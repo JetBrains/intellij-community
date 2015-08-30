@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve.reference;
 import com.intellij.openapi.paths.GlobalPathReferenceProvider;
 import com.intellij.openapi.paths.PathReferenceManager;
 import com.intellij.openapi.util.UserDataCache;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -47,7 +48,8 @@ public class ArbitraryPlaceUrlReferenceProvider extends PsiReferenceProvider {
             
             List<PsiReference> refs = null;
             GlobalPathReferenceProvider provider = myReferenceProvider.get();
-            for (IssueNavigationConfiguration.LinkMatch link : navigationConfiguration.findIssueLinks(element.getText())) {
+            CharSequence commentText = StringUtil.newBombedCharSequence(element.getText(), 500);
+            for (IssueNavigationConfiguration.LinkMatch link : navigationConfiguration.findIssueLinks(commentText)) {
               if (refs == null) refs = new SmartList<PsiReference>();
               if (provider == null) {
                 provider = (GlobalPathReferenceProvider)PathReferenceManager.getInstance().getGlobalWebPathReferenceProvider();
