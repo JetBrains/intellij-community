@@ -438,8 +438,7 @@ public class GroovyBlockGenerator {
 
   private boolean shouldSkip(boolean classLevel, PsiElement psi) {
     if (psi instanceof PsiComment) {
-      PsiElement prev = psi.getPrevSibling();
-      if (prev != null && prev.getNode().getElementType() != GroovyTokenTypes.mNLS || classLevel && !fieldGroupEnded(psi)) {
+      if ((psi.getPrevSibling() != null) || (classLevel && !fieldGroupEnded(psi))) {
         return true;
       }
     }
