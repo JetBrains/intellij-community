@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -52,11 +51,10 @@ import java.awt.*;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Encapsulates functionality of importing external system module to the intellij project.
- * 
+ *
  * @author Denis Zhdanov
  * @since 2/7/12 2:49 PM
  */
@@ -82,76 +80,66 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
     if (toImport.isEmpty()) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
-      @Override
-      public void execute() {
-        final Collection<DataNode<ModuleData>> toCreate = filterExistingModules(toImport, project, platformFacade);
-        if (!toCreate.isEmpty()) {
-          createModules(toCreate, project, platformFacade);
-        }
-        for (DataNode<ModuleData> node : toImport) {
-          Module module = platformFacade.findIdeModule(node.getData(), project);
-          if (module != null) {
-            syncPaths(module, platformFacade, node.getData());
-          }
-        }
-      }
-    });
+    final Collection<DataNode<ModuleData>> toCreate = filterExistingModules(toImport, project, platformFacade);
+    if (!toCreate.isEmpty()) {
+      ExternalSystemApiUtil.commitModels(synchronous, project, createModules(project, platformFacade, toCreate));
+    }
+    ExternalSystemApiUtil.commitModels(synchronous, project, syncModulesPaths(project, platformFacade, toImport));
   }
 
-  private static void createModules(@NotNull final Collection<DataNode<ModuleData>> toCreate,
-                                    @NotNull final Project project,
-                                    @NotNull final PlatformFacade platformFacade) {
-    Application application = ApplicationManager.getApplication();
-    final Map<DataNode<ModuleData>, Module> moduleMappings = ContainerUtilRt.newHashMap();
-    application.runWriteAction(new Runnable() {
+  @NotNull
+  private static List<ModifiableRootModel> createModules(@NotNull Project project,
+                                                         @NotNull PlatformFacade platformFacade,
+                                                         Collection<DataNode<ModuleData>> toCreate) {
+    final List<ModifiableRootModel> models = ContainerUtilRt.newArrayList();
+    try {
+      for (DataNode<ModuleData> moduleData : toCreate) {
+        models.add(createModule(project, platformFacade, moduleData));
+      }
+    }
+    catch (Error e) {
+      ExternalSystemApiUtil.disposeModels(models);
+      throw e;
+    }
+    return models;
+  }
+
+  private static ModifiableRootModel createModule(@NotNull Project project,
+                                                  @NotNull PlatformFacade platformFacade,
+                                                  @NotNull DataNode<ModuleData> module) {
+    final ModuleData data = module.getData();
+    final Module created = platformFacade.newModule(project, data.getModuleFilePath(), data.getModuleTypeId());
+
+    // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via gradle)
+    final ModifiableRootModel moduleRootModel = platformFacade.getModuleModifiableModel(created);
+    moduleRootModel.inheritSdk();
+    setModuleOptions(created, module);
+
+    final RootPolicy<Object> visitor = new RootPolicy<Object>() {
       @Override
-      public void run() {
-        for (DataNode<ModuleData> module : toCreate) {
-          importModule(module);
-        }
+      public Object visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Object value) {
+        moduleRootModel.removeOrderEntry(libraryOrderEntry);
+        return value;
       }
 
-      private void importModule(@NotNull DataNode<ModuleData> module) {
-        ModuleData data = module.getData();
-        final Module created = platformFacade.newModule(project, data.getModuleFilePath(), data.getModuleTypeId());
-
-        // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via gradle)
-        final ModifiableRootModel moduleRootModel = platformFacade.getModuleModifiableModel(created);
-        moduleRootModel.inheritSdk();
-        setModuleOptions(created, module);
-
-        RootPolicy<Object> visitor = new RootPolicy<Object>() {
-          @Override
-          public Object visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Object value) {
-            moduleRootModel.removeOrderEntry(libraryOrderEntry);
-            return value;
-          }
-
-          @Override
-          public Object visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Object value) {
-            moduleRootModel.removeOrderEntry(moduleOrderEntry);
-            return value;
-          }
-        };
-        try {
-          for (OrderEntry orderEntry : moduleRootModel.getOrderEntries()) {
-            orderEntry.accept(visitor, null);
-          }
-        }
-        finally {
-          moduleRootModel.commit();
-        }
-        moduleMappings.put(module, created);
+      @Override
+      public Object visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Object value) {
+        moduleRootModel.removeOrderEntry(moduleOrderEntry);
+        return value;
       }
-    });
+    };
+    for (OrderEntry orderEntry : moduleRootModel.getOrderEntries()) {
+      orderEntry.accept(visitor, null);
+    }
+    return moduleRootModel;
   }
 
   @NotNull
   private static Collection<DataNode<ModuleData>> filterExistingModules(@NotNull Collection<DataNode<ModuleData>> modules,
-                                                                        @NotNull Project project, @NotNull PlatformFacade platformFacade)
+                                                                        @NotNull Project project,
+                                                                        @NotNull PlatformFacade platformFacade)
   {
-    Collection<DataNode<ModuleData>> result = ContainerUtilRt.newArrayList();
+    final Collection<DataNode<ModuleData>> result = ContainerUtilRt.newArrayList();
     for (DataNode<ModuleData> node : modules) {
       ModuleData moduleData = node.getData();
       Module module = platformFacade.findIdeModule(moduleData, project);
@@ -165,30 +153,46 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
     return result;
   }
 
-  private static void syncPaths(@NotNull Module module, @NotNull PlatformFacade platformFacade, @NotNull ModuleData data) {
-    ModifiableRootModel modifiableModel = platformFacade.getModuleModifiableModel(module);
+  @NotNull
+  private List<ModifiableRootModel> syncModulesPaths(@NotNull Project project,
+                                                     @NotNull PlatformFacade platformFacade,
+                                                     Collection<DataNode<ModuleData>> toCreate) {
+    final List<ModifiableRootModel> models = ContainerUtilRt.newArrayList();
+    try {
+      for (DataNode<ModuleData> moduleData : toCreate) {
+        final Module module = platformFacade.findIdeModule(moduleData.getData(), project);
+        if (module != null) {
+          models.add(syncPaths(module, platformFacade, moduleData.getData()));
+        }
+      }
+    }
+    catch (Error e) {
+      ExternalSystemApiUtil.disposeModels(models);
+      throw e;
+    }
+    return models;
+  }
+
+  @NotNull
+  private static ModifiableRootModel syncPaths(@NotNull Module module, @NotNull PlatformFacade platformFacade, @NotNull ModuleData data) {
+    final ModifiableRootModel modifiableModel = platformFacade.getModuleModifiableModel(module);
     CompilerModuleExtension extension = modifiableModel.getModuleExtension(CompilerModuleExtension.class);
     if (extension == null) {
-      modifiableModel.dispose();
       LOG.warn(String.format("Can't sync paths for module '%s'. Reason: no compiler extension is found for it", module.getName()));
-      return;
+      return modifiableModel;
     }
-    try {
-      String compileOutputPath = data.getCompileOutputPath(ExternalSystemSourceType.SOURCE);
-      if (compileOutputPath != null) {
-        extension.setCompilerOutputPath(VfsUtilCore.pathToUrl(compileOutputPath));
-      }
+    final String compileOutputPath = data.getCompileOutputPath(ExternalSystemSourceType.SOURCE);
+    if (compileOutputPath != null) {
+      extension.setCompilerOutputPath(VfsUtilCore.pathToUrl(compileOutputPath));
+    }
 
-      String testCompileOutputPath = data.getCompileOutputPath(ExternalSystemSourceType.TEST);
-      if (testCompileOutputPath != null) {
-        extension.setCompilerOutputPathForTests(VfsUtilCore.pathToUrl(testCompileOutputPath));
-      }
+    final String testCompileOutputPath = data.getCompileOutputPath(ExternalSystemSourceType.TEST);
+    if (testCompileOutputPath != null) {
+      extension.setCompilerOutputPathForTests(VfsUtilCore.pathToUrl(testCompileOutputPath));
+    }
 
-      extension.inheritCompilerOutputPath(data.isInheritProjectCompileOutputPath());
-    }
-    finally {
-      modifiableModel.commit();
-    }
+    extension.inheritCompilerOutputPath(data.isInheritProjectCompileOutputPath());
+    return modifiableModel;
   }
 
   @NotNull
@@ -306,7 +310,7 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        List<Module> toRemove = ContainerUtil.newSmartList();
+        final List<Module> toRemove = ContainerUtil.newSmartList();
         if(ApplicationManager.getApplication().isHeadlessEnvironment()) {
           toRemove.addAll(orphanModules);
         } else {
@@ -329,7 +333,7 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
           content.add(orphanModulesList, ExternalSystemUiUtil.getFillLineConstraints(0));
           content.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 8, 0));
 
-          DialogWrapper dialog = new DialogWrapper(project) {
+          final DialogWrapper dialog = new DialogWrapper(project) {
             {
               setTitle(ExternalSystemBundle.message("import.title", externalSystemId.getReadableName()));
               init();
@@ -340,7 +344,7 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
             protected JComponent createCenterPanel() {
               return new JBScrollPane(content);
             }
-            
+
             @NotNull
             protected Action[] createActions() {
               return new Action[]{getOKAction()};
@@ -371,7 +375,7 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
   }
 
   private static void setModuleOptions(Module module, DataNode<ModuleData> moduleDataNode) {
-    ModuleData moduleData = moduleDataNode.getData();
+    final ModuleData moduleData = moduleDataNode.getData();
     module.putUserData(MODULE_DATA_KEY, moduleData);
 
     module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, moduleData.getOwner().toString());

@@ -127,7 +127,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
         }
 
         for (OrderEntry entry : ModuleRootManagerImpl.this.getOrderEntries()) {
-          assert !((RootModelComponentBase)entry).isDisposed();
+          assert !((RootModelComponentBase)entry).isDisposed() : String.format("%s is not disposed!", entry.getPresentableName());
         }
       }
     };

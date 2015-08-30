@@ -36,7 +36,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,7 +43,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -87,85 +85,86 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       return;
     }
 
-    MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> byModule = ExternalSystemApiUtil.groupBy(toImport, ProjectKeys.MODULE);
-    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
-      final Module module = platformFacade.findIdeModule(entry.getKey().getData(), project);
-      if (module == null) {
-        LOG.warn(String.format(
-          "Can't import content roots. Reason: target module (%s) is not found at the ide. Content roots: %s",
-          entry.getKey(), entry.getValue()
-        ));
-        continue;
+    final List<ModifiableRootModel> models = ContainerUtilRt.newArrayList();
+    try {
+      final MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> byModule = ExternalSystemApiUtil.groupBy(toImport, ProjectKeys.MODULE);
+      for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
+        final Module module = platformFacade.findIdeModule(entry.getKey().getData(), project);
+        if (module == null) {
+          LOG.warn(String.format(
+            "Can't import content roots. Reason: target module (%s) is not found at the ide. Content roots: %s",
+            entry.getKey(), entry.getValue()
+          ));
+          continue;
+        }
+        models.add(importData(entry.getValue(), module, platformFacade));
       }
-      importData(entry.getValue(), module, synchronous);
+      ExternalSystemApiUtil.commitModels(synchronous, project, models);
+    }
+    catch (Error e) {
+      ExternalSystemApiUtil.disposeModels(models);
+      throw e;
     }
   }
 
-  private static void importData(@NotNull final Collection<DataNode<ContentRootData>> data,
-                                 @NotNull final Module module,
-                                 boolean synchronous) {
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(module) {
-      @Override
-      public void execute() {
-        ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
-          @Override
-          public void consume(ModifiableRootModel model) {
-            final ContentEntry[] contentEntries = model.getContentEntries();
-            final Map<String, ContentEntry> contentEntriesMap = ContainerUtilRt.newHashMap();
-            for(ContentEntry contentEntry : contentEntries) {
-              contentEntriesMap.put(contentEntry.getUrl(), contentEntry);
-            }
+  @NotNull
+  private static ModifiableRootModel importData(@NotNull final Collection<DataNode<ContentRootData>> data,
+                                                @NotNull final Module module,
+                                                @NotNull final PlatformFacade platformFacade) {
+    final ModifiableRootModel model = platformFacade.getModuleModifiableModel(module);
+    final ContentEntry[] contentEntries = model.getContentEntries();
+    final Map<String, ContentEntry> contentEntriesMap = ContainerUtilRt.newHashMap();
+    for(ContentEntry contentEntry : contentEntries) {
+      contentEntriesMap.put(contentEntry.getUrl(), contentEntry);
+    }
 
-            boolean createEmptyContentRootDirectories = false;
-            if (!data.isEmpty()) {
-              ProjectSystemId projectSystemId = data.iterator().next().getData().getOwner();
-              AbstractExternalSystemSettings externalSystemSettings =
-                ExternalSystemApiUtil.getSettings(module.getProject(), projectSystemId);
+    boolean createEmptyContentRootDirectories = false;
+    if (!data.isEmpty()) {
+      ProjectSystemId projectSystemId = data.iterator().next().getData().getOwner();
+      AbstractExternalSystemSettings externalSystemSettings =
+        ExternalSystemApiUtil.getSettings(module.getProject(), projectSystemId);
 
-              String path = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
-              if (path != null) {
-                ExternalProjectSettings projectSettings = externalSystemSettings.getLinkedProjectSettings(path);
-                createEmptyContentRootDirectories = projectSettings != null && projectSettings.isCreateEmptyContentRootDirectories();
-              }
-            }
-
-            for (final DataNode<ContentRootData> node : data) {
-              final ContentRootData contentRoot = node.getData();
-
-              final ContentEntry contentEntry = findOrCreateContentRoot(model, contentRoot.getRootPath());
-              contentEntry.clearExcludeFolders();
-              contentEntry.clearSourceFolders();
-              LOG.debug(String.format("Importing content root '%s' for module '%s'", contentRoot.getRootPath(), module.getName()));
-              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE)) {
-                createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.SOURCE, false, createEmptyContentRootDirectories);
-              }
-              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST)) {
-                createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.TEST_SOURCE, false, createEmptyContentRootDirectories);
-              }
-              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.RESOURCE)) {
-                createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaResourceRootType.RESOURCE, false, createEmptyContentRootDirectories);
-              }
-              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST_RESOURCE)) {
-                createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaResourceRootType.TEST_RESOURCE, false, createEmptyContentRootDirectories);
-              }
-              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE_GENERATED)) {
-                createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.SOURCE, true, createEmptyContentRootDirectories);
-              }
-              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST_GENERATED)) {
-                createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.TEST_SOURCE, true, createEmptyContentRootDirectories);
-              }
-              for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.EXCLUDED)) {
-                createExcludedRootIfAbsent(contentEntry, path, module.getName(), module.getProject());
-              }
-              contentEntriesMap.remove(contentEntry.getUrl());
-            }
-            for(ContentEntry contentEntry : contentEntriesMap.values()) {
-              model.removeContentEntry(contentEntry);
-            }
-          }
-        });
+      String path = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+      if (path != null) {
+        ExternalProjectSettings projectSettings = externalSystemSettings.getLinkedProjectSettings(path);
+        createEmptyContentRootDirectories = projectSettings != null && projectSettings.isCreateEmptyContentRootDirectories();
       }
-    });
+    }
+
+    for (final DataNode<ContentRootData> node : data) {
+      final ContentRootData contentRoot = node.getData();
+
+      final ContentEntry contentEntry = findOrCreateContentRoot(model, contentRoot.getRootPath());
+      contentEntry.clearExcludeFolders();
+      contentEntry.clearSourceFolders();
+      LOG.debug(String.format("Importing content root '%s' for module '%s'", contentRoot.getRootPath(), module.getName()));
+      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE)) {
+        createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.SOURCE, false, createEmptyContentRootDirectories);
+      }
+      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST)) {
+        createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.TEST_SOURCE, false, createEmptyContentRootDirectories);
+      }
+      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.RESOURCE)) {
+        createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaResourceRootType.RESOURCE, false, createEmptyContentRootDirectories);
+      }
+      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST_RESOURCE)) {
+        createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaResourceRootType.TEST_RESOURCE, false, createEmptyContentRootDirectories);
+      }
+      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE_GENERATED)) {
+        createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.SOURCE, true, createEmptyContentRootDirectories);
+      }
+      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST_GENERATED)) {
+        createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.TEST_SOURCE, true, createEmptyContentRootDirectories);
+      }
+      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.EXCLUDED)) {
+        createExcludedRootIfAbsent(contentEntry, path, module.getName(), module.getProject());
+      }
+      contentEntriesMap.remove(contentEntry.getUrl());
+    }
+    for(ContentEntry contentEntry : contentEntriesMap.values()) {
+      model.removeContentEntry(contentEntry);
+    }
+    return model;
   }
 
   @NotNull

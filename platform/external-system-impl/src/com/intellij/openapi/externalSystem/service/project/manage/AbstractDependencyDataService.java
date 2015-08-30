@@ -139,9 +139,21 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
                          @NotNull final Project project,
                          @NotNull final PlatformFacade platformFacade,
                          final boolean synchronous) {
-    Map<Module, Collection<ExportableOrderEntry>> byModule = groupByModule(toRemoveComputable.compute());
-    for (Map.Entry<Module, Collection<ExportableOrderEntry>> entry : byModule.entrySet()) {
-      removeData(entry.getValue(), entry.getKey(), platformFacade, synchronous);
+    final List<ModifiableRootModel> models = ContainerUtilRt.newArrayList();
+    try {
+      final Map<Module, Collection<ExportableOrderEntry>> byModule = groupByModule(toRemoveComputable.compute());
+      for (Map.Entry<Module, Collection<ExportableOrderEntry>> entry : byModule.entrySet()) {
+        final Module module = entry.getKey();
+        final Collection<ExportableOrderEntry> depsToRemove = entry.getValue();
+        final ModifiableRootModel model = platformFacade.getModuleModifiableModel(module);
+        removeData(depsToRemove, model);
+        models.add(model);
+      }
+      ExternalSystemApiUtil.commitModels(synchronous, project, models);
+    }
+    catch (Error e) {
+      ExternalSystemApiUtil.disposeModels(models);
+      throw e;
     }
   }
 
@@ -159,41 +171,25 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
   }
 
   protected void removeData(@NotNull Collection<? extends ExportableOrderEntry> toRemove,
-                         @NotNull final Module module,
-                         @NotNull final PlatformFacade platformFacade,
-                         boolean synchronous) {
-    if (toRemove.isEmpty()) {
-      return;
-    }
-    for (final ExportableOrderEntry dependency : toRemove) {
-      ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(dependency.getOwnerModule()) {
-        @Override
-        public void execute() {
-          final ModifiableRootModel moduleRootModel = platformFacade.getModuleModifiableModel(module);
-          try {
-            // The thing is that intellij created order entry objects every time new modifiable model is created,
-            // that's why we can't use target dependency object as is but need to get a reference to the current
-            // entry object from the model instead.
-            for (OrderEntry entry : moduleRootModel.getOrderEntries()) {
-              if (entry instanceof ExportableOrderEntry) {
-                ExportableOrderEntry orderEntry = (ExportableOrderEntry)entry;
-                if (orderEntry.getPresentableName().equals(dependency.getPresentableName()) &&
-                    orderEntry.getScope().equals(dependency.getScope())) {
-                  moduleRootModel.removeOrderEntry(entry);
-                  break;
-                }
-              }
-              else if (entry.getPresentableName().equals(dependency.getPresentableName())) {
-                moduleRootModel.removeOrderEntry(entry);
-                break;
-              }
-            }
-          }
-          finally {
-            moduleRootModel.commit();
+                            @NotNull ModifiableRootModel moduleRootModel) {
+    for (ExportableOrderEntry dependency : toRemove) {
+      // The thing is that intellij created order entry objects every time new modifiable model is created,
+      // that's why we can't use target dependency object as is but need to get a reference to the current
+      // entry object from the model instead.
+      for (OrderEntry entry : moduleRootModel.getOrderEntries()) {
+        if (entry instanceof ExportableOrderEntry) {
+          ExportableOrderEntry orderEntry = (ExportableOrderEntry)entry;
+          if (orderEntry.getPresentableName().equals(dependency.getPresentableName()) &&
+              orderEntry.getScope().equals(dependency.getScope())) {
+            moduleRootModel.removeOrderEntry(entry);
+            break;
           }
         }
-      });
+        else if (entry.getPresentableName().equals(dependency.getPresentableName())) {
+          moduleRootModel.removeOrderEntry(entry);
+          break;
+        }
+      }
     }
   }
 }
