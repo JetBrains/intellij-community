@@ -29,6 +29,8 @@ import java.util.Collection;
  * The default implementation which modify IDEA's project model directly is registered as the last extension so it'll be executed if all other
  * extensions refuse to handle modification by returning {@code null}.
  *
+ * @see ProjectModelModificationService
+ *
  * @author nik
  */
 public abstract class ProjectModelModifier {

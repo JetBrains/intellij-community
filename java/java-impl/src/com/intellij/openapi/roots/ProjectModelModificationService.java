@@ -31,6 +31,8 @@ import java.util.Collections;
  * project model. Since importing the changes to IDEA's project model may take a while the method work asynchronously and returns
  * {@link Promise} objects which may be used to be notified when the project configuration is finally updated.
  *
+ * @see ProjectModelModifier
+ *
  * @author nik
  */
 public abstract class ProjectModelModificationService {
