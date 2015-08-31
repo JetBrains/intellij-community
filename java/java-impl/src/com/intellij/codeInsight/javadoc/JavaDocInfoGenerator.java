@@ -385,7 +385,7 @@ public class JavaDocInfoGenerator {
       return null;
 
     if (docURLs != null) {
-      if (elementHasSourceCode()) {
+      if (buffer.length() > 0 && elementHasSourceCode()) {
         LOG.debug("Documentation for " + myElement + " was generated from source code, it wasn't found at following URLs: ", docURLs);
       }
       else {
