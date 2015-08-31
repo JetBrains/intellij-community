@@ -484,6 +484,13 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         return lType instanceof PsiPrimitiveType && rType instanceof PsiClassType ||
                lType instanceof PsiClassType     && rType instanceof PsiPrimitiveType;
       }
+      // concat with a String
+      if (opCode == JavaTokenType.PLUS) {
+        if ((lType instanceof PsiClassType && lType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) ||
+            (rType instanceof PsiClassType && rType.equalsToText(CommonClassNames.JAVA_LANG_STRING))){
+          return false;
+        }
+      }
       // all other operations at least one should be of class type
       return lType instanceof PsiClassType || rType instanceof PsiClassType;
     }
