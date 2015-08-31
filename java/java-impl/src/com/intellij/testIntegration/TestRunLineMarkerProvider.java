@@ -28,6 +28,7 @@ import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -52,7 +53,8 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
       if (element instanceof PsiClass) {
         TestFramework framework = TestFrameworks.detectFramework((PsiClass)element);
         if (framework != null && framework.isTestClass(element)) {
-          return new Info(framework.getIcon(), TOOLTIP_PROVIDER, ExecutorAction.getActions(1));
+          String url = "java:suite://" + ((PsiClass)element).getQualifiedName();
+          return getInfo(url, framework, e.getProject());
         }
       }
       if (element instanceof PsiMethod) {
@@ -61,13 +63,18 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
           TestFramework framework = TestFrameworks.detectFramework(psiClass);
           if (framework != null && framework.isTestMethod(element)) {
             String url = "java:test://" + psiClass.getQualifiedName() + "." + ((PsiMethod)element).getName();
-            Icon icon = getTestStateIcon(url, e.getProject());
-            return new Info(icon == null ? framework.getIcon() : icon, TOOLTIP_PROVIDER, ExecutorAction.getActions(1));
+            return getInfo(url, framework, e.getProject());
           }
         }
       }
     }
     return null;
+  }
+
+  @NotNull
+  protected Info getInfo(String url, TestFramework framework, Project project) {
+    Icon icon = getTestStateIcon(url, project);
+    return new Info(icon == null ? framework.getIcon() : icon, TOOLTIP_PROVIDER, ExecutorAction.getActions(1));
   }
 
   protected boolean isIdentifier(PsiElement e) {
