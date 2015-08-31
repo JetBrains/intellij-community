@@ -187,6 +187,7 @@ public class FindPopupWithProgress {
         @Override
         public void handleInsert(InsertionContext context, LookupElement item) {
           mySelectedRef = (VcsRef)item.getObject();
+          myTextField.onOk();
         }
       };
     }
