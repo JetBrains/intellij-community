@@ -15,6 +15,9 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -22,9 +25,13 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,19 +47,26 @@ public class FindPopupWithProgress {
   private static final Logger LOG = Logger.getInstance(FindPopupWithProgress.class);
 
   @NotNull private final TextFieldWithProgress myTextField;
-  @NotNull private final Function<String, Future> myFunction;
+  @NotNull private final Function<String, Future> myOnSelectedHash;
+  @NotNull private final Function<VcsRef, Future> myOnSelectedRef;
   @NotNull private final JBPopup myPopup;
   @Nullable private Future myFuture;
+  @Nullable private VcsRef mySelectedRef;
 
   public FindPopupWithProgress(@NotNull final Project project,
-                               @NotNull Collection<String> variants,
-                               @NotNull Function<String, Future> function) {
-    myFunction = function;
-    myTextField = new TextFieldWithProgress(project, variants) {
+                               @NotNull Collection<VcsRef> variants,
+                               @NotNull Function<String, Future> onSelectedHash,
+                               @NotNull Function<VcsRef, Future> onSelectedRef,
+                               @NotNull VcsLogColorManager colorManager) {
+    myOnSelectedHash = onSelectedHash;
+    myOnSelectedRef = onSelectedRef;
+    myTextField = new TextFieldWithProgress<VcsRef>(project, new VcsRefCompletionProvider(variants, colorManager)) {
       @Override
       public void onOk() {
         if (myFuture == null) {
-          final Future future = myFunction.fun(getText().trim());
+          final Future future = ((mySelectedRef == null || (!mySelectedRef.getName().equals(getText().trim())))
+                                 ? myOnSelectedHash.fun(getText().trim())
+                                 : myOnSelectedRef.fun(mySelectedRef));
           myFuture = future;
           showProgress();
           ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -126,5 +140,55 @@ public class FindPopupWithProgress {
 
   public void show(@NotNull JComponent anchor) {
     myPopup.showInCenterOf(anchor);
+  }
+
+  private class VcsRefCompletionProvider extends TextFieldWithAutoCompletionListProvider<VcsRef> {
+    @NotNull private final VcsLogColorManager myColorManager;
+
+    public VcsRefCompletionProvider(@NotNull Collection<VcsRef> variants, @NotNull VcsLogColorManager colorManager) {
+      super(variants);
+      myColorManager = colorManager;
+    }
+
+    @Nullable
+    @Override
+    protected Icon getIcon(@NotNull VcsRef item) {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    protected String getLookupString(@NotNull VcsRef item) {
+      return item.getName();
+    }
+
+    @Nullable
+    @Override
+    protected String getTailText(@NotNull VcsRef item) {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    protected String getTypeText(@NotNull VcsRef item) {
+      if (!myColorManager.isMultipleRoots()) return null;
+      return item.getRoot().getName();
+    }
+
+    @Override
+    public int compare(VcsRef item1, VcsRef item2) {
+      return StringUtil.compare(item1.getName(), item2.getName(), false);
+    }
+
+    @Nullable
+    @Override
+    protected InsertHandler<LookupElement> createInsertHandler(@NotNull VcsRef item) {
+      return new InsertHandler<LookupElement>() {
+        @Override
+        public void handleInsert(InsertionContext context, LookupElement item) {
+          mySelectedRef = (VcsRef)item.getObject();
+        }
+      };
+    }
   }
 }
