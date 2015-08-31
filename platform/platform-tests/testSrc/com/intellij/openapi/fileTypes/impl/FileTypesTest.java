@@ -34,7 +34,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -97,7 +96,7 @@ public class FileTypesTest extends PlatformTestCase {
     checkNotIgnored("ax.cxx");
     checkNotIgnored("ab.cd");
     checkNotIgnored("ab.c__d");
-    checkNotIgnored("xx" + "xx");
+    checkNotIgnored("xxxx");
     checkNotIgnored("xx");
     assertTrue(myFileTypeManager.isIgnoredFilesListEqualToCurrent(pattern2 + ";" + pattern1));
     assertFalse(myFileTypeManager.isIgnoredFilesListEqualToCurrent(pattern2 + ";" + "ab.c*d"));
@@ -112,8 +111,8 @@ public class FileTypesTest extends PlatformTestCase {
     });
     final String[] names = new String[100];
     for (int i = 0; i < names.length; i++) {
-      String name = String.valueOf((i%10)*10 + (i*100) + i + 1);
-      names[i] = (name + name + name + name);
+      String name = String.valueOf(i % 10 * 10 + i * 100 + i + 1);
+      names[i] = name + name + name + name;
     }
     PlatformTestUtil.startPerformanceTest("ignore perf", 700, new ThrowableRunnable() {
       @Override
@@ -173,7 +172,7 @@ public class FileTypesTest extends PlatformTestCase {
     File file = createTempFile(".svn", "");
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertTrue(FileTypeManager.getInstance().isFileIgnored(vFile));
-    vFile.delete(this);
+    delete(vFile);
 
     file = createTempFile("a.txt", "");
     vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
@@ -235,7 +234,7 @@ public class FileTypesTest extends PlatformTestCase {
     assertTrue(psi instanceof PsiBinaryFile);
     assertEquals(FileTypes.UNKNOWN, virtualFile.getFileType());
 
-    virtualFile.setBinaryContent("xxxxxxx".getBytes(CharsetToolkit.UTF8_CHARSET));
+    setBinaryContent(virtualFile, "xxxxxxx".getBytes(CharsetToolkit.UTF8_CHARSET));
     assertEquals(FileTypes.PLAIN_TEXT, virtualFile.getFileType());
     PsiFile after = getPsiManager().findFile(virtualFile);
     assertNotSame(psi, after);
@@ -247,8 +246,8 @@ public class FileTypesTest extends PlatformTestCase {
   public void testAutoDetectTextFileFromContents() throws IOException {
     File dir = createTempDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
-    VirtualFile vFile = vDir.createChildData(this, "test.xxxxxxxx");
-    VfsUtil.saveText(vFile, "text");
+    VirtualFile vFile = createChildData(vDir, "test.xxxxxxxx");
+    setFileText(vFile, "text");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType()); // type autodetected during indexing
@@ -332,12 +331,12 @@ public class FileTypesTest extends PlatformTestCase {
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof PlainTextFileType);
 
       log("T: ------ TYPE:IDEA_MODULE");
-      VfsUtil.saveText(vFile, "TYPE:IDEA_MODULE");
+      setFileText(vFile,  "TYPE:IDEA_MODULE");
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ModuleFileType);
 
       log("T: ------ TYPE:IDEA_PROJECT");
-      VfsUtil.saveText(vFile, "TYPE:IDEA_PROJECT");
+      setFileText(vFile, "TYPE:IDEA_PROJECT");
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ProjectFileType);
       log("T: ------");
@@ -369,10 +368,16 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   public void testReassignedPredefinedFileType() throws Exception {
-    FileType perlFileType = myFileTypeManager.getFileTypeByFileName("foo.pl");
+    final FileType perlFileType = myFileTypeManager.getFileTypeByFileName("foo.pl");
     assertEquals("Perl", perlFileType.getName());
     assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
-    myFileTypeManager.associatePattern(perlFileType, "*.cgi");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        myFileTypeManager.associatePattern(perlFileType, "*.cgi");
+      }
+    });
+
     assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
 
     Element element = myFileTypeManager.getState();
@@ -380,7 +385,13 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.initComponent();
     assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
 
-    myFileTypeManager.removeAssociatedExtension(perlFileType, "*.cgi");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        myFileTypeManager.removeAssociatedExtension(perlFileType, "*.cgi");
+      }
+    });
+
     myFileTypeManager.clearForTests();
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.initComponent();
@@ -410,7 +421,13 @@ public class FileTypesTest extends PlatformTestCase {
 
   // for IDEA-114804 File types mapped to text are not remapped when corresponding plugin is installed
   public void testRemappingToInstalledPluginExtension() throws WriteExternalException, InvalidDataException {
-    myFileTypeManager.associatePattern(PlainTextFileType.INSTANCE, "*.fromPlugin");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        myFileTypeManager.associatePattern(PlainTextFileType.INSTANCE, "*.fromPlugin");
+      }
+    });
+
     Element element = myFileTypeManager.getState();
     String s = JDOMUtil.writeElement(element);
     log(s);
@@ -487,7 +504,13 @@ public class FileTypesTest extends PlatformTestCase {
       myFileTypeManager.loadState(element);
       myFileTypeManager.initComponent();
 
-      myFileTypeManager.associatePattern(typeFromPlugin, "*.foo");
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          myFileTypeManager.associatePattern(typeFromPlugin, "*.foo");
+        }
+      });
+
 
       element = myFileTypeManager.getState();
       log(JDOMUtil.writeElement(element));
@@ -544,17 +567,39 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   public void testDefaultFileType() throws Exception {
-    FileType idl = myFileTypeManager.findFileTypeByName("IDL");
-    myFileTypeManager.associatePattern(idl, "*.xxx");
+    final FileType idl = myFileTypeManager.findFileTypeByName("IDL");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        myFileTypeManager.associatePattern(idl, "*.xxx");
+      }
+    });
+
     Element element = myFileTypeManager.getState();
     log(JDOMUtil.writeElement(element));
-    myFileTypeManager.removeAssociatedExtension(idl, "xxx");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        myFileTypeManager.removeAssociatedExtension(idl, "xxx");
+      }
+    });
+
     myFileTypeManager.clearForTests();
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.loadState(element);
     myFileTypeManager.initComponent();
     FileType extensions = myFileTypeManager.getFileTypeByExtension("xxx");
     assertEquals("IDL", extensions.getName());
-    myFileTypeManager.removeAssociatedExtension(idl, "xxx");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        myFileTypeManager.removeAssociatedExtension(idl, "xxx");
+      }
+    });
+  }
+
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
   }
 }

@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
@@ -62,6 +63,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.net.URL;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -135,10 +137,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   static final String FILE_SPEC = "filetypes";
 
   // these flags are stored in 'packedFlags' as chunks of four bits
-  private static final int AUTO_DETECTED_AS_TEXT_MASK = 1<<0;     // set if the file was auto-detected as text
-  private static final int AUTO_DETECTED_AS_BINARY_MASK = 1<<1;   // set if the file was auto-detected as binary
-  private static final int AUTO_DETECT_WAS_RUN_MASK = 1<<2;       // set if auto-detection was performed for this file
-  private static final int ATTRIBUTES_WERE_LOADED_MASK = 1<<3;    // set if AUTO_* bits above were loaded from the file persistent attributes and saved to packedFlags
+  private static final byte AUTO_DETECTED_AS_TEXT_MASK = 1<<0;     // set if the file was auto-detected as text
+  private static final byte AUTO_DETECTED_AS_BINARY_MASK = 1<<1;   // set if the file was auto-detected as binary
+
+  // set if auto-detection was performed for this file.
+  // if some detector returned some custom file type, it's stored in DETECTED_FROM_CONTENT_FILE_TYPE_KEY file key.
+  // otherwise if auto-detected as text or binary, the result is stored in AUTO_DETECTED_AS_TEXT_MASK|AUTO_DETECTED_AS_BINARY_MASK bits
+  private static final byte AUTO_DETECT_WAS_RUN_MASK = 1<<2;
+  private static final byte ATTRIBUTES_WERE_LOADED_MASK = 1<<3;    // set if AUTO_* bits above were loaded from the file persistent attributes and saved to packedFlags
   private final ConcurrentPackedBitsArray packedFlags = new ConcurrentPackedBitsArray(4);
 
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
@@ -355,14 +361,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (shouldRedetect) {
         int id = ((VirtualFileWithId)file).getId();
         long flags = packedFlags.get(id);
-        FileType before = fromFlags(file, flags);
+        FileType before = fromCachedFlags(file, flags);
 
         if (toLog()) {
           log("F: reDetect("+file.getName()+") prepare to redetect. flags: "+flags);
         }
 
-        file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
-        FileType after = detectByFile(file);
+        FileType after = getOrDetectByFile(file);
 
         if (after == null) {
           after = detectFromContentAndCache(file);
@@ -370,6 +375,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         else {
           // back to standard file type
           // detected by conventional methods, no need to run detect-from-content
+          file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
           flags = 0;
           packedFlags.set(id, flags);
         }
@@ -457,7 +463,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   @NotNull
   public FileType getFileTypeByFile(@NotNull VirtualFile file) {
-    FileType fileType = detectByFile(file);
+    FileType fileType = getOrDetectByFile(file);
 
     if (fileType == null) {
       fileType = file instanceof StubVirtualFile ? UnknownFileType.INSTANCE : getOrDetectFromContent(file);
@@ -467,7 +473,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Nullable // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
-  private FileType detectByFile(@NotNull VirtualFile file) {
+  private FileType getOrDetectByFile(@NotNull VirtualFile file) {
     FileType fileType = file.getUserData(FILE_TYPE_KEY);
     if (fileType != null) return fileType;
 
@@ -514,9 +520,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
       boolean autoDetectWasRun = (flags & AUTO_DETECT_WAS_RUN_MASK) != 0;
       if (autoDetectWasRun) {
-        FileType type = fromFlags(file, flags);
+        FileType type = fromCachedFlags(file, flags);
         if (toLog()) {
-          log("F: autodetected getFileType("+file.getName()+") = "+type.getName()+"; packedFlags.get(id):"+flags);
+          log("F: autodetected getFileType("+file.getName()+") = "+type.getName()+"; packedFlags.get(id):"+flags+"; DETECTED_FROM_CONTENT_FILE_TYPE_KEY: "+file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY));
         }
         return type;
       }
@@ -536,6 +542,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private volatile FileAttribute autoDetectedAttribute;
   // read auto-detection flags from the persistent FS file attributes. If file attributes are absent, return 0 for flags
+  // returns three bits value for AUTO_DETECTED_AS_TEXT_MASK, AUTO_DETECTED_AS_BINARY_MASK and AUTO_DETECT_WAS_RUN_MASK bits
   protected byte readFlagsFromCache(@NotNull VirtualFile file) {
     DataInputStream stream = autoDetectedAttribute.readAttribute(file);
     boolean wasAutoDetectRun = false;
@@ -553,16 +560,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
     catch (IOException ignored) {
     }
-    status = (byte)BitUtil.set(status, AUTO_DETECT_WAS_RUN_MASK, wasAutoDetectRun);
+    status = BitUtil.set(status, AUTO_DETECT_WAS_RUN_MASK, wasAutoDetectRun);
 
-    return status;
+    return (byte)(status & (AUTO_DETECTED_AS_TEXT_MASK | AUTO_DETECTED_AS_BINARY_MASK | AUTO_DETECT_WAS_RUN_MASK));
   }
+
   // store auto-detection flags to the persistent FS file attributes
+  // writes AUTO_DETECTED_AS_TEXT_MASK, AUTO_DETECTED_AS_BINARY_MASK bits only
   protected void writeFlagsToCache(@NotNull VirtualFile file, int flags) {
     DataOutputStream stream = autoDetectedAttribute.writeAttribute(file);
     try {
       try {
-        stream.writeByte(flags);
+        stream.writeByte(flags & (AUTO_DETECTED_AS_TEXT_MASK | AUTO_DETECTED_AS_BINARY_MASK));
       }
       finally {
         stream.close();
@@ -584,7 +593,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private static FileType fromFlags(@NotNull VirtualFile file, long flags) {
+  private static FileType fromCachedFlags(@NotNull VirtualFile file, long flags) {
     return BitUtil.isSet(flags, AUTO_DETECTED_AS_TEXT_MASK) ? FileTypes.PLAIN_TEXT :
            BitUtil.isSet(flags, AUTO_DETECTED_AS_BINARY_MASK) ? UnknownFileType.INSTANCE :
            ObjectUtils.notNull(file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY), FileTypes.PLAIN_TEXT);
@@ -644,15 +653,37 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return file.getFileSystem() instanceof FileSystemInterface && !SingleRootFileViewProvider.isTooLargeForContentLoading(file);
   }
 
+  private static boolean processFirstBytes(@NotNull final InputStream stream, final int length, @NotNull Processor<ByteSequence> processor) throws IOException {
+    final byte[] bytes = FileUtilRt.getThreadLocalBuffer();
+    assert bytes.length >= length : "Cannot process more than " + bytes.length + " in one call, requested:" + length;
+
+    int n = stream.read(bytes, 0, length);
+    if (n <= 0) {
+      // maybe locked because someone else is writing to it
+      // repeat inside read action to guarantee all writes are finished
+      n = ApplicationManager.getApplication().runReadAction(new ThrowableComputable<Integer, IOException>() {
+        @Override
+        public Integer compute() throws IOException {
+          return stream.read(bytes, 0, length);
+        }
+      });
+      if (n <= 0) {
+        return false;
+      }
+    }
+
+    return processor.process(new ByteSequence(bytes, 0, n));
+  }
+
   @NotNull
   private FileType detectFromContentAndCache(@NotNull final VirtualFile file) {
     long start = System.currentTimeMillis();
     try {
       final InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file);
       final Ref<FileType> result = new Ref<FileType>(UnknownFileType.INSTANCE);
-      boolean r;
+      boolean r = false;
       try {
-        r = FileUtil.processFirstBytes(inputStream, DETECT_BUFFER_SIZE, new Processor<ByteSequence>() {
+        r = processFirstBytes(inputStream, DETECT_BUFFER_SIZE, new Processor<ByteSequence>() {
           @Override
           public boolean process(ByteSequence byteSequence) {
             boolean isText = guessIfText(file, byteSequence);
@@ -689,23 +720,23 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         });
       }
       finally {
+        if (toLog()) {
+          byte[] buffer = new byte[50];
+          InputStream newStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file);
+          int n = newStream.read(buffer, 0, buffer.length);
+          log("F: Redetect run for file: " + file.getName() + "; result: "+result.get().getName()+"; processor ret: "+r+"; stream: "+streamInfo(inputStream)+"; newStream: "+streamInfo(newStream)+"; read: "+n+"; buffer: "+Arrays.toString(buffer));
+          newStream.close();
+          try {
+            InputStream in = ReflectionUtil.getField(newStream.getClass(), newStream, InputStream.class, "in");
+            String path = ReflectionUtil.getField(in.getClass(), in, String.class, "path");
+            log("F: inputStream.in: " + in + "("+in.getClass()+"; in.path: "+path+"; path.exists "+new File(path).exists()+"; canRead: "+new File(path).canRead());
+          }
+          catch (Exception ignored) {
+          }
+        }
         inputStream.close();
       }
       FileType fileType = result.get();
-      if (toLog()) {
-        byte[] buffer = new byte[50];
-        InputStream newStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file);
-        int n = newStream.read(buffer, 0, buffer.length);
-        newStream.close();
-        log("F: Redetect run for file: " + file.getName() + "; result: "+fileType.getName()+"; processor ret: "+r+"; stream: "+inputStream+"; newStream: "+newStream+"; read: "+n+"; buffer: "+Arrays.toString(buffer));
-        try {
-          InputStream in = ReflectionUtil.getField(newStream.getClass(), newStream, InputStream.class, "in");
-          String path = ReflectionUtil.getField(in.getClass(), in, String.class, "path");
-          log("F: inputStream.in: " + in + "("+in.getClass()+"; in.path: "+path+"; path.exists "+new File(path).exists()+"; canRead: "+new File(path).canRead());
-        }
-        catch (Exception ignored) {
-        }
-      }
 
       if (LOG.isDebugEnabled()) {
         LOG.debug(file + "; type=" + fileType.getDescription() + "; " + counterAutoDetect);
@@ -721,6 +752,27 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     catch (IOException ignored) {
       return UnknownFileType.INSTANCE; // return unknown, do not cache
     }
+  }
+
+  // for diagnostics
+  private static Object streamInfo(InputStream stream) throws IOException {
+    if (stream instanceof BufferedInputStream) {
+      InputStream in = ReflectionUtil.getField(stream.getClass(), stream, InputStream.class, "in");
+      byte[] buf = ReflectionUtil.getField(stream.getClass(), stream, byte[].class, "buf");
+      int count = ReflectionUtil.getField(stream.getClass(), stream, int.class, "count");
+      int pos = ReflectionUtil.getField(stream.getClass(), stream, int.class, "pos");
+
+      return "BufferedInputStream(buf="+(buf == null ? null : Arrays.toString(Arrays.copyOf(buf, count))) + ", count="+count+ ", pos="+pos+", in="+streamInfo(in)+")";
+    }
+    if (stream instanceof FileInputStream) {
+      String path = ReflectionUtil.getField(stream.getClass(), stream, String.class, "path");
+      FileChannel channel = ReflectionUtil.getField(stream.getClass(), stream, FileChannel.class, "channel");
+      boolean closed = ReflectionUtil.getField(stream.getClass(), stream, boolean.class, "closed");
+      int available = stream.available();
+      File file = new File(path);
+      return "FileInputStream(path="+path+ ", available="+available+ ", closed="+closed+ ", channel="+channel+", channel.size="+(channel==null?null:channel.size())+", file.exists=" + file.exists()+", file.content='"+FileUtil.loadFile(file)+"')";
+    }
+    return stream;
   }
 
   private static boolean guessIfText(@NotNull VirtualFile file, @NotNull ByteSequence byteSequence) {
