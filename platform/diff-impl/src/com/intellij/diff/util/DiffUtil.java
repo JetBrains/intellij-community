@@ -538,6 +538,13 @@ public class DiffUtil {
                                                               @NotNull ProgressIndicator indicator) {
     if (chunks[0] == null && chunks[1] == null && chunks[2] == null) return null; // ---
 
+    if (comparisonPolicy == ComparisonPolicy.IGNORE_WHITESPACES) {
+      if (isChunksEquals(chunks[0], chunks[1], comparisonPolicy) &&
+          isChunksEquals(chunks[0], chunks[2], comparisonPolicy)) {
+        return Collections.emptyList(); // whitespace-only changes, ex: empty lines added/removed
+      }
+    }
+
     if (chunks[0] == null && chunks[1] == null ||
         chunks[0] == null && chunks[2] == null ||
         chunks[1] == null && chunks[2] == null) { // =--, -=-, --=
@@ -554,7 +561,7 @@ public class DiffUtil {
     CharSequence chunk1 = side1.select(chunks);
     CharSequence chunk2 = side2.select(chunks);
 
-    if (chunks[1] != null && ComparisonManager.getInstance().isEquals(chunk1, chunk2, comparisonPolicy)) {
+    if (chunks[1] != null && isChunksEquals(chunk1, chunk2, comparisonPolicy)) {
       return null; // unmodified - deleted
     }
 
@@ -566,6 +573,14 @@ public class DiffUtil {
         return new MyWordFragment(side1, side2, fragment);
       }
     });
+  }
+
+  private static boolean isChunksEquals(@Nullable CharSequence chunk1,
+                                        @Nullable CharSequence chunk2,
+                                        @NotNull ComparisonPolicy comparisonPolicy) {
+    if (chunk1 == null) chunk1 = "";
+    if (chunk2 == null) chunk2 = "";
+    return ComparisonManager.getInstance().isEquals(chunk1, chunk2, comparisonPolicy);
   }
 
   //
