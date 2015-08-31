@@ -46,8 +46,8 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class FindPopupWithProgress {
-  private static final Logger LOG = Logger.getInstance(FindPopupWithProgress.class);
+public class GoToHashOrRefPopup {
+  private static final Logger LOG = Logger.getInstance(GoToHashOrRefPopup.class);
 
   @NotNull private final TextFieldWithProgress myTextField;
   @NotNull private final Function<String, Future> myOnSelectedHash;
@@ -56,11 +56,11 @@ public class FindPopupWithProgress {
   @Nullable private Future myFuture;
   @Nullable private VcsRef mySelectedRef;
 
-  public FindPopupWithProgress(@NotNull final Project project,
-                               @NotNull Collection<VcsRef> variants,
-                               @NotNull Function<String, Future> onSelectedHash,
-                               @NotNull Function<VcsRef, Future> onSelectedRef,
-                               @NotNull VcsLogColorManager colorManager) {
+  public GoToHashOrRefPopup(@NotNull final Project project,
+                            @NotNull Collection<VcsRef> variants,
+                            @NotNull Function<String, Future> onSelectedHash,
+                            @NotNull Function<VcsRef, Future> onSelectedRef,
+                            @NotNull VcsLogColorManager colorManager) {
     myOnSelectedHash = onSelectedHash;
     myOnSelectedRef = onSelectedRef;
     myTextField = new TextFieldWithProgress<VcsRef>(project, new VcsRefCompletionProvider(variants, colorManager)) {

@@ -27,7 +27,7 @@ import com.intellij.vcs.log.ui.VcsLogUiImpl;
 
 import java.util.concurrent.Future;
 
-public class GoToRefAction extends DumbAwareAction {
+public class GoToHashOrRefAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -38,7 +38,7 @@ public class GoToRefAction extends DumbAwareAction {
       return;
     }
 
-    FindPopupWithProgress popup = new FindPopupWithProgress(project, log.getAllReferences(), new Function<String, Future>() {
+    GoToHashOrRefPopup popup = new GoToHashOrRefPopup(project, log.getAllReferences(), new Function<String, Future>() {
       @Override
       public Future fun(String text) {
         return log.jumpToReference(text);
