@@ -20,14 +20,14 @@ import com.intellij.application.options.colors.*;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -35,82 +35,82 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class DiffOptionsPanel implements OptionsPanel {
-  private final ColorAndFontOptions myOptions;
+  @NotNull private final ColorAndFontOptions myOptions;
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
+
   private ColorPanel myBackgroundColorPanel;
+  private ColorPanel myStripeMarkColorPanel;
   private JList myOptionsList;
   private JPanel myWholePanel;
-  private ColorPanel myStripeMarkColorPanel;
 
-  public DiffOptionsPanel(ColorAndFontOptions options) {
+  private final CollectionListModel<MyDescription> myOptionsModel = new CollectionListModel<MyDescription>();
 
+  public DiffOptionsPanel(@NotNull ColorAndFontOptions options) {
     myOptions = options;
 
-    myOptionsList.setCellRenderer(new OptionsReneder());
+    //noinspection unchecked
+    myOptionsList.setCellRenderer(new MyCellRenderer());
+    //noinspection unchecked
     myOptionsList.setModel(myOptionsModel);
 
     ListSelectionModel selectionModel = myOptionsList.getSelectionModel();
     selectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     selectionModel.addListSelectionListener(new ListSelectionListener() {
-          @Override
-          public void valueChanged(ListSelectionEvent e) {
-            TextDiffType selection = getSelectedOption();
-            if (selection == null) {
-              myBackgroundColorPanel.setEnabled(false);
-              myStripeMarkColorPanel.setEnabled(false);
-            } else {
-              myBackgroundColorPanel.setEnabled(true);
-              myStripeMarkColorPanel.setEnabled(true);
-              MyColorAndFontDescription description = getSelectedDescription();
-              if (description != null) {
-                myBackgroundColorPanel.setSelectedColor(description.getBackgroundColor());
-                myStripeMarkColorPanel.setSelectedColor(description.getStripeMarkColor());
-              }
-            }
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        MyDescription description = getSelectedDescription();
+        if (description == null) {
+          myBackgroundColorPanel.setEnabled(false);
+          myStripeMarkColorPanel.setEnabled(false);
+        }
+        else {
+          myBackgroundColorPanel.setEnabled(true);
+          myStripeMarkColorPanel.setEnabled(true);
+          myBackgroundColorPanel.setSelectedColor(description.getBackgroundColor());
+          myStripeMarkColorPanel.setSelectedColor(description.getStripeMarkColor());
+        }
 
-            myDispatcher.getMulticaster().selectedOptionChanged(selection);
-          }
-        });
+        myDispatcher.getMulticaster().selectedOptionChanged(description);
+      }
+    });
 
     myBackgroundColorPanel.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        MyColorAndFontDescription selectedDescription = getSelectedDescription();
+        MyDescription selectedDescription = getSelectedDescription();
+        if (selectedDescription == null) return;
         if (!checkModifiableScheme()) {
           myBackgroundColorPanel.setSelectedColor(selectedDescription.getBackgroundColor());
-          return;
         }
-        selectedDescription.setBackgroundColor(myBackgroundColorPanel.getSelectedColor());
-        myDispatcher.getMulticaster().settingsChanged();
+        else {
+          selectedDescription.setBackgroundColor(myBackgroundColorPanel.getSelectedColor());
+          myDispatcher.getMulticaster().settingsChanged();
+        }
       }
     });
     myStripeMarkColorPanel.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        MyColorAndFontDescription selectedDescription = getSelectedDescription();
+        MyDescription selectedDescription = getSelectedDescription();
+        if (selectedDescription == null) return;
         if (!checkModifiableScheme()) {
           myStripeMarkColorPanel.setSelectedColor(selectedDescription.getStripeMarkColor());
-          return;
         }
-        selectedDescription.setStripeMarkColor(myStripeMarkColorPanel.getSelectedColor());
-        myDispatcher.getMulticaster().settingsChanged();
+        else {
+          selectedDescription.setStripeMarkColor(myStripeMarkColorPanel.getSelectedColor());
+          myDispatcher.getMulticaster().settingsChanged();
+        }
       }
     });
   }
 
-
-
-
   @Override
-  public void addListener(final ColorAndFontSettingsListener listener) {
+  public void addListener(ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
-
   }
 
   @Override
@@ -120,103 +120,63 @@ public class DiffOptionsPanel implements OptionsPanel {
 
   @Override
   public void updateOptionsList() {
-    myOptionsModel.clear();
-    myDescriptions.clear();
-    Map<TextAttributesKey, TextDiffType> typesByKey = ContainerUtil.newMapFromValues(TextDiffType.MERGE_TYPES.iterator(),
-                                                                                     TextDiffType.ATTRIBUTES_KEY);
+    myOptionsModel.removeAll();
     for (int i = 0; i < myOptions.getCurrentDescriptions().length; i++) {
       EditorSchemeAttributeDescriptor description = myOptions.getCurrentDescriptions()[i];
-      TextAttributesKey type = TextAttributesKey.find(description.getType());
-      if (description.getGroup() == ColorAndFontOptions.DIFF_GROUP &&
-          typesByKey.keySet().contains(type)) {
-        myOptionsModel.add(typesByKey.get(type));
-        myDescriptions.put(type.getExternalName(), (MyColorAndFontDescription)description);
+      if (ColorAndFontOptions.DIFF_GROUP.equals(description.getGroup()) && description instanceof MyDescription) {
+        myOptionsModel.add((MyDescription)description);
       }
     }
     ScrollingUtil.ensureSelectionExists(myOptionsList);
   }
 
   @Override
-  public Runnable showOption(final String option) {
-
-
-    AbstractListModel model = (AbstractListModel)myOptionsList.getModel();
-
-    for (int i = 0; i < model.getSize(); i++) {
-      Object o = model.getElementAt(i);
-      if (o instanceof TextDiffType) {
-        String type = ((TextDiffType)o).getDisplayName();
-        if (type.toLowerCase().contains(option.toLowerCase())) {
-          final int i1 = i;
-          return new Runnable() {
-            @Override
-            public void run() {
-              ScrollingUtil.selectItem(myOptionsList, i1);
-            }
-          };
-
-        }
+  public Runnable showOption(String option) {
+    for (int i = 0; i < myOptionsModel.getSize(); i++) {
+      MyDescription description = myOptionsModel.getElementAt(i);
+      if (StringUtil.containsIgnoreCase(description.getDisplayName(), option)) {
+        final int index = i;
+        return new Runnable() {
+          @Override
+          public void run() {
+            ScrollingUtil.selectItem(myOptionsList, index);
+          }
+        };
       }
     }
-
     return null;
-
-
   }
 
   @Override
   public Set<String> processListOptions() {
     Set<String> result = ContainerUtil.newHashSet();
-    Map<TextAttributesKey, TextDiffType> typesByKey = ContainerUtil.newMapFromValues(TextDiffType.MERGE_TYPES.iterator(),
-                                                                                     TextDiffType.ATTRIBUTES_KEY);
     for (int i = 0; i < myOptions.getCurrentDescriptions().length; i++) {
       EditorSchemeAttributeDescriptor description = myOptions.getCurrentDescriptions()[i];
-      TextAttributesKey type = TextAttributesKey.find(description.getType());
-      if (description.getGroup() == ColorAndFontOptions.DIFF_GROUP &&
-          typesByKey.keySet().contains(type)) {
-        result.add(type.getExternalName());
+      if (ColorAndFontOptions.DIFF_GROUP.equals(description.getGroup()) && description instanceof MyDescription) {
+        result.add(description.getType());
       }
     }
 
     return result;
   }
 
-
   @Override
   public void applyChangesToScheme() {
-    MyColorAndFontDescription description = getSelectedDescription();
+    MyDescription description = getSelectedDescription();
     if (description != null) {
       description.apply(myOptions.getSelectedScheme());
     }
   }
 
   @Override
-  public void selectOption(final String typeToSelect) {
-
+  public void selectOption(String typeToSelect) {
     for (int i = 0; i < myOptionsModel.getItems().size(); i++) {
-      Object o = myOptionsModel.get(i);
-      if (o instanceof TextDiffType) {
-        if (typeToSelect.equals(((TextDiffType)o).getDisplayName())) {
-          ScrollingUtil.selectItem(myOptionsList, i);
-          return;
-        }
+      MyDescription description = myOptionsModel.getElementAt(i);
+      if (typeToSelect.equals(description.getDisplayName())) {
+        ScrollingUtil.selectItem(myOptionsList, i);
+        return;
       }
     }
-
-
-  }
-
-
-  private static final Comparator<TextDiffType> TEXT_DIFF_TYPE_COMPARATOR = new Comparator<TextDiffType>() {
-      @Override
-      public int compare(TextDiffType textDiffType, TextDiffType textDiffType1) {
-        return textDiffType.getDisplayName().compareToIgnoreCase(textDiffType1.getDisplayName());
-      }
-    };
-  private final SortedListModel<TextDiffType> myOptionsModel = new SortedListModel<TextDiffType>(TEXT_DIFF_TYPE_COMPARATOR);
-  private final HashMap<String, MyColorAndFontDescription> myDescriptions = new HashMap<String,MyColorAndFontDescription>();
-  private TextDiffType getSelectedOption() {
-    return (TextDiffType)myOptionsList.getSelectedValue();
   }
 
   private boolean checkModifiableScheme() {
@@ -227,50 +187,61 @@ public class DiffOptionsPanel implements OptionsPanel {
     return !isReadOnly;
   }
 
-  private MyColorAndFontDescription getSelectedDescription() {
-    TextDiffType selection = getSelectedOption();
-    if (selection == null) return null;
-    return myDescriptions.get(selection.getAttributesKey().getExternalName());
+  @Nullable
+  private MyDescription getSelectedDescription() {
+    return (MyDescription)myOptionsList.getSelectedValue();
   }
 
-  public static void addSchemeDescriptions(@NotNull List<EditorSchemeAttributeDescriptor> descriptions, @NotNull EditorColorsScheme scheme) {
+  public static void addSchemeDescriptions(@NotNull List<EditorSchemeAttributeDescriptor> descriptions,
+                                           @NotNull EditorColorsScheme scheme) {
     for (TextDiffType diffType : TextDiffType.MERGE_TYPES) {
-      descriptions.add(new MyColorAndFontDescription(diffType, scheme));
+      descriptions.add(new MyDescription(diffType, scheme));
     }
   }
 
-  private static class OptionsReneder extends ColoredListCellRenderer {
+  private static class MyCellRenderer extends ColoredListCellRenderer {
     @Override
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      TextDiffType diffType = (TextDiffType)value;
-      append(diffType.getDisplayName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      MyDescription description = (MyDescription)value;
+      append(description.getDisplayName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
 
-
-  private static class MyColorAndFontDescription implements EditorSchemeAttributeDescriptor {
-    private Color myBackgroundColor;
-    private Color myStripebarColor;
-    private final Color myOriginalBackground;
-    private final Color myOriginalStripebar;
+  private static class MyDescription implements EditorSchemeAttributeDescriptor {
     private final EditorColorsScheme myScheme;
     private final TextDiffType myDiffType;
 
-    public MyColorAndFontDescription(@NotNull TextDiffType diffType, @NotNull EditorColorsScheme scheme) {
+    private final Color myOriginalBackground;
+    private final Color myOriginalStripe;
+    private Color myBackgroundColor;
+    private Color myStripeColor;
+
+    public MyDescription(@NotNull TextDiffType diffType, @NotNull EditorColorsScheme scheme) {
       myScheme = scheme;
       myDiffType = diffType;
-      TextAttributes attrs = diffType.getTextAttributes(myScheme);
-      myBackgroundColor = attrs.getBackgroundColor();
-      myStripebarColor = attrs.getErrorStripeColor();
+      TextAttributes textAttributes = getAttributes();
+      myBackgroundColor = textAttributes.getBackgroundColor();
+      myStripeColor = textAttributes.getErrorStripeColor();
       myOriginalBackground = myBackgroundColor;
-      myOriginalStripebar = myStripebarColor;
+      myOriginalStripe = myStripeColor;
+    }
+
+    @NotNull
+    public String getDisplayName() {
+      return myDiffType.getDisplayName();
+    }
+
+    @NotNull
+    public TextAttributes getAttributes() {
+      return myScheme.getAttributes(myDiffType.getAttributesKey());
     }
 
     @Override
     public void apply(EditorColorsScheme scheme) {
       TextAttributesKey key = myDiffType.getAttributesKey();
-      TextAttributes attrs = new TextAttributes(null, myBackgroundColor, null, EffectType.BOXED, Font.PLAIN);
-      attrs.setErrorStripeColor(myStripebarColor);
+      TextAttributes attrs = new TextAttributes();
+      attrs.setBackgroundColor(myBackgroundColor);
+      attrs.setErrorStripeColor(myStripeColor);
       scheme.setAttributes(key, attrs);
     }
 
@@ -291,9 +262,9 @@ public class DiffOptionsPanel implements OptionsPanel {
 
     @Override
     public boolean isModified() {
-      TextAttributes attrs = myDiffType.getTextAttributes(myScheme);
-      return !Comparing.equal(myOriginalBackground, attrs.getBackgroundColor()) ||
-             !Comparing.equal(myOriginalStripebar, attrs.getErrorStripeColor());
+      TextAttributes textAttributes = getAttributes();
+      return !Comparing.equal(myOriginalBackground, textAttributes.getBackgroundColor()) ||
+             !Comparing.equal(myOriginalStripe, textAttributes.getErrorStripeColor());
     }
 
     public void setBackgroundColor(Color selectedColor) {
@@ -305,11 +276,11 @@ public class DiffOptionsPanel implements OptionsPanel {
     }
 
     public void setStripeMarkColor(Color selectedColor) {
-      myStripebarColor = selectedColor;
+      myStripeColor = selectedColor;
     }
 
     public Color getStripeMarkColor() {
-      return myStripebarColor;
+      return myStripeColor;
     }
   }
 }
