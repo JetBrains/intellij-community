@@ -22,11 +22,14 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.Collection;
 import java.util.concurrent.CancellationException;
@@ -74,8 +77,20 @@ public class FindPopupWithProgress {
         }
       }
     };
+    myTextField.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myTextField, myTextField.getPreferableFocusComponent())
+    JBLabel label = new JBLabel("Enter hash or branch/tag name:");
+    label.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    label.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+    JPanel panel = new JPanel();
+    BoxLayout layout = new BoxLayout(panel, BoxLayout.PAGE_AXIS);
+    panel.setLayout(layout);
+    panel.add(label);
+    panel.add(myTextField);
+    panel.setBorder(new EmptyBorder(2, 2, 2, 2));
+
+    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myTextField.getPreferableFocusComponent())
       .setCancelOnClickOutside(true).setCancelOnWindowDeactivation(true).setCancelKeyEnabled(true).setRequestFocus(true).createPopup();
     myPopup.addListener(new JBPopupListener.Adapter() {
       @Override
@@ -89,13 +104,6 @@ public class FindPopupWithProgress {
         myTextField.hideProgress();
       }
     });
-
-    final JBTextField field = new JBTextField(20);
-    final Dimension size = field.getPreferredSize();
-    final Insets insets = myTextField.getBorder().getBorderInsets(myTextField);
-    size.height += 6 + insets.top + insets.bottom;
-    size.width += 4 + insets.left + insets.right;
-    myPopup.setSize(size);
   }
 
   private void cancelPopup() {
