@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,8 +105,10 @@ public class SuspiciousGetterSetterInspection extends BaseInspection {
         return;
       }
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(method.getProject());
-      final String computedFieldName = codeStyleManager.propertyNameToVariableName(decapitalize(extractedFieldName), VariableKind.FIELD);
-      if (fieldName.equalsIgnoreCase(computedFieldName)) {
+      final String decapitalized = decapitalize(extractedFieldName);
+      final String computedFieldName = codeStyleManager.propertyNameToVariableName(decapitalized, VariableKind.FIELD);
+      final String computedStaticFieldName = codeStyleManager.propertyNameToVariableName(decapitalized, VariableKind.STATIC_FINAL_FIELD);
+      if (fieldName.equals(computedFieldName) || fieldName.equals(computedStaticFieldName)) {
         return;
       }
       if (onlyWarnWhenFieldPresent) {
@@ -114,7 +116,8 @@ public class SuspiciousGetterSetterInspection extends BaseInspection {
         if (aClass == null) {
           return;
         }
-        if (aClass.findFieldByName(computedFieldName, true) == null) {
+        if (aClass.findFieldByName(computedFieldName, true) == null &&
+            aClass.findFieldByName(computedStaticFieldName, true) == null) {
           return;
         }
       }
