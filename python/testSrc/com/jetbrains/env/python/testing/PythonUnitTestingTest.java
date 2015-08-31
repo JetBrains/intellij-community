@@ -144,10 +144,10 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
         final List<String> fileNames = runner.getHighlightedStringsInConsole().getSecond();
-        Assert.assertThat(String.format("Wrong number of highlighted entries(%s) in the following output: %s",
+        Assert.assertTrue(String.format("Not enough highlighted entries(%s) in the following output: %s",
                                         StringUtil.join(fileNames, ","),
                                         runner.getAllConsoleText()),
-                          fileNames, Matchers.hasSize(3));
+                          fileNames.size() >= 3);
         // UnitTest highlights file name
         Assert.assertThat("Bad line highlighted", fileNames, Matchers.everyItem(Matchers.endsWith(fileName)));
       }
