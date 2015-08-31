@@ -42,6 +42,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.*;
+import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -683,10 +684,7 @@ public class JavaDocInfoGenerator {
   }
 
   private void generatePackageJavaDoc(final StringBuilder buffer, final PsiPackage psiPackage, boolean generatePrologueAndEpilogue) {
-    VirtualFile[] dirs = PackageIndex.getInstance(myProject).getDirectoriesByPackageName(psiPackage.getQualifiedName(), true);
-    for (VirtualFile dir : dirs) {
-      PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(dir);
-      if (directory == null) continue;
+    for (PsiDirectory directory : psiPackage.getDirectories(new EverythingGlobalScope(myProject))) {
       final PsiFile packageInfoFile = directory.findFile(PsiPackage.PACKAGE_INFO_FILE);
       if (packageInfoFile != null) {
         final ASTNode node = packageInfoFile.getNode();
