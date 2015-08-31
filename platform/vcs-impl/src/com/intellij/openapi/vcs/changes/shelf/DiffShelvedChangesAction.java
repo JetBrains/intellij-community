@@ -170,10 +170,10 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
     for (final ShelvedChange shelvedChange : changesFromFirstList) {
       final String beforePath = shelvedChange.getBeforePath();
       final String afterPath = shelvedChange.getAfterPath();
+      final boolean isNewFile = FileStatus.ADDED.equals(shelvedChange.getFileStatus());
 
-      final VirtualFile file;
+      final VirtualFile file; // isNewFile -> parent directory, !isNewFile -> file
       try {
-        boolean isNewFile = FileStatus.ADDED.equals(shelvedChange.getFileStatus());
         file = ApplyFilePatchBase.findPatchTarget(patchContext, beforePath, afterPath, isNewFile);
         if (!isNewFile && (file == null || !file.exists())) throw new FileNotFoundException(beforePath);
       }
@@ -194,7 +194,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
         @Override
         public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
           throws DiffRequestProducerException, ProcessCanceledException {
-          if (file != null && file.getFileType() == UnknownFileType.INSTANCE) {
+          if (!isNewFile && file.getFileType() == UnknownFileType.INSTANCE) {
             return new UnknownFileTypeDiffRequest(file, getName());
           }
 
