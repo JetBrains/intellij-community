@@ -31,7 +31,7 @@ public enum ColorBlindness {
    * <li>mid-greens with some oranges.</li>
    * </ul>
    */
-  protanopia,
+  protanopia("color.blindness.protanopia.name"),
   /**
    * Lacking the medium-wavelength sensitive retinal cones,
    * those with this condition are unable to distinguish
@@ -46,7 +46,7 @@ public enum ColorBlindness {
    * <li>light blues with lilac.</li>
    * </ul>
    */
-  deuteranopia,
+  deuteranopia("color.blindness.deuteranopia.name"),
   /**
    * Lacking the short-wavelength sensitive retinal cones,
    * those affected see short-wavelength colors (blue, indigo and a spectral violet)
@@ -59,9 +59,15 @@ public enum ColorBlindness {
    * <li>oranges with reds.</li>
    * </ul>
    */
-  tritanopia,
+  tritanopia("color.blindness.tritanopia.name"),
   /**
    * Total color blindness is defined as the inability to see color.
    */
-  achromatopsia
+  achromatopsia("color.blindness.achromatopsia.name");
+
+  public final String key;
+
+  ColorBlindness(String key) {
+    this.key = key;
+  }
 }

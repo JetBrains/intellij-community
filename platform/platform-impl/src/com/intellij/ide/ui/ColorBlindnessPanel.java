@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.ui;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.util.ui.JBUI;
 
@@ -37,10 +37,10 @@ final class ColorBlindnessPanel extends JPanel implements ChangeListener {
     add(HorizontalLayout.LEFT, myComboBox);
     myCheckBox.setSelected(false);
     myCheckBox.addChangeListener(this);
-    myCheckBox.setText(IdeBundle.message("checkbox.color.blindness"));
+    myCheckBox.setText(UIBundle.message("color.blindness.checkbox.text"));
     int count = 0;
     for (ColorBlindness blindness : ColorBlindness.values()) {
-      String name = IdeBundle.message("combobox.color.blindness." + blindness.name());
+      String name = UIBundle.message(blindness.key);
       if (!name.isEmpty()) {
         myComboBox.addItem(new Item(blindness, name));
         count++;
