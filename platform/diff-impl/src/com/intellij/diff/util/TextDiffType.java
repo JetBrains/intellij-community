@@ -15,8 +15,6 @@
  */
 package com.intellij.diff.util;
 
-import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,14 +22,10 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public interface TextDiffType {
-  @NotNull TextDiffType INSERTED = TextDiffTypeFactory.getInstance()
-    .createTextDiffType(DiffColors.DIFF_INSERTED, DiffBundle.message("diff.type.inserted.name"));
-  @NotNull TextDiffType DELETED = TextDiffTypeFactory.getInstance()
-    .createTextDiffType(DiffColors.DIFF_DELETED, DiffBundle.message("diff.type.deleted.name"));
-  @NotNull TextDiffType MODIFIED = TextDiffTypeFactory.getInstance()
-    .createTextDiffType(DiffColors.DIFF_MODIFIED, DiffBundle.message("diff.type.changed.name"));
-  @NotNull TextDiffType CONFLICT = TextDiffTypeFactory.getInstance()
-    .createTextDiffType(DiffColors.DIFF_CONFLICT, DiffBundle.message("diff.type.conflict.name"));
+  @NotNull TextDiffType INSERTED = TextDiffTypeFactory.INSERTED;
+  @NotNull TextDiffType DELETED = TextDiffTypeFactory.DELETED;
+  @NotNull TextDiffType MODIFIED = TextDiffTypeFactory.MODIFIED;
+  @NotNull TextDiffType CONFLICT = TextDiffTypeFactory.CONFLICT;
 
   @NotNull
   String getName();

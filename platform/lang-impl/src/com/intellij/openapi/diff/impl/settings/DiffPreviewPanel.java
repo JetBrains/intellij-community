@@ -24,6 +24,8 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.simple.SimpleThreesideDiffChange;
 import com.intellij.diff.tools.simple.SimpleThreesideDiffViewer;
+import com.intellij.diff.tools.util.base.HighlightPolicy;
+import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
@@ -126,6 +128,8 @@ public class DiffPreviewPanel implements PreviewPanel {
   private static class SampleContext extends DiffContext {
     public SampleContext() {
       TextDiffSettingsHolder.TextDiffSettings settings = new TextDiffSettingsHolder.TextDiffSettings();
+      settings.setHighlightPolicy(HighlightPolicy.BY_WORD);
+      settings.setIgnorePolicy(IgnorePolicy.IGNORE_WHITESPACES);
       putUserData(TextDiffSettingsHolder.KEY, settings);
     }
 

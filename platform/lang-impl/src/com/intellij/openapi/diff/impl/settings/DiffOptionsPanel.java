@@ -17,13 +17,15 @@
 package com.intellij.openapi.diff.impl.settings;
 
 import com.intellij.application.options.colors.*;
-import com.intellij.openapi.diff.impl.util.TextDiffType;
+import com.intellij.diff.util.TextDiffTypeFactory;
+import com.intellij.diff.util.TextDiffTypeFactory.TextDiffTypeImpl;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +45,10 @@ public class DiffOptionsPanel implements OptionsPanel {
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
   private ColorPanel myBackgroundColorPanel;
+  private ColorPanel myIgnoredColorPanel;
   private ColorPanel myStripeMarkColorPanel;
+  private JBCheckBox myInheritIgnoredCheckBox;
+
   private JList myOptionsList;
   private JPanel myWholePanel;
 
@@ -65,13 +70,20 @@ public class DiffOptionsPanel implements OptionsPanel {
         MyDescription description = getSelectedDescription();
         if (description == null) {
           myBackgroundColorPanel.setEnabled(false);
+          myIgnoredColorPanel.setEnabled(false);
           myStripeMarkColorPanel.setEnabled(false);
+          myInheritIgnoredCheckBox.setEnabled(false);
         }
         else {
           myBackgroundColorPanel.setEnabled(true);
+          myIgnoredColorPanel.setEnabled(true && !description.isInheritIgnoredColor());
           myStripeMarkColorPanel.setEnabled(true);
+          myInheritIgnoredCheckBox.setEnabled(true);
+
           myBackgroundColorPanel.setSelectedColor(description.getBackgroundColor());
+          myIgnoredColorPanel.setSelectedColor(description.getIgnoredColor());
           myStripeMarkColorPanel.setSelectedColor(description.getStripeMarkColor());
+          myInheritIgnoredCheckBox.setSelected(description.isInheritIgnoredColor());
         }
 
         myDispatcher.getMulticaster().selectedOptionChanged(description);
@@ -92,6 +104,20 @@ public class DiffOptionsPanel implements OptionsPanel {
         }
       }
     });
+    myIgnoredColorPanel.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        MyDescription selectedDescription = getSelectedDescription();
+        if (selectedDescription == null) return;
+        if (!checkModifiableScheme()) {
+          myIgnoredColorPanel.setSelectedColor(selectedDescription.getIgnoredColor());
+        }
+        else {
+          selectedDescription.setIgnoredColor(myIgnoredColorPanel.getSelectedColor());
+          myDispatcher.getMulticaster().settingsChanged();
+        }
+      }
+    });
     myStripeMarkColorPanel.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -102,6 +128,22 @@ public class DiffOptionsPanel implements OptionsPanel {
         }
         else {
           selectedDescription.setStripeMarkColor(myStripeMarkColorPanel.getSelectedColor());
+          myDispatcher.getMulticaster().settingsChanged();
+        }
+      }
+    });
+    myInheritIgnoredCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        MyDescription selectedDescription = getSelectedDescription();
+        if (selectedDescription == null) return;
+        if (!checkModifiableScheme()) {
+          myInheritIgnoredCheckBox.setSelected(selectedDescription.isInheritIgnoredColor());
+        }
+        else {
+          selectedDescription.setInheritIgnoredColor(myInheritIgnoredCheckBox.isSelected());
+          myIgnoredColorPanel.setEnabled(!myInheritIgnoredCheckBox.isSelected());
+          myIgnoredColorPanel.setSelectedColor(selectedDescription.myIgnoredColor);
           myDispatcher.getMulticaster().settingsChanged();
         }
       }
@@ -153,7 +195,7 @@ public class DiffOptionsPanel implements OptionsPanel {
     for (int i = 0; i < myOptions.getCurrentDescriptions().length; i++) {
       EditorSchemeAttributeDescriptor description = myOptions.getCurrentDescriptions()[i];
       if (ColorAndFontOptions.DIFF_GROUP.equals(description.getGroup()) && description instanceof MyDescription) {
-        result.add(description.getType());
+        result.add(((MyDescription)description).getDisplayName());
       }
     }
 
@@ -194,7 +236,7 @@ public class DiffOptionsPanel implements OptionsPanel {
 
   public static void addSchemeDescriptions(@NotNull List<EditorSchemeAttributeDescriptor> descriptions,
                                            @NotNull EditorColorsScheme scheme) {
-    for (TextDiffType diffType : TextDiffType.MERGE_TYPES) {
+    for (TextDiffTypeImpl diffType : TextDiffTypeFactory.getInstance().getAllDiffTypes()) {
       descriptions.add(new MyDescription(diffType, scheme));
     }
   }
@@ -209,38 +251,43 @@ public class DiffOptionsPanel implements OptionsPanel {
 
   private static class MyDescription implements EditorSchemeAttributeDescriptor {
     private final EditorColorsScheme myScheme;
-    private final TextDiffType myDiffType;
+    private final TextDiffTypeImpl myDiffType;
 
     private final Color myOriginalBackground;
+    private final Color myOriginalIgnored;
     private final Color myOriginalStripe;
     private Color myBackgroundColor;
+    private Color myIgnoredColor;
     private Color myStripeColor;
 
-    public MyDescription(@NotNull TextDiffType diffType, @NotNull EditorColorsScheme scheme) {
+    public MyDescription(@NotNull TextDiffTypeImpl diffType, @NotNull EditorColorsScheme scheme) {
       myScheme = scheme;
       myDiffType = diffType;
       TextAttributes textAttributes = getAttributes();
       myBackgroundColor = textAttributes.getBackgroundColor();
+      myIgnoredColor = textAttributes.getForegroundColor();
       myStripeColor = textAttributes.getErrorStripeColor();
       myOriginalBackground = myBackgroundColor;
+      myOriginalIgnored = myIgnoredColor;
       myOriginalStripe = myStripeColor;
     }
 
     @NotNull
     public String getDisplayName() {
-      return myDiffType.getDisplayName();
+      return myDiffType.getName();
     }
 
     @NotNull
     public TextAttributes getAttributes() {
-      return myScheme.getAttributes(myDiffType.getAttributesKey());
+      return myScheme.getAttributes(myDiffType.getKey());
     }
 
     @Override
     public void apply(EditorColorsScheme scheme) {
-      TextAttributesKey key = myDiffType.getAttributesKey();
+      TextAttributesKey key = myDiffType.getKey();
       TextAttributes attrs = new TextAttributes();
       attrs.setBackgroundColor(myBackgroundColor);
+      attrs.setForegroundColor(myIgnoredColor);
       attrs.setErrorStripeColor(myStripeColor);
       scheme.setAttributes(key, attrs);
     }
@@ -257,13 +304,14 @@ public class DiffOptionsPanel implements OptionsPanel {
 
     @Override
     public String getType() {
-      return myDiffType.getAttributesKey().getExternalName();
+      return myDiffType.getKey().getExternalName();
     }
 
     @Override
     public boolean isModified() {
       TextAttributes textAttributes = getAttributes();
       return !Comparing.equal(myOriginalBackground, textAttributes.getBackgroundColor()) ||
+             !Comparing.equal(myOriginalIgnored, textAttributes.getForegroundColor()) ||
              !Comparing.equal(myOriginalStripe, textAttributes.getErrorStripeColor());
     }
 
@@ -275,12 +323,28 @@ public class DiffOptionsPanel implements OptionsPanel {
       return myBackgroundColor;
     }
 
+    public void setIgnoredColor(Color selectedColor) {
+      myIgnoredColor = selectedColor;
+    }
+
+    public Color getIgnoredColor() {
+      return myIgnoredColor;
+    }
+
     public void setStripeMarkColor(Color selectedColor) {
       myStripeColor = selectedColor;
     }
 
     public Color getStripeMarkColor() {
       return myStripeColor;
+    }
+
+    public boolean isInheritIgnoredColor() {
+      return myIgnoredColor == null;
+    }
+
+    public void setInheritIgnoredColor(boolean value) {
+      myIgnoredColor = value ? null : TextDiffTypeFactory.getMiddleColor(myBackgroundColor, myScheme.getDefaultBackground());
     }
   }
 }
