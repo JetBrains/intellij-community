@@ -18,6 +18,7 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -29,9 +30,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
+import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,6 +151,17 @@ public class FindPopupWithProgress {
     public VcsRefCompletionProvider(@NotNull Collection<VcsRef> variants, @NotNull VcsLogColorManager colorManager) {
       super(variants);
       myColorManager = colorManager;
+    }
+
+    @Override
+    public LookupElementBuilder createLookupBuilder(@NotNull VcsRef item) {
+      LookupElementBuilder lookupBuilder = super.createLookupBuilder(item);
+      if (myColorManager.isMultipleRoots()) {
+        lookupBuilder = lookupBuilder
+          .withTypeText(getTypeText(item), new ColorIcon(15, VcsLogGraphTable.getRootBackgroundColor(item.getRoot(), myColorManager)),
+                        true);
+      }
+      return lookupBuilder;
     }
 
     @Nullable
