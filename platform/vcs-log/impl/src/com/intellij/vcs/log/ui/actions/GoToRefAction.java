@@ -19,14 +19,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 
-import java.util.Collection;
 import java.util.concurrent.Future;
 
 public class GoToRefAction extends DumbAwareAction {
@@ -35,23 +33,22 @@ public class GoToRefAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
     final VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
-    VcsLogUiImpl logUi = (VcsLogUiImpl)e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    final VcsLogUiImpl logUi = (VcsLogUiImpl)e.getData(VcsLogDataKeys.VCS_LOG_UI);
     if (project == null || log == null || logUi == null) {
       return;
     }
 
-    Collection<String> refs = ContainerUtil.map(log.getAllReferences(), new Function<VcsRef, String>() {
+    FindPopupWithProgress popup = new FindPopupWithProgress(project, log.getAllReferences(), new Function<String, Future>() {
       @Override
-      public String fun(VcsRef ref) {
-        return ref.getName();
+      public Future fun(String text) {
+        return log.jumpToReference(text);
       }
-    });
-    FindPopupWithProgress popup = new FindPopupWithProgress(project, refs, new Function<String, Future>() {
-            @Override
-            public Future fun(String text) {
-              return log.jumpToReference(text);
-            }
-          });
+    }, new Function<VcsRef, Future>() {
+      @Override
+      public Future fun(VcsRef vcsRef) {
+        return logUi.jumpToCommit(vcsRef.getCommitHash());
+      }
+    }, logUi.getColorManager());
     popup.show(logUi.getTable());
   }
 
