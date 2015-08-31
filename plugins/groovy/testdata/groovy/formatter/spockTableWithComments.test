@@ -1,7 +1,7 @@
 class HelloSpock extends spock.lang.Specification {
   def 'different length tables with comments are aligned properly'() {
     expect:
-    name.size() == length
+    ordinal.size() > 0
 
     where:
     ordinal | value1 | value2 || value3
@@ -10,7 +10,7 @@ class HelloSpock extends spock.lang.Specification {
     'third' | 3 | 3 || 3
 
     'fourth' | 4 | 4 || 4444444444
-    //comment between lines
+    // comment between lines
     'fifth' | 5 | 555555555 || 5
 
     /* block comment and empty line between lines */
@@ -23,7 +23,7 @@ class HelloSpock extends spock.lang.Specification {
 class HelloSpock extends spock.lang.Specification {
   def 'different length tables with comments are aligned properly'() {
     expect:
-    name.size() == length
+    ordinal.size() > 0
 
     where:
     ordinal  | value1    | value2    || value3
@@ -32,7 +32,7 @@ class HelloSpock extends spock.lang.Specification {
     'third'  | 3         | 3         || 3
 
     'fourth' | 4         | 4         || 4444444444
-    //comment between lines
+    // comment between lines
     'fifth'  | 5         | 555555555 || 5
 
     /* block comment and empty line between lines */
