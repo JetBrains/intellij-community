@@ -23,6 +23,7 @@ import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 
 import java.util.concurrent.Future;
@@ -38,7 +39,7 @@ public class GoToHashOrRefAction extends DumbAwareAction {
       return;
     }
 
-    GoToHashOrRefPopup popup = new GoToHashOrRefPopup(project, log.getAllReferences(), new Function<String, Future>() {
+    GoToHashOrRefPopup popup = new GoToHashOrRefPopup(project, VcsLogUtil.getVisibleBranches(log, logUi), new Function<String, Future>() {
       @Override
       public Future fun(String text) {
         return log.jumpToReference(text);
