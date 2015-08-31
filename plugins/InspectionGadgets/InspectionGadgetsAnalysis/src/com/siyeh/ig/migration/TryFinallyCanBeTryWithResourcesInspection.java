@@ -104,7 +104,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       }
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       @NonNls final StringBuilder newTryStatementText = new StringBuilder("try (");
-      final Set<Integer> unwantedChildren = new HashSet(2);
+      final Set<Integer> unwantedChildren = new HashSet<Integer>(2);
       boolean separator = false;
       for (final PsiLocalVariable variable : variables) {
         final boolean hasInitializer;
@@ -128,10 +128,10 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
           if (index < 0) {
             return;
           }
-          unwantedChildren.add(Integer.valueOf(index));
+          unwantedChildren.add(index);
           final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)tryBlockChildren[index];
           if (expressionStatement.getNextSibling() instanceof PsiWhiteSpace) {
-            unwantedChildren.add(Integer.valueOf(index + 1));
+            unwantedChildren.add(index + 1);
           }
           final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expressionStatement.getExpression();
           final PsiExpression rhs = assignmentExpression.getRExpression();
@@ -143,10 +143,12 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         separator = true;
       }
       int j = 1;
-      while (!unwantedChildren.contains(Integer.valueOf(j)) && j < tryBlockChildren.length - 1) {
-        tryStatement.getParent().addBefore(tryBlockChildren[j], tryStatement);
-        unwantedChildren.add(Integer.valueOf(j));
-        j++;
+      if (!unwantedChildren.isEmpty()) {
+        while (!unwantedChildren.contains(Integer.valueOf(j)) && j < tryBlockChildren.length - 1) {
+          tryStatement.getParent().addBefore(tryBlockChildren[j], tryStatement);
+          unwantedChildren.add(j);
+          j++;
+        }
       }
       newTryStatementText.append(") {");
       final int tryBlockStatementsLength = tryBlockChildren.length - 1;
@@ -165,7 +167,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       final PsiElement[] finallyChildren = finallyBlock.getChildren();
       boolean appended = false;
       final int finallyChildrenLength = finallyChildren.length - 1;
-      final List<PsiElement> savedComments = new ArrayList();
+      final List<PsiElement> savedComments = new ArrayList<PsiElement>();
       for (int i = 1; i < finallyChildrenLength; i++) {
         final PsiElement child = finallyChildren[i];
         if (isCloseStatement(child, variables)) {
@@ -335,7 +337,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     }
   }
 
-  static boolean isVariableUsedOutsideContext(PsiVariable variable, PsiElement context) {
+  private static boolean isVariableUsedOutsideContext(PsiVariable variable, PsiElement context) {
     final VariableUsedOutsideContextVisitor visitor = new VariableUsedOutsideContextVisitor(variable, context);
     final PsiElement declarationScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
     if (declarationScope == null) {
@@ -345,16 +347,16 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     return visitor.variableIsUsed();
   }
 
-  static List<PsiLocalVariable> collectVariables(PsiTryStatement tryStatement) {
+  private static List<PsiLocalVariable> collectVariables(PsiTryStatement tryStatement) {
     final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock == null) {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
     final PsiStatement[] statements = finallyBlock.getStatements();
     if (statements.length == 0) {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
-    final List<PsiLocalVariable> variables = new ArrayList();
+    final List<PsiLocalVariable> variables = new ArrayList<PsiLocalVariable>();
     for (PsiStatement statement : statements) {
       final PsiLocalVariable variable = findAutoCloseableVariable(statement);
       if (variable != null) {
@@ -366,7 +368,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   }
 
   @Nullable
-  static PsiLocalVariable findAutoCloseableVariable(PsiStatement statement) {
+  private static PsiLocalVariable findAutoCloseableVariable(PsiStatement statement) {
     if (statement instanceof PsiIfStatement) {
       final PsiIfStatement ifStatement = (PsiIfStatement)statement;
       if (ifStatement.getElseBranch() != null) {
@@ -460,7 +462,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     return aClass != null && InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
   }
 
-  static int findInitialization(PsiElement[] elements, PsiVariable variable, boolean hasInitializer) {
+  private static int findInitialization(PsiElement[] elements, PsiVariable variable, boolean hasInitializer) {
     int result = -1;
     final int statementsLength = elements.length;
     for (int i = 0; i < statementsLength; i++) {
@@ -469,7 +471,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         if (result >= 0 && !hasInitializer) {
           return -1;
         }
-        else if (hasInitializer) {
+        if (hasInitializer) {
           return i;
         }
         result = i;
@@ -500,9 +502,9 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     return variable.equals(target);
   }
 
-  static class VariableUsedOutsideContextVisitor extends JavaRecursiveElementVisitor {
+  private static class VariableUsedOutsideContextVisitor extends JavaRecursiveElementWalkingVisitor {
 
-    private boolean used = false;
+    private boolean used;
     @NotNull private final PsiVariable variable;
     private final PsiElement skipContext;
 

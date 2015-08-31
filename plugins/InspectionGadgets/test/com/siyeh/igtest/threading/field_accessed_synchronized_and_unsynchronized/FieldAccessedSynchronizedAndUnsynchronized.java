@@ -55,3 +55,22 @@ class Test {
     this.object = object;
   }
 }
+class AAAAAAA {
+
+  private boolean ready;
+  private final Object LOCK = new Object();
+
+  void h(int i) {
+    synchronized (LOCK) {
+      ready = true;
+    }
+    new Runnable () {
+      @Override
+      public void run() {
+        synchronized (LOCK) {
+          ready = false;
+        }
+      }
+    };
+  }
+}

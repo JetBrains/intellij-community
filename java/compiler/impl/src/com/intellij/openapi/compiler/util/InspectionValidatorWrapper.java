@@ -132,7 +132,7 @@ public class InspectionValidatorWrapper implements Validator {
 
     @Nullable 
     public PsiFile getPsiFile() {
-      return myPsiManager.findFile(myVirtualFile);
+      return myVirtualFile.isValid() ? myPsiManager.findFile(myVirtualFile) : null;
     }
   }
 

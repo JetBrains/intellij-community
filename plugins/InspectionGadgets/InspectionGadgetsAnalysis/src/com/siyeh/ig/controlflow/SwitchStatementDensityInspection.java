@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.psi.*;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -72,7 +72,7 @@ public class SwitchStatementDensityInspection extends BaseInspection {
       if (intDensity > m_limit) {
         return;
       }
-      registerStatementError(statement, Integer.valueOf(intDensity));
+      registerStatementError(statement, intDensity);
     }
 
     private double calculateDensity(@NotNull PsiCodeBlock body, int branchCount) {
@@ -82,9 +82,8 @@ public class SwitchStatementDensityInspection extends BaseInspection {
     }
   }
 
-  private static class StatementCountVisitor extends JavaRecursiveElementVisitor {
-
-    private int statementCount = 0;
+  private static class StatementCountVisitor extends JavaRecursiveElementWalkingVisitor {
+    private int statementCount;
 
     @Override
     public void visitStatement(@NotNull PsiStatement statement) {
@@ -95,7 +94,7 @@ public class SwitchStatementDensityInspection extends BaseInspection {
       statementCount++;
     }
 
-    public int getStatementCount() {
+    int getStatementCount() {
       return statementCount;
     }
   }

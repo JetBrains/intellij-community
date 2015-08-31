@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @author Sergey Simonchik
+ * A collection of utility methods for working with PATH environment variable.
  */
 public class PathEnvironmentVariableUtil {
 
@@ -43,7 +43,7 @@ public class PathEnvironmentVariableUtil {
    * listed in PATH environment variable.
    *
    * @param fileBaseName file base name
-   * @return {@code File} instance or null if not found
+   * @return {@link File} instance or null if not found
    */
   @Nullable
   public static File findInPath(@NotNull String fileBaseName) {
@@ -56,7 +56,7 @@ public class PathEnvironmentVariableUtil {
    *
    * @param fileBaseName file base name
    * @param filter exe file filter
-   * @return {@code File} instance or null if not found
+   * @return {@link File} instance or null if not found
    */
   @Nullable
   public static File findInPath(@NotNull String fileBaseName, @Nullable FileFilter filter) {
@@ -69,7 +69,7 @@ public class PathEnvironmentVariableUtil {
    *
    * @param fileBaseName file base name
    * @param  logDetails true if extra logging is needed
-   * @return {@code File} instance or null if not found
+   * @return {@link File} instance or null if not found
    */
   @Nullable
   public static File findInPath(@NotNull String fileBaseName, boolean logDetails) {
@@ -88,7 +88,7 @@ public class PathEnvironmentVariableUtil {
    * Original PATH environment variable value is a value returned by <code>System.getenv("PATH")</code>.
    *
    * @param fileBaseName file base name
-   * @return {@code File} instance or null if not found
+   * @return {@link File} instance or null if not found
    */
   private static File findInOriginalPath(@NotNull String fileBaseName) {
     String originalPath;
@@ -188,5 +188,4 @@ public class PathEnvironmentVariableUtil {
     }
     return exePath;
   }
-
 }

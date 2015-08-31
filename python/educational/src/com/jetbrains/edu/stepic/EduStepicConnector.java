@@ -5,11 +5,17 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
@@ -17,6 +23,7 @@ import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.NameValuePair;
 import org.apache.http.StatusLine;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -27,6 +34,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -36,6 +44,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -52,7 +61,6 @@ public class EduStepicConnector {
   private static final String stepicUrl = "https://stepic.org/";
   private static final String stepicApiUrl = stepicUrl + "api/";
   private static final Logger LOG = Logger.getInstance(EduStepicConnector.class.getName());
-  private static final String ourDomain = "stepic.org";
   private static String ourCSRFToken = "";
   private static CloseableHttpClient ourClient;
 
@@ -74,7 +82,9 @@ public class EduStepicConnector {
     request.addHeader(new BasicHeader("referer", "https://stepic.org"));
     request.addHeader(new BasicHeader("content-type", "application/json"));
 
-    HttpClientBuilder builder = HttpClients.custom().setSslcontext(CertificateManager.getInstance().getSslContext()).setMaxConnPerRoute(100);
+
+    HttpClientBuilder builder = HttpClients.custom().setSslcontext(CertificateManager.getInstance().getSslContext()).setMaxConnPerRoute(100000).
+      setConnectionReuseStrategy(DefaultConnectionReuseStrategy.INSTANCE);
     ourCookieStore = new BasicCookieStore();
 
     try {
@@ -127,6 +137,7 @@ public class EduStepicConnector {
     }
     catch (UnsupportedEncodingException e) {
       LOG.error(e.getMessage());
+      ourClient = null;
       return false;
     }
 
@@ -134,15 +145,18 @@ public class EduStepicConnector {
 
     try {
       final CloseableHttpResponse response = ourClient.execute(request);
+      final String s = EntityUtils.toString(response.getEntity());
       saveCSRFToken();
       final StatusLine line = response.getStatusLine();
       if (line.getStatusCode() != 302) {
         LOG.error("Failed to login " + EntityUtils.toString(response.getEntity()));
+        ourClient = null;
         return false;
       }
     }
     catch (IOException e) {
-      LOG.error(e.getMessage());
+      LOG.warn(e.getMessage());
+      ourClient = null;
       return false;
     }
     return true;
@@ -156,7 +170,11 @@ public class EduStepicConnector {
     setHeaders(request, "application/json");
 
     final CloseableHttpResponse response = ourClient.execute(request);
+    final StatusLine statusLine = response.getStatusLine();
     final String responseString = EntityUtils.toString(response.getEntity());
+    if (statusLine.getStatusCode() != 200) {
+      throw new IOException("Stepic returned non 200 status code " + responseString);
+    }
     Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     return gson.fromJson(responseString, container);
   }
@@ -186,6 +204,12 @@ public class EduStepicConnector {
       if (StringUtil.isEmptyOrSpaces(courseType)) continue;
       final List<String> typeLanguage = StringUtil.split(courseType, " ");
       if (typeLanguage.size() == 2 && PYCHARM_PREFIX.equals(typeLanguage.get(0))) {
+
+        for (Integer instructor : info.instructors) {
+          final CourseInfo.Author author = getFromStepic("users/" + String.valueOf(instructor), AuthorWrapper.class).users.get(0);
+          info.addAuthor(author);
+        }
+
         result.add(info);
       }
     }
@@ -194,7 +218,7 @@ public class EduStepicConnector {
 
   public static Course getCourse(@NotNull final CourseInfo info) {
     final Course course = new Course();
-    course.setAuthors(info.getInstructors());
+    course.setAuthors(info.getAuthors());
     course.setDescription(info.getDescription());
     course.setName(info.getName());
     String courseType = info.getType();
@@ -233,13 +257,14 @@ public class EduStepicConnector {
     return lessons;
   }
 
-  private static void createTask(Lesson lesson, Integer s) throws IOException {
-    final Step step = getStep(s);
+  private static void createTask(Lesson lesson, Integer stepicId) throws IOException {
+    final Step step = getStep(stepicId);
     final Task task = new Task();
+    task.setStepicId(stepicId);
     task.setName(step.options != null ? step.options.title : PYCHARM_PREFIX);
     task.setText(step.text);
     for (TestFileWrapper wrapper : step.options.test) {
-      task.setTestsTexts(wrapper.name, wrapper.text);
+      task.addTestsTexts(wrapper.name, wrapper.text);
     }
 
     task.taskFiles = new HashMap<String, TaskFile>();      // TODO: it looks like we don't need taskFiles as map anymore
@@ -256,41 +281,168 @@ public class EduStepicConnector {
   }
 
 
-  public static void showLoginDialog() {
-    final LoginDialog dialog = new LoginDialog();
-    dialog.show();
+  public static boolean showLoginDialog() {
+    final boolean[] logged = {false};
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        final LoginDialog dialog = new LoginDialog();
+        dialog.show();
+        logged[0] = dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE;
+      }
+    }, ModalityState.defaultModalityState());
+    return logged[0];
   }
 
-  public static void postCourse(Project project, @NotNull final Course course) {
-    final HttpPost request = new HttpPost(stepicApiUrl + "courses");
-    if (ourClient == null) {
-      showLoginDialog();
+  public static void postAttempt(@NotNull final Task task, boolean passed, @Nullable String login, @Nullable String password) {
+    if (task.getStepicId() <= 0) {
+      return;
     }
-
-    setHeaders(request, "application/json");
-    String requestBody = new Gson().toJson(new CourseWrapper(course));
-    request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-
-    try {
-      final CloseableHttpResponse response = ourClient.execute(request);
-      final String responseString = EntityUtils.toString(response.getEntity());
-      final StatusLine line = response.getStatusLine();
-      if (line.getStatusCode() != 201) {
-        LOG.error("Failed to push " + responseString);
+    if (ourClient == null) {
+      if (StringUtil.isEmptyOrSpaces(login) || StringUtil.isEmptyOrSpaces(password)) {
         return;
       }
-      final CourseInfo postedCourse = new Gson().fromJson(responseString, CoursesContainer.class).courses.get(0);
-
-      final int sectionId = postModule(postedCourse);
-      int position = 1;
-      for (Lesson lesson : course.getLessons()) {
-        final int lessonId = postLesson(project, lesson);
-        postUnit(lessonId, position, sectionId);
-        position += 1;
+      else {
+        final boolean success = login(login, password);
+        if (!success) return;
       }
+    }
+
+    final HttpPost attemptRequest = new HttpPost(stepicApiUrl + "attempts");
+    setHeaders(attemptRequest, "application/json");
+    String attemptRequestBody = new Gson().toJson(new AttemptWrapper(task.getStepicId()));
+    attemptRequest.setEntity(new StringEntity(attemptRequestBody, ContentType.APPLICATION_JSON));
+
+    try {
+      final CloseableHttpResponse attemptResponse = ourClient.execute(attemptRequest);
+      final String attemptResponseString = EntityUtils.toString(attemptResponse.getEntity());
+      final StatusLine statusLine = attemptResponse.getStatusLine();
+      if (statusLine.getStatusCode() != 201) {
+        LOG.error("Failed to make attempt " + attemptResponseString);
+      }
+      final AttemptWrapper.Attempt attempt = new Gson().fromJson(attemptResponseString, AttemptContainer.class).attempts.get(0);
+
+      final Map<String, TaskFile> taskFiles = task.getTaskFiles();
+      final ArrayList<SolutionFile> files = new ArrayList<SolutionFile>();
+      for (TaskFile fileEntry : taskFiles.values()) {
+        files.add(new SolutionFile(fileEntry.name, fileEntry.text));
+      }
+      postSubmission(passed, attempt, files);
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
+    }
+  }
+
+  private static void postSubmission(boolean passed, AttemptWrapper.Attempt attempt, ArrayList<SolutionFile> files) throws IOException {
+    final HttpPost request = new HttpPost(stepicApiUrl + "submissions");
+    setHeaders(request, "application/json");
+
+    String requestBody = new Gson().toJson(new SubmissionWrapper(attempt.id, passed ? "1" : "0", files));
+    request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+    final CloseableHttpResponse response = ourClient.execute(request);
+    final String responseString = EntityUtils.toString(response.getEntity());
+    final StatusLine line = response.getStatusLine();
+    if (line.getStatusCode() != 201) {
+      LOG.error("Failed to make submission " + responseString);
+    }
+  }
+
+
+  public static void postCourse(final Project project, @NotNull final Course course) {
+    ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Modal(project, "Uploading Course", true) {
+      @Override
+      public void run(@NotNull final ProgressIndicator indicator) {
+        indicator.setText("Uploading course to " + stepicUrl);
+        final HttpPost request = new HttpPost(stepicApiUrl + "courses");
+        if (ourClient == null) {
+          final String login = StudySettings.getInstance().getLogin();
+          if (StringUtil.isEmptyOrSpaces(login)) {
+            final boolean success = showLoginDialog();
+            if (!success) {
+              return;
+            }
+          }
+          else {
+            boolean success = login(login, StudySettings.getInstance().getPassword());
+            if (!success) {
+              if (!showLoginDialog()) {
+                return;
+              }
+            }
+          }
+        }
+
+        setHeaders(request, "application/json");
+        String requestBody = new Gson().toJson(new CourseWrapper(course));
+        request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+        try {
+          final CloseableHttpResponse response = ourClient.execute(request);
+          final String responseString = EntityUtils.toString(response.getEntity());
+          final StatusLine line = response.getStatusLine();
+          if (line.getStatusCode() != 201) {
+            LOG.error("Failed to push " + responseString);
+            return;
+          }
+          final CourseInfo postedCourse = new Gson().fromJson(responseString, CoursesContainer.class).courses.get(0);
+
+          final int sectionId = postModule(postedCourse.id, 1, String.valueOf(postedCourse.getName()));
+          int position = 1;
+          for (Lesson lesson : course.getLessons()) {
+            indicator.checkCanceled();
+            final int lessonId = postLesson(project, lesson, indicator);
+            postUnit(lessonId, position, sectionId);
+            position += 1;
+          }
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              postAdditionalFiles(project, postedCourse.id, indicator);
+            }
+          });
+        }
+        catch (IOException e) {
+          LOG.error(e.getMessage());
+        }
+      }
+    });
+  }
+
+  private static void postAdditionalFiles(@NotNull final Project project, int id, ProgressIndicator indicator) {
+    final VirtualFile baseDir = project.getBaseDir();
+    final List<VirtualFile> files = VfsUtil.getChildren(baseDir, new VirtualFileFilter() {
+      @Override
+      public boolean accept(VirtualFile file) {
+        final String name = file.getName();
+        return !name.contains(EduNames.LESSON) && !name.equals(EduNames.COURSE_META_FILE) && !name.equals(EduNames.HINTS) &&
+          !"pyc".equals(file.getExtension()) && !file.isDirectory() && !name.equals(EduNames.TEST_HELPER) && !name.startsWith(".");
+      }
+    });
+
+    if (!files.isEmpty()) {
+      final int sectionId = postModule(id, 2, EduNames.PYCHARM_ADDITIONAL);
+      final Lesson lesson = new Lesson();
+      lesson.setName(EduNames.PYCHARM_ADDITIONAL);
+      final Task task = new Task();
+      task.setLesson(lesson);
+      task.setName(EduNames.PYCHARM_ADDITIONAL);
+      task.setIndex(1);
+      task.setText(EduNames.PYCHARM_ADDITIONAL);
+      for (VirtualFile file : files) {
+        try {
+          if (file != null) {
+            task.addTestsTexts(file.getName(), Base64.encodeBase64URLSafeString(FileUtil.loadBytes(file.getInputStream())));
+          }
+        }
+        catch (IOException e) {
+          LOG.error("Can't find file " + file.getPath());
+        }
+      }
+      lesson.addTask(task);
+      lesson.setIndex(1);
+      final int lessonId = postLesson(project, lesson, indicator);
+      postUnit(lessonId, 1, sectionId);
     }
   }
 
@@ -319,13 +471,13 @@ public class EduStepicConnector {
     }
   }
 
-  private static int postModule(CourseInfo courseInfo) {
+  private static int postModule(int courseId, int position, @NotNull final String title) {
     final HttpPost request = new HttpPost(stepicApiUrl + "sections");
     setHeaders(request, "application/json");
     final Section section = new Section();
-    section.course = courseInfo.id;
-    section.title = String.valueOf(courseInfo.getName());
-    section.position = 1;
+    section.course = courseId;
+    section.title = title;
+    section.position = position;
     final SectionWrapper sectionContainer = new SectionWrapper();
     sectionContainer.section = section;
     String requestBody = new Gson().toJson(sectionContainer);
@@ -347,7 +499,7 @@ public class EduStepicConnector {
     return -1;
   }
 
-  public static int postLesson(Project project, @NotNull final Lesson lesson) {
+  public static int postLesson(Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
     final HttpPost request = new HttpPost(stepicApiUrl + "lessons");
     if (ourClient == null) {
       showLoginDialog();
@@ -367,6 +519,7 @@ public class EduStepicConnector {
       }
       final Lesson postedLesson = new Gson().fromJson(responseString, Course.class).getLessons().get(0);
       for (Task task : lesson.getTaskList()) {
+        indicator.checkCanceled();
         postTask(project, task, postedLesson.id);
       }
       return postedLesson.id;
@@ -377,23 +530,28 @@ public class EduStepicConnector {
     return -1;
   }
 
-  public static void postTask(Project project, @NotNull final Task task, int id) {
+  public static void postTask(final Project project, @NotNull final Task task, final int lessonId) {
     final HttpPost request = new HttpPost(stepicApiUrl + "step-sources");
     setHeaders(request, "application/json");
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
-    String requestBody = gson.toJson(new StepSourceWrapper(project, task, id));
-    request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        final String requestBody = gson.toJson(new StepSourceWrapper(project, task, lessonId));
+        request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
-    try {
-      final CloseableHttpResponse response = ourClient.execute(request);
-      final StatusLine line = response.getStatusLine();
-      if (line.getStatusCode() != 201) {
-        LOG.error("Failed to push " + EntityUtils.toString(response.getEntity()));
+        try {
+          final CloseableHttpResponse response = ourClient.execute(request);
+          final StatusLine line = response.getStatusLine();
+          if (line.getStatusCode() != 201) {
+            LOG.error("Failed to push " + EntityUtils.toString(response.getEntity()));
+          }
+        }
+        catch (IOException e) {
+          LOG.error(e.getMessage());
+        }
       }
-    }
-    catch (IOException e) {
-      LOG.error(e.getMessage());
-    }
+    });
   }
 
   private static void setHeaders(@NotNull final HttpRequestBase request, String contentType) {
@@ -428,30 +586,55 @@ public class EduStepicConnector {
 
     public static StepOptions fromTask(final Project project, @NotNull final Task task) {
       final StepOptions source = new StepOptions();
-
-      final String text = task.getTestsText(project);
-      source.test = Collections.singletonList(new TestFileWrapper(EduNames.TESTS_FILE, text));
+      setTests(task, source, project);
       source.files = new ArrayList<TaskFile>();
       source.title = task.getName();
       for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
+        final TaskFile taskFile = new TaskFile();
+        TaskFile.copy(entry.getValue(), taskFile);
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
             final VirtualFile taskDir = task.getTaskDir(project);
             assert taskDir != null;
-            EduUtils.createStudentFileFromAnswer(project, taskDir, taskDir, entry);
+            EduUtils.createStudentFileFromAnswer(project, taskDir, taskDir, entry.getKey(), taskFile);
           }
         });
-        final TaskFile taskFile = entry.getValue();
         taskFile.name = entry.getKey();
-        final Document document = task.getDocument(project, taskFile.name);
-        if (document != null) {
-          source.text = document.getImmutableCharSequence().toString();
-          taskFile.text = document.getImmutableCharSequence().toString();
+
+        final VirtualFile taskDirectory = task.getTaskDir(project);
+        if (taskDirectory == null) return null;
+        final VirtualFile file = taskDirectory.findChild(taskFile.name);
+        try {
+          if (file != null) {
+            taskFile.text = Base64.encodeBase64URLSafeString(FileUtil.loadBytes(file.getInputStream()));
+          }
         }
+        catch (IOException e) {
+          LOG.error("Can't find file " + file.getPath());
+        }
+
         source.files.add(taskFile);
       }
       return source;
+    }
+
+    private static void setTests(@NotNull final Task task, @NotNull final StepOptions source, @NotNull final Project project) {
+      final Map<String, String> testsText = task.getTestsText();
+      if (testsText.isEmpty()) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            source.test = Collections.singletonList(new TestFileWrapper(EduNames.TESTS_FILE, task.getTestsText(project)));
+          }
+        });
+      }
+      else {
+        source.test = new ArrayList<TestFileWrapper>();
+        for (Map.Entry<String, String> entry : testsText.entrySet()) {
+          source.test.add(new TestFileWrapper(entry.getKey(), entry.getValue()));
+        }
+      }
     }
   }
 
@@ -464,8 +647,8 @@ public class EduStepicConnector {
     @Expose
     StepSource stepSource;
 
-    public StepSourceWrapper(Project project, Task task, int id) {
-      stepSource = new StepSource(project, task, id);
+    public StepSourceWrapper(Project project, Task task, int lessonId) {
+      stepSource = new StepSource(project, task, lessonId);
     }
   }
 
@@ -497,8 +680,8 @@ public class EduStepicConnector {
     @Expose int position = 0;
     @Expose int lesson = 0;
 
-    public StepSource(Project project, Task task, int id) {
-      lesson = id;
+    public StepSource(Project project, Task task, int lesson) {
+      this.lesson = lesson;
       position = task.getIndex();
       block = Step.fromTask(project, task);
     }
@@ -547,6 +730,72 @@ public class EduStepicConnector {
 
   static class UnitWrapper{
     Unit unit;
+  }
+
+
+  static class AttemptWrapper {
+    static class Attempt {
+      public Attempt(int step) {
+        this.step = step;
+      }
+
+      int step;
+      int id;
+    }
+    public AttemptWrapper(int step) {
+      attempt = new Attempt(step);
+    }
+
+    Attempt attempt;
+  }
+
+  static class AttemptContainer {
+    List<AttemptWrapper.Attempt> attempts;
+  }
+
+  static class SolutionFile {
+    String name;
+    String text;
+
+    public SolutionFile(String name, String text) {
+      this.name = name;
+      this.text = text;
+    }
+  }
+
+  static class AuthorWrapper {
+    List<CourseInfo.Author> users;
+  }
+
+  static class SubmissionWrapper {
+    Submission submission;
+
+
+    public SubmissionWrapper(int attempt, String score, ArrayList<SolutionFile> files) {
+      submission = new Submission(score, attempt, files);
+    }
+
+    static class Submission {
+      int attempt;
+
+      private final Reply reply;
+
+      public Submission(String score, int attempt, ArrayList<SolutionFile> files) {
+        reply = new Reply(files, score);
+        this.attempt = attempt;
+      }
+
+      static class Reply {
+        String score;
+        List<SolutionFile> solution;
+
+        public Reply(ArrayList<SolutionFile> files, String score) {
+          this.score = score;
+          solution = files;
+        }
+      }
+    }
+
   }
 
 }

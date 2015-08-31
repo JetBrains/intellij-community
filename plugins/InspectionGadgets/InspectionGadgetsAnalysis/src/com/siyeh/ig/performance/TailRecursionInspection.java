@@ -170,12 +170,12 @@ public class TailRecursionInspection extends BaseInspection {
       return visitor.containsCallOnOtherInstance();
     }
 
-    private static class MethodContainsCallOnOtherInstanceVisitor extends JavaRecursiveElementVisitor {
+    private static class MethodContainsCallOnOtherInstanceVisitor extends JavaRecursiveElementWalkingVisitor {
 
-      private boolean containsCallOnOtherInstance = false;
+      private boolean containsCallOnOtherInstance;
       private final PsiClass aClass;
 
-      MethodContainsCallOnOtherInstanceVisitor(PsiClass aClass) {
+      private MethodContainsCallOnOtherInstanceVisitor(PsiClass aClass) {
         this.aClass = aClass;
       }
 
@@ -200,7 +200,7 @@ public class TailRecursionInspection extends BaseInspection {
         }
       }
 
-      public boolean containsCallOnOtherInstance() {
+      private boolean containsCallOnOtherInstance() {
         return containsCallOnOtherInstance;
       }
     }

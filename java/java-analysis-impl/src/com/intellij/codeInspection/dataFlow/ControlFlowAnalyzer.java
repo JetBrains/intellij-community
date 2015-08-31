@@ -116,6 +116,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return myCurrentFlow;
   }
 
+
   private static PsiClassType createClassType(PsiManager manager, GlobalSearchScope scope, String fqn) {
     PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(fqn, scope);
     if (aClass != null) return JavaPsiFacade.getElementFactory(manager.getProject()).createType(aClass);
@@ -1172,29 +1173,17 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression lExpr = operands[0];
     lExpr.accept(this);
     PsiType lType = lExpr.getType();
-    boolean hasAssignment = containsAssignments(lExpr);
 
     for (int i = 1; i < operands.length; i++) {
       PsiExpression rExpr = operands[i];
       PsiType rType = rExpr.getType();
 
       acceptBinaryRightOperand(op, type, lExpr, lType, rExpr, rType);
-      if (hasAssignment || containsAssignments(rExpr)) {
-        addInstruction(new PopInstruction());
-        addInstruction(new PopInstruction());
-        pushUnknown();
-        hasAssignment = false;
-      } else {
-        addInstruction(new BinopInstruction(op, expression.isPhysical() ? expression : null, expression.getProject()));
-      }
+      addInstruction(new BinopInstruction(op, expression.isPhysical() ? expression : null, expression.getProject()));
 
       lExpr = rExpr;
       lType = rType;
     }
-  }
-
-  private static boolean containsAssignments(@Nullable PsiElement element) {
-    return PsiTreeUtil.findChildOfType(element, PsiAssignmentExpression.class) != null;
   }
 
   @Nullable

@@ -217,6 +217,17 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     return javaParameters;
   }
 
+  @Override
+  protected List<String> getNamedParams(String parameters) {
+    try {
+      Integer.parseInt(parameters);
+      return super.getNamedParams(parameters);
+    }
+    catch (NumberFormatException e) {
+      return Arrays.asList(parameters.split(" "));
+    }
+  }
+
   @NotNull
   @Override
   protected String getForkMode() {

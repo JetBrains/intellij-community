@@ -24,18 +24,35 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+
 /**
  * @author nik
  */
 public class JUnitDependencyScopeSuggester extends LibraryDependencyScopeSuggester {
+  private static final String[] JUNIT_JAR_MARKERS = {
+    "org.junit.Test", "junit.framework.TestCase", "org.hamcrest.Matcher", "org.hamcrest.Matchers"
+  };
+
   @Nullable
   @Override
   public DependencyScope getDefaultDependencyScope(@NotNull Library library) {
     VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
-    if (files.length == 1 && (LibraryUtil.isClassAvailableInLibrary(files, "junit.framework.TestCase")
-                              || LibraryUtil.isClassAvailableInLibrary(library, "org.junit.Test"))) {
-      return DependencyScope.TEST;
+    if (files.length == 0) return null;
+    for (VirtualFile file : files) {
+      if (!isTestJarRoot(file)) {
+        return null;
+      }
     }
-    return null;
+    return DependencyScope.TEST;
+  }
+
+  private static boolean isTestJarRoot(VirtualFile file) {
+    for (String marker : JUNIT_JAR_MARKERS) {
+      if (LibraryUtil.isClassAvailableInLibrary(Collections.singletonList(file), marker)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

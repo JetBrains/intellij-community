@@ -39,8 +39,21 @@ public abstract class LibraryPresentationProvider<P extends LibraryProperties> {
     return myKind;
   }
 
+  /**
+   * @deprecated override {@link #getIcon(LibraryProperties)}.
+   */
+
+  @Deprecated
   @Nullable
-  public abstract Icon getIcon();
+  public Icon getIcon() {
+    throw new AbstractMethodError();
+  }
+
+  @Nullable
+  public Icon getIcon(@Nullable LibraryProperties properties) {
+    //noinspection deprecation
+    return getIcon();
+  }
 
   @Nullable
   public String getDescription(@NotNull P properties) {

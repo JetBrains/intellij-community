@@ -222,16 +222,22 @@ public class PopFrameAction extends DebuggerAction {
       }
       return new JavaStackFrame(descriptor, false);
     }
-    return getSelectedStackFrame(e);
+    JavaStackFrame frame = getSelectedStackFrame(e);
+    if (frame != null) {
+      StackFrameProxyImpl proxy = frame.getStackFrameProxy();
+      if (proxy == null || proxy.isBottom()) return null;
+      return frame;
+    }
+    return null;
   }
 
-  private static StackFrameProxyImpl getStackFrameProxy(AnActionEvent e) {
-    StackFrameDescriptorImpl descriptor = getSelectedStackFrameDescriptor(e);
-    if (descriptor != null) {
-      if (descriptor.getFrameProxy().isBottom()) {
-        return null;
+  static StackFrameProxyImpl getStackFrameProxy(AnActionEvent e) {
+    DebuggerTreeNodeImpl node = getSelectedNode(e.getDataContext());
+    if (node != null) {
+      NodeDescriptorImpl descriptor = node.getDescriptor();
+      if (descriptor instanceof StackFrameDescriptorImpl) {
+        return ((StackFrameDescriptorImpl)descriptor).getFrameProxy();
       }
-      return descriptor.getFrameProxy();
     }
     else {
       JavaStackFrame stackFrame = getSelectedStackFrame(e);
@@ -268,8 +274,7 @@ public class PopFrameAction extends DebuggerAction {
       if (session != null) {
         XStackFrame frame = session.getCurrentStackFrame();
         if (frame instanceof JavaStackFrame) {
-          StackFrameProxyImpl proxy = ((JavaStackFrame)frame).getStackFrameProxy();
-          return !proxy.isBottom() ? ((JavaStackFrame)frame) : null;
+          return ((JavaStackFrame)frame);
         }
       }
     }
@@ -301,7 +306,7 @@ public class PopFrameAction extends DebuggerAction {
     boolean enable = false;
 
     StackFrameProxyImpl proxy = getStackFrameProxy(e);
-    if (proxy != null && isAtBreakpoint(e)) {
+    if (proxy != null && !proxy.isBottom() && isAtBreakpoint(e)) {
       enable = proxy.getVirtualMachine().canPopFrames();
     }
 

@@ -50,7 +50,7 @@ public abstract class ManifestImporter {
     String classpathPrefix = getClasspathPrefix(manifestConfiguration);
     for (MavenArtifact mavenArtifact : mavenProject.getDependencies()) {
       final DependencyScope scope = MavenModuleImporter.selectScope(mavenArtifact.getScope());
-      if (scope.isForProductionRuntime()) {
+      if (scope.isForProductionCompile() || scope.isForProductionRuntime()) {
         if (classpath.length() > 0) {
           classpath.append(" ");
         }

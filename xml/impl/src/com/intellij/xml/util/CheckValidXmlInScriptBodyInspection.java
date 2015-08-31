@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -92,7 +93,7 @@ public class CheckValidXmlInScriptBodyInspection extends CheckValidXmlInScriptBo
       String replacement = xmlCharacter.equals("&") ? AMP_ENTITY_REFERENCE : LT_ENTITY_REFERENCE;
       replacement = startElement.getText().replace(xmlCharacter,replacement);
 
-      editor.getDocument().replaceString(
+      InjectedLanguageUtil.getTopLevelEditor(editor).getDocument().replaceString(
         range.getStartOffset(),
         range.getEndOffset(),
         replacement

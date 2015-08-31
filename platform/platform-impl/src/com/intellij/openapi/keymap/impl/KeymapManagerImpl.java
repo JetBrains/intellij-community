@@ -84,7 +84,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
         }
       }
     };
-    mySchemesManager = factory.createSchemesManager(KEYMAPS_DIR_PATH, schemeProcessor, RoamingType.PER_USER);
+    mySchemesManager = factory.create(KEYMAPS_DIR_PATH, schemeProcessor);
 
     String systemDefaultKeymap = WelcomeWizardUtil.getWizardMacKeymap() != null
                                  ? WelcomeWizardUtil.getWizardMacKeymap()

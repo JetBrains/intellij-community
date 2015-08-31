@@ -40,7 +40,8 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspectionBase extends B
   /**
    * @noinspection PublicField
    */
-  @NonNls public String questionString = "is,can,has,should,could,will,shall,check,contains,equals,startsWith,endsWith";
+  @NonNls public String questionString =
+    "add,are,can,check,contains,could,endsWith,equals,has,is,matches,must,put,remove,shall,should,startsWith,was,were,will,would";
   @SuppressWarnings({"PublicField"})
   public boolean ignoreBooleanMethods = false;
   @SuppressWarnings({"PublicField"})

@@ -304,9 +304,11 @@ public interface Caret extends UserDataHolderEx, Disposable {
   boolean isAtRtlLocation();
 
   /**
-   * Returns <code>true</code> if caret is located at a boundary between LTR and RTL text fragments. Caret can located at any side of the
-   * boundary, exact location can be determined from directionality flags of caret's logical and visual position 
+   * Returns <code>true</code> if caret is located at a boundary between different runs of bidirectional text. 
+   * This means that text fragments at different sides of the boundary are non-adjacent in logical order.
+   * Caret can located at any side of the boundary, 
+   * exact location can be determined from directionality flags of caret's logical and visual position 
    * ({@link LogicalPosition#leansForward} and {@link VisualPosition#leansRight}).
    */
-  boolean isAtDirectionBoundary();
+  boolean isAtBidiRunBoundary();
 }

@@ -71,7 +71,7 @@ public abstract class DiffWindowBase {
       public void actionPerformed(final AnActionEvent e) {
         myWrapper.close();
       }
-    }.registerCustomShortcutSet(CommonShortcuts.getCloseActiveWindow(), myProcessor.getComponent());
+    }.registerCustomShortcutSet(CommonShortcuts.getCloseActiveWindow(), myProcessor.getComponent(), myWrapper);
   }
 
   public void show() {

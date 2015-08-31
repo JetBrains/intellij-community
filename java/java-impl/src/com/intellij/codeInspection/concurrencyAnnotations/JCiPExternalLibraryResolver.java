@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.concurrencyAnnotations;
 
-import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryDescriptor;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.openapi.module.Module;
 import com.intellij.util.PathUtil;
@@ -32,10 +32,10 @@ import java.util.List;
  */
 public class JCiPExternalLibraryResolver extends ExternalLibraryResolver {
   private static final ExternalLibraryDescriptor JDCIP_LIBRARY_DESCRIPTOR =
-    new ExternalLibraryDescriptor("net.jcip", "jcip-annotations", null) {
+    new ExternalLibraryDescriptor("net.jcip", "jcip-annotations") {
       @NotNull
       @Override
-      public List<String> locateLibraryClassesRoots(@NotNull Module contextModule) {
+      public List<String> getLibraryClassesRoots() {
         return Collections.singletonList(PathUtil.getJarPathForClass(GuardedBy.class));
       }
 
@@ -47,7 +47,7 @@ public class JCiPExternalLibraryResolver extends ExternalLibraryResolver {
 
   @Nullable
   @Override
-  public ExternalClassResolveResult resolveClass(@NotNull String shortClassName, @NotNull ThreeState isAnnotation) {
+  public ExternalClassResolveResult resolveClass(@NotNull String shortClassName, @NotNull ThreeState isAnnotation, @NotNull Module contextModule) {
     if (JCiPUtil.isJCiPAnnotation(shortClassName) && isAnnotation == ThreeState.YES) {
       return new ExternalClassResolveResult("net.jcip.annotations." + shortClassName, JDCIP_LIBRARY_DESCRIPTOR);
     }

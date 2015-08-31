@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -22,14 +23,18 @@ import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.CommitStepException;
+import com.intellij.ide.wizard.StepWithSubSteps;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -155,10 +160,19 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   @Override
   protected final void doOKAction() {
-    if (!doFinishAction()) return;
+    final Ref<Boolean> result = Ref.create(false);
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        result.set(doFinishAction());
+      }
+    });
+    if (!result.get()) return;
+    
     super.doOKAction();
   }
 
+  @VisibleForTesting
   public boolean doFinishAction() {
     int idx = getCurrentStep();
     try {
@@ -257,6 +271,9 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   protected void doPreviousAction() {
     final ModuleWizardStep step = getCurrentStepObject();
     step.onStepLeaving();
+    if (step instanceof StepWithSubSteps) {
+      ((StepWithSubSteps)step).doPreviousAction();
+    }
     super.doPreviousAction();
   }
 
@@ -267,8 +284,12 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     super.doCancelAction();
   }
 
+  protected boolean isLastStep() {
+    return myCurrentStep == mySteps.size() - 1 || isLastStep(getCurrentStep());
+  }
+
   private boolean isLastStep(int step) {
-    return getNextStep(step) == step;
+    return getNextStep(step) == step && !isStepWithNotCompletedSubSteps(mySteps.get(step));
   }
 
   @Override
@@ -277,6 +298,10 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     final StepSequence stepSequence = getSequence();
     if (stepSequence != null) {
       ModuleWizardStep current = mySteps.get(step);
+      if (isStepWithNotCompletedSubSteps(current)) {
+        return step;
+      }
+
       nextStep = stepSequence.getNextStep(current);
       while (nextStep != null && !nextStep.isStepVisible()) {
         nextStep = stepSequence.getNextStep(nextStep);
@@ -290,11 +315,24 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
       ModuleWizardStep previousStep = null;
       final StepSequence stepSequence = getSequence();
       if (stepSequence != null) {
-        previousStep = stepSequence.getPreviousStep(mySteps.get(step));
+        final ModuleWizardStep current = mySteps.get(step);
+        if (isNotFirstSubStepInStep(current)) {
+          return step;
+        }
+
+        previousStep = stepSequence.getPreviousStep(current);
         while (previousStep != null && !previousStep.isStepVisible()) {
           previousStep = stepSequence.getPreviousStep(previousStep);
         }
       }
       return previousStep == null ? 0 : mySteps.indexOf(previousStep);
+  }
+
+  private static boolean isStepWithNotCompletedSubSteps(ModuleWizardStep current) {
+    return current instanceof StepWithSubSteps && !((StepWithSubSteps)current).isLast();
+  }
+
+  private static boolean isNotFirstSubStepInStep(ModuleWizardStep current) {
+    return current instanceof StepWithSubSteps && !((StepWithSubSteps)current).isFirst();
   }
 }

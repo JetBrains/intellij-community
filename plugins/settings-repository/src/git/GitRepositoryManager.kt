@@ -24,10 +24,13 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
 import org.eclipse.jgit.api.AddCommand
+import org.eclipse.jgit.api.errors.UnmergedPathsException
 import org.eclipse.jgit.errors.TransportException
+import org.eclipse.jgit.ignore.IgnoreNode
 import org.eclipse.jgit.lib.ConfigConstants
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.lib.RepositoryState
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.*
 import org.jetbrains.jgit.dirCache.AddLoadedFile
@@ -60,9 +63,11 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     JGitCredentialsProvider(credentialsStore, repository)
   }
 
+  private var ignoreRules: IgnoreNode? = null
+
   init {
     if (ApplicationManager.getApplication()?.isUnitTestMode() != true) {
-      ShutDownTracker.getInstance().registerShutdownTask(object: Runnable {
+      ShutDownTracker.getInstance().registerShutdownTask(object : Runnable {
         override fun run() {
           _repository?.close()
         }
@@ -71,6 +76,8 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   }
 
   override fun createRepositoryIfNeed(): Boolean {
+    ignoreRules = null
+
     if (isRepositoryExists()) {
       return false
     }
@@ -81,6 +88,8 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   }
 
   override fun deleteRepository() {
+    ignoreRules = null
+
     super.deleteRepository()
 
     val r = _repository
@@ -110,7 +119,37 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     repository.deletePath(path, isFile, false)
   }
 
-  override fun commit(indicator: ProgressIndicator?) = lock.write { commit(this, indicator) }
+  override fun commit(indicator: ProgressIndicator?, syncType: SyncType?): Boolean {
+    lock.write {
+      try {
+        // will be reset if OVERWRITE_LOCAL, so, we should not fix state in this case
+        return commitIfCan(indicator, if (syncType == SyncType.OVERWRITE_LOCAL) repository.getRepositoryState() else repository.fixAndGetState())
+      }
+      catch (e: UnmergedPathsException) {
+        if (syncType == SyncType.OVERWRITE_LOCAL) {
+          LOG.warn("Unmerged detected, ignored because sync type is OVERWRITE_LOCAL", e)
+          return false
+        }
+        else {
+          indicator?.checkCanceled()
+          LOG.warn("Unmerged detected, will be attempted to resolve", e)
+          resolveUnmergedConflicts(repository)
+          indicator?.checkCanceled()
+          return commitIfCan(indicator, repository.fixAndGetState())
+        }
+      }
+    }
+  }
+
+  private fun commitIfCan(indicator: ProgressIndicator?, state: RepositoryState): Boolean {
+    if (state.canCommit()) {
+      return commit(this, indicator)
+    }
+    else {
+      LOG.warn("Cannot commit, repository in state ${state.getDescription()}")
+      return false
+    }
+  }
 
   override fun getAheadCommitsCount() = repository.getAheadCommitsCount()
 
@@ -183,7 +222,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     }
   }
 
-  override fun pull(indicator: ProgressIndicator) = Pull(this, indicator).pull()
+  override fun pull(indicator: ProgressIndicator?) = Pull(this, indicator).pull()
 
   override fun resetToTheirs(indicator: ProgressIndicator) = Reset(this, indicator).reset(true)
 
@@ -191,7 +230,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
 
   override fun canCommit() = repository.getRepositoryState().canCommit()
 
-  fun renameDirectory(pairs: Map<String, String?>) {
+  fun renameDirectory(pairs: Map<String, String?>): Boolean {
     val addCommand = AddCommand(repository)
     val toDelete = SmartList<DeleteDirectory>()
     var added = false
@@ -238,10 +277,29 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     }
 
     if (toDelete.isEmpty() && !added) {
-      return
+      return false
     }
 
-    repository.commit(IdeaCommitMessageFormatter().prependMessage().append("Get rid of \$ROOT_CONFIG$").toString())
+    repository.commit(with(IdeaCommitMessageFormatter()) { StringBuilder().appendCommitOwnerInfo(true) }.append("Get rid of \$ROOT_CONFIG$ and \$APP_CONFIG").toString())
+    return true
+  }
+
+  private fun getIgnoreRules(): IgnoreNode? {
+    var node = ignoreRules
+    if (node == null) {
+      val file = File(dir, Constants.DOT_GIT_IGNORE)
+      if (file.exists()) {
+        node = IgnoreNode()
+        file.inputStream().use { node!!.parse(it) }
+        ignoreRules = node
+      }
+    }
+    return node
+  }
+
+  override fun isPathIgnored(path: String): Boolean {
+    // add first slash as WorkingTreeIterator does "The ignore code wants path to start with a '/' if possible."
+    return getIgnoreRules()?.isIgnored("/$path", false) == IgnoreNode.MatchResult.IGNORED
   }
 }
 

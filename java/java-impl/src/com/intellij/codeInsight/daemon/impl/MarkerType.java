@@ -61,9 +61,18 @@ public class MarkerType {
 
   private final GutterIconNavigationHandler<PsiElement> handler;
   private final Function<PsiElement, String> myTooltip;
+  @NotNull private final String myDebugName;
 
+  /**
+   * @deprecated use {@link #MarkerType(String, Function, LineMarkerNavigator)} instead
+   */
   public MarkerType(@NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
+    this("Unknown", tooltip, navigator);
+  }
+
+  public MarkerType(@NotNull String debugName, @NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
     myTooltip = tooltip;
+    myDebugName = debugName;
     handler = new GutterIconNavigationHandler<PsiElement>() {
       @Override
       public void navigate(final MouseEvent e, final PsiElement elt) {
@@ -77,6 +86,11 @@ public class MarkerType {
     };
   }
 
+  @Override
+  public String toString() {
+    return myDebugName;
+  }
+
   @NotNull
   public GutterIconNavigationHandler<PsiElement> getNavigationHandler() {
     return handler;
@@ -87,7 +101,7 @@ public class MarkerType {
     return myTooltip;
   }
 
-  static final MarkerType OVERRIDING_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
+  static final MarkerType OVERRIDING_METHOD = new MarkerType("OVERRIDING_METHOD", new NullableFunction<PsiElement, String>() {
     @Override
     public String fun(PsiElement element) {
       PsiElement parent = getParentMethod(element);
@@ -169,7 +183,7 @@ public class MarkerType {
   }
 
   public static final String SEARCHING_FOR_OVERRIDING_METHODS = "Searching for Overriding Methods";
-  static final MarkerType OVERRIDDEN_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
+  static final MarkerType OVERRIDDEN_METHOD = new MarkerType("OVERRIDDEN_METHOD", new NullableFunction<PsiElement, String>() {
     @Override
     public String fun(PsiElement element) {
       PsiElement parent = element.getParent();
@@ -257,7 +271,7 @@ public class MarkerType {
   }
 
   private static final String SEARCHING_FOR_OVERRIDDEN_METHODS = "Searching for Overridden Methods";
-  static final MarkerType SUBCLASSED_CLASS = new MarkerType(new NullableFunction<PsiElement, String>() {
+  static final MarkerType SUBCLASSED_CLASS = new MarkerType("SUBCLASSED_CLASS", new NullableFunction<PsiElement, String>() {
     @Override
     public String fun(PsiElement element) {
       PsiElement parent = element.getParent();

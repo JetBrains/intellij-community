@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -45,7 +46,8 @@ public abstract class DefaultVcsRootPolicy {
   @Nullable
   public abstract VirtualFile getVcsRootFor(final VirtualFile file);
 
-  public abstract void markDefaultRootsDirty(final DirtBuilder builder, VcsGuess vcsGuess);
+  @NotNull
+  public abstract Collection<VirtualFile> getDirtyRoots();
   
   public String getProjectConfigurationMessage(final Project project) {
     boolean isDirectoryBased = ProjectUtil.isDirectoryBased(project);

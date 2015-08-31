@@ -12,5 +12,6 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="educational" />
+    <orderEntry type="library" name="guava-tools" level="project" />
   </component>
 </module>

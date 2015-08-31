@@ -32,6 +32,8 @@ def connect_to_server_for_communication_to_xml_rpc_on_xdist():
         else:
             pydev_runfiles_xml_rpc.InitializeServer(int(port), daemon=True)
 
+PY2 = sys.version_info[0] <= 2
+PY3 = not PY2
 
 #===================================================================================================
 # Mocking to get clickable file representations
@@ -47,7 +49,18 @@ def _MockFileRepresentation():
         if i != -1:
             msg = msg[:i]
 
-        tw.line('File "%s", line %s\n%s' %(os.path.abspath(self.path), self.lineno, msg))
+        path = os.path.abspath(self.path)
+
+        if PY2:
+            if not isinstance(path, unicode):  # Note: it usually is NOT unicode...
+                path = path.decode(sys.getfilesystemencoding(), 'replace')
+
+            if not isinstance(msg, unicode):  # Note: it usually is unicode...
+                msg = msg.decode('utf-8', 'replace')
+            unicode_line = unicode('File "%s", line %s\n%s') % (path, self.lineno, msg)
+            tw.line(unicode_line)
+        else:
+            tw.line('File "%s", line %s\n%s' % (path, self.lineno, msg))
 
     code.ReprFileLocation.toterminal = toterminal
 
@@ -115,13 +128,41 @@ def pytest_runtest_makereport(item, call):
     excinfo = call.excinfo
 
     if not call.excinfo:
-        report_outcome = "passed"
-        report_longrepr = None
+        evalxfail = getattr(item, '_evalxfail', None)
+        if evalxfail and report_when == 'call':
+            # I.e.: a method marked with xfail passed... let the user know.
+            report_outcome = "failed"
+            report_longrepr = "XFAIL: Unexpected pass"
+
+        else:
+            report_outcome = "passed"
+            report_longrepr = None
     else:
         excinfo = call.excinfo
-        if not isinstance(excinfo, py.code.ExceptionInfo):
+
+        handled = False
+
+        if not (call.excinfo and
+                    call.excinfo.errisinstance(pytest.xfail.Exception)):
+            evalxfail = getattr(item, '_evalxfail', None)
+            # Something which had an xfail failed: this is expected.
+            if evalxfail:
+                report_outcome = "passed"
+                report_longrepr = None
+                handled = True
+
+        if handled:
+            pass
+
+        elif not isinstance(excinfo, py.code.ExceptionInfo):
             report_outcome = "failed"
             report_longrepr = excinfo
+
+        elif excinfo.errisinstance(pytest.xfail.Exception):
+            # Case where an explicit xfail is raised (i.e.: pytest.xfail("reason") is called
+            # programatically).
+            report_outcome = "passed"
+            report_longrepr = None
 
         elif excinfo.errisinstance(py.test.skip.Exception):
             report_outcome = "skipped"
@@ -181,6 +222,9 @@ def pytest_runtest_makereport(item, call):
                 error_contents += '\n'
                 error_contents += content
                 error_contents += '\n'
+    else:
+        if report_longrepr:
+            error_contents += str(report_longrepr)
 
     if status != 'skip': #I.e.: don't event report skips...
         report_test(status, filename, test, captured_output, error_contents, report_duration)
@@ -209,6 +253,10 @@ def pytest_runtest_setup(item):
     else:
         class_name = None
     for test in accept_tests:
+        # This happens when parameterizing pytest tests.
+        i = name.find('[')
+        if i > 0:
+            name = name[:i]
         if test == name:
             #Direct match of the test (just go on with the default loading)
             return

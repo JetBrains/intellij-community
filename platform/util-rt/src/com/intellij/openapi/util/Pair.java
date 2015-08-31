@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class Pair<A, B> {
   public final A first;
@@ -49,11 +50,11 @@ public class Pair<A, B> {
     };
   }
 
-  public static <T> T getFirst(Pair<T, ?> pair) {
+  public static <T> T getFirst(@Nullable Pair<T, ?> pair) {
     return pair != null ? pair.first : null;
   }
 
-  public static <T> T getSecond(Pair<?, T> pair) {
+  public static <T> T getSecond(@Nullable Pair<?, T> pair) {
     return pair != null ? pair.second : null;
   }
 

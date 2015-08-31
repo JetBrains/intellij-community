@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ package com.intellij.openapi.paths;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
@@ -61,7 +61,7 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
                                     String url,
                                     TextRange rangeInElement, @NotNull List<PsiReference> references) {
     if (isWebReferenceUrl(url)) {
-      references.add(new WebReference(psiElement, rangeInElement));
+      references.add(new WebReference(psiElement, rangeInElement, url));
       return true;
     }
     else if (url.contains("://") || url.startsWith("//") || startsWithAllowedPrefix(url)) {

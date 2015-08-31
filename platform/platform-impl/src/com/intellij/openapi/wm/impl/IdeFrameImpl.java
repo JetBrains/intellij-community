@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -464,7 +464,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
       return;
     }
     MouseGestureManager.getInstance().remove(this);
-    WelcomeFrame.notifyFrameClosed(this);
 
     // clear both our and swing hard refs
     if (myRootPane != null) {
@@ -499,7 +498,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     if (!WindowManager.getInstance().isFullScreenSupportedInCurrentOS()) return;
 
     if (myProject != null) {
-      PropertiesComponent.getInstance(myProject).setValue(FULL_SCREEN, String.valueOf(state));
+      PropertiesComponent.getInstance(myProject).setValue(FULL_SCREEN, state);
       doLayout();
     }
   }
@@ -507,7 +506,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
   public static boolean shouldRestoreFullScreen(@Nullable Project project) {
     return WindowManager.getInstance().isFullScreenSupportedInCurrentOS() &&
            project != null &&
-           (SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE || PropertiesComponent.getInstance(project).getBoolean(FULL_SCREEN, false));
+           (SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE || PropertiesComponent.getInstance(project).getBoolean(FULL_SCREEN));
   }
 
   @Override

@@ -1,8 +1,8 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/componentSets/Xml.xml" xpointer="xpointer(/components/*)">
+  <xi:include href="/componentSets/Xml.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/XmlActions.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="/META-INF/XmlActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/DomPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
@@ -396,8 +396,8 @@
                      bundle="messages.XmlBundle" key="xml.inspections.check.tag.empty.body"
                      groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      implementationClass="com.intellij.xml.util.CheckTagEmptyBodyInspection"/>
-    <!-- TODO: assign it to XML & DTD -->
-    <localInspection shortName="CheckDtdRefs" enabledByDefault="true" level="ERROR"
+
+    <localInspection language="XML" shortName="CheckDtdRefs" enabledByDefault="true" level="ERROR"
                      bundle="messages.XmlBundle" key="xml.inspections.check.dtd.references"
                      groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      implementationClass="com.intellij.xml.util.CheckDtdReferencesInspection"/>

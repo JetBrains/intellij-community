@@ -22,7 +22,9 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -31,7 +33,10 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.jdi.*;
+import com.intellij.debugger.jdi.LocalVariableProxyImpl;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -408,7 +413,11 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     protected final List<DebuggerTreeNodeImpl> myChildren = new LinkedList<DebuggerTreeNodeImpl>();
 
     protected BuildNodeCommand(DebuggerTreeNodeImpl node) {
-      super(DebuggerTree.this.getDebuggerContext());
+      this(node, null);
+    }
+
+    protected BuildNodeCommand(DebuggerTreeNodeImpl node, ThreadReferenceProxyImpl thread) {
+      super(DebuggerTree.this.getDebuggerContext(), thread);
       myNode = node;
     }
 
@@ -628,7 +637,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
   private class BuildThreadCommand extends BuildNodeCommand {
     public BuildThreadCommand(DebuggerTreeNodeImpl threadNode) {
-      super(threadNode);
+      super(threadNode, ((ThreadDescriptorImpl)threadNode.getDescriptor()).getThreadReference());
     }
 
     @Override

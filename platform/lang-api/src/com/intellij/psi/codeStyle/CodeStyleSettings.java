@@ -18,6 +18,7 @@ package com.intellij.psi.codeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -26,6 +27,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
@@ -168,8 +170,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public boolean IGNORE_SAME_INDENTS_FOR_LANGUAGES = false;
 
   public boolean AUTODETECT_INDENTS = true;
-
-  public boolean SHOW_DETECTED_INDENT_NOTIFICATION = true;
 
   @SuppressWarnings("UnusedDeclaration")
   @Deprecated
@@ -639,9 +639,11 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
           return options;
         }
       }
-      FileIndentOptionsProvider[] providers = Extensions.getExtensions(FileIndentOptionsProvider.EP_NAME);
-      for (FileIndentOptionsProvider provider : providers) {
+
+      boolean committedDocumentNeeded = false;
+      for (FileIndentOptionsProvider provider : Extensions.getExtensions(FileIndentOptionsProvider.EP_NAME)) {
         if (!isFullReformat || provider.useOnFullReformat()) {
+          committedDocumentNeeded |= provider instanceof ProviderForCommittedDocument;
           IndentOptions indentOptions = provider.getIndentOptions(this, file);
           if (indentOptions != null) {
             if (providerProcessor != null) {
@@ -653,10 +655,27 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
           }
         }
       }
-      return getIndentOptions(file.getFileType());
+
+      IndentOptions options = getIndentOptions(file.getFileType());
+      if (committedDocumentNeeded) {
+        markOptionsInaccurateIfDocumentUncommitted(options, file);
+      }
+      return options;
     }
     else
       return OTHER_INDENT_OPTIONS;
+  }
+
+  private static void markOptionsInaccurateIfDocumentUncommitted(@NotNull IndentOptions options, @NotNull PsiFile file) {
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
+    Document document = manager.getDocument(file);
+    if (document != null && !manager.isCommitted(document)) {
+      options.setRecalculateForCommittedDocument(true);
+    }
+  }
+
+  public static boolean isRecalculateForCommittedDocument(@NotNull IndentOptions options) {
+    return options.isRecalculateForCommittedDocument();
   }
 
   private static boolean isFileFullyCoveredByRange(@NotNull PsiFile file, @Nullable TextRange formatRange) {

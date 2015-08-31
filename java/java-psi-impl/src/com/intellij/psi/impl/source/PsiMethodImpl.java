@@ -262,6 +262,9 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   public PsiDocComment getDocComment() {
+    final PsiMethodStub stub = getStub();
+    if (stub != null && !stub.hasDocComment()) return null;
+
     return (PsiDocComment)getNode().findChildByRoleAsPsiElement(ChildRole.DOC_COMMENT);
   }
 

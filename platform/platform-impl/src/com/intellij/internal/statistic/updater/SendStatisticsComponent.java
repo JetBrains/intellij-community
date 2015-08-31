@@ -15,15 +15,18 @@
  */
 package com.intellij.internal.statistic.updater;
 
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.internal.statistic.StatisticsUploadAssistant;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.connect.StatisticsServiceEP;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,10 +51,21 @@ public class SendStatisticsComponent implements ApplicationComponent {
   }
 
   private void runStatisticsService() {
-    StatisticsService statisticsService = StatisticsUploadAssistant.getStatisticsService();
+    final StatisticsService statisticsService = StatisticsUploadAssistant.getStatisticsService();
 
-    if (StatisticsUploadAssistant.showNotification()) {
-      StatisticsNotificationManager.showNotification(statisticsService);
+    if (StatisticsUploadAssistant.isShouldShowNotification()) {
+      Application app = ApplicationManager.getApplication();
+      app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+        @Override
+        public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+          myAlarm.addRequest(new Runnable() {
+            @Override
+            public void run() {
+              StatisticsNotificationManager.showNotification(statisticsService);
+            }
+          }, 30 * 1000);
+        }
+      });
     }
     else if (StatisticsUploadAssistant.isSendAllowed() && StatisticsUploadAssistant.isTimeToSend()) {
       StatisticsService serviceToUse = null;

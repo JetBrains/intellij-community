@@ -34,7 +34,6 @@ import com.intellij.openapi.externalSystem.view.ModuleNode;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -56,7 +55,7 @@ public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
   public void setSelected(AnActionEvent e, boolean state) {
     final ProjectSystemId projectSystemId = getSystemId(e);
     final ExternalSystemNode<ExternalConfigPathAware> projectNode = getProjectNode(e);
-    if (projectNode == null || projectNode.getData() == null) return;
+    if (projectSystemId == null || projectNode == null || projectNode.getData() == null) return;
 
     projectNode.setIgnored(state);
 
@@ -89,7 +88,8 @@ public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
   @Override
   public boolean isSelected(AnActionEvent e) {
     boolean selected = super.isSelected(e);
-    final String systemIdName = ObjectUtils.notNull(getSystemId(e).getReadableName(), "external");
+    ProjectSystemId systemId = getSystemId(e);
+    final String systemIdName = systemId != null ? systemId.getReadableName() : "external";
     if (selected) {
       setText(e, ExternalSystemBundle.message("action.unignore.external.project.text", systemIdName));
       setDescription(e, ExternalSystemBundle.message("action.unignore.external.project.description", systemIdName));

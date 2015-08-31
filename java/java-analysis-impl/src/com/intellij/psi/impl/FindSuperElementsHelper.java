@@ -76,18 +76,22 @@ public class FindSuperElementsHelper {
     if (!hasSubClass) {
       return null;
     }
-    final Collection<PsiClass> checkedInterfaces = new THashSet<PsiClass>();
+    final Collection<PsiAnchor> checkedInterfaces = new THashSet<PsiAnchor>();
     final PsiMethod[] result = new PsiMethod[1];
-    ClassInheritorsSearch.search(containingClass, true).forEach(new Processor<PsiClass>() {
+    ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), true, true, false).forEach(new Processor<PsiClass>() {
       @Override
       public boolean process(PsiClass inheritor) {
         for (PsiClassType interfaceType : inheritor.getImplementsListTypes()) {
           PsiClassType.ClassResolveResult resolved = interfaceType.resolveGenerics();
           PsiClass anInterface = resolved.getElement();
-          if (anInterface == null || !checkedInterfaces.add(anInterface)) continue;
+          if (anInterface == null || !checkedInterfaces.add(PsiAnchor.create(anInterface))) continue;
           for (PsiMethod superMethod : anInterface.findMethodsByName(method.getName(), true)) {
             PsiClass superInterface = superMethod.getContainingClass();
             if (superInterface == null) {
+              continue;
+            }
+            if (containingClass.isInheritor(superInterface, true)) {
+              // if containingClass implements the superInterface then it's not a sibling inheritance but a pretty boring the usual one
               continue;
             }
 
@@ -100,10 +104,11 @@ public class FindSuperElementsHelper {
             final MethodSignature derivedSignature = method.getSignature(PsiSubstitutor.EMPTY);
             boolean isOverridden = MethodSignatureUtil.isSubsignature(superSignature, derivedSignature);
 
-            if (isOverridden) {
-              result[0] = superMethod;
-              return false;
+            if (!isOverridden) {
+              continue;
             }
+            result[0] = superMethod;
+            return false;
           }
         }
         return true;

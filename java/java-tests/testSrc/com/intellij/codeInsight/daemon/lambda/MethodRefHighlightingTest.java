@@ -106,6 +106,10 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIntersectionTypesInReceiverPosition() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

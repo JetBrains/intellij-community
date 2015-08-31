@@ -50,6 +50,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions(
         "RIGHT_MARGIN",
+        "WRAP_ON_TYPING",
         "KEEP_LINE_BREAKS",
         "KEEP_FIRST_COLUMN_COMMENT",
         "KEEP_CONTROL_STATEMENT_IN_ONE_LINE",

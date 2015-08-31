@@ -15,19 +15,19 @@
  */
 package com.siyeh.ipp.exceptions;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.intellij.lang.annotations.Language;
+import com.siyeh.ipp.IPPTestCase;
 
 /**
+ * @see MergeNestedTryStatementsIntention
  * @author Bas Leijdekkers
  */
-public class MergeNestedTryStatementsIntentionTest extends LightCodeInsightFixtureTestCase {
+public class MergeNestedTryStatementsIntentionTest extends IPPTestCase {
   public void testSimple() {
     doTest(
       "import java.io.*;\n" +
       "class C {\n" +
       "    void foo(File file1, File file2) throws IOException {\n" +
-      "        /*_*/try (FileInputStream in = new FileInputStream(file1)) {\n" +
+      "        /*_Merge nested 'try' statements*/try (FileInputStream in = new FileInputStream(file1)) {\n" +
       "            try (FileOutputStream out = new FileOutputStream(file2)) {\n" +
       "                System.out.println(in + \", \" + out);\n" +
       "            }\n" +
@@ -50,7 +50,7 @@ public class MergeNestedTryStatementsIntentionTest extends LightCodeInsightFixtu
       "import java.io.*;\n" +
       "class C {\n" +
       "    void foo(File file) {\n" +
-      "        /*_*/try {\n" +
+      "        /*_Merge nested 'try' statements*/try {\n" +
       "            try (InputStreamReader r = new InputStreamReader(new FileInputStream(file), \"utf-8\")) {\n" +
       "              System.out.println(r);\n" +
       "            }\n" +
@@ -78,7 +78,7 @@ public class MergeNestedTryStatementsIntentionTest extends LightCodeInsightFixtu
       "import java.io.*;\n" +
       "class C {\n" +
       "    void foo(File file1) {\n" +
-      "        /*_*/try {\n" +
+      "        /*_Merge nested 'try' statements*/try {\n" +
       "            try {\n" +
       "                FileInputStream in = new FileInputStream(file1);\n" +
       "            } catch (FileNotFoundException e) {\n" +
@@ -110,7 +110,7 @@ public class MergeNestedTryStatementsIntentionTest extends LightCodeInsightFixtu
       "class C {\n" +
       "    void m() throws Exception {\n" +
       "        Reader r1 = new StringReader();\n" +
-      "        /*_*/try (r1) {\n" +
+      "        /*_Merge nested 'try' statements*/try (r1) {\n" +
       "            try (Reader r2 = new StringReader()) {\n" +
       "                System.out.println(r1 + \", \" + r2);\n" +
       "            }\n" +
@@ -127,11 +127,5 @@ public class MergeNestedTryStatementsIntentionTest extends LightCodeInsightFixtu
       "        }\n" +
       "    }\n" +
       "}");
-  }
-
-  private void doTest(@Language("JAVA") String before, @Language("JAVA") String after) {
-    myFixture.configureByText("a.java", before.replace("/*_*/", "<caret>"));
-    myFixture.launchAction(myFixture.findSingleIntention(new MergeNestedTryStatementsIntention().getText()));
-    myFixture.checkResult(after);
   }
 }

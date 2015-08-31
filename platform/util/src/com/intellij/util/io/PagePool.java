@@ -77,8 +77,8 @@ public class PagePool {
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int finalization_queue_hits = 0;
 
   public static final PagePool SHARED = new PagePool(
-    SystemProperties.getIntProperty("idea.io.protected.pool.size", 64), // 64 * 32 = 2M
-    SystemProperties.getIntProperty("idea.io.probatonal.pool.size", 64)
+    SystemProperties.getIntProperty("idea.io.protected.pool.size", 256), // 256 * 8 = 2M
+    SystemProperties.getIntProperty("idea.io.probatonal.pool.size", 256)
   );
 
   private RandomAccessDataFile lastOwner = null;

@@ -111,6 +111,10 @@ public class EventDispatcher<T extends EventListener> {
     myListeners.add(listener);
   }
 
+  /**
+   * CAUTION: do not use in pair with {@link #removeListener(EventListener)}: a memory leak can occur.
+   * In case a listener is removed, it's disposable stays in disposable hierarchy, preventing the listener from being gc'ed.
+   */
   public void addListener(@NotNull final T listener, @NotNull Disposable parentDisposable) {
     addListener(listener);
     Disposer.register(parentDisposable, new Disposable() {

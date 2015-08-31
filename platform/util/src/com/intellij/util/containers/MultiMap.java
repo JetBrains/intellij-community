@@ -387,6 +387,11 @@ public class MultiMap<K, V> implements Serializable {
     return myMap.toString();
   }
 
+  @SuppressWarnings("unchecked")
+  public static <K, V> MultiMap<K, V> empty() {
+    return EMPTY;
+  }
+
   private static class EmptyMap extends MultiMap {
     @NotNull
     @Override

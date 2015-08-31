@@ -52,6 +52,7 @@ import static com.intellij.util.containers.ContainerUtil.newTroveSet;
  */
 public class RefreshWorker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker");
+  private static final Logger LOG_ATTRIBUTES = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker_Attributes");
 
   private final boolean myIsRecursive;
   private final Queue<Pair<NewVirtualFile, FileAttributes>> myRefreshQueue = new Queue<Pair<NewVirtualFile, FileAttributes>>(100);
@@ -145,6 +146,9 @@ public class RefreshWorker {
 
       boolean currentWritable = persistence.isWritable(file);
       boolean upToDateWritable = attributes.isWritable();
+      if (LOG_ATTRIBUTES.isDebugEnabled()) {
+        LOG_ATTRIBUTES.debug("file=" + file + " writable vfs=" + file.isWritable() + " persistence=" + currentWritable + " real=" + upToDateWritable);
+      }
       if (currentWritable != upToDateWritable) {
         scheduleAttributeChange(file, VirtualFile.PROP_WRITABLE, currentWritable, upToDateWritable);
       }
@@ -198,7 +202,7 @@ public class RefreshWorker {
       if (!fs.isCaseSensitive()) {
         actualNames = new OpenTHashSet<String>(strategy, upToDateNames);
       }
-      debug(LOG, "current=%s +%s -%s", currentNames, newNames, deletedNames);
+      debug(LOG, "current=%s +%s -%s", Arrays.toString(currentNames), newNames, deletedNames);
 
       List<Pair<String, FileAttributes>> addedMap = ContainerUtil.newArrayListWithCapacity(newNames.size());
       for (String name : newNames) {

@@ -507,7 +507,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     if (!vcsManager.hasActiveVcss()) return;
 
     final VcsInvalidated invalidated = myDirtyScopeManager.retrieveScopes();
-    if (checkScopeIsEmpty(invalidated)) return;
+    if (checkScopeIsEmpty(invalidated)) {
+      myDirtyScopeManager.changesProcessed();
+      return;
+    }
 
     final boolean wasEverythingDirty = invalidated.isEverythingDirty();
     final List<VcsDirtyScope> scopes = invalidated.getScopes();

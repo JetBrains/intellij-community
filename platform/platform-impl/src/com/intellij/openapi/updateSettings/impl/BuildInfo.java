@@ -35,6 +35,7 @@ import java.util.Locale;
  */
 public class BuildInfo implements Comparable<BuildInfo> {
   private final BuildNumber myNumber;
+  private final BuildNumber myApiVersion;
   private final String myVersion;
   private final String myMessage;
   /**
@@ -50,6 +51,15 @@ public class BuildInfo implements Comparable<BuildInfo> {
 
   public BuildInfo(Element node) {
     myNumber = BuildNumber.fromString(node.getAttributeValue("number"));
+
+    String apiVersion = node.getAttributeValue("apiVersion");
+    if (apiVersion != null) {
+      myApiVersion = BuildNumber.fromString(apiVersion, myNumber.getProductCode());
+    }
+    else {
+      myApiVersion = myNumber;
+    }
+
     myVersion = node.getAttributeValue("version");
 
     Date releaseDate = null;
@@ -84,6 +94,10 @@ public class BuildInfo implements Comparable<BuildInfo> {
 
   public BuildNumber getNumber() {
     return myNumber;
+  }
+
+  public BuildNumber getApiVersion() {
+    return myApiVersion;
   }
 
   public String getVersion() {

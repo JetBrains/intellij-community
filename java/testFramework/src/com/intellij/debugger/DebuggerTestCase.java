@@ -92,6 +92,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       assertNull(DebuggerManagerEx.getInstanceEx(myProject).getDebugProcess(getDebugProcess().getProcessHandler()));
       myDebuggerSession = null;
     }
+    throwExceptionsIfAny();
     checkTestOutput();
   }
 

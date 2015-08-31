@@ -14,6 +14,7 @@ import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -93,10 +94,12 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
     return output;
   }
 
-  protected Library createLibrary(final String name, final VirtualFile classesRoot, final VirtualFile sourceRoot) {
+  protected Library createLibrary(final String name, final @Nullable VirtualFile classesRoot, final @Nullable VirtualFile sourceRoot) {
     final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary(name);
     final Library.ModifiableModel model = library.getModifiableModel();
-    model.addRoot(classesRoot, OrderRootType.CLASSES);
+    if (classesRoot != null) {
+      model.addRoot(classesRoot, OrderRootType.CLASSES);
+    }
     if (sourceRoot != null) {
       model.addRoot(sourceRoot, OrderRootType.SOURCES);
     }

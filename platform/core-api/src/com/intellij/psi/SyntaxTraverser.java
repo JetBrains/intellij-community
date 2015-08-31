@@ -15,10 +15,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import static com.intellij.openapi.util.Conditions.compose;
+
 /**
  * @author gregsh
  */
-public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser<T>> implements Iterable<T>, UserDataHolder {
+public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser<T>> implements UserDataHolder {
 
   @NotNull
   public static ApiEx<PsiElement> psiApi() {
@@ -46,6 +48,11 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   }
 
   @NotNull
+  public static SyntaxTraverser<PsiElement> psiTraverser(@Nullable PsiElement root) {
+    return psiTraverser().withRoot(root);
+  }
+
+  @NotNull
   public static SyntaxTraverser<PsiElement> revPsiTraverser() {
     return new SyntaxTraverser<PsiElement>(psiApiReversed(), null);
   }
@@ -53,6 +60,11 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   @NotNull
   public static SyntaxTraverser<ASTNode> astTraverser() {
     return new SyntaxTraverser<ASTNode>(astApi(), null);
+  }
+
+  @NotNull
+  public static SyntaxTraverser<ASTNode> astTraverser(@Nullable ASTNode root) {
+    return astTraverser().withRoot(root);
   }
 
   @NotNull
@@ -96,12 +108,12 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
 
   @NotNull
   public SyntaxTraverser<T> expandTypes(@NotNull Condition<? super IElementType> condition) {
-    return super.expand(Conditions.compose(api.TO_TYPE(), condition));
+    return super.expand(compose(api.TO_TYPE(), condition));
   }
 
   @NotNull
   public SyntaxTraverser<T> filterTypes(@NotNull Condition<? super IElementType> condition) {
-    return super.filter(Conditions.compose(api.TO_TYPE(), condition));
+    return super.filter(compose(api.TO_TYPE(), condition));
   }
 
   @Nullable
@@ -124,7 +136,6 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
       }
     });
   }
-
 
   public abstract static class Api<T> implements Function<T, Iterable<? extends T>> {
     @NotNull

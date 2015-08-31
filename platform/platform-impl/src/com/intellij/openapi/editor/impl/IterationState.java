@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
@@ -504,14 +503,14 @@ public final class IterationState {
       TextAttributes attrs = cachedAttributes.get(i);
 
       if (fore == null) {
-        fore = ifDiffers(attrs.getForegroundColor(), myDefaultForeground);
+        fore = attrs.getForegroundColor();
       }
 
       if (back == null) {
         if (isInSelection && i == selectionAttributesIndex || !isInSelection && i >= selectionAttributesIndex) {
           selectionBackgroundIsPotentiallyVisible = true;
         }
-        back = ifDiffers(attrs.getBackgroundColor(), myDefaultBackground);
+        back = attrs.getBackgroundColor();
       }
 
       if (fontType == Font.PLAIN) {
@@ -539,11 +538,6 @@ public final class IterationState {
       myCurrentLineHasVirtualSelection = false;
       myCurrentPastLineEndBackgroundSegment = 0;
     }
-  }
-
-  @Nullable
-  private static Color ifDiffers(final Color c1, final Color c2) {
-    return Comparing.equal(c1, c2) ? null : c1;
   }
 
   public boolean atEnd() {

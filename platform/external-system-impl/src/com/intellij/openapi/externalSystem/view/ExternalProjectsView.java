@@ -51,6 +51,8 @@ public interface ExternalProjectsView {
 
   boolean getGroupTasks();
 
+  boolean useTasksNode();
+
   ProjectSystemId getSystemId();
 
   void handleDoubleClickOrEnter(@NotNull ExternalSystemNode node, @Nullable String actionId, InputEvent inputEvent);

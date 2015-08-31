@@ -15,16 +15,19 @@
  */
 package com.siyeh.ipp.exceptions;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.intellij.lang.annotations.Language;
+import com.siyeh.ipp.IPPTestCase;
 
-public class ReplaceArmWithTryFinallyIntentionTest extends LightCodeInsightFixtureTestCase {
+/**
+ * @see ReplaceArmWithTryFinallyIntention
+ */
+public class ReplaceArmWithTryFinallyIntentionTest extends IPPTestCase {
+
   public void testSimple() {
     doTest(
       "import java.io.*;\n" +
       "class C {\n" +
       "    void m() throws Exception {\n" +
-      "        /*_*/try (Reader r = new StringReader()) {\n" +
+      "        /*_Replace 'try-with-resources' with 'try finally'*/try (Reader r = new StringReader()) {\n" +
       "            System.out.println(r);\n" +
       "        }\n" +
       "    }\n" +
@@ -49,7 +52,7 @@ public class ReplaceArmWithTryFinallyIntentionTest extends LightCodeInsightFixtu
       "class C {\n" +
       "    void m() throws Exception {\n" +
       "        Reader r1 = new StringReader();\n" +
-      "        /*_*/try (r1; Reader r2 = new StringReader()) {\n" +
+      "        /*_Replace 'try-with-resources' with 'try finally'*/try (r1; Reader r2 = new StringReader()) {\n" +
       "            System.out.println(r1 + \", \" + r2);\n" +
       "        }\n" +
       "    }\n" +
@@ -73,9 +76,68 @@ public class ReplaceArmWithTryFinallyIntentionTest extends LightCodeInsightFixtu
       "}");
   }
 
-  private void doTest(@Language("JAVA") String before, @Language("JAVA") String after) {
-    myFixture.configureByText("a.java", before.replace("/*_*/", "<caret>"));
-    myFixture.launchAction(myFixture.findSingleIntention(new ReplaceArmWithTryFinallyIntention().getText()));
-    myFixture.checkResult(after);
+  public void testArmWithFinally() {
+    doTest(
+      "import java.io.*;\n" +
+      "class C {\n" +
+      "    void m() throws Exception {\n" +
+      "        /*_Replace 'try-with-resources' with 'try finally'*/try (Reader r = new StringReader()) {\n" +
+      "            System.out.println(r);\n" +
+      "        } finally {\n" +
+      "          System.out.println();\n" +
+      "        }\n" +
+      "    }\n" +
+      "}",
+
+      "import java.io.*;\n" +
+      "class C {\n" +
+      "    void m() throws Exception {\n" +
+      "        try {\n" +
+      "            Reader r = new StringReader();\n" +
+      "            try {\n" +
+      "                System.out.println(r);\n" +
+      "            } finally {\n" +
+      "                r.close();\n" +
+      "            }\n" +
+      "        } finally {\n" +
+      "          System.out.println();\n" +
+      "        }\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testMultipleResourcesWithCatch() {
+    doTest(
+      "import java.io.*;\n" +
+      "class C {\n" +
+      "    void m(StringReader r1, StringReader r2) {\n" +
+      "        try/*_Replace 'try-with-resources' with 'try finally'*/ (r1; r2) {\n" +
+      "            System.out.println(r1);\n" +
+      "        } catch (RuntimeException e) {\n" +
+      "            e.printStackTrace();\n" +
+      "        }\n" +
+      "    }\n" +
+      "}\n",
+
+      "import java.io.*;\n" +
+      "class C {\n" +
+      "    void m(StringReader r1, StringReader r2) {\n" +
+      "        try {\n" +
+      "            try {\n" +
+      "                try {\n" +
+      "                    System.out.println(r1);\n" +
+      "                } finally {\n" +
+      "                    r2.close();\n" +
+      "                }\n" +
+      "            } finally {\n" +
+      "                r1.close();\n" +
+      "            }\n" +
+      "        } catch (RuntimeException e) {\n" +
+      "            e.printStackTrace();\n" +
+      "        }\n" +
+      "    }\n" +
+      "}\n"
+    );
   }
 }

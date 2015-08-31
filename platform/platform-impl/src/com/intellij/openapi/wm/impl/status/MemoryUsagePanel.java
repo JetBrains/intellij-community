@@ -48,12 +48,8 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
     long maxMemory = Math.min(Runtime.getRuntime().maxMemory() / MEGABYTE, 9999);
     SAMPLE_STRING = maxMemory + " of " + maxMemory + "M ";
   }
-  private static final int HEIGHT = 16;
-  private static final Color USED_COLOR_1 = new JBColor(Gray._185, Gray._150);
-  private static final Color USED_COLOR_2 = new JBColor(Gray._145, Gray._120);
-  private static final Color UNUSED_COLOR_1 = new JBColor(Gray._200.withAlpha(100), Gray._120);
-  private static final Color UNUSED_COLOR_2 = new JBColor(Gray._150.withAlpha(130), Gray._100);
-  private static final Color UNUSED_COLOR_3 = Gray._175;
+  private static final Color USED_COLOR = new JBColor(Gray._185, Gray._110);
+  private static final Color UNUSED_COLOR = new JBColor(Gray._200.withAlpha(100), Gray._90);
 
   private long myLastTotal = -1;
   private long myLastUsed = -1;
@@ -162,30 +158,21 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       final int totalBarLength = size.width - insets.left - insets.right;
       final int usedBarLength = (int)(totalBarLength * usedMem / maxMem);
       final int unusedBarLength = (int)(totalBarLength * unusedMem / maxMem);
-      final int barHeight = Math.max(JBUI.scale(HEIGHT), getFont().getSize() + 2);
+      final int barHeight = Math.max(size.height, getFont().getSize() + 2);
       final int yOffset = (size.height - barHeight) / 2;
       final int xOffset = insets.left;
 
       // background
-      if (!UIUtil.isUnderAquaLookAndFeel()) {
-        g2.setColor(UIUtil.getControlColor());
-      }
-      else {
-        g2.setPaint(UIUtil.getGradientPaint(0, 0, new JBColor(Gray._190, Gray._120), 0, barHeight, new JBColor(Gray._230, Gray._160)));
-      }
-      g2.fillRect(xOffset, yOffset, totalBarLength, barHeight);
+      g2.setColor(UIUtil.getPanelBackground());
+      g2.fillRect(0, 0, size.width, size.height);
 
       // gauge (used)
-      setGradient(g2, pressed, barHeight, USED_COLOR_1, USED_COLOR_2);
+      g2.setColor(USED_COLOR);
       g2.fillRect(xOffset, yOffset, usedBarLength, barHeight);
 
       // gauge (unused)
-      setGradient(g2, pressed, barHeight, UNUSED_COLOR_1, UNUSED_COLOR_2);
+      g2.setColor(UNUSED_COLOR);
       g2.fillRect(xOffset + usedBarLength, yOffset, unusedBarLength, barHeight);
-      if (!UIUtil.isUnderDarcula()) {
-        g2.setColor(UNUSED_COLOR_3);
-        g2.drawLine(xOffset + usedBarLength + unusedBarLength, yOffset, xOffset + usedBarLength + unusedBarLength, barHeight);
-      }
 
       // label
       g2.setFont(getFont());
@@ -196,25 +183,21 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       final int infoWidth = fontMetrics.charsWidth(info.toCharArray(), 0, info.length());
       final int infoHeight = fontMetrics.getAscent();
       UISettings.setupAntialiasing(g2);
-      g2.setColor(UIUtil.getLabelForeground());
+      final Color fg = pressed ? UIUtil.getLabelDisabledForeground() : JBColor.foreground();
+      g2.setColor(fg);
       g2.drawString(info, xOffset + (totalBarLength - infoWidth) / 2, yOffset + infoHeight + (barHeight - infoHeight) / 2 - 1);
 
       g2.dispose();
     }
 
     UIUtil.drawImage(g, myBufferedImage, 0, 0, null);
-  }
-
-  private static void setGradient(Graphics2D g2, boolean invert, int height, Color start, Color end) {
-    if (UIUtil.isUnderDarcula()) {
-      start = start.darker();
-      end = end.darker();
-    }
-    if (invert) {
-      g2.setPaint(UIUtil.getGradientPaint(0, 0, end, 0, height, start));
-    }
-    else {
-      g2.setPaint(UIUtil.getGradientPaint(0, 0, start, 0, height, end));
+    if (UIUtil.isRetina() && !UIUtil.isUnderDarcula()) {
+      Graphics2D g2 = (Graphics2D)g.create(0, 0, getWidth(), getHeight());
+      g2.scale(0.5, 0.5);
+      g2.setColor(Gray.x91);
+      g2.drawLine(0,0,2 * getWidth(), 0);
+      g2.scale(1, 1);
+      g2.dispose();
     }
   }
 

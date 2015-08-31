@@ -7,10 +7,22 @@
 
   <extensionPoints>
     <extensionPoint name="myEP" interface="SomeInterface">
-    <with attribute="attributeName" implements="SomeImplements"/>
+      <with attribute="attributeName" implements="SomeImplements"/>
     </extensionPoint>
 
     <extensionPoint qualifiedName="qualifiedName" beanClass="BeanClass"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="defaultExtensionNs" xmlns="extensionXmlNs"/>
+
+  <actions>
+    <action id="actionId" text="actionText" class="actionClass"/>
+    <group id="groupId">
+      <action id="groupAction" text="groupActionText" class="actionClass"/>
+      <group id="nestedGroup">
+        <action id="nestedGroupActionId" text="nestedGroupActionText" class="actionClass"/>
+      </group>
+    </group>
+  </actions>
 
 </idea-plugin>

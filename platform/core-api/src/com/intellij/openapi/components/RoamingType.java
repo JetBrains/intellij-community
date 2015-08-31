@@ -28,13 +28,13 @@ public enum RoamingType {
   /**
    * Default, shared.
    */
-  PER_USER,
+  DEFAULT,
 
   @Deprecated
   /**
-   * Use {@link #PER_USER} instead
+   * Use {@link #DEFAULT} instead
    */
-  GLOBAL,
+  PER_USER,
 
   @Deprecated
   /**

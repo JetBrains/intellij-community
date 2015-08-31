@@ -29,7 +29,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
   private final String myText;
   private final String myClassName;
   private final PsiElement myContext;
-  private final GlobalSearchScope myResolveScope;
+  @NotNull private final GlobalSearchScope myResolveScope;
   private final PsiClass myRefClass;
   private final PsiSubstitutor mySubstitutor;
 
@@ -50,14 +50,13 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     this (manager, text, className, null, resolveScope);
   }
 
-  public LightClassReference(@NotNull PsiManager manager, @NotNull @NonNls String text, @NotNull @NonNls String className, PsiSubstitutor substitutor, PsiElement context) {
+  public LightClassReference(@NotNull PsiManager manager, @NotNull @NonNls String text, @NotNull @NonNls String className, PsiSubstitutor substitutor, @NotNull PsiElement context) {
     super(manager, JavaLanguage.INSTANCE);
     myText = text;
     myClassName = className;
     mySubstitutor = substitutor;
     myContext = context;
-
-    myResolveScope = null;
+    myResolveScope = context.getResolveScope();
     myRefClass = null;
   }
 
@@ -69,8 +68,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     super(manager, JavaLanguage.INSTANCE);
     myText = text;
     myRefClass = refClass;
-
-    myResolveScope = null;
+    myResolveScope = refClass.getResolveScope();
     myClassName = null;
     myContext = null;
     mySubstitutor = substitutor;
@@ -179,11 +177,11 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
   @NotNull
   public String getCanonicalText() {
     String name = getQualifiedName();
-    if (name == null) return null;
+    if (name == null) return "";
     PsiType[] types = getTypeParameters();
     if (types.length == 0) return name;
 
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     buf.append(name);
     buf.append('<');
     for (int i = 0; i < types.length; i++) {
@@ -281,5 +279,11 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
   @Override
   public boolean isQualified() {
     return false;
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getResolveScope() {
+    return myResolveScope;
   }
 }

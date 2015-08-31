@@ -20,7 +20,6 @@ import com.google.common.collect.Iterables;
 import com.intellij.execution.ExecutionException;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -28,6 +27,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
@@ -440,13 +441,17 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
       @Override
       public void onSuccess() {
         if (myPath != null) {
-          final Application application = ApplicationManager.getApplication();
-          application.invokeLater(new Runnable() {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              setupVirtualEnvSdk(allSdks, myPath, associateWithProject(), callback);
+              DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+                @Override
+                public void run() {
+                  setupVirtualEnvSdk(allSdks, myPath, associateWithProject(), callback);
+                }
+              });
             }
-          }, ModalityState.any());
+          });
         }
       }
     };

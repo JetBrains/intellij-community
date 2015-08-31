@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myContentPane" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="537" height="57"/>
+      <xy x="20" y="20" width="537" height="60"/>
     </constraints>
     <properties/>
     <border type="etched" title-resource-bundle="messages/XDebuggerBundle" title-key="suspend.policy.panel.title"/>
@@ -39,14 +39,32 @@
           <text resource-bundle="messages/XDebuggerBundle" key="suspend.policy.panel.suspend"/>
         </properties>
       </component>
-      <component id="ac069" class="javax.swing.JButton" binding="myMakeDefaultButton" default-binding="true">
+      <grid id="b5b11" binding="myMakeDefaultPanel" layout-manager="CardLayout" hgap="0" vgap="0">
         <constraints>
-          <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties>
-          <text resource-bundle="messages/XDebuggerBundle" key="suspend.policy.panel.makeDefault"/>
-        </properties>
-      </component>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="ac069" class="javax.swing.JButton" binding="myMakeDefaultButton" default-binding="true">
+            <constraints>
+              <card name="Show"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/XDebuggerBundle" key="suspend.policy.panel.makeDefault"/>
+            </properties>
+          </component>
+          <grid id="8c1b4" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <card name="Hide"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
+          </grid>
+        </children>
+      </grid>
     </children>
   </grid>
   <buttonGroups>

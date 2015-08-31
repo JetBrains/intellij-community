@@ -36,8 +36,6 @@ import java.util.List;
 
 public class HgAnnotationProvider implements AnnotationProvider {
 
-  private static final int DEFAULT_LIMIT = 500;
-
   @NotNull private final Project myProject;
 
   public HgAnnotationProvider(@NotNull Project project) {
@@ -63,7 +61,7 @@ public class HgAnnotationProvider implements AnnotationProvider {
     try {
       HgLogCommand logCommand = new HgLogCommand(myProject);
       logCommand.setFollowCopies(true);
-      logResult = logCommand.execute(fileToAnnotate, DEFAULT_LIMIT, false);
+      logResult = logCommand.execute(fileToAnnotate, -1, false);
     }
     catch (HgCommandException e) {
       throw new VcsException("Can not annotate, " + HgVcsMessages.message("hg4idea.error.log.command.execution"), e);

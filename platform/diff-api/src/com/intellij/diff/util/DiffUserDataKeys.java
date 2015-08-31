@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 
+import javax.swing.*;
 import java.util.List;
 
 public interface DiffUserDataKeys {
@@ -44,12 +45,15 @@ public interface DiffUserDataKeys {
   Key<Boolean> DO_NOT_IGNORE_WHITESPACES = Key.create("Diff.DoNotIgnoreWhitespaces");
   Key<String> DIALOG_GROUP_KEY = Key.create("Diff.DialogGroupKey");
 
+  Key<Boolean> DO_NOT_CHANGE_WINDOW_TITLE = Key.create("Diff.DoNotChangeWindowTitle");
+
   //
   // DiffContext / DiffRequest
   //
   // Both data from DiffContext / DiffRequest will be used. Data from DiffRequest will be used first.
   //
 
+  Key<List<JComponent>> NOTIFICATIONS = Key.create("Diff.Notifications");
   Key<List<AnAction>> CONTEXT_ACTIONS = Key.create("Diff.ContextActions");
   Key<DataProvider> DATA_PROVIDER = Key.create("Diff.DataProvider");
   Key<Boolean> GO_TO_SOURCE_DISABLE = Key.create("Diff.GoToSourceDisable");

@@ -14,14 +14,15 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.JBColor;
@@ -35,6 +36,7 @@ import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.run.StudyExecutor;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
+import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,25 +107,24 @@ public class StudyUtils {
   public static void updateAction(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
-    presentation.setVisible(false);
     final Project project = e.getProject();
     if (project != null) {
-      final FileEditor[] editors = FileEditorManager.getInstance(project).getAllEditors();
-      for (FileEditor editor : editors) {
-        if (editor instanceof StudyEditor) {
-          presentation.setEnabled(true);
-          presentation.setVisible(true);
-        }
+      final StudyEditor studyEditor = getSelectedStudyEditor(project);
+      if (studyEditor != null) {
+        presentation.setEnabled(true);
       }
     }
   }
 
-  public static void updateStudyToolWindow(@NotNull final Project project) {
-    ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).
-      getContentManager().removeAllContents(false);
+  public static void updateToolWindows(@NotNull final Project project) {
+    final ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
+    windowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW).getContentManager().removeAllContents(false);
     StudyToolWindowFactory factory = new StudyToolWindowFactory();
-    factory.createToolWindowContent(project, ToolWindowManager.getInstance(project).
-      getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
+    factory.createToolWindowContent(project, windowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
+
+    windowManager.getToolWindow(StudyProgressToolWindowFactory.ID).getContentManager().removeAllContents(false);
+    StudyProgressToolWindowFactory windowFactory = new StudyProgressToolWindowFactory();
+    windowFactory.createToolWindowContent(project, windowManager.getToolWindow(StudyProgressToolWindowFactory.ID));
   }
 
   public static void deleteFile(@NotNull final VirtualFile file) {
@@ -302,5 +303,23 @@ public class StudyUtils {
         });
       }
     }
+  }
+
+  @Nullable
+  public static Document getPatternDocument(@NotNull final TaskFile taskFile, String name) {
+    Task task = taskFile.getTask();
+    String lessonDir = EduNames.LESSON + String.valueOf(task.getLesson().getIndex());
+    String taskDir = EduNames.TASK + String.valueOf(task.getIndex());
+    Course course = task.getLesson().getCourse();
+    File resourceFile = new File(course.getCourseDirectory());
+    if (!resourceFile.exists()) {
+      return  null;
+    }
+    String patternPath = FileUtil.join(resourceFile.getPath(), lessonDir, taskDir, name);
+    VirtualFile patternFile = VfsUtil.findFileByIoFile(new File(patternPath), true);
+    if (patternFile == null) {
+      return null;
+    }
+    return FileDocumentManager.getInstance().getDocument(patternFile);
   }
 }

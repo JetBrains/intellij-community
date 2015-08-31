@@ -50,7 +50,7 @@ public class Extensions {
   }
 
   @NotNull
-  public static ExtensionsArea getArea(@Nullable AreaInstance areaInstance) {
+  public static ExtensionsArea getArea(@Nullable("null means root") AreaInstance areaInstance) {
     if (areaInstance == null) {
       return ourRootArea;
     }
@@ -94,7 +94,7 @@ public class Extensions {
   }
 
   @NotNull
-  public static <T> T[] getExtensions(String extensionPointName, @Nullable AreaInstance areaInstance) {
+  public static <T> T[] getExtensions(String extensionPointName, @Nullable("null means root") AreaInstance areaInstance) {
     ExtensionsArea area = getArea(areaInstance);
     ExtensionPoint<T> extensionPoint = area.getExtensionPoint(extensionPointName);
     return extensionPoint.getExtensions();
@@ -122,7 +122,7 @@ public class Extensions {
     throw new IllegalArgumentException("could not find extension implementation " + extClass);
   }
 
-  public static void instantiateArea(@NonNls @NotNull String areaClass, @NotNull AreaInstance areaInstance, @Nullable AreaInstance parentAreaInstance) {
+  public static void instantiateArea(@NonNls @NotNull String areaClass, @NotNull AreaInstance areaInstance, @Nullable("null means root") AreaInstance parentAreaInstance) {
     AreaClassConfiguration configuration = ourAreaClass2Configuration.get(areaClass);
     if (configuration == null) {
       throw new IllegalArgumentException("Area class is not registered: " + areaClass);

@@ -95,7 +95,8 @@ public class HighlightControlFlowUtil {
     // do not compute constant expressions for if() statement condition
     // see JLS 14.20 Unreachable Statements
     try {
-      final ControlFlow controlFlow = getControlFlowNoConstantEvaluate(codeBlock);
+      AllVariablesControlFlowPolicy policy = AllVariablesControlFlowPolicy.getInstance();
+      final ControlFlow controlFlow = ControlFlowFactory.getInstance(codeBlock.getProject()).getControlFlow(codeBlock, policy, false, false);
       final PsiElement unreachableStatement = ControlFlowUtil.getUnreachableStatement(controlFlow);
       if (unreachableStatement != null) {
         String description = JavaErrorMessages.message("unreachable.statement");

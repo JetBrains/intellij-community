@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,18 @@
 package com.intellij.openapi.command.undo;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class UndoManager {
+  public static final Key<Document> ORIGINAL_DOCUMENT = new Key<Document>("ORIGINAL_DOCUMENT");
 
-  public static UndoManager getInstance(Project project) {
+  public static UndoManager getInstance(@NotNull Project project) {
     return project.getComponent(UndoManager.class);
   }
 

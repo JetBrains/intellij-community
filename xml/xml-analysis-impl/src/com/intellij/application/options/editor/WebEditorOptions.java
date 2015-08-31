@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,11 @@ import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author spleaner
- */
 @State(
   name = "XmlEditorOptions",
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/editor.xml")
 )
 public class WebEditorOptions implements PersistentStateComponent<WebEditorOptions> {
-  private boolean myBreadcrumbsEnabled = true;
-  private boolean myBreadcrumbsEnabledInXml = false;
   private boolean myShowCssColorPreviewInGutter = true;
   private boolean mySelectWholeCssIdentifierOnDoubleClick = true;
   private boolean myShowCssInlineColorPreview = false;
@@ -51,22 +46,6 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public static WebEditorOptions getInstance() {
     return ServiceManager.getService(WebEditorOptions.class);
-  }
-
-  public boolean isBreadcrumbsEnabled() {
-    return myBreadcrumbsEnabled;
-  }
-
-  public void setBreadcrumbsEnabled(boolean b) {
-    myBreadcrumbsEnabled = b;
-  }
-
-  public boolean isBreadcrumbsEnabledInXml() {
-    return myBreadcrumbsEnabledInXml;
-  }
-
-  public void setBreadcrumbsEnabledInXml(boolean b) {
-    myBreadcrumbsEnabledInXml = b;
   }
 
   public boolean isShowCssInlineColorPreview() {

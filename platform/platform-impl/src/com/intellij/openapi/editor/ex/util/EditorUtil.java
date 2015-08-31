@@ -62,6 +62,11 @@ public final class EditorUtil {
   }
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
+    if (editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering) {
+      LogicalPosition lineEndPosition = editor.visualToLogicalPosition(new VisualPosition(line, Integer.MAX_VALUE));
+      int lineEndOffset = editor.logicalPositionToOffset(lineEndPosition);
+      return editor.offsetToVisualPosition(lineEndOffset, true, true).column;
+    }
     Document document = editor.getDocument();
     int lastLine = document.getLineCount() - 1;
     if (lastLine < 0) {
@@ -81,7 +86,7 @@ public final class EditorUtil {
 
     int resultLogLine = Math.min(lastLogLine, lastLine);
     VisualPosition resVisStart = editor.offsetToVisualPosition(document.getLineStartOffset(resultLogLine));
-    VisualPosition resVisEnd = editor.offsetToVisualPosition(document.getLineEndOffset(resultLogLine), true);
+    VisualPosition resVisEnd = editor.offsetToVisualPosition(document.getLineEndOffset(resultLogLine));
 
     // Target logical line is not soft wrap affected.
     if (resVisStart.line == resVisEnd.line) {
@@ -908,6 +913,21 @@ public final class EditorUtil {
     int size = UISettings.getInstance().PRESENTATION_MODE
                ? UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE - 4 : scheme.getEditorFontSize();
     return new Font(scheme.getEditorFontName(), Font.PLAIN, size);
+  }
+
+  /**
+   * Number of virtual soft wrap introduced lines on a current logical line before the visual position that corresponds
+   * to the current logical position.
+   *
+   * @see LogicalPosition#softWrapLinesOnCurrentLogicalLine
+   */
+  public static int getSoftWrapCountAfterLineStart(@NotNull Editor editor, @NotNull LogicalPosition position) {
+    if (position.visualPositionAware) {
+      return position.softWrapLinesOnCurrentLogicalLine;
+    }
+    int startOffset = editor.getDocument().getLineStartOffset(position.line);
+    int endOffset = editor.logicalPositionToOffset(position);
+    return editor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset).size();
   }
 }
 

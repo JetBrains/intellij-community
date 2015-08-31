@@ -19,14 +19,17 @@ package com.intellij.formatting;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 class AlignmentImpl extends Alignment {
-  private static final List<LeafBlockWrapper> EMPTY = Collections.unmodifiableList(new ArrayList<LeafBlockWrapper>(0));
+  private static final List<LeafBlockWrapper> EMPTY = Collections.emptyList();
   private final boolean myAllowBackwardShift;
   private final Anchor myAnchor;
-  private Collection<LeafBlockWrapper> myOffsetRespBlocks = EMPTY;
+  private List<LeafBlockWrapper> myOffsetRespBlocks = EMPTY;
   private AlignmentImpl myParentAlignment;
+  private ProbablyIncreasingLowerboundAlgorithm<LeafBlockWrapper> myOffsetRespBlocksCalculator;
 
   /**
    * Creates new <code>AlignmentImpl</code> object with <code>'false'</code> as <code>'allows backward shift'</code> argument flag.
@@ -45,6 +48,7 @@ class AlignmentImpl extends Alignment {
   AlignmentImpl(boolean allowBackwardShift, @NotNull Anchor anchor) {
     myAllowBackwardShift = allowBackwardShift;
     myAnchor = anchor;
+    myOffsetRespBlocksCalculator = new ProbablyIncreasingLowerboundAlgorithm<LeafBlockWrapper>(myOffsetRespBlocks);
   }
 
   public boolean isAllowBackwardShift() {
@@ -61,7 +65,10 @@ class AlignmentImpl extends Alignment {
   }
 
   public void reset() {
-    if (myOffsetRespBlocks != EMPTY) myOffsetRespBlocks.clear();
+    if (myOffsetRespBlocks != EMPTY) {
+      myOffsetRespBlocks.clear();
+    }
+    myOffsetRespBlocksCalculator.reset();
   }
 
   public void setParent(final Alignment base) {
@@ -105,28 +112,13 @@ class AlignmentImpl extends Alignment {
     if (!continueOffsetResponsibleBlockRetrieval(block)) {
       return null;
     }
+
     LeafBlockWrapper result = null;
-    if (myOffsetRespBlocks != EMPTY) {
-      LeafBlockWrapper firstAlignedBlock = null;
-      LeafBlockWrapper lastAlignedBlock = null;
-      for (final LeafBlockWrapper current : myOffsetRespBlocks) {
-        if (block == null || current.getStartOffset() < block.getStartOffset()) {
-          if (firstAlignedBlock == null || firstAlignedBlock.getStartOffset() > current.getStartOffset()) {
-            firstAlignedBlock = current;
-          }
-          if (lastAlignedBlock == null || lastAlignedBlock.getStartOffset() < current.getStartOffset()) {
-            lastAlignedBlock = current;
-          }
-        }
-      }
-      if (firstAlignedBlock != null) {
-        result = firstAlignedBlock;
-      }
-      else {
-        result = lastAlignedBlock;
-      }
+    final List<LeafBlockWrapper> leftBlocks = myOffsetRespBlocksCalculator.getLeftSubList(block);
+    if (!leftBlocks.isEmpty()) {
+      result = leftBlocks.get(0);
     }
-    
+
     if (result == null && myParentAlignment != null) {
       return myParentAlignment.getOffsetRespBlockBefore(block);
     }
@@ -142,22 +134,14 @@ class AlignmentImpl extends Alignment {
    * @param block   wrapped block to register within the current alignment object
    */
   void setOffsetRespBlock(final LeafBlockWrapper block) {
-    if (myOffsetRespBlocks == EMPTY) myOffsetRespBlocks = new LinkedHashSet<LeafBlockWrapper>(1);
-    myOffsetRespBlocks.add(block);
-  }
-
-  @Nullable
-  private AbstractBlockWrapper getLeftRespNeighbor(@NotNull AbstractBlockWrapper block) {
-    AbstractBlockWrapper nearLeft = null;
-    int distance = Integer.MAX_VALUE;
-    for (AbstractBlockWrapper offsetBlock : myOffsetRespBlocks) if (offsetBlock != null) {
-      int curDistance = block.getStartOffset() - offsetBlock.getStartOffset();
-      if (curDistance < distance && curDistance > 0) {
-        nearLeft = offsetBlock;
-        distance = curDistance;
-      }
+    if (block == null) {
+      return;
     }
-    return nearLeft;
+    if (myOffsetRespBlocks == EMPTY) {
+      myOffsetRespBlocks = new ArrayList<LeafBlockWrapper>(1);
+      myOffsetRespBlocksCalculator.setBlocksList(myOffsetRespBlocks);
+    }
+    myOffsetRespBlocks.add(block);
   }
 
   @NotNull
@@ -193,7 +177,7 @@ class AlignmentImpl extends Alignment {
     }
 
     if (block != null) {
-      AbstractBlockWrapper prevAlignBlock = getLeftRespNeighbor(block);
+      AbstractBlockWrapper prevAlignBlock = myOffsetRespBlocksCalculator.getLeftRespNeighbor(block);
       if (!onDifferentLines(prevAlignBlock, block)) {
         return false;
       }

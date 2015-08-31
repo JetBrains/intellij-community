@@ -40,7 +40,7 @@ public class IntelliJCheckBoxUI extends DarculaCheckBoxUI {
     final int x1 = JBUI.scale(5);
     final int y1 = JBUI.scale(9);
     final int x2 = JBUI.scale(7);
-    final int y2 = JBUI.scale(11);
+    final int y2 = (int)JBUI.scale(11.2f);
     if (enabled) {
       g.setPaint(getShadowColor(true, true));
       g.drawLine(x1, y1, x2, y2);

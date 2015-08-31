@@ -45,10 +45,10 @@ import java.util.List;
 public abstract class TextEditorBasedStructureViewModel implements StructureViewModel, ProvidingTreeModel {
   private final Editor myEditor;
   private final PsiFile myPsiFile;
-  private final Disposable myDisposable = Disposer.newDisposable();
   private final List<FileEditorPositionListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private List<ModelListener> myModelListeners = new ArrayList<ModelListener>(2);
   private CaretAdapter myEditorCaretListener;
+  private Disposable myEditorCaretListenerDisposable;
 
   /**
    * Creates a structure view model instance linked to a text editor displaying the specified
@@ -88,7 +88,8 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   @Override
   public final void addEditorPositionListener(@NotNull FileEditorPositionListener listener) {
     if (myEditor != null && myListeners.isEmpty()) {
-      EditorFactory.getInstance().getEventMulticaster().addCaretListener(myEditorCaretListener, myDisposable);
+      myEditorCaretListenerDisposable = Disposer.newDisposable();
+      EditorFactory.getInstance().getEventMulticaster().addCaretListener(myEditorCaretListener, myEditorCaretListenerDisposable);
     }
     myListeners.add(listener);
   }
@@ -97,13 +98,16 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   public final void removeEditorPositionListener(@NotNull FileEditorPositionListener listener) {
     myListeners.remove(listener);
     if (myEditor != null && myListeners.isEmpty()) {
-      EditorFactory.getInstance().getEventMulticaster().removeCaretListener(myEditorCaretListener);
+      Disposer.dispose(myEditorCaretListenerDisposable);
+      myEditorCaretListenerDisposable = null;
     }
   }
 
   @Override
   public void dispose() {
-    Disposer.dispose(myDisposable);
+    if (myEditorCaretListenerDisposable != null) {
+      Disposer.dispose(myEditorCaretListenerDisposable);
+    }
     myModelListeners.clear();
   }
 

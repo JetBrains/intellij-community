@@ -314,4 +314,22 @@ public interface EditorEx extends Editor {
    * When no mouse-clicks happened return the regular caret offset.
    */
   int getExpectedCaretOffset();
+
+  /**
+   * Sets id of action group what will be used to construct context menu displayed on mouse right button's click. Setting this to 
+   * <code>null</code> disables built-in logic for showing context menu (it can still be achieved by implementing corresponding mouse
+   * event listener).
+   * 
+   * @see #getContextMenuGroupId() 
+   */
+  void setContextMenuGroupId(@Nullable String groupId);
+
+  /**
+   * Returns id of action group what will be used to construct context menu displayed on mouse right button's click. <code>null</code>
+   * value means built-in logic for showing context menu is disabled.
+   * 
+   * @see #setContextMenuGroupId(String)
+   */
+  @Nullable
+  String getContextMenuGroupId();
 }

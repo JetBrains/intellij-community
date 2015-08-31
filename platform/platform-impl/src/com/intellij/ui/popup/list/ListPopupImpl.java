@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.JBListWithHintProvider;
-import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.ClosableByLeftArrow;
@@ -124,7 +124,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     if (listStep instanceof MultiSelectionListPopupStep<?>) {
       int[] indices = ((MultiSelectionListPopupStep)listStep).getDefaultOptionIndices();
       if (indices.length > 0) {
-        ListScrollingUtil.ensureIndexIsVisible(myList, indices[0], 0);
+        ScrollingUtil.ensureIndexIsVisible(myList, indices[0], 0);
         myList.setSelectedIndices(indices);
         selected = true;
       }
@@ -132,7 +132,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     else {
       final int defaultIndex = listStep.getDefaultOptionIndex();
       if (defaultIndex >= 0 && defaultIndex < myList.getModel().getSize()) {
-        ListScrollingUtil.selectItem(myList, defaultIndex);
+        ScrollingUtil.selectItem(myList, defaultIndex);
         selected = true;
       }
     }
@@ -170,7 +170,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
       }
 
       if (mostUsedValue > 0) {
-        ListScrollingUtil.selectItem(myList, mostUsedValue);
+        ScrollingUtil.selectItem(myList, mostUsedValue);
         return true;
       }
     }
@@ -237,7 +237,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     Insets padding = UIUtil.getListViewportPadding();
     myList.setBorder(new EmptyBorder(padding));
 
-    ListScrollingUtil.installActions(myList);
+    ScrollingUtil.installActions(myList);
 
     myList.setCellRenderer(getListElementRenderer());
 
@@ -521,6 +521,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
 
     @Override
     protected void processMouseEvent(MouseEvent e) {
+      if (!isMultiSelectionEnabled() &&
+          (e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0) {
+        // do not toggle selection with ctrl+click event in single-selection mode
+        e.consume();
+      }
       if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) && isOnNextStepButton(e)) {
         e.consume();
       }

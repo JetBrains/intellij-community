@@ -151,7 +151,13 @@ public class VfsData {
 
     Object existingData = segment.myObjectArray.get(offset);
     if (existingData != null) {
-      throw new AssertionError("File already created: " + existingData + "; parentId=" + FSRecords.getParent(id));
+      int parent = FSRecords.getParent(id);
+      String msg = "File already created: " + existingData + "; parentId=" + parent;
+      if (parent > 0) {
+        msg += "; parent.name=" + FSRecords.getName(parent);
+        msg += "; parent.children=" + Arrays.toString(FSRecords.listAll(id));
+      }
+      throw new AssertionError(msg);
     }
     segment.myObjectArray.set(offset, data);
   }
@@ -199,8 +205,8 @@ public class VfsData {
       myObjectArray.set(getOffset(fileId), map);
     }
 
-    KeyFMap getUserMap(VirtualFileSystemEntry file) {
-      Object o = myObjectArray.get(getOffset(Math.abs(file.getId())));
+    KeyFMap getUserMap(VirtualFileSystemEntry file, int id) {
+      Object o = myObjectArray.get(getOffset(id));
       if (!(o instanceof KeyFMap)) {
         throw reportDeadFileAccess(file);
       }

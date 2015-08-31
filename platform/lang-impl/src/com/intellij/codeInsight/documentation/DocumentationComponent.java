@@ -489,6 +489,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myHint = hint;
   }
 
+  public JBPopup getHint() {
+    return myHint;
+  }
+
   public JComponent getComponent() {
     return myEditorPane;
   }

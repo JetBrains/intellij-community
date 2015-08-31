@@ -33,9 +33,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ClonableOrderEntry;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
@@ -952,10 +950,15 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           };
           builder.setName(component.getNameValue());
           builder.setModuleFilePath(path + "/" + builder.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION);
-          final Module module = myContext.myModulesConfigurator.addModule(builder);
-          if (module != null) {
-            addModuleNode(module);
-          }
+          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+            @Override
+            public void run() {
+              final Module module = myContext.myModulesConfigurator.addModule(builder);
+              if (module != null) {
+                addModuleNode(module);
+              }
+            }
+          });
         }
         catch (Exception e1) {
           LOG.error(e1);

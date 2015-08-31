@@ -5,11 +5,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -53,7 +53,6 @@ public class StudyGenerator {
   public static void createTask(@NotNull final Task task, @NotNull final VirtualFile lessonDir, @NotNull final File resourceRoot,
                                 @NotNull final Project project) throws IOException {
     VirtualFile taskDir = lessonDir.createChildDirectory(project, EduNames.TASK + Integer.toString(task.getIndex()));
-    EduUtils.markDirAsSourceRoot(taskDir, project);
     File newResourceRoot = new File(resourceRoot, taskDir.getName());
     int i = 0;
     for (Map.Entry<String, TaskFile> taskFile : task.getTaskFiles().entrySet()) {
@@ -70,6 +69,7 @@ public class StudyGenerator {
           File resourceFile = new File(newResourceRoot, fileName);
           File fileInProject = new File(taskDir.getCanonicalPath(), fileName);
           FileUtil.copy(resourceFile, fileInProject);
+          StudyTaskManager.getInstance(project).addInvisibleFiles(FileUtil.toSystemIndependentName(fileInProject.getPath()));
         }
       }
     }
@@ -84,6 +84,7 @@ public class StudyGenerator {
    */
   public static void createLesson(@NotNull final Lesson lesson, @NotNull final VirtualFile courseDir, @NotNull final File resourceRoot,
                                   @NotNull final Project project) throws IOException {
+    if (EduNames.PYCHARM_ADDITIONAL.equals(lesson.getName())) return;
     String lessonDirName = EduNames.LESSON + Integer.toString(lesson.getIndex());
     VirtualFile lessonDir = courseDir.createChildDirectory(project, lessonDirName);
     final List<Task> taskList = lesson.getTaskList();
@@ -114,7 +115,7 @@ public class StudyGenerator {
                 File[] files = resourceRoot.listFiles(new FilenameFilter() {
                   @Override
                   public boolean accept(File dir, String name) {
-                    return !name.contains(EduNames.LESSON) && !name.equals("course.json") && !name.equals("hints");
+                    return !name.contains(EduNames.LESSON) && !name.equals(EduNames.COURSE_META_FILE) && !name.equals(EduNames.HINTS);
                   }
                 });
                 for (File file : files) {

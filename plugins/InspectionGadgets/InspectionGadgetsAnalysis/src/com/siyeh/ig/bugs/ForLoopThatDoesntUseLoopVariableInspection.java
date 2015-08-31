@@ -151,13 +151,12 @@ public class ForLoopThatDoesntUseLoopVariableInspection
     }
   }
 
-  private static class UseVisitor extends JavaRecursiveElementVisitor {
+  private static class UseVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiLocalVariable variable;
-    private boolean used = false;
+    private boolean used;
 
     private UseVisitor(PsiLocalVariable var) {
-      super();
       variable = var;
     }
 

@@ -20,12 +20,13 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PathUtil;
+import com.theoryinpractice.testng.intention.TestNGExternalLibraryResolver;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import icons.TestngIcons;
 import org.jetbrains.annotations.NonNls;
@@ -52,14 +53,9 @@ public class TestNGFramework extends JavaTestFramework {
     return "org.testng.annotations.Test";
   }
 
-  @NotNull
-  public String getLibraryPath() {
-    try {
-      return PathUtil.getJarPathForClass(Class.forName("org.testng.annotations.Test"));
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
+  @Override
+  public ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
+    return TestNGExternalLibraryResolver.TESTNG_DESCRIPTOR;
   }
 
   @Nullable

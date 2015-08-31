@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,13 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.Nullable;
 
 public class UserExpressionDescriptorImpl extends EvaluationDescriptor implements UserExpressionDescriptor{
   private final ValueDescriptorImpl myParentDescriptor;
@@ -51,15 +51,11 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
     return myName;
   }
 
+  @Nullable
   @Override
-  public String calcValueName() {
-    if (NodeRendererSettings.getInstance().getClassRenderer().SHOW_DECLARED_TYPE) {
-      Value value = getValue();
-      if (value != null) {
-        return addDeclaredType(value.type().name());
-      }
-    }
-    return super.calcValueName();
+  public String getDeclaredType() {
+    Value value = getValue();
+    return value != null ? value.type().name() : null;
   }
 
   protected PsiCodeFragment getEvaluationCode(final StackFrameContext context) throws EvaluateException {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ReflectionUtil;
 import org.jdom.Element;
+import org.jdom.IllegalDataException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -47,7 +48,7 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(Element element) {
     clear();
 
     Class callerClass = null;
@@ -59,8 +60,7 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
       final ClassLoader classLoader = callerClass.getClassLoader();
       for (Element listItemElement : listElement.getChildren(ATTR_ITEM)) {
         if (!ATTR_ITEM.equals(listItemElement.getName())) {
-          throw new InvalidDataException(
-            "Unable to read list item. Unknown element found: " + listItemElement.getName());
+          throw new IllegalDataException("Unable to read list item. Unknown element found: " + listItemElement.getName());
         }
         String itemClassString = listItemElement.getAttributeValue(ATTR_CLASS);
         Class itemClass;
@@ -68,8 +68,7 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
           itemClass = Class.forName(itemClassString, true, classLoader);
         }
         catch (ClassNotFoundException ex) {
-          throw new InvalidDataException(
-            "Unable to read list item: unable to load class: " + itemClassString + " \n" + ex.getMessage());
+          throw new IllegalDataException("Unable to read list item: unable to load class: " + itemClassString + " \n" + ex.getMessage());
         }
 
         String listItem = listItemElement.getAttributeValue(ATTR_VALUE);

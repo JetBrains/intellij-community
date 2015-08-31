@@ -26,6 +26,6 @@ public interface LightDuplicateProfile {
   void process(@NotNull LighterAST ast, @NotNull Callback callback);
 
   interface Callback {
-    void process(@NotNull LighterAST ast, @NotNull LighterASTNode node, int hash);
+    void process(int hash, int hash2, @NotNull LighterAST ast, @NotNull LighterASTNode... nodes);
   }
 }

@@ -16,10 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Comparing;
@@ -41,7 +38,7 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class JavaPsiClassReferenceElement extends LookupItem<Object> {
+public class JavaPsiClassReferenceElement extends LookupItem<Object> implements TypedLookupItem {
   public static final Key<String> PACKAGE_NAME = Key.create("PACKAGE_NAME");
   public static final ClassConditionKey<JavaPsiClassReferenceElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaPsiClassReferenceElement.class);
   private final Object myClass;
@@ -61,6 +58,14 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
 
   public String getForcedPresentableName() {
     return myForcedPresentableName;
+  }
+
+  @Nullable
+  @Override
+  public PsiType getType() {
+    PsiClass psiClass = getObject();
+    final PsiSubstitutor substitutor = (PsiSubstitutor)getAttribute(LookupItem.SUBSTITUTOR);
+    return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, substitutor == null ? PsiSubstitutor.EMPTY : substitutor);
   }
 
   @NotNull
@@ -147,11 +152,9 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
       presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item, presentation.isReal()));
     }
 
-    final boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
     boolean strikeout = JavaElementLookupRenderer.isToStrikeout(item);
     presentation.setItemText(getName(psiClass, item, diamond));
     presentation.setStrikeout(strikeout);
-    presentation.setItemTextBold(bold);
 
     String tailText = getLocationString(item);
     PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);

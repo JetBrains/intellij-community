@@ -16,7 +16,6 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroManager
-import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -37,40 +36,14 @@ class PlatformLangProjectStoreClassProvider : ProjectStoreClassProvider {
 }
 
 class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
-  override fun reinitComponent(componentName: String, changedStorages: Set<StateStorage>): Boolean {
-    if (super.reinitComponent(componentName, changedStorages)) {
-      return true
-    }
-
-    for (module in getPersistentModules()) {
-      // we have to reinit all modules for component because we don't know affected module
-      module.stateStore.reinitComponent(componentName, changedStorages)
-    }
-    return true
-  }
-
-  override fun getSubstitutors(): Array<TrackingPathMacroSubstitutor> {
+  override fun getSubstitutors(): List<TrackingPathMacroSubstitutor> {
     val result = SmartList<TrackingPathMacroSubstitutor>()
     ContainerUtil.addIfNotNull(result, storageManager.getMacroSubstitutor())
 
     for (module in getPersistentModules()) {
       ContainerUtil.addIfNotNull(result, module.stateStore.getStateStorageManager().getMacroSubstitutor())
     }
-    return result.toTypedArray()
-  }
-
-  override fun isReloadPossible(componentNames: Set<String>): Boolean {
-    if (!super.isReloadPossible(componentNames)) {
-      return false
-    }
-
-    for (module in getPersistentModules()) {
-      if (!module.stateStore.isReloadPossible(componentNames)) {
-        return false
-      }
-    }
-
-    return true
+    return result
   }
 
   private fun getPersistentModules() = ModuleManager.getInstance(project)?.getModules() ?: Module.EMPTY_ARRAY

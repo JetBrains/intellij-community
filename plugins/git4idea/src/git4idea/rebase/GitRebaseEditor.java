@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,11 @@ package git4idea.rebase;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.ide.TextCopyProvider;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -47,9 +50,9 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
-import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -422,24 +425,18 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     }
   }
 
-  private class MyCopyProvider implements CopyProvider {
+  private class MyCopyProvider extends TextCopyProvider {
+    @Nullable
     @Override
-    public void performCopy(@NotNull DataContext dataContext) {
-      List<String> data = ContainerUtil.newArrayList();
-      for (int row : myCommitsTable.getSelectedRows()) {
-        data.add(myTableModel.getStringToCopy(row));
+    public Collection<String> getTextLinesToCopy() {
+      if (myCommitsTable.getSelectedRowCount() > 0) {
+        List<String> lines = ContainerUtil.newArrayList();
+        for (int row : myCommitsTable.getSelectedRows()) {
+          lines.add(myTableModel.getStringToCopy(row));
+        }
+        return lines;
       }
-      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(data, "\n")));
-    }
-
-    @Override
-    public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-      return myCommitsTable.getSelectedRowCount() > 0;
-    }
-
-    @Override
-    public boolean isCopyVisible(@NotNull DataContext dataContext) {
-      return true;
+      return null;
     }
   }
 }

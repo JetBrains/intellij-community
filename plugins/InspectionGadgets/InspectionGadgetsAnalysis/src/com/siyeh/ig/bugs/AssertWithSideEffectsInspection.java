@@ -74,11 +74,10 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
     }
   }
 
-  private static class SideEffectVisitor extends JavaRecursiveElementVisitor {
+  private static class SideEffectVisitor extends JavaRecursiveElementWalkingVisitor {
+    private boolean hasSideEffects;
 
-    private boolean hasSideEffects = false;
-
-    public boolean hasSideEffects() {
+    boolean hasSideEffects() {
       return hasSideEffects;
     }
 
@@ -146,9 +145,8 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
     return visitor.hasSideEffects();
   }
 
-  private static class MethodSideEffectVisitor extends JavaRecursiveElementVisitor {
-
-    private boolean hasSideEffects = false;
+  private static class MethodSideEffectVisitor extends JavaRecursiveElementWalkingVisitor {
+    private boolean hasSideEffects;
 
     @Override
     public void visitAssignmentExpression(PsiAssignmentExpression expression) {
@@ -194,7 +192,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
       }
     }
 
-    public boolean hasSideEffects() {
+    private boolean hasSideEffects() {
       return hasSideEffects;
     }
   }

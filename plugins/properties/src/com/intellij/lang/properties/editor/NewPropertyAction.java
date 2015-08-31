@@ -29,6 +29,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,6 +74,16 @@ class NewPropertyAction extends AnAction {
       if (resourceBundleEditor == null) {
         return;
       }
+    }
+
+    final ResourceBundle bundle = resourceBundleEditor.getResourceBundle();
+    final VirtualFile file = bundle.getDefaultPropertiesFile().getVirtualFile();
+    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file);
+    if (status.hasReadonlyFiles()) {
+      Messages.showErrorDialog(bundle.getProject(),
+                               String.format("Resource bundle '%s' has read-only default properties file", bundle.getBaseName()),
+                               "Can't Create New Property");
+      return;
     }
 
     final String prefix;

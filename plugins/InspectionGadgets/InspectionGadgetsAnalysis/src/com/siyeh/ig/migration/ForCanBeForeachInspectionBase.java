@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,9 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean REPORT_INDEXED_LOOP = true;
   @SuppressWarnings("PublicField")
-  public boolean ignoreUntypedCollections = false;
+  public boolean ignoreUntypedCollections;
 
-  protected static boolean isIndexedListLoopStatement(PsiForStatement forStatement, boolean ignoreUntypedCollections) {
+  static boolean isIndexedListLoopStatement(PsiForStatement forStatement, boolean ignoreUntypedCollections) {
     final PsiStatement initialization = forStatement.getInitialization();
     if (!(initialization instanceof PsiDeclarationStatement)) {
       return false;
@@ -282,7 +282,7 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
     return visitor.getNumCallsToIteratorNext();
   }
 
-  private static boolean isIteratorMethodCalled(PsiVariable iterator, PsiStatement body) {
+  public static boolean isIteratorMethodCalled(PsiVariable iterator, PsiStatement body) {
     final IteratorMethodCallVisitor visitor = new IteratorMethodCallVisitor(iterator);
     body.accept(visitor);
     return visitor.isMethodCalled();
@@ -406,7 +406,7 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
       }
       return getCollectionFromListMethodCall(rhs, HardcodedMethodConstants.SIZE, secondDeclaredElement);
     }
-    else if (tokenType.equals(JavaTokenType.GT)) {
+    if (tokenType.equals(JavaTokenType.GT)) {
       if (!VariableAccessUtils.evaluatesToVariable(rhs, variable)) {
         return null;
       }
@@ -558,12 +558,12 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
   }
 
   private static class NumCallsToIteratorNextVisitor
-    extends JavaRecursiveElementVisitor {
+    extends JavaRecursiveElementWalkingVisitor {
 
-    private int numCallsToIteratorNext = 0;
+    private int numCallsToIteratorNext;
     private final PsiVariable iterator;
 
-    NumCallsToIteratorNextVisitor(PsiVariable iterator) {
+    private NumCallsToIteratorNextVisitor(PsiVariable iterator) {
       this.iterator = iterator;
     }
 
@@ -594,18 +594,17 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
       numCallsToIteratorNext++;
     }
 
-    public int getNumCallsToIteratorNext() {
+    private int getNumCallsToIteratorNext() {
       return numCallsToIteratorNext;
     }
   }
 
-  private static class IteratorMethodCallVisitor
-    extends JavaRecursiveElementVisitor {
+  private static class IteratorMethodCallVisitor extends JavaRecursiveElementWalkingVisitor {
 
-    private boolean methodCalled = false;
+    private boolean methodCalled;
     private final PsiVariable iterator;
 
-    IteratorMethodCallVisitor(PsiVariable iterator) {
+    private IteratorMethodCallVisitor(PsiVariable iterator) {
       this.iterator = iterator;
     }
 
@@ -627,7 +626,7 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
       if (HardcodedMethodConstants.NEXT.equals(name)) {
         return;
       }
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
       if (!(qualifier instanceof PsiReferenceExpression)) {
         return;
       }
@@ -644,26 +643,30 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
         return;
       }
       super.visitMethodReferenceExpression(expression);
-      final PsiExpression qualifierExpression = expression.getQualifierExpression();
-      if (qualifierExpression instanceof PsiReferenceExpression && iterator.equals(((PsiReferenceExpression)qualifierExpression).resolve())) {
+      final PsiExpression qualifierExpression = ParenthesesUtils.stripParentheses(expression.getQualifierExpression());
+      if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifierExpression;
+      if (iterator.equals(referenceExpression.resolve())) {
         methodCalled = true;
       }
     }
 
-    public boolean isMethodCalled() {
+    private boolean isMethodCalled() {
       return methodCalled;
     }
   }
 
   private static class VariableOnlyUsedAsIndexVisitor
-    extends JavaRecursiveElementVisitor {
+    extends JavaRecursiveElementWalkingVisitor {
 
     private boolean indexVariableUsedOnlyAsIndex = true;
     private final PsiVariable arrayVariable;
     private final PsiVariable indexVariable;
 
-    VariableOnlyUsedAsIndexVisitor(PsiVariable arrayVariable,
-                                   PsiVariable indexVariable) {
+    private VariableOnlyUsedAsIndexVisitor(PsiVariable arrayVariable,
+                                           PsiVariable indexVariable) {
       this.arrayVariable = arrayVariable;
       this.indexVariable = indexVariable;
     }
@@ -725,20 +728,20 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
       }
     }
 
-    public boolean isIndexVariableUsedOnlyAsIndex() {
+    private boolean isIndexVariableUsedOnlyAsIndex() {
       return indexVariableUsedOnlyAsIndex;
     }
   }
 
   private static class VariableOnlyUsedAsListIndexVisitor
-    extends JavaRecursiveElementVisitor {
+    extends JavaRecursiveElementWalkingVisitor {
 
     private boolean indexVariableUsedOnlyAsIndex = true;
-    private boolean listGetCalled = false;
+    private boolean listGetCalled;
     private final PsiVariable indexVariable;
     private final Holder collection;
 
-    VariableOnlyUsedAsListIndexVisitor(
+    private VariableOnlyUsedAsListIndexVisitor(
       @NotNull Holder collection,
       @NotNull PsiVariable indexVariable) {
       this.collection = collection;
@@ -779,7 +782,7 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
       }
     }
 
-    public boolean isIndexVariableUsedOnlyAsIndex() {
+    private boolean isIndexVariableUsedOnlyAsIndex() {
       return indexVariableUsedOnlyAsIndex && listGetCalled;
     }
 

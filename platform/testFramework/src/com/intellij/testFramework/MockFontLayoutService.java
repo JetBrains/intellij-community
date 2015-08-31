@@ -26,6 +26,7 @@ import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
 
 public class MockFontLayoutService extends FontLayoutService {
   private final int myCharWidth;
@@ -46,7 +47,7 @@ public class MockFontLayoutService extends FontLayoutService {
                                        int start,
                                        int end,
                                        boolean isRtl) {
-    return new MockGlyphVector(end - start, isRtl);
+    return new MockGlyphVector(Arrays.copyOfRange(chars, start, end), isRtl);
   }
 
   @Override
@@ -65,22 +66,22 @@ public class MockFontLayoutService extends FontLayoutService {
   }
   
   private class MockGlyphVector extends GlyphVector {
-    private final int myCharCount;
+    private final char[] myChars;
     private final boolean myIsRtl;
 
-    private MockGlyphVector(int length, boolean isRtl) {
-      myCharCount = length;
+    private MockGlyphVector(char[] chars, boolean isRtl) {
+      myChars = chars;
       myIsRtl = isRtl;
     }
 
     @Override
     public int getNumGlyphs() {
-      return myCharCount;
+      return myChars.length;
     }
 
     @Override
     public int getGlyphCharIndex(int glyphIndex) {
-      return myIsRtl ? myCharCount - 1 - glyphIndex : glyphIndex;
+      return myIsRtl ? myChars.length - 1 - glyphIndex : glyphIndex;
     }
 
     @Override
@@ -105,7 +106,7 @@ public class MockFontLayoutService extends FontLayoutService {
 
     @Override
     public int getGlyphCode(int glyphIndex) {
-      throw new UnsupportedOperationException();
+      return myChars[glyphIndex];
     }
 
     @Override

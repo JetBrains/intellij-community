@@ -85,7 +85,7 @@ public class ExceptionUtils {
     return throwable.equals(element);
   }
 
-  public static boolean statementThrowsException(PsiStatement statement) {
+  static boolean statementThrowsException(PsiStatement statement) {
     if (statement == null) {
       return false;
     }
@@ -143,7 +143,7 @@ public class ExceptionUtils {
     }
   }
 
-  public static boolean blockThrowsException(@Nullable PsiCodeBlock block) {
+  static boolean blockThrowsException(@Nullable PsiCodeBlock block) {
     if (block == null) {
       return false;
     }
@@ -233,11 +233,11 @@ public class ExceptionUtils {
     return out;
   }
 
-  private static class ExceptionsThrownVisitor extends JavaRecursiveElementVisitor {
+  private static class ExceptionsThrownVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final Set<PsiType> m_exceptionsThrown;
 
-    public ExceptionsThrownVisitor(Set<PsiType> thrownTypes) {
+    private ExceptionsThrownVisitor(Set<PsiType> thrownTypes) {
       m_exceptionsThrown = thrownTypes;
     }
 
@@ -260,7 +260,10 @@ public class ExceptionUtils {
       if (exception == null) {
         return;
       }
-      m_exceptionsThrown.add(exception.getType());
+      final PsiType type = exception.getType();
+      if (type != null) {
+        m_exceptionsThrown.add(type);
+      }
     }
 
     @Override
@@ -283,7 +286,7 @@ public class ExceptionUtils {
       }
     }
 
-    private static boolean isExceptionHandled(Set<PsiType> exceptionsHandled, PsiType thrownType) {
+    private static boolean isExceptionHandled(Set<PsiType> exceptionsHandled, @NotNull PsiType thrownType) {
       if (exceptionsHandled.contains(thrownType)) {
         return true;
       }

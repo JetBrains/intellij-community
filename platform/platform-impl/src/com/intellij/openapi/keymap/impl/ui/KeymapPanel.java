@@ -205,6 +205,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   @Override
+  public void processCurrentKeymapChanged() {
+    currentKeymapChanged();
+  }
+
+  @Override
   public void processCurrentKeymapChanged(@NotNull QuickList[] ids) {
     myQuickLists = ids;
     currentKeymapChanged();

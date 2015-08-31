@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import java.util.List;
 public class NullityInferrer {
   private static final int MAX_PASSES = 10;
   public static final String NOTHING_FOUND_TO_INFER = "Nothing found to infer";
-  private int numAnnotationsAdded = 0;
+  private int numAnnotationsAdded;
   private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNotNullSet = new ArrayList<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
   private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNullableSet = new ArrayList<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
   private final boolean myAnnotateLocalVariables;
@@ -62,7 +62,7 @@ public class NullityInferrer {
     return visitor.isNeverNull();
   }
 
-  protected boolean expressionIsSometimesNull(@Nullable PsiExpression expression) {
+  private boolean expressionIsSometimesNull(@Nullable PsiExpression expression) {
     if (expression == null) {
       return false;
     }
@@ -234,7 +234,7 @@ public class NullityInferrer {
   }
 
   private static class NullableUsageInfo extends UsageInfo {
-    public NullableUsageInfo(@NotNull PsiElement element) {
+    private NullableUsageInfo(@NotNull PsiElement element) {
       super(element);
     }
   }
@@ -354,7 +354,7 @@ public class NullityInferrer {
   }
 
   private class ExpressionIsSometimesNullVisitor extends JavaRecursiveElementWalkingVisitor{
-    private boolean sometimesNull = false;
+    private boolean sometimesNull;
 
     @Override
     public void visitElement(PsiElement element) {
@@ -466,7 +466,7 @@ public class NullityInferrer {
     return myNullableSet.contains(pointer);
   }
 
-  private class NullityInferrerVisitor extends JavaRecursiveElementVisitor{
+  private class NullityInferrerVisitor extends JavaRecursiveElementWalkingVisitor{
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {

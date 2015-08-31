@@ -19,7 +19,7 @@
  * <p>
  * Each parser knows how to parse test output to fetch file links from stack traces.
  * All parsers should extend {@link com.jetbrains.python.traceBackParsers.TraceBackParser} and be installed to
- * {@link com.jetbrains.python.traceBackParsers.TraceBackParser#PARSERS} while this functionality has no EP.
+ * {@link com.jetbrains.python.traceBackParsers.TraceBackParserAdapter#PARSERS} while this functionality has no EP.
  * </p>
  */
 package com.jetbrains.python.traceBackParsers;

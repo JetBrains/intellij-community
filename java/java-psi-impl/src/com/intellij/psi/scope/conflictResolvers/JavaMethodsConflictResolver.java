@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.scope.conflictResolvers;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -208,11 +207,18 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     Set<PsiMethod> superMethods = new HashSet<PsiMethod>();
     for (CandidateInfo conflict : conflicts) {
       final PsiMethod method = ((MethodCandidateInfo)conflict).getElement();
+      final PsiClass containingClass = method.getContainingClass();
+      final boolean isInterface = containingClass != null && containingClass.isInterface();
       for (HierarchicalMethodSignature methodSignature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
         final PsiMethod superMethod = methodSignature.getMethod();
-        final PsiClass aClass = superMethod.getContainingClass();
-        if (aClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
+        if (!isInterface) {
           superMethods.add(superMethod);
+        }
+        else {
+          final PsiClass aClass = superMethod.getContainingClass();
+          if (aClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
+            superMethods.add(superMethod);
+          }
         }
       }
     }
@@ -538,10 +544,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
       final PsiSubstitutor methodSubstitutor1 = calculateMethodSubstitutor(typeParameters1, method1, siteSubstitutor1, types1, types2AtSite,
                                                                            languageLevel);
-      boolean applicable12 = isApplicableTo(types2AtSite, method1, languageLevel, varargsPosition, methodSubstitutor1, method2);
+      boolean applicable12 = isApplicableTo(types2AtSite, method1, languageLevel, varargsPosition, methodSubstitutor1, method2, siteSubstitutor2);
 
       final PsiSubstitutor methodSubstitutor2 = calculateMethodSubstitutor(typeParameters2, method2, siteSubstitutor2, types2, types1AtSite, languageLevel);
-      boolean applicable21 = isApplicableTo(types1AtSite, method2, languageLevel, varargsPosition, methodSubstitutor2, method1);
+      boolean applicable21 = isApplicableTo(types1AtSite, method2, languageLevel, varargsPosition, methodSubstitutor2, method1, siteSubstitutor1);
 
       if (!myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
         final boolean typeArgsApplicable12 = GenericsUtil.isTypeArgumentsApplicable(typeParameters1, methodSubstitutor1, myArgumentsList, !applicable21);
@@ -594,19 +600,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     if (class1 != class2) {
       if (class2.isInheritor(class1, true) || class1.isInterface() && !class2.isInterface()) {
-        if (MethodSignatureUtil.isSubsignature(method1.getSignature(getSubstitutor(info1, map)), method2.getSignature(getSubstitutor(info2, map)))) {
+        if (isSubSignature(method1, method2, classSubstitutor1, classSubstitutor2, boxingHappened)) {
           return Specifics.SECOND;
         }
-        else if (method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && boxingHappened[0] == 0) {
-          return Specifics.SECOND;
-        }
-      }
-      else if (MethodSignatureUtil.areErasedParametersEqual(method1.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY)) &&
-               MethodSignatureUtil.isSubsignature(method2.getSignature(getSubstitutor(info2, map)), method1.getSignature(getSubstitutor(info1, map)))) {
-        return Specifics.FIRST;
       }
       else if (class1.isInheritor(class2, true) || class2.isInterface()) {
-        if (method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && boxingHappened[0] == 0) {
+        if (isSubSignature(method2, method1, classSubstitutor2, classSubstitutor1, boxingHappened)) {
           return Specifics.FIRST;
         }
       }
@@ -627,16 +626,27 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return Specifics.NEITHER;
   }
 
+  private static boolean isSubSignature(PsiMethod method1,
+                                        PsiMethod method2,
+                                        PsiSubstitutor classSubstitutor1,
+                                        PsiSubstitutor classSubstitutor2,
+                                        int[] boxingHappened) {
+    return MethodSignatureUtil.areErasedParametersEqual(method1.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY)) &&
+           MethodSignatureUtil.isSubsignature(method1.getSignature(classSubstitutor1), method2.getSignature(classSubstitutor2)) ||
+           method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && boxingHappened[0] == 0;
+  }
+
   private boolean isApplicableTo(@NotNull PsiType[] types2AtSite,
                                  @NotNull PsiMethod method1,
                                  @NotNull LanguageLevel languageLevel,
                                  boolean varargsPosition,
                                  @NotNull PsiSubstitutor methodSubstitutor1,
-                                 @NotNull PsiMethod method2) {
+                                 @NotNull PsiMethod method2, 
+                                 PsiSubstitutor siteSubstitutor1) {
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && method1.getTypeParameters().length > 0 && myArgumentsList instanceof PsiExpressionList) {
       final PsiElement parent = myArgumentsList.getParent();
       if (parent instanceof PsiCallExpression) {
-        return InferenceSession.isMoreSpecific(method2, method1, ((PsiExpressionList)myArgumentsList).getExpressions(), myArgumentsList, varargsPosition);
+        return InferenceSession.isMoreSpecific(method2, method1, siteSubstitutor1,  ((PsiExpressionList)myArgumentsList).getExpressions(), myArgumentsList, varargsPosition);
       }
     }
     final PsiUtil.ApplicabilityChecker applicabilityChecker = languageLevel.isAtLeast(LanguageLevel.JDK_1_8) 

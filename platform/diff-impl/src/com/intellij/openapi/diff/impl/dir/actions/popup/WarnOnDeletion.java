@@ -37,10 +37,10 @@ public class WarnOnDeletion extends ToggleAction implements DumbAware {
   }
 
   public static boolean isWarnWhenDeleteItems() {
-    return !PropertiesComponent.getInstance().isTrueValue(PROPERTY_NAME);
+    return PropertiesComponent.getInstance().getBoolean(PROPERTY_NAME);
   }
 
   public static void setWarnWhenDeleteItems(boolean warn) {
-    PropertiesComponent.getInstance().setValue(PROPERTY_NAME, Boolean.valueOf(!warn).toString());
+    PropertiesComponent.getInstance().setValue(PROPERTY_NAME, warn);
   }
 }

@@ -245,7 +245,7 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
     assert actionId != null;
     AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action == null) {
-      MavenKeymapExtension.registerAction(mavenProject, actionId, goal);
+      MavenKeymapExtension.getOrRegisterAction(mavenProject, actionId, goal);
     }
     Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
     activeKeymap.addShortcut(actionId, KeyboardShortcut.fromString(shortcut));

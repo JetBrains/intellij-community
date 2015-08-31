@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,11 +83,6 @@ public abstract class ActionGroup extends AnAction {
    */
   @Override
   public void actionPerformed(AnActionEvent e){
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
   }
 
   /**

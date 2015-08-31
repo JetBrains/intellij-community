@@ -17,9 +17,10 @@
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.actions.BaseCodeInsightAction;
+import com.intellij.codeInsight.generation.actions.PresentableActionHandlerBasedAction;
 import com.intellij.lang.CodeInsightActions;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
@@ -31,7 +32,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware {
+public class GotoSuperAction extends PresentableActionHandlerBasedAction implements CodeInsightActionHandler, DumbAware {
 
   @NonNls public static final String FEATURE_ID = "navigation.goto.super";
 
@@ -73,5 +74,11 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
     else {
       event.getPresentation().setVisible(false);
     }
+  }
+
+  @NotNull
+  @Override
+  protected LanguageExtension<CodeInsightActionHandler> getLanguageExtension() {
+    return CodeInsightActions.GOTO_SUPER;
   }
 }

@@ -24,7 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.util.PathMappingSettings;
+import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import org.jetbrains.annotations.NotNull;
@@ -37,14 +37,14 @@ public class PyRemoteProcessStarter {
   public ProcessHandler startRemoteProcess(@NotNull Sdk sdk,
                                            @NotNull GeneralCommandLine commandLine,
                                            @Nullable Project project,
-                                           @Nullable PathMappingSettings mappingSettings)
+                                           @Nullable PyRemotePathMapper pathMapper)
     throws ExecutionException {
     PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
     if (manager != null) {
       ProcessHandler processHandler;
 
       try {
-        processHandler = doStartRemoteProcess(sdk, commandLine, manager, project, mappingSettings);
+        processHandler = doStartRemoteProcess(sdk, commandLine, manager, project, pathMapper);
       }
       catch (ExecutionException e) {
         final Application application = ApplicationManager.getApplication();
@@ -65,17 +65,16 @@ public class PyRemoteProcessStarter {
                                                 @NotNull GeneralCommandLine commandLine,
                                                 @NotNull PythonRemoteInterpreterManager manager,
                                                 @Nullable Project project,
-                                                @Nullable PathMappingSettings settings)
+                                                @Nullable PyRemotePathMapper pathMapper)
     throws ExecutionException {
 
     SdkAdditionalData data = sdk.getSdkAdditionalData();
     assert data instanceof PyRemoteSdkAdditionalDataBase;
     PyRemoteSdkAdditionalDataBase pyRemoteSdkAdditionalDataBase = (PyRemoteSdkAdditionalDataBase)data;
     try {
-      settings = manager.setupMappings(project, pyRemoteSdkAdditionalDataBase, settings);
+      pathMapper = manager.setupMappings(project, pyRemoteSdkAdditionalDataBase, pathMapper);
 
-      return manager.startRemoteProcess(project, pyRemoteSdkAdditionalDataBase.getRemoteSdkCredentials(true), commandLine,
-                                        settings);
+      return manager.startRemoteProcess(project, pyRemoteSdkAdditionalDataBase.getRemoteSdkCredentials(true), commandLine, pathMapper);
     }
     catch (InterruptedException e) {
       throw new ExecutionException(e); //TODO: handle exception

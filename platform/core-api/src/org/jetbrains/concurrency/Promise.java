@@ -15,6 +15,8 @@
  */
 package org.jetbrains.concurrency;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
@@ -150,7 +152,7 @@ public abstract class Promise<T> {
   public abstract State getState();
 
   @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
-  public static class MessageError extends RuntimeException {
+  static class MessageError extends RuntimeException {
     public MessageError(@NotNull String error) {
       super(error);
     }
@@ -159,6 +161,15 @@ public abstract class Promise<T> {
     @Override
     public final synchronized Throwable fillInStackTrace() {
       return this;
+    }
+  }
+
+  /**
+   * Log error if not message error
+   */
+  public static void logError(@NotNull Logger logger, @NotNull Throwable e) {
+    if (!(e instanceof MessageError) || ApplicationManager.getApplication().isUnitTestMode()) {
+      logger.error(e);
     }
   }
 

@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<component>
+<idea-plugin>
   <actions>
 
     <group id="SwitchViewActions">
@@ -165,6 +165,7 @@
       <action id="CompareFileWithEditor" class="com.intellij.diff.actions.CompareFileWithEditorAction"/>
       <action id="CompareClipboardWithSelection" class="com.intellij.diff.actions.CompareClipboardWithSelectionAction"/>
 
+      <separator/>
       <action id="Diff.FocusOppositePane" class="com.intellij.openapi.diff.actions.FocusOppositePaneAction"/>
       <action id="Diff.FocusOppositePaneAndScroll" class="com.intellij.openapi.actionSystem.EmptyAction"/>
 
@@ -176,12 +177,22 @@
       <action id="PreviousDiff" class="com.intellij.openapi.diff.actions.PreviousDiffAction" icon="AllIcons.Actions.MoveUp"/>
       <action id="GotoChangedFile" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.ShowAsTree"/>
 
+      <action id="Diff.ApplyLeftSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ArrowRight"/>
+      <action id="Diff.ApplyRightSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Arrow"/>
+      <action id="Diff.AppendLeftSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ArrowRightDown"/>
+      <action id="Diff.AppendRightSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ArrowLeftDown"/>
+      <action id="Diff.IgnoreLeftSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Remove"/>
+      <action id="Diff.IgnoreRightSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Remove"/>
+      <separator/>
+
       <action id="CompareDirs" class="com.intellij.openapi.diff.actions.CompareDirectoriesAction" text="Compare Directories" use-shortcut-of="CompareTwoFiles"/>
 
       <separator/>
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
     <group id="Diff.EditorPopupMenu"/>
+    <group id="Diff.ViewerPopupMenu"/>
+    <group id="Diff.ViewerToolbar"/>
 
     <action id="ScrollTreeToCenter" text="Scroll to Center" class="com.intellij.ide.actions.ScrollTreeToCenterAction" use-shortcut-of="EditorScrollToCenter"/>
 
@@ -354,7 +365,7 @@
       </group>
 
       <!-- Tools -->
-      <group id="ToolsMenu" configurable="true" popup="true" compact="true">
+      <group id="ToolsMenu" popup="true" compact="true">
         <action id="PsiViewer" class="com.intellij.internal.psiView.PsiViewerAction"/>
         <action id="PsiViewerForContext" class="com.intellij.internal.psiView.PsiViewerForContextAction"/>
         <separator/>
@@ -465,7 +476,7 @@
       <group id="OtherMenu" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
 
-    <group id="MainToolBar" configurable="true">
+    <group id="MainToolBar">
       <reference ref="OpenFile"/>
       <reference ref="SaveAll"/>
       <reference ref="Synchronize"/>
@@ -490,17 +501,30 @@
 
     <group id="NavBarVcsGroup"/>
 
-    <group id="EditorPopupMenu" configurable="true">
+    <group id="EditorPopupMenu">
       <reference ref="$Cut"/>
       <reference ref="$Copy"/>
       <reference ref="$Paste"/>
       <reference ref="PasteMultiple"/>
       <reference ref="EditorPasteSimple"/>
       <reference ref="EditorToggleColumnMode"/>
+      <separator/>
+      <group id="EditorPopupMenu1"/>
+      <separator/>
+      <group id="EditorPopupMenu2"/>
+      <separator/>
+      <group id="EditorPopupMenu3"/>
+      <separator/>
       <action id="$SearchWeb" class="com.intellij.ide.actions.SearchWebAction"/>
       <separator/>
       <reference ref="CompareClipboardWithSelection"/>
       <reference ref="ChangeFileEncodingAction"/>
+    </group>
+    
+    <group id="BasicEditorPopupMenu">
+      <reference ref="$Cut"/>
+      <reference ref="$Copy"/>
+      <reference ref="$Paste"/>
     </group>
 
     <group id="ConsoleEditorPopupMenu">
@@ -627,7 +651,7 @@
     <action id="Console.Open" class="com.intellij.openapi.actionSystem.EmptyAction"/>
     <action id="Console.Execute" class="com.intellij.openapi.actionSystem.EmptyAction"/>
     <action id="Console.Execute.Multiline" class="com.intellij.openapi.actionSystem.EmptyAction"/>
-    <action id="Console.SplitLine" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="SplitLine"/>
+    <action id="Console.SplitLine" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorSplitLine"/>
     <group id="Console.HistoryActions">
       <action id="Console.History.Previous" class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <action id="Console.History.Next" class="com.intellij.openapi.actionSystem.EmptyAction"/>
@@ -675,6 +699,7 @@
         <separator/>
         <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction" text="Add Test Process"/>
         <action id="AddTestProcessActionIndefinte" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessActionIndefinite" text="Add Test Process Indefinite"/>
+        <action id="AddManyTestProcesses" internal="true" class="com.intellij.openapi.wm.impl.status.AddManyTestProcesses" text="Add Many Test Processes"/>
         <separator/>
         <action id="TestGestureAction" class="com.intellij.openapi.keymap.impl.ui.TestGestureAction" text="Test Gesture Action"/>
         <action id="TestDndAction" class="com.intellij.internal.validation.TestDnd" text="Test Dnd"/>
@@ -725,4 +750,4 @@
 
     <action id="MarkNotificationsAsRead" class="com.intellij.notification.impl.actions.MarkAllNotificationsAsReadAction"/>
   </actions>
-</component>
+</idea-plugin>

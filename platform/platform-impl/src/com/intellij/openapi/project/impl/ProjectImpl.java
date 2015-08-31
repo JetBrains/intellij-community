@@ -18,9 +18,7 @@ package com.intellij.openapi.project.impl;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -30,7 +28,6 @@ import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
-import com.intellij.openapi.components.impl.stores.UnknownMacroNotification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -43,16 +40,15 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.TimedReference;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,16 +57,15 @@ import org.picocontainer.*;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
 
   public static final String NAME_FILE = ".name";
-  public static Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
+  public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
+  public static final Key<String> CREATION_TRACE = Key.create("ProjectImpl.CREATION_TRACE");
 
   private ProjectManager myProjectManager;
   private MyProjectManagerListener myProjectManagerListener;
@@ -87,11 +82,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     super(ApplicationManager.getApplication(), "Project " + (projectName == null ? filePath : projectName));
 
     putUserData(CREATION_TIME, System.nanoTime());
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      putUserData(CREATION_TRACE, DebugUtil.currentStackTrace());
+    }
 
     getPicoContainer().registerComponentInstance(Project.class, this);
 
     if (!isDefault()) {
-      getStateStore().setProjectFilePath(filePath);
+      getStateStore().setPath(FileUtilRt.toSystemIndependentName(filePath));
     }
 
     myOptimiseTestLoadSpeed = optimiseTestLoadSpeed;
@@ -198,8 +196,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @NotNull
-  @Override
-  public IProjectStore getStateStore() {
+  IProjectStore getStateStore() {
     return (IProjectStore)ComponentsPackage.getStateStore(this);
   }
 
@@ -222,23 +219,23 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   @NotNull
   public String getProjectFilePath() {
-    return getStateStore().getProjectFilePath();
+    return isDefault() ? "" : getStateStore().getProjectFilePath();
   }
 
   @Override
   public VirtualFile getProjectFile() {
-    return getStateStore().getProjectFile();
+    return isDefault() ? null : getStateStore().getProjectFile();
   }
 
   @Override
   public VirtualFile getBaseDir() {
-    return getStateStore().getProjectBaseDir();
+    return isDefault() ? null : getStateStore().getProjectBaseDir();
   }
 
   @Nullable
   @Override
   public String getBasePath() {
-    return getStateStore().getProjectBasePath();
+    return isDefault() ? null : getStateStore().getProjectBasePath();
   }
 
   @NotNull
@@ -250,7 +247,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @NonNls
   @Override
   public String getPresentableUrl() {
-    if (myName == null) return null;  // not yet initialized
+    if (myName == null || isDefault()) {
+      // not yet initialized
+      return null;
+    }
     return getStateStore().getPresentableUrl();
   }
 
@@ -261,14 +261,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     String str = getPresentableUrl();
     if (str == null) str = getName();
 
-    final String prefix = getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED ? "" : getName();
+    final String prefix = !isDefault() && getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED ? "" : getName();
     return prefix + Integer.toHexString(str.hashCode());
   }
 
   @Override
   @Nullable
   public VirtualFile getWorkspaceFile() {
-    return getStateStore().getWorkspaceFile();
+    return isDefault() ? null : getStateStore().getWorkspaceFile();
   }
 
   @Override
@@ -352,7 +352,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
         }
       }
 
-      StoreUtil.save(getStateStore(), this);
+      StoreUtil.save(ComponentsPackage.getStateStore(this), this);
     }
     finally {
       mySavingInProgress.set(false);
@@ -368,7 +368,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()
     LOG.assertTrue(application.isUnitTestMode() || !ProjectManagerEx.getInstanceEx().isProjectOpened(this));
 
-    LOG.assertTrue(!isDisposed());
+    // we use super here, because temporarilyDisposed will be true if project closed
+    LOG.assertTrue(!super.isDisposed());
     if (myProjectManagerListener != null) {
       myProjectManager.removeProjectManagerListener(this, myProjectManagerListener);
     }
@@ -442,61 +443,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   public boolean isDefault() {
     return false;
-  }
-
-  @Override
-  public void checkUnknownMacros(final boolean showDialog) {
-    final IProjectStore stateStore = getStateStore();
-    TrackingPathMacroSubstitutor[] substitutors = stateStore.getSubstitutors();
-    Set<String> unknownMacros = new THashSet<String>();
-    for (TrackingPathMacroSubstitutor substitutor : substitutors) {
-      unknownMacros.addAll(substitutor.getUnknownMacros(null));
-    }
-
-    if (unknownMacros.isEmpty() || showDialog && !ProjectMacrosUtil.checkMacros(this, new THashSet<String>(unknownMacros))) {
-      return;
-    }
-
-    final PathMacros pathMacros = PathMacros.getInstance();
-    final Set<String> macrosToInvalidate = new THashSet<String>(unknownMacros);
-    for (Iterator<String> it = macrosToInvalidate.iterator(); it.hasNext(); ) {
-      String macro = it.next();
-      if (StringUtil.isEmptyOrSpaces(pathMacros.getValue(macro)) && !pathMacros.isIgnoredMacroName(macro)) {
-        it.remove();
-      }
-    }
-
-    if (!macrosToInvalidate.isEmpty()) {
-      final Set<String> components = new THashSet<String>();
-      for (TrackingPathMacroSubstitutor substitutor : substitutors) {
-        components.addAll(substitutor.getComponents(macrosToInvalidate));
-      }
-
-      if (stateStore.isReloadPossible(components)) {
-        for (TrackingPathMacroSubstitutor substitutor : substitutors) {
-          substitutor.invalidateUnknownMacros(macrosToInvalidate);
-        }
-
-        for (UnknownMacroNotification notification : NotificationsManager.getNotificationsManager().getNotificationsOfType(UnknownMacroNotification.class, this)) {
-          if (macrosToInvalidate.containsAll(notification.getMacros())) {
-            notification.expire();
-          }
-        }
-
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            stateStore.reinitComponents(components, true);
-          }
-        });
-      }
-      else {
-        if (Messages.showYesNoDialog(this, "Component could not be reloaded. Reload project?", "Configuration Changed",
-                                     Messages.getQuestionIcon()) == Messages.YES) {
-          ProjectManagerEx.getInstanceEx().reloadProject(this);
-        }
-      }
-    }
   }
 
   @NonNls

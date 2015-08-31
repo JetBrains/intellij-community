@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
@@ -28,11 +28,16 @@ import java.util.List;
 import java.util.Set;
 
 public interface IComponentStore {
+  /**
+   * @param path System-independent path.
+   */
+  void setPath(@NotNull String path);
+
   void initComponent(@NotNull Object component, boolean service);
 
-  void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData);
+  void reloadStates(@NotNull Set<String> componentNames, @NotNull MessageBus messageBus);
 
-  boolean reinitComponent(@NotNull String componentName, @NotNull Set<StateStorage> changedStorages);
+  void reloadState(@NotNull Class<? extends PersistentStateComponent<?>> componentClass);
 
   @NotNull
   Collection<String> getNotReloadableComponents(@NotNull Collection<String> componentNames);
@@ -52,14 +57,6 @@ public interface IComponentStore {
   }
 
   void save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles);
-
-  /**
-   * null if reloaded
-   * empty list if nothing to reload
-   * list of not reloadable components (reload is not performed)
-   */
-  @Nullable
-  Collection<String> reload(@NotNull MultiMap<StateStorage, VirtualFile> changedStorages);
 
   @TestOnly
   void saveApplicationComponent(@NotNull Object component);

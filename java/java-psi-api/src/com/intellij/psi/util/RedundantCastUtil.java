@@ -103,32 +103,36 @@ public class RedundantCastUtil {
       super(true);
     }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-      expression.acceptChildren(this);
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      visitElement(expression);
     }
 
-    @Override public void visitClass(PsiClass aClass) {
-      // avoid multiple visit
-    }
-
-    @Override public void visitMethod(PsiMethod method) {
-      // avoid multiple visit
-    }
-
-    @Override public void visitField(PsiField field) {
+    @Override
+    public void visitClass(PsiClass aClass) {
       // avoid multiple visit
     }
 
     @Override
-    protected void addToResults(@NotNull PsiTypeCastExpression typeCast){
+    public void visitMethod(PsiMethod method) {
+      // avoid multiple visit
+    }
+
+    @Override
+    public void visitField(PsiField field) {
+      // avoid multiple visit
+    }
+
+    @Override
+    protected void addToResults(@NotNull PsiTypeCastExpression typeCast) {
       if (!isTypeCastSemantic(typeCast)) {
         myFoundCasts.add(typeCast);
       }
     }
   }
 
-  private static class MyIsRedundantVisitor extends JavaRecursiveElementVisitor {
-    private boolean isRedundant = false;
+  private static class MyIsRedundantVisitor extends JavaRecursiveElementWalkingVisitor {
+    private boolean isRedundant;
     private final boolean myRecursive;
 
     private MyIsRedundantVisitor(final boolean recursive) {
@@ -151,6 +155,17 @@ public class RedundantCastUtil {
     @Override public void visitAssignmentExpression(PsiAssignmentExpression expression) {
       processPossibleTypeCast(expression.getRExpression(), expression.getLExpression().getType());
       super.visitAssignmentExpression(expression);
+    }
+
+    @Override
+    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+      PsiType type = expression.getType();
+      if (type instanceof PsiArrayType) {
+        for (PsiExpression initializer : expression.getInitializers()) {
+          processPossibleTypeCast(initializer, ((PsiArrayType)type).getComponentType());
+        }
+      }
+      super.visitArrayInitializerExpression(expression);
     }
 
     @Override public void visitVariable(PsiVariable variable) {
@@ -302,7 +317,8 @@ public class RedundantCastUtil {
       super.visitEnumConstant(enumConstant);
     }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
       //expression.acceptChildren(this);
     }
 
@@ -710,7 +726,7 @@ public class RedundantCastUtil {
     return result.get().booleanValue();
   }
 
-  public static boolean isTypeCastSemantic(PsiTypeCastExpression typeCast) {
+  private static boolean isTypeCastSemantic(PsiTypeCastExpression typeCast) {
     PsiExpression operand = typeCast.getOperand();
     if (operand == null) return false;
 
@@ -736,10 +752,13 @@ public class RedundantCastUtil {
       if (opType instanceof PsiClassType && ((PsiClassType)opType).hasParameters()) return true;
     }
 
-    if (operand instanceof PsiLambdaExpression || operand instanceof PsiMethodReferenceExpression) {
-      if (castType instanceof PsiClassType && InheritanceUtil.isInheritor(PsiUtil.resolveClassInType(castType), CommonClassNames.JAVA_IO_SERIALIZABLE)) return true;
+    final PsiExpression stripParenthesisOperand = PsiUtil.skipParenthesizedExprDown(operand);
+    if (stripParenthesisOperand instanceof PsiFunctionalExpression) {
+      if (isCastToSerializable(castType)) return true;
       if (castType instanceof PsiIntersectionType) {
-        return true;
+        for (PsiType type : ((PsiIntersectionType)castType).getConjuncts()) {
+          if (isCastToSerializable(type)) return true;
+        }
       }
     }
 
@@ -766,6 +785,10 @@ public class RedundantCastUtil {
       }
     }
     return false;
+  }
+
+  private static boolean isCastToSerializable(PsiType castType) {
+    return castType instanceof PsiClassType && InheritanceUtil.isInheritor(PsiUtil.resolveClassInType(castType), CommonClassNames.JAVA_IO_SERIALIZABLE);
   }
 
   private static boolean wrapperCastChangeSemantics(PsiExpression operand, PsiExpression otherOperand, PsiExpression toCast) {

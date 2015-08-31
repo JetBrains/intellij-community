@@ -168,11 +168,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         final PyType type = myTypeEvalContext.getType(qualifier);
         if (type instanceof PyClassType) {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
-          if (pyClass.isNewStyleClass()) {
+          if (pyClass.isNewStyleClass(null)) {
             if (pyClass.getOwnSlots() == null) {
               return;
             }
-            final List<String> slots = pyClass.getSlots();
+            final List<String> slots = pyClass.getSlots(null);
             final String attrName = node.getReferencedName();
             if (slots != null && !slots.contains(attrName) && !slots.contains(PyNames.DICT)) {
               for (PyClass ancestor : pyClass.getAncestorClasses(myTypeEvalContext)) {
@@ -182,7 +182,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 if (PyNames.OBJECT.equals(ancestor.getName())) {
                   break;
                 }
-                final List<String> ancestorSlots = ancestor.getSlots();
+                final List<String> ancestorSlots = ancestor.getSlots(null);
                 if (ancestorSlots == null || ancestorSlots.contains(attrName) || ancestorSlots.contains(PyNames.DICT)) {
                   return;
                 }
@@ -756,7 +756,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (PyTypeChecker.overridesGetAttr(cls, myTypeEvalContext)) {
           return true;
         }
-        if (cls.findProperty(name, true) != null) {
+        if (cls.findProperty(name, true, myTypeEvalContext) != null) {
           return true;
         }
         if (PyUtil.hasUnresolvedAncestors(cls, myTypeEvalContext)) {

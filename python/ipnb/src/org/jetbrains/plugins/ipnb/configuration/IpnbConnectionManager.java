@@ -273,8 +273,19 @@ public final class IpnbConnectionManager implements ProjectComponent {
                   new IpnbSettingsAdapter());
       return false;
     }
+    final String homePath = sdk.getHomePath();
+    if (homePath == null) {
+      showWarning(fileEditor, "Python Sdk is invalid, please check Python Interpreter in Settings->Python Interpreter", null);
+      return false;
+    }
+    String ipython = findIPythonRunner(homePath);
+    Map<String, String> env = null;
+    if (ipython == null) {
+      ipython = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
+      env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
+    }
 
-    final ArrayList<String> parameters = Lists.newArrayList("notebook", "--no-browser");
+    final ArrayList<String> parameters = Lists.newArrayList(homePath, ipython, "notebook", "--no-browser");
     if (hostPort.getFirst() != null) {
       parameters.add("--ip");
       parameters.add(hostPort.getFirst());
@@ -283,11 +294,10 @@ public final class IpnbConnectionManager implements ProjectComponent {
       parameters.add("--port");
       parameters.add(hostPort.getSecond());
     }
-
-    final GeneralCommandLine commandLine = PythonHelper.LOAD_ENTRY_POINT
-      .newCommandLine(sdk.getHomePath(), parameters)
-      .withWorkDirectory(myProject.getBasePath()).
-        withEnvironment(env);
+    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(myProject.getBasePath());
+    if (env != null) {
+      commandLine.withEnvironment(env);
+    }
 
     try {
       final KillableColoredProcessHandler processHandler = new KillableColoredProcessHandler(commandLine) {
@@ -334,6 +344,18 @@ public final class IpnbConnectionManager implements ProjectComponent {
     catch (ExecutionException e) {
       return false;
     }
+  }
+
+  @Nullable
+  private static String findIPythonRunner(String homePath) {
+    for (String name : Lists.newArrayList("ipython", "ipython-script.py")) {
+      String runnerPath = PythonSdkType.getExecutablePath(homePath, name);
+      if (runnerPath != null) {
+        return runnerPath;
+      }
+    }
+
+    return null;
   }
 
   @Nullable

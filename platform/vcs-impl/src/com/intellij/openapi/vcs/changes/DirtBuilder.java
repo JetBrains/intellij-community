@@ -16,35 +16,32 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.vcsUtil.VcsUtil;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 public class DirtBuilder implements DirtBuilderReader {
   private final VcsGuess myGuess;
   private final FileTypeManager myFileTypeManager;
 
-  private final Set<FilePathUnderVcs> myFiles;
-  private final Set<FilePathUnderVcs> myDirs;
+  private final MultiMap<AbstractVcs, FilePath> myFiles;
+  private final MultiMap<AbstractVcs, FilePath> myDirs;
   private boolean myEverythingDirty;
 
   public DirtBuilder(final VcsGuess guess) {
     myGuess = guess;
-    myDirs = new HashSet<FilePathUnderVcs>();
-    myFiles = new HashSet<FilePathUnderVcs>();
+    myDirs = MultiMap.createSet();
+    myFiles = MultiMap.createSet();
     myEverythingDirty = false;
     myFileTypeManager = FileTypeManager.getInstance();
   }
 
   public DirtBuilder(final DirtBuilder builder) {
-    myGuess = builder.myGuess;
-    myDirs = new HashSet<FilePathUnderVcs>(builder.myDirs);
-    myFiles = new HashSet<FilePathUnderVcs>(builder.myFiles);
+    this(builder.myGuess);
+    myDirs.putAllValues(builder.myDirs);
+    myFiles.putAllValues(builder.myFiles);
     myEverythingDirty = builder.myEverythingDirty;
-    myFileTypeManager = FileTypeManager.getInstance();
   }
 
   public void reset() {
@@ -57,35 +54,27 @@ public class DirtBuilder implements DirtBuilderReader {
     myEverythingDirty = true;
   }
 
-  public void addDirtyFile(final VcsRoot root) {
-    if (myFileTypeManager.isFileIgnored(root.getPath().getName())) return;
-    myFiles.add(new FilePathUnderVcs(VcsUtil.getFilePath(root.getPath()), root.getVcs()));
+  public void addDirtyFile(@NotNull AbstractVcs vcs, @NotNull FilePath file) {
+    if (myFileTypeManager.isFileIgnored(file.getName())) return;
+    myFiles.putValue(vcs, file);
   }
 
-  public void addDirtyDirRecursively(final VcsRoot root) {
-    if (myFileTypeManager.isFileIgnored(root.getPath().getName())) return;
-    myDirs.add(new FilePathUnderVcs(VcsUtil.getFilePath(root.getPath()), root.getVcs()));
-  }
-
-  public void addDirtyFile(final FilePathUnderVcs root) {
-    if (myFileTypeManager.isFileIgnored(root.getPath().getName())) return;
-    myFiles.add(root);
-  }
-
-  public void addDirtyDirRecursively(final FilePathUnderVcs root) {
-    if (myFileTypeManager.isFileIgnored(root.getPath().getName())) return;
-    myDirs.add(root);
+  public void addDirtyDirRecursively(@NotNull AbstractVcs vcs, @NotNull FilePath dir) {
+    if (myFileTypeManager.isFileIgnored(dir.getName())) return;
+    myDirs.putValue(vcs, dir);
   }
 
   public boolean isEverythingDirty() {
     return myEverythingDirty;
   }
 
-  public Collection<FilePathUnderVcs> getFilesForVcs() {
+  @NotNull
+  public MultiMap<AbstractVcs, FilePath> getFilesForVcs() {
     return myFiles;
   }
 
-  public Collection<FilePathUnderVcs> getDirsForVcs() {
+  @NotNull
+  public MultiMap<AbstractVcs, FilePath> getDirsForVcs() {
     return myDirs;
   }
 

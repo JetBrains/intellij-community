@@ -77,7 +77,7 @@ class MoveCaretLeftOrRightHandler extends EditorActionHandler {
       }
     }
     VisualPosition currentPosition = caret.getVisualPosition();
-    if (caret.isAtDirectionBoundary() && (myDirection == Direction.RIGHT ^ currentPosition.leansRight)) {
+    if (caret.isAtBidiRunBoundary() && (myDirection == Direction.RIGHT ^ currentPosition.leansRight)) {
       caret.moveToVisualPosition(currentPosition.leanRight(!currentPosition.leansRight));
     }
     else {

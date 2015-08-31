@@ -45,6 +45,7 @@ import java.util.*;
  * Main idea of the class is to accept parameters "as-is", just as they should look to an external process, and quote/escape them
  * as required by the underlying platform.
  *
+ * @see com.intellij.execution.util.ExecUtil
  * @see com.intellij.execution.process.OSProcessHandler
  */
 public class GeneralCommandLine implements UserDataHolder {

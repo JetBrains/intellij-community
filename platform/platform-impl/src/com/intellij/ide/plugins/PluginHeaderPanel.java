@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class PluginHeaderPanel {
       final PluginNode node = (PluginNode)plugin;
       myRating.setRate(node.getRating());
       myDownloads.setText(node.getDownloads() + " downloads");
-      myVersion.setText(" ver " + node.getVersion());
+      myVersion.setText("v" + node.getVersion());
       myUpdated.setText("Updated " + DateFormatUtil.formatDate(node.getDate()));
       switch (node.getStatus()) {
         case PluginNode.STATUS_INSTALLED:
@@ -184,8 +184,9 @@ public class PluginHeaderPanel {
         g.setPaint(getBackgroundPaint());
         g.fillRoundRect(1, 1, w - 2, h - 2, 6, 6);
         g.setColor(getButtonForeground());
-        g.drawString(getText(), 8 + 16 + 4, getBaseline(w, h));
-        getIcon().paintIcon(this, g, 8, (getHeight() - getIcon().getIconHeight()) / 2);
+        int offset = 8;
+        g.drawString(getText(), offset + 16 + 4, getBaseline(w, h));
+        getIcon().paintIcon(this, g, offset, (getHeight() - getIcon().getIconHeight()) / 2);
         config.restore();
       }
 
@@ -230,9 +231,9 @@ public class PluginHeaderPanel {
       @Override
       public String getText() {
         switch (myActionId) {
-          case UPDATE: return "Update plugin";
-          case INSTALL: return  "Install plugin";
-          case UNINSTALL: return "Uninstall plugin";
+          case UPDATE: return "Update";
+          case INSTALL: return "Install";
+          case UNINSTALL: return "Uninstall";
           case RESTART: return "Restart " + ApplicationNamesInfo.getInstance().getFullProductName();
         }
         return super.getText();
@@ -261,15 +262,10 @@ public class PluginHeaderPanel {
               public void run() {
                 setPlugin(myPlugin);
               }
-            });
+            }, true);
             break;
           case UNINSTALL:
-            //try {
-              UninstallPluginAction.uninstall(myManager.getInstalled(), myPlugin);
-            //}
-            //catch (IOException e1) {
-            //  e1.printStackTrace();
-            //}
+            UninstallPluginAction.uninstall(myManager.getInstalled(), true, myPlugin);
             break;
           case RESTART:
             if (myManager != null) {

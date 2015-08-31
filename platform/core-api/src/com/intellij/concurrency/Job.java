@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -51,7 +50,7 @@ public interface Job<T> {
 
   boolean isDone();
 
-  void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException, CancellationException;
+  void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException;
 
   @NotNull
   Job NULL_JOB = new Job() {
@@ -61,7 +60,7 @@ public interface Job<T> {
     }
 
     @Override
-    public void waitForCompletion(int millis) {
+    public void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException {
 
     }
 

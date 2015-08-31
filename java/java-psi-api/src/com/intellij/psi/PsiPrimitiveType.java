@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,16 +143,18 @@ public class PsiPrimitiveType extends PsiType.Stub {
    */
   @Nullable
   public PsiClassType getBoxedType(PsiElement context) {
-    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(context);
+    PsiFile file = context.getContainingFile();
+    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(file);
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return null;
 
     String boxedQName = getBoxedTypeName();
     //[ven]previous call returns null for NULL, VOID
     if (boxedQName == null) return null;
-    PsiClass aClass = JavaPsiFacade.getInstance(context.getProject()).findClass(boxedQName, context.getResolveScope());
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(file.getProject());
+    PsiClass aClass = facade.findClass(boxedQName, context.getResolveScope());
     if (aClass == null) return null;
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+    PsiElementFactory factory = facade.getElementFactory();
     return factory.createType(aClass, PsiSubstitutor.EMPTY, languageLevel, getAnnotations());
   }
 

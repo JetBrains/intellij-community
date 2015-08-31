@@ -17,10 +17,12 @@ package com.intellij.openapi.externalSystem.action.task;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.action.ExternalSystemAction;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.RunConfigurationNode;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
@@ -57,8 +59,10 @@ public class AssignRunConfigurationShortcutAction extends ExternalSystemAction {
     ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)settings.getConfiguration();
     String actionIdPrefix = getActionPrefix(project, runConfiguration.getSettings().getExternalProjectPath());
     String actionId = actionIdPrefix + settings.getName();
-    if (ActionManager.getInstance().getAction(actionId) != null) {
-      new EditKeymapsDialog(project, actionId).show();
+    AnAction action = ActionManager.getInstance().getAction(actionId);
+    if (action == null) {
+      ExternalSystemKeymapExtension.getOrRegisterAction(project, settings);
     }
+    new EditKeymapsDialog(project, actionId).show();
   }
 }

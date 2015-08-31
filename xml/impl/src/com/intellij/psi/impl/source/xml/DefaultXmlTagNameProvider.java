@@ -22,6 +22,7 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.completion.XmlTagInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -51,6 +52,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
+
+  private static final Logger LOG = Logger.getInstance(DefaultXmlTagNameProvider.class);
+
   @Override
   public void addTagNameVariants(List<LookupElement> elements, @NotNull XmlTag tag, String prefix) {
     final List<String> namespaces;
@@ -81,6 +85,9 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       }
 
       PsiElement declaration = descriptor.getDeclaration();
+      if (declaration != null && !declaration.isValid()) {
+        LOG.error(descriptor + " contains invalid declaration: " + declaration);
+      }
       LookupElementBuilder lookupElement = declaration == null ? LookupElementBuilder.create(qname) : LookupElementBuilder.create(declaration, qname);
       final int separator = qname.indexOf(':');
       if (separator > 0) {

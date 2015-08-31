@@ -16,14 +16,14 @@
 
 package com.intellij.history.integration.ui;
 
+import com.intellij.diff.actions.DocumentFragmentContent;
+import com.intellij.diff.contents.DiffContent;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.NullRevisionsProgress;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialogModel;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.FragmentContent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -90,8 +90,8 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
     DiffContent left = dm.getLeftDiffContent(new NullRevisionsProgress());
     DiffContent right = dm.getRightDiffContent(new NullRevisionsProgress());
 
-    assertEquals("b", new String(left.getBytes()));
-    assertEquals("bc", new String(right.getBytes()));
+    assertContent("b", left);
+    assertContent("bc", right);
   }
 
   public void testDiffContentsAndTitleForCurrentRevision() throws IOException {
@@ -101,8 +101,8 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
 
     DiffContent right = dm.getRightDiffContent(new NullRevisionsProgress());
 
-    assertEquals("bcd", new String(right.getBytes()));
-    assertTrue(right instanceof FragmentContent);
+    assertContent("bcd", right);
+    assertTrue(right instanceof DocumentFragmentContent);
   }
 
   public void testDiffForDeletedAndRecreatedFile() throws Exception {
@@ -114,8 +114,8 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
 
     initModelOnSecondLineAndSelectRevisions(3, 3);
 
-    assertEquals("b", new String(dm.getLeftDiffContent(new NullRevisionsProgress()).getBytes()));
-    assertEquals("bcd", new String(dm.getRightDiffContent(new NullRevisionsProgress()).getBytes()));
+    assertContent("b", dm.getLeftDiffContent(new NullRevisionsProgress()));
+    assertContent("bcd", dm.getRightDiffContent(new NullRevisionsProgress()));
   }
 
   public void testRevert() throws IOException {

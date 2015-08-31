@@ -38,7 +38,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -54,7 +53,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Encapsulates functionality of importing external system module to the intellij project.
@@ -69,14 +67,6 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
 
   private static final Logger LOG = Logger.getInstance("#" + ModuleDataService.class.getName());
 
-  /**
-   * We can't modify project modules (add/remove) until it's initialised, so, we delay that activity. Current constant
-   * holds number of milliseconds to wait between 'after project initialisation' processing attempts.
-   */
-  private static final int PROJECT_INITIALISATION_DELAY_MS = (int)TimeUnit.SECONDS.toMillis(1);
-
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-
   @NotNull
   @Override
   public Key<ModuleData> getTargetDataKey() {
@@ -90,12 +80,6 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
                          @NotNull final PlatformFacade platformFacade,
                          final boolean synchronous) {
     if (toImport.isEmpty()) {
-      return;
-    }
-    if (!project.isInitialized()) {
-      myAlarm.addRequest(
-        new ImportModulesTask(project, toImport, projectData, platformFacade, synchronous), PROJECT_INITIALISATION_DELAY_MS
-      );
       return;
     }
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
@@ -384,42 +368,6 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
     module.clearOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
     module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY);
     module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY);
-  }
-
-  private class ImportModulesTask implements Runnable {
-
-    private final Project myProject;
-    private final Collection<DataNode<ModuleData>> myModules;
-    @Nullable
-    private final ProjectData myProjectData;
-    private final PlatformFacade myPlatformFacade;
-    private final boolean mySynchronous;
-
-    ImportModulesTask(@NotNull Project project,
-                      @NotNull Collection<DataNode<ModuleData>> modules,
-                      @Nullable ProjectData projectData,
-                      @NotNull PlatformFacade platformFacade,
-                      boolean synchronous) {
-      myProject = project;
-      myModules = modules;
-      myProjectData = projectData;
-      myPlatformFacade = platformFacade;
-      mySynchronous = synchronous;
-    }
-
-    @Override
-    public void run() {
-      myAlarm.cancelAllRequests();
-      if (!myProject.isInitialized()) {
-        myAlarm.addRequest(
-          new ImportModulesTask(myProject, myModules, myProjectData, myPlatformFacade, mySynchronous),
-          PROJECT_INITIALISATION_DELAY_MS
-        );
-        return;
-      }
-
-      importData(myModules, myProjectData, myProject, myPlatformFacade, mySynchronous);
-    }
   }
 
   private static void setModuleOptions(Module module, DataNode<ModuleData> moduleDataNode) {

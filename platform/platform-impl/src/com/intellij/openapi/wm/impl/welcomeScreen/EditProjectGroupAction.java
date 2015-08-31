@@ -22,7 +22,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollingUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -77,7 +77,7 @@ public class EditProjectGroupAction extends RecentProjectsWelcomeScreenActionBas
         Object element = model.get(i);
         if (element instanceof ProjectGroupActionGroup) {
            if (((ProjectGroupActionGroup)element).getGroup().equals(group)) {
-             ListScrollingUtil.selectItem(list, i);
+             ScrollingUtil.selectItem(list, i);
              break;
            }
          }

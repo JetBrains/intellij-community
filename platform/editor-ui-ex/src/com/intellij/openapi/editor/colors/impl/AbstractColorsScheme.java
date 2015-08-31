@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.ide.ui.ColorBlindness;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.*;
@@ -28,7 +29,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
@@ -37,6 +37,7 @@ import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.*;
@@ -48,8 +49,7 @@ import static com.intellij.openapi.util.Couple.of;
 import static com.intellij.ui.ColorUtil.fromHex;
 
 public abstract class AbstractColorsScheme implements EditorColorsScheme {
-  private static final String OS_VALUE_PREFIX = SystemInfo.isWindows ? "windows" : SystemInfo.isMac ? "mac" : "linux";
-  private static final int CURR_VERSION = 141;
+  private static final int CURR_VERSION = 142;
 
   private static final FontSize DEFAULT_FONT_SIZE = FontSize.SMALL;
 
@@ -62,6 +62,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   @NotNull private final FontPreferences           myFontPreferences        = new FontPreferences();
   @NotNull private final FontPreferences           myConsoleFontPreferences = new FontPreferences();
 
+  private final ValueElementReader myValueReader = new TextAttributesReader();
   private String myFallbackFontName;
   private String mySchemeName;
 
@@ -69,6 +70,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   // version influences XML format and triggers migration
   private int myVersion = CURR_VERSION;
+  /**
+   * The version from the original file.
+   */
+  private int myOriginalVersion = CURR_VERSION;
 
   protected Map<ColorKey, Color>                   myColorsMap     = ContainerUtilRt.newHashMap();
   protected Map<TextAttributesKey, TextAttributes> myAttributesMap = ContainerUtilRt.newHashMap();
@@ -81,6 +86,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   @NonNls private static final String SCHEME_ELEMENT                 = "scheme";
   @NonNls public static final  String NAME_ATTR                      = "name";
   @NonNls private static final String VERSION_ATTR                   = "version";
+  @NonNls private static final String BASE_ATTRIBUTES_ATTR           = "baseAttributes";
   @NonNls private static final String DEFAULT_SCHEME_ATTR            = "default_scheme";
   @NonNls private static final String PARENT_SCHEME_ATTR             = "parent_scheme";
   @NonNls private static final String OPTION_ELEMENT                 = "option";
@@ -265,6 +271,9 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   public void readExternal(Element parentNode) {
+    UISettings settings = UISettings.getInstance();
+    ColorBlindness blindness = settings == null ? null : settings.COLOR_BLINDNESS;
+    myValueReader.setAttribute(blindness == null ? null : blindness.name());
     if (SCHEME_ELEMENT.equals(parentNode.getName())) {
       readScheme(parentNode);
     }
@@ -290,8 +299,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     }
 
     myVersion = readVersion;
+    myOriginalVersion = readVersion;
     String isDefaultScheme = node.getAttributeValue(DEFAULT_SCHEME_ATTR);
-    if (isDefaultScheme == null || !Boolean.parseBoolean(isDefaultScheme)) {
+    boolean isDefault = isDefaultScheme != null && Boolean.parseBoolean(isDefaultScheme);
+    if (!isDefault) {
       myParentScheme = DefaultColorSchemesManager.getInstance().getScheme(node.getAttributeValue(PARENT_SCHEME_ATTR, DEFAULT_SCHEME_NAME));
     }
 
@@ -299,13 +310,13 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       Element childNode = (Element)o;
       String childName = childNode.getName();
       if (OPTION_ELEMENT.equals(childName)) {
-        readSettings(childNode);
+        readSettings(childNode, isDefault);
       }
       else if (EDITOR_FONT.equals(childName)) {
-        readFontSettings(childNode, myFontPreferences);
+        readFontSettings(childNode, myFontPreferences, isDefault);
       }
       else if (CONSOLE_FONT.equals(childName)) {
-        readFontSettings(childNode, myConsoleFontPreferences);
+        readFontSettings(childNode, myConsoleFontPreferences, isDefault);
       }
       else if (COLORS_ELEMENT.equals(childName)) {
         readColors(childNode);
@@ -336,10 +347,12 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   public void readAttributes(@NotNull Element childNode) {
     for (Element e : childNode.getChildren(OPTION_ELEMENT)) {
       TextAttributesKey name = TextAttributesKey.find(e.getAttributeValue(NAME_ATTR));
-      TextAttributes attr = new TextAttributes(e.getChild(VALUE_ELEMENT));
+      Element valueElement = e.getChild(VALUE_ELEMENT);
+      TextAttributes attr = myValueReader.read(TextAttributes.class, valueElement);
       myAttributesMap.put(name, attr);
       migrateErrorStripeColorFrom14(name, attr);
     }
+    setMissingUndefinedAttributesForVersion142();
   }
 
   private void migrateErrorStripeColorFrom14(@NotNull TextAttributesKey name, @NotNull TextAttributes attr) {
@@ -348,6 +361,24 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     Couple<Color> m = DEFAULT_STRIPE_COLORS.get(name.getExternalName());
     if (m != null && Comparing.equal(m.first, attr.getErrorStripeColor())) {
       attr.setErrorStripeColor(m.second);
+    }
+  }
+
+  /**
+   * Defines empty attributes with fallback (inheritance) enabled for all the attributes explicitly defined in the parent scheme since
+   * previously undefined attributes were treated as inherited, not taken from the parent scheme.
+   */
+  private void setMissingUndefinedAttributesForVersion142() {
+    if (myOriginalVersion >= 142 || myParentScheme == null) return;
+    if (myParentScheme instanceof AbstractColorsScheme) {
+      for (TextAttributesKey key : ((AbstractColorsScheme)myParentScheme).myAttributesMap.keySet()) {
+        TextAttributes parentAttributes = ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key);
+        if (parentAttributes != null &&
+            !parentAttributes.isFallbackEnabled() &&
+            !myAttributesMap.containsKey(key)) {
+          myAttributesMap.put(key, new TextAttributes());
+        }
+      }
     }
   }
 
@@ -371,7 +402,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   private void readColors(Element childNode) {
     for (final Object o : childNode.getChildren(OPTION_ELEMENT)) {
       Element colorElement = (Element)o;
-      Color valueColor = readColorValue(colorElement);
+      Color valueColor = myValueReader.read(Color.class, colorElement);
       final String colorName = colorElement.getAttributeValue(NAME_ATTR);
       if (BACKGROUND_COLOR_NAME.equals(colorName)) {
         // This setting has been deprecated to usages of HighlighterColors.TEXT attributes.
@@ -383,61 +414,54 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     }
   }
 
-  private static Color readColorValue(final Element colorElement) {
-    String value = getValue(colorElement);
-    Color valueColor = null;
-    if (value != null && value.trim().length() > 0) {
-      try {
-        valueColor = new Color(Integer.parseInt(value, 16));
-      }
-      catch (NumberFormatException ignored) {
-      }
-    }
-    return valueColor;
-  }
-
-  private void readSettings(Element childNode) {
+  private void readSettings(Element childNode, boolean isDefault) {
     String name = childNode.getAttributeValue(NAME_ATTR);
-    String value = getValue(childNode);
     if (LINE_SPACING.equals(name)) {
-      myLineSpacing = Float.parseFloat(value);
+      Float value = myValueReader.read(Float.class, childNode);
+      if (value != null) myLineSpacing = value;
     }
     else if (EDITOR_FONT_SIZE.equals(name)) {
-      setEditorFontSize(JBUI.scale(Integer.parseInt(value)));
+      int value = readFontSize(childNode, isDefault);
+      if (value > 0) setEditorFontSize(value);
     }
     else if (EDITOR_FONT_NAME.equals(name)) {
-      setEditorFontName(value);
+      String value = myValueReader.read(String.class, childNode);
+      if (value != null) setEditorFontName(value);
     }
     else if (CONSOLE_LINE_SPACING.equals(name)) {
-      setConsoleLineSpacing(Float.parseFloat(value));
+      Float value = myValueReader.read(Float.class, childNode);
+      if (value != null) setConsoleLineSpacing(value);
     }
     else if (CONSOLE_FONT_SIZE.equals(name)) {
-      setConsoleFontSize(JBUI.scale(Integer.parseInt(value)));
+      int value = readFontSize(childNode, isDefault);
+      if (value > 0) setConsoleFontSize(value);
     }
     else if (CONSOLE_FONT_NAME.equals(name)) {
-      setConsoleFontName(value);
+      String value = myValueReader.read(String.class, childNode);
+      if (value != null) setConsoleFontName(value);
     }
     else if (EDITOR_QUICK_JAVADOC_FONT_SIZE.equals(name)) {
-      myQuickDocFontSize = FontSize.valueOf(value);
+      FontSize value = myValueReader.read(FontSize.class, childNode);
+      if (value != null) myQuickDocFontSize = value;
     }
   }
 
-  private static void readFontSettings(@NotNull Element element, @NotNull FontPreferences preferences) {
+  private int readFontSize(Element element, boolean isDefault) {
+    Integer size = myValueReader.read(Integer.class, element);
+    return size == null ? -1 : !isDefault ? size : JBUI.scaleFontSize(size);
+  }
+
+  private void readFontSettings(@NotNull Element element, @NotNull FontPreferences preferences, boolean isDefaultScheme) {
     List children = element.getChildren(OPTION_ELEMENT);
     String fontFamily = null;
     int size = -1;
     for (Object child : children) {
       Element e = (Element)child;
       if (EDITOR_FONT_NAME.equals(e.getAttributeValue(NAME_ATTR))) {
-        fontFamily = getValue(e);
+        fontFamily = myValueReader.read(String.class, e);
       }
       else if (EDITOR_FONT_SIZE.equals(e.getAttributeValue(NAME_ATTR))) {
-        try {
-          size = JBUI.scale(Integer.parseInt(getValue(e)));
-        }
-        catch (NumberFormatException ex) {
-          // ignore
-        }
+        size = readFontSize(e, isDefaultScheme);
       }
     }
     if (fontFamily != null && size > 1) {
@@ -446,11 +470,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     else if (fontFamily != null) {
       preferences.addFontFamily(fontFamily);
     }
-  }
-
-  private static String getValue(Element e) {
-    final String value = e.getAttributeValue(OS_VALUE_PREFIX);
-    return value == null ? e.getAttributeValue(VALUE_ELEMENT) : value;
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
@@ -473,7 +492,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     if (useOldFontFormat) {
       element = new Element(OPTION_ELEMENT);
       element.setAttribute(NAME_ATTR, EDITOR_FONT_SIZE);
-      element.setAttribute(VALUE_ELEMENT, String.valueOf(getEditorFontSize() / JBUI.scale(1)));
+      element.setAttribute(VALUE_ELEMENT, String.valueOf(getEditorFontSize()));
       parentNode.addContent(element);
     }
     else {
@@ -490,7 +509,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
         if (getConsoleFontSize() != getEditorFontSize()) {
           element = new Element(OPTION_ELEMENT);
           element.setAttribute(NAME_ATTR, CONSOLE_FONT_SIZE);
-          element.setAttribute(VALUE_ELEMENT, Integer.toString(getConsoleFontSize() / JBUI.scale(1)));
+          element.setAttribute(VALUE_ELEMENT, Integer.toString(getConsoleFontSize()));
           parentNode.addContent(element);
         }
       }
@@ -550,10 +569,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       parent.addContent(element);
     }
   }
-  
-  private static boolean haveToWrite(final TextAttributesKey key, final TextAttributes value, final TextAttributes defaultAttribute) {
-    return !(key.getFallbackAttributeKey() != null && value.isFallbackEnabled()) && !value.equals(defaultAttribute);
-  }
 
   private void writeAttributes(Element attrElements) throws WriteExternalException {
     List<TextAttributesKey> list = new ArrayList<TextAttributesKey>(myAttributesMap.keySet());
@@ -561,14 +576,27 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
     for (TextAttributesKey key: list) {
       TextAttributes defaultAttr = myParentScheme != null ? myParentScheme.getAttributes(key) : new TextAttributes();
+      TextAttributesKey baseKey = key.getFallbackAttributeKey();
+      TextAttributes defaultFallbackAttr =
+        baseKey != null && myParentScheme instanceof AbstractColorsScheme ?
+        ((AbstractColorsScheme)myParentScheme).getFallbackAttributes(baseKey) : null;
       TextAttributes value = myAttributesMap.get(key);
-      if (!haveToWrite(key,value,defaultAttr)) continue;
       Element element = new Element(OPTION_ELEMENT);
       element.setAttribute(NAME_ATTR, key.getExternalName());
-      Element valueElement = new Element(VALUE_ELEMENT);
-      value.writeExternal(valueElement);
-      element.addContent(valueElement);
-      attrElements.addContent(element);
+      if (baseKey != null && value.isFallbackEnabled()) {
+        if (defaultFallbackAttr != null && defaultAttr != null && defaultAttr != defaultFallbackAttr) {
+          element.setAttribute(BASE_ATTRIBUTES_ATTR, baseKey.getExternalName());
+          attrElements.addContent(element);
+        }
+      }
+      else {
+        if (value.containsValue() && !value.equals(defaultAttr) || defaultAttr == defaultFallbackAttr) {
+          Element valueElement = new Element(VALUE_ELEMENT);
+          value.writeExternal(valueElement);
+          element.addContent(valueElement);
+          attrElements.addContent(element);
+        }
+      }
     }
   }
 
@@ -665,13 +693,33 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   protected TextAttributes getFallbackAttributes(TextAttributesKey fallbackKey) {
     if (fallbackKey == null) return null;
-    if (myAttributesMap.containsKey(fallbackKey)) {
-      TextAttributes fallbackAttributes = myAttributesMap.get(fallbackKey);
-      if (fallbackAttributes != null && (!fallbackAttributes.isFallbackEnabled() || fallbackKey.getFallbackAttributeKey() == null)) {
+    TextAttributes fallbackAttributes = getDirectlyDefinedAttributes(fallbackKey);
+    if (fallbackAttributes != null) {
+      if (!fallbackAttributes.isFallbackEnabled() || fallbackKey.getFallbackAttributeKey() == null) {
         return fallbackAttributes;
       }
     }
     return getFallbackAttributes(fallbackKey.getFallbackAttributeKey());
   }
 
+
+  /**
+   * Looks for explicitly specified attributes either in the scheme or its parent scheme. No fallback keys are used.
+   *
+   * @param key The key to use for search.
+   * @return Explicitly defined attribute or <code>null</code> if not found.
+   */
+  @Nullable
+  public TextAttributes getDirectlyDefinedAttributes(@NotNull TextAttributesKey key) {
+    TextAttributes attributes = myAttributesMap.get(key);
+    if (attributes != null) {
+      return attributes;
+    }
+    return myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) : null;
+  }
+
+
+  protected static boolean containsValue(@Nullable TextAttributes attributes) {
+    return attributes != null && attributes.containsValue();
+  }
 }

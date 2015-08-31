@@ -25,17 +25,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
-import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
@@ -118,12 +114,12 @@ public class PyStubsTest extends PyTestCase {
       pyClass = classes.get(1);
       assertEquals("BarClass", pyClass.getName());
 
-      Property prop = pyClass.findProperty("value", true);
+      Property prop = pyClass.findProperty("value", true, null);
       Maybe<PyCallable> maybe_function = prop.getGetter();
       assertTrue(maybe_function.isDefined());
       assertEquals(pyClass.getMethods(false)[0], maybe_function.value());
 
-      Property setvalueProp = pyClass.findProperty("setvalue", true);
+      Property setvalueProp = pyClass.findProperty("setvalue", true, null);
       Maybe<PyCallable> setter = setvalueProp.getSetter();
       assertTrue(setter.isDefined());
       assertEquals("__set", setter.value().getName());
@@ -131,7 +127,7 @@ public class PyStubsTest extends PyTestCase {
       // properties by decorator
       pyClass = classes.get(2);
       assertEquals("BazClass", pyClass.getName());
-      prop = pyClass.findProperty("x", true);
+      prop = pyClass.findProperty("x", true, null);
       maybe_function = prop.getGetter();
       assertTrue(maybe_function.isDefined());
       assertEquals(pyClass.getMethods(false)[0], maybe_function.value());
@@ -278,7 +274,7 @@ public class PyStubsTest extends PyTestCase {
   public void testSlots() {
     final PyFileImpl file = (PyFileImpl) getTestFile();
     final PyClass pyClass = file.getTopLevelClasses().get(0);
-    assertSameElements(pyClass.getSlots(), "foo", "bar");
+    assertSameElements(pyClass.getSlots(null), "foo", "bar");
     assertNotParsed(file);
   }
 
@@ -346,7 +342,7 @@ public class PyStubsTest extends PyTestCase {
   public void testBuiltinAncestor() {
     final PyFileImpl file = (PyFileImpl) getTestFile();
     final PyClass pyClass = file.getTopLevelClasses().get(0);
-    final PyClass cls = pyClass.getAncestorClasses().iterator().next();
+    final PyClass cls = pyClass.getAncestorClasses(null).iterator().next();
     assertNotNull(cls);
     assertNotParsed(file);
   }

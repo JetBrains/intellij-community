@@ -34,4 +34,5 @@ public interface PsiFieldStub extends NamedStub<PsiField> {
   boolean isEnumConstant();
   boolean isDeprecated();
   boolean hasDeprecatedAnnotation();
+  boolean hasDocComment();
 }

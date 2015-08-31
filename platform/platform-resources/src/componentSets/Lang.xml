@@ -1,4 +1,4 @@
-<components>
+<idea-plugin>
   <application-components>
 
     <component>
@@ -36,6 +36,11 @@
 
     <component>
       <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewManager</implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.ide.script.IdeStartupScripts</implementation-class>
+      <skipForDefaultProject/>
     </component>
 
   </application-components>
@@ -114,9 +119,6 @@
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.EditorTracker</implementation-class>
       <loadForDefaultProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.SmartPointerEditorTracker</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory</implementation-class>
@@ -241,4 +243,4 @@
       <implementation-class>com.intellij.facet.FacetManagerImpl</implementation-class>
     </component>
   </module-components>
-</components>
+</idea-plugin>

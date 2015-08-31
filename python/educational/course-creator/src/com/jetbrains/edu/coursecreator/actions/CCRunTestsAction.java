@@ -44,7 +44,6 @@ import com.jetbrains.edu.coursecreator.CCUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.AbstractMap;
 import java.util.Map;
 
 public abstract class CCRunTestsAction extends AnAction {
@@ -56,6 +55,11 @@ public abstract class CCRunTestsAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    if (!CCProjectService.setCCActionAvailable(e)) {
+      EduUtils.enableAction(e, false);
+      return;
+    }
+
     Presentation presentation = e.getPresentation();
     presentation.setText("");
     presentation.setVisible(false);
@@ -77,6 +81,7 @@ public abstract class CCRunTestsAction extends AnAction {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
     final PsiDirectory taskDir = psiFile.getContainingDirectory();
+    if (taskDir == null) return;
     final PsiDirectory lessonDir = taskDir.getParent();
     if (lessonDir == null) return;
     if (course == null) return;
@@ -201,7 +206,7 @@ public abstract class CCRunTestsAction extends AnAction {
       }
       VirtualFile[] taskDirChildren = taskDir.getChildren();
       for (VirtualFile file : taskDirChildren) {
-        if (file.getName().contains("_windows")) {
+        if (file.getName().contains(EduNames.WINDOWS_POSTFIX)) {
           file.delete(project);
         }
         if (CCProjectService.getInstance(project).isTaskFile(file)) {
@@ -240,10 +245,9 @@ public abstract class CCRunTestsAction extends AnAction {
         if (EduUtils.indexIsValid(index, lesson.getTaskList())) {
           Task task = lesson.getTaskList().get(index);
           for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
-            TaskFile taskFileCopy = new TaskFile();
-            TaskFile.copy(entry.getValue(), taskFileCopy);
-            EduUtils.createStudentFileFromAnswer(project, taskResourceDir, taskDir,
-                                                 new AbstractMap.SimpleEntry<String, TaskFile>(entry.getKey(), taskFileCopy));
+            TaskFile taskFile = new TaskFile();
+            TaskFile.copy(entry.getValue(), taskFile);
+            EduUtils.createStudentFileFromAnswer(project, taskResourceDir, taskDir, entry.getKey(), taskFile);
           }
         }
       }

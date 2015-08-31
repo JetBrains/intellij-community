@@ -190,10 +190,8 @@ class ProgressDialog implements Disposable {
   public void dispose() {
     UIUtil.disposeProgress(myProgressBar);
     UIUtil.dispose(myTitlePanel);
-    final ActionListener[] listeners = myCancelButton.getActionListeners();
-    for (ActionListener listener : listeners) {
-      myCancelButton.removeActionListener(listener);
-    }
+    UIUtil.dispose(myBackgroundButton);
+    UIUtil.dispose(myCancelButton);
   }
 
   JPanel getPanel() {

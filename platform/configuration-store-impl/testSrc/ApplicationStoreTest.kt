@@ -15,119 +15,105 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.application.options.PathMacrosImpl
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.StateStorageManager
-import com.intellij.openapi.components.impl.stores.StorageData
-import com.intellij.openapi.components.impl.stores.StoreUtil
-import com.intellij.openapi.components.impl.stores.StreamProvider
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.*
+import com.intellij.util.SmartList
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.MatcherAssert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import java.io.ByteArrayInputStream
-import java.io.File
-import java.io.IOException
 import java.io.InputStream
+import java.nio.file.Path
+import java.nio.file.Paths
+import kotlin.properties.Delegates
 
-class ApplicationStoreTest : LightPlatformTestCase() {
-  private var testAppConfig: File? = null
-  private var componentStore: MyComponentStore? = null
-
-  override fun setUp() {
-    super.setUp()
-
-    val testAppConfigPath = System.getProperty("test.app.config.path")
-    if (testAppConfigPath == null) {
-      testAppConfig = FileUtil.createTempDirectory("testAppSettings", null)
-    }
-    else {
-      testAppConfig = File(FileUtil.expandUserHome(testAppConfigPath))
-    }
-    FileUtil.delete(testAppConfig!!)
-
-    componentStore = MyComponentStore(testAppConfig!!.getAbsolutePath())
+class ApplicationStoreTest {
+  companion object {
+    ClassRule val projectRule = ProjectRule()
   }
 
-  override fun tearDown() {
-    try {
-      Disposer.dispose(componentStore!!)
-      componentStore = null
-    }
-    finally {
-      try {
-        super.tearDown()
-      }
-      finally {
-        FileUtil.delete(testAppConfig!!)
-      }
-    }
+  private val tempDirManager = TemporaryDirectory()
+  public Rule fun getTemporaryFolder(): TemporaryDirectory = tempDirManager
+
+  private val edtRule = EdtRule()
+  public Rule fun _edtRule(): EdtRule = edtRule
+
+  private var testAppConfig: Path by Delegates.notNull()
+  private var componentStore: MyComponentStore by Delegates.notNull()
+
+  public Before fun setUp() {
+    testAppConfig = tempDirManager.newPath(refreshVfs = false)
+    componentStore = MyComponentStore(testAppConfig.systemIndependentPath)
   }
 
-  public fun testStreamProviderSaveIfSeveralStoragesConfigured() {
+  @Test fun `stream provider save if several storages configured`() {
     val component = SeveralStoragesConfigured()
 
     val streamProvider = MyStreamProvider()
-    componentStore!!.getStateStorageManager().setStreamProvider(streamProvider)
+    componentStore.storageManager.streamProvider = streamProvider
 
-    componentStore!!.initComponent(component, false)
+    componentStore.initComponent(component, false)
     component.foo = "newValue"
-    StoreUtil.save(componentStore!!, null)
+    componentStore.save(SmartList())
 
-    assertThat<String>(streamProvider.data.get(RoamingType.PER_USER)!!.get(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml"), equalTo("<application>\n" + "  <component name=\"HttpConfigurable\">\n" + "    <option name=\"foo\" value=\"newValue\" />\n" + "  </component>\n" + "</application>"))
+    assertThat(streamProvider.data.get(RoamingType.DEFAULT)!!.get("proxy.settings.xml")).isEqualTo("<application>\n" + "  <component name=\"HttpConfigurable\">\n" + "    <option name=\"foo\" value=\"newValue\" />\n" + "  </component>\n" + "</application>")
   }
 
-  public fun testLoadFromStreamProvider() {
+  @Test fun testLoadFromStreamProvider() {
     val component = SeveralStoragesConfigured()
 
     val streamProvider = MyStreamProvider()
     val map = THashMap<String, String>()
-    map.put(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml", "<application>\n" + "  <component name=\"HttpConfigurable\">\n" + "    <option name=\"foo\" value=\"newValue\" />\n" + "  </component>\n" + "</application>")
-    streamProvider.data.put(RoamingType.PER_USER, map)
+    val fileSpec = "proxy.settings.xml"
+    map.put(fileSpec, "<application>\n  <component name=\"HttpConfigurable\">\n    <option name=\"foo\" value=\"newValue\" />\n  </component>\n</application>")
+    streamProvider.data.put(RoamingType.DEFAULT, map)
 
-    componentStore!!.getStateStorageManager().setStreamProvider(streamProvider)
-    componentStore!!.initComponent(component, false)
-    assertThat(component.foo, equalTo("newValue"))
+    componentStore.storageManager.streamProvider = streamProvider
+    componentStore.initComponent(component, false)
+    assertThat(component.foo).isEqualTo("newValue")
+
+    assertThat(Paths.get(componentStore.storageManager.fileSpecToPath(fileSpec))).isRegularFile()
   }
 
-  public fun testRemoveDeprecatedStorageOnWrite() {
+  @Test fun `remove deprecated storage on write`() {
+    doRemoveDeprecatedStorageOnWrite(SeveralStoragesConfigured())
   }
 
-  public fun testRemoveDeprecatedStorageOnWrite2() {
+  @Test fun `remove deprecated storage on write 2`() {
     doRemoveDeprecatedStorageOnWrite(ActualStorageLast())
   }
 
   private fun doRemoveDeprecatedStorageOnWrite(component: Foo) {
-    val oldFile = saveConfig("other.xml", "<application>" + "  <component name=\"HttpConfigurable\">\n" + "    <option name=\"foo\" value=\"old\" />\n" + "  </component>\n" + "</application>")
+    val oldFile = writeConfig("other.xml", "<application><component name=\"HttpConfigurable\"><option name=\"foo\" value=\"old\" /></component></application>")
+    writeConfig("proxy.settings.xml", "<application><component name=\"HttpConfigurable\"><option name=\"foo\" value=\"new\" /></component></application>")
 
-    saveConfig("proxy.settings.xml", "<application>\n" + "  <component name=\"HttpConfigurable\">\n" + "    <option name=\"foo\" value=\"new\" />\n" + "  </component>\n" + "</application>")
+    testAppConfig.refreshVfs()
 
-    componentStore!!.initComponent(component, false)
-    assertThat(component.foo, equalTo("new"))
+    componentStore.initComponent(component, false)
+    assertThat(component.foo).isEqualTo("new")
 
     component.foo = "new2"
-    StoreUtil.save(componentStore!!, null)
+    runInEdtAndWait { componentStore.save(SmartList()) }
 
-    assertThat(oldFile.exists(), equalTo(false))
+    assertThat(oldFile).doesNotExist()
   }
 
-  private fun saveConfig(fileName: String, Language("XML") data: String): File {
-    val file = File(testAppConfig, fileName)
-    FileUtil.writeToFile(file, data)
-    return file
-  }
+  private fun writeConfig(fileName: String, Language("XML") data: String) = testAppConfig.writeChild(fileName, data)
 
   private class MyStreamProvider : StreamProvider {
+    override fun processChildren(path: String, roamingType: RoamingType, filter: (String) -> Boolean, processor: (String, InputStream, Boolean) -> Boolean) {
+    }
+
     public val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
 
-    override fun saveContent(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
+    override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
       getMap(roamingType).put(fileSpec, String(content, 0, size, CharsetToolkit.UTF8_CHARSET))
     }
 
@@ -140,9 +126,9 @@ class ApplicationStoreTest : LightPlatformTestCase() {
       return map
     }
 
-    override fun loadContent(fileSpec: String, roamingType: RoamingType): InputStream? {
-      val data = getMap(roamingType).get(fileSpec)
-      return if (data == null) null else ByteArrayInputStream(data.toByteArray(CharsetToolkit.UTF8_CHARSET))
+    override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
+      val data = getMap(roamingType).get(fileSpec) ?: return null
+      return ByteArrayInputStream(data.toByteArray())
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {
@@ -150,36 +136,23 @@ class ApplicationStoreTest : LightPlatformTestCase() {
     }
   }
 
-  class MyComponentStore(testAppConfigPath: String) : ComponentStoreImpl(), Disposable {
-    private val stateStorageManager: StateStorageManager
+  class MyComponentStore(testAppConfigPath: String) : ComponentStoreImpl() {
+    override val storageManager = ApplicationStorageManager(ApplicationManager.getApplication())
 
     init {
-      val macroSubstitutor = ApplicationPathMacroManager().createTrackingSubstitutor()
-      stateStorageManager = object : StateStorageManagerImpl(macroSubstitutor, "application", ApplicationManager.getApplication().getPicoContainer()) {
-        override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? {
-          if (fileSpec == "${StoragePathMacros.APP_CONFIG}/${PathMacrosImpl.EXT_FILE_NAME}.xml") {
-            return null
-          }
-          return super.getMacroSubstitutor(fileSpec)
-        }
-      }
-
-      stateStorageManager.addMacro(StoragePathMacros.APP_CONFIG, testAppConfigPath)
+      setPath(testAppConfigPath)
     }
 
-    override fun getStateStorageManager() = stateStorageManager
-
-    override fun dispose() {
+    override fun setPath(path: String) {
+      storageManager.addMacro(StoragePathMacros.APP_CONFIG, path)
     }
-
-    override fun getMessageBus() = ApplicationManager.getApplication().getMessageBus()
   }
 
   abstract class Foo {
     public var foo: String = "defaultValue"
   }
 
-  State(name = "HttpConfigurable", storages = arrayOf(Storage(file = StoragePathMacros.APP_CONFIG + "/proxy.settings.xml"), Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)))
+  @State(name = "HttpConfigurable", storages = arrayOf(Storage(file = "proxy.settings.xml"), Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)))
   class SeveralStoragesConfigured : Foo(), PersistentStateComponent<SeveralStoragesConfigured> {
     override fun getState(): SeveralStoragesConfigured? {
       return this
@@ -190,7 +163,7 @@ class ApplicationStoreTest : LightPlatformTestCase() {
     }
   }
 
-  State(name = "HttpConfigurable", storages = arrayOf(Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true), Storage(file = StoragePathMacros.APP_CONFIG + "/proxy.settings.xml")))
+  @State(name = "HttpConfigurable", storages = arrayOf(Storage(file = "other.xml", deprecated = true), Storage(file = "${StoragePathMacros.APP_CONFIG}/proxy.settings.xml")))
   class ActualStorageLast : Foo(), PersistentStateComponent<ActualStorageLast> {
     override fun getState() = this
 

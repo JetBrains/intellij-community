@@ -31,23 +31,31 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.pom.PomModel;
+import com.intellij.pom.core.impl.PomModelImpl;
+import com.intellij.pom.tree.TreeAspect;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiCachedValuesFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
+import com.intellij.psi.impl.source.text.BlockSupportImpl;
+import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
+import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
@@ -129,6 +137,11 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     if (myDefinitions.length > 0) {
       configureFromParserDefinition(myDefinitions[0], myFileExt);
     }
+
+    // That's for reparse routines
+    final PomModelImpl pomModel = new PomModelImpl(myProject);
+    myProject.registerService(PomModel.class, pomModel);
+    new TreeAspect(pomModel);
   }
 
   public void configureFromParserDefinition(ParserDefinition definition, String extension) {
@@ -212,6 +225,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
       assertEquals("virtual file text mismatch", text, LoadTextUtil.loadText(myFile.getVirtualFile()));
       assertEquals("doc text mismatch", text, myFile.getViewProvider().getDocument().getText());
       assertEquals("psi text mismatch", text, myFile.getText());
+      ensureCorrectReparse(myFile);
       if (checkResult){
         checkResult(name, myFile);
       }
@@ -313,5 +327,16 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
         element.acceptChildren(this);
       }
     });
+  }
+
+  public static void ensureCorrectReparse(@NotNull final PsiFile file) {
+    final String psiToStringDefault = DebugUtil.psiToString(file, false, false);
+
+    final String fileText = file.getText();
+    final DiffLog diffLog = new BlockSupportImpl(file.getProject()).reparseRange(
+      file, TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText);
+    diffLog.performActualPsiChange(file);
+
+    TestCase.assertEquals(psiToStringDefault, DebugUtil.psiToString(file, false, false));
   }
 }

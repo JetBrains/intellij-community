@@ -1,4 +1,4 @@
-<component>
+<idea-plugin>
   <actions>
     <group id="JavaGenerateGroup1">
       <action id="GenerateTestMethod" class="com.intellij.testIntegration.GenerateTestMethodAction"/>
@@ -60,7 +60,6 @@
     <group id="RefactoringMenu2">
       <action id="MethodDuplicates" class="com.intellij.refactoring.actions.MethodDuplicatesAction"/>
       
-      <action id="InvertBoolean" class="com.intellij.refactoring.actions.InvertBooleanAction"/>
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="Inline"/>
     </group>
 
@@ -361,4 +360,4 @@
       <add-to-group group-id="FileChooserToolbar" anchor="last"/>
     </action>
   </actions>
-</component>
+</idea-plugin>

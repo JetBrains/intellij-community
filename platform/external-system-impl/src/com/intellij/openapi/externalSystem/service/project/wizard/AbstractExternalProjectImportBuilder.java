@@ -160,7 +160,11 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     if (externalProjectNode != null) {
       ExternalProjectDataSelectorDialog dialog = new ExternalProjectDataSelectorDialog(
         project, new InternalExternalProjectInfo(myExternalSystemId, projectSettings.getExternalProjectPath(), externalProjectNode));
-      dialog.showAndGet();
+      if (dialog.hasMultipleDataToSelect()) {
+        dialog.showAndGet();
+      } else {
+        dialog.dispose();
+      }
 
       ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(project) {
         @Override

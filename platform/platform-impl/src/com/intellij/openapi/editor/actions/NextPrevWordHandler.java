@@ -38,7 +38,7 @@ class NextPrevWordHandler extends EditorActionHandler {
   protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
     assert caret != null;
     VisualPosition currentPosition = caret.getVisualPosition();
-    if (caret.isAtDirectionBoundary() && (myNext ^ currentPosition.leansRight)) {
+    if (caret.isAtBidiRunBoundary() && (myNext ^ currentPosition.leansRight)) {
       int selectionStartOffset = caret.getLeadSelectionOffset();
       VisualPosition selectionStartPosition = caret.getLeadSelectionPosition();
       caret.moveToVisualPosition(currentPosition.leanRight(!currentPosition.leansRight));

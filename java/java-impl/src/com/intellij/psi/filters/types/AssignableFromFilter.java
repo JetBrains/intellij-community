@@ -42,8 +42,6 @@ public class AssignableFromFilter implements ElementFilter{
     myClassName = className;
   }
 
-  public AssignableFromFilter(){}
-
   @Override
   public boolean isClassAcceptable(Class hintClass){
     return true;

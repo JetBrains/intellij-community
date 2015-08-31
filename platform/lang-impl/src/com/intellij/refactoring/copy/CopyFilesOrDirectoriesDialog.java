@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -40,6 +41,7 @@ import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
 import com.intellij.ui.components.JBLabelDecorator;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -100,11 +102,16 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
       String text;
       if (elements[0] instanceof PsiFile) {
         PsiFile file = (PsiFile)elements[0];
-        String url = shortenPath(file.getVirtualFile());
+        VirtualFile virtualFile = file.getVirtualFile();
+        String url = shortenPath(virtualFile);
         text = RefactoringBundle.message(doClone ? "copy.files.clone.file.0" : "copy.files.copy.file.0", url);
         // keep extensions (dots) and spaces, e.g. fragment file name will be "HTML Fragment (my.sql_61).html"
         // and leave ordinary file name AS IS
         String fileName = PathUtil.suggestFileName(file.getName(), true, true);
+        if (StringUtil.isEmpty(virtualFile.getExtension())) {
+          LanguageFileType type = file.getLanguage().getAssociatedFileType();
+          fileName = PathUtil.makeFileName(fileName, ObjectUtils.notNull(type, file.getFileType()).getDefaultExtension());
+        }
         myNewNameField.setText(fileName);
         final int dotIdx = fileName.lastIndexOf(".");
         if (dotIdx > -1) {

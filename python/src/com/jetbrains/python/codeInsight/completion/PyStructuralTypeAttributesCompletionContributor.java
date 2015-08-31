@@ -134,7 +134,7 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
     }
 
     /**
-     * A simpler and faster alternative to {@link com.jetbrains.python.psi.impl.PyClassImpl#getAncestorClasses()}.
+     * A simpler and faster alternative to {@link PyClass#getAncestorClasses(TypeEvalContext)}.
      * The approach used here does not require proper MRO order of ancestors and its performance is greatly improved by reusing
      * intermediate results in case of a large class hierarchy.
      */

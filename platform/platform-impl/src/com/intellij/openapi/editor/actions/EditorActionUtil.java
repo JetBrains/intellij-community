@@ -363,15 +363,19 @@ public class EditorActionUtil {
     else {
       LogicalPosition logLineEndLog = editor.offsetToLogicalPosition(document.getLineEndOffset(logLineToUse));
       VisualPosition logLineEndVis = editor.logicalToVisualPosition(logLineEndLog);
-      if (logLineEndLog.softWrapLinesOnCurrentLogicalLine > 0) {
-        moveCaretToStartOfSoftWrappedLine(editor, logLineEndVis, logLineEndLog.softWrapLinesOnCurrentLogicalLine);
+      int softWrapCount = EditorUtil.getSoftWrapCountAfterLineStart(editor, logLineEndLog);
+      if (softWrapCount > 0) {
+        moveCaretToStartOfSoftWrappedLine(editor, logLineEndVis, softWrapCount);
       }
       else {
         int line = logLineEndVis.line;
-        if (currentVisCaret.column == 0 && editorSettings.isSmartHome()) {
-          findSmartIndentColumn(editor, line);
-        }
         int column = 0;
+        if (currentVisCaret.column > 0) {
+          int firstNonSpaceColumnOnTheLine = findFirstNonSpaceColumnOnTheLine(editor, currentVisCaret.line);
+          if (firstNonSpaceColumnOnTheLine < currentVisCaret.column) {
+            column = firstNonSpaceColumnOnTheLine;
+          }
+        }
         caretModel.moveToVisualPosition(new VisualPosition(line, column));
       }
     }

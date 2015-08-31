@@ -15,10 +15,7 @@
  */
 package org.jetbrains.settingsRepository
 
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import java.io.File
 import java.nio.ByteBuffer
 
 public fun String?.nullize(): String? = StringUtil.nullize(this)
@@ -34,14 +31,4 @@ public fun byteBufferToBytes(byteBuffer: ByteBuffer): ByteArray {
   val bytes = ByteArray(byteBuffer.limit())
   byteBuffer.get(bytes)
   return bytes
-}
-
-fun getPluginSystemDir(): File {
-  val customPath = System.getProperty("ics.settingsRepository")
-  if (customPath == null) {
-    return File(PathManager.getConfigPath(), "settingsRepository")
-  }
-  else {
-    return File(FileUtil.expandUserHome(customPath))
-  }
 }

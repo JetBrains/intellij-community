@@ -15,27 +15,24 @@
  */
 package com.intellij.openapi.components;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Set;
 
 public interface StateStorage {
-  // app storage files changed
-  Topic<Listener> STORAGE_TOPIC = new Topic<Listener>("STORAGE_LISTENER", Listener.class, Topic.BroadcastDirection.NONE);
-  // project storage files changes (project or modules, it is reason why we use broadcast TO_PARENT - to be notified when some module storage file changed
-  //  even if listen only project message bus)
-  Topic<Listener> PROJECT_STORAGE_TOPIC = new Topic<Listener>("PROJECT_STORAGE_LISTENER", Listener.class, Topic.BroadcastDirection.NONE);
-
+  /**
+   * You can call this method only once.
+   * If state exists and not archived - not-null result.
+   * If doesn't exists or archived - null result.
+   */
   @Nullable
-  <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto);
+  <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto, boolean reload);
 
-  boolean hasState(@Nullable Object component, @NotNull String componentName, final Class<?> aClass, final boolean reloadData);
+  <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass);
+
+  boolean hasState(@NotNull String componentName, boolean reloadData);
 
   @Nullable
   ExternalizationSession startExternalization();
@@ -43,10 +40,10 @@ public interface StateStorage {
   /**
    * Get changed component names
    */
-  void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> componentNames);
+  void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames);
 
   interface ExternalizationSession {
-    void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, @Nullable Storage storageSpec);
+    void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state);
 
     /**
      * return null if nothing to save
@@ -57,9 +54,5 @@ public interface StateStorage {
 
   interface SaveSession {
     void save() throws IOException;
-  }
-
-  interface Listener {
-    void storageFileChanged(@NotNull VirtualFileEvent event, @NotNull StateStorage storage);
   }
 }

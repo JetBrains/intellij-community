@@ -250,7 +250,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     final Project project = mySession.getProject();
     text = XExpressionImpl.changeMode(text, mode);
     if (mode == EvaluationMode.EXPRESSION) {
-      return new ExpressionInputComponent(project, myEditorsProvider, mySourcePosition, text);
+      return new ExpressionInputComponent(project, myEditorsProvider, mySourcePosition, text, myDisposable);
     }
     else {
       return new CodeFragmentInputComponent(project, myEditorsProvider, mySourcePosition, text, myDisposable);

@@ -151,7 +151,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
         return appendToMethod(init, callback);
       }
       else { // no init! boldly copy ancestor's.
-        for (PyClass ancestor : cls.getAncestorClasses()) {
+        for (PyClass ancestor : cls.getAncestorClasses(null)) {
           init = ancestor.findMethodByName(PyNames.INIT, false);
           if (init != null) break;
         }
@@ -194,7 +194,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
         PyParameter[] params = ancestorInit.getParameterList().getParameters();
 
         boolean seen = false;
-        if (cls.isNewStyleClass()) {
+        if (cls.isNewStyleClass(null)) {
           // form the super() call
           sb.append("super(");
           if (!LanguageLevel.forElement(cls).isPy3K()) {

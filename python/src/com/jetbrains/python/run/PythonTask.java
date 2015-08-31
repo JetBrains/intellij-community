@@ -117,7 +117,7 @@ public class PythonTask {
     if (env != null) {
       commandLine.getEnvironment().putAll(env);
     }
-    PydevConsoleRunner.setCorrectStdOutEncoding(commandLine.getEnvironment(), myModule.getProject()); // To support UTF-8 output
+    PydevConsoleRunner.setCorrectStdOutEncoding(commandLine, myModule.getProject()); // To support UTF-8 output
 
     ProcessHandler handler;
     if (PySdkUtil.isRemote(mySdk)) {
@@ -125,7 +125,7 @@ public class PythonTask {
       handler = new PyRemoteProcessStarter().startRemoteProcess(mySdk, commandLine, myModule.getProject(), null);
     }
     else {
-      EncodingEnvironmentUtil.fixDefaultEncodingIfMac(commandLine, myModule.getProject());
+      EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(commandLine);
       handler = PythonProcessRunner.createProcessHandlingCtrlC(commandLine);
 
       ProcessTerminatedListener.attach(handler);
@@ -133,6 +133,15 @@ public class PythonTask {
     return handler;
   }
 
+
+  /**
+   * Runs command using env vars from facet
+   * @param consoleView console view to be used for command or null to create new
+   * @throws ExecutionException failed to execute command
+   */
+  public void run(@Nullable final ConsoleView consoleView) throws ExecutionException {
+    run(createCommandLine().getEnvironment(), consoleView);
+  }
 
   public GeneralCommandLine createCommandLine() {
     GeneralCommandLine cmd = new GeneralCommandLine();

@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltip;
+import com.intellij.ide.RemoteDesktopDetector;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -111,7 +112,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
         if (myClickHandler != null && id == MouseEvent.MOUSE_CLICKED) {
           if (!(me.getComponent() instanceof CloseButton) && insideBalloon) {
-            myClickHandler.actionPerformed(new ActionEvent(BalloonImpl.this, ActionEvent.ACTION_PERFORMED, "click", me.getModifiersEx()));
+            myClickHandler.actionPerformed(new ActionEvent(me, ActionEvent.ACTION_PERFORMED, "click", me.getModifiersEx()));
             if (myCloseOnClick) {
               hide();
               return;
@@ -1691,7 +1692,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   }
 
   public boolean isAnimationEnabled() {
-    return myAnimationEnabled && myAnimationCycle > 0;
+    return myAnimationEnabled && myAnimationCycle > 0 && !RemoteDesktopDetector.isRemoteSession();
   }
 
   public boolean isBlockClicks() {

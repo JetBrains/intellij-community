@@ -16,14 +16,14 @@
 package org.intellij.plugins.xpathView.eval;
 
 import com.intellij.find.FindSettings;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import org.intellij.plugins.xpathView.Config;
 import org.intellij.plugins.xpathView.HistoryElement;
 import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
-
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -77,6 +77,7 @@ public class EvalExpressionDialog extends InputExpressionDialog<EvalFormPanel> {
         super.doOKAction();
     }
 
+    @NotNull
     protected String getPrivateDimensionServiceKey() {
         return "XPathView.InputDialog.DIMENSION_SERVICE_KEY";
     }

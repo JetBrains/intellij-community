@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -40,6 +41,11 @@ public class ClassNameDiffersFromFileNameInspectionBase extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return !FileTypeUtils.isInServerPageFile(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ClassNameDiffersFromFileNameVisitor();
   }
@@ -50,9 +56,6 @@ public class ClassNameDiffersFromFileNameInspectionBase extends BaseInspection {
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       // no call to super, so that it doesn't drill down to inner classes
-      if (FileTypeUtils.isInServerPageFile(aClass)) {
-        return;
-      }
       final PsiElement parent = aClass.getParent();
       if (!(parent instanceof PsiJavaFile)) {
         return;

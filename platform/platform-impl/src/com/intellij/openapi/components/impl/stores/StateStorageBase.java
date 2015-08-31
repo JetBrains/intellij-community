@@ -16,28 +16,29 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class StateStorageBase<T extends StorageDataBase> implements StateStorage {
+import java.util.concurrent.atomic.AtomicReference;
+
+public abstract class StateStorageBase<T> implements StateStorage {
   protected static final Logger LOG = Logger.getInstance(StateStorageBase.class);
 
   private boolean mySavingDisabled = false;
-  protected final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
 
-  protected T myStorageData;
-
-  protected StateStorageBase(@Nullable TrackingPathMacroSubstitutor trackingPathMacroSubstitutor) {
-    myPathMacroSubstitutor = trackingPathMacroSubstitutor;
-  }
+  protected final AtomicReference<T> storageDataRef = new AtomicReference<T>();
 
   @Override
   @Nullable
-  public final <S> S getState(Object component, @NotNull String componentName, @NotNull Class<S> stateClass, @Nullable S mergeInto) {
-    return deserializeState(getStateAndArchive(getStorageData(), component, componentName), stateClass, mergeInto);
+  public final <S> S getState(Object component, @NotNull String componentName, @NotNull Class<S> stateClass, @Nullable S mergeInto, boolean reload) {
+    return deserializeState(getStateAndArchive(getStorageData(reload), component, componentName), stateClass, mergeInto);
+  }
+
+  @Override
+  public final <S> S getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<S> stateClass) {
+    return getState(component, componentName, stateClass, null, false);
   }
 
   @Nullable
@@ -48,9 +49,11 @@ public abstract class StateStorageBase<T extends StorageDataBase> implements Sta
   @Nullable
   protected abstract Element getStateAndArchive(@NotNull T storageData, Object component, @NotNull String componentName);
 
+  protected abstract boolean hasState(@NotNull T storageData, @NotNull String componentName);
+
   @Override
-  public final boolean hasState(@Nullable Object component, @NotNull String componentName, Class<?> aClass, boolean reloadData) {
-    return getStorageData(reloadData).hasState(componentName);
+  public final boolean hasState(@NotNull String componentName, boolean reloadData) {
+    return hasState(getStorageData(reloadData), componentName);
   }
 
   @NotNull
@@ -60,12 +63,18 @@ public abstract class StateStorageBase<T extends StorageDataBase> implements Sta
 
   @NotNull
   protected final T getStorageData(boolean reload) {
-    if (myStorageData != null && !reload) {
-      return myStorageData;
+    final T storageData = storageDataRef.get();
+    if (storageData != null && !reload) {
+      return storageData;
     }
 
-    myStorageData = loadData();
-    return myStorageData;
+    T newStorageData = loadData();
+    if (storageDataRef.compareAndSet(storageData, newStorageData)) {
+      return newStorageData;
+    }
+    else {
+      return getStorageData(false);
+    }
   }
 
   protected abstract T loadData();

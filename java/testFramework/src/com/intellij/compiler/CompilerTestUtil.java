@@ -79,23 +79,23 @@ public class CompilerTestUtil {
   }
 
   public static void enableExternalCompiler() {
+    ApplicationManagerEx.getApplicationEx().doNotSave(false);
+    final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
     new WriteAction() {
       @Override
       protected void run(@NotNull final Result result) {
-        ApplicationManagerEx.getApplicationEx().doNotSave(false);
-        JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
         table.addJdk(table.getInternalJdk());
       }
     }.execute();
   }
 
   public static void disableExternalCompiler(final Project project) {
+    ApplicationManagerEx.getApplicationEx().doNotSave(true);
+    final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
     new WriteAction() {
       @Override
       protected void run(@NotNull final Result result) {
-        ApplicationManagerEx.getApplicationEx().doNotSave(true);
         Module[] modules = ModuleManager.getInstance(project).getModules();
-        JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
         Sdk internalJdk = table.getInternalJdk();
         List<Module> modulesToRestore = new ArrayList<Module>();
         for (Module module : modules) {

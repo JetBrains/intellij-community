@@ -545,4 +545,13 @@ class Test {
       registrar.unregisterReferenceProvider(PsiDocTag.class, provider);
     }
   }
+
+  public void "test complete author name"() {
+    def userName = SystemProperties.userName
+    assert userName
+    myFixture.configureByText 'a.java', "/** @author <caret> */"
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResult "/** @author $userName<caret> */"
+  }
 }

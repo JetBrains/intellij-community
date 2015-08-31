@@ -63,7 +63,7 @@ public abstract class ReadonlyStatusHandler {
     return ensureFilesWritable(VfsUtilCore.toVirtualFileArray(files));
   }
 
-  public static ReadonlyStatusHandler getInstance(Project project) {
+  public static ReadonlyStatusHandler getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ReadonlyStatusHandler.class);
   }
 

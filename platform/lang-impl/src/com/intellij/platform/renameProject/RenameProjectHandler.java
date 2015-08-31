@@ -126,7 +126,7 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               @Override
               public void run() {
-                DumbService.getInstance(myProject).allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+                DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
                   @Override
                   public void run() {
                     modifiableModel.commit();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,26 +21,16 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.ide.util.scopeChooser.IgnoringComboBox;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
-import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.psi.search.scope.NonProjectFilesScope;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ScopeBasedTodosPanel extends TodoPanel {
   private static final String SELECTED_SCOPE = "TODO_SCOPE";
@@ -54,10 +44,7 @@ public class ScopeBasedTodosPanel extends TodoPanel {
       @Override
       public void actionPerformed(ActionEvent e) {
         rebuildWithAlarm(ScopeBasedTodosPanel.this.myAlarm);
-        final String selectedItemName = myScopes.getSelectedScopeName();
-        if (selectedItemName != null) {
-          PropertiesComponent.getInstance(myProject).setValue(SELECTED_SCOPE, selectedItemName);
-        }
+        PropertiesComponent.getInstance(myProject).setValue(SELECTED_SCOPE, myScopes.getSelectedScopeName(), null);
       }
     });
     rebuildWithAlarm(myAlarm);

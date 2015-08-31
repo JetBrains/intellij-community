@@ -18,126 +18,136 @@ package com.intellij.openapi.diff.impl.settings;
 
 import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.application.options.colors.PreviewPanel;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffContext;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.tools.simple.SimpleThreesideDiffChange;
+import com.intellij.diff.tools.simple.SimpleThreesideDiffViewer;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.impl.incrementalMerge.Change;
-import com.intellij.openapi.diff.impl.incrementalMerge.MergeList;
-import com.intellij.openapi.diff.impl.incrementalMerge.MergeSearchHelper;
-import com.intellij.openapi.diff.impl.incrementalMerge.ui.EditorPlace;
-import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * The panel from the Settings, that allows to see changes to diff/merge coloring scheme right away.
  */
 public class DiffPreviewPanel implements PreviewPanel {
-  private final MergePanel2.AsComponent myMergePanelComponent;
-  private final JPanel myPanel = new JPanel(new BorderLayout());
+  private final SimpleThreesideDiffViewer myViewer;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
   public DiffPreviewPanel(@NotNull Disposable parent) {
-    myMergePanelComponent = new MergePanel2.AsComponent(parent);
-    myPanel.add(myMergePanelComponent, BorderLayout.CENTER);
-    myMergePanelComponent.setToolbarEnabled(false);
-    MergePanel2 mergePanel = getMergePanel();
-    mergePanel.setScrollToFirstDiff(false);
+    myViewer = new SimpleThreesideDiffViewer(new SampleContext(), new SampleRequest());
+    myViewer.init();
+    Disposer.register(parent, myViewer);
 
-    for (int i = 0; i < MergePanel2.EDITORS_COUNT; i++) {
-      final EditorMouseListener motionListener = new EditorMouseListener(i);
-      final EditorClickListener clickListener = new EditorClickListener(i);
-      mergePanel.getEditorPlace(i).addListener(new EditorPlace.EditorListener() {
-        @Override
-        public void onEditorCreated(EditorPlace place) {
-          Editor editor = place.getEditor();
-          editor.addEditorMouseMotionListener(motionListener);
-          editor.addEditorMouseListener(clickListener);
-          editor.getCaretModel().addCaretListener(clickListener);
-        }
-
-        @Override
-        public void onEditorReleased(Editor releasedEditor) {
-          releasedEditor.removeEditorMouseMotionListener(motionListener);
-          releasedEditor.removeEditorMouseListener(clickListener);
-        }
-      });
-      Editor editor = mergePanel.getEditor(i);
-      if (editor != null) {
-        editor.addEditorMouseMotionListener(motionListener);
-        editor.addEditorMouseListener(clickListener);
-      }
+    for (ThreeSide side : ThreeSide.values()) {
+      final EditorMouseListener motionListener = new EditorMouseListener(side);
+      final EditorClickListener clickListener = new EditorClickListener(side);
+      Editor editor = myViewer.getEditor(side);
+      editor.addEditorMouseMotionListener(motionListener);
+      editor.addEditorMouseListener(clickListener);
+      editor.getCaretModel().addCaretListener(clickListener);
     }
   }
 
   @Override
   public Component getPanel() {
-    return myPanel;
+    return myViewer.getComponent();
   }
 
   @Override
   public void updateView() {
-    MergeList mergeList = getMergePanel().getMergeList();
-    if (mergeList != null) mergeList.updateMarkup();
-    myMergePanelComponent.repaint();
-
-  }
-
-  public void setMergeRequest(@Nullable Project project) throws FilesTooBigForDiffException {
-    getMergePanel().setDiffRequest(new SampleMerge(project));
-  }
-
-  private MergePanel2 getMergePanel() {
-    return myMergePanelComponent.getMergePanel();
+    List<SimpleThreesideDiffChange> changes = myViewer.getChanges();
+    for (SimpleThreesideDiffChange change : changes) {
+      change.destroyHighlighter();
+      change.installHighlighter();
+    }
   }
 
   public void setColorScheme(final EditorColorsScheme highlighterSettings) {
-    getMergePanel().setColorScheme(highlighterSettings);
-    getMergePanel().setHighlighterSettings(highlighterSettings);
-  }
-
-  private class EditorMouseListener extends EditorMouseMotionAdapter {
-    private final int myIndex;
-
-    private EditorMouseListener(int index) {
-      myIndex = index;
-    }
-
-    @Override
-    public void mouseMoved(EditorMouseEvent e) {
-      MergePanel2 mergePanel = getMergePanel();
-      Editor editor = mergePanel.getEditor(myIndex);
-      if (MergeSearchHelper.findChangeAt(e, mergePanel, myIndex) != null) EditorUtil.setHandCursor(editor);
+    for (EditorEx editorEx : myViewer.getEditors()) {
+      editorEx.setColorsScheme(highlighterSettings);
     }
   }
 
-  public static class SampleMerge extends DiffRequest {
-    public SampleMerge(@Nullable Project project) {
-      super(project);
+  private static class SampleRequest extends ContentDiffRequest {
+    private final List<DiffContent> myContents;
+
+    public SampleRequest() {
+      com.intellij.openapi.diff.DiffContent[] contents = DiffPreviewProvider.getContents();
+      myContents = ContainerUtil.list(convert(contents[0]), convert(contents[1]), convert(contents[2]));
     }
 
-    @Override
+    private static DiffContent convert(@NotNull com.intellij.openapi.diff.DiffContent content) {
+      Document document = content.getDocument();
+      FileType fileType = content.getContentType();
+      return DiffContentFactory.getInstance().create(null, document, fileType);
+    }
+
     @NotNull
-    public DiffContent[] getContents() {
-      return DiffPreviewProvider.getContents();
+    @Override
+    public List<DiffContent> getContents() {
+      return myContents;
+    }
+
+    @NotNull
+    @Override
+    public List<String> getContentTitles() {
+      return ContainerUtil.list(null, null, null);
+    }
+
+    @Nullable
+    @Override
+    public String getTitle() {
+      return DiffBundle.message("merge.color.options.dialog.title");
+    }
+  }
+
+  private static class SampleContext extends DiffContext {
+    public SampleContext() {
+      TextDiffSettingsHolder.TextDiffSettings settings = new TextDiffSettingsHolder.TextDiffSettings();
+      putUserData(TextDiffSettingsHolder.KEY, settings);
+    }
+
+    @Nullable
+    @Override
+    public Project getProject() {
+      return null;
     }
 
     @Override
-    public String[] getContentTitles() { return new String[]{"", "", ""}; }
+    public boolean isWindowFocused() {
+      return false;
+    }
+
     @Override
-    public String getWindowTitle() { return DiffBundle.message("merge.color.options.dialog.title"); }
+    public boolean isFocused() {
+      return false;
+    }
+
+    @Override
+    public void requestFocus() {
+    }
   }
 
   @Override
@@ -145,42 +155,71 @@ public class DiffPreviewPanel implements PreviewPanel {
     myDispatcher.addListener(listener);
   }
 
-  private class EditorClickListener extends EditorMouseAdapter implements CaretListener {
-    private final int myIndex;
+  private class EditorMouseListener extends EditorMouseMotionAdapter {
+    @NotNull private final ThreeSide mySide;
 
-    private EditorClickListener(int i) {
-      myIndex = i;
+    private EditorMouseListener(@NotNull ThreeSide side) {
+      mySide = side;
+    }
+
+    @Override
+    public void mouseMoved(EditorMouseEvent e) {
+      if (getChange(mySide, e) != null) EditorUtil.setHandCursor(e.getEditor());
+    }
+  }
+
+  private class EditorClickListener extends EditorMouseAdapter implements CaretListener {
+    @NotNull private final ThreeSide mySide;
+
+    private EditorClickListener(@NotNull ThreeSide side) {
+      mySide = side;
     }
 
     @Override
     public void mouseClicked(EditorMouseEvent e) {
-      select(MergeSearchHelper.findChangeAt(e, getMergePanel(), myIndex));
+      selectChange(getChange(mySide, e));
     }
-
-    private void select(Change change) {
-      if (change == null) return;
-      myDispatcher.getMulticaster().selectionInPreviewChanged(change.getType().getTextDiffType().getDisplayName());
-     }
 
     @Override
     public void caretPositionChanged(CaretEvent e) {
-      select(MergeSearchHelper.findChangeAt(e, getMergePanel(), myIndex));
+      selectChange(getChange(mySide, e.getNewPosition().line));
     }
 
     @Override
     public void caretAdded(CaretEvent e) {
-
     }
 
     @Override
     public void caretRemoved(CaretEvent e) {
-
     }
+  }
+
+  private void selectChange(@Nullable SimpleThreesideDiffChange change) {
+    if (change == null) return;
+    myDispatcher.getMulticaster().selectionInPreviewChanged(change.getDiffType().getName());
+  }
+
+  @Nullable
+  private SimpleThreesideDiffChange getChange(ThreeSide side, EditorMouseEvent e) {
+    EditorEx editor = myViewer.getEditor(side);
+    LogicalPosition logicalPosition = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
+    int offset = editor.logicalPositionToOffset(logicalPosition);
+    int line = editor.getDocument().getLineNumber(offset);
+    return getChange(side, line);
+  }
+
+  @Nullable
+  private SimpleThreesideDiffChange getChange(ThreeSide side, int line) {
+    for (SimpleThreesideDiffChange change : myViewer.getChanges()) {
+      int startLine = change.getStartLine(side);
+      int endLine = change.getEndLine(side);
+      if (DiffUtil.isSelectedByLine(line, startLine, endLine)) return change;
+    }
+    return null;
   }
 
   @Override
   public void blinkSelectedHighlightType(final Object selected) {
-    
   }
 
   @Override

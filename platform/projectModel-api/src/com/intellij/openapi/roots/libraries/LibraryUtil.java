@@ -162,4 +162,14 @@ public class LibraryUtil {
     }
     return null;
   }
+
+  @NotNull
+  public static String getPresentableName(@NotNull Library library) {
+    final String name = library.getName();
+    if (name != null) {
+      return name;
+    }
+    final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+    return files.length > 0 ? files[0].getName() : "Empty Library";
+  }
 }

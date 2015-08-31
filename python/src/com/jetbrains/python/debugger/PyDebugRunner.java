@@ -18,6 +18,7 @@ package com.jetbrains.python.debugger;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.console.LanguageConsoleBuilder;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -82,8 +83,8 @@ public class PyDebugRunner extends GenericProgramRunner {
            ((AbstractPythonRunConfiguration)profile).canRunWithCoverage();
   }
 
-  @Override
-  protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) throws ExecutionException {
+
+  protected XDebugSession createSession(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     final PythonCommandLineState pyState = (PythonCommandLineState)state;
@@ -92,22 +93,37 @@ public class PyDebugRunner extends GenericProgramRunner {
     RunProfile profile = environment.getRunProfile();
     final ExecutionResult result = pyState.execute(environment.getExecutor(), createCommandLinePatchers(environment.getProject(), pyState, profile, serverLocalPort));
 
-    final XDebugSession session = XDebuggerManager.getInstance(environment.getProject()).
+    return XDebuggerManager.getInstance(environment.getProject()).
       startSession(environment, new XDebugProcessStarter() {
         @Override
         @NotNull
         public XDebugProcess start(@NotNull final XDebugSession session) {
           PyDebugProcess pyDebugProcess =
-            new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler(),
-                               pyState.isMultiprocessDebug());
+            createDebugProcess(session, serverSocket, result, pyState);
 
           createConsoleCommunicationAndSetupActions(environment.getProject(), result, pyDebugProcess, session);
-
-
           return pyDebugProcess;
         }
       });
+  }
+
+  @NotNull
+  protected PyDebugProcess createDebugProcess(@NotNull XDebugSession session,
+                                              ServerSocket serverSocket,
+                                              ExecutionResult result,
+                                              PythonCommandLineState pyState) {
+    return new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler(),
+                              pyState.isMultiprocessDebug());
+  }
+
+  @Override
+  protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) throws ExecutionException {
+    XDebugSession session = createSession(state, environment);
+    initSession(session, state, environment.getExecutor());
     return session.getRunContentDescriptor();
+  }
+
+  protected void initSession(XDebugSession session, RunProfileState state, Executor executor) {
   }
 
   public static int findIndex(List<String> paramList, String paramName) {

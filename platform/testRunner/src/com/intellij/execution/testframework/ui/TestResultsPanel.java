@@ -19,7 +19,6 @@ import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkPropertyListener;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.ToolbarPanel;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -29,10 +28,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -42,8 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 /**
  * @author yole
@@ -60,10 +54,10 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
   protected final AnAction[] myConsoleActions;
   protected final TestConsoleProperties myProperties;
   protected TestStatusLine myStatusLine;
-  private Splitter mySplitter;
+  private JBSplitter mySplitter;
 
   protected TestResultsPanel(@NotNull JComponent console, AnAction[] consoleActions, TestConsoleProperties properties,
-                             String splitterProportionProperty, float splitterDefaultProportion) {
+                             @NotNull String splitterProportionProperty, float splitterDefaultProportion) {
     super(new BorderLayout(0,1));
     myConsole = console;
     myConsoleActions = consoleActions;
@@ -190,33 +184,10 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
   public void dispose() {
   }
 
-  protected static Splitter createSplitter(final String proportionProperty, final float defaultProportion, boolean splitVertically) {
-    final Splitter splitter = new OnePixelSplitter(splitVertically);
+  @NotNull
+  protected static JBSplitter createSplitter(@NotNull String proportionProperty, float defaultProportion, boolean splitVertically) {
+    JBSplitter splitter = new OnePixelSplitter(splitVertically, proportionProperty, defaultProportion);
     splitter.setHonorComponentsMinimumSize(true);
-    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
-    float proportion;
-    final String value = propertiesComponent.getValue(proportionProperty);
-    if (value != null) {
-      try {
-        proportion = Float.parseFloat(value);
-      }
-      catch (NumberFormatException e) {
-        proportion = defaultProportion;
-      }
-    }
-    else {
-      proportion = defaultProportion;
-    }
-
-    splitter.addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(@NotNull final PropertyChangeEvent event) {
-        if (event.getPropertyName().equals(Splitter.PROP_PROPORTION)) {
-          propertiesComponent.setValue(proportionProperty, String.valueOf(splitter.getProportion()));
-        }
-      }
-    });
-    splitter.setProportion(proportion);
     return splitter;
   }
 

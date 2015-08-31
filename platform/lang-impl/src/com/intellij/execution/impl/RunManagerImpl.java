@@ -95,9 +95,8 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   private final EventDispatcher<RunManagerListener> myDispatcher = EventDispatcher.create(RunManagerListener.class);
 
-  public RunManagerImpl(final Project project,
-                        PropertiesComponent propertiesComponent) {
-    myConfig = new RunManagerConfig(propertiesComponent, this);
+  public RunManagerImpl(@NotNull Project project, @NotNull PropertiesComponent propertiesComponent) {
+    myConfig = new RunManagerConfig(propertiesComponent);
     myProject = project;
 
     initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions());
@@ -360,7 +359,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     setBeforeRunTasks(configuration, tasks, addEnabledTemplateTasksIfAbsent);
 
     if (existingSettings == settings) {
-      myDispatcher.getMulticaster().runConfigurationChanged(settings);
+      myDispatcher.getMulticaster().runConfigurationChanged(settings, existingId);
     }
     else {
       myDispatcher.getMulticaster().runConfigurationAdded(settings);
@@ -721,12 +720,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       }
     }
 
-    try {
-      myOrder.readExternal(parentNode);
-    }
-    catch (InvalidDataException e) {
-      throw new RuntimeException(e);
-    }
+    myOrder.readExternal(parentNode);
 
     // migration (old ids to UUIDs)
     readList(myOrder);
@@ -735,12 +729,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     Element recentNode = parentNode.getChild(RECENT);
     if (recentNode != null) {
       JDOMExternalizableStringList list = new JDOMExternalizableStringList();
-      try {
-        list.readExternal(recentNode);
-      }
-      catch (InvalidDataException e) {
-        throw new RuntimeException(e);
-      }
+      list.readExternal(recentNode);
       readList(list);
       for (String name : list) {
         RunnerAndConfigurationSettings settings = myConfigurations.get(name);
@@ -1275,7 +1264,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   public void fireRunConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
-    myDispatcher.getMulticaster().runConfigurationChanged(settings);
+    myDispatcher.getMulticaster().runConfigurationChanged(settings, null);
   }
 
   private void fireRunConfigurationsRemoved(@Nullable List<RunnerAndConfigurationSettings> removed) {

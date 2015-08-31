@@ -193,7 +193,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     }
 
     if (myGenerateAnnotations != null && myGenerateAnnotations.isEnabled()) {
-      PropertiesComponent.getInstance(myProject).setValue(EXTRACT_METHOD_GENERATE_ANNOTATIONS, String.valueOf(myGenerateAnnotations.isSelected()));
+      PropertiesComponent.getInstance(myProject).setValue(EXTRACT_METHOD_GENERATE_ANNOTATIONS, myGenerateAnnotations.isSelected(), true);
     }
     super.doOKAction();
   }
@@ -398,7 +398,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     final JavaComboBoxVisibilityPanel panel = new JavaComboBoxVisibilityPanel();
     final PsiMethod containingMethod = getContainingMethod();
     panel.setVisibility(containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.PUBLIC) 
-                        ? PropertiesComponent.getInstance(myProject).getOrInit( EXTRACT_METHOD_DEFAULT_VISIBILITY, PsiModifier.PRIVATE)
+                        ? PropertiesComponent.getInstance(myProject).getValue(EXTRACT_METHOD_DEFAULT_VISIBILITY, PsiModifier.PRIVATE)
                         : PsiModifier.PRIVATE);
     panel.addListener(new ChangeListener() {
       @Override

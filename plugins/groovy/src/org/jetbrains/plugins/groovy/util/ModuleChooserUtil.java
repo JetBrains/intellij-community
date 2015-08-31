@@ -116,16 +116,27 @@ public class ModuleChooserUtil {
     }
   }
 
-  public static List<Module> getGroovyCompatibleModules(Project project, Condition<Module> condition) {
-    ArrayList<Module> result = new ArrayList<Module>();
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (condition.value(module)) {
-        final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-        if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
-          result.add(module);
+  @NotNull
+  private static Condition<Module> isGroovyCompatibleModule(final Condition<Module> condition) {
+    return new Condition<Module>() {
+      @Override
+      public boolean value(Module module) {
+        if (condition.value(module)) {
+          final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+          if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
+            return true;
+          }
         }
+        return false;
       }
-    }
-    return result;
+    };
+  }
+
+  public static List<Module> getGroovyCompatibleModules(Project project, final Condition<Module> condition) {
+    return ContainerUtil.filter(ModuleManager.getInstance(project).getModules(), isGroovyCompatibleModule(condition));
+  }
+
+  public static boolean hasGroovyCompatibleModules(Project project, final Condition<Module> condition) {
+    return ContainerUtil.or(ModuleManager.getInstance(project).getModules(), isGroovyCompatibleModule(condition));
   }
 }

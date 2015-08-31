@@ -53,7 +53,7 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(XmlAttlistDecl.class), dtdReferencesProvider);
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(XmlElementContentSpec.class), dtdReferencesProvider);
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(XmlToken.class), dtdReferencesProvider);
-    registrar.registerReferenceProvider(xmlAttributeValue(), ArbitraryPlaceUrlReferenceProvider.INSTANCE, PsiReferenceRegistrar.LOWER_PRIORITY);
+    registrar.registerReferenceProvider(xmlAttributeValue(), new ArbitraryPlaceUrlReferenceProvider(), PsiReferenceRegistrar.LOWER_PRIORITY);
 
 
     URIReferenceProvider uriProvider = new URIReferenceProvider();

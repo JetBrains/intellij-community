@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,6 +113,11 @@ public class EmptyCatchBlockInspectionBase extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return !FileTypeUtils.isInServerPageFile(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new EmptyCatchBlockVisitor();
   }
@@ -123,9 +127,6 @@ public class EmptyCatchBlockInspectionBase extends BaseInspection {
     @Override
     public void visitTryStatement(@NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
-      if (FileTypeUtils.isInServerPageFile(statement.getContainingFile())) {
-        return;
-      }
       final PsiCatchSection[] catchSections = statement.getCatchSections();
       for (final PsiCatchSection section : catchSections) {
         checkCatchSection(section);

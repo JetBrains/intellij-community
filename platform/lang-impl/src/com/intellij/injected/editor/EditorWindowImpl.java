@@ -374,7 +374,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
 
   @Override
   @NotNull
-  public VisualPosition offsetToVisualPosition(int offset, boolean leanForward) {
+  public VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
     return logicalToVisualPosition(offsetToLogicalPosition(offset).leanForward(leanForward));
   }
 
@@ -861,5 +861,16 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   @Override
   public int getExpectedCaretOffset() {
     return myDocumentWindow.hostToInjected(myDelegate.getExpectedCaretOffset());
+  }
+
+  @Override
+  public void setContextMenuGroupId(@Nullable String groupId) {
+    myDelegate.setContextMenuGroupId(groupId);
+  }
+
+  @Nullable
+  @Override
+  public String getContextMenuGroupId() {
+    return myDelegate.getContextMenuGroupId();
   }
 }

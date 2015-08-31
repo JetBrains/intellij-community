@@ -330,6 +330,35 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void testAnonClassCodeBlock_BracesIndented() {
+    getSettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
+    doTextTest(
+      "class X {\n" +
+      "    public void run() {\n" +
+      "        Runnable a = new Runnable() {\n" +
+      "            @Override\n" +
+      "            public void run() {\n" +
+      "                \n" +
+      "            }\n" +
+      "        };\n" +
+      "    }\n" +
+      "}",
+
+      "class X\n" +
+      "    {\n" +
+      "    public void run() {\n" +
+      "        Runnable a = new Runnable()\n" +
+      "            {\n" +
+      "            @Override\n" +
+      "            public void run() {\n" +
+      "\n" +
+      "            }\n" +
+      "            };\n" +
+      "    }\n" +
+      "    }"
+    );
+  }
+
   public void testMethodIsSimple_IfCodeBlockHasNoLinefeeds() {
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     doClassTest(

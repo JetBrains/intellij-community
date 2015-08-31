@@ -1,8 +1,10 @@
 Cleaning output files:
 out/production/ChangeExtends/Super.class
+out/production/ChangeExtends/Super2.class
 End of files
 Compiling files:
 src/Super.java
+src/Super2.java
 End of files
 Cleaning output files:
 out/production/ChangeExtends/Client.class

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@
 
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupResolveConverter;
 
 import java.util.Collection;
 
@@ -30,17 +32,13 @@ import java.util.Collection;
  */
 public interface Reference extends DomElement {
 
-  /**
-   * Returns the value of the id child.
-   * Attribute id
-   *
-   * @return the value of the id child.
-   */
   @NotNull
-  GenericAttributeValue<String> getRef();
+  @Convert(ActionOrGroupResolveConverter.class)
+  GenericAttributeValue<ActionOrGroup> getRef();
 
   @NotNull
-  GenericAttributeValue<String> getId();
+  @Convert(ActionOrGroupResolveConverter.class)
+  GenericAttributeValue<ActionOrGroup> getId();
 
   @NotNull
   Collection<AddToGroup> getAddToGroups();

@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.google.common.util.concurrent.Atomics;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -205,7 +206,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   public void beforeDocumentChanged(@Nullable PsiFile psiCause) {
     PsiFile psiFile = psiCause != null ? psiCause : getPsi(getBaseLanguage());
-    if (psiFile instanceof PsiFileImpl) {
+    if (psiFile instanceof PsiFileImpl && myContent instanceof VirtualFileContent) {
       setContent(new PsiFileContent((PsiFileImpl)psiFile, psiCause == null ? getModificationStamp() : LocalTimeCounter.currentTime()));
       checkLengthConsistency();
     }
@@ -542,6 +543,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   private void checkLengthConsistency() {
     Document document = getCachedDocument();
+    if (document instanceof DocumentWindow) {
+      return;
+    }
     if (document != null &&
         ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myManager.getProject())).getSynchronizer().isInSynchronization(document)) {
       return;
@@ -550,7 +554,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     List<FileElement> knownTreeRoots = getKnownTreeRoots();
     if (knownTreeRoots.isEmpty()) return;
 
-    int fileLength = myContent.getText().length();
+    int fileLength = myContent.getTextLength();
     for (FileElement fileElement : knownTreeRoots) {
       int nodeLength = fileElement.getTextLength();
       if (nodeLength != fileLength) {
@@ -575,6 +579,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   private interface Content {
     CharSequence getText();
+    int getTextLength();
 
     long getModificationStamp();
   }
@@ -594,6 +599,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         return LoadTextUtil.loadText(virtualFile);
       }
       return getLastCommittedText(document);
+    }
+
+    @Override
+    public int getTextLength() {
+      return getText().length();
     }
 
     @Override
@@ -656,6 +666,15 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         });
       }
       return content;
+    }
+
+    @Override
+    public int getTextLength() {
+      String content = myContent;
+      if (content != null) {
+        return content.length();
+      }
+      return myFile.calcTreeElement().getTextLength();
     }
 
     @Override

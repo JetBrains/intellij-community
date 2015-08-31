@@ -3,22 +3,16 @@ package com.jetbrains.python.edu;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.execution.actions.RunContextAction;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Function;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyImportStatement;
-import com.jetbrains.python.psi.PyStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,90 +31,48 @@ public class PyExecuteFileLineMarkerProvider implements LineMarkerProvider {
 
   @Override
   public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
-    for (PsiElement element : elements) {
-      if (isFirstCodeLine(element)) {
-        final LineMarkerInfo<PsiElement> markerInfo = new LineMarkerInfo<PsiElement>(
-          element, element.getTextRange(), AllIcons.Actions.Execute, Pass.UPDATE_OVERRIDEN_MARKERS,
-          new Function<PsiElement, String>() {
-            @Override
-            public String fun(PsiElement e) {
-              return "Execute '" + e.getContainingFile().getName() + "'";
-            }
-          }, null,
-          GutterIconRenderer.Alignment.RIGHT) {
+    if (elements.isEmpty()) {
+      return;
+    }
+    PsiElement file = elements.get(0).getContainingFile();
+    final RunContextAction runAction = new RunContextAction(DefaultRunExecutor.getRunExecutorInstance());
+    final LineMarkerInfo<PsiElement> markerInfo = new LineMarkerInfo<PsiElement>(
+      file, file.getTextRange(), AllIcons.Actions.Execute, Pass.UPDATE_OVERRIDEN_MARKERS,
+      new Function<PsiElement, String>() {
+        @Override
+        public String fun(PsiElement e) {
+          return "Execute '" + e.getContainingFile().getName() + "'";
+        }
+      }, null,
+      GutterIconRenderer.Alignment.RIGHT) {
+      @Nullable
+      @Override
+      public GutterIconRenderer createGutterRenderer() {
+        return new LineMarkerGutterIconRenderer<PsiElement>(this) {
+          @Override
+          public AnAction getClickAction() {
+            return runAction;
+          }
+
           @Nullable
           @Override
-          public GutterIconRenderer createGutterRenderer() {
-            return new LineMarkerGutterIconRenderer<PsiElement>(this){
-              @Override
-              public AnAction getClickAction() {
-
-                return new AnAction() {
-                  @Override
-                  public void actionPerformed(@NotNull AnActionEvent e) {
-                    final DefaultActionGroup group = new DefaultActionGroup();
-                    group.add(new PyRunCurrentFileAction());
-                    final PyExecuteFileExtensionPoint[] extensions =
-                      ApplicationManager.getApplication().getExtensions(PyExecuteFileExtensionPoint.EP_NAME);
-                    for (PyExecuteFileExtensionPoint extension : extensions) {
-                      final AnAction action = extension.getRunAction();
-                      action.update(e);
-                      if (e.getPresentation().isEnabled())
-                        group.add(action);
-                    }
-                    if (group.getChildrenCount() == 1) {
-                      new PyRunCurrentFileAction().actionPerformed(e);
-                    }
-                    else {
-                      final ListPopup popup =
-                        new PopupFactoryImpl().createActionGroupPopup(null, group, e.getDataContext(), false, false, false, null, 5);
-                      popup.showInBestPositionFor(e.getDataContext());
-                    }
-                  }
-                };
+          public ActionGroup getPopupMenuActions() {
+            final DefaultActionGroup group = new DefaultActionGroup();
+            group.add(runAction);
+            final PyExecuteFileExtensionPoint[] extensions =
+              ApplicationManager.getApplication().getExtensions(PyExecuteFileExtensionPoint.EP_NAME);
+            for (PyExecuteFileExtensionPoint extension : extensions) {
+              final AnAction action = extension.getRunAction();
+              if (action == null) {
+                continue;
               }
-
-              @Nullable
-              @Override
-              public ActionGroup getPopupMenuActions() {
-                final DefaultActionGroup group = new DefaultActionGroup();
-                group.add(new PyRunCurrentFileAction());
-                final PyExecuteFileExtensionPoint[] extensions =
-                  ApplicationManager.getApplication().getExtensions(PyExecuteFileExtensionPoint.EP_NAME);
-                for (PyExecuteFileExtensionPoint extension : extensions) {
-                  final AnAction action = extension.getRunAction();
-                  group.add(action);
-                }
-                return group;
-              }
-            };
+              group.add(action);
+            }
+            return group;
           }
         };
-        result.add(markerInfo);
       }
-    }
-  }
-
-  private static boolean isFirstCodeLine(PsiElement element) {
-    return element instanceof PyStatement &&
-           element.getParent() instanceof PyFile &&
-           !isNothing(element) &&
-           nothingBefore(element);
-  }
-
-  private static boolean nothingBefore(PsiElement element) {
-    element = element.getPrevSibling();
-    while (element != null) {
-      if (!isNothing(element)) {
-        return false;
-      }
-      element = element.getPrevSibling();
-    }
-
-    return true;
-  }
-
-  private static boolean isNothing(PsiElement element) {
-    return (element instanceof PsiComment) || (element instanceof PyImportStatement) || (element instanceof PsiWhiteSpace);
+    };
+    result.add(markerInfo);
   }
 }

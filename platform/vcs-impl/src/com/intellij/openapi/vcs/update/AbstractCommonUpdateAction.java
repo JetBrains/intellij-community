@@ -34,10 +34,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter;
 import com.intellij.openapi.vcs.actions.VcsContext;
-import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
-import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -293,6 +290,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     private final Project myProject;
     private final ProjectLevelVcsManagerEx myProjectLevelVcsManager;
+    private final ChangeListManagerEx myChangeListManager;
     private UpdatedFiles myUpdatedFiles;
     private final FilePath[] myRoots;
     private final Map<AbstractVcs, Collection<FilePath>> myVcsToVirtualFiles;
@@ -313,6 +311,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       myProject = project;
       myProjectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project);
       myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+      myChangeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);
       myRoots = roots;
       myVcsToVirtualFiles = vcsToVirtualFiles;
 
@@ -335,14 +334,14 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     private void suspendIfNeeded() {
       if (! myActionInfo.canChangeFileStatus()) {
         // i.e. for update but not for integrate or status
-        ((VcsDirtyScopeManagerImpl) myDirtyScopeManager).suspendMe();
+        myChangeListManager.freezeImmediately(null);
       }
     }
 
     private void releaseIfNeeded() {
       if (! myActionInfo.canChangeFileStatus()) {
         // i.e. for update but not for integrate or status
-        ((VcsDirtyScopeManagerImpl) myDirtyScopeManager).reanimate();
+        myChangeListManager.letGo();
       }
     }
 

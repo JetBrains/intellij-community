@@ -141,14 +141,10 @@ public class ParameterHidingMemberVariableInspectionBase extends BaseInspection 
       if (variableName == null) {
         return null;
       }
-      PsiClass aClass = ClassUtils.getContainingClass(variable);
+      PsiClass aClass = ClassUtils.getContainingClass(method);
       while (aClass != null) {
-        final PsiField[] fields = aClass.getAllFields();
-        for (PsiField field : fields) {
-          final String fieldName = field.getName();
-          if (!variableName.equals(fieldName)) {
-            continue;
-          }
+        PsiField field = aClass.findFieldByName(variableName, true);
+        if (field != null) {
           if (m_ignoreStaticMethodParametersHidingInstanceFields && !field.hasModifierProperty(PsiModifier.STATIC) &&
               method.hasModifierProperty(PsiModifier.STATIC)) {
             continue;
@@ -157,6 +153,7 @@ public class ParameterHidingMemberVariableInspectionBase extends BaseInspection 
             return aClass;
           }
         }
+
         aClass = ClassUtils.getContainingClass(aClass);
       }
       return null;

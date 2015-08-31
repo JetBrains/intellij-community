@@ -20,11 +20,10 @@ public class StudyProgressBar extends JComponent implements DumbAware {
   private final int myHeight;
   private final int myIndent;
   private double myFraction = 0.0;
-  private Color myColor = JBColor.BLUE;
+  private static Color myColor = JBColor.GREEN;
 
   public StudyProgressBar(double fraction, int height, int indent) {
     myFraction = fraction;
-    myColor = JBColor.GREEN;
     myHeight = height;
     myIndent = indent;
   }
@@ -43,7 +42,7 @@ public class StudyProgressBar extends JComponent implements DumbAware {
 
     Dimension size = getSize();
     double width = size.getWidth() - 2*myIndent;
-    g2.setPaint(UIUtil.getListBackground());
+    g2.setPaint(UIUtil.getTextFieldBackground());
     Rectangle2D rect = new Rectangle2D.Double(myIndent, 0, width, myHeight);
     g2.fill(rect);
 
@@ -53,7 +52,6 @@ public class StudyProgressBar extends JComponent implements DumbAware {
     int arcHeight = 5;
     g2.drawRoundRect(myIndent, 0, (int)width, myHeight, arcWidth, arcHeight);
     g2.setPaint(SHADOW2);
-    g2.drawRoundRect(myIndent, 0, (int)width, myHeight, arcWidth, arcHeight);
 
     int y_center = myHeight / 2;
     int y_steps = myHeight / 2 - 3;
@@ -80,6 +78,13 @@ public class StudyProgressBar extends JComponent implements DumbAware {
       x_offset += BRICK_WIDTH + BRICK_SPACE;
     }
     config.restore();
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension dimension = super.getPreferredSize();
+    dimension.height = myHeight + 10;
+    return dimension;
   }
 
   @Override

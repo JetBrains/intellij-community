@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
@@ -22,6 +24,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
+import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -120,6 +123,42 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
       public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
       }
     });
+  }
+
+  public void testNoConflictingVariableDueToReparse() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
+      }
+    });
+  }
+
+  public void testLocalInsideAnonymous1() throws Exception {
+    final Pass<AbstractInplaceIntroducer> pass = new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
+      }
+    };
+    String name = getTestName(true);
+    configureByFile(getBasePath() + name + getExtension());
+    final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
+    try {
+      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+      getEditor().getSettings().setVariableInplaceRenameEnabled(true);
+
+      //ensure extract local var
+      final MyIntroduceHandler introduceHandler = createIntroduceHandler();
+      introduceHandler.invokeImpl(LightPlatformTestCase.getProject(), getLocalVariableFromEditor(), getEditor());
+      final AbstractInplaceIntroducer introducer = introduceHandler.getInplaceIntroducer();
+      pass.pass(introducer);
+      TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
+      assert state != null;
+      state.gotoEnd(false);
+      checkResultByFile(getBasePath() + name + "_after" + getExtension());
+    }
+    finally {
+      getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
+    }
   }
 
   @Override

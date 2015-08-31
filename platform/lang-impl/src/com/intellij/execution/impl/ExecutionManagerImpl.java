@@ -375,7 +375,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
 
           final RunContentDescriptor descriptor = starter.execute(state, environment);
           if (descriptor != null) {
-            environment.setContentToReuse(descriptor);
             final Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity =
               Trinity.create(descriptor, environment.getRunnerAndConfigurationSettings(), executor);
             myRunningConfigurations.add(trinity);
@@ -395,6 +394,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
               started = true;
               processHandler.addProcessListener(new ProcessExecutionListener(project, profile, processHandler));
             }
+            environment.setContentToReuse(descriptor);
           }
         }
         catch (ProcessCanceledException e) {
@@ -541,7 +541,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
       if (condition.value(trinity.getSecond())) {
         ProcessHandler processHandler = trinity.getFirst().getProcessHandler();
-        if (processHandler != null && !processHandler.isProcessTerminating() && !processHandler.isProcessTerminated()) {
+        if (processHandler != null /*&& !processHandler.isProcessTerminating()*/ && !processHandler.isProcessTerminated()) {
           result.add(trinity.getFirst());
         }
       }
@@ -575,7 +575,10 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
 
       myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminated(myProfile, myProcessHandler);
 
-      SaveAndSyncHandler.getInstance().scheduleRefresh();
+      SaveAndSyncHandler saveAndSyncHandler = SaveAndSyncHandler.getInstance();
+      if (saveAndSyncHandler != null) {
+        saveAndSyncHandler.scheduleRefresh();
+      }
     }
 
     @Override

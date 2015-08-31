@@ -26,14 +26,16 @@ public class PyEnvTaskRunner {
     myRoots = roots;
   }
 
-  public void runTask(PyTestTask testTask, String testName) {
+  // todo: doc
+  public void runTask(PyTestTask testTask, String testName, @NotNull final String... tagsRequiedByTest) {
     boolean wasExecuted = false;
 
     List<String> passedRoots = Lists.newArrayList();
 
     for (String root : myRoots) {
 
-      if (!isSuitableForTask(PyEnvTestCase.loadEnvTags(root), testTask) || !shouldRun(root, testTask)) {
+      final Set<String> requredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiedByTest));
+      if (!isSuitableForTask(PyEnvTestCase.loadEnvTags(root), requredTags) || !shouldRun(root, testTask)) {
         continue;
       }
 
@@ -115,8 +117,8 @@ public class PyEnvTaskRunner {
     return "local";
   }
 
-  private static boolean isSuitableForTask(List<String> tags, PyTestTask task) {
-    return isSuitableForTags(tags, task.getTags());
+  private static boolean isSuitableForTask(List<String> availableTags, @NotNull final Set<String> requiredTags) {
+    return isSuitableForTags(availableTags, requiredTags);
   }
 
   public static boolean isSuitableForTags(List<String> envTags, Set<String> taskTags) {

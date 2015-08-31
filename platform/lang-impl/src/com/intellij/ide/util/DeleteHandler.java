@@ -139,7 +139,7 @@ public class DeleteHandler {
             }
           }, elements, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true);
 
-          DumbService.getInstance(project).allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, processor);
+          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, processor);
         }
       }) {
         @Override

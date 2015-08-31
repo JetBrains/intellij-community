@@ -15,11 +15,10 @@
  */
 package com.intellij.ui;
 
-import java.awt.Component;
-import java.awt.Font;
+import javax.swing.plaf.FontUIResource;
+import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import javax.swing.plaf.FontUIResource;
 
 /**
  * @author Sergey.Malenkov
@@ -27,6 +26,7 @@ import javax.swing.plaf.FontUIResource;
 public enum RelativeFont implements PropertyChangeListener {
   PLAIN(Font.PLAIN, 0),
   BOLD(Font.BOLD, 0),
+  ITALIC(Font.ITALIC, 0),
   LARGE(1f),
   SMALL(-1f),
   HUGE(2f),

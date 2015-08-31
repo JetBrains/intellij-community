@@ -20,6 +20,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
@@ -97,12 +98,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
 
     @Override
     public String getPresentableName() {
-      final String name = myLibrary.getName();
-      if (name != null) {
-        return name;
-      }
-      final VirtualFile[] files = myLibrary.getFiles(OrderRootType.CLASSES);
-      return files.length > 0 ? files[0].getName() : "Empty Library";
+      return LibraryUtil.getPresentableName(myLibrary);
     }
 
     @Override

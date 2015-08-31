@@ -40,6 +40,6 @@ public class UnifiedDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public String getName() {
-    return "Oneside viewer";
+    return "Unified viewer";
   }
 }

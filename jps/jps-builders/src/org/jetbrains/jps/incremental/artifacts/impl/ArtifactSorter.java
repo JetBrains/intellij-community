@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,6 @@ public class ArtifactSorter {
   private List<JpsArtifact> doGetSortedArtifacts() {
     GraphGenerator<JpsArtifact> graph = createArtifactsGraph();
     DFSTBuilder<JpsArtifact> builder = new DFSTBuilder<JpsArtifact>(graph);
-    builder.buildDFST();
     List<JpsArtifact> names = new ArrayList<JpsArtifact>();
     names.addAll(graph.getNodes());
     Collections.sort(names, builder.comparator());
@@ -83,7 +82,6 @@ public class ArtifactSorter {
     }
 
     final DFSTBuilder<JpsArtifact> builder = new DFSTBuilder<JpsArtifact>(graph);
-    builder.buildDFST();
     if (builder.isAcyclic() && result.isEmpty()) return Collections.emptyMap();
 
     final TIntArrayList sccs = builder.getSCCs();

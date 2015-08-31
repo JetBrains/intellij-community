@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,16 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import sun.awt.AWTAutoShutdown;
 
+import javax.swing.*;
+import java.awt.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
@@ -39,5 +45,31 @@ public class TestRunnerUtil {
       if (method.getAnnotation(Test.class) != null) return true;
     }
     return false;
+  }
+
+  public static void replaceIdeEventQueueSafely() {
+    if (Toolkit.getDefaultToolkit().getSystemEventQueue() instanceof IdeEventQueue) {
+      return;
+    }
+    if (SwingUtilities.isEventDispatchThread()) {
+      throw new RuntimeException("must not call under EDT");
+    }
+    AWTAutoShutdown.getInstance().notifyThreadBusy(Thread.currentThread());
+    UIUtil.pump();
+    // in JDK 1.6 java.awt.EventQueue.push() causes slow painful death of current EDT
+    // so we have to wait through its agony to termination
+    try {
+      SwingUtilities.invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          IdeEventQueue.getInstance();
+        }
+      });
+      SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
+      SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

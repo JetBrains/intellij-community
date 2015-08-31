@@ -209,7 +209,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       }
 
       if (element instanceof PsiWhiteSpace) {
-        if (element.getText().contains("\n")) {
+        if (element.getText().contains("\n") && result.length() > 0) {
           result.append('\n'); // keep line break structure
         }
       }
@@ -232,7 +232,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           if (arguments.length == 0) {
             return null;
           }
-          else if (arguments.length > 1) {
+          if (arguments.length > 1) {
             if (result.length() != 0) {
               insertPlus(result);
             }
@@ -303,7 +303,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
             result.insert(index - 1, "+ ");
             return;
           }
-          else if (c == '\n') {
+          if (c == '\n') {
             break;
           }
           index--;
@@ -315,14 +315,14 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       }
     }
 
-    private static class StringBuildingVisitor extends JavaRecursiveElementVisitor {
+    private static class StringBuildingVisitor extends JavaRecursiveElementWalkingVisitor {
 
       private final PsiVariable myVariable;
       private final StringBuilder myBuilder;
       private final List<PsiMethodCallExpression> expressions = ContainerUtil.newArrayList();
-      private boolean myProblem = false;
+      private boolean myProblem;
 
-      public StringBuildingVisitor(@NotNull PsiVariable variable, StringBuilder builder) {
+      private StringBuildingVisitor(@NotNull PsiVariable variable, StringBuilder builder) {
         myVariable = variable;
         myBuilder = builder;
       }
@@ -362,7 +362,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         return expressions;
       }
 
-      public boolean hadProblem() {
+      private boolean hadProblem() {
         return myProblem;
       }
     }
@@ -431,7 +431,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     }
   }
 
-  public static boolean isAppendCall(PsiElement element) {
+  private static boolean isAppendCall(PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression)) {
       return false;
     }
@@ -450,7 +450,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     return arguments.length == 1;
   }
 
-  public static boolean isToStringCall(PsiElement element) {
+  private static boolean isToStringCall(PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression)) {
       return false;
     }
@@ -488,15 +488,15 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     return null;
   }
 
-  private static class ReplaceableByStringVisitor extends JavaRecursiveElementVisitor {
+  private static class ReplaceableByStringVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiElement myParent;
     private final PsiVariable myVariable;
     private boolean myReplaceable = true;
-    private boolean myPossibleSideEffect = false;
-    private boolean myToStringFound = false;
+    private boolean myPossibleSideEffect;
+    private boolean myToStringFound;
 
-    public ReplaceableByStringVisitor(@NotNull PsiVariable variable) {
+    ReplaceableByStringVisitor(@NotNull PsiVariable variable) {
       myVariable = variable;
       myParent = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiIfStatement.class, PsiLoopStatement.class);
     }
@@ -577,7 +577,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         }
         return true;
       }
-      else if (grandParent instanceof PsiNewExpression) {
+      if (grandParent instanceof PsiNewExpression) {
         final PsiLocalVariable variable = PsiTreeUtil.getParentOfType(grandParent, PsiLocalVariable.class, true, PsiExpressionList.class);
         if (!myVariable.equals(variable)) {
           return false;

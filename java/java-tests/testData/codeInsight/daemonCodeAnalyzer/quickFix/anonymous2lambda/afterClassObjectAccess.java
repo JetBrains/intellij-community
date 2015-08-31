@@ -2,7 +2,7 @@
 class Test {
   {
     ((Runnable) () -> {
-      
+
     }).getClass();;
   }
 }

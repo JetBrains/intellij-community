@@ -1,12 +1,17 @@
 /*
- * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
- */
-
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 06-Sep-2006
- * Time: 13:56:11
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
@@ -25,11 +30,6 @@ public class JavadocInspectionQuickFixTest extends LightQuickFixParameterizedTes
     javaDocLocalInspection.TOP_LEVEL_CLASS_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package";
     javaDocLocalInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package";
     return new LocalInspectionTool[]{javaDocLocalInspection};
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
   }
 
   public void test() throws Exception { doAllTests(); }

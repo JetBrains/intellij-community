@@ -52,13 +52,18 @@ import java.util.Collections;
 import java.util.List;
 
 class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
+  private static boolean isPlaceGlobal(AnActionEvent e) {
+    return ActionPlaces.isMainMenuOrActionSearch(e.getPlace())
+           || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
+           || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace());
+  }
   @Override
   public void update(final AnActionEvent e) {
     boolean enable = false;
     Icon icon = getTemplatePresentation().getIcon();
     String description = getTemplatePresentation().getDescription();
     Presentation presentation = e.getPresentation();
-    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
+    if (isPlaceGlobal(e)) {
       List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(e.getDataContext());
       List<Pair<TaskInfo, ProgressIndicator>> cancellableProcesses = getCancellableProcesses(e.getProject());
       int todoSize = stoppableDescriptors.size() + cancellableProcesses.size();
@@ -115,7 +120,7 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
     Project project = e.getProject();
     List<Pair<TaskInfo, ProgressIndicator>> cancellableProcesses = getCancellableProcesses(project);
     List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(dataContext);
-    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
+    if (isPlaceGlobal(e)) {
       int todoSize = cancellableProcesses.size() + stoppableDescriptors.size();
       if (todoSize == 1) {
         if (!stoppableDescriptors.isEmpty()) {

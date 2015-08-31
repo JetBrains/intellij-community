@@ -15,9 +15,13 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -54,6 +58,8 @@ public class RefreshSessionImpl extends RefreshSession {
   private volatile boolean iHaveEventsToFire;
   private volatile RefreshWorker myWorker = null;
   private volatile boolean myCancelled = false;
+  private final DumbModePermission myDumbModePermission;
+  private final Throwable myStartTrace;
 
   public RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable) {
     this(async, recursive, finishRunnable, ModalityState.NON_MODAL);
@@ -65,6 +71,15 @@ public class RefreshSessionImpl extends RefreshSession {
     myFinishRunnable = finishRunnable;
     myModalityState = modalityState;
     LOG.assertTrue(modalityState == ModalityState.NON_MODAL || modalityState != ModalityState.any(), "Refresh session should have a specific modality");
+
+    if (modalityState == ModalityState.NON_MODAL) {
+      myDumbModePermission = null;
+      myStartTrace = null;
+    }
+    else {
+      myDumbModePermission = DumbServiceImpl.getExplicitPermission(modalityState);
+      myStartTrace = new Throwable(); // please report exceptions here to peter
+    }
   }
 
   public RefreshSessionImpl(@NotNull List<VFileEvent> events) {
@@ -164,23 +179,37 @@ public class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  public void fireEvents(boolean hasWriteAction) {
+  public void fireEvents(final boolean hasWriteAction) {
+    AccessToken token = myStartTrace == null ? null : DumbServiceImpl.forceDumbModeStartTrace(myStartTrace);
     try {
       if (!iHaveEventsToFire || ApplicationManager.getApplication().isDisposed()) return;
 
-      if (hasWriteAction) {
-        fireEventsInWriteAction();
-      }
-      else {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
+      Runnable runnable = new Runnable() {
+        public void run() {
+          if (hasWriteAction) {
             fireEventsInWriteAction();
           }
-        });
+          else {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                fireEventsInWriteAction();
+              }
+            });
+          }
+        }
+      };
+
+      if (myDumbModePermission != null) {
+        DumbService.allowStartingDumbModeInside(myDumbModePermission, runnable);
+      } else {
+        runnable.run();
       }
     }
     finally {
+      if (token != null) {
+        token.finish();
+      }
       mySemaphore.up();
     }
   }

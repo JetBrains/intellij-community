@@ -18,6 +18,7 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -106,7 +107,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
   }
 
   private void updateDefaultChannel() {
-    if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
+    if (UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds() && ApplicationInfoImpl.getShadowInstance().isEAP()) {
       myState.UPDATE_CHANNEL_TYPE = ChannelStatus.EAP_CODE;
     }
   }

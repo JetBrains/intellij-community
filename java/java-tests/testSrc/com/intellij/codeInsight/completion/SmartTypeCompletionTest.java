@@ -1148,6 +1148,13 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doFirstItemTest('\t');
   }
 
+  public void testSuggestMethodReturnType() { 
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "Serializable", "CharSequence", "Object");
+  }
+
+  public void testSuggestCastReturnTypeByCalledMethod() { doTest(); }
+
   public void testNonStaticField() throws Exception { doAntiTest(); }
 
   private void doActionTest() throws Exception {

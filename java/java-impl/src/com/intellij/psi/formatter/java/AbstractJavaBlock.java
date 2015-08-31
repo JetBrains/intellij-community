@@ -69,6 +69,23 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private Map<IElementType, Wrap> myPreferredWraps;
   private AbstractJavaBlock myParentBlock;
 
+  private BlockFactory myBlockFactory = new BlockFactory() {
+    @Override
+    public Block createBlock(ASTNode node, Indent indent, Alignment alignment, Wrap wrap) {
+      return new SimpleJavaBlock(node, wrap, AlignmentStrategy.wrap(alignment), indent, mySettings, myJavaSettings);
+    }
+
+    @Override
+    public CommonCodeStyleSettings getSettings() {
+      return mySettings;
+    }
+
+    @Override
+    public JavaCodeStyleSettings getJavaSettings() {
+      return myJavaSettings;
+    }
+  };
+
   protected AbstractJavaBlock(@NotNull final ASTNode node,
                               final Wrap wrap,
                               final Alignment alignment,
@@ -355,6 +372,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   @Nullable
   protected Wrap createChildWrap() {
+    if (!isBuildInjectedBlocks()) {
+      return null; //when detecting indent we do not care about wraps
+    }
     return myWrapManager.createChildBlockWrap(this, getSettings(), this);
   }
 
@@ -473,12 +493,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (nodeType == JavaElementType.POLYADIC_EXPRESSION) nodeType = JavaElementType.BINARY_EXPRESSION;
 
       if (childType == JavaTokenType.LBRACE && nodeType == JavaElementType.ARRAY_INITIALIZER_EXPRESSION) {
-        final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.ARRAY_INITIALIZER_WRAP), false);
-        child = processParenthesisBlock(JavaTokenType.LBRACE, JavaTokenType.RBRACE,
-                                  result,
-                                  child,
-                                  WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                  mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
+        ArrayInitializerBlocksBuilder builder = new ArrayInitializerBlocksBuilder(myNode, myBlockFactory);
+        List<Block> newlyCreated = builder.buildBlocks();
+
+        child = myNode.getLastChildNode();
+        result.addAll(newlyCreated);
       }
       else if (childType == JavaTokenType.LBRACE && nodeType == JavaElementType.ANNOTATION_ARRAY_INITIALIZER) {
         final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.ARRAY_INITIALIZER_WRAP), false);
@@ -511,10 +530,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                   mySettings.ALIGN_MULTILINE_RESOURCES);
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.ANNOTATION_PARAMETER_LIST) {
-        Wrap wrap = Wrap.createWrap(getWrapType(myJavaSettings.ANNOTATION_PARAMETER_WRAP), false);
-        child = processParenthesisBlock(result, child,
-                                  WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                  myJavaSettings.ALIGN_MULTILINE_ANNOTATION_PARAMETERS);
+        AnnotationInitializerBlocksBuilder builder = new AnnotationInitializerBlocksBuilder(myNode, myBlockFactory);
+        List<Block> newlyCreated = builder.buildBlocks();
+
+        child = myNode.getLastChildNode();
+        result.addAll(newlyCreated);
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.PARENTH_EXPRESSION) {
         child = processParenthesisBlock(result, child,
@@ -816,6 +836,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   @Nullable
   protected Wrap arrangeChildWrap(final ASTNode child, Wrap defaultWrap) {
+    if (!isBuildInjectedBlocks()) {
+      return null; //when detecting indent we do not care about wraps
+    }
     return myWrapManager.arrangeChildWrap(child, myNode, mySettings, myJavaSettings, defaultWrap, this);
   }
 
@@ -1207,14 +1230,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return null;
   }
 
-  private ChildAlignmentStrategyProvider getStrategyProvider() {
+  protected ChildAlignmentStrategyProvider getStrategyProvider() {
     if (mySettings.ALIGN_GROUP_FIELD_DECLARATIONS && myNode.getElementType() == JavaElementType.CLASS) {
       return new SubsequentFieldAligner(mySettings);
     }
 
     ASTNode parent = myNode.getTreeParent();
     IElementType parentType = parent != null ? parent.getElementType() : null;
-    if (mySettings.ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS && parentType == JavaElementType.METHOD) {
+    if (mySettings.ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS
+        && (parentType == JavaElementType.METHOD || myNode instanceof PsiCodeBlock)) {
       return new SubsequentVariablesAligner();
     }
 

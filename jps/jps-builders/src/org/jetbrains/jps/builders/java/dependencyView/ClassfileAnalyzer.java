@@ -217,61 +217,21 @@ class ClassfileAnalyzer {
       }
     }
 
-    private final SignatureVisitor mySignatureCrawler = new SignatureVisitor(Opcodes.ASM5) {
-      public void visitFormalTypeParameter(String name) {
-      }
-
+    private final SignatureVisitor mySignatureCrawler = new BaseSignatureVisitor() {
       public SignatureVisitor visitClassBound() {
-        return this;
+        return mySignatureWithGenericBoundUsageCrawler;
       }
 
       public SignatureVisitor visitInterfaceBound() {
-        return this;
-      }
-
-      public SignatureVisitor visitSuperclass() {
-        return this;
-      }
-
-      public SignatureVisitor visitInterface() {
-        return this;
-      }
-
-      public SignatureVisitor visitParameterType() {
-        return this;
-      }
-
-      public SignatureVisitor visitReturnType() {
-        return this;
-      }
-
-      public SignatureVisitor visitExceptionType() {
-        return this;
-      }
-
-      public void visitBaseType(char descriptor) {
-      }
-
-      public void visitTypeVariable(String name) {
-      }
-
-      public SignatureVisitor visitArrayType() {
-        return this;
-      }
-
-      public void visitInnerClassType(String name) {
-      }
-
-      public void visitTypeArgument() {
+        return mySignatureWithGenericBoundUsageCrawler;
       }
 
       public SignatureVisitor visitTypeArgument(char wildcard) {
-        return this;
+        return mySignatureWithGenericBoundUsageCrawler;
       }
+    };
 
-      public void visitEnd() {
-      }
-
+    private final SignatureVisitor mySignatureWithGenericBoundUsageCrawler = new BaseSignatureVisitor() {
       public void visitClassType(String name) {
         final int className = myContext.get(name);
         myUsages.add(UsageRepr.createClassUsage(myContext, className));
@@ -651,6 +611,72 @@ class ClassfileAnalyzer {
 
       if (name != null) {
         myLocalClassFlag.set(true);
+      }
+    }
+
+    private class BaseSignatureVisitor extends SignatureVisitor {
+
+      public BaseSignatureVisitor() {
+        super(Opcodes.ASM5);
+      }
+
+      public void visitFormalTypeParameter(String name) {
+      }
+
+      public SignatureVisitor visitClassBound() {
+        return this;
+      }
+
+      public SignatureVisitor visitInterfaceBound() {
+        return this;
+      }
+
+      public SignatureVisitor visitSuperclass() {
+        return this;
+      }
+
+      public SignatureVisitor visitInterface() {
+        return this;
+      }
+
+      public SignatureVisitor visitParameterType() {
+        return this;
+      }
+
+      public SignatureVisitor visitReturnType() {
+        return this;
+      }
+
+      public SignatureVisitor visitExceptionType() {
+        return this;
+      }
+
+      public void visitBaseType(char descriptor) {
+      }
+
+      public void visitTypeVariable(String name) {
+      }
+
+      public SignatureVisitor visitArrayType() {
+        return this;
+      }
+
+      public void visitInnerClassType(String name) {
+      }
+
+      public void visitTypeArgument() {
+      }
+
+      public SignatureVisitor visitTypeArgument(char wildcard) {
+        return this;
+      }
+
+      public void visitEnd() {
+      }
+
+      public void visitClassType(String name) {
+        final int className = myContext.get(name);
+        myUsages.add(UsageRepr.createClassUsage(myContext, className));
       }
     }
   }

@@ -21,10 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -144,13 +141,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   @Override
   public void doOKAction() {
     if (myEditor.apply()) {
-      DumbService.allowStartingDumbModeInside(
-        DumbModePermission.MAY_START_BACKGROUND, ProjectManager.getInstance().getOpenProjects(), new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().saveAll();
-          }
-        });
+      ApplicationManager.getApplication().saveAll();
       super.doOKAction();
     }
   }

@@ -17,13 +17,14 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class CompositeBlockWrapper extends AbstractBlockWrapper{
   private List<AbstractBlockWrapper> myChildren;
-  //private static final CommonCodeStyleSettings.IndentOptions DEF_OPTIONS = new CommonCodeStyleSettings.IndentOptions();
+  private ProbablyIncreasingLowerboundAlgorithm<AbstractBlockWrapper> myPrevBlockCalculator = null;
 
   /**
    * Shortcut for calling {@link #CompositeBlockWrapper(Block, WhiteSpace, CompositeBlockWrapper, TextRange)} with
@@ -47,6 +48,9 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
 
   public void setChildren(final List<AbstractBlockWrapper> children) {
     myChildren = children;
+    if (myPrevBlockCalculator != null) {
+      myPrevBlockCalculator.setBlocksList(myChildren);
+    }
   }
 
   @Override
@@ -90,6 +94,7 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
   public void dispose() {
     super.dispose();
     myChildren = null;
+    myPrevBlockCalculator = null;
   }
 
   /**
@@ -101,7 +106,11 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
    *                  <code>null</code> otherwise
    */
   @Nullable
-  public AbstractBlockWrapper getPrevIndentedSibling(final AbstractBlockWrapper current) {
+  public AbstractBlockWrapper getPrevIndentedSibling(@NotNull final AbstractBlockWrapper current) {
+    if (myChildren.size() > 10) {
+      return getPrevIndentedSiblingFast(current);
+    }
+
     AbstractBlockWrapper candidate = null;
     for (AbstractBlockWrapper child : myChildren) {
       if (child.getStartOffset() >= current.getStartOffset()) return candidate;
@@ -109,6 +118,22 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
     }
 
     return candidate;
+  }
+
+  @Nullable
+  private AbstractBlockWrapper getPrevIndentedSiblingFast(@NotNull final AbstractBlockWrapper current) {
+    if (myPrevBlockCalculator == null) {
+      myPrevBlockCalculator = new ProbablyIncreasingLowerboundAlgorithm<AbstractBlockWrapper>(myChildren);
+    }
+
+    final List<AbstractBlockWrapper> leftBlocks = myPrevBlockCalculator.getLeftSubList(current);
+    for (int i = leftBlocks.size() - 1; i >= 0; i--) {
+      final AbstractBlockWrapper child = leftBlocks.get(i);
+      if (child.getWhiteSpace().containsLineFeeds()) {
+        return child;
+      }
+    }
+    return null;
   }
 
   /*

@@ -20,6 +20,7 @@ import com.intellij.concurrency.AsyncFuture;
 import com.intellij.concurrency.AsyncUtil;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -51,10 +52,10 @@ import com.intellij.util.codeInsight.CommentUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -299,7 +300,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
             return !canceled.get();
           }
         };
-        if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        if (ApplicationManager.getApplication().isWriteAccessAllowed() || ((ApplicationEx)ApplicationManager.getApplication()).isWriteActionPending()) {
           // no point in processing in separate threads - they are doomed to fail to obtain read action anyway
           completed &= ContainerUtil.process(files, processor);
         }
@@ -488,30 +489,26 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           return psiFile.getViewProvider().getContents();
         }
       });
-      final char[] textArray = ApplicationManager.getApplication().runReadAction(new Computable<char[]>() {
+
+      LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, progress, new TIntProcedure() {
         @Override
-        public char[] compute() {
-          return CharArrayUtil.fromSequenceWithoutCopying(text);
+        public boolean execute(final int index) {
+          boolean isReferenceOK = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+            @Override
+            public Boolean compute() {
+              PsiReference referenceAt = psiFile.findReferenceAt(index);
+              return referenceAt == null || useScope == null ||
+                     !PsiSearchScopeUtil.isInScope(useScope.intersectWith(initialScope), psiFile);
+            }
+          });
+          if (isReferenceOK && !processor.process(psiFile, index, index + patternLength)) {
+            cancelled.set(Boolean.TRUE);
+            return false;
+          }
+
+          return true;
         }
       });
-      int index = LowLevelSearchUtil.searchWord(text, textArray, 0, text.length(), searcher, progress);
-      while(index >= 0) {
-        final int finalIndex = index;
-        boolean isReferenceOK = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            PsiReference referenceAt = psiFile.findReferenceAt(finalIndex);
-            return referenceAt == null || useScope == null ||
-                   !PsiSearchScopeUtil.isInScope(useScope.intersectWith(initialScope), psiFile);
-          }
-        });
-        if (isReferenceOK && !processor.process(psiFile, index, index + patternLength)) {
-          cancelled.set(Boolean.TRUE);
-          break;
-        }
-
-        index = LowLevelSearchUtil.searchWord(text, textArray, index + patternLength, text.length(), searcher, progress);
-      }
       if (cancelled.get()) break;
       progress.setFraction((double)(i + 1) / files.length);
     }
@@ -551,8 +548,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static class RequestWithProcessor {
-    @NotNull final PsiSearchRequest request;
-    @NotNull Processor<PsiReference> refProcessor;
+    @NotNull private final PsiSearchRequest request;
+    @NotNull private Processor<PsiReference> refProcessor;
 
     private RequestWithProcessor(@NotNull PsiSearchRequest first, @NotNull Processor<PsiReference> second) {
       request = first;

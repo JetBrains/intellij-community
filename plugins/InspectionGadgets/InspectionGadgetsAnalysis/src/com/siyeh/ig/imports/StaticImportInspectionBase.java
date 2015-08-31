@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,11 @@ public class StaticImportInspectionBase extends BaseInspection {
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "static.import.problem.descriptor");
+  }
+
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return !FileTypeUtils.isInServerPageFile(file);
   }
 
   @Override
@@ -245,9 +250,6 @@ public class StaticImportInspectionBase extends BaseInspection {
         return;
       }
       final PsiJavaFile file = (PsiJavaFile)parent;
-      if (FileTypeUtils.isInServerPageFile(file)) {
-        return;
-      }
       if (!file.getClasses()[0].equals(aClass)) {
         return;
       }

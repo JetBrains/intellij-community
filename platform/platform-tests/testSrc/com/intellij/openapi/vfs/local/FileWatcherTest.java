@@ -761,6 +761,39 @@ public class FileWatcherTest extends PlatformTestCase {
     }
   }
 
+  public void testWatchRootReplacement() throws IOException {
+    File top = createTestDir("top");
+    File dir1 = createTestDir(top, "dir1");
+    File dir2 = createTestDir(top, "dir2");
+    File f1 = createTestFile(dir1, "f.txt");
+    File f2 = createTestFile(dir2, "f.txt");
+    refresh(f1);
+    refresh(f2);
+
+    final Ref<LocalFileSystem.WatchRequest> request = Ref.create(watch(dir1));
+    try {
+      myAccept = true;
+      FileUtil.writeToFile(f1, "data");
+      FileUtil.writeToFile(f2, "data");
+      assertEvent(VFileContentChangeEvent.class, f1.getPath());
+
+      final String newRoot = dir2.getPath();
+      getEvents("events to replace watch root", new Runnable() {
+        @Override
+        public void run() {
+          request.set(myFileSystem.replaceWatchedRoot(request.get(), newRoot, true));
+        }
+      });
+
+      myAccept = true;
+      FileUtil.writeToFile(f1, "more data");
+      FileUtil.writeToFile(f2, "more data");
+      assertEvent(VFileContentChangeEvent.class, f2.getPath());
+    }
+    finally {
+      unwatch(request.get());
+    }
+  }
 
   @NotNull
   private LocalFileSystem.WatchRequest watch(File watchFile) {

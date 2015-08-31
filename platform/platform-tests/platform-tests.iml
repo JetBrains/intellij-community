@@ -26,5 +26,6 @@
     <orderEntry type="module" module-name="jps-model-impl" scope="TEST" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" scope="TEST" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="module" module-name="util-tests" scope="TEST" />
   </component>
 </module>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -200,7 +200,6 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
 
   @Override
   public void contentsSynchronized() {
-    super.contentsSynchronized();
     Set<Language> languages = getLanguages();
     for (Iterator<Map.Entry<Language, PsiFileImpl>> iterator = myRoots.entrySet().iterator(); iterator.hasNext(); ) {
       Map.Entry<Language, PsiFileImpl> entry = iterator.next();
@@ -210,6 +209,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
         file.markInvalidated();
       }
     }
+    super.contentsSynchronized();
   }
 
   @Override

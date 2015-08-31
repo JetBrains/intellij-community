@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.ide.scratch.ScratchRootType;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
@@ -64,6 +64,7 @@ import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
+import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -354,7 +355,7 @@ public class PyUtil {
   @NotNull
   public static List<PyClass> getAllSuperClasses(@NotNull PyClass pyClass) {
     List<PyClass> superClasses = new ArrayList<PyClass>();
-    for (PyClass ancestor : pyClass.getAncestorClasses()) {
+    for (PyClass ancestor : pyClass.getAncestorClasses(null)) {
       if (!PyNames.FAKE_OLD_BASE.equals(ancestor.getName())) {
         superClasses.add(ancestor);
       }
@@ -932,11 +933,11 @@ public class PyUtil {
   /**
    * If directory is a PsiDirectory, that is also a valid Python package, return PsiFile that points to __init__.py,
    * if such file exists, or directory itself (i.e. namespace package). Otherwise, return {@code null}.
-   * Unlike {@link #turnDirIntoInit(com.intellij.psi.PsiElement)} this function handles namespace packages and
+   * Unlike {@link #turnDirIntoInit(PsiElement)} this function handles namespace packages and
    * accepts only PsiDirectories as target.
    *
    * @param directory directory to check
-   * @param anchor optional PSI element to determine language level as for {@link #isPackage(com.intellij.psi.PsiDirectory, com.intellij.psi.PsiElement)}
+   * @param anchor optional PSI element to determine language level as for {@link #isPackage(PsiDirectory, PsiElement)}
    * @return PsiFile or PsiDirectory, if target is a Python package and {@code null} null otherwise
    */
   @Nullable
@@ -1085,8 +1086,23 @@ public class PyUtil {
     return PyNames.isIdentifier(name);
   }
 
-  public static LookupElement createNamedParameterLookup(String name) {
-    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + "=").withIcon(PlatformIcons.PARAMETER_ICON);
+  /**
+   * Constructs new lookup element for completion of keyword argument with equals sign appended.
+   *
+   * @param name    name of the parameter
+   * @param project project instance to check code style settings and surround equals sign with spaces if necessary
+   * @return lookup element
+   */
+  @NotNull
+  public static LookupElement createNamedParameterLookup(@NotNull String name, @Nullable Project project) {
+    final String suffix;
+    if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(PyCodeStyleSettings.class).SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT) {
+      suffix = " = ";
+    }
+    else {
+      suffix = "=";
+    }
+    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + suffix).withIcon(PlatformIcons.PARAMETER_ICON);
     lookupElementBuilder = lookupElementBuilder.withInsertHandler(OverwriteEqualsInsertHandler.INSTANCE);
     return PrioritizedLookupElement.withGrouping(lookupElementBuilder, 1);
   }
@@ -1272,7 +1288,7 @@ public class PyUtil {
         PyFunction.Modifier modifier = node.getModifier();
         boolean isMetaclassMethod = false;
         PyClass type_cls = PyBuiltinCache.getInstance(node).getClass("type");
-        for (PyClass ancestor_cls : cls.getAncestorClasses()) {
+        for (PyClass ancestor_cls : cls.getAncestorClasses(null)) {
           if (ancestor_cls == type_cls) {
             isMetaclassMethod = true;
             break;
@@ -1309,7 +1325,7 @@ public class PyUtil {
           if (firstArg.equals(klass.getName()) || firstArg.equals(PyNames.CANONICAL_SELF + "." + PyNames.__CLASS__)) {
             return true;
           }
-          for (PyClass s : klass.getAncestorClasses()) {
+          for (PyClass s : klass.getAncestorClasses(null)) {
             if (firstArg.equals(s.getName())) {
               return true;
             }
@@ -1672,7 +1688,7 @@ public class PyUtil {
   }
 
   /**
-   * Filters out {@link com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo}
+   * Filters out {@link PyMemberInfo}
    * that should not be displayed in this refactoring (like object)
    *
    * @param pyMemberInfos collection to sort
@@ -1740,10 +1756,10 @@ public class PyUtil {
 
   /**
    * Checks that given class is the root of class hierarchy, i.e. it's either {@code object} or
-   * special {@link com.jetbrains.python.PyNames#FAKE_OLD_BASE} class for old-style classes.
+   * special {@link PyNames#FAKE_OLD_BASE} class for old-style classes.
    *
    * @param cls    Python class to check
-   * @see com.jetbrains.python.psi.impl.PyBuiltinCache
+   * @see PyBuiltinCache
    * @see PyNames#FAKE_OLD_BASE
    */
   public static boolean isObjectClass(@NotNull PyClass cls) {
@@ -1753,11 +1769,11 @@ public class PyUtil {
 
   /**
    * Checks that given type is the root of type hierarchy, i.e. it's type of either {@code object} or special
-   * {@link com.jetbrains.python.PyNames#FAKE_OLD_BASE} class for old-style classes.
+   * {@link PyNames#FAKE_OLD_BASE} class for old-style classes.
    *
    * @param type   Python class to check
    * @param anchor arbitrary PSI element to find appropriate SDK
-   * @see com.jetbrains.python.psi.impl.PyBuiltinCache
+   * @see PyBuiltinCache
    * @see PyNames#FAKE_OLD_BASE
    */
   public static boolean isObjectType(@NotNull PyType type, @NotNull PsiElement anchor) {
@@ -1766,13 +1782,8 @@ public class PyUtil {
   }
 
   public static boolean isInScratchFile(@NotNull PsiElement element) {
-    final ScratchFileService service = ScratchFileService.getInstance();
-    final PsiFile file = element.getContainingFile();
-    if (file != null) {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      return service != null && virtualFile != null && service.getRootType(virtualFile) != null;
-    }
-    return false;
+    PsiFile file = element.getContainingFile();
+    return file != null && ScratchRootType.getInstance().isScratchFile(file.getVirtualFile());
   }
 
   /**

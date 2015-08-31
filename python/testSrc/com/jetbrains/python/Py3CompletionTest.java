@@ -40,7 +40,7 @@ public class Py3CompletionTest extends PyTestCase {
   }
 
   public void testNamedTuple() {
-    final String testName = "completion/" + getTestName(true);
+    final String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");
     myFixture.completeBasic();
     final List<String> strings = myFixture.getLookupElementStrings();
@@ -63,17 +63,17 @@ public class Py3CompletionTest extends PyTestCase {
 
   private void doTest() {
     CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
-    final String testName = "completion/" + getTestName(true);
+    final String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");
     myFixture.completeBasic();
     myFixture.checkResultByFile(testName + ".after.py");
   }
 
   private void doMultiFileTest() {
-    myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
+    myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");
     myFixture.completeBasic();
-    myFixture.checkResultByFile("completion/" + getTestName(true) + "/a.after.py");
+    myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
   }
 
   private List<String> doTestByText(String text) {
@@ -131,10 +131,10 @@ public class Py3CompletionTest extends PyTestCase {
   }
 
   private void doMultiFileTestInsideNamespacePackage() {
-    myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
+    myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("nspkg1/a.py");
     myFixture.completeBasic();
-    myFixture.checkResultByFile("completion/" + getTestName(true) + "/nspkg1/a.after.py");
+    myFixture.checkResultByFile(getTestName(true) + "/nspkg1/a.after.py");
   }
 
   // PY-14385
@@ -155,5 +155,10 @@ public class Py3CompletionTest extends PyTestCase {
   // PY-11214
   public void testDunderNext() {
     doTest();
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/completion";
   }
 }

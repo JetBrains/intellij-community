@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,25 +33,47 @@ public class JBSplitter extends Splitter {
    */
   @Nullable
   private String mySplitterProportionKey = null;
+  private final float myDefaultProportion;
 
   public JBSplitter() {
     super();
+
+    myDefaultProportion = 0.5f;
+  }
+
+  public JBSplitter(@NotNull String proportionKey, float defaultProportion) {
+    this(false, proportionKey, defaultProportion);
+  }
+
+  public JBSplitter(boolean vertical, @NotNull String proportionKey, float defaultProportion) {
+    super(vertical, defaultProportion);
+
+    mySplitterProportionKey = proportionKey;
+    myDefaultProportion = defaultProportion;
   }
 
   public JBSplitter(boolean vertical) {
     super(vertical);
+
+    myDefaultProportion = 0.5f;
   }
 
   public JBSplitter(boolean vertical, float proportion) {
     super(vertical, proportion);
+
+    myDefaultProportion = proportion;
   }
 
   public JBSplitter(float proportion) {
     super(false, proportion);
+
+    myDefaultProportion = proportion;
   }
 
   public JBSplitter(boolean vertical, float proportion, float minProp, float maxProp) {
     super(vertical, proportion, minProp, maxProp);
+
+    myDefaultProportion = proportion;
   }
 
   /**
@@ -95,14 +117,14 @@ public class JBSplitter extends Splitter {
   }
 
   protected void loadProportion() {
-    if (! StringUtil.isEmpty(mySplitterProportionKey)) {
+    if (!StringUtil.isEmpty(mySplitterProportionKey)) {
       setProportion(PropertiesComponent.getInstance().getFloat(mySplitterProportionKey, myProportion));
     }
   }
 
   protected void saveProportion() {
-    if (! StringUtil.isEmpty(mySplitterProportionKey)) {
-      PropertiesComponent.getInstance().setValue(mySplitterProportionKey, String.valueOf(myProportion));
+    if (!StringUtil.isEmpty(mySplitterProportionKey)) {
+      PropertiesComponent.getInstance().setValue(mySplitterProportionKey, myProportion, myDefaultProportion);
     }
   }
 }

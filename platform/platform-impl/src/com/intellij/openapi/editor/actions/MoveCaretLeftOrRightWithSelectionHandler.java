@@ -34,7 +34,7 @@ class MoveCaretLeftOrRightWithSelectionHandler extends EditorActionHandler {
   protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
     assert caret != null;
     VisualPosition currentPosition = caret.getVisualPosition();
-    if (caret.isAtDirectionBoundary() && (myMoveRight ^ currentPosition.leansRight)) {
+    if (caret.isAtBidiRunBoundary() && (myMoveRight ^ currentPosition.leansRight)) {
       int selectionStartToUse = caret.getLeadSelectionOffset();
       VisualPosition selectionStartPositionToUse = caret.getLeadSelectionPosition();
       caret.moveToVisualPosition(currentPosition.leanRight(!currentPosition.leansRight));

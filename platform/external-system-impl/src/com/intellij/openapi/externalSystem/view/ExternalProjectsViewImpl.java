@@ -78,7 +78,7 @@ import java.util.List;
  * @author Vladislav.Soroka
  * @since 9/19/2014
  */
-public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements DataProvider, ExternalProjectsView {
+public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements DataProvider, ExternalProjectsView, Disposable {
   public static final Logger LOG = Logger.getInstance(ExternalProjectsViewImpl.class);
 
   @NotNull
@@ -171,6 +171,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   public void init() {
+    Disposer.register(myProject, this);
     initTree();
 
     final ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
@@ -190,13 +191,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
         wasVisible = true;
       }
     };
-    manager.addToolWindowManagerListener(listener);
-
-    Disposer.register(myProject, new Disposable() {
-      public void dispose() {
-        manager.removeToolWindowManagerListener(listener);
-      }
-    });
+    manager.addToolWindowManagerListener(listener, myProject);
 
     getShortcutsManager().addListener(new ExternalSystemShortcutsManager.Listener() {
       @Override
@@ -305,6 +300,12 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       if (gearAction instanceof ExternalSystemViewGearAction) {
         ((ExternalSystemViewGearAction)gearAction).setView(this);
         group.add(gearAction);
+        Disposer.register(myProject, new Disposable() {
+          @Override
+          public void dispose() {
+            ((ExternalSystemViewGearAction)gearAction).setView(null);
+          }
+        });
       }
     }
     return group;
@@ -312,6 +313,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
   private void initStructure() {
     myStructure = new ExternalProjectsStructure(myProject, myTree);
+    Disposer.register(this, myStructure);
     myStructure.init(this);
   }
 
@@ -420,7 +422,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     final List<ExternalSystemNode<?>> result = new SmartList<ExternalSystemNode<?>>();
     final MultiMap<Key<?>, DataNode<?>> groups = ExternalSystemApiUtil.group(dataNode.getChildren());
     for (ExternalSystemViewContributor contributor : ExternalSystemViewContributor.EP_NAME.getExtensions()) {
-      List<Key<?>> keys = contributor.getKeys();
+      Set<Key<?>> keys = ContainerUtil.newTreeSet(contributor.getKeys());
 
       final MultiMap<Key<?>, DataNode<?>> dataNodes = MultiMap.create();
       for (Key<?> key : keys) {
@@ -477,6 +479,11 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
   public boolean getGroupTasks() {
     return myState.groupTasks;
+  }
+
+  @Override
+  public boolean useTasksNode() {
+    return true;
   }
 
   public void setGroupTasks(boolean value) {
@@ -646,5 +653,12 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       if (navigatable != null) navigatables.add(navigatable);
     }
     return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[navigatables.size()]);
+  }
+
+  @Override
+  public void dispose() {
+    this.listeners.clear();
+    this.myStructure = null;
+    this.myTree = null;
   }
 }

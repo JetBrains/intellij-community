@@ -76,8 +76,12 @@ public class IntelliJLaf extends DarculaLaf {
   }
 
   public static boolean isGraphite() {
-    // https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ApplicationKit/Classes/NSCell_Class/index.html#//apple_ref/doc/c_ref/NSGraphiteControlTint
-    // NSGraphiteControlTint = 6
-    return Foundation.invoke("NSColor", "currentControlTint").intValue() == 6;
+    try {
+      // https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ApplicationKit/Classes/NSCell_Class/index.html#//apple_ref/doc/c_ref/NSGraphiteControlTint
+      // NSGraphiteControlTint = 6
+      return Foundation.invoke("NSColor", "currentControlTint").intValue() == 6;
+    } catch (Exception e) {
+      return false;
+    }
   }
 }

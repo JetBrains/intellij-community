@@ -73,7 +73,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     final ParametersInfo superInfo = new ParametersInfo(superInit.getParameterList());
     final boolean addSelfToCall;
 
-    if (klass.isNewStyleClass()) {
+    if (klass.isNewStyleClass(null)) {
       addSelfToCall = false;
       if (LanguageLevel.forElement(klass).isPy3K()) {
         superCall.append("super().__init__(");

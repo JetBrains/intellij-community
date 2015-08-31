@@ -852,10 +852,15 @@ skip_properties:
   ; set the current time for installation files under $INSTDIR\bin
   ExecCmd::exec 'copy "$INSTDIR\bin\*.*s" +,,'
   call winVersion
-  ${If} $0 == "1"  
+  ${If} $0 == "1"
     ;ExecCmd::exec 'icacls "$INSTDIR" /grant %username%:F /T >"$INSTDIR"\installation_log.txt 2>"$INSTDIR"\installation_error.txt'
     AccessControl::GrantOnFile \
       "$INSTDIR" "(S-1-5-32-545)" "GenericRead + GenericExecute"
+    AccessControl::GrantOnFile \
+      "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions" "(S-1-5-32-545)" "GenericRead + GenericWrite"
+    ${StrRep} $0 ${PRODUCT_EXE_FILE} ".exe" "64.exe.vmoptions"
+    AccessControl::GrantOnFile \
+      "$INSTDIR\bin\$0" "(S-1-5-32-545)" "GenericRead + GenericWrite"
   ${EndIf}
 SectionEnd
 
@@ -973,6 +978,9 @@ Function un.ConfirmDeleteSettings
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 3" "Text" "$(text_delete_settings)"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 4" "Text" "$(confirm_delete_caches)"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 5" "Text" "$(confirm_delete_settings)"
+  ;do not show feedback web page checkbox for EAP builds.
+  StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" hide_feedback_checkbox feedback_web_page
+feedback_web_page:
   StrCmp "${UNINSTALL_WEB_PAGE}" "feedback_web_page" hide_feedback_checkbox done
 hide_feedback_checkbox:
     ; do not show feedback web page checkbox through products uninstall.
@@ -1189,7 +1197,9 @@ remove_IntelliJIdeaProjectFile:
   Call un.OMDeleteRegKey
 done:
   DeleteRegKey SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
-; UNCOMMENT THIS IN RELEASE BUILD
+  ;do not show feedback web page checkbox for EAP builds.
+  StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" end_of_uninstall feedback_web_page
+feedback_web_page:
   StrCmp "${UNINSTALL_WEB_PAGE}" "feedback_web_page" end_of_uninstall
   !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 6" "State"
   StrCmp "$R3" "0" end_of_uninstall

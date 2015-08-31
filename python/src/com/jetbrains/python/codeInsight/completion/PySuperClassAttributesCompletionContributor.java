@@ -60,7 +60,7 @@ public class PySuperClassAttributesCompletionContributor extends CompletionContr
     for (PyTargetExpression expr : cls.getClassAttributes()) {
       seenNames.add(expr.getName());
     }
-    for (PyClass ancestor : cls.getAncestorClasses()) {
+    for (PyClass ancestor : cls.getAncestorClasses(null)) {
       for (PyTargetExpression expr : ancestor.getClassAttributes()) {
         if (!seenNames.contains(expr.getName())) {
           seenNames.add(expr.getName());

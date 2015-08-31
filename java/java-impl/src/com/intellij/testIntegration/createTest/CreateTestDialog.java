@@ -35,6 +35,8 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.ComboBox;
@@ -139,9 +141,8 @@ public class CreateTestDialog extends DialogWrapper {
       myFixLibraryPanel.setVisible(true);
       String text = CodeInsightBundle.message("intention.create.test.dialog.library.not.found", descriptor.getName());
       myFixLibraryLabel.setText(text);
-
-      myFixLibraryButton.setVisible(descriptor instanceof JavaTestFramework ? !((JavaTestFramework)descriptor).getLibraryPaths().isEmpty()
-                                                                            : descriptor.getLibraryPath() != null);
+      myFixLibraryButton.setVisible(descriptor instanceof JavaTestFramework && ((JavaTestFramework)descriptor).getFrameworkLibraryDescriptor() != null
+                                    || descriptor.getLibraryPath() != null);
     }
 
     String superClass = descriptor.getDefaultSuperClass();
@@ -185,13 +186,11 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   private void restoreShowInheritedMembersStatus() {
-    String v = getProperties().getValue(SHOW_INHERITED_MEMBERS_PROPERTY);
-    myShowInheritedMethodsBox.setSelected(v != null && v.equals("true"));
+    myShowInheritedMethodsBox.setSelected(getProperties().getBoolean(SHOW_INHERITED_MEMBERS_PROPERTY));
   }
 
   private void saveShowInheritedMembersStatus() {
-    boolean v = myShowInheritedMethodsBox.isSelected();
-    getProperties().setValue(SHOW_INHERITED_MEMBERS_PROPERTY, Boolean.toString(v));
+    getProperties().setValue(SHOW_INHERITED_MEMBERS_PROPERTY, myShowInheritedMethodsBox.isSelected());
   }
 
   private PropertiesComponent getProperties() {
@@ -365,7 +364,14 @@ public class CreateTestDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         final Object selectedItem = myLibrariesCombo.getSelectedItem();
         if (selectedItem != null) {
-          onLibrarySelected((TestFramework)selectedItem);
+          final DumbService dumbService = DumbService.getInstance(myProject);
+          dumbService.setAlternativeResolveEnabled(true);
+          try {
+            onLibrarySelected((TestFramework)selectedItem);
+          }
+          finally {
+            dumbService.setAlternativeResolveEnabled(false);
+          }
         }
       }
     });
@@ -379,13 +385,18 @@ public class CreateTestDialog extends DialogWrapper {
 
     myFixLibraryButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+          @Override
           public void run() {
-            if (mySelectedFramework instanceof JavaTestFramework) {
-              ((JavaTestFramework)mySelectedFramework).setupLibrary(myTargetModule);
-            } else {
-              OrderEntryFix.addJarToRoots(mySelectedFramework.getLibraryPath(), myTargetModule, null);
-            }
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                if (mySelectedFramework instanceof JavaTestFramework) {
+                  ((JavaTestFramework)mySelectedFramework).setupLibrary(myTargetModule);
+                } else {
+                  OrderEntryFix.addJarToRoots(mySelectedFramework.getLibraryPath(), myTargetModule, null);
+                }
+              }
+            });
           }
         });
         myFixLibraryPanel.setVisible(false);

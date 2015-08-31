@@ -27,9 +27,8 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Segment;
@@ -672,52 +671,100 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertNotNull(node);
   }
 
-  public void testSmartPointersForOpenFilesAreFastened() {
-    PsiJavaFile file = (PsiJavaFile)myJavaFacade.findClass("AClass", GlobalSearchScope.allScope(getProject())).getContainingFile();
-
-    SmartPointerManagerImpl manager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject);
-    VirtualFile virtualFile = file.getVirtualFile();
-
-    assertFalse(manager.areBeltsFastened(virtualFile));
-    FileEditor[] editors = FileEditorManager.getInstance(myProject).openFile(virtualFile, true);
-    assertTrue(editors.length != 0);
-
-    assertTrue(manager.areBeltsFastened(virtualFile));
-
-    FileEditorManager.getInstance(myProject).closeFile(virtualFile);
-    assertFalse(manager.areBeltsFastened(virtualFile));
-
-    SmartPsiElementPointer<PsiClass> pointer = manager.createSmartPsiElementPointer(file.getClasses()[0]);
-
-    assertFalse(manager.areBeltsFastened(virtualFile));
-    editors = FileEditorManager.getInstance(myProject).openFile(virtualFile, true);
-    assertTrue(editors.length != 0);
-
-    assertTrue(manager.areBeltsFastened(virtualFile));
-
-    FileEditorManager.getInstance(myProject).closeFile(virtualFile);
-    assertFalse(manager.areBeltsFastened(virtualFile));
-
-    assertEquals(file.getClasses()[0], pointer.getElement()); // retain pointer from gc
-  }
-
-  public void testLargeFileWithManyChanges() {
+  public void testLargeFileWithManyChangesPerformance() {
     configureByText(PlainTextFileType.INSTANCE, StringUtil.repeat("foo foo \n", 50000));
     final TextRange range = TextRange.from(10, 10);
     final SmartPsiFileRange pointer = SmartPointerManager.getInstance(myProject).createSmartPsiFileRangePointer(myFile, range);
 
     final Document document = myFile.getViewProvider().getDocument();
     assertNotNull(document);
-    
-    for (int i = 0; i < 10000; i++) {
-      document.insertString(i * 20 + 100, "x\n");
-      assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
-      if (i % 500 == 0) {
+
+    PlatformTestUtil.startPerformanceTest("smart pointer range update", 25000, () -> {
+      for (int i = 0; i < 10000; i++) {
+        document.insertString(i * 20 + 100, "x\n");
+        assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
         assertEquals(range, pointer.getRange());
       }
-    }
+    }).cpuBound().assertTiming();
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     assertEquals(range, pointer.getRange());
+  }
+
+  public void testConvergingRanges() {
+    configureByText(PlainTextFileType.INSTANCE, "aba");
+    final Document document = myFile.getViewProvider().getDocument();
+    assertNotNull(document);
+
+    SmartPsiFileRange range1 = SmartPointerManager.getInstance(myProject).createSmartPsiFileRangePointer(myFile, TextRange.create(0, 2));
+    SmartPsiFileRange range2 = SmartPointerManager.getInstance(myProject).createSmartPsiFileRangePointer(myFile, TextRange.create(1, 3));
+
+    document.deleteString(0, 1);
+    document.deleteString(1, 2);
+    assertEquals(TextRange.create(0, 1), range1.getRange());
+    assertEquals(TextRange.create(0, 1), range2.getRange());
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    assertEquals(TextRange.create(0, 1), range1.getRange());
+    assertEquals(TextRange.create(0, 1), range2.getRange());
+
+    document.insertString(0, "a");
+    assertEquals(TextRange.create(1, 2), range1.getRange());
+    assertEquals(TextRange.create(1, 2), range2.getRange());
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    assertEquals(TextRange.create(1, 2), range1.getRange());
+    assertEquals(TextRange.create(1, 2), range2.getRange());
+  }
+
+  public void testMoveText() {
+    PsiJavaFile file = (PsiJavaFile)configureByText(JavaFileType.INSTANCE, "class C1{}\nclass C2 {}");
+    DocumentEx document = (DocumentEx)file.getViewProvider().getDocument();
+
+    SmartPsiElementPointer<PsiClass> pointer1 =
+      SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(file.getClasses()[0]);
+    SmartPsiElementPointer<PsiClass> pointer2 =
+      SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(file.getClasses()[1]);
+    assertEquals("C1", pointer1.getElement().getName());
+    assertEquals("C2", pointer2.getElement().getName());
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(((SmartPointerEx) pointer1).getCachedElement());
+    assertNull(((SmartPointerEx) pointer2).getCachedElement());
+
+    TextRange range = file.getClasses()[1].getTextRange();
+    document.moveText(range.getStartOffset(), range.getEndOffset(), 0);
+
+    System.out.println(pointer1.getRange());
+    System.out.println(pointer2.getRange());
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+    assertEquals("C1", pointer1.getElement().getName());
+    assertEquals("C2", pointer2.getElement().getName());
+  }
+
+  public void testNonPhysicalFile() {
+    PsiJavaFile file = (PsiJavaFile)myJavaFacade.findClass("AClass", GlobalSearchScope.allScope(getProject())).getContainingFile().copy();
+    SmartPsiFileRange pointer = SmartPointerManager.getInstance(myProject).createSmartPsiFileRangePointer(file, TextRange.create(1, 2));
+
+    file.getViewProvider().getDocument().insertString(0, " ");
+
+    assertEquals(TextRange.create(2, 3), pointer.getRange());
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    assertEquals(TextRange.create(2, 3), pointer.getRange());
+  }
+
+  public void testAnchorInfoSurvivesPsiChange() {
+    PsiJavaFile file = (PsiJavaFile)configureByText(JavaFileType.INSTANCE, "class C1{}\nclass C2 {}");
+
+    SmartPsiElementPointer<PsiClass> pointer =
+      SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(file.getClasses()[1]);
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(((SmartPointerEx) pointer).getCachedElement());
+
+    file.getClasses()[1].delete();
+
+    assertNotNull(pointer.getElement());
   }
 }

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.progress.ProgressIndicator
@@ -22,22 +37,25 @@ public interface RepositoryManager {
   /**
    * Return error message if failed
    */
-  public fun setUpstream(url: String?, branch: String?)
+  public fun setUpstream(url: String?, branch: String? = null)
 
   public fun read(path: String): InputStream?
 
-  public fun write(path: String, content: ByteArray, size: Int)
+  /**
+   * Returns false if file is not written (for example, due to ignore rules).
+   */
+  public fun write(path: String, content: ByteArray, size: Int): Boolean
 
   public fun delete(path: String)
-
-  public fun listSubFileNames(path: String): Collection<String>
 
   public fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean)
 
   /**
-   * Not all implementations support progress indicator (will not be updated on progress)
+   * Not all implementations support progress indicator (will not be updated on progress).
+   *
+   * syncType will be passed if called before sync.
    */
-  public fun commit(indicator: ProgressIndicator? = null): Boolean
+  public fun commit(indicator: ProgressIndicator? = null, syncType: SyncType? = null): Boolean
 
   public fun getAheadCommitsCount(): Int
 
@@ -47,7 +65,7 @@ public interface RepositoryManager {
 
   public fun fetch(indicator: ProgressIndicator? = null): Updater
 
-  public fun pull(indicator: ProgressIndicator): UpdateResult?
+  public fun pull(indicator: ProgressIndicator? = null): UpdateResult?
 
   public fun has(path: String): Boolean
 
@@ -62,12 +80,6 @@ public interface RepositoryManager {
 
     // valid only if merge was called before
     val definitelySkipPush: Boolean
-  }
-}
-
-fun RepositoryManager.commitIfCan(indicator: ProgressIndicator? = null) {
-  if (canCommit()) {
-    commit(indicator)
   }
 }
 

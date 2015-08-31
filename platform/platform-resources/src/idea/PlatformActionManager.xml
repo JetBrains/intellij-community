@@ -1,6 +1,8 @@
-<component xmlns:xi="http://www.w3.org/2001/XInclude">
-  <action id="EditorIndentSelection" class="com.intellij.openapi.editor.actions.IndentSelectionAction"/>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <actions>
+    <action id="EditorIndentSelection" class="com.intellij.openapi.editor.actions.IndentSelectionAction"/>
+  </actions>
 
-  <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/component/*)"/>
-  <xi:include href="/idea/VcsActions.xml" xpointer="xpointer(/component/*)"/>
-</component>
+  <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/idea/VcsActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+</idea-plugin>

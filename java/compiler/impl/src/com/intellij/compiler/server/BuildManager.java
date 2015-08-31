@@ -913,7 +913,7 @@ public class BuildManager implements Disposable {
     int sdkMinorVersion = 0;
     JavaSdkVersion sdkVersion = null;
 
-    final Set<Sdk> candidates = new HashSet<Sdk>();
+    final Set<Sdk> candidates = new LinkedHashSet<Sdk>();
     final Sdk defaultSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (defaultSdk != null && defaultSdk.getSdkType() instanceof JavaSdkType) {
       candidates.add(defaultSdk);

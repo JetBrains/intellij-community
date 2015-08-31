@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -132,7 +133,7 @@ public class ClassUtils {
     return packageName1.equals(packageName2);
   }
 
-  public static boolean isFieldVisible(PsiField field, PsiClass fromClass) {
+  public static boolean isFieldVisible(@NotNull PsiField field, PsiClass fromClass) {
     final PsiClass fieldClass = field.getContainingClass();
     if (fieldClass == null) {
       return false;

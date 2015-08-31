@@ -172,7 +172,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @TestOnly
   public boolean stripTrailingSpaces(Project project) {
-    return stripTrailingSpaces(project, false, false, new int[0]);
+    return stripTrailingSpaces(project, false);
+  }
+
+  @TestOnly
+  public boolean stripTrailingSpaces(Project project, boolean inChangedLinesOnly) {
+    return stripTrailingSpaces(project, inChangedLinesOnly, false, new int[0]);
   }
 
   /**
@@ -640,6 +645,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myFrozen = null;
   }
 
+  public void clearLineModificationFlags(int startLine, int endLine) {
+    myLineSet = getLineSet().clearModificationFlags(startLine, endLine);
+    myFrozen = null;
+  }
+
   void clearLineModificationFlagsExcept(@NotNull int[] caretLines) {
     IntArrayList modifiedLines = new IntArrayList(caretLines.length);
     LineSet lineSet = getLineSet();
@@ -804,6 +814,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myText;
   }
 
+  // Breaks encapsulation, yet required for current zero-latency typing implementation.
+  // TODO Should be removed when we implement typing without starting write actions.
+  @NotNull
+  public ImmutableText getImmutableText() {
+    return myText;
+  }
 
   @Override
   public void addDocumentListener(@NotNull DocumentListener listener) {

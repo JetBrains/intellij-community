@@ -13,11 +13,6 @@ public final class DefaultStorageAnnotation implements Storage {
   }
 
   @Override
-  public boolean isDefault() {
-    return true;
-  }
-
-  @Override
   public String file() {
     return StoragePathMacros.PROJECT_FILE;
   }
@@ -34,7 +29,7 @@ public final class DefaultStorageAnnotation implements Storage {
 
   @Override
   public RoamingType roamingType() {
-    return RoamingType.PER_USER;
+    return RoamingType.DEFAULT;
   }
 
   @Override

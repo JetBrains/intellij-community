@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentio
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementFactory;
@@ -95,6 +96,7 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
       locationAttribute.setValue(newValue);
     }
 
+    PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     CodeStyleManager.getInstance(file.getProject()).reformat(tag);
 
     @SuppressWarnings("ConstantConditions")

@@ -13,35 +13,35 @@ INSTALLATION INSTRUCTIONS
 
        ./@@product@@.sh
 
-     to start the application.
+     to start the application. As a side effect, this will initialize various
+     configuration files in the ~/.@@system_selector@@ directory.
 
-  3. [OPTIONAL] Add the "{installation home}/bin" to your PATH environmental
+  3. [OPTIONAL] Add "{installation home}/bin" to your PATH environment
      variable so that you may start @@product_full@@ from any directory.
 
-  4. [OPTIONAL] To adjust the value of JVM heap size open @@product@@.vmoptions
-     (@@product@@64.vmoptions for 64-bit JDK), and modify the -Xms and -Xmx parameters.
+  4. [OPTIONAL] To adjust the value of the JVM heap size, create
+      ~/.@@system_selector@@/@@product@@.vmoptions (or @@product@@64.vmoptions
+      if using a 64-bit JDK), and set the -Xms and -Xms paramters. To see how
+      to do this, you can reference the vmoptions file under
+      "{installation home}/bin" as a model.
 
-
-  [OPTIONAL] Changing location of "config" and "system" directory
+  [OPTIONAL] Changing the location of "config" and "system" directories
   ------------------------------------------------------------------------------
-  By default @@product_full@@ stores all your settings under ~/.@@system_selector@@/config directory
-  and stores data cache under ~/.@@system_selector@@/system directory.
+  By default, @@product_full@@ stores all your settings under the ~/.@@system_selector@@/config
+  directory and uses ~/.@@system_selector@@/system as a data cache.
   If you want to change these settings,
 
-  1. Open a console and cd into "{installation home}/bin"
+  1. Open a console and cd into ~/.@@system_selector@@/
 
-  2. Open file "idea.properties" in an editor. You should find strings like
+  2. Create the file "idea.properties" and open it in an editor. Set the
+     idea.system.path and/or idea.config.path variables as desired, for
+     example:
 
-     idea.system.path=~/.@@settings_dir@@/system
+     idea.system.path=~/custom/system
+     idea.config.path=~/custom/config
 
-     and
-
-     idea.config.path=~/.@@settings_dir@@/config
-
-     and change them.
-
-  3. Note that we recommend to store data cache ("system" directory) at a disk 
-     with at least 1G bytes free space
+  3. Note that we recommend to store data cache ("system" directory) on a disk
+     with at least 1GB of free space.
 
 
 

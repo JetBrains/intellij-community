@@ -44,22 +44,7 @@ public abstract class MutableLookupElement<T> extends LookupElement{
   public abstract MutableLookupElement<T> setPresentableText(@NotNull String displayText);
 
   @NotNull
-  public abstract MutableLookupElement<T> setTypeText(final String text);
-
-  @NotNull
-  public abstract MutableLookupElement<T> setTailText(final String text, final boolean grayed);
-
-  @NotNull
   public abstract MutableLookupElement<T> setTailType(@NotNull TailType type);
-
-  /**
-   * Use {@link com.intellij.codeInsight.completion.CompletionResultSet#caseInsensitive()} instead
-   * @param caseSensitive
-   * @return
-   */
-  @Deprecated
-  @NotNull
-  public abstract MutableLookupElement<T> setCaseSensitive(boolean caseSensitive);
 
   public abstract MutableLookupElement<T> addLookupStrings(@NonNls String... additionalLookupStrings);
 

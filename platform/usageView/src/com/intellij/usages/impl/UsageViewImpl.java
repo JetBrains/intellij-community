@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -43,6 +42,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
@@ -75,7 +75,6 @@ import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
@@ -867,9 +866,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         setSearchInProgress(true);
         associateProgress(indicator);
 
-        myChangesDetected = false;
-        UsageSearcher usageSearcher = myUsageSearcherFactory.create();
-        usageSearcher.generate(new Processor<Usage>() {
+        Processor<Usage> processor = new Processor<Usage>() {
           @Override
           public boolean process(final Usage usage) {
             if (searchHasBeenCancelled()) return false;
@@ -882,7 +879,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
               if (usageCount > UsageLimitUtil.USAGES_LIMIT) {
                 if (tooManyUsagesStatus.switchTooManyUsagesStatus()) {
                   UsageViewManagerImpl
-                    .showTooManyUsagesWarning(project, tooManyUsagesStatus, indicator, getPresentation(), usageCountWithoutDefinition.get(), UsageViewImpl.this);
+                    .showTooManyUsagesWarning(project, tooManyUsagesStatus, indicator, getPresentation(), usageCountWithoutDefinition.get(),
+                                              UsageViewImpl.this);
                 }
               }
               ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -894,8 +892,17 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             }
             return !indicator.isCanceled();
           }
-        });
-        drainQueuedUsageNodes();
+        };
+
+        myChangesDetected = false;
+        PsiManager.getInstance(project).startBatchFilesProcessingMode();
+        try {
+          myUsageSearcherFactory.create().generate(processor);
+          drainQueuedUsageNodes();
+        }
+        finally {
+          PsiManager.getInstance(project).finishBatchFilesProcessingMode();
+        }
         setSearchInProgress(false);
       }
     };
@@ -1465,8 +1472,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return myModel.areTargetsValid();
   }
 
-  private class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator,Disposable, CopyProvider {
+  private class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator,Disposable{
     @Nullable private OccurenceNavigatorSupport mySupport;
+    private CopyProvider myCopyProvider;
 
     private MyPanel(@NotNull JTree tree) {
       mySupport = new OccurenceNavigatorSupport(tree) {
@@ -1485,6 +1493,21 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         @Override
         public String getPreviousOccurenceActionName() {
           return UsageViewBundle.message("action.previous.occurrence");
+        }
+      };
+      myCopyProvider = new TextCopyProvider() {
+        @Nullable
+        @Override
+        public Collection<String> getTextLinesToCopy() {
+          final Node[] selectedNodes = getSelectedNodes();
+          if (selectedNodes != null && selectedNodes.length > 0) {
+            ArrayList<String> lines = ContainerUtil.newArrayList();
+            for (Node node : selectedNodes) {
+              lines.add(node.getText(UsageViewImpl.this));
+            }
+            return lines;
+          }
+          return null;
         }
       };
     }
@@ -1522,24 +1545,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     @Override
     public String getPreviousOccurenceActionName() {
       return mySupport != null ? mySupport.getPreviousOccurenceActionName() : "";
-    }
-
-    @Override
-    public void performCopy(@NotNull DataContext dataContext) {
-      final Node selectedNode = getSelectedNode();
-      assert selectedNode != null;
-      final String plainText = selectedNode.getText(UsageViewImpl.this);
-      CopyPasteManager.getInstance().setContents(new StringSelection(plainText.trim()));
-    }
-
-    @Override
-    public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-      return getSelectedNode() != null;
-    }
-
-    @Override
-    public boolean isCopyVisible(@NotNull DataContext dataContext) {
-      return true;
     }
 
     @Override
@@ -1581,7 +1586,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         sink.put(PlatformDataKeys.HELP_ID, HELP_ID);
       }
       else if (key == PlatformDataKeys.COPY_PROVIDER) {
-        sink.put(PlatformDataKeys.COPY_PROVIDER, this);
+        sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
       }
       else if (node != null) {
         Object userObject = node.getUserObject();

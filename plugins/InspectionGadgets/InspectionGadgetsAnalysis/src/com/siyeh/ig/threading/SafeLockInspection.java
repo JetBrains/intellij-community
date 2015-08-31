@@ -168,9 +168,8 @@ public class SafeLockInspection extends BaseInspection { // todo extend Resource
     }
   }
 
-  private static class UnlockVisitor extends JavaRecursiveElementVisitor {
-
-    private boolean containsUnlock = false;
+  private static class UnlockVisitor extends JavaRecursiveElementWalkingVisitor {
+    private boolean containsUnlock;
     private final PsiVariable variable;
     private final LockType type;
 
@@ -238,12 +237,12 @@ public class SafeLockInspection extends BaseInspection { // todo extend Resource
       }
     }
 
-    public boolean containsUnlock() {
+    boolean containsUnlock() {
       return containsUnlock;
     }
   }
 
-  enum LockType {
+  private enum LockType {
     READ, WRITE, REGULAR
   }
 }

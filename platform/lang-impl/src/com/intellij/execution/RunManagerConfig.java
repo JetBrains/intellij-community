@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,37 +16,32 @@
 
 package com.intellij.execution;
 
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.util.StoringPropertyContainer;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 public class RunManagerConfig {
   public static final String MAKE = ExecutionBundle.message("before.run.property.make");
-  private final StoringPropertyContainer myProperties;
-  private final PropertiesComponent myPropertiesComponent;
+
   public static final int MIN_RECENT_LIMIT = 0;
+  public static final int DEFAULT_RECENT_LIMIT = 5;
+
+  private final PropertiesComponent myPropertiesComponent;
+
   @NonNls private static final String RECENTS_LIMIT = "recentsLimit";
   @NonNls private static final String RESTART_REQUIRES_CONFIRMATION = "restartRequiresConfirmation";
   @NonNls private static final String STOP_INCOMPATIBLE_REQUIRES_CONFIRMATION = "stopIncompatibleRequiresConfirmation";
 
-  public RunManagerConfig(PropertiesComponent propertiesComponent,
-                          RunManagerImpl manager) {
+  public RunManagerConfig(PropertiesComponent propertiesComponent) {
     myPropertiesComponent = propertiesComponent;
-    myProperties = new StoringPropertyContainer("RunManagerConfig.", propertiesComponent);
   }
 
   public int getRecentsLimit() {
-    try {
-      return Math.max(MIN_RECENT_LIMIT, Integer.valueOf(myPropertiesComponent.getOrInit(RECENTS_LIMIT, "5")).intValue());
-    }
-    catch (NumberFormatException e) {
-      return 5;
-    }
+    return Math.max(MIN_RECENT_LIMIT, StringUtil.parseInt(myPropertiesComponent.getValue(RECENTS_LIMIT), DEFAULT_RECENT_LIMIT));
   }
 
   public void setRecentsLimit(int recentsLimit) {
-    myPropertiesComponent.setValue(RECENTS_LIMIT, Integer.toString(recentsLimit));
+    myPropertiesComponent.setValue(RECENTS_LIMIT, recentsLimit, DEFAULT_RECENT_LIMIT);
   }
 
   public boolean isRestartRequiresConfirmation() {
@@ -54,7 +49,7 @@ public class RunManagerConfig {
   }
 
   public void setRestartRequiresConfirmation(boolean restartRequiresConfirmation) {
-    myPropertiesComponent.setValue(RESTART_REQUIRES_CONFIRMATION, String.valueOf(restartRequiresConfirmation));
+    myPropertiesComponent.setValue(RESTART_REQUIRES_CONFIRMATION, restartRequiresConfirmation, true);
   }
 
   public boolean isStopIncompatibleRequiresConfirmation() {
@@ -62,6 +57,6 @@ public class RunManagerConfig {
   }
 
   public void setStopIncompatibleRequiresConfirmation(boolean stopIncompatibleRequiresConfirmation) {
-    myPropertiesComponent.setValue(STOP_INCOMPATIBLE_REQUIRES_CONFIRMATION, String.valueOf(stopIncompatibleRequiresConfirmation));
+    myPropertiesComponent.setValue(STOP_INCOMPATIBLE_REQUIRES_CONFIRMATION, stopIncompatibleRequiresConfirmation, true);
   }
 }

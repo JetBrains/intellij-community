@@ -105,7 +105,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   /**
    * @deprecated
-   * use {@link com.intellij.util.containers.StringInterner#intern(Object)} directly instead
+   * use {@link StringInterner#intern(Object)} directly instead
    */
   @NotNull
   @Deprecated
@@ -115,7 +115,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   /**
    * @deprecated 
-   * use {@link com.intellij.openapi.util.JDOMUtil#internElement(org.jdom.Element, com.intellij.util.containers.StringInterner)}
+   * use {@link JDOMUtil#internElement(Element, StringInterner)}
    */
   @SuppressWarnings("unused")
   @Deprecated
@@ -223,6 +223,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myDescriptionChildText = pluginBean.description;
     myChangeNotes = pluginBean.changeNotes;
     myVersion = pluginBean.pluginVersion;
+    if (myVersion == null) {
+      myVersion = PluginManagerCore.getBuildNumber().getBaselineVersion() + ".SNAPSHOT";
+    }
+
     myCategory = pluginBean.category;
 
 

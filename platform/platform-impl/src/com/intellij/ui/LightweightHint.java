@@ -310,10 +310,12 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   /**
-   * @return bounds of hint component in the layered pane.
+   * @return bounds of hint component in the parent component's layered pane coordinate system.
    */
   public final Rectangle getBounds() {
-    return myComponent.getBounds();
+    Rectangle bounds = new Rectangle(myComponent.getBounds());
+    final JLayeredPane layeredPane = myParentComponent.getRootPane().getLayeredPane();
+    return SwingUtilities.convertRectangle(myComponent, bounds, layeredPane);
   }
 
   @Override

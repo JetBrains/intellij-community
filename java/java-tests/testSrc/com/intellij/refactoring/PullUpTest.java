@@ -182,6 +182,10 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(false, IGNORE_CONFLICTS, new RefactoringTestUtil.MemberDescriptor("test", PsiMethod.class));
   }
 
+  public void testPullUpAsAbstractInClass() throws Exception {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("test", PsiMethod.class, true));
+  }
+
   private void doTest(RefactoringTestUtil.MemberDescriptor... membersToFind) {
     doTest(true, membersToFind);
   }

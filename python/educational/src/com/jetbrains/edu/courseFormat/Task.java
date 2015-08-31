@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.EduNames;
@@ -17,12 +18,15 @@ import java.util.Map;
 /**
  * Implementation of task which contains task files, tests, input file for tests
  */
-public class Task implements Named {
+public class Task implements StudyItem {
   @Expose
   private String name;
 
   // index is visible to user number of task from 1 to task number
   private int myIndex;
+
+  private int myStepicId;
+
   @Expose
   @SerializedName("task_files")
   public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
@@ -62,7 +66,7 @@ public class Task implements Named {
     return text;
   }
 
-  public void setText(@NotNull final String text) {
+  public void setText(final String text) {
     this.text = text;
   }
 
@@ -78,7 +82,7 @@ public class Task implements Named {
     return testsText;
   }
 
-  public void setTestsTexts(String name, String text) {
+  public void addTestsTexts(String name, String text) {
     testsText.put(name, text);
   }
 
@@ -98,7 +102,13 @@ public class Task implements Named {
   public void addTaskFile(@NotNull final String name, int index) {
     TaskFile taskFile = new TaskFile();
     taskFile.setIndex(index);
+    taskFile.setTask(this);
+    taskFile.name = name;
     taskFiles.put(name, taskFile);
+  }
+
+  public void addTaskFile(@NotNull final TaskFile taskFile) {
+    taskFiles.put(taskFile.name, taskFile);
   }
 
   @Nullable
@@ -130,42 +140,35 @@ public class Task implements Named {
     return null;
   }
 
-  @Nullable
+  @NotNull
   public String getTaskText(@NotNull final Project project) {
+    if (!StringUtil.isEmptyOrSpaces(text)) return text;
     final VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
       final VirtualFile file = taskDir.findChild(EduNames.TASK_HTML);
-      if (file == null) return null;
+      if (file == null) return "";
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
         return document.getImmutableCharSequence().toString();
       }
     }
 
-    return null;
+    return "";
   }
 
-  @Nullable
+  @NotNull
   public String getTestsText(@NotNull final Project project) {
     final VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
       final VirtualFile file = taskDir.findChild(EduNames.TESTS_FILE);
-      if (file == null) return null;
+      if (file == null) return "";
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
         return document.getImmutableCharSequence().toString();
       }
     }
 
-    return null;
-  }
-
-  public Document getDocument(Project project, String name) {
-    final VirtualFile taskDirectory = getTaskDir(project);
-    if (taskDirectory == null) return null;
-    final VirtualFile file = taskDirectory.findChild(name);
-    if (file == null) return null;
-    return FileDocumentManager.getInstance().getDocument(file);
+    return "";
   }
 
   @Override
@@ -192,5 +195,13 @@ public class Task implements Named {
     result = 31 * result + (text != null ? text.hashCode() : 0);
     result = 31 * result + (testsText != null ? testsText.hashCode() : 0);
     return result;
+  }
+
+  public void setStepicId(int stepicId) {
+    myStepicId = stepicId;
+  }
+
+  public int getStepicId() {
+    return myStepicId;
   }
 }

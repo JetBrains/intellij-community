@@ -39,6 +39,9 @@ import java.util.concurrent.ConcurrentMap;
  * @author yole
  */
 public class LibraryScopeCache {
+
+  private final LibrariesOnlyScope myLibrariesOnlyScope;
+
   public static LibraryScopeCache getInstance(Project project) {
     return ServiceManager.getService(project, LibraryScopeCache.class);
   }
@@ -74,6 +77,7 @@ public class LibraryScopeCache {
 
   public LibraryScopeCache(Project project) {
     myProject = project;
+    myLibrariesOnlyScope = new LibrariesOnlyScope(GlobalSearchScope.allScope(myProject), myProject);
   }
 
   void clear() {
@@ -95,7 +99,7 @@ public class LibraryScopeCache {
       return scope;
     }
     GlobalSearchScope newScope = modulesLibraryIsUsedIn.length == 0
-                                 ? new LibrariesOnlyScope(GlobalSearchScope.allScope(myProject), myProject)
+                                 ? myLibrariesOnlyScope
                                  : new LibraryRuntimeClasspathScope(myProject, modulesLibraryIsUsedIn);
     return ConcurrencyUtil.cacheOrGet(myLibraryScopes, modulesLibraryIsUsedIn, newScope);
   }
@@ -212,7 +216,7 @@ public class LibraryScopeCache {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return myOriginal.contains(file) && !myIndex.isInContent(file);
+      return myOriginal.contains(file) && (myIndex.isInLibraryClasses(file) || myIndex.isInLibrarySource(file));
     }
 
     @Override
@@ -223,6 +227,11 @@ public class LibraryScopeCache {
     @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return false;
+    }
+
+    @Override
+    public boolean isSearchOutsideRootModel() {
+      return myOriginal.isSearchOutsideRootModel();
     }
 
     @Override

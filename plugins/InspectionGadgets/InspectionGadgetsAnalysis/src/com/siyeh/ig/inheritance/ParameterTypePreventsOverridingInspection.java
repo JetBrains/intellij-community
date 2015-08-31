@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,6 +101,9 @@ public class ParameterTypePreventsOverridingInspection extends BaseInspection {
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
       final PsiParameterList parameterList = method.getParameterList();
       final int parameterCount = parameterList.getParametersCount();
       if (parameterCount == 0) {

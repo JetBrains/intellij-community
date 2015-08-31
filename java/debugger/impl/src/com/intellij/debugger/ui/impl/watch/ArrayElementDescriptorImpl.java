@@ -52,10 +52,6 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
     return String.valueOf(myIndex);
   }
 
-  public String calcValueName() {
-    return "[" + getName() + "]";
-  }
-
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     return getArrayElement(myArray, myIndex);
   }

@@ -107,7 +107,7 @@ public class CollectionContainsUrlInspection extends BaseInspection {
     }
 
     private static ClassType getClassType(@Nullable PsiClass aClass) {
-      return isMapOrSet(aClass, new HashSet());
+      return isMapOrSet(aClass, new HashSet<PsiClass>());
     }
 
     private static ClassType isMapOrSet(
@@ -122,7 +122,7 @@ public class CollectionContainsUrlInspection extends BaseInspection {
       if (CommonClassNames.JAVA_UTIL_SET.equals(className)) {
         return ClassType.SET;
       }
-      else if (CommonClassNames.JAVA_UTIL_MAP.equals(className)) {
+      if (CommonClassNames.JAVA_UTIL_MAP.equals(className)) {
         return ClassType.MAP;
       }
       final PsiClass[] supers = aClass.getSupers();
@@ -138,9 +138,9 @@ public class CollectionContainsUrlInspection extends BaseInspection {
   }
 
   private static class UrlAddedVisitor
-    extends JavaRecursiveElementVisitor {
+    extends JavaRecursiveElementWalkingVisitor {
 
-    private boolean urlAdded = false;
+    private boolean urlAdded;
     private final PsiVariable variable;
     private final ClassType collectionType;
 
@@ -194,7 +194,7 @@ public class CollectionContainsUrlInspection extends BaseInspection {
       urlAdded = true;
     }
 
-    public boolean isUrlAdded() {
+    boolean isUrlAdded() {
       return urlAdded;
     }
   }
@@ -203,6 +203,7 @@ public class CollectionContainsUrlInspection extends BaseInspection {
 
     SET, MAP, OTHER;
 
+    @NotNull
     public String toString() {
       final String string = super.toString();
       return string.charAt(0) + string.substring(1).toLowerCase();

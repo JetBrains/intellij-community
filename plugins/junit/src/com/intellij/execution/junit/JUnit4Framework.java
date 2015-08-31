@@ -21,8 +21,7 @@ import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -33,11 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 public class JUnit4Framework extends JavaTestFramework {
-  private static final Logger LOG = Logger.getInstance("#" + JUnit4Framework.class.getName());
-
   @NotNull
   public String getName() {
     return "JUnit4";
@@ -53,15 +49,10 @@ public class JUnit4Framework extends JavaTestFramework {
     return JUnitUtil.TEST_ANNOTATION;
   }
 
-  @NotNull
-  public String getLibraryPath() {
-    return getLibraryPaths().get(0);
-  }
-
-  @NotNull
+  @Nullable
   @Override
-  public List<String> getLibraryPaths() {
-    return JavaSdkUtil.getJUnit4JarPaths();
+  public ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
+    return JUnitExternalLibraryDescriptor.JUNIT4;
   }
 
   @Nullable

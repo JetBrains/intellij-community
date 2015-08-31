@@ -45,9 +45,9 @@ public class TestNGXmlSuiteHelper {
                                 Logger logger) {
     File xmlFile;
     final XmlSuite xmlSuite = new XmlSuite();
+    xmlSuite.setParameters(testParams);
     XmlTest xmlTest = new XmlTest(xmlSuite);
     xmlTest.setName(name);
-    xmlTest.setParameters(testParams);
     List<XmlClass> xmlClasses = new ArrayList<XmlClass>();
     int idx = 0;
     for (String className : map.keySet()) {

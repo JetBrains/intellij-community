@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder;
 
-import com.intellij.openapi.externalSystem.model.ExternalProject;
+import org.jetbrains.plugins.gradle.model.ExternalProject;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.IdeaTestUtil;

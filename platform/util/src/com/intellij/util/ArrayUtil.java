@@ -788,6 +788,17 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
+  public static <T> int lastIndexOf(@NotNull final int[] src, final int obj) {
+    for (int i = src.length - 1; i >= 0; i--) {
+      final int o = src[i];
+      if (o == obj) {
+          return i;
+      }
+    }
+    return -1;
+  }
+
+  @Contract(pure=true)
   public static <T> int lastIndexOf(@NotNull final T[] src, final T obj, @NotNull Equality<? super T> comparator) {
     for (int i = src.length - 1; i >= 0; i--) {
       final T o = src[i];
@@ -903,6 +914,17 @@ public class ArrayUtil extends ArrayUtilRt {
 
   // calculates average of the median values in the selected part of the array. E.g. for part=3 returns average in the middle third.
   public static long averageAmongMedians(@NotNull long[] time, int part) {
+    assert part >= 1;
+    int n = time.length;
+    Arrays.sort(time);
+    long total = 0;
+    for (int i= n /2- n / part /2; i< n /2+ n / part /2; i++) {
+      total += time[i];
+    }
+    int middlePartLength = n / part;
+    return middlePartLength == 0 ? 0 : total / middlePartLength;
+  }
+  public static long averageAmongMedians(@NotNull int[] time, int part) {
     assert part >= 1;
     int n = time.length;
     Arrays.sort(time);

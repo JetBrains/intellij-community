@@ -71,6 +71,23 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
     if (taskDir == null) {
       return;
     }
+
+    VirtualFile shouldBeActive = getFileToActivate(project, nextTaskFiles, taskDir);
+    JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
+    TreePath path = TreeUtil.getFirstNodePath(tree);
+    tree.collapsePath(path);
+    if (shouldBeActive != null) {
+      ProjectView.getInstance(project).select(shouldBeActive, shouldBeActive, false);
+      FileEditorManager.getInstance(project).openFile(shouldBeActive, true);
+    }
+    ToolWindow runToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.RUN);
+    if (runToolWindow != null) {
+      runToolWindow.hide(null);
+    }
+  }
+
+  @Nullable
+  protected VirtualFile getFileToActivate(@NotNull Project project, Map<String, TaskFile> nextTaskFiles, VirtualFile taskDir) {
     VirtualFile shouldBeActive = null;
     for (Map.Entry<String, TaskFile> entry : nextTaskFiles.entrySet()) {
       String name = entry.getKey();
@@ -83,17 +100,17 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
         }
       }
     }
-    JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
-    TreePath path = TreeUtil.getFirstNodePath(tree);
-    tree.collapsePath(path);
-    if (shouldBeActive != null) {
-      ProjectView.getInstance(project).select(shouldBeActive, shouldBeActive, false);
-      FileEditorManager.getInstance(project).openFile(shouldBeActive, true);
+    return shouldBeActive != null ? shouldBeActive : getFirstTaskFile(taskDir, project);
+  }
+
+  @Nullable
+  private static VirtualFile getFirstTaskFile(@NotNull final VirtualFile taskDir, @NotNull final Project project) {
+    for (VirtualFile virtualFile : taskDir.getChildren()) {
+      if (StudyUtils.getTaskFile(project, virtualFile) != null) {
+        return virtualFile;
+      }
     }
-    ToolWindow runToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.RUN);
-    if (runToolWindow != null) {
-      runToolWindow.hide(null);
-    }
+    return null;
   }
 
   @Override
@@ -108,4 +125,9 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
   protected abstract String getNavigationFinishedMessage();
 
   protected abstract Task getTargetTask(@NotNull final Task sourceTask);
+
+  @Override
+  public void update(AnActionEvent e) {
+    StudyUtils.updateAction(e);
+  }
 }

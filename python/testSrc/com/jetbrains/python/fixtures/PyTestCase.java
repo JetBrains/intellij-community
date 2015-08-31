@@ -411,7 +411,7 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   @NotNull
-  protected PyCodeStyleSettings getPythonCodeStyle() {
+  protected PyCodeStyleSettings getPythonCodeStyleSettings() {
     return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
   }
 

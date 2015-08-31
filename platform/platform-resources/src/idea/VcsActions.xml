@@ -1,4 +1,4 @@
-<component>
+<idea-plugin>
   <actions>
     <action id="Vcs.ShowTabbedFileHistory" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryAction"
             icon="AllIcons.Vcs.History"/>
@@ -378,4 +378,4 @@
       <add-to-group group-id="Diff.KeymapGroup"/>
     </group>
   </actions>
-</component>
+</idea-plugin>

@@ -87,11 +87,11 @@ public interface PropertiesFile {
    * It is this value you use to do actual PSI work, e.g. call {@link com.intellij.psi.PsiElement#delete()} to remove this property from the file.
    * @throws IncorrectOperationException
    */
-  @NotNull PsiElement addPropertyAfter(@NotNull Property property, @Nullable Property anchor) throws IncorrectOperationException;
+  @NotNull PsiElement addPropertyAfter(@NotNull IProperty property, @Nullable IProperty anchor) throws IncorrectOperationException;
 
   IProperty addProperty(String key, String value);
 
-  IProperty addPropertyAfter(String key, String value, Property anchor);
+  IProperty addPropertyAfter(String key, String value, IProperty anchor);
   /**
    * @return Property key to the property value map.
    * Do not modify this map. It's no use anyway.

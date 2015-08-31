@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.javabeans;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;

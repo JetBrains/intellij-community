@@ -56,11 +56,11 @@ import java.util.Set;
  * <p> Bundled resources are updated automatically upon plugin version change. For bundled plugins, application version is used. </p>
  */
 public class ExtensionsRootType extends RootType {
-  public static final String EXTENSIONS_PATH = "extensions";
-  public static final String BACKUP_FILE_EXTENSION = "old";
-
   static final Logger LOG = Logger.getInstance(ExtensionsRootType.class);
+
   private static final String HASH_ALGORITHM = "MD5";
+  private static final String EXTENSIONS_PATH = "extensions";
+  private static final String BACKUP_FILE_EXTENSION = "old";
 
   ExtensionsRootType() {
     super(EXTENSIONS_PATH, "Extensions");
@@ -127,6 +127,11 @@ public class ExtensionsRootType extends RootType {
     catch (IOException ignore) {
     }
     return super.substituteName(project, file);
+  }
+
+  public boolean isBackupFile(@NotNull VirtualFile file) {
+    String extension = file.getExtension();
+    return !file.isDirectory() && extension != null && extension.startsWith(BACKUP_FILE_EXTENSION);
   }
 
   @Nullable

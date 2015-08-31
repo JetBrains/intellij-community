@@ -1273,12 +1273,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private void doPreloadActions() {
-    try {
-      Thread.sleep(5000); // wait for project initialization to complete
-    }
-    catch (InterruptedException e) {
-      return; // IDEA exited
-    }
+    pausePreloading(5000); // wait for project initialization to complete
     preloadActionGroup(IdeActions.GROUP_EDITOR_POPUP);
     preloadActionGroup(IdeActions.GROUP_EDITOR_TAB_POPUP);
     preloadActionGroup(IdeActions.GROUP_PROJECT_VIEW_POPUP);
@@ -1317,14 +1312,19 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
       myActionsPreloaded++;
       if (myActionsPreloaded % 10 == 0) {
-        try {
-          //noinspection BusyWait
-          Thread.sleep(300);
-        }
-        catch (InterruptedException ignored) {
-          throw new RuntimeInterruptedException(ignored);
-        }
+        pausePreloading(300);
       }
+    }
+  }
+
+  private static void pausePreloading(int millis) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    try {
+      Thread.sleep(millis);
+    }
+    catch (InterruptedException ignored) {
+      throw new RuntimeInterruptedException(ignored);
     }
   }
 

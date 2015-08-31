@@ -482,7 +482,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       SymbolCollectingProcessor p = new SymbolCollectingProcessor();
       myFile.processDeclarationsNoGuess(p, ResolveState.initial(), myFile, myFile);
       MostlySingularMultiMap<String, SymbolCollectingProcessor.ResultWithContext> results = p.getResults();
-      return Result.create(results, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, myFile);
+      return Result.create(results, PsiModificationTracker.MODIFICATION_COUNT, myFile);
     }
   }
 

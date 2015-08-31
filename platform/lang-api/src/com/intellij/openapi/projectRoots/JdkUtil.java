@@ -391,17 +391,17 @@ public class JdkUtil {
   }
 
   public static boolean useDynamicClasspath(@Nullable Project project) {
-    final String hasDynamicProperty = System.getProperty("idea.dynamic.classpath", "false");
-    return Boolean.valueOf(project != null
-                           ? PropertiesComponent.getInstance(project).getOrInit("dynamic.classpath", hasDynamicProperty)
-                           : hasDynamicProperty).booleanValue();
+    boolean hasDynamicProperty = Boolean.parseBoolean(System.getProperty("idea.dynamic.classpath", "false"));
+    return project != null
+           ? PropertiesComponent.getInstance(project).getBoolean("dynamic.classpath", hasDynamicProperty)
+           : hasDynamicProperty;
   }
 
   public static boolean useDynamicVMOptions() {
-    return Boolean.valueOf(PropertiesComponent.getInstance().getOrInit("dynamic.vmoptions", "true")).booleanValue();
+    return PropertiesComponent.getInstance().getBoolean("dynamic.vmoptions", true);
   }
   
   public static boolean useClasspathJar() {
-    return Boolean.valueOf(PropertiesComponent.getInstance().getOrInit("idea.dynamic.classpath.jar", "true")).booleanValue();
+    return PropertiesComponent.getInstance().getBoolean("idea.dynamic.classpath.jar", true);
   }
 }

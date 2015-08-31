@@ -5,8 +5,6 @@
   <p>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers.</p>
   <p>Synchronization is performed automatically after successful completion of "Update Project" or "Push" actions. Also you can do sync using VCS -> Sync Settings.</p>
   <p>See <a href="https://github.com/develar/settings-repository">project page</a> for more info.</p>]]></description>
-  <version>999.999</version>
-  <idea-version since-build="142.3406" until-build="143.0"/>
   <vendor>JetBrains</vendor>
 
   <!-- otherwise plugin will be not loaded in tests -->
@@ -18,6 +16,9 @@
     <projectService serviceInterface="org.jetbrains.settingsRepository.ProjectId"
                     serviceImplementation="org.jetbrains.settingsRepository.ProjectId"/>
     <!--<checkinHandlerFactory implementation="org.jetbrains.settingsRepository.actions.CommitToIcsAction$IcsBeforeCommitDialogHandler" order="first"/>-->
+
+    <applicationConfigurable groupId="tools" instance="org.jetbrains.settingsRepository.IcsConfigurable" id="reference.settings.ics"
+                             key="ics.settings" bundle="messages.IcsBundle"/>
   </extensions>
 
   <actions>

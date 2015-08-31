@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       show(myPanel, p.x - offset, p.y, myPanel, new HintHint(myPanel, p));
       final JBList list = getList();
       if (0 <= myIndex && myIndex < list.getItemsCount()) {
-       ListScrollingUtil.selectItem(list, myIndex);
+       ScrollingUtil.selectItem(list, myIndex);
       }
     }
     if (myPanel.isInFloatingMode()) {

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -22,10 +23,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class ExpectedTypeUtils {
@@ -173,7 +176,7 @@ public class ExpectedTypeUtils {
         expectedType = type;
       }
       else if (isShiftOperation(tokenType)) {
-        expectedType = unaryNumericPromotion(wrappedExpressionType);
+        expectedType = TypeUtils.unaryNumericPromotion(wrappedExpressionType);
       }
       else if (ComparisonUtils.isEqualityComparison(polyadicExpression)) {
         final PsiExpression operand1 = operands[0];
@@ -227,30 +230,6 @@ public class ExpectedTypeUtils {
       }
       // void
       return null;
-    }
-
-    /**
-     * JLS 5.6.1 Unary Numeric Promotion
-     */
-    private static PsiType unaryNumericPromotion(PsiType type) {
-      if (type == null) {
-        return null;
-      }
-      if (type.equalsToText("java.lang.Byte") || type.equalsToText("java.lang.Short") ||
-          type.equalsToText("java.lang.Character") || type.equalsToText("java.lang.Integer") ||
-          type.equals(PsiType.BYTE) || type.equals(PsiType.SHORT) || type.equals(PsiType.CHAR)) {
-        return PsiType.INT;
-      }
-      else if (type.equalsToText("java.lang.Long")) {
-        return PsiType.LONG;
-      }
-      else if (type.equalsToText("java.lang.Float")) {
-        return PsiType.FLOAT;
-      }
-      else if (type.equalsToText("java.lang.Double")) {
-        return PsiType.DOUBLE;
-      }
-      return type;
     }
 
     @Override
@@ -550,9 +529,12 @@ public class ExpectedTypeUtils {
       if (aClass == null) {
         return null;
       }
+      final PsiReferenceList throwsList = method.getThrowsList();
+      final HashSet<PsiClassType> thrownTypes = ContainerUtil.newHashSet(throwsList.getReferencedTypes());
       final PsiMethod[] superMethods = aClass.findMethodsBySignature(method, true);
       PsiMethod topSuper = null;
       PsiClass topSuperContainingClass = null;
+      methodLoop:
       for (PsiMethod superMethod : superMethods) {
         final PsiClass superClass = superMethod.getContainingClass();
         if (superClass == null) {
@@ -575,6 +557,13 @@ public class ExpectedTypeUtils {
         }
         if (topSuper != null && superClass.isInheritor(topSuperContainingClass, true)) {
           continue;
+        }
+        final PsiReferenceList superThrowsList = superMethod.getThrowsList();
+        final PsiClassType[] superThrownTypes = superThrowsList.getReferencedTypes();
+        for (PsiClassType superThrownType : superThrownTypes) {
+          if (!ExceptionUtil.isUncheckedException(superThrownType) && !thrownTypes.contains(superThrownType)) {
+            continue methodLoop;
+          }
         }
         topSuper = superMethod;
         topSuperContainingClass = superClass;

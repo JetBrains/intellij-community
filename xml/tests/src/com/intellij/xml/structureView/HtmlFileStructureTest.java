@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@ public class HtmlFileStructureTest extends FileStructureTestBase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myHtml5OutlineModeDefault = PropertiesComponent.getInstance().getBoolean(getHtml5OutlineModePropertyName(), false);
+    myHtml5OutlineModeDefault = PropertiesComponent.getInstance().getBoolean(getHtml5OutlineModePropertyName());
     setHtml5OutlineMode(true);
   }
 
   @Override
   public void tearDown() throws Exception {
-    PropertiesComponent.getInstance().setValue(getHtml5OutlineModePropertyName(), String.valueOf(myHtml5OutlineModeDefault));
+    PropertiesComponent.getInstance().setValue(getHtml5OutlineModePropertyName(), myHtml5OutlineModeDefault);
     super.tearDown();
   }
 
@@ -56,8 +56,8 @@ public class HtmlFileStructureTest extends FileStructureTestBase {
   }
 
   public void setHtml5OutlineMode(boolean enabled) {
-    myPopup.setTreeActionState(Html5SectionsNodeProvider.class, enabled);
-    update();
+    myPopupFixture.getPopup().setTreeActionState(Html5SectionsNodeProvider.class, enabled);
+    myPopupFixture.update();
   }
 
   public void testEmpty() {checkTree();}

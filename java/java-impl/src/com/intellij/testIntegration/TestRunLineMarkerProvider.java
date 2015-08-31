@@ -16,9 +16,12 @@
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
-import com.intellij.execution.lineMarker.RunLineMarkerInfo;
+import com.intellij.execution.TestStateStorage;
+import com.intellij.execution.lineMarker.ExecutorAction;
+import com.intellij.execution.lineMarker.RunLineMarkerContributor;
+import com.intellij.execution.testframework.TestIconMapper;
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
@@ -28,13 +31,12 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
+import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
  */
-public class TestRunLineMarkerProvider implements LineMarkerProvider {
+public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
 
   private static final Function<PsiElement, String> TOOLTIP_PROVIDER = new Function<PsiElement, String>() {
     @Override
@@ -45,27 +47,44 @@ public class TestRunLineMarkerProvider implements LineMarkerProvider {
 
   @Nullable
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement e) {
-    if (e instanceof PsiIdentifier) {
+  public Info getInfo(PsiElement e) {
+    if (isIdentifier(e)) {
       PsiElement element = e.getParent();
       if (element instanceof PsiClass) {
         TestFramework framework = TestFrameworks.detectFramework((PsiClass)element);
         if (framework != null && framework.isTestClass(element)) {
-          return new RunLineMarkerInfo(e, framework.getIcon(), TOOLTIP_PROVIDER);
+          String url = "java:suite://" + ((PsiClass)element).getQualifiedName();
+          return getInfo(url, framework, e.getProject());
         }
       }
       if (element instanceof PsiMethod) {
-        TestFramework framework = TestFrameworks.detectFramework(PsiTreeUtil.getParentOfType(element, PsiClass.class));
-        if (framework != null && framework.isTestMethod(element)) {
-          return new RunLineMarkerInfo(e, framework.getIcon(), TOOLTIP_PROVIDER);
+        PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+        if (psiClass != null) {
+          TestFramework framework = TestFrameworks.detectFramework(psiClass);
+          if (framework != null && framework.isTestMethod(element)) {
+            String url = "java:test://" + psiClass.getQualifiedName() + "." + ((PsiMethod)element).getName();
+            return getInfo(url, framework, e.getProject());
+          }
         }
       }
     }
     return null;
   }
 
-  @Override
-  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
+  @NotNull
+  protected Info getInfo(String url, TestFramework framework, Project project) {
+    Icon icon = getTestStateIcon(url, project);
+    return new Info(icon == null ? framework.getIcon() : icon, TOOLTIP_PROVIDER, ExecutorAction.getActions(1));
+  }
 
+  protected boolean isIdentifier(PsiElement e) {
+    return e instanceof PsiIdentifier;
+  }
+
+  private static Icon getTestStateIcon(String url, Project project) {
+    TestStateStorage.Record state = TestStateStorage.getInstance(project).getState(url);
+    if (state == null) return null;
+    TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(state.magnitude);
+    return TestIconMapper.getIcon(magnitude);
   }
 }

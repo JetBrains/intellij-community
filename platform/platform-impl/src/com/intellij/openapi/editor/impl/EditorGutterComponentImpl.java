@@ -113,6 +113,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Nullable private TIntFunction myAdditionalLineNumberConvertor;
   private TIntFunction myLineNumberAreaWidthFunction;
   private boolean myShowDefaultGutterPopup = true;
+  @Nullable private ActionGroup myCustomGutterPopupGroup;
   private TIntObjectHashMap<Color> myTextFgColors = new TIntObjectHashMap<Color>();
   private boolean myPaintBackground = true;
 
@@ -281,8 +282,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void drawEditorBackgroundForRange(Graphics g, int startOffset, int endOffset, TextAttributes attributes,
                                             Color defaultBackgroundColor, Color defaultForegroundColor, int startX) {
-    VisualPosition visualStart = myEditor.offsetToVisualPosition(startOffset);
-    VisualPosition visualEnd   = myEditor.offsetToVisualPosition(endOffset);
+    VisualPosition visualStart = myEditor.offsetToVisualPosition(startOffset, true, false);
+    VisualPosition visualEnd   = myEditor.offsetToVisualPosition(endOffset, false, false);
     for (int line = visualStart.getLine(); line <= visualEnd.getLine(); line++) {
       if (line == visualStart.getLine()) {
         if (visualStart.getColumn() == 0) {
@@ -491,7 +492,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     for (int i = startLineNumber; i < endLineNumber; i++) {
       LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(new VisualPosition(i, 0));
-      if (logicalPosition.softWrapLinesOnCurrentLogicalLine > 0) {
+      if (EditorUtil.getSoftWrapCountAfterLineStart(myEditor, logicalPosition) > 0) {
         continue;
       }
       int logLine = convertor.execute(logicalPosition.line);
@@ -580,10 +581,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         if (!lowerHighlighter.isValid()) continue;
 
         int startLineIndex = lowerHighlighter.getDocument().getLineNumber(startOffset);
-        if (isInvalidLine(document, startLineIndex)) continue;
+        if (!isValidLine(document, startLineIndex)) continue;
 
         int endLineIndex = lowerHighlighter.getDocument().getLineNumber(endOffset);
-        if (isInvalidLine(document, endLineIndex)) continue;
+        if (!isValidLine(document, endLineIndex)) continue;
 
         if (lowerHighlighter.getEditorFilter().avaliableIn(myEditor)) {
           processor.process(lowerHighlighter);
@@ -596,10 +597,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private static boolean isInvalidLine(@NotNull Document document, int line) {
+  private static boolean isValidLine(@NotNull Document document, int line) {
     if (line < 0) return false;
     int lineCount = document.getLineCount();
-    return lineCount == 0 ? line > 0 : line >= lineCount;
+    return lineCount == 0 ? line == 0 : line < lineCount;
   }
 
   private static boolean less(RangeHighlighter h1, RangeHighlighter h2) {
@@ -1550,6 +1551,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Override
+  public void setGutterPopupGroup(@Nullable ActionGroup group) {
+    myCustomGutterPopupGroup = group;
+  }
+
+  @Override
   public void setPaintBackground(boolean value) {
     myPaintBackground = value;
   }
@@ -1610,8 +1616,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
       else {
-        if (myShowDefaultGutterPopup) {
-          ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
+        ActionGroup group = myCustomGutterPopupGroup;
+        if (group == null && myShowDefaultGutterPopup) {
+          group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
+        }
+        if (group != null) {
           ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
           popupMenu.getComponent().show(this, e.getX(), e.getY());
         }

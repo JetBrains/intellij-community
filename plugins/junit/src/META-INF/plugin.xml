@@ -78,7 +78,7 @@
     </group>
     <group>
       <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite" text="Add to pattern suite"/>
-      <add-to-group anchor="first" group-id="RunContextGroup"/>
+      <add-to-group anchor="last" group-id="RunContextGroup"/>
     </group>
   </actions>
 </idea-plugin>
