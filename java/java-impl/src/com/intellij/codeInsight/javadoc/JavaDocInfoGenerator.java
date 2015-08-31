@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
@@ -409,25 +408,24 @@ public class JavaDocInfoGenerator {
   }
 
   private boolean elementHasSourceCode() {
-    VirtualFile[] files;
+    PsiFileSystemItem[] items;
     if (myElement instanceof PsiDirectory) {
       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)myElement);
       if (aPackage == null) return false;
-      files = PackageIndex.getInstance(myProject).getDirectoriesByPackageName(aPackage.getQualifiedName(), true);
+      items = aPackage.getDirectories(new EverythingGlobalScope(myProject));
     }
     else if (myElement instanceof PsiPackage) {
-      files = PackageIndex.getInstance(myProject).getDirectoriesByPackageName(((PsiPackage)myElement).getQualifiedName(), true);
+      items = ((PsiPackage)myElement).getDirectories(new EverythingGlobalScope(myProject));
     }
     else {
       PsiFile containingFile = myElement.getNavigationElement().getContainingFile();
       if (containingFile == null) return false;
-      VirtualFile virtualFile = containingFile.getVirtualFile();
-      if (virtualFile == null) return false;
-      files = new VirtualFile[] {virtualFile};
+      items = new PsiFileSystemItem[] {containingFile};
     }
     ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
-    for (VirtualFile file : files) {
-      if (projectFileIndex.isInSource(file)) return true;
+    for (PsiFileSystemItem item : items) {
+      VirtualFile file = item.getVirtualFile();
+      if (file != null && projectFileIndex.isInSource(file)) return true;
     }
     return false;
   }
