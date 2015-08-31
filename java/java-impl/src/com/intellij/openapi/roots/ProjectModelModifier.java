@@ -26,6 +26,8 @@ import java.util.Collection;
 
 /**
  * Register implementation of this extension to support custom dependency management system for {@link ProjectModelModificationService}.
+ * The default implementation which modify IDEA's project model directly is registered as the last extension so it'll be executed if all other
+ * extensions refuse to handle modification by returning {@code null}.
  *
  * @author nik
  */
