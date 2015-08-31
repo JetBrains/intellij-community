@@ -51,16 +51,17 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
 
   public void testChainedMethodWithComments() throws Exception {
     getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
-    doMethodTest("AA.bb()\n" +
-                 ".cc() // comment after line\n" +
-                 ".dd()\n " +
-                 "        /* block comment on empty line */\n" +
-                 ".ee();",
-                 "AA.bb()\n" +
-                 "  .cc() // comment after line\n" +
-                 "  .dd()\n " +
-                 "/* block comment on empty line */\n" +
-                 "  .ee();");
+    doMethodTest("AAAAA.b()\n" +
+                 ".c() // comment after line\n" +
+                 ".d()\n" +
+                 "        /* unaligned block comment on separate line */\n" +
+                 ".e();",
+
+                 "AAAAA.b()\n" +
+                 "     .c() // comment after line\n" +
+                 "     .d()\n" +
+                 "/* unaligned block comment on separate line */\n" +
+                 "     .e();");
   }
 
   public void testMultipleMethodAnnotationsCommentedInTheMiddle() throws Exception {
