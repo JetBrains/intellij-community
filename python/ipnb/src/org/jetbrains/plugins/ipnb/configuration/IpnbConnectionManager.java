@@ -265,7 +265,6 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     catch (ExecutionException ignored) {
     }
-    final Map<String, String> env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
 
     final Pair<String, String> hostPort = getHostPortFromUrl(url);
     if (hostPort == null) {
@@ -281,7 +280,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     String ipython = findIPythonRunner(homePath);
     Map<String, String> env = null;
     if (ipython == null) {
-      ipython = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
+      ipython = PythonHelper.LOAD_ENTRY_POINT.asParamString();
       env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
     }
 
