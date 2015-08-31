@@ -469,6 +469,9 @@ public class JavaKeywordCompletion {
       if (referenceList != null && referenceList.getParent() instanceof PsiClass) {
         psiClass = (PsiClass)referenceList.getParent();
       }
+      else if (prevLeaf.getParent() instanceof PsiTypeParameterList && prevLeaf.getParent().getParent() instanceof PsiClass) {
+        psiClass = (PsiClass)prevLeaf.getParent().getParent();
+      }
     }
 
     if (psiClass != null) {
