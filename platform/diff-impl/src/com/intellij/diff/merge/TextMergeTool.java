@@ -30,6 +30,7 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.KeyboardModifierListener;
+import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
@@ -165,9 +166,7 @@ public class TextMergeTool implements MergeTool {
       components.closeHandler = new BooleanGetter() {
         @Override
         public boolean get() {
-          return Messages.showYesNoDialog(getComponent().getRootPane(),
-                                          DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
-                                          DiffBundle.message("cancel.visual.merge.dialog.title"), Messages.getQuestionIcon()) == Messages.YES;
+          return MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext);
         }
       };
 
@@ -273,9 +272,9 @@ public class TextMergeTool implements MergeTool {
         group.add(new ApplySelectedChangesAction(Side.RIGHT, false));
         group.add(new IgnoreSelectedChangesAction(Side.LEFT, false));
         group.add(new IgnoreSelectedChangesAction(Side.RIGHT, false));
-        group.add(Separator.getInstance());
 
-        group.addAll(super.createEditorPopupActions());
+        group.add(Separator.getInstance());
+        group.addAll(TextDiffViewerUtil.createEditorPopupActions());
 
         return group;
       }
@@ -312,12 +311,9 @@ public class TextMergeTool implements MergeTool {
                 return;
               }
             }
-            if (result == MergeResult.CANCEL) {
-              if (Messages.showYesNoDialog(myPanel.getRootPane(),
-                                           DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
-                                           DiffBundle.message("cancel.visual.merge.dialog.title"), Messages.getQuestionIcon()) != Messages.YES) {
-                return;
-              }
+            if (result == MergeResult.CANCEL &&
+                !MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext)) {
+              return;
             }
             destroyChangedBlocks();
             myMergeContext.finishMerge(result);

@@ -112,6 +112,6 @@ public class XMasterBreakpointPanel<B extends XBreakpoint<?>> extends XBreakpoin
   }
 
   public void hide() {
-    myContentPane.setVisible(false);
+    myContentPane.getParent().remove(myContentPane);
   }
 }

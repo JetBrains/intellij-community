@@ -34,6 +34,7 @@ import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
@@ -262,7 +263,9 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   @NotNull
   @Override
   public <B extends XBreakpoint<?>> Collection<? extends B> getBreakpoints(@NotNull Class<? extends XBreakpointType<B, ?>> typeClass) {
-    return getBreakpoints(XBreakpointType.EXTENSION_POINT_NAME.findExtension(typeClass));
+    XBreakpointType<B, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeClass);
+    LOG.assertTrue(type != null, "Unregistered breakpoint type " + typeClass);
+    return getBreakpoints(type);
   }
 
   @Override

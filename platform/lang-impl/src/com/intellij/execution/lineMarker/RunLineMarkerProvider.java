@@ -57,7 +57,7 @@ public class RunLineMarkerProvider implements LineMarkerProvider {
     }
     if (icon == null) return null;
 
-    return new LineMarkerInfo<PsiElement>(element, element.getTextOffset(), icon, Pass.UPDATE_ALL, null, null) {
+    return new LineMarkerInfo<PsiElement>(element, element.getTextOffset(), icon, Pass.UPDATE_ALL, null, null, GutterIconRenderer.Alignment.CENTER) {
       @Nullable
       @Override
       public GutterIconRenderer createGutterRenderer() {

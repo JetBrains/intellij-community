@@ -38,9 +38,9 @@ import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
 import org.jetbrains.ide.PooledThreadExecutor;
+import org.jetbrains.util.concurrency.AsyncPromise;
+import org.jetbrains.util.concurrency.Promise;
 
 import java.io.IOException;
 import java.net.BindException;
@@ -143,8 +143,12 @@ public final class NettyUtil {
           @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
           Throwable cause = future.cause();
           if (promise != null) {
-            //noinspection ThrowableResultOfMethodCallIgnored
-            promise.setError(cause == null ? Promise.createError("Cannot connect: unknown error") : cause);
+            if (cause == null) {
+              promise.setError("Cannot connect: unknown error");
+            }
+            else {
+              promise.setError(cause);
+            }
           }
           return null;
         }

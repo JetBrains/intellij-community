@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,12 +69,12 @@ public class ManageButton extends ComboBoxAction implements DumbAware {
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myBuilder.isSharedToTeamMembers();
+      return myBuilder.isProjectLevel();
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      myBuilder.setShareToTeamMembers(state);
+      myBuilder.setIsProjectLevel(state);
     }
   }
 

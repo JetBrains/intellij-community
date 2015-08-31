@@ -17,6 +17,10 @@ import java.awt.*;
 import java.util.List;
 
 public class EduAnswerPlaceholderPainter {
+
+  //it should be the lowest highlighting layer, otherwise selection and other effects are not visible
+  public static final int PLACEHOLDERS_LAYER = 0;
+
   private EduAnswerPlaceholderPainter() {
 
   }
@@ -38,7 +42,7 @@ public class EduAnswerPlaceholderPainter {
     int highlighterLength = useLength ? length : replacementLength;
     final int endOffset = startOffset + highlighterLength;
     RangeHighlighter
-      highlighter = editor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, HighlighterLayer.LAST + 1,
+      highlighter = editor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, PLACEHOLDERS_LAYER,
                                                                 textAttributes, HighlighterTargetArea.EXACT_RANGE);
     highlighter.setCustomRenderer(new CustomHighlighterRenderer() {
       @Override

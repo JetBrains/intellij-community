@@ -30,12 +30,23 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.Members;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderHelperLightPsiClass;
 
+import java.util.Collection;
+
 public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor {
 
   public static final String DEFAULT_STRATEGY_NAME = "DefaultStrategy";
 
-  @NotNull
   @Override
+  public void collectClasses(@NotNull GrTypeDefinition clazz, Collection<PsiClass> collector) {
+    collector.addAll(collect(clazz).getClasses());
+  }
+
+  @Override
+  public void collectMethods(@NotNull GrTypeDefinition clazz, Collection<PsiMethod> collector) {
+    collector.addAll(collect(clazz).getMethods());
+  }
+
+  @NotNull
   public Members collect(@NotNull final GrTypeDefinition typeDefinition) {
     return new DefaultBuilderStrategyHandler(typeDefinition).doProcess();
   }

@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.filters.Filter;
+import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.testframework.*;
@@ -237,9 +238,11 @@ public class TestResultsXmlFormatter {
     final Ref<ConsoleViewContentType> lastType = new Ref<ConsoleViewContentType>();
     final Ref<SAXException> error = new Ref<SAXException>();
 
+    final int bufferSize = ConsoleBuffer.useCycleBuffer() ? ConsoleBuffer.getCycleBufferSize() : -1;
     final Printer printer = new Printer() {
       @Override
       public void print(String text, ConsoleViewContentType contentType) {
+        ProgressManager.checkCanceled();
         if (contentType != lastType.get()) {
           if (buffer.length() > 0) {
             try {
@@ -251,7 +254,9 @@ public class TestResultsXmlFormatter {
           }
           lastType.set(contentType);
         }
-        buffer.append(text);
+        if (bufferSize < 0 || buffer.length() < bufferSize) {
+          buffer.append(text);
+        }
       }
 
       @Override

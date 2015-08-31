@@ -99,11 +99,21 @@ public class ClassDependencyLoader {
           aPackage.getAnnotations();
         }
       }
-      catch (LinkageError e) {
-        throw new ClassNotFoundException(name);
+      catch (Error e) {
+        myVisited.remove(aClass);
+        //noinspection InstanceofCatchParameter
+        if (e instanceof LinkageError) {
+          throw new ClassNotFoundException(name);
+        }
+        throw e;
       }
-      catch (TypeNotPresentException e) {
-        throw new ClassNotFoundException(name);
+      catch (RuntimeException e) {
+        myVisited.remove(aClass);
+        //noinspection InstanceofCatchParameter
+        if (e instanceof TypeNotPresentException) {
+          throw new ClassNotFoundException(name);
+        }
+        throw e;
       }
     }
   }

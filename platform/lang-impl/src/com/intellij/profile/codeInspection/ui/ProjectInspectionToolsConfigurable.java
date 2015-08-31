@@ -25,6 +25,7 @@ import com.intellij.codeInspection.ex.InspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
+import org.jetbrains.annotations.NotNull;
 
 public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigurable {
   public ProjectInspectionToolsConfigurable(InspectionProfileManager profileManager, InspectionProjectProfileManager projectProfileManager) {
@@ -37,12 +38,12 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
   }
 
   @Override
-  protected void applyRootProfile(String name, boolean isShared) {
-    if (isShared) {
+  protected void applyRootProfile(@NotNull String name, boolean isProjectLevel) {
+    if (isProjectLevel) {
       myProjectProfileManager.setProjectProfile(name);
     }
     else {
-      myProfileManager.setRootProfile(name);
+      myApplicationProfileManager.setRootProfile(name);
       myProjectProfileManager.setProjectProfile(null);
     }
     InspectionProfileManagerImpl.onProfilesChanged();

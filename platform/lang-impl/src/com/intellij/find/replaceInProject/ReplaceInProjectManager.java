@@ -45,7 +45,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -141,9 +140,8 @@ public class ReplaceInProjectManager {
     findManager.showFindDialog(findModel, new Runnable() {
       @Override
       public void run() {
-        final PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
         if (!findModel.isProjectScope() &&
-            psiDirectory == null &&
+            FindInProjectUtil.getDirectory(findModel) == null &&
             findModel.getModuleName() == null &&
             findModel.getCustomScope() == null) {
           return;
@@ -158,7 +156,7 @@ public class ReplaceInProjectManager {
         final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModel.isOpenInNewTab(), findModelCopy);
         final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
 
-        UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, psiDirectory, processPresentation);
+        UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, processPresentation);
         searchAndShowUsages(manager, factory, findModelCopy, presentation, processPresentation, findManager);
       }
     });
@@ -583,14 +581,11 @@ public class ReplaceInProjectManager {
 
   private class UsageSearcherFactory implements Factory<UsageSearcher> {
     private final FindModel myFindModelCopy;
-    private final PsiDirectory myPsiDirectory;
     private final FindUsagesProcessPresentation myProcessPresentation;
 
     private UsageSearcherFactory(@NotNull FindModel findModelCopy,
-                                PsiDirectory psiDirectory,
                                 @NotNull FindUsagesProcessPresentation processPresentation) {
       myFindModelCopy = findModelCopy;
-      myPsiDirectory = psiDirectory;
       myProcessPresentation = processPresentation;
     }
 
@@ -603,7 +598,7 @@ public class ReplaceInProjectManager {
           try {
             myIsFindInProgress = true;
 
-            FindInProjectUtil.findUsages(myFindModelCopy, myPsiDirectory, myProject,
+            FindInProjectUtil.findUsages(myFindModelCopy, myProject,
                                          new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER),
                                          myProcessPresentation);
           }

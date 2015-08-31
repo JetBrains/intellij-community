@@ -178,7 +178,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     if (newExpr != null) {
       for (ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes(newExpr, true)) {
         PsiType expected = info.getDefaultType();
-        if (expected.isAssignableFrom(delegate.getPsiType())) {
+        if (expected.isAssignableFrom(delegate.getType())) {
           if (expected instanceof PsiClassType && ((PsiClassType)expected).isRaw()) {
             return true;
           }

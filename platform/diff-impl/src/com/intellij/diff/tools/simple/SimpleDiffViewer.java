@@ -115,10 +115,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.add(new MyReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
+    group.add(Separator.getInstance());
+    group.addAll(super.createToolbarActions());
+
     return group;
   }
 
-  @Nullable
+  @NotNull
   @Override
   protected List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<AnAction>();
@@ -130,6 +133,9 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.add(Separator.getInstance());
     group.add(new MyToggleAutoScrollAction());
     group.add(new MyToggleExpandByDefaultAction());
+
+    group.add(Separator.getInstance());
+    group.addAll(super.createPopupActions());
 
     return group;
   }
@@ -145,8 +151,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.add(new AppendSelectedChangesAction(Side.RIGHT, false));
     group.add(new RevertSelectedChangesAction(Side.LEFT));
     group.add(new RevertSelectedChangesAction(Side.RIGHT));
-    group.add(Separator.getInstance());
 
+    group.add(Separator.getInstance());
     group.addAll(super.createEditorPopupActions());
 
     return group;

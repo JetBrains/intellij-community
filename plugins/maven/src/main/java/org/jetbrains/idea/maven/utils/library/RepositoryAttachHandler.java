@@ -381,7 +381,7 @@ public class RepositoryAttachHandler {
                                     List<MavenId> mavenIds,
                                     List<MavenExtraArtifactType> extraTypes,
                                     Collection<MavenRepositoryInfo> repositories,
-                                    final Processor<List<MavenArtifact>> resultProcessor,
+                                    @Nullable final Processor<List<MavenArtifact>> resultProcessor,
                                     ProgressIndicator indicator) {
     boolean cancelled = false;
     final Collection<MavenArtifact> result = new LinkedHashSet<MavenArtifact>();
@@ -434,7 +434,9 @@ public class RepositoryAttachHandler {
             DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
               @Override
               public void run() {
-                resultProcessor.process(new ArrayList<MavenArtifact>(result));
+                if (resultProcessor != null) {
+                  resultProcessor.process(new ArrayList<MavenArtifact>(result));
+                }
               }
             });
           }

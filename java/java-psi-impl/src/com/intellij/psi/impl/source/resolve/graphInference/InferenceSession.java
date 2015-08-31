@@ -1290,10 +1290,9 @@ public class InferenceSession {
       // the type to search is the result of capture conversion (5.1.10) applied to T; 
       // otherwise, the type to search is the same as the type of the first search. Again, the type arguments, if any, are given by the method reference.
       if (PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor)) {
-        final PsiClassType.ClassResolveResult pResult = PsiUtil.resolveGenericsClassInType(PsiImplUtil.normalizeWildcardTypeByPosition(pType, (PsiExpression)myContext));
-        final PsiClass pClass = pResult.getElement();
-        final PsiSubstitutor receiverSubstitutor = pClass != null ? TypeConversionUtil
-          .getClassSubstitutor(containingClass, pClass, pResult.getSubstitutor()) : null;
+        PsiType normalizedPType = PsiImplUtil.normalizeWildcardTypeByPosition(pType, (PsiExpression)myContext);
+        final PsiSubstitutor receiverSubstitutor = PsiMethodReferenceCompatibilityConstraint
+          .getParameterizedTypeSubstitutor(containingClass, normalizedPType);
         if (receiverSubstitutor != null) {
           if (!method.hasTypeParameters()) {
             if (signature.getParameterTypes().length == 1 || PsiUtil.isRawSubstitutor(containingClass, receiverSubstitutor)) {

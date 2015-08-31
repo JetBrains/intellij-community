@@ -141,7 +141,7 @@ public class GrClassImplUtil {
     final PsiClassType[] implementsTypes = getReferenceListTypes(grType.getImplementsClause());
     final PsiClassType[] extendsTypes = getReferenceListTypes(grType.getExtendsClause());
     result.addAll(Arrays.asList(implementsTypes));
-    result.addAll(AstTransformContributor.runContributors(grType).getImplementsTypes());
+    result.addAll(AstTransformContributor.runContributorsForImplementsTypes(grType));
     if (!grType.isInterface() && !ContainerUtil.or(implementsTypes, IS_GROOVY_OBJECT) && !ContainerUtil.or(extendsTypes, IS_GROOVY_OBJECT)) {
       result.add(getGroovyObjectType(grType));
     }

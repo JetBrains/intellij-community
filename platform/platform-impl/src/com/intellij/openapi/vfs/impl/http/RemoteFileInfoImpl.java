@@ -331,7 +331,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
           remoteFileInfo.removeDownloadingListener(this);
         }
         finally {
-          promise.setError(Promise.createError(errorMessage));
+          promise.setError(errorMessage);
         }
       }
 
@@ -341,7 +341,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
           remoteFileInfo.removeDownloadingListener(this);
         }
         finally {
-          promise.setError(Promise.createError("Cancelled"));
+          promise.setError("Cancelled");
         }
       }
     });

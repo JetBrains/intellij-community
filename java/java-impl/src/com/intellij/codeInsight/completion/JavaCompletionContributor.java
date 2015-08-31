@@ -293,7 +293,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   private static void registerClassFromTypeElement(LookupElement element, InheritorsHolder inheritors) {
-    PsiType type = assertNotNull(element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY)).getPsiType();
+    PsiType type = assertNotNull(element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY)).getType();
     PsiClass aClass =
       type instanceof PsiClassType && ((PsiClassType)type).getParameterCount() == 0 ? ((PsiClassType)type).resolve() : null;
     if (aClass != null) {

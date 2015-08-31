@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
@@ -42,6 +41,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.*;
+import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -385,7 +385,7 @@ public class JavaDocInfoGenerator {
       return null;
 
     if (docURLs != null) {
-      if (elementHasSourceCode()) {
+      if (buffer.length() > 0 && elementHasSourceCode()) {
         LOG.debug("Documentation for " + myElement + " was generated from source code, it wasn't found at following URLs: ", docURLs);
       }
       else {
@@ -408,25 +408,24 @@ public class JavaDocInfoGenerator {
   }
 
   private boolean elementHasSourceCode() {
-    VirtualFile[] files;
+    PsiFileSystemItem[] items;
     if (myElement instanceof PsiDirectory) {
       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)myElement);
       if (aPackage == null) return false;
-      files = PackageIndex.getInstance(myProject).getDirectoriesByPackageName(aPackage.getQualifiedName(), true);
+      items = aPackage.getDirectories(new EverythingGlobalScope(myProject));
     }
     else if (myElement instanceof PsiPackage) {
-      files = PackageIndex.getInstance(myProject).getDirectoriesByPackageName(((PsiPackage)myElement).getQualifiedName(), true);
+      items = ((PsiPackage)myElement).getDirectories(new EverythingGlobalScope(myProject));
     }
     else {
       PsiFile containingFile = myElement.getNavigationElement().getContainingFile();
       if (containingFile == null) return false;
-      VirtualFile virtualFile = containingFile.getVirtualFile();
-      if (virtualFile == null) return false;
-      files = new VirtualFile[] {virtualFile};
+      items = new PsiFileSystemItem[] {containingFile};
     }
     ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
-    for (VirtualFile file : files) {
-      if (projectFileIndex.isInSource(file)) return true;
+    for (PsiFileSystemItem item : items) {
+      VirtualFile file = item.getVirtualFile();
+      if (file != null && projectFileIndex.isInSource(file)) return true;
     }
     return false;
   }
@@ -683,10 +682,7 @@ public class JavaDocInfoGenerator {
   }
 
   private void generatePackageJavaDoc(final StringBuilder buffer, final PsiPackage psiPackage, boolean generatePrologueAndEpilogue) {
-    VirtualFile[] dirs = PackageIndex.getInstance(myProject).getDirectoriesByPackageName(psiPackage.getQualifiedName(), true);
-    for (VirtualFile dir : dirs) {
-      PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(dir);
-      if (directory == null) continue;
+    for (PsiDirectory directory : psiPackage.getDirectories(new EverythingGlobalScope(myProject))) {
       final PsiFile packageInfoFile = directory.findFile(PsiPackage.PACKAGE_INFO_FILE);
       if (packageInfoFile != null) {
         final ASTNode node = packageInfoFile.getNode();

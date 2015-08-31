@@ -328,12 +328,12 @@ public class JavaKeywordCompletion {
           result.consume(createKeyword(position, PsiKeyword.THIS));
         }
 
-        final LookupItem superItem = (LookupItem)createKeyword(position, PsiKeyword.SUPER);
+        final LookupElement superItem = createKeyword(position, PsiKeyword.SUPER);
         if (psiElement().afterLeaf(psiElement().withText("{").withSuperParent(2, psiMethod().constructor(true))).accepts(position)) {
           final PsiMethod method = PsiTreeUtil.getParentOfType(position, PsiMethod.class, false, PsiClass.class);
           assert method != null;
           final boolean hasParams = superConstructorHasParameters(method);
-          superItem.setInsertHandler(new ParenthesesInsertHandler<LookupElement>() {
+          result.consume(LookupElementDecorator.withInsertHandler(superItem, new ParenthesesInsertHandler<LookupElement>() {
             @Override
             protected boolean placeCaretInsideParentheses(InsertionContext context, LookupElement item) {
               return hasParams;
@@ -344,7 +344,8 @@ public class JavaKeywordCompletion {
               super.handleInsert(context, item);
               TailType.insertChar(context.getEditor(), context.getTailOffset(), ';');
             }
-          });
+          }));
+          return;
         }
 
         result.consume(superItem);
@@ -467,6 +468,9 @@ public class JavaKeywordCompletion {
       PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(prevLeaf, PsiReferenceList.class);
       if (referenceList != null && referenceList.getParent() instanceof PsiClass) {
         psiClass = (PsiClass)referenceList.getParent();
+      }
+      else if (prevLeaf.getParent() instanceof PsiTypeParameterList && prevLeaf.getParent().getParent() instanceof PsiClass) {
+        psiClass = (PsiClass)prevLeaf.getParent().getParent();
       }
     }
 
@@ -643,7 +647,7 @@ public class JavaKeywordCompletion {
     br = TailTypeDecorator.withTail(br, tailType);
     cont = TailTypeDecorator.withTail(cont, tailType);
 
-    if (loop != null && new InsideElementFilter(new ClassFilter(PsiStatement.class)).isAcceptable(position, loop)) {
+    if (loop != null && PsiTreeUtil.isAncestor(loop.getBody(), position, false)) {
       result.consume(br);
       result.consume(cont);
     }

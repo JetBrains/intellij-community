@@ -720,12 +720,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       }
     }
 
-    try {
-      myOrder.readExternal(parentNode);
-    }
-    catch (InvalidDataException e) {
-      throw new RuntimeException(e);
-    }
+    myOrder.readExternal(parentNode);
 
     // migration (old ids to UUIDs)
     readList(myOrder);
@@ -734,12 +729,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     Element recentNode = parentNode.getChild(RECENT);
     if (recentNode != null) {
       JDOMExternalizableStringList list = new JDOMExternalizableStringList();
-      try {
-        list.readExternal(recentNode);
-      }
-      catch (InvalidDataException e) {
-        throw new RuntimeException(e);
-      }
+      list.readExternal(recentNode);
       readList(list);
       for (String name : list) {
         RunnerAndConfigurationSettings settings = myConfigurations.get(name);

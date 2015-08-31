@@ -86,7 +86,7 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
     }
     else {
       title = ExecutionBundle.message(titleKey);
-      content = DiffContentFactory.getInstance().create(contentString, null);
+      content = DiffContentFactory.getInstance().create(contentString);
     }
     return Pair.create(title, content);
   }

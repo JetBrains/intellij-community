@@ -117,4 +117,25 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     checkResultByFile(getBasePath() + "SiblingInheritance.java");
   }
 
+  public void testDoNotShowSiblingInheritanceLineMarkerIfSubclassImplementsTheSameInterfaceAsTheCurrentClass() throws Throwable {
+    configureByFile(getBasePath() + "DeceivingSiblingInheritance.java");
+    PsiJavaFile file = (PsiJavaFile)getFile();
+    PsiClass OCBaseLanguageFileType = JavaPsiFacade.getInstance(getProject()).findClass("z.OCBaseLanguageFileType", GlobalSearchScope.fileScope(file));
+    PsiMethod getName = OCBaseLanguageFileType.getMethods()[0];
+    assertEquals("getName", getName.getName());
+
+    doHighlighting();
+    Document document = getEditor().getDocument();
+    List<LineMarkerInfo> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
+    List<LineMarkerInfo> inMyClass = ContainerUtil.filter(markers, info -> {
+      return OCBaseLanguageFileType.getTextRange().containsRange(info.startOffset, info.endOffset);
+    });
+    assertTrue(inMyClass.toString(), inMyClass.size() == 2);
+    LineMarkerInfo iMarker = findMarkerWithElement(inMyClass, getName.getNameIdentifier());
+    assertSame(MarkerType.OVERRIDING_METHOD.getNavigationHandler(), iMarker.getNavigationHandler());
+
+    LineMarkerInfo aMarker = findMarkerWithElement(inMyClass, OCBaseLanguageFileType.getNameIdentifier());
+    assertSame(MarkerType.SUBCLASSED_CLASS.getNavigationHandler(), aMarker.getNavigationHandler());
+  }
+
 }

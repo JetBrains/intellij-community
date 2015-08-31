@@ -18,12 +18,15 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.Members;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationContributor;
+
+import java.util.Collection;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.createBuildMethod;
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.createFieldSetter;
@@ -32,8 +35,12 @@ public class ExternalBuilderStrategySupport extends BuilderAnnotationContributor
 
   public static final String EXTERNAL_STRATEGY_NAME = "ExternalStrategy";
 
-  @NotNull
   @Override
+  public void collectMethods(@NotNull GrTypeDefinition clazz, Collection<PsiMethod> collector) {
+    collector.addAll(collect(clazz).getMethods());
+  }
+
+  @NotNull
   public Members collect(@NotNull GrTypeDefinition builderClass) {
     Pair<PsiAnnotation, GrTypeDefinition> definitionPair = getConstructedClass(builderClass);
     if (definitionPair == null) return Members.EMPTY;

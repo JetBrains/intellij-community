@@ -83,7 +83,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   private static final String HEADER_TITLE = "Profile:";
 
   private static final Logger LOG = Logger.getInstance(InspectionToolsConfigurable.class);
-  protected final InspectionProfileManager myProfileManager;
+  protected final InspectionProfileManager myApplicationProfileManager;
   protected final InspectionProjectProfileManager myProjectProfileManager;
   private final CardLayout myLayout = new CardLayout();
   private final Map<Profile, SingleInspectionProfilePanel> myPanels =
@@ -97,7 +97,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   public InspectionToolsConfigurable(@NotNull final InspectionProjectProfileManager projectProfileManager,
                                      InspectionProfileManager profileManager) {
     myProjectProfileManager = projectProfileManager;
-    myProfileManager = profileManager;
+    myApplicationProfileManager = profileManager;
   }
 
   private static JComponent withBorderOnTop(final JComponent component) {
@@ -117,7 +117,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     do {
       profileDefaultName += " (copy)";
     }
-    while (hasName(profileDefaultName, myPanels.get(selectedProfile).isProfileShared()));
+    while (hasName(profileDefaultName, myPanels.get(selectedProfile).isProjectLevel()));
 
     final ProfileManager profileManager = selectedProfile.getProfileManager();
     InspectionProfileImpl inspectionProfile =
@@ -208,7 +208,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
                                      value.getName(),
                                      value.getProfileManager().getClass(),
                                      ((InspectionProfileImpl) value).isChanged()));
-        final boolean isShared = singleInspectionProfilePanel.isProfileShared();
+        final boolean isShared = singleInspectionProfilePanel.isProjectLevel();
         setIcon(isShared ? AllIcons.General.ProjectSettings : AllIcons.General.Settings);
         setText(singleInspectionProfilePanel.getCurrentProfileName());
       }
@@ -225,28 +225,28 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
     JComponent manageButton = new ManageButton(new ManageButtonBuilder() {
       @Override
-      public boolean isSharedToTeamMembers() {
+      public boolean isProjectLevel() {
         SingleInspectionProfilePanel panel = getSelectedPanel();
-        return panel != null && panel.isProfileShared();
+        return panel != null && panel.isProjectLevel();
       }
 
       @Override
-      public void setShareToTeamMembers(boolean shared) {
+      public void setIsProjectLevel(boolean isProjectLevel) {
         final SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
         LOG.assertTrue(selectedPanel != null, "No settings selectedPanel for: " + getSelectedObject());
 
         final String name = getSelectedPanel().getCurrentProfileName();
         for (SingleInspectionProfilePanel p : myPanels.values()) {
           if (p != selectedPanel && Comparing.equal(p.getCurrentProfileName(), name)) {
-            final boolean curShared = p.isProfileShared();
-            if (curShared == shared) {
-              Messages.showErrorDialog((shared ? "Shared" : "Application level") + " profile with same name exists.", "Inspections Settings");
+            final boolean curShared = p.isProjectLevel();
+            if (curShared == isProjectLevel) {
+              Messages.showErrorDialog((isProjectLevel ? "Shared" : "Application level") + " profile with same name exists.", "Inspections Settings");
               return;
             }
           }
         }
 
-        selectedPanel.setProfileShared(shared);
+        selectedPanel.setIsProjectLevel(isProjectLevel);
         myProfiles.repaint();
       }
 
@@ -290,7 +290,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
             if (singleInspectionProfilePanel == null) {
               return false;
             }
-            final boolean isValid = text.equals(initialName) || !hasName(text, singleInspectionProfilePanel.isProfileShared());
+            final boolean isValid = text.equals(initialName) || !hasName(text, singleInspectionProfilePanel.isProjectLevel());
             if (isValid) {
               myAuxiliaryRightPanel.showDescription(getSelectedObject().getDescription());
             }
@@ -386,7 +386,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
               final InspectionProfileImpl profile;
               try {
                 Element rootElement = JDOMUtil.loadDocument(VfsUtilCore.virtualToIoFile(file)).getRootElement();
-                profile = importInspectionProfile(rootElement, myProfileManager, getProject(), wholePanel);
+                profile = importInspectionProfile(rootElement, myApplicationProfileManager, getProject(), wholePanel);
                 if (getProfilePanel(profile) != null) {
                   if (Messages.showOkCancelDialog(wholePanel, "Profile with name \'" +
                                                               profile.getName() +
@@ -523,14 +523,14 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
         final SingleInspectionProfilePanel panel = getProfilePanel(inspectionProfile);
         panel.apply();
         if (panel == selectedPanel) {
-          applyRootProfile(panel.getCurrentProfileName(), panel.isProfileShared());
+          applyRootProfile(panel.getCurrentProfileName(), panel.isProjectLevel());
         }
       }
     }
     doReset();
   }
 
-  protected abstract void applyRootProfile(final String name, final boolean isShared);
+  protected abstract void applyRootProfile(@NotNull String name, boolean isProjectLevel);
 
   private SingleInspectionProfilePanel getProfilePanel(Profile inspectionProfile) {
     return myPanels.get(inspectionProfile);
@@ -542,9 +542,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   private void deleteProfile(Profile profile) {
     final String name = profile.getName();
-    if (profile.getProfileManager() == myProfileManager) {
-      if (myProfileManager.getProfile(name, false) != null) {
-        myProfileManager.deleteProfile(name);
+    if (profile.getProfileManager() == myApplicationProfileManager) {
+      if (myApplicationProfileManager.getProfile(name, false) != null) {
+        myApplicationProfileManager.deleteProfile(name);
       }
       return;
     }
@@ -632,7 +632,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   protected Collection<Profile> getProfiles() {
     final Collection<Profile> result = new ArrayList<Profile>();
-    result.addAll(new TreeSet<Profile>(myProfileManager.getProfiles()));
+    result.addAll(new TreeSet<Profile>(myApplicationProfileManager.getProfiles()));
     result.addAll(myProjectProfileManager.getProfiles());
     return result;
   }
@@ -673,7 +673,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   private boolean hasName(@NotNull final String name, boolean shared) {
     for (SingleInspectionProfilePanel p : myPanels.values()) {
-      if (name.equals(p.getCurrentProfileName()) && shared == p.isProfileShared()) {
+      if (name.equals(p.getCurrentProfileName()) && shared == p.isProjectLevel()) {
         return true;
       }
     }

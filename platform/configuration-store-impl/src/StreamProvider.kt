@@ -16,6 +16,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import java.io.InputStream
 
 public interface StreamProvider {
@@ -44,6 +45,10 @@ public interface StreamProvider {
   public fun delete(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT)
 }
 
-public fun StreamProvider.write(fileSpec: String, content: String) {
-  write(fileSpec, content.toByteArray())
+public fun StreamProvider.write(path: String, content: String) {
+  write(path, content.toByteArray())
+}
+
+public fun StreamProvider.write(path: String, content: BufferExposingByteArrayOutputStream, roamingType: RoamingType = RoamingType.DEFAULT) {
+  write(path, content.getInternalBuffer(), content.size(), roamingType)
 }

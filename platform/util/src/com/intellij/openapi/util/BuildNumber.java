@@ -158,15 +158,14 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
   private static BuildNumber fromFile() {
     try {
-      final String homePath = PathManager.getHomePath();
-      final File buildTxtFile = FileUtil.findFirstThatExist(homePath + "/build.txt", homePath + "/community/build.txt");
+      String home = PathManager.getHomePath();
+      File buildTxtFile = FileUtil.findFirstThatExist(home + "/build.txt", home + "/Resources/build.txt", home + "/community/build.txt");
       if (buildTxtFile != null) {
         String text = FileUtil.loadFile(buildTxtFile).trim();
         return fromString(text);
       }
     }
-    catch (IOException ignored) {
-    }
+    catch (IOException ignored) { }
 
     return fallback();
   }

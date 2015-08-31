@@ -36,6 +36,7 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
 
   private JPanel myContentPane;
   private JButton myMakeDefaultButton;
+  private JPanel myMakeDefaultPanel;
 
   private ButtonGroup mySuspendPolicyGroup;
 
@@ -99,7 +100,11 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
   }
 
   private void updateMakeDefaultEnableState() {
-    myMakeDefaultButton.setEnabled(!getSelectedSuspendPolicy().equals(((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).getSuspendPolicy()));
+    boolean enabled = !getSelectedSuspendPolicy().equals(
+      ((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).getSuspendPolicy());
+    ((CardLayout)myMakeDefaultPanel.getLayout()).show(myMakeDefaultPanel, enabled ? "Show" : "Hide");
+    myMakeDefaultButton.setVisible(enabled);
+    myMakeDefaultButton.setEnabled(enabled);
   }
 
   private void updateSuspendPolicyFont() {
@@ -125,7 +130,7 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
   private void changeVisibleState(boolean suspendThreadSupported) {
     mySuspendAll.setVisible(suspendThreadSupported);
     mySuspendThread.setVisible(suspendThreadSupported);
-    myMakeDefaultButton.setVisible(suspendThreadSupported);
+    myMakeDefaultPanel.setVisible(suspendThreadSupported);
   }
 
   @Override
@@ -135,7 +140,7 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
   }
 
   public void hide() {
-    myContentPane.setVisible(false);
+    myContentPane.getParent().remove(myContentPane);
   }
 
   @Override

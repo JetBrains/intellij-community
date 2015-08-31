@@ -70,7 +70,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    myDelegate.findConflicts(conflicts, refUsages.get());
+    myDelegate.findConflicts(refUsages.get(), conflicts);
     
     if (!conflicts.isEmpty())  {
       return showConflicts(conflicts, null);
@@ -89,7 +89,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     final List<SmartPsiElementPointer> toInvert = new ArrayList<SmartPsiElementPointer>();
 
     final LinkedHashSet<PsiElement> elementsToInvert = new LinkedHashSet<PsiElement>();
-    myDelegate.collectRefElements(myElement, elementsToInvert, myRenameProcessor, myNewName);
+    myDelegate.collectRefElements(myElement, myRenameProcessor, myNewName, elementsToInvert);
     for (PsiElement element : elementsToInvert) {
       toInvert.add(mySmartPointerManager.createSmartPsiElementPointer(element));
     }
@@ -170,7 +170,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    myDelegate.invertDefaultElementInitializer(myElement);
+    myDelegate.invertElementInitializer(myElement);
   }
 
   @Override

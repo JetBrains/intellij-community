@@ -108,8 +108,15 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
         fillTypeArgs |= psiClass.hasTypeParameters() && PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5);
       }
     }
-    else if (insertingAnnotationWithParameters(context, item)) {
-      JavaCompletionUtil.insertParentheses(context, item, false, true);
+    else if (insertingAnnotation(context, item)) {
+      if (shouldHaveAnnotationParameters(psiClass)) {
+        JavaCompletionUtil.insertParentheses(context, item, false, true);
+      }
+      CharSequence text = context.getDocument().getCharsSequence();
+      int tail = context.getTailOffset();
+      if (text.length() > tail && Character.isLetter(text.charAt(tail))) {
+        context.getDocument().insertString(tail, " ");
+      }
     }
 
     if (fillTypeArgs && context.getCompletionChar() != '(') {
@@ -164,15 +171,12 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     return false;
   }
 
-  private static boolean insertingAnnotationWithParameters(InsertionContext context, LookupElement item) {
+  private static boolean insertingAnnotation(InsertionContext context, LookupElement item) {
     final Object obj = item.getObject();
     if (!(obj instanceof PsiClass) || !((PsiClass)obj).isAnnotationType()) return false;
 
     PsiElement leaf = context.getFile().findElementAt(context.getStartOffset());
-    if (psiElement(PsiIdentifier.class).withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).accepts(leaf)) {
-      return shouldHaveAnnotationParameters((PsiClass)obj);
-    }
-    return false;
+    return psiElement(PsiIdentifier.class).withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).accepts(leaf);
   }
 
   static boolean shouldHaveAnnotationParameters(PsiClass annoClass) {

@@ -29,8 +29,6 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
@@ -205,7 +203,7 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
     try {
       mySeverityRegistrar.readExternal(state);
     }
-    catch (InvalidDataException e) {
+    catch (Throwable e) {
       LOG.error(e);
     }
     super.loadState(state);
@@ -214,12 +212,7 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
   @Override
   public Element getState() {
     Element state = super.getState();
-    try {
-      mySeverityRegistrar.writeExternal(state);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
+    mySeverityRegistrar.writeExternal(state);
     return state;
   }
 
@@ -231,7 +224,7 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
   @Override
   public void convert(Element element) {
     super.convert(element);
-    if (myProjectProfile != null) {
+    if (getProjectProfile() != null) {
       ((ProfileEx)getProjectProfileImpl()).convert(element, getProject());
     }
   }

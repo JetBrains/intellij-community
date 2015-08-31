@@ -46,10 +46,27 @@ public class EditorPaintingTest extends AbstractEditorTest {
 
   public void testWholeLineHighlighterAtDocumentEnd() throws Exception {
     initText("foo");
-    myEditor.getMarkupModel().addRangeHighlighter(0, 3, HighlighterLayer.WARNING,
-                                                  new TextAttributes(null, Color.red, null, null, Font.PLAIN),
-                                                  HighlighterTargetArea.LINES_IN_RANGE);
+    addLineHighlighter(0, 3, HighlighterLayer.WARNING, null, Color.red);
     checkResult();
+  }
+
+  public void testUpperHighlighterCanSetDefaultForegroundColor() throws Exception {
+    initText("foo");
+    addRangeHighlighter(1, 3, HighlighterLayer.WARNING, Color.red, null);
+    addRangeHighlighter(2, 3, HighlighterLayer.ERROR, Color.black, null);
+    checkResult();
+  }
+
+  private static void addRangeHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
+    myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer,
+                                                  new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN),
+                                                  HighlighterTargetArea.EXACT_RANGE);
+  }
+  
+  private static void addLineHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
+    myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer,
+                                                  new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN),
+                                                  HighlighterTargetArea.LINES_IN_RANGE);
   }
 
   @Override
@@ -61,9 +78,13 @@ public class EditorPaintingTest extends AbstractEditorTest {
 
   @Override
   protected void tearDown() throws Exception {
-    Registry.get("editor.new.rendering").setValue(false);
-    FontLayoutService.setInstance(null);
-    super.tearDown();
+    try {
+      Registry.get("editor.new.rendering").setValue(false);
+      FontLayoutService.setInstance(null);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private void checkResult() throws IOException {

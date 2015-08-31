@@ -78,7 +78,7 @@ public class CompositePrintable implements Printable, Disposable {
         printables.add(printable);
       }
     }
-    myWrapper.printOn(printer, printables);
+    myWrapper.printOn(printer, printables, true);
   }
 
   public void addLast(@NotNull final Printable printable) {
@@ -224,9 +224,17 @@ public class CompositePrintable implements Printable, Disposable {
     }
 
     public void printOn(final Printer console, final List<Printable> printables) {
+      printOn(console, printables, false);
+    }
+
+    public void printOn(final Printer console, final List<Printable> printables, final boolean skipFileContent) {
       final Runnable request = new Runnable() {
         @Override
         public void run() {
+          if (skipFileContent) {
+            readFileContentAndPrint(console, null, printables);
+            return;
+          }
           final File file = hasOutput() ? getFile() : null;
           synchronized (myFileLock) {
             readFileContentAndPrint(console, file, printables);

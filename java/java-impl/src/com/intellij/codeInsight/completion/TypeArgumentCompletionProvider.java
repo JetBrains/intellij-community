@@ -217,7 +217,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
 
     public void registerSingleClass(@Nullable InheritorsHolder inheritors) {
       if (inheritors != null && myTypeItems.size() == 1) {
-        PsiType type = myTypeItems.get(0).getPsiType();
+        PsiType type = myTypeItems.get(0).getType();
         PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
         if (aClass != null && !aClass.hasTypeParameters()) {
           JavaCompletionUtil.setShowFQN(myTypeItems.get(0));

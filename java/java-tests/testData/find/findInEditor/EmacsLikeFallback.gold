@@ -28,9 +28,9 @@ searchInProjectFiles =false
 [[<a>]]
 [a]b
 --
-RangeHighlighter: (0,1); layer:5999; tooltip: null : [null,java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
+RangeHighlighter: (0,1); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
 RangeHighlighter: (0,1); layer:5999; tooltip: null : [null,null,0,ROUNDED_BOX,java.awt.Color[r=0,g=0,b=0],null]
-RangeHighlighter: (2,3); layer:5999; tooltip: null : [null,java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
+RangeHighlighter: (2,3); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
 ------------
 --- FIND MODEL ---
 myStringToFind =ab
@@ -62,7 +62,7 @@ searchInProjectFiles =false
 a
 [[<ab>]]
 --
-RangeHighlighter: (2,4); layer:5999; tooltip: null : [null,java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
+RangeHighlighter: (2,4); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
 RangeHighlighter: (2,4); layer:5999; tooltip: null : [null,null,0,ROUNDED_BOX,java.awt.Color[r=0,g=0,b=0],null]
 ------------
 --- FIND MODEL ---
@@ -95,7 +95,7 @@ searchInProjectFiles =false
 [[<a>]]
 [a]b
 --
-RangeHighlighter: (0,1); layer:5999; tooltip: null : [null,java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
+RangeHighlighter: (0,1); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
 RangeHighlighter: (0,1); layer:5999; tooltip: null : [null,null,0,ROUNDED_BOX,java.awt.Color[r=0,g=0,b=0],null]
-RangeHighlighter: (2,3); layer:5999; tooltip: null : [null,java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
+RangeHighlighter: (2,3); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
 ------------

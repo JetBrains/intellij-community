@@ -69,7 +69,7 @@ public class BinaryFilePatchInProgress extends AbstractFilePatchInProgress<Shelv
       public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
         throws DiffRequestProducerException, ProcessCanceledException {
         Change change = file.createChange(project);
-        return PatchDiffRequestFactory.createFromChange(project, change, getName(), context, indicator);
+        return PatchDiffRequestFactory.createDiffRequest(project, change, getName(), context, indicator);
       }
 
       @NotNull
