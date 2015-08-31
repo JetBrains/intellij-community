@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner.states;
 
-import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
+import com.intellij.execution.ExecutionBundle;
 
 /**
  * @author Roman Chernyatchik
@@ -32,7 +32,6 @@ public interface TestStateInfo {
    * Some magic definition from AbstractTestProxy class.
    * If state is defect something wrong is with it and should be shown
    * properly in UI.
-   * @return
    */
   boolean isDefect();
 
@@ -54,22 +53,21 @@ public interface TestStateInfo {
   boolean wasTerminated();
 
   /**
-   * It's some magic parameter than describe state type.
-   * @return
+   * It's some magic parameter that describes state type.
    */
   Magnitude getMagnitude();
 
   //WARN: It is Hack, see PoolOfTestStates, API is necessary
   enum Magnitude {
-    SKIPPED_INDEX(0, 1, SMTestsRunnerBundle.message("sm.test.runner.magnitude.skipped.failed.title")),
-    COMPLETE_INDEX(1, 3, SMTestsRunnerBundle.message("sm.test.runner.magnitude.completed.failed.title")),
-    NOT_RUN_INDEX(2, 0, SMTestsRunnerBundle.message("sm.test.runner.magnitude.not.run.failed.title")),
-    RUNNING_INDEX(3, 7, SMTestsRunnerBundle.message("sm.test.runner.magnitude.running.failed.title")),
-    TERMINATED_INDEX(4, 6, SMTestsRunnerBundle.message("sm.test.runner.magnitude.terminated.failed.title")),
-    IGNORED_INDEX(5, 2, SMTestsRunnerBundle.message("sm.test.runner.magnitude.ignored.failed.title")),
-    FAILED_INDEX(6, 4, SMTestsRunnerBundle.message("sm.test.runner.magnitude.assertion.failed.title")),
-    ERROR_INDEX(8, 5, SMTestsRunnerBundle.message("sm.test.runner.magnitude.testerror.title")),
-    PASSED_INDEX(COMPLETE_INDEX.getValue(), COMPLETE_INDEX.getSortWeight(), SMTestsRunnerBundle.message("sm.test.runner.magnitude.passed.title"));
+    SKIPPED_INDEX(0, 1, ExecutionBundle.message("sm.test.runner.magnitude.skipped.failed.title")),
+    COMPLETE_INDEX(1, 3, ExecutionBundle.message("sm.test.runner.magnitude.completed.failed.title")),
+    NOT_RUN_INDEX(2, 0, ExecutionBundle.message("sm.test.runner.magnitude.not.run.failed.title")),
+    RUNNING_INDEX(3, 7, ExecutionBundle.message("sm.test.runner.magnitude.running.failed.title")),
+    TERMINATED_INDEX(4, 6, ExecutionBundle.message("sm.test.runner.magnitude.terminated.failed.title")),
+    IGNORED_INDEX(5, 2, ExecutionBundle.message("sm.test.runner.magnitude.ignored.failed.title")),
+    FAILED_INDEX(6, 4, ExecutionBundle.message("sm.test.runner.magnitude.assertion.failed.title")),
+    ERROR_INDEX(8, 5, ExecutionBundle.message("sm.test.runner.magnitude.testerror.title")),
+    PASSED_INDEX(COMPLETE_INDEX.getValue(), COMPLETE_INDEX.getSortWeight(), ExecutionBundle.message("sm.test.runner.magnitude.passed.title"));
 
     private final int myValue;
     private final int mySortWeight;

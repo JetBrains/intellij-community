@@ -53,7 +53,7 @@ public class SendStatisticsComponent implements ApplicationComponent {
   private void runStatisticsService() {
     final StatisticsService statisticsService = StatisticsUploadAssistant.getStatisticsService();
 
-    if (StatisticsUploadAssistant.showNotification()) {
+    if (StatisticsUploadAssistant.isShouldShowNotification()) {
       Application app = ApplicationManager.getApplication();
       app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
         @Override

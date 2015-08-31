@@ -64,6 +64,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testExtends11() throws Exception { doTest(false); }
   public void testExtends12() throws Exception { doTest(false); }
   public void testExtends13() throws Exception { doTest(false); }
+  public void testExtendsAfterClassGenerics() throws Exception { doTest(2, "extends", "implements"); }
   public void testSynchronized1() throws Exception { doTest(false); }
 
   public void testSynchronized2() throws Exception {

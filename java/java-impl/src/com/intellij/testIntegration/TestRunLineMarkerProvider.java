@@ -16,15 +16,22 @@
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
+import com.intellij.execution.testframework.TestIconMapper;
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
@@ -46,7 +53,8 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
       if (element instanceof PsiClass) {
         TestFramework framework = TestFrameworks.detectFramework((PsiClass)element);
         if (framework != null && framework.isTestClass(element)) {
-          return new Info(framework.getIcon(), TOOLTIP_PROVIDER, ExecutorAction.getActions(1));
+          String url = "java:suite://" + ((PsiClass)element).getQualifiedName();
+          return getInfo(url, framework, e.getProject());
         }
       }
       if (element instanceof PsiMethod) {
@@ -54,8 +62,8 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
         if (psiClass != null) {
           TestFramework framework = TestFrameworks.detectFramework(psiClass);
           if (framework != null && framework.isTestMethod(element)) {
-  //          String url = "java:test://" + psiClass.getQualifiedName() + "." + ((PsiMethod)element).getName();
-            return new Info(framework.getIcon(), TOOLTIP_PROVIDER, ExecutorAction.getActions(1));
+            String url = "java:test://" + psiClass.getQualifiedName() + "." + ((PsiMethod)element).getName();
+            return getInfo(url, framework, e.getProject());
           }
         }
       }
@@ -63,7 +71,20 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
     return null;
   }
 
+  @NotNull
+  protected Info getInfo(String url, TestFramework framework, Project project) {
+    Icon icon = getTestStateIcon(url, project);
+    return new Info(icon == null ? framework.getIcon() : icon, TOOLTIP_PROVIDER, ExecutorAction.getActions(1));
+  }
+
   protected boolean isIdentifier(PsiElement e) {
     return e instanceof PsiIdentifier;
+  }
+
+  private static Icon getTestStateIcon(String url, Project project) {
+    TestStateStorage.Record state = TestStateStorage.getInstance(project).getState(url);
+    if (state == null) return null;
+    TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(state.magnitude);
+    return TestIconMapper.getIcon(magnitude);
   }
 }

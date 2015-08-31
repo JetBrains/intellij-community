@@ -17,13 +17,17 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+
+import java.util.Map;
 
 import static com.intellij.psi.PsiModifier.ABSTRACT;
 
@@ -67,5 +71,72 @@ public class GrTraitUtil {
            || containingClass instanceof ClsClassImpl
               && containingClass.isInterface()
               && AnnotationUtil.isAnnotated(containingClass, "groovy.transform.Trait", false);
+  }
+
+  public static PsiMethod createTraitMethodFromCompiledHelperMethod(final PsiMethod compiledMethod, PsiClass trait) {
+    assert compiledMethod.getParameterList().getParametersCount() > 0;
+
+    final GrLightMethodBuilder result = new GrLightMethodBuilder(compiledMethod.getManager(), compiledMethod.getName());
+    result.setNavigationElement(compiledMethod);
+    result.setOriginInfo("via @Trait");
+    result.addModifier(PsiModifier.STATIC);
+    for (PsiTypeParameter parameter : compiledMethod.getTypeParameters()) {
+      result.getTypeParameterList().addParameter(parameter);
+    }
+
+    final Map<String, PsiTypeParameter> substitutionMap = ContainerUtil.newTroveMap();
+    for (PsiTypeParameter parameter : trait.getTypeParameters()) {
+      substitutionMap.put(parameter.getName(), parameter);
+    }
+
+    final PsiElementFactory myElementFactory = JavaPsiFacade.getInstance(compiledMethod.getProject()).getElementFactory();
+    final PsiTypeVisitor<PsiType> corrector = new PsiTypeMapper() {
+
+      @Nullable
+      @Override
+      public PsiType visitClassType(PsiClassType classType) {
+        final PsiClass resolved = classType.resolve();
+        // if resolved to method parameter -> return as is
+        if (resolved instanceof PsiTypeParameter && compiledMethod.equals(((PsiTypeParameter)resolved).getOwner())) return classType;
+        if (resolved == null) {
+          // if not resolved -> try to get from map
+          final PsiTypeParameter byName = substitutionMap.get(classType.getCanonicalText());
+          return byName == null ? classType : myElementFactory.createType(byName);
+        }
+        else {
+          // if resolved -> get from map anyways
+          final PsiTypeParameter byName = substitutionMap.get(resolved.getName());
+          final PsiTypeVisitor<PsiType> $this = this;
+          final PsiType[] substitutes = !classType.hasParameters() ? PsiType.EMPTY_ARRAY : ContainerUtil.map2Array(
+            classType.getParameters(), PsiType.class, new Function<PsiType, PsiType>() {
+              @Override
+              public PsiType fun(PsiType type) {
+                return type.accept($this);
+              }
+            }
+          );
+          return myElementFactory.createType(byName != null ? byName : resolved, substitutes);
+        }
+      }
+    };
+
+    for (int i = 1; i < compiledMethod.getParameterList().getParameters().length; i++) {
+      final PsiParameter originalParameter = compiledMethod.getParameterList().getParameters()[i];
+      final PsiType originalType = originalParameter.getType();
+      final PsiType correctedType = trait.hasTypeParameters() ? originalType.accept(corrector) : originalType;
+      result.addParameter(originalParameter.getName(), correctedType, false);
+    }
+
+    for (PsiClassType type : compiledMethod.getThrowsList().getReferencedTypes()) {
+      final PsiType correctedType = trait.hasTypeParameters() ? type.accept(corrector) : type;
+      result.getThrowsList().addReference(correctedType instanceof PsiClassType ? (PsiClassType)correctedType : type);
+    }
+
+    {
+      final PsiType originalType = compiledMethod.getReturnType();
+      result.setReturnType(originalType != null && trait.hasTypeParameters() ? originalType.accept(corrector) : originalType);
+    }
+
+    return result;
   }
 }

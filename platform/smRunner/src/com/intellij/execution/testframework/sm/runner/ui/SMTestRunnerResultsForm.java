@@ -828,8 +828,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       TestStateStorage storage = TestStateStorage.getInstance(getProject());
       List<SMTestProxy> tests = myRoot.getAllTests();
       for (SMTestProxy proxy : tests) {
-        String url = proxy.getLocationUrl();
-        if (proxy.isLeaf() && url != null) {
+        String url = proxy instanceof SMTestProxy.SMRootTestProxy ? ((SMTestProxy.SMRootTestProxy)proxy).getRootLocation() : proxy.getLocationUrl();
+        if (url != null) {
           storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date()));
         }
       }
