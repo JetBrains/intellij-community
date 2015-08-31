@@ -406,7 +406,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void reloadSdk(Sdk currentSdk) {
-    PythonSdkType.setupSdkPaths(myProject, null, currentSdk, myModificators.get(currentSdk)); // or must it be a RunWriteAction?
+    PythonSdkType.setupSdkPaths(currentSdk, myProject, null, myModificators.get(currentSdk)); // or must it be a RunWriteAction?
   }
 
   private class ToggleVirtualEnvFilterButton extends ToggleActionButton implements DumbAware {
