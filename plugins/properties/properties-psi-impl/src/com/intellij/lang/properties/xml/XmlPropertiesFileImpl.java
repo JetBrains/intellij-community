@@ -56,7 +56,7 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
   private final Object myLock = new Object();
 
   private void ensurePropertiesLoaded() {
-    while (myFileModificationStamp != myFile.getModificationStamp()) {
+    while (myFileModificationStamp != myFile.getModificationStamp() || myPropertiesMap == null) {
       myFileModificationStamp = myFile.getModificationStamp();
       MostlySingularMultiMap<String, IProperty> propertiesMap = new MostlySingularMultiMap<String, IProperty>();
       XmlTag rootTag = myFile.getRootTag();
