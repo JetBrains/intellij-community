@@ -687,7 +687,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           qualifier.accept(this);
           objectEvaluator = myResult;
         }
-        else if (fieldClass.equals(getContextPsiClass()) || getContextPsiClass().isInheritor(fieldClass, true)) {
+        else if (fieldClass.equals(getContextPsiClass()) ||
+                 (getContextPsiClass() != null && getContextPsiClass().isInheritor(fieldClass, true))) {
             objectEvaluator = new ThisEvaluator();
         }
         else {  // myContextPsiClass != fieldClass && myContextPsiClass is not a subclass of fieldClass
@@ -1295,6 +1296,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       return element == null ? getContextPsiClass() : (PsiClass)element;
     }
 
+    @Nullable
     public PsiClass getContextPsiClass() {
       return myContextPsiClass;
     }
