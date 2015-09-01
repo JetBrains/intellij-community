@@ -2221,8 +2221,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     TextAttributes attributes = ((LexerEditorHighlighter)myHighlighter).getAttributes((DocumentImpl)myDocument, offset, c);
 
     int fontType = attributes.getFontType();
-    Font font = fontFor(fontType);
+    FontInfo fontInfo = EditorUtil.fontForChar(c, attributes.getFontType(), this);
+    Font font = fontInfo.getFont();
 
+    // it's more reliable to query actual font metrics
     FontMetrics fontMetrics = getFontMetrics(fontType);
 
     int charWidth = fontMetrics.charWidth(c);
@@ -2317,7 +2319,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       Point point = newArea.getLocation();
       int ascent = getAscent();
-      Font font = fontFor(attributes.getFontType());
+      // simplified font selection (based on the first character)
+      FontInfo fontInfo = EditorUtil.fontForChar(newText.charAt(0), attributes.getFontType(), this);
+      Font font = fontInfo.getFont();
+
       Color color = attributes.getForegroundColor() == null ? getForegroundColor() : attributes.getForegroundColor();
 
       EditorUIUtil.setupAntialiasing(g);
@@ -2347,11 +2352,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Color getCaretRowBackground() {
     Color color = myScheme.getColor(EditorColors.CARET_ROW_COLOR);
     return color == null ? getBackgroundColor() : color;
-  }
-
-  @NotNull
-  private Font fontFor(int fontType) {
-    return myScheme.getFont(EditorFontType.values()[fontType]);
   }
 
   private static void shift(@NotNull Graphics g, @NotNull Rectangle r, int delta) {
