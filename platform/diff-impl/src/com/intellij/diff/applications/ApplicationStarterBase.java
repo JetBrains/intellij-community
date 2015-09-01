@@ -82,7 +82,7 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
   @Override
   public void premain(String[] args) {
     if (!checkArguments(args)) {
-      System.err.println(getUsageMessage());
+      System.out.println(getUsageMessage());
       System.exit(1);
     }
   }
