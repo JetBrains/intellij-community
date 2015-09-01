@@ -303,21 +303,7 @@ class RunConfigurable extends BaseConfigurable {
         myTree.requestFocusInWindow();
         final RunnerAndConfigurationSettings settings = manager.getSelectedConfiguration();
         if (settings != null) {
-          final Enumeration enumeration = myRoot.breadthFirstEnumeration();
-          while (enumeration.hasMoreElements()) {
-            final DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
-            final Object userObject = node.getUserObject();
-            if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
-              final RunnerAndConfigurationSettings runnerAndConfigurationSettings = (RunnerAndConfigurationSettings)userObject;
-              final ConfigurationType configurationType = settings.getType();
-              if (configurationType != null &&
-                  Comparing.strEqual(runnerAndConfigurationSettings.getConfiguration().getType().getId(), configurationType.getId()) &&
-                  Comparing.strEqual(runnerAndConfigurationSettings.getConfiguration().getName(), settings.getName())) {
-                TreeUtil.selectInTree(node, true, myTree);
-                return;
-              }
-            }
-          }
+          selectConfiguration(settings.getConfiguration());
         }
         else {
           mySelectedConfigurable = null;
@@ -328,6 +314,23 @@ class RunConfigurable extends BaseConfigurable {
     });
     sortTopLevelBranches();
     ((DefaultTreeModel)myTree.getModel()).reload();
+  }
+
+  private void selectConfiguration(@NotNull RunConfiguration configuration) {
+    final Enumeration enumeration = myRoot.breadthFirstEnumeration();
+    while (enumeration.hasMoreElements()) {
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
+      final Object userObject = node.getUserObject();
+      if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
+        final RunnerAndConfigurationSettings runnerAndConfigurationSettings = (RunnerAndConfigurationSettings)userObject;
+        final ConfigurationType configurationType = configuration.getType();
+        if (Comparing.strEqual(runnerAndConfigurationSettings.getConfiguration().getType().getId(), configurationType.getId()) &&
+            Comparing.strEqual(runnerAndConfigurationSettings.getConfiguration().getName(), configuration.getName())) {
+          TreeUtil.selectInTree(node, true, myTree);
+          return;
+        }
+      }
+    }
   }
 
   private void showTemplateConfigurable(ConfigurationFactory factory) {
@@ -610,7 +613,7 @@ class RunConfigurable extends BaseConfigurable {
       myAdditionalSettings.add(Pair.create(configurable, configurable.createComponent()));
     }
 
-    myWholePanel = new JPanel(new BorderLayout());
+    myWholePanel = new DataContextPanel(new BorderLayout());
 
     mySplitter.setFirstComponent(createLeftPanel());
     mySplitter.setSecondComponent(myRightPanel);
@@ -2072,6 +2075,23 @@ class RunConfigurable extends BaseConfigurable {
         return getType((DefaultMutableTreeNode)treeNode.getParent());
       }
       return null;
+    }
+  }
+
+  private class DataContextPanel extends JPanel implements DataProvider {
+    public DataContextPanel(LayoutManager layout) {
+      super(layout);
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      return RunConfigurationSelector.KEY.getName().equals(dataId) ? new RunConfigurationSelector() {
+        @Override
+        public void select(@NotNull RunConfiguration configuration) {
+          selectConfiguration(configuration);
+        }
+      } : null;
     }
   }
 }
