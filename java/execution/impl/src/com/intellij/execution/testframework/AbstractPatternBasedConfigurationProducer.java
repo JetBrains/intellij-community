@@ -75,6 +75,9 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
   public boolean isConfiguredFromContext(ConfigurationContext context, Set<String> patterns) {
     final LinkedHashSet<String> classes = new LinkedHashSet<String>();
     final DataContext dataContext = context.getDataContext();
+    if (TestsUIUtil.isMultipleSelectionImpossible(dataContext)) {
+      return false;
+    }
     final PsiElement[] locationElements = collectLocationElements(classes, dataContext);
     if (locationElements == null) {
       collectContextElements(dataContext, true, false, classes, new PsiElementProcessor.CollectElements<PsiElement>());
@@ -88,6 +91,9 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
   public PsiElement checkPatterns(ConfigurationContext context, LinkedHashSet<String> classes) {
     PsiElement[] result;
     final DataContext dataContext = context.getDataContext();
+    if (TestsUIUtil.isMultipleSelectionImpossible(dataContext)) {
+      return null;
+    }
     final PsiElement[] locationElements = collectLocationElements(classes, dataContext);
     PsiElementProcessor.CollectElements<PsiElement> processor = new PsiElementProcessor.CollectElements<PsiElement>();
     if (locationElements != null) {
