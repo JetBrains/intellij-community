@@ -21,6 +21,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -193,7 +194,9 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
     }
     else if (psiMember instanceof PsiMember) {
       final PsiClass containingClass = location instanceof MethodLocation
-                                       ? ((MethodLocation)location).getContainingClass(): ((PsiMember)psiMember).getContainingClass();
+                                       ? ((MethodLocation)location).getContainingClass()
+                                       : location instanceof PsiMemberParameterizedLocation ? ((PsiMemberParameterizedLocation)location).getContainingClass() 
+                                                                                            : ((PsiMember)psiMember).getContainingClass();
       assert containingClass != null;
       return ClassUtil.getJVMClassName(containingClass) + "," + ((PsiMember)psiMember).getName();
     } else if (psiMember instanceof PsiPackage) {
