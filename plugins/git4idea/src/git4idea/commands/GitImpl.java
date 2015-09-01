@@ -150,6 +150,7 @@ public class GitImpl implements Git {
         handler.setUrl(url);
         handler.addParameters("--progress");
         handler.addParameters(url);
+        handler.endOptions();
         handler.addParameters(clonedDirectoryName);
         addListeners(handler, listeners);
         return handler;
