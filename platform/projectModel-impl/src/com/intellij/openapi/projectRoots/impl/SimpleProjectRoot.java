@@ -17,8 +17,6 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.ex.ProjectRoot;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -33,7 +31,7 @@ import java.io.File;
 /**
  * @author mike
  */
-public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
+public class SimpleProjectRoot implements ProjectRoot {
   private String myUrl;
   private VirtualFile myFile;
   private final VirtualFile[] myFileArray = new VirtualFile[1];
@@ -118,7 +116,6 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
     return myUrl;
   }
 
-  @Override
   public void readExternal(Element element) {
     String url = element.getAttributeValue(ATTRIBUTE_URL);
     myUrl = migrateJdkAnnotationsToCommunityForDevIdea(url);
@@ -136,8 +133,7 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
     return url;
   }
 
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     if (!myInitialized) {
       initialize();
     }

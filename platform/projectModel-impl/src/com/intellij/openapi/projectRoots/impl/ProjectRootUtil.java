@@ -21,8 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.ProjectRoot;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -83,11 +81,11 @@ public class ProjectRootUtil {
     throw new IllegalArgumentException("Wrong type: " + type);
   }
 
-  static Element write(ProjectRoot projectRoot) throws WriteExternalException {
+  static Element write(ProjectRoot projectRoot)  {
     Element element = new Element(ELEMENT_ROOT);
     if (projectRoot instanceof SimpleProjectRoot) {
       element.setAttribute(ATTRIBUTE_TYPE, SIMPLE_ROOT);
-      ((JDOMExternalizable)projectRoot).writeExternal(element);
+      ((SimpleProjectRoot)projectRoot).writeExternal(element);
     }
     else if (projectRoot instanceof CompositeProjectRoot) {
       element.setAttribute(ATTRIBUTE_TYPE, COMPOSITE_ROOT);

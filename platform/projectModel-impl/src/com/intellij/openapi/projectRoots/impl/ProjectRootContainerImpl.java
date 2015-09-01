@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.PersistentOrderRootType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -195,7 +194,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     List<PersistentOrderRootType> allTypes = OrderRootType.getSortedRootTypes();
     for (PersistentOrderRootType type : allTypes) {
       write(element, type);
@@ -235,7 +234,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     myRoots.put(type, root);
   }
 
-  private void write(Element roots, PersistentOrderRootType type) throws WriteExternalException {
+  private void write(Element roots, PersistentOrderRootType type) {
     String sdkRootName = type.getSdkRootName();
     if (sdkRootName != null) {
       Element e = new Element(sdkRootName);

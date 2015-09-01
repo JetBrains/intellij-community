@@ -24,7 +24,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -266,7 +265,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
 
     for (Element child : element.getChildren(ELEMENT_JDK)) {
       ProjectJdkImpl jdk = new ProjectJdkImpl(null, null);
-      jdk.readExternal(child);
+      jdk.readExternal(child, this);
       mySdks.add(jdk);
     }
   }
@@ -276,12 +275,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
     Element element = new Element("state");
     for (Sdk jdk : mySdks) {
       Element e = new Element(ELEMENT_JDK);
-      try {
-        ((ProjectJdkImpl)jdk).writeExternal(e);
-      }
-      catch (WriteExternalException ignored) {
-        continue;
-      }
+      ((ProjectJdkImpl)jdk).writeExternal(e);
       element.addContent(e);
     }
     return element;
