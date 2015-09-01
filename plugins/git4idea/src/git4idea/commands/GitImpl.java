@@ -682,7 +682,7 @@ public class GitImpl implements Git {
 
   // could be upper-cased, so should check case-insensitively
   public static final String[] ERROR_INDICATORS = {
-    "error", "remote: error", "fatal",
+    "error:", "remote: error", "fatal:",
     "Cannot", "Could not", "Interactive rebase already started", "refusing to pull", "cannot rebase:", "conflict",
     "unable"
   };
