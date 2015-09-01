@@ -210,17 +210,14 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
-    PyType type = null;
     for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-      type = typeProvider.getCallType(this, callSite, context);
+      final PyType type = typeProvider.getCallType(this, callSite, context);
       if (type != null) {
         type.assertValid(typeProvider.toString());
-        break;
+        return type;
       }
     }
-    if (type == null) {
-      type = context.getReturnType(this);
-    }
+    final PyType type = context.getReturnType(this);
     final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
     if (results != null) {
       return analyzeCallType(type, results.getReceiver(), results.getArguments(), context);
