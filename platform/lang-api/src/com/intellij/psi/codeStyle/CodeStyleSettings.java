@@ -44,6 +44,8 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable {
+
+  public static final int MAX_RIGHT_MARGIN = 1000;
   
   private static final Logger LOG = Logger.getInstance("#" + CodeStyleSettings.class.getName());
 
