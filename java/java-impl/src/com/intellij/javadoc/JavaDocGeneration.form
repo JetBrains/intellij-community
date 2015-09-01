@@ -247,7 +247,7 @@
         </constraints>
         <properties>
           <margin top="0" left="8" bottom="10" right="3"/>
-          <text value="Include jdk and library sources in -sourcepath"/>
+          <text value="Include JDK and library sources in -sourcepath"/>
         </properties>
       </component>
       <component id="44709" class="javax.swing.JCheckBox" binding="myLinkToJdkDocs">
