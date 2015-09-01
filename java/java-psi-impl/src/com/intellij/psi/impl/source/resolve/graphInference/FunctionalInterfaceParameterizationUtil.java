@@ -177,7 +177,7 @@ public class FunctionalInterfaceParameterizationUtil {
       for (int i = 0; i < parameters.length; i++) {
         PsiType paramType = parameters[i];
         if (paramType instanceof PsiWildcardType) {
-          final PsiType bound = GenericsUtil.eliminateWildcards(((PsiWildcardType)paramType).getBound(), false);
+          final PsiType bound = GenericsUtil.eliminateWildcards(((PsiWildcardType)paramType).getBound(), false, false);
           if (((PsiWildcardType)paramType).isSuper()) {
             newParameters[i] = bound;
           }

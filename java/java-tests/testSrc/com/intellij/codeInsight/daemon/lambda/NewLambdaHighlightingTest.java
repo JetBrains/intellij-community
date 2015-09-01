@@ -212,6 +212,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testPreserveCapturedWildcardsDuringNonWildcardParameterization() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
