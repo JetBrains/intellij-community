@@ -47,6 +47,12 @@ public abstract class DiffRequestFactory {
   public abstract ContentDiffRequest createFromFiles(@Nullable Project project, @NotNull VirtualFile file1, @NotNull VirtualFile file2);
 
   @NotNull
+  public abstract ContentDiffRequest createFromFiles(@Nullable Project project,
+                                                     @NotNull VirtualFile leftFile,
+                                                     @NotNull VirtualFile baseFile,
+                                                     @NotNull VirtualFile rightFile);
+
+  @NotNull
   public abstract ContentDiffRequest createClipboardVsValue(@NotNull String value);
 
   //
