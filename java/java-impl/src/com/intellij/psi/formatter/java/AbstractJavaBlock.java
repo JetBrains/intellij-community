@@ -907,9 +907,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                         null,
                                         isAfterIncomplete ? alignmentStrategy.getAlignment(null) : bracketAlignment);
           result.add(block);
-          if (internalIndent instanceof ExpandableIndent && to == JavaTokenType.RPARENTH) {
-            ((ExpandableIndent)internalIndent).setStrictMinOffsetBlock(block);
-          }
           return child;
         }
         else {

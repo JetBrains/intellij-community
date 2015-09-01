@@ -29,7 +29,7 @@ public class JavaFormatterMultilineMethodCallParamsTest extends AbstractJavaForm
     );
   }
 
-  public void testChainedMethodInsideCall_WithRParenOnNewLine() {
+  public void IGNORED_testChainedMethodInsideCall_WithRParenOnNewLine() {
     doMethodTest(
       "call(new StringBuilder()\n" +
       ".append(\"aaa\")\n" +

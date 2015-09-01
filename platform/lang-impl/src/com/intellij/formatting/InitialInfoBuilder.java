@@ -76,9 +76,7 @@ class InitialInfoBuilder {
   private Set<Alignment> myAlignmentsInsideRangeToModify = ContainerUtil.newHashSet();
   private boolean myCollectAlignmentsInsideFormattingRange = false;
 
-  private Set<Block> myStrictMinOffsetBlocks = ContainerUtil.newHashSet();
   private MultiMap<ExpandableIndent, AbstractBlockWrapper> myBlocksToForceChildrenIndent = new LinkedMultiMap<ExpandableIndent, AbstractBlockWrapper>();
-  private Map<Block, AbstractBlockWrapper> myMarkerIndentToBlock = ContainerUtil.newHashMap();
 
   private InitialInfoBuilder(final Block rootBlock,
                              final FormattingDocumentModel model,
@@ -294,11 +292,7 @@ class InitialInfoBuilder {
   public MultiMap<ExpandableIndent, AbstractBlockWrapper> getExpandableIndentsBlocks() {
     return myBlocksToForceChildrenIndent;
   }
-
-  public Map<Block, AbstractBlockWrapper> getMarkerBlocks() {
-    return myMarkerIndentToBlock;
-  }
-
+  
   private void doIteration(@NotNull State state) {
     List<Block> subBlocks = state.parentBlock.getSubBlocks();
     final int subBlocksCount = subBlocks.size();
@@ -338,17 +332,9 @@ class InitialInfoBuilder {
   }
 
   private void registerExpandableIndents(@NotNull Block block, @NotNull AbstractBlockWrapper wrapper) {
-    ExpandableIndent expandableIndent = block.getIndent() instanceof ExpandableIndent ? ((ExpandableIndent)block.getIndent()) : null;
-    if (expandableIndent != null) {
-      myBlocksToForceChildrenIndent.putValue(expandableIndent, wrapper);
-      Block markerBlock = expandableIndent.getStrictMinOffsetBlock();
-      if (markerBlock != null) {
-        myStrictMinOffsetBlocks.add(markerBlock);
-      }
-    }
-
-    if (myStrictMinOffsetBlocks.contains(block)) {
-      myMarkerIndentToBlock.put(block, wrapper);
+    if (block.getIndent() instanceof ExpandableIndent) {
+      ExpandableIndent indent = (ExpandableIndent)block.getIndent();
+      myBlocksToForceChildrenIndent.putValue(indent, wrapper);
     }
   }
 

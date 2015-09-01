@@ -16,20 +16,11 @@
 package com.intellij.formatting;
 
 public class ExpandableIndent extends IndentImpl {
-  private Block myStrictMinOffsetBlock;
   private boolean myEnforceIndent;
 
   public ExpandableIndent(Type type) {
     super(type, false, 0, false, true);
     myEnforceIndent = false;
-  }
-
-  public void setStrictMinOffsetBlock(Block block) {
-    myStrictMinOffsetBlock = block;
-  }
-
-  Block getStrictMinOffsetBlock() {
-    return myStrictMinOffsetBlock;
   }
 
   @Override

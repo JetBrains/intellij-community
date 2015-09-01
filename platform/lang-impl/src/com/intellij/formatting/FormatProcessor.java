@@ -160,7 +160,6 @@ public class FormatProcessor {
   @NotNull
   private State myCurrentState;
   private MultiMap<ExpandableIndent, AbstractBlockWrapper> myExpandableIndents;
-  private Map<Block, AbstractBlockWrapper> myExpandableIndentsMinOffsetBlocksToWrappers;
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
@@ -1368,7 +1367,6 @@ public class FormatProcessor {
       myWrapper.setCollectAlignmentsInsideFormattingRange(myReformatContext);
 
       myExpandableIndents = myWrapper.getExpandableIndentsBlocks();
-      myExpandableIndentsMinOffsetBlocksToWrappers = myWrapper.getMarkerBlocks();
     }
 
     @Override
@@ -1612,7 +1610,7 @@ public class FormatProcessor {
 
       final ExpandableIndent indent = myIterator.next();
       Collection<AbstractBlockWrapper> blocksToExpandIndent = myExpandableIndents.get(indent);
-      if (shouldExpand(indent, blocksToExpandIndent)) {
+      if (shouldExpand(blocksToExpandIndent)) {
         for (AbstractBlockWrapper block : blocksToExpandIndent) {
           indent.setEnforceIndent(true);
           reindentNewLineChildren(block);
@@ -1621,57 +1619,32 @@ public class FormatProcessor {
       }
     }
 
-    private boolean shouldExpand(ExpandableIndent indent, Collection<AbstractBlockWrapper> blocksToExpandIndent) {
+    private boolean shouldExpand(Collection<AbstractBlockWrapper> blocksToExpandIndent) {
+      AbstractBlockWrapper last = null;
       for (AbstractBlockWrapper block : blocksToExpandIndent) {
-        if (!block.getWhiteSpace().containsLineFeeds()) continue;
-        return true;
-      }
-
-      int strictMinOffset = getStrictMinOffset(indent);
-      if (strictMinOffset == Integer.MAX_VALUE) {
-        return false;
-      }
-
-      for (AbstractBlockWrapper block : blocksToExpandIndent) {
-        int minNewLineChildrenOffset = findMinNewLineIndent(block);
-        if (minNewLineChildrenOffset <= strictMinOffset) {
+        if (block.getWhiteSpace().containsLineFeeds()) {
           return true;
         }
+        last = block;
       }
 
+      if (last != null) {
+        AbstractBlockWrapper prev = getPreviousBlock(last);
+        return prev != null && prev.getWhiteSpace().containsLineFeeds();
+      }
+      
       return false;
     }
-
-    private int getStrictMinOffset(ExpandableIndent indent) {
-      final Block minOffsetBlock = indent.getStrictMinOffsetBlock();
-      if (minOffsetBlock == null) return Integer.MAX_VALUE;
-
-      AbstractBlockWrapper wrapper = myExpandableIndentsMinOffsetBlocksToWrappers.get(minOffsetBlock);
-      if (wrapper.getWhiteSpace().containsLineFeeds()) {
-        return wrapper.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
+    
+    private AbstractBlockWrapper getPreviousBlock(AbstractBlockWrapper block) {
+      List<AbstractBlockWrapper> children = block.getParent().getChildren();
+      int nextBlockIndex = children.indexOf(block) + 1;
+      if (nextBlockIndex < children.size()) {
+        return children.get(nextBlockIndex);
       }
-
-      return Integer.MAX_VALUE;
+      return null;
     }
-
-    private int findMinNewLineIndent(@NotNull AbstractBlockWrapper block) {
-      if (block instanceof LeafBlockWrapper && block.getWhiteSpace().containsLineFeeds()) {
-        return block.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
-      }
-      else if (block instanceof CompositeBlockWrapper) {
-        List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)block).getChildren();
-        int currentMin = Integer.MAX_VALUE;
-        for (AbstractBlockWrapper child : children) {
-          int childIndent = findMinNewLineIndent(child);
-          if (childIndent < currentMin) {
-            currentMin = childIndent;
-          }
-        }
-        return currentMin;
-      }
-      return Integer.MAX_VALUE;
-    }
-
+    
     private void reindentNewLineChildren(final @NotNull AbstractBlockWrapper block) {
       if (block instanceof LeafBlockWrapper) {
         WhiteSpace space = block.getWhiteSpace();
