@@ -1061,7 +1061,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         else if (VirtualFile.PROP_WRITABLE.equals(propertyChangeEvent.getPropertyName())) {
           executeSetWritable(file, ((Boolean)newValue).booleanValue());
           if (LOG.isDebugEnabled()) {
-            LOG.debug("File " + file + " writable=" + file.isWritable());
+            LOG.debug("File " + file + " writable=" + file.isWritable() + " id=" + getFileId(file));
           }
         }
         else if (VirtualFile.PROP_HIDDEN.equals(propertyChangeEvent.getPropertyName())) {
