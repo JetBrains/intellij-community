@@ -813,6 +813,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return promise;
   }
 
+  /**
+   * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
+   * if project is closed)
+   */
   public Promise<List<Module>> scheduleImportAndResolve() {
     AsyncPromise<List<Module>> promise = scheduleResolve();// scheduleImport will be called after the scheduleResolve process has finished
     fireImportAndResolveScheduled();
@@ -838,6 +842,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
             public void run() {
               if (hasScheduledProjects()) {
                 scheduleImport().processed(result);
+              }
+              else {
+                result.setResult(Collections.<Module>emptyList());
               }
             }
           };
