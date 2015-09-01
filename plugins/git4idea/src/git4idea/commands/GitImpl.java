@@ -18,6 +18,7 @@ package git4idea.commands;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -604,7 +605,7 @@ public class GitImpl implements Git {
       GitLineHandler handler = handlerConstructor.compute();
       handler.addLineListener(new GitLineHandlerListener() {
         @Override public void onLineAvailable(String line, Key outputType) {
-          if (isError(line)) {
+          if (looksLikeError(line)) {
             errorOutput.add(line);
           } else {
             output.add(line);
@@ -668,16 +669,13 @@ public class GitImpl implements Git {
     return ObjectUtils.assertNotNull(compoundResult);
   }
 
-  /**
-   * Check if the line looks line an error message
-   */
-  private static boolean isError(String text) {
-    for (String indicator : ERROR_INDICATORS) {
-      if (text.trim().toLowerCase().startsWith(indicator.toLowerCase())) {
-        return true;
+  private static boolean looksLikeError(@NotNull final String text) {
+    return ContainerUtil.exists(ERROR_INDICATORS, new Condition<String>() {
+      @Override
+      public boolean value(@NotNull String indicator) {
+        return StringUtil.startsWithIgnoreCase(text.trim(), indicator);
       }
-    }
-    return false;
+    });
   }
 
   // could be upper-cased, so should check case-insensitively
