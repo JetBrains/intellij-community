@@ -142,17 +142,12 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
     String relativePath = path.substring(rootPath.length());
 
-    String branch = getCurrentBranchNameOnRemote(repository);
-    if (branch != null) {
-      return makeUrlToOpen(editor, relativePath, branch, githubRemoteUrl);
-    }
-
     String hash = getCurrentFileRevisionHash(project, virtualFile);
     if (hash != null) {
       return makeUrlToOpen(editor, relativePath, hash, githubRemoteUrl);
     }
 
-    GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "Can't find related tracked branch or hash.");
+    GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "Can't get last revision.");
     return null;
   }
 
@@ -210,7 +205,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          ref.set((GitRevisionNumber)GitHistoryUtils.getCurrentRevision(project, VcsUtil.getFilePath(file), null));
+          ref.set((GitRevisionNumber)GitHistoryUtils.getCurrentRevision(project, VcsUtil.getFilePath(file), "HEAD"));
         }
         catch (VcsException e) {
           LOG.warn(e);
