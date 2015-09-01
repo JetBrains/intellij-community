@@ -207,6 +207,11 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  //JDK-8043374
+  public void testIntersectionTypeOfDifferentParameterizationOfTheSameClassInNonWildcardParameterization() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

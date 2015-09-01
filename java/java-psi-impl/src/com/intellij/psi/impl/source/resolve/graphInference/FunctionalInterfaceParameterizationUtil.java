@@ -185,7 +185,7 @@ public class FunctionalInterfaceParameterizationUtil {
             newParameters[i] = bound != null ? bound : PsiType.getJavaLangObject(psiClass.getManager(), psiClassType.getResolveScope());
             for (PsiClassType paramBound : typeParameters[i].getExtendsListTypes()) {
               if (!PsiPolyExpressionUtil.mentionsTypeParameters(paramBound, typeParametersSet)) {
-                newParameters[i] = GenericsUtil.getGreatestLowerBound(paramBound, newParameters[i]);
+                newParameters[i] = GenericsUtil.getGreatestLowerBound(newParameters[i], paramBound);
               }
             }
           }
