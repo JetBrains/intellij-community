@@ -89,7 +89,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   private static final ImmutableSet<String> SECTIONS_WITH_NAME = ImmutableSet.of(METHODS_SECTION);
 
   @Nullable
-  protected static String normalizeSectionTitle(@NotNull @NonNls String title) {
+  public static String getNormalizedSectionTitle(@NotNull @NonNls String title) {
     return SECTION_ALIASES.get(title.toLowerCase());
   }
 
@@ -148,7 +148,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     if (pair.getFirst() == null) {
       return Pair.create(null, sectionStartLine);
     }
-    final String normalized = normalizeSectionTitle(pair.getFirst().toString());
+    final String normalized = getNormalizedSectionTitle(pair.getFirst().toString());
     if (normalized == null) {
       return Pair.create(null, sectionStartLine);
     }
@@ -497,13 +497,18 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   }
 
   @NotNull
-  private List<Section> getSectionsWithNormalizedTitle(@NotNull final String title) {
+  public List<Section> getSectionsWithNormalizedTitle(@NotNull final String title) {
     return ContainerUtil.mapNotNull(mySections, new Function<Section, Section>() {
       @Override
       public Section fun(Section section) {
-        return section.getNormalizedTitle().equals(title) ? section : null;
+        return section.getNormalizedTitle().equals(getNormalizedSectionTitle(title)) ? section : null;
       }
     });
+  }
+
+  @Nullable
+  public Section getFirstSectionWithNormalizedTitle(@NotNull String title) {
+    return ContainerUtil.getFirstItem(getSectionsWithNormalizedTitle(title));
   }
 
   @Nullable
@@ -534,7 +539,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     @NotNull
     public String getNormalizedTitle() {
       //noinspection ConstantConditions
-      return normalizeSectionTitle(getTitle());
+      return getNormalizedSectionTitle(getTitle());
     }
 
     @NotNull

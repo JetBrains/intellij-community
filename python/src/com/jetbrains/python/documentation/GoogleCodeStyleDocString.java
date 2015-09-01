@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
  * @see <a href="http://google-styleguide.googlecode.com/svn/trunk/pyguide.html?showone=Comments#Comments">Google Python Style: Docstrings</a>
  */
 public class GoogleCodeStyleDocString extends SectionBasedDocString {
-  public static final Pattern SECTION_HEADER_RE = Pattern.compile("\\s*(\\w+):\\s*", Pattern.MULTILINE);
+  public static final Pattern SECTION_HEADER_RE = Pattern.compile("\\s*([\\w\\s]+):\\s*", Pattern.MULTILINE);
   private static final Pattern FIELD_NAME_AND_TYPE_RE = Pattern.compile("\\s*(.+?)\\s*\\(\\s*(.*?)\\s*\\)\\s*");
 
   public GoogleCodeStyleDocString(@NotNull Substring text) {

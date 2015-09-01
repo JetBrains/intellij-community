@@ -28,7 +28,7 @@ public class GoogleCodeStyleDocStringUpdater extends SectionBasedDocStringUpdate
   }
 
   @Override
-  void updateParamDeclarationWithType(@NotNull Substring nameSubstring, @NotNull String type) {
+  protected void updateParamDeclarationWithType(@NotNull Substring nameSubstring, @NotNull String type) {
     insert(nameSubstring.getEndOffset(), " (" + type + ")");
   }
 

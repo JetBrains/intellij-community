@@ -283,6 +283,13 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     assertSize(1, paramSection.getFields());
   }
 
+  public void testGoogleKeywordArgumentsSection() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertEmpty(docString.getSummary());
+    assertSize(1, docString.getSections());
+    assertEquals("keyword arguments", docString.getSections().get(0).getNormalizedTitle());
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/docstrings";

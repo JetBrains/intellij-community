@@ -34,14 +34,24 @@ public abstract class DocStringBuilder<This extends DocStringBuilder> {
 
   @NotNull
   public This addLine(@NotNull String line) {
-    myLines.add(line);
+    return addLine(line, myLines.size());
+  }
+
+  @NotNull
+  public This addLine(@NotNull String line, int index) {
+    myLines.add(index, line);
     //noinspection unchecked
     return (This)this;
   }
 
   @NotNull
   public This addEmptyLine() {
-    return addLine("");
+    return addLine("", myLines.size());
+  }
+
+  @NotNull
+  public This addEmptyLine(int index) {
+    return addLine("", index);
   }
 
   @NotNull

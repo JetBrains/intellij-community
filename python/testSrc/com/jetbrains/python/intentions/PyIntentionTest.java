@@ -499,6 +499,26 @@ public class  PyIntentionTest extends PyTestCase {
     doDocReturnTypeTest(DocStringFormat.GOOGLE);
   }
 
+  // PY-16758
+  public void testGoogleReturnSectionAfterKeywords() {
+    doDocReturnTypeTest(DocStringFormat.GOOGLE);
+  }
+  
+  // PY-16758
+  public void testGoogleReturnSectionAfterYields() {
+    doDocReturnTypeTest(DocStringFormat.GOOGLE);
+  }
+
+  // PY-16758
+  public void testGoogleReturnSectionBeforeRaises() {
+    doDocReturnTypeTest(DocStringFormat.GOOGLE);
+  }
+
+  // PY-16758
+  public void testParamSectionBeforeKeywords() {
+    doDocAddMissingParamsTest(DocStringFormat.GOOGLE);
+  }
+
   // PY-9795
   public void testGoogleDocStubWithTypes() {
     final PyCodeInsightSettings codeInsightSettings = PyCodeInsightSettings.getInstance();

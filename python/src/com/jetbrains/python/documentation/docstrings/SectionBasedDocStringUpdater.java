@@ -15,7 +15,9 @@
  */
 package com.jetbrains.python.documentation.docstrings;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.documentation.SectionBasedDocString;
@@ -27,12 +29,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Mikhail Golubev
  */
 public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<SectionBasedDocString> {
+  private static final ImmutableList<String> CANONICAL_SECTION_ORDER = ImmutableList.of(
+    SectionBasedDocString.PARAMETERS_SECTION,
+    SectionBasedDocString.KEYWORD_ARGUMENTS_SECTION,
+    SectionBasedDocString.OTHER_PARAMETERS_SECTION,
+    SectionBasedDocString.YIELDS_SECTION,
+    SectionBasedDocString.RETURNS_SECTION,
+    SectionBasedDocString.RAISES_SECTION
+  );
+
   private final List<AddParameter> myAddParameterRequests = new ArrayList<AddParameter>();
 
   public SectionBasedDocStringUpdater(@NotNull SectionBasedDocString docString, @NotNull String minContentIndent) {
@@ -66,18 +79,15 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
       }
       else {
         final String newLine = createReturnLine(type, getSectionIndent(returnSection), getExpectedFieldIndent());
-        insertAfterLine(getSectionLastTitleLine(returnSection), newLine);
+        insertAfterLine(getSectionTitleLastLine(returnSection), newLine);
       }
     }
     else {
-      final int line = findLastNonEmptyLine();
-      final String newSection = createBuilder()
+      final SectionBasedDocStringBuilder builder = createBuilder()
         .withSectionIndent(getExpectedFieldIndent())
-        .addEmptyLine()
         .startReturnsSection()
-        .addReturnValue(null, type, "")
-        .buildContent(getExpectedSectionIndent(), true);
-      insertAfterLine(line, newSection);
+        .addReturnValue(null, type, "");
+      insertNewSection(builder, SectionBasedDocString.RETURNS_SECTION);
     }
   }
 
@@ -123,11 +133,9 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
       final Section firstParamSection = findFirstParametersSection();
       // Insert whole new parameter block
       if (firstParamSection == null) {
-        paramBlockBuilder
-          .addEmptyLine()
-          .startParametersSection();
-        final String blockText = buildBlock(paramBlockBuilder, newParams, getExpectedFieldIndent(), getExpectedSectionIndent());
-        insertAfterLine(findLastNonEmptyLine(), blockText);
+        paramBlockBuilder.startParametersSection();
+        final SectionBasedDocStringBuilder builder = addParametersInBlock(paramBlockBuilder, newParams, getExpectedFieldIndent());
+        insertNewSection(builder, SectionBasedDocString.PARAMETERS_SECTION);
       }
       // Update existing parameter block
       else {
@@ -135,7 +143,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
         // Section exist, but empty
         if (firstParamField == null) {
           final String blockText = buildBlock(paramBlockBuilder, newParams, getExpectedFieldIndent(), getSectionIndent(firstParamSection));
-          insertAfterLine(getSectionLastTitleLine(firstParamSection), blockText);
+          insertAfterLine(getSectionTitleLastLine(firstParamSection), blockText);
         }
         else {
           // Section contain other parameter declarations
@@ -153,14 +161,70 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
                                    @NotNull List<AddParameter> params,
                                    @NotNull String sectionIndent,
                                    @NotNull String indent) {
+    return addParametersInBlock(builder, params, sectionIndent).buildContent(indent, true);
+  }
+
+  private static SectionBasedDocStringBuilder addParametersInBlock(@NotNull SectionBasedDocStringBuilder builder,
+                                                                   @NotNull List<AddParameter> params,
+                                                                   @NotNull String sectionIndent) {
     builder.withSectionIndent(sectionIndent);
     for (AddParameter param : params) {
       builder.addParameter(param.name, param.type, "");
     }
-    return builder.buildContent(indent, true);
+    return builder;
+  }
+
+  private void insertNewSection(@NotNull SectionBasedDocStringBuilder builder, @NotNull String sectionTitle) {
+    final Pair<Integer, Boolean> pos = findPreferredSectionLine(sectionTitle);
+    if (pos.getSecond()) {
+      builder.addEmptyLine(0);
+      insertAfterLine(pos.getFirst(), builder.buildContent(getExpectedSectionIndent(), true));
+    }
+    else {
+      builder.addEmptyLine();
+      insertBeforeLine(pos.getFirst(), builder.buildContent(getExpectedSectionIndent(), true));
+    }
+  }
+
+  /**
+   * @return pair (lineNum, insertAfter), i.e. first item is line number,
+   * second item is true if new section should be inserted after this line and false otherwise
+   */
+  private Pair<Integer, Boolean> findPreferredSectionLine(@NotNull String sectionTitle) {
+    final String normalized = SectionBasedDocString.getNormalizedSectionTitle(sectionTitle);
+    final int index = CANONICAL_SECTION_ORDER.indexOf(normalized);
+    if (index < 0) {
+      return Pair.create(findLastNonEmptyLine(), true);
+    }
+    final Map<String, Section> namedSections = new HashMap<String, Section>();
+    for (Section section : myOriginalDocString.getSections()) {
+      final String normalizedTitle = section.getNormalizedTitle();
+      // leave only first occurrences
+      if (!namedSections.containsKey(normalizedTitle)) {
+        namedSections.put(normalizedTitle, section);
+      }
+    }
+    for (int i = index - 1; i >= 0; i--) {
+      final Section previous = namedSections.get(CANONICAL_SECTION_ORDER.get(i));
+      if (previous != null) {
+        return Pair.create(getSectionEndLine(previous), true);
+      }
+    }
+    for (int i = index + 1; i < CANONICAL_SECTION_ORDER.size(); i++) {
+      final Section next = namedSections.get(CANONICAL_SECTION_ORDER.get(i));
+      if (next != null) {
+        return Pair.create(getSectionStartLine(next), false);
+      }
+    }
+    return Pair.create(findLastNonEmptyLine(), true);
   }
 
 
+  protected abstract void updateParamDeclarationWithType(@NotNull Substring nameSubstring, @NotNull String type);
+
+  protected abstract SectionBasedDocStringBuilder createBuilder();
+
+  @Nullable
   private Substring findParamNameSubstring(@NotNull final String name) {
     return ContainerUtil.find(myOriginalDocString.getParameterSubstrings(), new Condition<Substring>() {
       @Override
@@ -170,13 +234,9 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     });
   }
 
-  abstract void updateParamDeclarationWithType(@NotNull Substring nameSubstring, @NotNull String type);
-
-  protected int getSectionLastTitleLine(@NotNull Section paramSection) {
+  protected int getSectionTitleLastLine(@NotNull Section paramSection) {
     return getSectionStartLine(paramSection);
   }
-
-  protected abstract SectionBasedDocStringBuilder createBuilder();
 
   protected String createReturnLine(@NotNull String type,
                                     @NotNull String docStringIndent,
@@ -242,6 +302,12 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     return section.getTitleAsSubstring().getStartLine();
   }
 
+  protected int getSectionEndLine(@NotNull Section section) {
+    final List<SectionField> fields = section.getFields();
+    //noinspection ConstantConditions
+    return fields.isEmpty() ? getSectionTitleLastLine(section) : getFieldEndLine(ContainerUtil.getLastItem(fields));
+  }
+
   protected int getFieldStartLine(@NotNull SectionField field) {
     return chooseFirstNotNull(field.getNameAsSubstring(),
                               field.getTypeAsSubstring(),
@@ -261,7 +327,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
         return value;
       }
     }
-    throw new NullPointerException("At least one of values should be not null");
+    throw new NullPointerException("At least one of values must be not null");
   }
 
   private static class AddParameter {
