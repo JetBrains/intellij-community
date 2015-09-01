@@ -44,4 +44,7 @@ public class MacIntelliJIconCache {
   public static Icon getIcon(String name, boolean selected, boolean focused) {
     return getIcon(name, selected, focused, false);
   }
+  public static Icon getIcon(String name) {
+    return getIcon(name, false, false, false);
+  }
 }
