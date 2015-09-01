@@ -348,13 +348,13 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
 
     override fun setStateInOldStorage(component: Any, componentName: String, state: Any) {
-      val stateStorage = storageManager.getOldStorage(component, componentName, StateStorageOperation.WRITE)
-      if (stateStorage != null) {
-        getExternalizationSession(stateStorage)?.setState(component, componentName, state)
+      val storage = storageManager.getOldStorage(component, componentName, StateStorageOperation.WRITE)
+      if (storage != null) {
+        getExternalizationSession(storage)?.setState(component, componentName, state)
       }
     }
 
-    protected fun getExternalizationSession(storage: StateStorage): StateStorage.ExternalizationSession? {
+    private fun getExternalizationSession(storage: StateStorage): StateStorage.ExternalizationSession? {
       var session = sessions.get(storage)
       if (session == null) {
         session = storage.startExternalization()
