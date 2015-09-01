@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ import java.util.*;
 
 @State(
   name = "ProjectJdkTable",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/jdk.table.xml", roamingType = RoamingType.DISABLED)}
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/jdk.table.xml", roamingType = RoamingType.DISABLED)
 )
 public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl");
@@ -56,7 +56,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
 
   private final MessageListenerList<Listener> myListenerList;
 
-  @NonNls public static final String ELEMENT_JDK = "jdk";
+  @NonNls private static final String ELEMENT_JDK = "jdk";
 
   private final Map<String, ProjectJdkImpl> myCachedProjectJdks = new HashMap<String, ProjectJdkImpl>();
   private final MessageBus myMessageBus;
@@ -69,9 +69,11 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       private FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
 
+      @Override
       public void before(@NotNull List<? extends VFileEvent> events) {
       }
 
+      @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         if (!events.isEmpty()) {
           final Set<Sdk> affected = new SmartHashSet<Sdk>();
@@ -116,7 +118,6 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
           }
         }
       }
-
     });
   }
 
@@ -149,7 +150,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
   @Nullable
   public Sdk findJdk(String name, String type) {
     Sdk projectJdk = findJdk(name);
-    if (projectJdk != null){
+    if (projectJdk != null) {
       return projectJdk;
     }
     final String sdkTypeName = getSdkTypeName(type);
@@ -163,7 +164,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
 
     final SdkType[] sdkTypes = SdkType.getAllTypes();
     for (SdkType sdkType : sdkTypes) {
-      if (Comparing.strEqual(sdkTypeName, sdkType.getName())){
+      if (Comparing.strEqual(sdkTypeName, sdkType.getName())) {
         if (sdkType.isValidSdkHome(jdkPath)) {
           ProjectJdkImpl projectJdkImpl = new ProjectJdkImpl(name, sdkType);
           projectJdkImpl.setHomePath(jdkPath);
@@ -190,7 +191,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
   public List<Sdk> getSdksOfType(final SdkTypeId type) {
     List<Sdk> result = new ArrayList<Sdk>();
     final Sdk[] sdks = getAllJdks();
-    for(Sdk sdk: sdks) {
+    for (Sdk sdk : sdks) {
       if (sdk.getSdkType() == type) {
         result.add(sdk);
       }
@@ -264,12 +265,10 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
   public void loadState(Element element) {
     mySdks.clear();
 
-    final List children = element.getChildren(ELEMENT_JDK);
-    for (final Object aChildren : children) {
-      final Element e = (Element)aChildren;
-      final ProjectJdkImpl jdk = new ProjectJdkImpl(null, null);
+    for (Element child : element.getChildren(ELEMENT_JDK)) {
+      ProjectJdkImpl jdk = new ProjectJdkImpl(null, null);
       try {
-        jdk.readExternal(e);
+        jdk.readExternal(child);
       }
       catch (InvalidDataException ex) {
         LOG.error(ex);
@@ -280,9 +279,9 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
 
   @Override
   public Element getState() {
-    Element element = new Element("ProjectJdkTableImpl");
+    Element element = new Element("state");
     for (Sdk jdk : mySdks) {
-      final Element e = new Element(ELEMENT_JDK);
+      Element e = new Element(ELEMENT_JDK);
       try {
         ((ProjectJdkImpl)jdk).writeExternal(e);
       }
