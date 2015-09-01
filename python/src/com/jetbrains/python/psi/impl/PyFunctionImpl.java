@@ -217,12 +217,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         return type;
       }
     }
-    final PyType type = context.getReturnType(this);
-    final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
-    if (results != null) {
-      return analyzeCallType(type, results.getReceiver(), results.getArguments(), context);
-    }
-    return type;
+    final PyExpression receiver = PyTypeChecker.getReceiver(callSite, this);
+    final List<PyExpression> arguments = PyTypeChecker.getArguments(callSite, this);
+    final List<PyParameter> parameters = PyUtil.getParameters(this, context);
+    final List<PyParameter> explicitParameters = PyTypeChecker.filterExplicitParameters(parameters, this, callSite);
+    final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(arguments, explicitParameters);
+    return getCallType(receiver, mapping, context);
   }
 
   @Nullable

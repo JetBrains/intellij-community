@@ -18,9 +18,7 @@ package com.jetbrains.python.pyi;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.Processor;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -94,7 +92,7 @@ public class PyiTypeProvider extends PyTypeProviderBase {
           final List<PyFunction> overloads = getOverloads(functionStub, context);
           for (PyFunction overload : overloads) {
             final Map<PyExpression, PyNamedParameter> mapping = mapArguments(callSite, overload);
-            final PyExpression receiver = getReceiver(callSite, overload);
+            final PyExpression receiver = PyTypeChecker.getReceiver(callSite, overload);
             final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping, context);
             final PyType returnType = context.getReturnType(overload);
             final PyType unifiedType = substitutions != null ? PyTypeChecker.substitute(returnType, substitutions, context) : null;
@@ -180,81 +178,16 @@ public class PyiTypeProvider extends PyTypeProviderBase {
   }
 
   @NotNull
-  public static List<PyExpression> getArguments(@NotNull PyCallSiteExpression expr, @NotNull PsiElement resolved) {
-    if (expr instanceof PyCallExpression) {
-      return Arrays.asList(((PyCallExpression)expr).getArguments());
-    }
-    else if (expr instanceof PySubscriptionExpression) {
-      return Collections.singletonList(((PySubscriptionExpression)expr).getIndexExpression());
-    }
-    else if (expr instanceof PyBinaryExpression) {
-      final PyBinaryExpression binaryExpr = (PyBinaryExpression)expr;
-      final boolean isRight = resolved instanceof PsiNamedElement && PyNames.isRightOperatorName(((PsiNamedElement)resolved).getName());
-      return Collections.singletonList(isRight ? binaryExpr.getLeftExpression() : binaryExpr.getRightExpression());
-    }
-    else {
-      return Collections.emptyList();
-    }
-  }
-
-  @NotNull
-  public static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite, @NotNull PsiElement resolved) {
+  private static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite, @NotNull PsiElement resolved) {
     if (resolved instanceof PyCallable) {
       final PyCallable callable = (PyCallable)resolved;
-      final List<PyExpression> arguments = getArguments(callSite, resolved);
-      final List<PyParameter> parameters = getExplicitParameters(callable, callSite);
-      return PyCallExpressionHelper.mapArguments(arguments, parameters).getMappedParameters();
+      final List<PyExpression> arguments = PyTypeChecker.getArguments(callSite, resolved);
+      final List<PyParameter> parameters = Arrays.asList(callable.getParameterList().getParameters());
+      final List<PyParameter> explicitParameters = PyTypeChecker.filterExplicitParameters(parameters, callable, callSite);
+      return PyCallExpressionHelper.mapArguments(arguments, explicitParameters);
     }
     else {
       return Collections.emptyMap();
-    }
-  }
-
-  @NotNull
-  public static List<PyParameter> getExplicitParameters(@NotNull PyCallable callable, @NotNull PyCallSiteExpression callSite) {
-    final List<PyParameter> parameters = Arrays.asList(callable.getParameterList().getParameters());
-    final int implicitOffset;
-    if (callSite instanceof PyCallExpression) {
-      final PyCallExpression callExpr = (PyCallExpression)callSite;
-      final PyExpression callee = callExpr.getCallee();
-      if (callee instanceof PyReferenceExpression && callable instanceof PyFunction) {
-        implicitOffset = PyCallExpressionHelper.getImplicitArgumentCount((PyReferenceExpression)callee, (PyFunction)callable);
-      }
-      else {
-        implicitOffset = 0;
-      }
-    }
-    else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
-      implicitOffset = 1;
-    }
-    else {
-      implicitOffset = 0;
-    }
-    return parameters.subList(Math.min(implicitOffset, parameters.size()), parameters.size());
-  }
-
-  @Nullable
-  public static PyExpression getReceiver(@NotNull PyCallSiteExpression expr, @NotNull PsiElement resolved) {
-    if (expr instanceof PyCallExpression) {
-      if (resolved instanceof PyFunction) {
-        final PyFunction function = (PyFunction)resolved;
-        if (function.getModifier() == PyFunction.Modifier.STATICMETHOD) {
-          return null;
-        }
-      }
-      final PyExpression callee = ((PyCallExpression)expr).getCallee();
-      return callee instanceof PyQualifiedExpression ? ((PyQualifiedExpression)callee).getQualifier() : null;
-    }
-    else if (expr instanceof PySubscriptionExpression) {
-      return ((PySubscriptionExpression)expr).getOperand();
-    }
-    else if (expr instanceof PyBinaryExpression) {
-      final PyBinaryExpression binaryExpr = (PyBinaryExpression)expr;
-      final boolean isRight = resolved instanceof PsiNamedElement && PyNames.isRightOperatorName(((PsiNamedElement)resolved).getName());
-      return isRight ? binaryExpr.getRightExpression() : binaryExpr.getLeftExpression();
-    }
-    else {
-      return null;
     }
   }
 }

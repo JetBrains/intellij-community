@@ -647,7 +647,7 @@ public class PyCallExpressionHelper {
     final List<PyParameter> parameters = PyUtil.getParameters(markedCallee.getCallable(), context);
     final List<PyParameter> explicitParameters = dropImplicitParameters(parameters, markedCallee.getImplicitOffset());
     final List<PyExpression> arguments = new ArrayList<PyExpression>(Arrays.asList(argumentList.getArguments()));
-    final ArgumentMappingResults mappingResults = mapArguments(arguments, explicitParameters);
+    final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
     return new PyCallExpression.PyArgumentsMapping(callExpression, markedCallee,
                                                    mappingResults.getMappedParameters(), mappingResults.getUnmappedParameters(),
                                                    mappingResults.getUnmappedArguments(),
@@ -657,7 +657,13 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  public static ArgumentMappingResults mapArguments(@NotNull List<PyExpression> arguments, @NotNull List<PyParameter> parameters) {
+  public static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull List<PyExpression> arguments,
+                                                                 @NotNull List<PyParameter> parameters) {
+    return analyzeArguments(arguments, parameters).getMappedParameters();
+  }
+
+  @NotNull
+  private static ArgumentMappingResults analyzeArguments(@NotNull List<PyExpression> arguments, @NotNull List<PyParameter> parameters) {
     boolean seenSingleStar = false;
     boolean mappedVariadicArgumentsToParameters = false;
     final Map<PyExpression, PyNamedParameter> mappedParameters = new LinkedHashMap<PyExpression, PyNamedParameter>();

@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -88,8 +89,10 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     private void checkCallSite(@Nullable PyCallSiteExpression callSite) {
       final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<PyGenericType, PyType>();
-      final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, myTypeEvalContext);
-      if (results != null) {
+      final List<PyTypeChecker.AnalyzeCallResults> resultsSet = PyTypeChecker.analyzeCallSite(callSite, myTypeEvalContext);
+      // TODO: Analyze all results (typing overloads, binary left-right operators), not the first one
+      if (!resultsSet.isEmpty()) {
+        final PyTypeChecker.AnalyzeCallResults results = resultsSet.get(0);
         boolean genericsCollected = false;
         for (Map.Entry<PyExpression, PyNamedParameter> entry : results.getArguments().entrySet()) {
           final PyNamedParameter p = entry.getValue();

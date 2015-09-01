@@ -16,15 +16,13 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ResolveResult;
+import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
@@ -549,7 +547,8 @@ public class PyTypeChecker {
   }
 
   @Nullable
-  public static AnalyzeCallResults analyzeCallSite(@Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  @Deprecated
+  public static AnalyzeCallResults analyzeSingleCallSite(@Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     if (callSite instanceof PyCallExpression) {
       return analyzeCall((PyCallExpression)callSite, context);
     }
@@ -560,6 +559,52 @@ public class PyTypeChecker {
       return analyzeCall((PySubscriptionExpression)callSite, context);
     }
     return null;
+  }
+
+  @NotNull
+  public static List<AnalyzeCallResults> analyzeCallSite(@Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+    if (callSite != null) {
+      final List<AnalyzeCallResults> results = new ArrayList<AnalyzeCallResults>();
+      for (PyCallable callable : resolveCallee(callSite, context)) {
+        final PyExpression receiver = getReceiver(callSite, callable);
+        final List<PyExpression> arguments = getArguments(callSite, callable);
+        for (List<PyParameter> parameters : PyUtil.getOverloadedParametersSet(callable, context)) {
+          final List<PyParameter> explicitParameters = filterExplicitParameters(parameters, callable, callSite);
+          final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(arguments, explicitParameters);
+          results.add(new AnalyzeCallResults(callable, receiver, mapping));
+        }
+      }
+      return results;
+    }
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  private static List<PyCallable> resolveCallee(@NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    if (callSite instanceof PyCallExpression) {
+      final PyCallExpression callExpr = (PyCallExpression)callSite;
+      final PyCallExpression.PyMarkedCallee callee = callExpr.resolveCallee(resolveContext);
+      return callee != null ? Collections.singletonList(callee.getCallable()) : Collections.<PyCallable>emptyList();
+    }
+    else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
+      final List<PyCallable> results = new ArrayList<PyCallable>();
+      boolean resolvedToUnknownResult = false;
+      for (PsiElement result : PyUtil.multiResolveTopPriority(callSite, resolveContext)) {
+        if (result instanceof PyTypedElement) {
+          final PyType resultType = context.getType((PyTypedElement)result);
+          if (resultType instanceof PyFunctionType) {
+            results.add(((PyFunctionType)resultType).getCallable());
+            continue;
+          }
+        }
+        resolvedToUnknownResult = true;
+      }
+      return resolvedToUnknownResult ? Collections.<PyCallable>emptyList() : results;
+    }
+    else {
+      return Collections.emptyList();
+    }
   }
 
   @Nullable
@@ -641,6 +686,72 @@ public class PyTypeChecker {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static List<PyParameter> filterExplicitParameters(@NotNull List<PyParameter> parameters, @NotNull PyCallable callable,
+                                                           @NotNull PyCallSiteExpression callSite) {
+    final int implicitOffset;
+    if (callSite instanceof PyCallExpression) {
+      final PyCallExpression callExpr = (PyCallExpression)callSite;
+      final PyExpression callee = callExpr.getCallee();
+      if (callee instanceof PyReferenceExpression && callable instanceof PyFunction) {
+        implicitOffset = PyCallExpressionHelper.getImplicitArgumentCount((PyReferenceExpression)callee, (PyFunction)callable);
+      }
+      else {
+        implicitOffset = 0;
+      }
+    }
+    else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
+      implicitOffset = 1;
+    }
+    else {
+      implicitOffset = 0;
+    }
+    return parameters.subList(Math.min(implicitOffset, parameters.size()), parameters.size());
+  }
+
+  @NotNull
+  public static List<PyExpression> getArguments(@NotNull PyCallSiteExpression expr, @NotNull PsiElement resolved) {
+    if (expr instanceof PyCallExpression) {
+      return Arrays.asList(((PyCallExpression)expr).getArguments());
+    }
+    else if (expr instanceof PySubscriptionExpression) {
+      return Collections.singletonList(((PySubscriptionExpression)expr).getIndexExpression());
+    }
+    else if (expr instanceof PyBinaryExpression) {
+      final PyBinaryExpression binaryExpr = (PyBinaryExpression)expr;
+      final boolean isRight = resolved instanceof PsiNamedElement && PyNames.isRightOperatorName(((PsiNamedElement)resolved).getName());
+      return Collections.singletonList(isRight ? binaryExpr.getLeftExpression() : binaryExpr.getRightExpression());
+    }
+    else {
+      return Collections.emptyList();
+    }
+  }
+
+  @Nullable
+  public static PyExpression getReceiver(@NotNull PyCallSiteExpression expr, @NotNull PsiElement resolved) {
+    if (expr instanceof PyCallExpression) {
+      if (resolved instanceof PyFunction) {
+        final PyFunction function = (PyFunction)resolved;
+        if (function.getModifier() == PyFunction.Modifier.STATICMETHOD) {
+          return null;
+        }
+      }
+      final PyExpression callee = ((PyCallExpression)expr).getCallee();
+      return callee instanceof PyQualifiedExpression ? ((PyQualifiedExpression)callee).getQualifier() : null;
+    }
+    else if (expr instanceof PySubscriptionExpression) {
+      return ((PySubscriptionExpression)expr).getOperand();
+    }
+    else if (expr instanceof PyBinaryExpression) {
+      final PyBinaryExpression binaryExpr = (PyBinaryExpression)expr;
+      final boolean isRight = resolved instanceof PsiNamedElement && PyNames.isRightOperatorName(((PsiNamedElement)resolved).getName());
+      return isRight ? binaryExpr.getRightExpression() : binaryExpr.getLeftExpression();
+    }
+    else {
+      return null;
+    }
   }
 
   public static class AnalyzeCallResults {

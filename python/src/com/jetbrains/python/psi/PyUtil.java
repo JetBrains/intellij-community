@@ -1583,9 +1583,30 @@ public class PyUtil {
   }
 
   @NotNull
-  private static List<List<PyParameter>> getOverloadedParametersSet(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+  public static List<List<PyParameter>> getOverloadedParametersSet(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     final List<List<PyParameter>> parametersSet = getOverloadedParametersSet(context.getType(callable), context);
     return parametersSet != null ? parametersSet : Collections.singletonList(Arrays.asList(callable.getParameterList().getParameters()));
+  }
+
+  @Nullable
+  private static List<PyParameter> getParametersOfCallableType(@NotNull PyCallableType type, @NotNull TypeEvalContext context) {
+    final List<PyCallableParameter> callableTypeParameters = type.getParameters(context);
+    if (callableTypeParameters != null) {
+      boolean allParametersDefined = true;
+      final List<PyParameter> parameters = new ArrayList<PyParameter>();
+      for (PyCallableParameter callableParameter : callableTypeParameters) {
+        final PyParameter parameter = callableParameter.getParameter();
+        if (parameter == null) {
+          allParametersDefined = false;
+          break;
+        }
+        parameters.add(parameter);
+      }
+      if (allParametersDefined) {
+        return parameters;
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -1616,27 +1637,6 @@ public class PyUtil {
       }
     }
 
-    return null;
-  }
-
-  @Nullable
-  private static List<PyParameter> getParametersOfCallableType(@NotNull PyCallableType type, @NotNull TypeEvalContext context) {
-    final List<PyCallableParameter> callableTypeParameters = type.getParameters(context);
-    if (callableTypeParameters != null) {
-      boolean allParametersDefined = true;
-      final List<PyParameter> parameters = new ArrayList<PyParameter>();
-      for (PyCallableParameter callableParameter : callableTypeParameters) {
-        final PyParameter parameter = callableParameter.getParameter();
-        if (parameter == null) {
-          allParametersDefined = false;
-          break;
-        }
-        parameters.add(parameter);
-      }
-      if (allParametersDefined) {
-        return parameters;
-      }
-    }
     return null;
   }
 
