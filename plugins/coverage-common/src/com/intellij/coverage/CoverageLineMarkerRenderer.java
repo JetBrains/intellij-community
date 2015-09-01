@@ -217,13 +217,15 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer {
     group.add(new EditCoverageColorsAction(editor, lineNumber));
     group.add(new HideCoverageInfoAction());
 
-    final JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, group, true).getComponent();
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, group, true);
+    final JComponent toolbarComponent = toolbar.getComponent();
 
     final Color background = ((EditorEx)editor).getBackgroundColor();
     final Color foreground = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
-    toolbar.setBackground(background);
-    toolbar.setBorder(new ColoredSideBorder(foreground, foreground, lineData == null || lineData.getStatus() == LineCoverage.NONE || mySubCoverageActive ? foreground : null, foreground, 1));
-    return toolbar;
+    toolbarComponent.setBackground(background);
+    toolbarComponent.setBorder(new ColoredSideBorder(foreground, foreground, lineData == null || lineData.getStatus() == LineCoverage.NONE || mySubCoverageActive ? foreground : null, foreground, 1));
+    toolbar.updateActionsImmediately();
+    return toolbarComponent;
   }
 
   public void moveToLine(final int lineNumber, final Editor editor) {
