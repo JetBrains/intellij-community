@@ -29,7 +29,6 @@ import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,22 +133,5 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
   @Override
   public void loadState(PyDocumentationSettings state) {
     XmlSerializerUtil.copyBean(state, this);
-  }
-
-  /**
-   * TODO: Use this factory for the whole document infrastructure to simplify new documentation engine support
-   * Factory that returns appropriate instance of {@link StructuredDocString} if specificed
-   *
-   * @return instance or null if no doctype os set
-   */
-  @Nullable
-  public StructuredDocString getDocString() {
-    if (myDocStringFormat.equals(DocStringFormat.EPYTEXT)) {
-      return DocStringUtil.parseDocStringContent(DocStringFormat.EPYTEXT, "");
-    }
-    if (myDocStringFormat.equals(DocStringFormat.REST)) {
-      return DocStringUtil.parseDocStringContent(DocStringFormat.REST, "");
-    }
-    return null;
   }
 }

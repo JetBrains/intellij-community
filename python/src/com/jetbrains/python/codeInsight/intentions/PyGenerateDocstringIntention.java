@@ -67,8 +67,7 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
 
   private boolean isAvailableForFunction(PyFunction function) {
     if (function.getDocStringValue() != null) {
-      final PyDocstringGenerator docstringGenerator = PyDocstringGenerator.forDocStringOwner(function);
-      if (docstringGenerator.hasParametersToAdd()) {
+      if (PyDocstringGenerator.forDocStringOwner(function).withInferredParameters(false).hasParametersToAdd()) {
         myText = PyBundle.message("INTN.add.parameters.to.docstring");
         return true;
       }
@@ -101,8 +100,10 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
     if (!DocStringUtil.ensureNotPlainDocstringFormat(docStringOwner)) {
       return;
     }
-    final PyDocstringGenerator docstringGenerator = PyDocstringGenerator.forDocStringOwner(docStringOwner);
-    docstringGenerator.addFirstEmptyLine();
+    final PyDocstringGenerator docstringGenerator = PyDocstringGenerator
+      .forDocStringOwner(docStringOwner)
+      .withInferredParameters(false)
+      .addFirstEmptyLine();
     final PyStringLiteralExpression updated = docstringGenerator.buildAndInsert().getDocStringExpression();
     if (updated != null && editor != null) {
       final int offset = updated.getTextOffset();

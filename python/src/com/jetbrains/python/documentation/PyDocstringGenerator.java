@@ -64,25 +64,24 @@ public class PyDocstringGenerator {
 
   // Updated after buildAndInsert()
   @Nullable private PyDocStringOwner myDocStringOwner;
-  private final String myDocStringIndent;
-  private final DocStringFormat myDocStringFormat;
+  private String myDocStringIndent;
+  private DocStringFormat myDocStringFormat;
 
   private boolean myUseTypesFromDebuggerSignature = true;
   private boolean myNewMode = false; // true - generate new string, false - update existing
   private boolean myAddFirstEmptyLine = false;
   private boolean myParametersPrepared = false;
-  private boolean myAlwaysGenerateReturn;
   private String myQuotes = TRIPLE_DOUBLE_QUOTES;
 
   private PyDocstringGenerator(@Nullable PyDocStringOwner docStringOwner,
-                              @NotNull DocStringFormat format,
-                              @NotNull String indentation, 
-                              @NotNull String docStringText) {
+                               @Nullable String docStringText,
+                               @NotNull DocStringFormat format,
+                               @NotNull String indentation) {
     myDocStringOwner = docStringOwner;
     myDocStringIndent = indentation;
     myDocStringFormat = format;
     myDocStringText = docStringText;
-    myNewMode = StringUtil.isEmpty(myDocStringText);
+    myNewMode = myDocStringText == null;
   }
 
   @NotNull
@@ -91,27 +90,27 @@ public class PyDocstringGenerator {
     if (owner instanceof PyStatementListContainer) {
       indentation = PyIndentUtil.getElementIndent(((PyStatementListContainer)owner).getStatementList());
     }
-    final String docStringText = owner.getDocStringExpression() == null ? "" : owner.getDocStringExpression().getText();
-    return new PyDocstringGenerator(owner, DocStringUtil.getDocStringFormat(owner), indentation, docStringText);
+    final String docStringText = owner.getDocStringExpression() == null ? null : owner.getDocStringExpression().getText();
+    return new PyDocstringGenerator(owner, docStringText, DocStringUtil.getDocStringFormat(owner), indentation);
   }
   
   @NotNull
   public static PyDocstringGenerator create(@NotNull DocStringFormat format, @NotNull String indentation) {
-    return new PyDocstringGenerator(null, format, indentation, "");
+    return new PyDocstringGenerator(null, null, format, indentation);
   }
 
   @NotNull
   public static PyDocstringGenerator update(@NotNull PyStringLiteralExpression docString) {
-    return new PyDocstringGenerator(PsiTreeUtil.getParentOfType(docString, PyDocStringOwner.class), 
-                                    DocStringUtil.getDocStringFormat(docString),
-                                    PyIndentUtil.getElementIndent(docString), docString.getText());
+    return new PyDocstringGenerator(PsiTreeUtil.getParentOfType(docString, PyDocStringOwner.class),
+                                    docString.getText(), DocStringUtil.getDocStringFormat(docString),
+                                    PyIndentUtil.getElementIndent(docString));
   }
 
   @NotNull
   public static PyDocstringGenerator update(@NotNull DocStringFormat format,
                                             @NotNull String indentation,
                                             @NotNull String text) {
-    return new PyDocstringGenerator(null, format, indentation, text);
+    return new PyDocstringGenerator(null, text, format, indentation);
   }
   
   @NotNull
@@ -149,16 +148,6 @@ public class PyDocstringGenerator {
     return this;
   }
 
-  /**
-   * By default return declaration is added only if function body contains return statement. Sometimes it's not possible, e.g.
-   * in  {@link com.jetbrains.python.editor.PythonEnterHandler} where unclosed docstring literal "captures" whole function body
-   * including return statements.
-   */
-  @NotNull
-  public PyDocstringGenerator forceAddReturn() {
-    myAlwaysGenerateReturn = true;
-    return this;
-  }
 
   @NotNull
   public PyDocstringGenerator addFirstEmptyLine() {
@@ -173,34 +162,65 @@ public class PyDocstringGenerator {
   }
 
   /**
-   * Populate parameters for function if nothing was specified. 
-   * Order parameters, remove duplicates and merge parameters with and without type according to docstring format.
+   * @param alwaysAddReturn by default return declaration is added only if function body contains return statement. Sometimes it's not
+   *                        possible, e.g. in  {@link com.jetbrains.python.editor.PythonEnterHandler} where unclosed docstring literal
+   *                        "captures" whole function body including return statements.
    */
-  private void prepareParameters() {
-    // Populate parameter list, if no one was specified explicitly to either add or remove
-    if (!myParametersPrepared && myAddedParams.isEmpty() && myRemovedParams.isEmpty()) {
-      if (myDocStringOwner instanceof PyFunction) {
-        for (PyParameter param : ((PyFunction)myDocStringOwner).getParameterList().getParameters()) {
-          final String paramName = param.getName();
-          final StructuredDocString docString = getStructuredDocString();
-          if (StringUtil.isEmpty(paramName) || param.isSelf() || docString != null && docString.getParameters().contains(paramName)) {
-            continue;
-          }
-          withParam(paramName);
+  @NotNull
+  public PyDocstringGenerator withInferredParameters(boolean alwaysAddReturn) {
+    if (myDocStringOwner instanceof PyFunction) {
+      for (PyParameter param : ((PyFunction)myDocStringOwner).getParameterList().getParameters()) {
+        final String paramName = param.getName();
+        final StructuredDocString docString = getStructuredDocString();
+        if (StringUtil.isEmpty(paramName) || param.isSelf() || docString != null && docString.getParameters().contains(paramName)) {
+          continue;
         }
-        final RaiseVisitor visitor = new RaiseVisitor();
-        final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
-        statementList.accept(visitor);
-        if (visitor.myHasReturn || myAlwaysGenerateReturn) {
-          // will add :return: placeholder in Sphinx/Epydoc docstrings
-          myAddedParams.add(new DocstringParam("", null, true));
-          if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
-            withReturnValue("");
-          }
+        withParam(paramName);
+      }
+      final RaiseVisitor visitor = new RaiseVisitor();
+      final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
+      statementList.accept(visitor);
+      if (visitor.myHasReturn || alwaysAddReturn) {
+        // will add :return: placeholder in Sphinx/Epydoc docstrings
+        myAddedParams.add(new DocstringParam("", null, true));
+        if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
+          withReturnValue("");
         }
       }
     }
-    
+    return this;
+  }
+
+  @NotNull
+  public String getDocStringIndent() {
+    return myDocStringIndent;
+  }
+
+  public void setDocStringFormat(@NotNull DocStringFormat format) {
+    myDocStringFormat = format;
+  }
+
+  @NotNull
+  public DocStringFormat getDocStringFormat() {
+    return myDocStringFormat;
+  }
+
+  public void setDocStringIndent(@NotNull String docStringIndent) {
+    myDocStringIndent = docStringIndent;
+  }
+
+  public boolean isNewMode() {
+    return myNewMode;
+  }
+
+  /**
+   * Populate parameters for function if nothing was specified.
+   * Order parameters, remove duplicates and merge parameters with and without type according to docstring format.
+   */
+  private void prepareParameters() {
+    if (myParametersPrepared) {
+      return;
+    }
     final Set<Pair<String, Boolean>> withoutType = Sets.newHashSet();
     final Map<Pair<String, Boolean>, String> paramTypes = Maps.newHashMap();
     for (DocstringParam param : myAddedParams) {
@@ -278,7 +298,7 @@ public class PyDocstringGenerator {
 
   @Nullable
   private StructuredDocString getStructuredDocString() {
-    return myDocStringText.isEmpty() ? null : DocStringUtil.parseDocString(myDocStringFormat, myDocStringText);
+    return myDocStringText == null ? null : DocStringUtil.parseDocString(myDocStringFormat, myDocStringText);
   }
 
   public void startTemplate() {

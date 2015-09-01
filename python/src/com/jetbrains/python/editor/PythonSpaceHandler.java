@@ -51,8 +51,8 @@ public class PythonSpaceHandler extends TypedHandlerDelegate {
           final String quotes = document.getText(TextRange.from(expectedStringStart, 3));
           final String docString = PyDocstringGenerator.forDocStringOwner(docOwner)
             .forceNewMode()
+            .withInferredParameters(true)
             .withQuotes(quotes)
-            .forceAddReturn()
             .buildDocString();
           document.insertString(offset, docString.substring(3));
           if (!StringUtil.isEmptyOrSpaces(docString.substring(3, docString.length() - 3))) {

@@ -262,7 +262,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       final int caretOffset = editor.getCaretModel().getOffset();
       final String quotes = editor.getDocument().getText(TextRange.from(caretOffset - 3, 3));
       final String docString = PyDocstringGenerator.forDocStringOwner(docOwner)
-        .forceAddReturn()
+        .withInferredParameters(true)
         .withQuotes(quotes)
         .forceNewMode()
         .buildDocString();
