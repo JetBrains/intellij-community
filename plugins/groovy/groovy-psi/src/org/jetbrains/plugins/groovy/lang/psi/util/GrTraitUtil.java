@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.util.Function;
@@ -36,6 +37,12 @@ import static com.intellij.psi.PsiModifier.ABSTRACT;
  */
 public class GrTraitUtil {
   private static final Logger LOG = Logger.getInstance(GrTraitUtil.class);
+  private static final PsiTypeMapper ID_MAPPER = new PsiTypeMapper() {
+    @Override
+    public PsiType visitClassType(PsiClassType classType) {
+      return classType;
+    }
+  };
 
   @Contract("null -> false")
   public static boolean isInterface(@Nullable PsiClass aClass) {
@@ -73,7 +80,7 @@ public class GrTraitUtil {
               && AnnotationUtil.isAnnotated(containingClass, "groovy.transform.Trait", false);
   }
 
-  public static PsiMethod createTraitMethodFromCompiledHelperMethod(final PsiMethod compiledMethod, PsiClass trait) {
+  public static PsiMethod createTraitMethodFromCompiledHelperMethod(final PsiMethod compiledMethod, final PsiClass trait) {
     assert compiledMethod.getParameterList().getParametersCount() > 0;
 
     final GrLightMethodBuilder result = new GrLightMethodBuilder(compiledMethod.getManager(), compiledMethod.getName());
@@ -84,59 +91,68 @@ public class GrTraitUtil {
       result.getTypeParameterList().addParameter(parameter);
     }
 
-    final Map<String, PsiTypeParameter> substitutionMap = ContainerUtil.newTroveMap();
-    for (PsiTypeParameter parameter : trait.getTypeParameters()) {
-      substitutionMap.put(parameter.getName(), parameter);
-    }
+    final PsiTypeVisitor<PsiType> corrector = createCorrector(compiledMethod, trait);
 
-    final PsiElementFactory myElementFactory = JavaPsiFacade.getInstance(compiledMethod.getProject()).getElementFactory();
-    final PsiTypeVisitor<PsiType> corrector = new PsiTypeMapper() {
-
-      @Nullable
-      @Override
-      public PsiType visitClassType(PsiClassType classType) {
-        final PsiClass resolved = classType.resolve();
-        // if resolved to method parameter -> return as is
-        if (resolved instanceof PsiTypeParameter && compiledMethod.equals(((PsiTypeParameter)resolved).getOwner())) return classType;
-        if (resolved == null) {
-          // if not resolved -> try to get from map
-          final PsiTypeParameter byName = substitutionMap.get(classType.getCanonicalText());
-          return byName == null ? classType : myElementFactory.createType(byName);
-        }
-        else {
-          // if resolved -> get from map anyways
-          final PsiTypeParameter byName = substitutionMap.get(resolved.getName());
-          final PsiTypeVisitor<PsiType> $this = this;
-          final PsiType[] substitutes = !classType.hasParameters() ? PsiType.EMPTY_ARRAY : ContainerUtil.map2Array(
-            classType.getParameters(), PsiType.class, new Function<PsiType, PsiType>() {
-              @Override
-              public PsiType fun(PsiType type) {
-                return type.accept($this);
-              }
-            }
-          );
-          return myElementFactory.createType(byName != null ? byName : resolved, substitutes);
-        }
-      }
-    };
-
-    for (int i = 1; i < compiledMethod.getParameterList().getParameters().length; i++) {
-      final PsiParameter originalParameter = compiledMethod.getParameterList().getParameters()[i];
-      final PsiType originalType = originalParameter.getType();
-      final PsiType correctedType = trait.hasTypeParameters() ? originalType.accept(corrector) : originalType;
+    final PsiParameter[] methodParameters = compiledMethod.getParameterList().getParameters();
+    for (int i = 1; i < methodParameters.length; i++) {
+      final PsiParameter originalParameter = methodParameters[i];
+      final PsiType correctedType = originalParameter.getType().accept(corrector);
       result.addParameter(originalParameter.getName(), correctedType, false);
     }
 
     for (PsiClassType type : compiledMethod.getThrowsList().getReferencedTypes()) {
-      final PsiType correctedType = trait.hasTypeParameters() ? type.accept(corrector) : type;
+      final PsiType correctedType = type.accept(corrector);
       result.getThrowsList().addReference(correctedType instanceof PsiClassType ? (PsiClassType)correctedType : type);
     }
 
     {
       final PsiType originalType = compiledMethod.getReturnType();
-      result.setReturnType(originalType != null && trait.hasTypeParameters() ? originalType.accept(corrector) : originalType);
+      result.setReturnType(originalType == null ? null : originalType.accept(corrector));
     }
 
     return result;
+  }
+
+  @NotNull
+  private static PsiTypeMapper createCorrector(final PsiMethod compiledMethod, final PsiClass trait) {
+    final PsiTypeParameter[] traitTypeParameters = trait.getTypeParameters();
+    if (traitTypeParameters.length == 0) return ID_MAPPER;
+
+    final Map<String, PsiTypeParameter> substitutionMap = ContainerUtil.newTroveMap();
+    for (PsiTypeParameter parameter : traitTypeParameters) {
+      substitutionMap.put(parameter.getName(), parameter);
+    }
+
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(trait.getProject()).getElementFactory();
+    return new PsiTypeMapper() {
+
+      @Nullable
+      @Override
+      public PsiType visitClassType(PsiClassType originalType) {
+        final PsiClass resolved = originalType.resolve();
+        // if resolved to method parameter -> return as is
+        if (resolved instanceof PsiTypeParameter && compiledMethod.equals(((PsiTypeParameter)resolved).getOwner())) return originalType;
+        final PsiType[] typeParameters = originalType.getParameters();
+        final PsiTypeParameter byName = substitutionMap.get(originalType.getCanonicalText());
+        if (byName != null) {
+          assert typeParameters.length == 0;
+          return elementFactory.createType(byName);
+        }
+        if (resolved == null) return originalType;
+        if (typeParameters.length == 0) return originalType;    // do not go deeper
+
+        final Ref<Boolean> hasChanges = Ref.create(false);
+        final PsiTypeVisitor<PsiType> $this = this;
+        final PsiType[] substitutes = ContainerUtil.map2Array(typeParameters, PsiType.class, new Function<PsiType, PsiType>() {
+          @Override
+          public PsiType fun(PsiType type) {
+            final PsiType mapped = type.accept($this);
+            hasChanges.set(mapped != type);
+            return mapped;
+          }
+        });
+        return hasChanges.get() ? elementFactory.createType(resolved, substitutes) : originalType;
+      }
+    };
   }
 }
