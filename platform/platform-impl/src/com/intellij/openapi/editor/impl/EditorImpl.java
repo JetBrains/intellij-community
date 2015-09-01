@@ -2186,7 +2186,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean canPaintImmediately(char c) {
     return myDocument instanceof DocumentImpl &&
            myHighlighter instanceof LexerEditorHighlighter &&
-           myDocument.getTextLength() > 0 &&
            !mySelectionModel.hasSelection() &&
            areVisualLinesUnique(myCaretModel.getAllCarets()) &&
            !isInplaceRenamerActive() &&
