@@ -4,5 +4,5 @@ def f(x, y):
     
     Parameters
     ----------
-        x : object
+    x : object
     """

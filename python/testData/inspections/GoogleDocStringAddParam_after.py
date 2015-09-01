@@ -1,6 +1,6 @@
 def f(b):
     """
 
-    Parameters:
-        b: 
+    Args:
+      b: 
     """

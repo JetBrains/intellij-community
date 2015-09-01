@@ -1,9 +1,9 @@
 def f(x, y):
     """
 
-    Parameters:
-        x:
-        y:
+    Args:
+      x:
+      y:
     """
 
 

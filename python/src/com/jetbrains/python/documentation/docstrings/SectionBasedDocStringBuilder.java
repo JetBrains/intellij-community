@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.documentation.docstrings;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,23 +22,26 @@ import org.jetbrains.annotations.Nullable;
  * @author Mikhail Golubev
  */
 public abstract class SectionBasedDocStringBuilder extends DocStringBuilder<SectionBasedDocStringBuilder> {
-  protected static final String DEFAULT_SECTION_INDENT = StringUtil.repeatSymbol(' ', 4);
-  protected static final String DEFAULT_CONTINUATION_INDENT = StringUtil.repeatSymbol(' ', 4);
 
-  protected String mySectionIndent = DEFAULT_SECTION_INDENT;
-  protected final String myContinuationIndent = DEFAULT_CONTINUATION_INDENT;
+  protected String mySectionIndent;
+  protected final String myContinuationIndent;
 
   private String myCurSectionTitle = null;
+
+  protected SectionBasedDocStringBuilder(@NotNull String defaultSectionIndent, @NotNull String defaultContinuationIndent) {
+    mySectionIndent = defaultSectionIndent; 
+    myContinuationIndent = defaultContinuationIndent;
+  }
 
   @NotNull
   public SectionBasedDocStringBuilder startParametersSection() {
     // TODO make default section titles configurable
-    return startSection("Parameters");
+    return startSection(getDefaultParametersHeader());
   }
 
   @NotNull
   public SectionBasedDocStringBuilder startReturnsSection() {
-    return startSection("Returns");
+    return startSection(getDefaultReturnsHeader());
   }
 
   @NotNull
@@ -58,6 +60,12 @@ public abstract class SectionBasedDocStringBuilder extends DocStringBuilder<Sect
   }
 
   @NotNull
+  protected abstract String getDefaultParametersHeader();
+
+  @NotNull
+  protected abstract String getDefaultReturnsHeader();
+
+  @NotNull
   public abstract SectionBasedDocStringBuilder addParameter(@NotNull String name, @Nullable String type, @NotNull String description);
 
   @NotNull
@@ -65,7 +73,7 @@ public abstract class SectionBasedDocStringBuilder extends DocStringBuilder<Sect
 
   @NotNull
   protected SectionBasedDocStringBuilder addSectionLine(@NotNull String line) {
-    return (SectionBasedDocStringBuilder)addLine(mySectionIndent + line);
+    return addLine(mySectionIndent + line);
   }
 
   @NotNull

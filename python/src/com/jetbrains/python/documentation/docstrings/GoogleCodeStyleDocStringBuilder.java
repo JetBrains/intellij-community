@@ -24,6 +24,23 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GoogleCodeStyleDocStringBuilder extends SectionBasedDocStringBuilder {
 
+  public GoogleCodeStyleDocStringBuilder() {
+    // Two spaces according to Google Code Style
+    super("  ", "  ");
+  }
+
+  @Override
+  @NotNull
+  protected String getDefaultParametersHeader() {
+    return "Args";
+  }
+
+  @Override
+  @NotNull
+  protected String getDefaultReturnsHeader() {
+    return "Returns";
+  }
+
   @NotNull
   @Override
   protected SectionBasedDocStringBuilder startSection(@NotNull String title) {

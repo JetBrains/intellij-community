@@ -1,6 +1,6 @@
 def f(x, y):
     """Summary.
 
-    Parameters:
-        x (object): 
+    Args:
+      x (object): 
     """

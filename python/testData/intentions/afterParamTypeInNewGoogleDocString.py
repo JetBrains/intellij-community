@@ -1,7 +1,7 @@
 def f(x):
     """
 
-    Parameters:
-        x (object): 
+    Args:
+      x (object): 
     """
     return 42

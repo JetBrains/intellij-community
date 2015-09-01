@@ -5,6 +5,6 @@ def f(x, y):
     Returns:
       Something
 
-    Parameters:
-        x (object): 
+    Args:
+      x (object): 
     """

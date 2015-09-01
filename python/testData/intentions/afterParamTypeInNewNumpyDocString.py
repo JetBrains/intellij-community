@@ -3,6 +3,6 @@ def f(x):
 
     Parameters
     ----------
-        x : object
+    x : object
     """
     return 42

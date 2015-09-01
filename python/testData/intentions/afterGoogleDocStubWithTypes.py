@@ -1,11 +1,11 @@
 def f(x, y):
     """
 
-    Parameters:
-        x ():
-        y ():
+    Args:
+      x ():
+      y ():
 
     Returns:
-        object:
+      object:
     """
     return 42

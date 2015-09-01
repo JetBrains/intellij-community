@@ -3,11 +3,11 @@ def f(x, y):
 
     Parameters
     ----------
-        x :
-        y :
+    x :
+    y :
 
     Returns
     -------
-        object
+    object
     """
     return 42

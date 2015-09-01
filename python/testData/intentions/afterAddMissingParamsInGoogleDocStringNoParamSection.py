@@ -1,8 +1,8 @@
 def f(x, y, z):
     """
 
-    Parameters:
-        x: 
-        y: 
-        z: 
+    Args:
+      x: 
+      y: 
+      z: 
     """

@@ -26,6 +26,23 @@ public class NumpyDocStringBuilder extends SectionBasedDocStringBuilder {
   private final char DEFAULT_SECTION_TITLE_UNDERLINE_SYMBOL = '-';
   private char myUnderlineSymbol = DEFAULT_SECTION_TITLE_UNDERLINE_SYMBOL;
 
+  public NumpyDocStringBuilder() {
+    // Sections are not indented and continuation indent of 4 spaces like in Numpy sources
+    super("", "    ");
+  }
+
+  @Override
+  @NotNull
+  protected String getDefaultParametersHeader() {
+    return "Parameters";
+  }
+
+  @Override
+  @NotNull
+  protected String getDefaultReturnsHeader() {
+    return "Returns";
+  }
+
   @NotNull
   @Override
   protected SectionBasedDocStringBuilder startSection(@NotNull String title) {
