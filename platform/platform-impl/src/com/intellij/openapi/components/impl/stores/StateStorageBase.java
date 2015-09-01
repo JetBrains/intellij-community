@@ -13,90 +13,72 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.openapi.components.impl.stores
 
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.diagnostic.Logger;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.concurrent.atomic.AtomicReference;
-
-public abstract class StateStorageBase<T> implements StateStorage {
-  protected static final Logger LOG = Logger.getInstance(StateStorageBase.class);
-
-  private boolean mySavingDisabled = false;
-
-  protected final AtomicReference<T> storageDataRef = new AtomicReference<T>();
-
-  @Override
-  @Nullable
-  public final <S> S getState(Object component, @NotNull String componentName, @NotNull Class<S> stateClass, @Nullable S mergeInto, boolean reload) {
-    return deserializeState(getStateAndArchive(getStorageData(reload), component, componentName), stateClass, mergeInto);
+public abstract class StateStorageBase<T : Any> : StateStorage {
+  companion object {
+    protected val LOG: Logger = Logger.getInstance(javaClass<StateStorageBase<Any>>())
   }
 
-  @Override
-  public final <S> S getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<S> stateClass) {
-    return getState(component, componentName, stateClass, null, false);
+  private var mySavingDisabled = false
+
+  protected val storageDataRef: AtomicReference<T> = AtomicReference()
+
+  override fun <S> getState(component: Any?, componentName: String, stateClass: Class<S>, mergeInto: S?, reload: Boolean): S? {
+    return deserializeState(getState(getStorageData(reload), component, componentName), stateClass, mergeInto)
   }
 
-  @Nullable
-  protected <S> S deserializeState(@Nullable Element serializedState, @NotNull Class <S> stateClass, @Nullable S mergeInto) {
-    return DefaultStateSerializer.deserializeState(serializedState, stateClass, mergeInto);
+  open fun <S> deserializeState(serializedState: Element?, stateClass: Class<S>, mergeInto: S?): S? {
+    return DefaultStateSerializer.deserializeState(serializedState, stateClass, mergeInto)
   }
 
-  @Nullable
-  protected abstract Element getStateAndArchive(@NotNull T storageData, Object component, @NotNull String componentName);
+  abstract fun getState(storageData: T, component: Any?, componentName: String): Element?
 
-  protected abstract boolean hasState(@NotNull T storageData, @NotNull String componentName);
+  protected abstract fun hasState(storageData: T, componentName: String): Boolean
 
-  @Override
-  public final boolean hasState(@NotNull String componentName, boolean reloadData) {
-    return hasState(getStorageData(reloadData), componentName);
+  override fun hasState(componentName: String, reloadData: Boolean): Boolean {
+    return hasState(getStorageData(reloadData), componentName)
   }
 
-  @NotNull
-  public final T getStorageData() {
-    return getStorageData(false);
+  public fun getStorageData(): T {
+    return getStorageData(false)
   }
 
-  @NotNull
-  protected final T getStorageData(boolean reload) {
-    final T storageData = storageDataRef.get();
+  protected fun getStorageData(reload: Boolean): T {
+    val storageData = storageDataRef.get()
     if (storageData != null && !reload) {
-      return storageData;
+      return storageData
     }
 
-    T newStorageData = loadData();
+    val newStorageData = loadData()
     if (storageDataRef.compareAndSet(storageData, newStorageData)) {
-      return newStorageData;
+      return newStorageData
     }
     else {
-      return getStorageData(false);
+      return getStorageData(false)
     }
   }
 
-  protected abstract T loadData();
+  protected abstract fun loadData(): T
 
-  public final void disableSaving() {
+  public fun disableSaving() {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Disabled saving for " + toString());
+      LOG.debug("Disabled saving for " + toString())
     }
-    mySavingDisabled = true;
+    mySavingDisabled = true
   }
 
-  public final void enableSaving() {
+  public fun enableSaving() {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Enabled saving " + toString());
+      LOG.debug("Enabled saving " + toString())
     }
-    mySavingDisabled = false;
+    mySavingDisabled = false
   }
 
-  protected final boolean checkIsSavingDisabled() {
+  protected fun checkIsSavingDisabled(): Boolean {
     if (mySavingDisabled && LOG.isDebugEnabled()) {
-      LOG.debug("Saving disabled for " + toString());
+      LOG.debug("Saving disabled for " + toString())
     }
-    return mySavingDisabled;
+    return mySavingDisabled
   }
 }
