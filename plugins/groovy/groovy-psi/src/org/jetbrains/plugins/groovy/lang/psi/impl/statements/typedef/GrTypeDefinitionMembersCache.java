@@ -228,9 +228,7 @@ public class GrTypeDefinitionMembersCache {
     public List<PsiMethod> collectMethods(@NotNull Collection<PsiMethod> codeMethods) {
       if (myDefinition.isInterface() && !myDefinition.isTrait()) return Collections.emptyList();
 
-      GrImplementsClause clause = myDefinition.getImplementsClause();
-      if (clause == null) return Collections.emptyList();
-      PsiClassType[] types = clause.getReferencedTypes();
+      final PsiClassType[] types = myDefinition.getImplementsListTypes();
 
       List<PsiClassType.ClassResolveResult> traits = getSuperTraitsByCorrectOrder(types);
       if (traits.isEmpty()) return Collections.emptyList();
