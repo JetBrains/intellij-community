@@ -57,9 +57,9 @@ private val LOG = Logger.getInstance(javaClass<ComponentStoreImpl>())
 /**
  * <b>Note:</b> this class is used in upsource, please notify upsource team in case you change its API.
  */
-public abstract class ComponentStoreImpl : IComponentStore {
-  private val myComponents = Collections.synchronizedMap(THashMap<String, Any>())
-  private val mySettingsSavingComponents = CopyOnWriteArrayList<SettingsSavingComponent>()
+abstract class ComponentStoreImpl : IComponentStore {
+  private val components = Collections.synchronizedMap(THashMap<String, Any>())
+  private val settingsSavingComponents = CopyOnWriteArrayList<SettingsSavingComponent>()
 
   protected open val project: Project?
     get() = null
@@ -73,7 +73,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
 
   override final fun initComponent(component: Any, service: Boolean) {
     if (component is SettingsSavingComponent) {
-      mySettingsSavingComponents.add(component)
+      settingsSavingComponents.add(component)
     }
 
     if (!(component is JDOMExternalizable || component is PersistentStateComponent<*>)) {
@@ -110,17 +110,17 @@ public abstract class ComponentStoreImpl : IComponentStore {
   }
 
   override fun save(readonlyFiles: MutableList<util.Pair<StateStorage.SaveSession, VirtualFile>>) {
-    val externalizationSession = if (myComponents.isEmpty()) null else storageManager.startExternalization()
+    val externalizationSession = if (components.isEmpty()) null else storageManager.startExternalization()
     if (externalizationSession != null) {
-      val names = ArrayUtilRt.toStringArray(myComponents.keySet())
+      val names = ArrayUtilRt.toStringArray(components.keySet())
       Arrays.sort(names)
       for (name in names) {
-        commitComponent(externalizationSession, myComponents.get(name)!!, name)
+        commitComponent(externalizationSession, components.get(name)!!, name)
       }
     }
 
     var errors: MutableList<Throwable>? = null
-    for (settingsSavingComponent in mySettingsSavingComponents) {
+    for (settingsSavingComponent in settingsSavingComponents) {
       try {
         settingsSavingComponent.save()
       }
@@ -160,7 +160,7 @@ public abstract class ComponentStoreImpl : IComponentStore {
     val token = WriteAction.start()
     try {
       VfsRootAccess.allowRootAccess(file.getAbsolutePath())
-      CompoundRuntimeException.doThrow(doSave(sessions, arrayListOf(), null))
+      CompoundRuntimeException.doThrow(doSave(sessions))
     }
     finally {
       try {
@@ -185,12 +185,10 @@ public abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun doSave(saveSessions: List<SaveSession>?, readonlyFiles: MutableList<Pair<SaveSession, VirtualFile>>, prevErrors: MutableList<Throwable>?): MutableList<Throwable>? {
+  protected open fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<Pair<SaveSession, VirtualFile>> = arrayListOf(), prevErrors: MutableList<Throwable>? = null): MutableList<Throwable>? {
     var errors = prevErrors
-    if (saveSessions != null) {
-      for (session in saveSessions) {
-        errors = executeSave(session, readonlyFiles, prevErrors)
-      }
+    for (session in saveSessions) {
+      errors = executeSave(session, readonlyFiles, prevErrors)
     }
     return errors
   }
@@ -222,9 +220,9 @@ public abstract class ComponentStoreImpl : IComponentStore {
   }
 
   private fun doAddComponent(name: String, component: Any) {
-    val existing = myComponents.put(name, component)
+    val existing = components.put(name, component)
     if (existing != null && existing !== component) {
-      myComponents.put(name, existing)
+      components.put(name, existing)
       LOG.error("Conflicting component name '$name': ${existing.javaClass} and ${component.javaClass}")
     }
   }
@@ -325,22 +323,14 @@ public abstract class ComponentStoreImpl : IComponentStore {
 
   protected open fun optimizeTestLoading(): Boolean = false
 
-  override final fun isReloadPossible(componentNames: MutableSet<String>): Boolean {
-    for (componentName in componentNames) {
-      val component = myComponents.get(componentName)
-      if (component != null && (component !is PersistentStateComponent<*> || !StoreUtil.getStateSpec(component).reloadable)) {
-        return false
-      }
-    }
+  override final fun isReloadPossible(componentNames: MutableSet<String>) = !componentNames.any { isNotReloadable(it) }
 
-    return true
-  }
+  private fun isNotReloadable(component: Any?) = component != null && (component !is PersistentStateComponent<*> || !StoreUtil.getStateSpec(component).reloadable)
 
-  override final fun getNotReloadableComponents(componentNames: MutableCollection<String>): Collection<String> {
+  fun getNotReloadableComponents(componentNames: Collection<String>): Collection<String> {
     var notReloadableComponents: MutableSet<String>? = null
     for (componentName in componentNames) {
-      val component = myComponents.get(componentName)
-      if (component != null && (component !is PersistentStateComponent<*> || !StoreUtil.getStateSpec(component).reloadable)) {
+      if (isNotReloadable(components.get(componentName))) {
         if (notReloadableComponents == null) {
           notReloadableComponents = LinkedHashSet<String>()
         }
@@ -358,14 +348,14 @@ public abstract class ComponentStoreImpl : IComponentStore {
 
   override final fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
     val stateSpec = StoreUtil.getStateSpecOrError(componentClass)
-    val component = myComponents.get(stateSpec.name) as PersistentStateComponent<*>?
+    val component = components.get(stateSpec.name) as PersistentStateComponent<*>?
     if (component != null) {
       initPersistentComponent(stateSpec, component, emptySet(), true)
     }
   }
 
   private fun reloadState(componentName: String, changedStorages: Set<StateStorage>): Boolean {
-    val component = myComponents.get(componentName) as PersistentStateComponent<*>?
+    val component = components.get(componentName) as PersistentStateComponent<*>?
     if (component == null) {
       return false
     }

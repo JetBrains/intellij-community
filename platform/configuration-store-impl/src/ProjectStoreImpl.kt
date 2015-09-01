@@ -186,7 +186,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
     }
   }
 
-  override fun doSave(saveSessions: List<SaveSession>?, readonlyFiles: MutableList<Pair<SaveSession, VirtualFile>>, prevErrors: MutableList<Throwable>?): MutableList<Throwable>? {
+  override fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<Pair<SaveSession, VirtualFile>>, prevErrors: MutableList<Throwable>?): MutableList<Throwable>? {
     var errors = prevErrors
     beforeSave(readonlyFiles)
 

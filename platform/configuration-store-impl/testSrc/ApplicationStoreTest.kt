@@ -79,7 +79,7 @@ class ApplicationStoreTest {
     componentStore.initComponent(component, false)
     assertThat(component.foo).isEqualTo("newValue")
 
-    assertThat(Paths.get(componentStore.storageManager.fileSpecToPath(fileSpec))).isRegularFile()
+    assertThat(Paths.get(componentStore.storageManager.expandNormalizedPath(fileSpec))).isRegularFile()
   }
 
   @Test fun `remove deprecated storage on write`() {
