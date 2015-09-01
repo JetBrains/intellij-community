@@ -625,7 +625,7 @@ public class GitImpl implements Git {
 
       handler.runInCurrentThread(null);
       authFailed = handler.hasHttpAuthFailed();
-      success = !startFailed.get() && errorOutput.isEmpty() && (handler.isIgnoredErrorCode(exitCode.get()) || exitCode.get() == 0);
+      success = !startFailed.get() && (handler.isIgnoredErrorCode(exitCode.get()) || exitCode.get() == 0);
     }
     while (authFailed && authAttempt++ < 2);
     return new GitCommandResult(success, exitCode.get(), errorOutput, output, null);
