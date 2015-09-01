@@ -87,9 +87,13 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   public GeneralCodeStylePanel(CodeStyleSettings settings) {
     super(settings);
 
+    //noinspection unchecked
     myLineSeparatorCombo.addItem(SYSTEM_DEPENDANT_STRING);
+    //noinspection unchecked
     myLineSeparatorCombo.addItem(UNIX_STRING);
+    //noinspection unchecked
     myLineSeparatorCombo.addItem(WINDOWS_STRING);
+    //noinspection unchecked
     myLineSeparatorCombo.addItem(MACINTOSH_STRING);
     addPanelToWatch(myPanel);
 
@@ -129,7 +133,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myAdditionalSettingsPanel.removeAll();
     myAdditionalOptions = ConfigurableWrapper.createConfigurables(GeneralCodeStyleOptionsProviderEP.EP_NAME);
     for (GeneralCodeStyleOptionsProvider provider : myAdditionalOptions) {
-      myAdditionalSettingsPanel.add(provider.createComponent());
+      JComponent generalSettingsComponent = provider.createComponent();
+      if (generalSettingsComponent != null) {
+        myAdditionalSettingsPanel.add(generalSettingsComponent);
+      }
     }
   }
 
