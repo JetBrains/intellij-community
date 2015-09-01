@@ -24,7 +24,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -267,12 +266,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
 
     for (Element child : element.getChildren(ELEMENT_JDK)) {
       ProjectJdkImpl jdk = new ProjectJdkImpl(null, null);
-      try {
-        jdk.readExternal(child);
-      }
-      catch (InvalidDataException ex) {
-        LOG.error(ex);
-      }
+      jdk.readExternal(child);
       mySdks.add(jdk);
     }
   }

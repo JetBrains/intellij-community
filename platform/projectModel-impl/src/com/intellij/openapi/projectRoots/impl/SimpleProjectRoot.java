@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.ex.ProjectRoot;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -120,7 +119,7 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(Element element) {
     String url = element.getAttributeValue(ATTRIBUTE_URL);
     myUrl = migrateJdkAnnotationsToCommunityForDevIdea(url);
   }

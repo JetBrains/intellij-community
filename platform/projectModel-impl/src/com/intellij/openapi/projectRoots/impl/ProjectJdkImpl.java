@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,10 @@ import com.intellij.openapi.projectRoots.ex.ProjectRootContainer;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -132,7 +135,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
   }
 
    @Override
-   public void readExternal(Element element) throws InvalidDataException {
+   public void readExternal(Element element) {
     myName = element.getChild(ELEMENT_NAME).getAttributeValue(ATTRIBUTE_VALUE);
     final Element typeChild = element.getChild(ELEMENT_TYPE);
     final String sdkTypeName = typeChild != null? typeChild.getAttributeValue(ATTRIBUTE_VALUE) : null;
