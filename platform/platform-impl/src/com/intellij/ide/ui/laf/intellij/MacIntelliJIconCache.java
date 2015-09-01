@@ -32,7 +32,7 @@ public class MacIntelliJIconCache {
     if (selected) key+= "Selected";
     if (focused) key+= "Focused";
     else if (disabled) key+="Disabled";
-    if (IntelliJLaf.isGraphite()) key+="Graphite";
+    if (IntelliJLaf.isGraphite()) key= "graphite/" + key;
     Icon icon = cache.get(key);
     if (icon == null) {
       icon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/" + key + ".png", MacIntelliJIconCache.class, true);
