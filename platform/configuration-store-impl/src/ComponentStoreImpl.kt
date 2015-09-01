@@ -208,7 +208,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       LOG.error(e)
     }
 
-    val element = storageManager.getOldStorage(component, componentName, StateStorageOperation.READ)?.getState(component, componentName, javaClass<Element>()) ?: return null
+    val element = storageManager.getOldStorage(component, componentName, StateStorageOperation.READ)?.getState(component, componentName, javaClass<Element>(), null, false) ?: return null
     try {
       component.readExternal(element)
     }
@@ -248,7 +248,8 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
 
       val storage = storageManager.getStateStorage(storageSpec)
-      var state = storage.getState(component, name, stateClass, defaultState, reloadData)
+      var stateGetter = (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass)
+      var state = if (stateGetter == null) storage.getState(component, name, stateClass, defaultState, reloadData) else stateGetter.getState(defaultState)
       if (state == null) {
         if (changedStorages != null && changedStorages.contains(storage)) {
           // state will be null if file deleted
@@ -260,7 +261,12 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
       }
 
-      component.loadState(state)
+      try {
+        component.loadState(state)
+      }
+      finally {
+        stateGetter?.close()
+      }
       return name
     }
 

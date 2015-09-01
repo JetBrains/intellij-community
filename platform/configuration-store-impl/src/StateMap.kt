@@ -33,7 +33,7 @@ import java.util.Arrays
 import java.util.TreeMap
 import java.util.concurrent.atomic.AtomicReferenceArray
 
-class StateMap private constructor(private val names: Array<String>, private val states: AtomicReferenceArray<Any>) {
+class StateMap private constructor(private val names: Array<String>, private val states: AtomicReferenceArray<Any?>) {
   companion object {
     private val LOG = Logger.getInstance(javaClass<StateMap>())
 
@@ -51,7 +51,7 @@ class StateMap private constructor(private val names: Array<String>, private val
         Arrays.sort(names)
       }
 
-      val states = AtomicReferenceArray<Any>(names.size())
+      val states = AtomicReferenceArray<Any?>(names.size())
       for (i in names.indices) {
         states.set(i, map.get(names[i]))
       }
@@ -72,16 +72,16 @@ class StateMap private constructor(private val names: Array<String>, private val
       if (Arrays.equals(newBytes, oldState)) {
         return null
       }
-      else if (LOG.isDebugEnabled() && SystemProperties.getBooleanProperty("idea.log.changed.components", false)) {
+      else if (SystemProperties.getBooleanProperty("idea.log.changed.components", false)) {
         fun stateToString(state: Any) = JDOMUtil.writeParent(state as? Element ?: unarchiveState(state as ByteArray), "\n")
 
         val before = stateToString(oldState)
         val after = stateToString(newState)
         if (before == after) {
-          LOG.debug("Serialization error: serialized are different, but unserialized are equal")
+          LOG.info("Serialization error: serialized are different, but unserialized are equal")
         }
         else {
-          LOG.debug("$key ${StringUtil.repeat("=", 80 - key.length())}\nBefore:\n$before\nAfter:\n$after")
+          LOG.info("$key ${StringUtil.repeat("=", 80 - key.length())}\nBefore:\n$before\nAfter:\n$after")
         }
       }
       return newBytes
@@ -160,5 +160,16 @@ class StateMap private constructor(private val names: Array<String>, private val
 
     val state = states.get(index) as? Element ?: return null
     return if (states.compareAndSet(index, state, archiveState(state))) state else getStateAndArchive(key)
+  }
+
+  public fun archive(key: String, state: Element?) {
+    val index = Arrays.binarySearch(names, key)
+    if (index < 0) {
+      return
+    }
+
+    val currentState = states.get(index)
+    LOG.assertTrue(currentState is Element)
+    states.set(index, if (state == null) null else archiveState(state))
   }
 }
