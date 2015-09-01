@@ -28,6 +28,7 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileTime
 
 public class TemporaryDirectory : ExternalResource() {
   private val paths = SmartList<Path>()
@@ -109,6 +110,8 @@ public fun Path.deleteRecursively(): Path = if (exists()) Files.walkFileTree(thi
     return FileVisitResult.CONTINUE
   }
 }) else this
+
+public fun Path.getLastModifiedTime(): FileTime? = Files.getLastModifiedTime(this)
 
 public val Path.systemIndependentPath: String
   get() = toString().replace(File.separatorChar, '/')
