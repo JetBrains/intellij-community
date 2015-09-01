@@ -85,11 +85,10 @@ public class GrTraitUtil {
               && AnnotationUtil.isAnnotated(containingClass, "groovy.transform.Trait", false);
   }
 
-  public static PsiMethod createTraitMethodFromCompiledHelperMethod(final PsiMethod compiledMethod, final PsiClass trait) {
+  public static PsiMethod createTraitMethodFromCompiledHelperMethod(final PsiMethod compiledMethod, final ClsClassImpl trait) {
     assert compiledMethod.getParameterList().getParametersCount() > 0;
 
     final GrLightMethodBuilder result = new GrLightMethodBuilder(compiledMethod.getManager(), compiledMethod.getName());
-    result.setNavigationElement(compiledMethod);
     result.setOriginInfo("via @Trait");
     result.addModifier(PsiModifier.STATIC);
     for (PsiTypeParameter parameter : compiledMethod.getTypeParameters()) {
@@ -114,6 +113,10 @@ public class GrTraitUtil {
       final PsiType originalType = compiledMethod.getReturnType();
       result.setReturnType(originalType == null ? null : originalType.accept(corrector));
     }
+
+    final PsiClass traitSource = trait.getSourceMirrorClass();
+    final PsiMethod sourceMethod = traitSource == null ? null : traitSource.findMethodBySignature(result, false);
+    result.setNavigationElement(sourceMethod != null ? sourceMethod : compiledMethod);
 
     return result;
   }
