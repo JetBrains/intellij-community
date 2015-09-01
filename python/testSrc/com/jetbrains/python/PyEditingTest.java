@@ -26,9 +26,9 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.documentation.DocStringFormat;
-import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -198,40 +198,47 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testEnterStubInDocstring() {  // CR-PY-144
-    final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    final DocStringFormat oldFormat = documentationSettings.getFormat();
-    documentationSettings.setFormat(DocStringFormat.PLAIN);
-    try {
-      doTestEnter("def foo():\n  \"\"\"<caret>", "def foo():\n" +
-                                                 "  \"\"\"\n" +
-                                                 "  \n" +
-                                                 "  \"\"\"");
-    } finally {
-      documentationSettings.setFormat(oldFormat);
-    }
+    runWithDocStringFormat(DocStringFormat.PLAIN, new Runnable() {
+      public void run() {
+        doTestEnter("def foo():\n  \"\"\"<caret>", "def foo():\n" +
+                                                   "  \"\"\"\n" +
+                                                   "  \n" +
+                                                   "  \"\"\"");
+      }
+    });
   }
 
   public void testEnterDocStringStubInClass() {
-    doTypingTest('\n');
+    doDocStringTypingTest('\n', DocStringFormat.REST);
   }
 
   public void testEnterDocStringStubInFile() {
-    doTypingTest('\n');
+    doDocStringTypingTest('\n', DocStringFormat.REST);
+  }
+
+  // PY-16656
+  public void testEnterDocStringStubInFunctionWithSelf() {
+    doDocStringTypingTest('\n', DocStringFormat.REST);
+  }
+  
+  // PY-16656
+  public void testEnterDocStringStubInStaticMethodWithSelf() {
+    doDocStringTypingTest('\n', DocStringFormat.REST);
   }
 
   // PY-3421
   public void testSpaceDocStringStubInFunction() {
-    doTypingTest(' ');
+    doDocStringTypingTest(' ', DocStringFormat.REST);
   }
 
   // PY-3421
   public void testSpaceDocStringStubInFile() {
-    doTypingTest(' ');
+    doDocStringTypingTest(' ', DocStringFormat.REST);
   }
 
   // PY-3421
   public void testSpaceDocStringStubInClass() {
-    doTypingTest(' ');
+    doDocStringTypingTest(' ', DocStringFormat.REST);
   }
 
   public void testEnterInString() {  // PY-1738
@@ -422,6 +429,15 @@ public class PyEditingTest extends PyTestCase {
     myFixture.configureByFile(testName + ".py");
     doTyping(character);
     myFixture.checkResultByFile(testName + ".after.py");
+  }
+
+  private void doDocStringTypingTest(final char character, @NotNull DocStringFormat format) {
+    runWithDocStringFormat(format, new Runnable() {
+      @Override
+      public void run() {
+        doTypingTest(character);
+      }
+    });
   }
 
   private void doTyping(final char character) {
