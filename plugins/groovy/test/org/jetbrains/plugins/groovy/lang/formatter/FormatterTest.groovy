@@ -115,7 +115,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testAnnotationOnSeparateLine() throws Throwable { doTest(); }
   public void testAlignMultipleVariables() throws Throwable { doTest(); }
 
-  //public void testSpockTableWithStringComment() throws Throwable { doTest() }
+  public void testSpockTableWithStringComment() throws Throwable { doTest() }
   public void testSpockTableWithComments() throws Throwable { doTest() }
 
   public void testElseIfs() throws Throwable {
