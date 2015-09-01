@@ -18,14 +18,15 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogUi;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Comparator;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 public class GoToHashOrRefAction extends DumbAwareAction {
@@ -49,7 +50,7 @@ public class GoToHashOrRefAction extends DumbAwareAction {
       public Future fun(VcsRef vcsRef) {
         return logUi.jumpToCommit(vcsRef.getCommitHash());
       }
-    }, logUi.getColorManager());
+    }, logUi.getColorManager(), new VcsRefComparator(logUi.getDataPack().getLogProviders()));
     popup.show(logUi.getTable());
   }
 
@@ -60,4 +61,26 @@ public class GoToHashOrRefAction extends DumbAwareAction {
     e.getPresentation().setEnabledAndVisible(e.getProject() != null && log != null && logUi != null);
   }
 
+  private static class VcsRefComparator implements Comparator<VcsRef> {
+    @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
+
+    public VcsRefComparator(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
+      myProviders = providers;
+    }
+
+    @Override
+    public int compare(@NotNull VcsRef ref1, @NotNull VcsRef ref2) {
+      VcsLogProvider provider1 = myProviders.get(ref1.getRoot());
+      VcsLogProvider provider2 = myProviders.get(ref1.getRoot());
+
+      if (provider1 == null) return provider2 == null ? ref1.getName().compareTo(ref2.getName()) : 1;
+      if (provider2 == null) return -1;
+
+      if (provider1 == provider2) {
+        return provider1.getReferenceManager().getLabelsOrderComparator().compare(ref1, ref2);
+      }
+
+      return provider1.getSupportedVcs().getName().compareTo(provider2.getSupportedVcs().getName());
+    }
+  }
 }

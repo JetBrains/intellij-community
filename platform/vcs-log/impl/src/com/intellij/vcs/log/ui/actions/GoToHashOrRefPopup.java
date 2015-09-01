@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
@@ -42,6 +41,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -60,10 +60,11 @@ public class GoToHashOrRefPopup {
                             @NotNull Collection<VcsRef> variants,
                             @NotNull Function<String, Future> onSelectedHash,
                             @NotNull Function<VcsRef, Future> onSelectedRef,
-                            @NotNull VcsLogColorManager colorManager) {
+                            @NotNull VcsLogColorManager colorManager,
+                            @NotNull Comparator<VcsRef> comparator) {
     myOnSelectedHash = onSelectedHash;
     myOnSelectedRef = onSelectedRef;
-    myTextField = new TextFieldWithProgress<VcsRef>(project, new VcsRefCompletionProvider(variants, colorManager)) {
+    myTextField = new TextFieldWithProgress<VcsRef>(project, new VcsRefCompletionProvider(variants, colorManager, comparator)) {
       @Override
       public void onOk() {
         if (myFuture == null) {
@@ -147,10 +148,14 @@ public class GoToHashOrRefPopup {
 
   private class VcsRefCompletionProvider extends TextFieldWithAutoCompletionListProvider<VcsRef> {
     @NotNull private final VcsLogColorManager myColorManager;
+    @NotNull private final Comparator<VcsRef> myReferenceComparator;
 
-    public VcsRefCompletionProvider(@NotNull Collection<VcsRef> variants, @NotNull VcsLogColorManager colorManager) {
+    public VcsRefCompletionProvider(@NotNull Collection<VcsRef> variants,
+                                    @NotNull VcsLogColorManager colorManager,
+                                    @NotNull Comparator<VcsRef> comparator) {
       super(variants);
       myColorManager = colorManager;
+      myReferenceComparator = comparator;
     }
 
     @Override
@@ -191,7 +196,7 @@ public class GoToHashOrRefPopup {
 
     @Override
     public int compare(VcsRef item1, VcsRef item2) {
-      return StringUtil.compare(item1.getName(), item2.getName(), false);
+      return myReferenceComparator.compare(item1, item2);
     }
 
     @Nullable
