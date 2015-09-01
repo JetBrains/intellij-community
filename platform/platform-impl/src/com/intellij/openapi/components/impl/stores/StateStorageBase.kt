@@ -15,6 +15,11 @@
  */
 package com.intellij.openapi.components.impl.stores
 
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.diagnostic.Logger
+import org.jdom.Element
+import java.util.concurrent.atomic.AtomicReference
+
 public abstract class StateStorageBase<T : Any> : StateStorage {
   companion object {
     protected val LOG: Logger = Logger.getInstance(javaClass<StateStorageBase<Any>>())
