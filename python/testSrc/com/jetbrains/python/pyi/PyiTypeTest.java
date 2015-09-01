@@ -101,4 +101,8 @@ public class PyiTypeTest extends PyTestCase {
   public void testPyiOnPythonPath() {
     doTest("int");
   }
+
+  public void testOverloadedReturnType() {
+    doTest("str");
+  }
 }

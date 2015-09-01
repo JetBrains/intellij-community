@@ -643,10 +643,23 @@ public class PyCallExpressionHelper {
                                                      Collections.<PyNamedParameter>emptyList(), Collections.<PyNamedParameter>emptyList(),
                                                      Collections.<PyExpression, PyTupleParameter>emptyMap());
     }
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
+    final List<PyParameter> parameters = PyUtil.getParameters(markedCallee.getCallable(), context);
+    final List<PyParameter> explicitParameters = dropImplicitParameters(parameters, markedCallee.getImplicitOffset());
+    final List<PyExpression> arguments = new ArrayList<PyExpression>(Arrays.asList(argumentList.getArguments()));
+    final ArgumentMappingResults mappingResults = mapArguments(arguments, explicitParameters);
+    return new PyCallExpression.PyArgumentsMapping(callExpression, markedCallee,
+                                                   mappingResults.getMappedParameters(), mappingResults.getUnmappedParameters(),
+                                                   mappingResults.getUnmappedArguments(),
+                                                   mappingResults.getParametersMappedToVariadicPositionalArguments(),
+                                                   mappingResults.getParametersMappedToVariadicKeywordArguments(),
+                                                   mappingResults.getMappedTupleParameters());
+  }
 
+  @NotNull
+  public static ArgumentMappingResults mapArguments(@NotNull List<PyExpression> arguments, @NotNull List<PyParameter> parameters) {
     boolean seenSingleStar = false;
     boolean mappedVariadicArgumentsToParameters = false;
-    final TypeEvalContext context = resolveContext.getTypeEvalContext();
     final Map<PyExpression, PyNamedParameter> mappedParameters = new LinkedHashMap<PyExpression, PyNamedParameter>();
     final List<PyParameter> unmappedParameters = new ArrayList<PyParameter>();
     final List<PyExpression> unmappedArguments = new ArrayList<PyExpression>();
@@ -654,9 +667,6 @@ public class PyCallExpressionHelper {
     final List<PyNamedParameter> parametersMappedToVariadicPositionalArguments = new ArrayList<PyNamedParameter>();
     final Map<PyExpression, PyTupleParameter> tupleMappedParameters = new LinkedHashMap<PyExpression, PyTupleParameter>();
 
-    final List<PyParameter> allParameters = PyUtil.getParameters(markedCallee.getCallable(), context);
-    final List<PyParameter> parameters = dropImplicitParameters(allParameters, markedCallee.getImplicitOffset());
-    final List<PyExpression> arguments = new ArrayList<PyExpression>(Arrays.asList(argumentList.getArguments()));
 
     final List<PyExpression> positionalArguments = filterPositionalElements(arguments);
     final List<PyKeywordArgument> keywordArguments = filterKeywordArguments(arguments);
@@ -777,9 +787,62 @@ public class PyCallExpressionHelper {
     unmappedArguments.addAll(variadicPositionalArguments);
     unmappedArguments.addAll(variadicKeywordArguments);
 
-    return new PyCallExpression.PyArgumentsMapping(callExpression, markedCallee, mappedParameters, unmappedParameters, unmappedArguments,
-                                                   parametersMappedToVariadicPositionalArguments,
-                                                   parametersMappedToVariadicKeywordArguments, tupleMappedParameters);
+    return new ArgumentMappingResults(mappedParameters, unmappedParameters, unmappedArguments,
+                                      parametersMappedToVariadicPositionalArguments, parametersMappedToVariadicKeywordArguments,
+                                      tupleMappedParameters);
+  }
+
+  public static class ArgumentMappingResults {
+    @NotNull private final Map<PyExpression, PyNamedParameter> myMappedParameters;
+    @NotNull private final List<PyParameter> myUnmappedParameters;
+    @NotNull private final List<PyExpression> myUnmappedArguments;
+    @NotNull private final List<PyNamedParameter> myParametersMappedToVariadicPositionalArguments;
+    @NotNull private final List<PyNamedParameter> myParametersMappedToVariadicKeywordArguments;
+    @NotNull private final Map<PyExpression, PyTupleParameter> myMappedTupleParameters;
+
+    public ArgumentMappingResults(@NotNull Map<PyExpression, PyNamedParameter> mappedParameters,
+                                  @NotNull List<PyParameter> unmappedParameters,
+                                  @NotNull List<PyExpression> unmappedArguments,
+                                  @NotNull List<PyNamedParameter> parametersMappedToVariadicPositionalArguments,
+                                  @NotNull List<PyNamedParameter> parametersMappedToVariadicKeywordArguments,
+                                  @NotNull Map<PyExpression, PyTupleParameter> mappedTupleParameters) {
+      myMappedParameters = mappedParameters;
+      myUnmappedParameters = unmappedParameters;
+      myUnmappedArguments = unmappedArguments;
+      myParametersMappedToVariadicPositionalArguments = parametersMappedToVariadicPositionalArguments;
+      myParametersMappedToVariadicKeywordArguments = parametersMappedToVariadicKeywordArguments;
+      myMappedTupleParameters = mappedTupleParameters;
+    }
+
+    @NotNull
+    public Map<PyExpression, PyNamedParameter> getMappedParameters() {
+      return myMappedParameters;
+    }
+
+    @NotNull
+    public List<PyParameter> getUnmappedParameters() {
+      return myUnmappedParameters;
+    }
+
+    @NotNull
+    public List<PyExpression> getUnmappedArguments() {
+      return myUnmappedArguments;
+    }
+
+    @NotNull
+    public List<PyNamedParameter> getParametersMappedToVariadicPositionalArguments() {
+      return myParametersMappedToVariadicPositionalArguments;
+    }
+
+    @NotNull
+    public List<PyNamedParameter> getParametersMappedToVariadicKeywordArguments() {
+      return myParametersMappedToVariadicKeywordArguments;
+    }
+
+    @NotNull
+    public Map<PyExpression, PyTupleParameter> getMappedTupleParameters() {
+      return myMappedTupleParameters;
+    }
   }
 
   private static class TupleMappingResults {

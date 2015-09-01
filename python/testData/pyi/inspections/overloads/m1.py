@@ -5,3 +5,7 @@ class C(object):
 
 def f(key):
     return key
+
+
+def g(x):
+    pass
