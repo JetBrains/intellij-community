@@ -170,7 +170,7 @@ public class MarkerType {
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
 
-    String postfix = MessageFormat.format(" via sub-class <a href=\"#javaClass/{0}\">{0}</a>", ClassPresentationUtil.getNameForClass(subClass, false));
+    String postfix = MessageFormat.format(" via sub-class <a href=\"#javaClass/{0}\">{0}</a>", ClassPresentationUtil.getNameForClass(subClass, true));
     @NonNls String pattern = DaemonBundle.message(isSuperAbstract && !isAbstract ?
                                                   "method.implements" :
                                                   "method.overrides") + postfix;
