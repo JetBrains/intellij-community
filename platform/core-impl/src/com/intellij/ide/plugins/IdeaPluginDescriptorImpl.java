@@ -43,6 +43,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -79,6 +80,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private PluginId[] myOptionalDependencies = PluginId.EMPTY_ARRAY;
   private Map<PluginId, String> myOptionalConfigs;
   private Map<PluginId, IdeaPluginDescriptorImpl> myOptionalDescriptors;
+  private List<PluginRuntimeModule> myPluginModules = Collections.emptyList();
   @Nullable private List<Element> myActionsElements;
   private ComponentConfig[] myAppComponents;
   private ComponentConfig[] myProjectComponents;
@@ -99,6 +101,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private String myUntilBuild;
   private Boolean mySkipped;
   private List<String> myModules;
+  private static Map<String, PluginModuleScope> ourScopesById = new HashMap<String, PluginModuleScope>();
+  static {
+    for (PluginModuleScope scope : PluginModuleScope.values()) {
+      ourScopesById.put(scope.getId(), scope);
+    }
+  }
 
   public IdeaPluginDescriptorImpl(@NotNull File pluginPath) {
     myPath = pluginPath;
@@ -259,6 +267,13 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
 
+    if (!pluginBean.pluginRuntimeModules.isEmpty()) {
+      myPluginModules = new ArrayList<PluginRuntimeModule>(pluginBean.pluginRuntimeModules.size());
+      for (PluginModuleBean module : pluginBean.pluginRuntimeModules) {
+        myPluginModules.add(new PluginRuntimeModule(RuntimeModuleId.module(module.moduleId), getScopes(module.scope)));
+      }
+    }
+
     myDependencies = dependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : dependentPlugins.toArray(new PluginId[dependentPlugins.size()]);
     myOptionalDependencies = optionalDependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : optionalDependentPlugins.toArray(new PluginId[optionalDependentPlugins.size()]);
 
@@ -304,6 +319,29 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (pluginBean.modules != null && !pluginBean.modules.isEmpty()) {
       myModules = pluginBean.modules;
     }
+  }
+
+  private Set<PluginModuleScope> getScopes(String scope) {
+    if (scope == null || scope.isEmpty() || scope.equals("embedded")) {
+      return Collections.singleton(PluginModuleScope.IDE);
+    }
+    String[] scopesIds = scope.split(",");
+    if (scopesIds.length == 1) {
+      return Collections.singleton(getScopeById(scope));
+    }
+    EnumSet<PluginModuleScope> scopes = EnumSet.noneOf(PluginModuleScope.class);
+    for (String id : scopesIds) {
+      scopes.add(getScopeById(id));
+    }
+    return scopes;
+  }
+
+  private PluginModuleScope getScopeById(String scopeId) {
+    PluginModuleScope scope = ourScopesById.get(scopeId);
+    if (scope == null) {
+      throw new PluginException("Incorrect scope for plugin module: " + scopeId, myId);
+    }
+    return scope;
   }
 
   // made public for Upsource
@@ -707,5 +745,16 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Nullable
   public List<String> getModules() {
     return myModules;
+  }
+
+  @NotNull
+  public List<RuntimeModuleId> getPluginModules(@NotNull PluginModuleScope scope) {
+    List<RuntimeModuleId> modules = new ArrayList<RuntimeModuleId>();
+    for (PluginRuntimeModule module : myPluginModules) {
+      if (module.isInScope(scope)) {
+        modules.add(module.getModuleId());
+      }
+    }
+    return modules;
   }
 }
