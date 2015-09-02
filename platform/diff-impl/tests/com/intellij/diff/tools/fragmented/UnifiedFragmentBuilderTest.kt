@@ -15,6 +15,10 @@
  */
 package com.intellij.diff.tools.fragmented
 
+import com.intellij.diff.assertEmpty
+import com.intellij.diff.assertEquals
+import com.intellij.diff.assertFalse
+import com.intellij.diff.assertTrue
 import com.intellij.diff.comparison.ComparisonManagerImpl
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.util.LineRange
@@ -22,9 +26,6 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.testFramework.UsefulTestCase
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 public class UnifiedFragmentBuilderTest : UsefulTestCase() {
   public fun testEquals() {
@@ -38,8 +39,8 @@ public class UnifiedFragmentBuilderTest : UsefulTestCase() {
 
     assertTrue(builder.isEqual())
     assertEquals(builder.getText().toString(), "A\nB\nC\n")
-    UsefulTestCase.assertEmpty(builder.getChangedLines())
-    UsefulTestCase.assertEmpty(builder.getBlocks())
+    assertEmpty(builder.getChangedLines())
+    assertEmpty(builder.getBlocks())
   }
 
   public fun testWrongEndLineTypoBug() {

@@ -15,6 +15,9 @@
  */
 package com.intellij.diff.comparison
 
+import com.intellij.diff.assertEquals
+import com.intellij.diff.assertOrderedEquals
+import com.intellij.diff.assertTrue
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.openapi.editor.Document
@@ -25,8 +28,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.ContainerUtil
 import java.util.BitSet
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 public abstract class ComparisonUtilTestBase : UsefulTestCase() {
   private var oldRegistryValue: Boolean = false
@@ -46,10 +47,9 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
   // Impl
   //
 
-  private fun doLineTest(before: Document, after: Document, matchings: Couple<BitSet>?, expected: List<Change>?, policy: ComparisonPolicy) {
+  private fun doLineTest(before: Document, after: Document, expected: List<Change>?, policy: ComparisonPolicy) {
     val fragments = MANAGER.compareLines(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR)
     checkConsistency(fragments, before, after)
-    if (matchings != null) checkLineMatching(fragments, matchings)
     if (expected != null) checkLineChanges(fragments, expected)
   }
 
@@ -70,10 +70,9 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
     if (expected != null) checkDiffChanges(fragments, expected)
   }
 
-  private fun doSplitterTest(before: Document, after: Document, matchings: Couple<BitSet>?, expected: List<Change>?, policy: ComparisonPolicy) {
+  private fun doSplitterTest(before: Document, after: Document, expected: List<Change>?, policy: ComparisonPolicy) {
     val fragments = MANAGER.compareLinesInner(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR)
     checkConsistency(fragments, before, after)
-    if (matchings != null) checkLineMatching(fragments, matchings)
     if (expected != null) checkLineChanges(fragments, expected)
   }
 
@@ -119,24 +118,12 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
 
   private fun checkLineChanges(fragments: List<LineFragment>, expected: List<Change>) {
     val changes = convertLineFragments(fragments)
-    UsefulTestCase.assertOrderedEquals(changes, expected)
+    assertOrderedEquals(changes, expected)
   }
 
   private fun checkDiffChanges(fragments: List<DiffFragment>, expected: List<Change>) {
     val changes = convertDiffFragments(fragments)
-    UsefulTestCase.assertOrderedEquals(changes, expected)
-  }
-
-  private fun checkLineMatching(fragments: List<LineFragment>, matchings: Couple<BitSet>) {
-    val set1 = BitSet()
-    val set2 = BitSet()
-    for (fragment in fragments) {
-      set1.set(fragment.getStartLine1(), fragment.getEndLine1())
-      set2.set(fragment.getStartLine2(), fragment.getEndLine2())
-    }
-
-    assertEquals(matchings.first, set1)
-    assertEquals(matchings.second, set2)
+    assertOrderedEquals(changes, expected)
   }
 
   private fun checkDiffMatching(fragments: List<DiffFragment>, matchings: Couple<BitSet>) {
@@ -230,10 +217,10 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
         assertTrue(change != null || matchings != null)
 
         when (type) {
-          TestType.LINE -> doLineTest(before!!, after!!, matchings, change, policy)
+          TestType.LINE -> doLineTest(before!!, after!!, change, policy)
           TestType.WORD -> doWordTest(before!!, after!!, matchings, change, policy)
           TestType.CHAR -> doCharTest(before!!, after!!, matchings, change, policy)
-          TestType.SPLITTER -> doSplitterTest(before!!, after!!, matchings, change, policy)
+          TestType.SPLITTER -> doSplitterTest(before!!, after!!, change, policy)
         }
       }
       catch (e: Throwable) {

@@ -227,7 +227,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
 
     words {
       ("x .. z" - "x y .. z")
-      ("      " - " --     ").default() // TODO: looks wrong.default()
+      ("      " - " --     ").default() // TODO: looks wrong
       ("      " - "  -     ").ignore()
       testAll()
     }

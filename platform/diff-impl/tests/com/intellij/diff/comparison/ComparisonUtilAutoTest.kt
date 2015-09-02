@@ -15,6 +15,9 @@
  */
 package com.intellij.diff.comparison
 
+import com.intellij.diff.assertEquals
+import com.intellij.diff.assertFalse
+import com.intellij.diff.assertTrue
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.util.DiffUtil
@@ -26,9 +29,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.HashMap
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 public class ComparisonUtilAutoTest : AutoTestCase() {
   private var oldRegistryValue: Boolean = false
