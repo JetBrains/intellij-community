@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.ArrayUtilRt
@@ -240,15 +241,14 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val defaultState = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
     val storageSpecs = getStorageSpecs(component, stateSpec, StateStorageOperation.READ)
-    val stateStorageChooser = component as? StateStorageChooserEx
+    val storageChooser = component as? StateStorageChooserEx
     for (storageSpec in storageSpecs) {
-      val resolution = if (stateStorageChooser == null) Resolution.DO else stateStorageChooser.getResolution(storageSpec, StateStorageOperation.READ)
-      if (resolution === Resolution.SKIP) {
+      if (storageChooser?.getResolution(storageSpec, StateStorageOperation.READ) == Resolution.SKIP) {
         continue
       }
 
       val storage = storageManager.getStateStorage(storageSpec)
-      var stateGetter = (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass)
+      var stateGetter = if (isUseLoadedStateAsExisting(storageSpec) && Registry.`is`("use.loaded.state.as.existing", false)) (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass) else null
       var state = if (stateGetter == null) storage.getState(component, name, stateClass, defaultState, reloadData) else stateGetter.getState(defaultState)
       if (state == null) {
         if (changedStorages != null && changedStorages.contains(storage)) {
@@ -261,7 +261,12 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
       }
 
-      stateGetter?.use { component.loadState(state) }
+      try {
+        component.loadState(state)
+      }
+      finally {
+        stateGetter?.close()
+      }
       return name
     }
 
@@ -270,6 +275,8 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
     return name
   }
+
+  protected open fun isUseLoadedStateAsExisting(storageSpec: Storage): Boolean = true
 
   protected open fun getPathMacroManagerForDefaults(): PathMacroManager? = null
 

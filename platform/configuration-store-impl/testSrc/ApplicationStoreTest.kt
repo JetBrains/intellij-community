@@ -110,7 +110,7 @@ class ApplicationStoreTest {
   }
 
   @State(name = "A", storages = arrayOf(Storage(file = "a.xml")))
-  private class A : PersistentStateComponent<Element> {
+  private open class A : PersistentStateComponent<Element> {
     data class State(@Attribute var foo: String = "", @Attribute var bar: String = "")
 
     var state = State()
@@ -142,6 +142,24 @@ class ApplicationStoreTest {
     saveStore()
 
     assertThat(file).hasContent("<application>\n  <component name=\"A\" foo=\"1\" bar=\"2\" />\n</application>")
+  }
+
+  @Test fun `do not apply to workspace storage - do not save if only format is changed`() {
+    @State(name = "A", storages = arrayOf(Storage(file = StoragePathMacros.WORKSPACE_FILE)))
+    class AWorkspace : A()
+
+    val oldContent = "<application><component name=\"A\" foo=\"old\" deprecated=\"old\"/></application>"
+    val file = writeConfig("workspace.xml", oldContent)
+    val oldModificationTime = file.getLastModifiedTime()
+    testAppConfig.refreshVfs()
+
+    val component = AWorkspace()
+    componentStore.initComponent(component, false)
+    assertThat(component.state).isEqualTo(A.State("old"))
+
+    saveStore()
+
+    assertThat(file).hasContent("<application>\n  <component name=\"A\" foo=\"old\" />\n</application>")
   }
 
   private fun saveStore() {
@@ -188,7 +206,10 @@ class ApplicationStoreTest {
 
     override fun setPath(path: String) {
       storageManager.addMacro(StoragePathMacros.APP_CONFIG, path)
+      storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, "$path/workspace.xml")
     }
+
+    override fun isUseLoadedStateAsExisting(storageSpec: Storage) = storageSpec.file != StoragePathMacros.WORKSPACE_FILE
   }
 
   abstract class Foo {

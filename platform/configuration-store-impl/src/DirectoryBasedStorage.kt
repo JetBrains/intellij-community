@@ -62,7 +62,7 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
     }
   }
 
-  override fun getState(storageData: Map<String, StateMap>, component: Any?, componentName: String) = getCompositeStateAndArchive(storageData, componentName, mySplitter)
+  override fun getState(storageData: Map<String, StateMap>, component: Any?, componentName: String, archive: Boolean) = getCompositeStateAndArchive(storageData, componentName, mySplitter)
 
   override fun loadData(): MutableMap<String, StateMap> {
     return fromMap(DirectoryStorageUtil.loadFrom(getVirtualFile(), myPathMacroSubstitutor))
