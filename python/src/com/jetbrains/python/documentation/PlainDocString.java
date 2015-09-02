@@ -68,12 +68,6 @@ public class PlainDocString extends DocStringLineParser implements StructuredDoc
 
   @NotNull
   @Override
-  public String createParameterType(@NotNull String name, @NotNull String type) {
-    return "";
-  }
-
-  @NotNull
-  @Override
   public List<String> getParameters() {
     return Collections.emptyList();
   }

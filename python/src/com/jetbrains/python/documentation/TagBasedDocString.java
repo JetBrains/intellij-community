@@ -75,12 +75,6 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
   public abstract List<String> getAdditionalTags();
 
   @Override
-  @NotNull
-  public String createParameterType(@NotNull final String name, @NotNull final String type) {
-    return myTagPrefix + TYPE + String.format(" %s %s", name, type);
-  }
-
-  @Override
   public String getDescription() {
     return myDescription;
   }

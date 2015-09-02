@@ -263,12 +263,6 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     return Collections.unmodifiableList(mySections);
   }
 
-  @NotNull
-  @Override
-  public String createParameterType(@NotNull String name, @NotNull String type) {
-    return null;
-  }
-
   @Override
   public String getSummary() {
     return mySummary != null ? mySummary.concatTrimmedLines("\n") : "";

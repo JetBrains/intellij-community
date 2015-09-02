@@ -25,14 +25,6 @@ import java.util.List;
  * @author vlan
  */
 public interface StructuredDocString {
-  /**
-   * Creates parameter type documentation specific for certain doct type
-   * @param name param name
-   * @param type param type
-   * @return text to add to docsting
-   */
-  @NotNull
-  String createParameterType(@NotNull String name, @NotNull String type);
 
   String getSummary();
   String getDescription(); // for formatter
