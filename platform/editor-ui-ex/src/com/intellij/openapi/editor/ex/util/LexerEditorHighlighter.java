@@ -19,7 +19,6 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -400,7 +399,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   protected TextAttributes convertAttributes(@NotNull TextAttributesKey[] keys) {
-    TextAttributes attrs = myScheme.getAttributes(HighlighterColors.TEXT);
+    TextAttributes attrs = new TextAttributes();
     for (TextAttributesKey key : keys) {
       TextAttributes attrs2 = myScheme.getAttributes(key);
       if (attrs2 != null) {
