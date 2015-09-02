@@ -37,7 +37,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
 
   protected abstract fun loadLocalData(): Element?
 
-  override final fun getState(storageData: StateMap, component: Any?, componentName: String) = storageData.getState(componentName)
+  override final fun getState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean) = storageData.getState(componentName)
 
   override fun archiveState(storageData: StateMap, componentName: String, serializedState: Element?) {
     storageData.archive(componentName, serializedState)

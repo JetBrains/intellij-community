@@ -15,12 +15,9 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.stores.StateStorageBase
-import com.intellij.openapi.util.registry.Registry
 import org.jdom.Element
-import java.io.Closeable
 
 abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
   fun <S : Any> createGetSession(component: PersistentStateComponent<S>, componentName: String, stateClass: Class<S>, reload: Boolean = false) = StateGetter(component, componentName, getStorageData(reload), stateClass, this)
@@ -31,7 +28,7 @@ abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
   abstract fun archiveState(storageData: T, componentName: String, serializedState: Element?)
 }
 
-class StateGetter<S : Any, T : Any>(private val component: PersistentStateComponent<S>, private val componentName: String, private val storageData: T, private val stateClass: Class<S>, private val storage: StorageBaseEx<T>) : Closeable {
+class StateGetter<S : Any, T : Any>(private val component: PersistentStateComponent<S>, private val componentName: String, private val storageData: T, private val stateClass: Class<S>, private val storage: StorageBaseEx<T>) {
   var serializedState: Element? = null
 
   fun getState(mergeInto: S? = null): S? {
@@ -44,7 +41,7 @@ class StateGetter<S : Any, T : Any>(private val component: PersistentStateCompon
     return storage.deserializeState(serializedState, stateClass, mergeInto)
   }
 
-  override fun close() {
+  fun close() {
     if (serializedState == null) {
       return
     }
@@ -53,7 +50,7 @@ class StateGetter<S : Any, T : Any>(private val component: PersistentStateCompon
 
     val stateAfterLoad: S?
     try {
-      stateAfterLoad = if (ApplicationManager.getApplication().isUnitTestMode() || Registry.`is`("use.loaded.state.as.existing", false)) component.getState() else null
+      stateAfterLoad = component.getState()
     }
     catch(e: Throwable) {
       LOG.error("Cannot get state after load", e)

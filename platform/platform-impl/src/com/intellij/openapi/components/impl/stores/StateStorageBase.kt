@@ -29,15 +29,19 @@ public abstract class StateStorageBase<T : Any> : StateStorage {
 
   protected val storageDataRef: AtomicReference<T> = AtomicReference()
 
-  override fun <S> getState(component: Any?, componentName: String, stateClass: Class<S>, mergeInto: S?, reload: Boolean): S? {
-    return deserializeState(getState(getStorageData(reload), component, componentName), stateClass, mergeInto)
+  override final fun <S> getState(component: Any?, componentName: String, stateClass: Class<S>, mergeInto: S?, reload: Boolean): S? {
+    return getState(component, componentName, stateClass, true, reload, mergeInto)
+  }
+
+  fun <S : Any> getState(component: Any?, componentName: String, stateClass: Class<S>, archive: Boolean = true, reload: Boolean = false, mergeInto: S? = null): S? {
+    return deserializeState(getState(getStorageData(reload), component, componentName, archive), stateClass, mergeInto)
   }
 
   open fun <S> deserializeState(serializedState: Element?, stateClass: Class<S>, mergeInto: S?): S? {
     return DefaultStateSerializer.deserializeState(serializedState, stateClass, mergeInto)
   }
 
-  abstract fun getState(storageData: T, component: Any?, componentName: String): Element?
+  abstract fun getState(storageData: T, component: Any?, componentName: String, archive: Boolean = true): Element?
 
   protected abstract fun hasState(storageData: T, componentName: String): Boolean
 
