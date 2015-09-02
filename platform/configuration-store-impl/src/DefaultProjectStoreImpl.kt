@@ -77,6 +77,8 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
     override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
   }
 
+  override fun isUseLoadedStateAsExisting(storage: StateStorage) = false
+
   // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock (currently we store loaded archived state in memory, but later implementation can be changed)
   fun getStateCopy() = storage.loadLocalData()
   

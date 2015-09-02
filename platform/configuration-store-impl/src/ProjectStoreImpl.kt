@@ -288,8 +288,6 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
   }
 
   override fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation) = selectDefaultStorages(storages, operation, scheme)
-
-  override fun isUseLoadedStateAsExisting(storageSpec: Storage) = storageSpec.file != StoragePathMacros.WORKSPACE_FILE
 }
 
 fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation, scheme: StorageScheme): Array<Storage> {

@@ -144,12 +144,12 @@ class ApplicationStoreTest {
     assertThat(file).hasContent("<application>\n  <component name=\"A\" foo=\"1\" bar=\"2\" />\n</application>")
   }
 
-  @Test fun `do not apply to workspace storage - do not save if only format is changed`() {
-    @State(name = "A", storages = arrayOf(Storage(file = StoragePathMacros.WORKSPACE_FILE)))
+  @Test fun `do not check if only format changed for non-roamable storage`() {
+    @State(name = "A", storages = arrayOf(Storage(file = "b.xml", roamingType = RoamingType.DISABLED)))
     class AWorkspace : A()
 
     val oldContent = "<application><component name=\"A\" foo=\"old\" deprecated=\"old\"/></application>"
-    val file = writeConfig("workspace.xml", oldContent)
+    val file = writeConfig("b.xml", oldContent)
     val oldModificationTime = file.getLastModifiedTime()
     testAppConfig.refreshVfs()
 
@@ -206,10 +206,7 @@ class ApplicationStoreTest {
 
     override fun setPath(path: String) {
       storageManager.addMacro(StoragePathMacros.APP_CONFIG, path)
-      storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, "$path/workspace.xml")
     }
-
-    override fun isUseLoadedStateAsExisting(storageSpec: Storage) = storageSpec.file != StoragePathMacros.WORKSPACE_FILE
   }
 
   abstract class Foo {

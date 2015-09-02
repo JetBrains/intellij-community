@@ -248,7 +248,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
 
       val storage = storageManager.getStateStorage(storageSpec)
-      var stateGetter = if (isUseLoadedStateAsExisting(storageSpec) && (ApplicationManager.getApplication().isUnitTestMode() || Registry.`is`("use.loaded.state.as.existing", false))) {
+      var stateGetter = if (isUseLoadedStateAsExisting(storage) && (ApplicationManager.getApplication().isUnitTestMode() || Registry.`is`("use.loaded.state.as.existing", false))) {
         (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass)
       }
       else {
@@ -281,7 +281,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return name
   }
 
-  protected open fun isUseLoadedStateAsExisting(storageSpec: Storage): Boolean = true
+  protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean = (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED
 
   protected open fun getPathMacroManagerForDefaults(): PathMacroManager? = null
 

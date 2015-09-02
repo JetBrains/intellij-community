@@ -32,7 +32,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
                                                        protected val pathMacroSubstitutor: TrackingPathMacroSubstitutor?,
                                                        roamingType: RoamingType? = RoamingType.DEFAULT,
                                                        provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
-  protected val roamingType: RoamingType = roamingType ?: RoamingType.DEFAULT
+  val roamingType: RoamingType = roamingType ?: RoamingType.DEFAULT
   private val provider: StreamProvider? = if (provider == null || roamingType == RoamingType.DISABLED || !provider.isApplicable(fileSpec, this.roamingType)) null else provider
 
   protected abstract fun loadLocalData(): Element?
