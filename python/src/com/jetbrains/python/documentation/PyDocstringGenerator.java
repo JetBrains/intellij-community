@@ -91,7 +91,7 @@ public class PyDocstringGenerator {
       indentation = PyIndentUtil.getElementIndent(((PyStatementListContainer)owner).getStatementList());
     }
     final String docStringText = owner.getDocStringExpression() == null ? null : owner.getDocStringExpression().getText();
-    return new PyDocstringGenerator(owner, docStringText, DocStringUtil.getDocStringFormat(owner), indentation);
+    return new PyDocstringGenerator(owner, docStringText, DocStringUtil.getConfiguredDocStringFormat(owner), indentation);
   }
   
   @NotNull
@@ -102,7 +102,7 @@ public class PyDocstringGenerator {
   @NotNull
   public static PyDocstringGenerator update(@NotNull PyStringLiteralExpression docString) {
     return new PyDocstringGenerator(PsiTreeUtil.getParentOfType(docString, PyDocStringOwner.class),
-                                    docString.getText(), DocStringUtil.getDocStringFormat(docString),
+                                    docString.getText(), DocStringUtil.getConfiguredDocStringFormat(docString),
                                     PyIndentUtil.getElementIndent(docString));
   }
 

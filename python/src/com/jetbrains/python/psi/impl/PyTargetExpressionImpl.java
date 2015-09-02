@@ -294,7 +294,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   public static PyType getTypeFromComment(PyTargetExpressionImpl targetExpression) {
     String docComment = DocStringUtil.getAttributeDocComment(targetExpression);
     if (docComment != null) {
-      StructuredDocString structuredDocString = DocStringUtil.parse(docComment);
+      StructuredDocString structuredDocString = DocStringUtil.parse(docComment, targetExpression);
       if (structuredDocString != null) {
         String typeName = structuredDocString.getParamType(null);
         if (typeName == null) {

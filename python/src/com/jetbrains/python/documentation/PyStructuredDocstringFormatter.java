@@ -60,7 +60,6 @@ public class PyStructuredDocstringFormatter {
       module = modules[0];
     }
     if (module == null) return Lists.newArrayList();
-    final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
     final List<String> result = new ArrayList<String>();
 
     final String[] lines = PyDocumentationBuilder.removeCommonIndentation(docstring);
@@ -68,20 +67,21 @@ public class PyStructuredDocstringFormatter {
 
     final String formatter;
     final StructuredDocString structuredDocString;
-    if (documentationSettings.isGoogleFormat(element.getContainingFile()) || DocStringUtil.isGoogleDocString(preparedDocstring)) {
+    final DocStringFormat format = DocStringUtil.guessDocStringFormat(preparedDocstring, element);
+    if (format == DocStringFormat.GOOGLE) {
       formatter = PythonHelpersLocator.getHelperPath("google_formatter.py");
       structuredDocString = DocStringUtil.parseDocString(DocStringFormat.GOOGLE, preparedDocstring);
     }
-    else if (documentationSettings.isNumpyFormat(element.getContainingFile()) || DocStringUtil.isNumpyDocstring(preparedDocstring)) {
+    else if (format == DocStringFormat.NUMPY) {
       formatter = PythonHelpersLocator.getHelperPath("numpy_formatter.py");
       structuredDocString = DocStringUtil.parseDocString(DocStringFormat.NUMPY, preparedDocstring);
     }
-    else if (documentationSettings.isEpydocFormat(element.getContainingFile()) || DocStringUtil.isEpydocDocString(preparedDocstring)) {
+    else if (format == DocStringFormat.EPYTEXT) {
       formatter = PythonHelpersLocator.getHelperPath("epydoc_formatter.py");
       structuredDocString = DocStringUtil.parseDocString(DocStringFormat.EPYTEXT, preparedDocstring);
       result.add(formatStructuredDocString(structuredDocString));
     }
-    else if (documentationSettings.isReSTFormat(element.getContainingFile()) || DocStringUtil.isSphinxDocString(preparedDocstring)) {
+    else if (format == DocStringFormat.REST) {
       formatter = PythonHelpersLocator.getHelperPath("rest_formatter.py");
       structuredDocString = DocStringUtil.parseDocString(DocStringFormat.REST, preparedDocstring);
     }

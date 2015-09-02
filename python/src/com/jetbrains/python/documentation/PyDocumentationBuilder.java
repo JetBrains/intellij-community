@@ -442,7 +442,7 @@ class PyDocumentationBuilder {
   }
 
   private static Pair<String, String> getTypeAndDescr(String docString, @NotNull PyNamedParameter followed) {
-    final StructuredDocString structuredDocString = DocStringUtil.parse(docString);
+    final StructuredDocString structuredDocString = docString != null ? DocStringUtil.parse(docString, followed) : null;
     String type = null;
     String desc = null;
     if (structuredDocString != null) {

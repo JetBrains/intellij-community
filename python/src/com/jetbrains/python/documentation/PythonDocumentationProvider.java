@@ -93,10 +93,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       String summary = "";
       final PyStringLiteralExpression docStringExpression = func.getDocStringExpression();
       if (docStringExpression != null) {
-        final StructuredDocString docString = DocStringUtil.parse(docStringExpression.getStringValue());
-        if (docString != null) {
-          summary = docString.getSummary();
-        }
+        final StructuredDocString docString = DocStringUtil.parse(docStringExpression.getStringValue(), docStringExpression);
+        summary = docString.getSummary();
       }
       return $(cat.toString()).add(describeDecorators(func, LSame2, ", ", LSame1)).add(describeFunction(func, LSame2, LSame1))
                               .toString() + "\n" + summary;
@@ -112,10 +110,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         }
       }
       if (docStringExpression != null) {
-        final StructuredDocString docString = DocStringUtil.parse(docStringExpression.getStringValue());
-        if (docString != null) {
-          summary = docString.getSummary();
-        }
+        final StructuredDocString docString = DocStringUtil.parse(docStringExpression.getStringValue(), docStringExpression);
+        summary = docString.getSummary();
       }
 
       return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, false, false)).toString() + "\n" + summary;

@@ -59,7 +59,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         final List<PsiReference> result = new ArrayList<PsiReference>();
         final int offset = ranges.get(0).getStartOffset();
         // XXX: It does not work with multielement docstrings
-        StructuredDocString docString = DocStringUtil.parse(text);
+        StructuredDocString docString = DocStringUtil.parse(text, element);
         if (docString instanceof TagBasedDocString) {
           final TagBasedDocString taggedDocString = (TagBasedDocString)docString;
           result.addAll(referencesFromNames(expr, offset, docString,

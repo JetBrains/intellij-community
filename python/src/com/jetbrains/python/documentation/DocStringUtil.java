@@ -51,24 +51,31 @@ public class DocStringUtil {
     return PyPsiUtils.strValue(owner.getDocStringExpression());
   }
 
+  /**
+   * Attempts to detect docstring format from given text and parses it into corresponding structured docstring.
+   * It's recommended to use more reliable {@link #parse(String, PsiElement)} that fallbacks to format specified in settings.
+   *
+   * @return structured docstring for one of supported formats or instance of {@link PlainDocString} if none was recognized.
+   * @see #parse(String, PsiElement) 
+   */
   @Nullable
-  public static StructuredDocString parse(@Nullable String text) {
-    if (text == null) {
-      return null;
-    }
-    if (isSphinxDocString(text)) {
-      return parseDocStringContent(DocStringFormat.REST, text);
-    }
-    if (isGoogleDocString(text)) {
-      return parseDocStringContent(DocStringFormat.GOOGLE, text);
-    }
-    if (isNumpyDocstring(text)) {
-      return parseDocStringContent(DocStringFormat.NUMPY, text);
-    }
-    return parseDocStringContent(DocStringFormat.EPYTEXT, text);
+  public static StructuredDocString parse(@NotNull String text) {
+    return parse(text, null);
   }
 
-
+  /**
+   * Attempts to detects docstring format first from given text, next from settings and parses text into corresponding structured docstring.
+   *
+   * @return structured docstring for one of supported formats or instance of {@link PlainDocString} if none was recognized.
+   * @see DocStringFormat#ALL_NAMES_BUT_PLAIN
+   * @see #guessDocStringFormat(String, PsiElement)
+   */
+  @NotNull
+  public static StructuredDocString parse(@NotNull String text, @Nullable PsiElement anchor) {
+    final DocStringFormat format = guessDocStringFormat(text, anchor);
+    return parseDocStringContent(format, text);
+  }
+  
   @NotNull
   public static StructuredDocString parseDocString(@NotNull DocStringFormat format,
                                                    @NotNull PyStringLiteralExpression literalExpression) {
@@ -104,7 +111,7 @@ public class DocStringUtil {
       case NUMPY:
         return new NumpyDocString(content);
       default:
-        throw new UnsupportedOperationException("Not supported for plain docstrings. Use PyDocStringUtil#ensureNotPlainDocstringFormat");
+        return new PlainDocString(content);
     }
   }
 
@@ -113,16 +120,58 @@ public class DocStringUtil {
     final TextRange contentRange = PyStringLiteralExpressionImpl.getNodeTextRange(text);
     return new Substring(text, contentRange.getStartOffset(), contentRange.getEndOffset());
   }
+  
+  /**
+   * @return docstring format inferred heuristically solely from its content. For more reliable result use anchored version 
+   * {@link #guessDocStringFormat(String, PsiElement)} of this method.
+   * @see #guessDocStringFormat(String, PsiElement) 
+   */
+  @NotNull
+  public static DocStringFormat guessDocStringFormat(@NotNull String text) {
+    if (isLikeNumpyDocstring(text)) {
+      return DocStringFormat.NUMPY;
+    }
+    if (isLikeGoogleDocString(text)) {
+      return DocStringFormat.GOOGLE;
+    }
+    if (isLikeEpydocDocString(text)) {
+      return DocStringFormat.EPYTEXT;
+    }
+    if (isLikeSphinxDocString(text)) {
+      return DocStringFormat.REST;
+    }
+    return DocStringFormat.PLAIN;
+  }
 
-  public static boolean isSphinxDocString(@NotNull String text) {
+  /**
+   * @return docstring inferred heuristically and if unsuccessful fallback to configured format retrieved from anchor PSI element 
+   * @see #getConfiguredDocStringFormat(PsiElement) 
+   */
+  @NotNull
+  public static DocStringFormat guessDocStringFormat(@NotNull String text, @Nullable PsiElement anchor) {
+    final DocStringFormat guessed = guessDocStringFormat(text);
+    return guessed == DocStringFormat.PLAIN && anchor != null ? getConfiguredDocStringFormat(anchor) : guessed;
+  }
+
+  /**
+   * @return docstring format configured for file or module containing given anchor PSI element
+   * @see PyDocumentationSettings#getFormatForFile(PsiFile)
+   */
+  @NotNull
+  public static DocStringFormat getConfiguredDocStringFormat(@NotNull PsiElement anchor) {
+    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(getModuleForElement(anchor));
+    return settings.getFormatForFile(anchor.getContainingFile());
+  }
+
+  public static boolean isLikeSphinxDocString(@NotNull String text) {
     return text.contains(":param ") || text.contains(":rtype") || text.contains(":type");
   }
 
-  public static boolean isEpydocDocString(@NotNull String text) {
+  public static boolean isLikeEpydocDocString(@NotNull String text) {
     return text.contains("@param ") || text.contains("@rtype") || text.contains("@type");
   }
 
-  public static boolean isGoogleDocString(@NotNull String text) {
+  public static boolean isLikeGoogleDocString(@NotNull String text) {
     for (@NonNls String title : StringUtil.findMatches(text, GoogleCodeStyleDocString.SECTION_HEADER, 1)) {
       if (SectionBasedDocString.SECTION_NAMES.contains(title.toLowerCase())) {
         return true;
@@ -131,7 +180,7 @@ public class DocStringUtil {
     return false;
   }
 
-  public static boolean isNumpyDocstring(@NotNull String text) {
+  public static boolean isLikeNumpyDocstring(@NotNull String text) {
     final String[] lines = StringUtil.splitByLines(text, false);
     for (int i = 0; i < lines.length; i++) {
       final String line = lines[i];
@@ -161,8 +210,10 @@ public class DocStringUtil {
     return null;
   }
 
-  public static StructuredDocString getStructuredDocString(PyDocStringOwner owner) {
-    return parse(owner.getDocStringValue());
+  @Nullable
+  public static StructuredDocString getStructuredDocString(@NotNull PyDocStringOwner owner) {
+    final String value = owner.getDocStringValue();
+    return value == null ? null : parse(value, owner);
   }
 
   public static boolean isDocStringExpression(@Nullable PyExpression expression) {
@@ -254,11 +305,5 @@ public class DocStringUtil {
       settings.setFormat(DocStringFormat.fromNameOrPlain(values.get(i)));
     }
     return true;
-  }
-
-  @NotNull
-  public static DocStringFormat getDocStringFormat(@NotNull PsiElement anchor) {
-    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(getModuleForElement(anchor));
-    return settings.getFormatForFile(anchor.getContainingFile());
   }
 }

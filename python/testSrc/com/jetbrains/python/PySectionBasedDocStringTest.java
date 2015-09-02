@@ -293,7 +293,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
 
   // PY-16766
   public void testGoogleDocStringContentDetection() {
-    assertTrue(DocStringUtil.isGoogleDocString(
+    assertTrue(DocStringUtil.isLikeGoogleDocString(
       "\n" +
       "    My Section:\n" +
       "        some user defined section\n" +
