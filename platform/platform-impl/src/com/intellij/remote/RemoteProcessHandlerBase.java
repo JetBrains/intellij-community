@@ -14,9 +14,19 @@ public interface RemoteProcessHandlerBase {
   @NotNull
   PathMapper getMappingSettings();
 
+  /**
+   * @deprecated use {@link #getRemoteSocket(int)}
+   */
+  @Deprecated
   Pair<String, Integer> obtainRemoteSocket() throws RemoteSdkException;
 
+  /**
+   * @deprecated use {@link #getRemoteSocket(int)}
+   */
+  @Deprecated
   void addRemoteForwarding(int remotePort, int localPort);
+
+  Pair<String, Integer> getRemoteSocket(int localPort) throws RemoteSdkException;
 
   List<PathMappingSettings.PathMapping> getFileMappings();
 }
