@@ -54,6 +54,15 @@ public class Conditions {
     };
   }
 
+  public static <T> Condition<T> notInstanceOf(final Class<?> clazz) {
+    return new Condition<T>() {
+      @Override
+      public boolean value(T t) {
+        return !clazz.isInstance(t);
+      }
+    };
+  }
+
   public static Condition<Class> assignableTo(final Class clazz) {
     return new Condition<Class>() {
       @Override
@@ -76,10 +85,23 @@ public class Conditions {
   }
 
   public static <T> Condition<T> is(final T option) {
+    return equalTo(option);
+  }
+
+  public static <T> Condition<T> equalTo(final Object option) {
     return new Condition<T>() {
       @Override
       public boolean value(T t) {
         return Comparing.equal(t, option);
+      }
+    };
+  }
+
+  public static <T> Condition<T> notEqualTo(final Object option) {
+    return new Condition<T>() {
+      @Override
+      public boolean value(T t) {
+        return !Comparing.equal(t, option);
       }
     };
   }
