@@ -240,10 +240,9 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val defaultState = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
     val storageSpecs = getStorageSpecs(component, stateSpec, StateStorageOperation.READ)
-    val stateStorageChooser = component as? StateStorageChooserEx
+    val storageChooser = component as? StateStorageChooserEx
     for (storageSpec in storageSpecs) {
-      val resolution = if (stateStorageChooser == null) Resolution.DO else stateStorageChooser.getResolution(storageSpec, StateStorageOperation.READ)
-      if (resolution === Resolution.SKIP) {
+      if (storageChooser?.getResolution(storageSpec, StateStorageOperation.READ) == Resolution.SKIP) {
         continue
       }
 
