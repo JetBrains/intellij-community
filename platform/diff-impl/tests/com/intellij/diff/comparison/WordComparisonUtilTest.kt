@@ -304,4 +304,78 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
       testDefault()
     }
   }
+
+  public fun testLegacy() {
+    words {
+      ("abc def, 123" - "ab def, 12")
+      ("---      ---" - "--      --").default()
+      testAll()
+    }
+
+    words {
+      (" a[xy]+1" - ",a[]+1")
+      ("-  --   " - "-     ").default()
+      ("   --   " - "-     ").trim()
+      testAll()
+    }
+
+    words {
+      ("0987_  a.g();_" - "yyyy_")
+      ("------------- " - "---- ").default()
+      testAll()
+    }
+
+    words {
+      ("  abc_2222_" - "    x = abc_zzzz_")
+    //("      ---- " - "--  ----    ---- ").legacy()
+      ("      ---- " - " ------     ---- ").default()
+      ("      ---- " - "    ---     ---- ").trim()
+      testAll()
+    }
+
+    words { // Idea58505
+      ("   if (eventMerger!=null && !dataSelection.getValueIsAdjusting()) {" -
+       "   if (eventMerger!=null && (dataSelection==null || !dataSelection.getValueIsAdjusting())) {")
+    //("                            -                                      " -
+    // "                            -             ------------------------                       -  ").legacy()
+      ("                                                                   " -
+       "                           ------------------------                                      -  ").default()
+      ("                                                                   " -
+       "                            -----------------------                                      -  ").ignore()
+      testAll()
+    }
+
+    words { // Idea56428
+      ("messageInsertStatement = connection.prepareStatement(\"INSERT INTO AUDIT (AUDIT_TYPE_ID, STATUS, SERVER_ID, INSTANCE_ID, REQUEST_ID) VALUES (?, ?, ?, ?, ?)\");" -
+       "messageInsertStatement = connection.prepareStatement(\"INSERT INTO AUDIT (AUDIT_TYPE_ID, CREATION_TIMESTAMP, STATUS, SERVER_ID, INSTANCE_ID, REQUEST_ID) VALUES (?, ?, ?, ?, ?, ?)\");").plainSource()
+    //("                                                     .                                                                                                     .   " -
+    // "                                                     .                                   --------------------                                                                 --- .   ").legacy()
+      ("                                                     .                                                                                                     .   " -
+       "                                                     .                                  --------------------                                                                  --- .   ").default()
+      ("                                                     .                                                                                                     .   " -
+       "                                                     .                                   -------------------                                                                  --- .   ").ignore()
+      testAll()
+    }
+
+    words {
+      ("f(a, b);" - "f(a,_  b);")
+      ("        " - "    --    ").default()
+      ("        " - "          ").trim()
+      testAll()
+    }
+
+    words {
+      (" o.f(a)" - "o. f( b)")
+      ("-    - " - "  -  -- ").default()
+      ("     - " - "  -  -- ").trim()
+      ("     - " - "      - ").ignore()
+      testAll()
+    }
+
+    words {
+      (" 123 " - "xyz")
+      (" --- " - "---").trim()
+      testTrim()
+    }
+  }
 }

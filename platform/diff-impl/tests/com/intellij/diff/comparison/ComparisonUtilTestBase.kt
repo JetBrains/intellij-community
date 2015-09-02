@@ -242,7 +242,7 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
       }
     }
 
-    private fun parseSource(string: String): Document = DocumentImpl(string.replace('_', '\n'))
+    private fun parseSource(string: String): String = string.replace('_', '\n')
 
     private fun parseMatching(before: String, after: String): Couple<BitSet> {
       return Couple.of(parseMatching(before), parseMatching(after))
@@ -250,7 +250,7 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
 
     private fun parseMatching(matching: String): BitSet {
       val set = BitSet()
-      matching.forEachIndexed { i, c -> if (c != ' ') set.set(i) }
+      matching.filterNot { it == '.' }.forEachIndexed { i, c -> if (c != ' ') set.set(i) }
       return set
     }
 
@@ -283,9 +283,15 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
       init {
         val builder = this@TestBuilder
         if (builder.before == null && builder.after == null) {
-          builder.before = parseSource(before)
-          builder.after = parseSource(after)
+          builder.before = DocumentImpl(parseSource(before))
+          builder.after = DocumentImpl(parseSource(after))
         }
+      }
+
+      public fun plainSource() {
+        val builder = this@TestBuilder
+        builder.before = DocumentImpl(before)
+        builder.after = DocumentImpl(after)
       }
 
       public fun default() {
