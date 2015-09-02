@@ -728,7 +728,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       final int width = c.getWidth() - 4;
       if (bg != null) {
         g2.setColor(bg);
-        g2.fillRoundRect(offset + 2, 0, width - 6, height - 3, ROUND_VALUE, ROUND_VALUE);
+        g2.fillRoundRect(offset + 2, 0, width - 4, height - 3, ROUND_VALUE, ROUND_VALUE);
       }
 
       final Color borderColor = s.getBorderColor(c);
