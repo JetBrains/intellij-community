@@ -20,17 +20,22 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 
+import java.util.Collection;
 import java.util.Map;
 
 import static com.intellij.psi.PsiModifier.ABSTRACT;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.IMPLEMENTED_FQN;
 
 /**
  * Created by Max Medvedev on 16/05/14
@@ -80,11 +85,10 @@ public class GrTraitUtil {
               && AnnotationUtil.isAnnotated(containingClass, "groovy.transform.Trait", false);
   }
 
-  public static PsiMethod createTraitMethodFromCompiledHelperMethod(final PsiMethod compiledMethod, final PsiClass trait) {
+  public static PsiMethod createTraitMethodFromCompiledHelperMethod(final PsiMethod compiledMethod, final ClsClassImpl trait) {
     assert compiledMethod.getParameterList().getParametersCount() > 0;
 
     final GrLightMethodBuilder result = new GrLightMethodBuilder(compiledMethod.getManager(), compiledMethod.getName());
-    result.setNavigationElement(compiledMethod);
     result.setOriginInfo("via @Trait");
     result.addModifier(PsiModifier.STATIC);
     for (PsiTypeParameter parameter : compiledMethod.getTypeParameters()) {
@@ -109,6 +113,10 @@ public class GrTraitUtil {
       final PsiType originalType = compiledMethod.getReturnType();
       result.setReturnType(originalType == null ? null : originalType.accept(corrector));
     }
+
+    final PsiClass traitSource = trait.getSourceMirrorClass();
+    final PsiMethod sourceMethod = traitSource == null ? null : traitSource.findMethodBySignature(result, false);
+    result.setNavigationElement(sourceMethod != null ? sourceMethod : compiledMethod);
 
     return result;
   }
@@ -154,5 +162,41 @@ public class GrTraitUtil {
         return hasChanges.get() ? elementFactory.createType(resolved, substitutes) : originalType;
       }
     };
+  }
+
+  public static Collection<PsiMethod> getCompiledTraitConcreteMethods(@NotNull final ClsClassImpl trait) {
+    return CachedValuesManager.getCachedValue(trait, new CachedValueProvider<Collection<PsiMethod>>() {
+      @Nullable
+      @Override
+      public Result<Collection<PsiMethod>> compute() {
+        final Collection<PsiMethod> result = ContainerUtil.newArrayList();
+        doCollectCompiledTraitMethods(trait, result);
+        return Result.create(result, trait);
+      }
+    });
+  }
+
+  private static void doCollectCompiledTraitMethods(ClsClassImpl trait, Collection<PsiMethod> result) {
+    for (PsiMethod method : trait.getMethods()) {
+      if (AnnotationUtil.isAnnotated(method, IMPLEMENTED_FQN, false)) {
+        result.add(method);
+      }
+    }
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(trait.getProject());
+    final String helperFQN = trait.getQualifiedName();
+    final PsiClass traitHelper = psiFacade.findClass(helperFQN + "$Trait$Helper", trait.getResolveScope());
+    if (traitHelper == null) return;
+    final PsiType classType = TypesUtil.createJavaLangClassType(
+      psiFacade.getElementFactory().createType(trait), trait.getProject(), trait.getResolveScope()
+    );
+    for (PsiMethod method : traitHelper.getMethods()) {
+      if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length <= 0) continue;
+      final PsiParameter self = parameters[0];
+      if (self.getType().equals(classType)) {
+        result.add(createTraitMethodFromCompiledHelperMethod(method, trait));
+      }
+    }
   }
 }

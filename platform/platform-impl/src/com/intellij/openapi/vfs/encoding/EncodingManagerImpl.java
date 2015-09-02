@@ -205,6 +205,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     for (Project project : projects) {
       result.addAll(EncodingProjectManager.getInstance(project).getFavorites());
     }
+    result.addAll(EncodingProjectManagerImpl.widelyKnownCharsets());
     return result;
   }
 

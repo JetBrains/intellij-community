@@ -527,8 +527,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   private static boolean isEnumConstant(final ObjectReference objRef) {
-    final Type type = objRef.type();
-    return type instanceof ClassType && ((ClassType)type).isEnum();
+    try {
+      Type type = objRef.type();
+      return type instanceof ClassType && ((ClassType)type).isEnum();
+    } catch (ObjectCollectedException ignored) {}
+    return false;
   }
 
   public boolean canSetValue() {

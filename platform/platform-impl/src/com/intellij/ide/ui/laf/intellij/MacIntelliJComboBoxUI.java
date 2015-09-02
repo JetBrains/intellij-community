@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
@@ -34,15 +34,8 @@ import java.awt.event.KeyEvent;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
-  private static final Icon COMBOBOX = DarculaLaf.loadIcon("comboboxMac.png");
-  private static final Icon COMBOBOX_LEFT = DarculaLaf.loadIcon("comboboxLeft.png");
-  private static final Icon COMBOBOX_TOP_BOTTOM = DarculaLaf.loadIcon("comboboxTopBottom.png");
-  private static final Icon COMBOBOX_FOCUSED = DarculaLaf.loadIcon("comboboxMacFocused.png");
-  private static final Icon COMBOBOX_LEFT_FOCUSED = DarculaLaf.loadIcon("comboboxLeftFocused.png");
-  private static final Icon COMBOBOX_TOP_BOTTOM_FOCUSED = DarculaLaf.loadIcon("comboboxTopBottomFocused.png");
-  private static final Icon COMBOBOX_TOP_BOTTOM_DISABLED = DarculaLaf.loadIcon("comboboxTopBottomDisabled.png");
-  private static final Icon COMBOBOX_LEFT_DISABLED = DarculaLaf.loadIcon("comboboxLeftDisabled.png");
-  private static final Icon COMBOBOX_DISABLED = DarculaLaf.loadIcon("comboboxMacDisabledRight.png");
+  private static final Icon DEFAULT_ICON = EmptyIcon.create(MacIntelliJIconCache.getIcon("comboRight"));
+
   private final JComboBox myComboBox;
 
   public MacIntelliJComboBoxUI(JComboBox comboBox) {
@@ -68,13 +61,13 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     JButton button = new BasicArrowButton(SwingConstants.SOUTH, bg, fg, fg, fg) {
       @Override
       public void paint(Graphics g2) {
-        Icon icon = myComboBox.isEnabled() ? myComboBox.hasFocus() ? COMBOBOX_FOCUSED : COMBOBOX : COMBOBOX_DISABLED;
+        Icon icon = MacIntelliJIconCache.getIcon("comboRight", false, myComboBox.hasFocus(), !myComboBox.isEnabled());
         icon.paintIcon(this, g2, 0, 0);
       }
 
       @Override
       public Dimension getPreferredSize() {
-        return JBUI.size(COMBOBOX.getIconWidth(), COMBOBOX.getIconHeight());
+        return JBUI.size(DEFAULT_ICON.getIconWidth(), DEFAULT_ICON.getIconHeight());
       }
     };
     button.setBorder(BorderFactory.createEmptyBorder());
@@ -88,7 +81,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
   }
 
   private static Dimension getSizeWithIcon(Dimension d) {
-    return new Dimension(Math.max(d.width + 7, COMBOBOX.getIconWidth()), Math.max(d.height, COMBOBOX.getIconHeight()));
+    return new Dimension(Math.max(d.width + 7, DEFAULT_ICON.getIconWidth()), Math.max(d.height, DEFAULT_ICON.getIconHeight()));
   }
 
   @Override
@@ -118,7 +111,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
             @Override
             public Dimension getPreferredSize() {
               Dimension size = super.getPreferredSize();
-              return new Dimension(size.width, COMBOBOX.getIconHeight() - 6);
+              return new Dimension(size.width, DEFAULT_ICON.getIconHeight() - 6);
             }
           };
         }
@@ -167,7 +160,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
   @Override
   protected Rectangle rectangleForCurrentValue() {
     Rectangle rect = super.rectangleForCurrentValue();
-    rect.height=Math.min(rect.height, COMBOBOX.getIconHeight()-8);
+    rect.height=Math.min(rect.height, DEFAULT_ICON.getIconHeight()-8);
     rect.y+=4;
     rect.x+=8;
     rect.width-=8;
@@ -210,7 +203,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
 
         Insets insets = getInsets();
         int buttonHeight = height - (insets.top + insets.bottom);
-        int buttonWidth = COMBOBOX.getIconWidth();
+        int buttonWidth = DEFAULT_ICON.getIconWidth();
         if (arrowButton != null) {
           Insets arrowInsets = arrowButton.getInsets();
           buttonWidth = arrowButton.getPreferredSize().width + arrowInsets.left + arrowInsets.right;
@@ -245,19 +238,19 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     Rectangle r = arrowButton.getBounds();
     int stop = r.x;
     Insets clip = getInsets();
-    Graphics gg = g.create(clip.left, r.y, stop - clip.left, COMBOBOX.getIconHeight());
-    boolean enabled = c.isEnabled();
+    Graphics gg = g.create(clip.left, r.y, stop - clip.left, DEFAULT_ICON.getIconHeight());
+    boolean disabled = !c.isEnabled();
     boolean hasFocus = c.hasFocus();
-    Icon icon = enabled ? hasFocus ? COMBOBOX_LEFT_FOCUSED : COMBOBOX_LEFT : COMBOBOX_LEFT_DISABLED;
+    Icon icon = MacIntelliJIconCache.getIcon("comboLeft", false, hasFocus, disabled);
     icon.paintIcon(c,gg,0,0);
     int x = icon.getIconWidth();
-    icon = enabled ? hasFocus ? COMBOBOX_TOP_BOTTOM_FOCUSED : COMBOBOX_TOP_BOTTOM : COMBOBOX_TOP_BOTTOM_DISABLED;
+    icon = MacIntelliJIconCache.getIcon("comboMiddle", false, hasFocus, disabled);
     while (x < stop) {
       icon.paintIcon(c, gg, x, 0);
       x+=icon.getIconWidth();
     }
     gg.dispose();
-    icon = enabled ? hasFocus ? COMBOBOX_FOCUSED : COMBOBOX : COMBOBOX_DISABLED;
+    icon = MacIntelliJIconCache.getIcon("comboRight", false, hasFocus, disabled);
     icon.paintIcon(c, g, r.x, r.y);
 
     if ( !comboBox.isEditable() ) {

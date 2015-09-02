@@ -23,7 +23,6 @@ import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -38,9 +37,6 @@ public interface IComponentStore {
   void reloadStates(@NotNull Set<String> componentNames, @NotNull MessageBus messageBus);
 
   void reloadState(@NotNull Class<? extends PersistentStateComponent<?>> componentClass);
-
-  @NotNull
-  Collection<String> getNotReloadableComponents(@NotNull Collection<String> componentNames);
 
   boolean isReloadPossible(@NotNull Set<String> componentNames);
 

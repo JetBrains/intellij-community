@@ -66,6 +66,7 @@ class ModuleStoreTest {
       assertThat(getOptionValue("foo")).isEqualTo("not bar")
 
       setOption("foo", "not bar")
+      // ensure that save the same data will not lead to any problems (like "Content equals, but it must be handled not on this level")
       saveStore()
     }
   }

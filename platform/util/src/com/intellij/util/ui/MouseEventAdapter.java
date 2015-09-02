@@ -30,49 +30,49 @@ public class MouseEventAdapter<T> implements MouseListener, MouseMotionListener,
   }
 
   @Override
-  public final void mouseEntered(MouseEvent event) {
+  public void mouseEntered(MouseEvent event) {
     MouseListener listener = getMouseListener(myAdapter);
     if (listener != null) listener.mouseEntered(convert(event));
   }
 
   @Override
-  public final void mousePressed(MouseEvent event) {
+  public void mousePressed(MouseEvent event) {
     MouseListener listener = getMouseListener(myAdapter);
     if (listener != null) listener.mousePressed(convert(event));
   }
 
   @Override
-  public final void mouseClicked(MouseEvent event) {
+  public void mouseClicked(MouseEvent event) {
     MouseListener listener = getMouseListener(myAdapter);
     if (listener != null) listener.mouseClicked(convert(event));
   }
 
   @Override
-  public final void mouseReleased(MouseEvent event) {
+  public void mouseReleased(MouseEvent event) {
     MouseListener listener = getMouseListener(myAdapter);
     if (listener != null) listener.mouseReleased(convert(event));
   }
 
   @Override
-  public final void mouseExited(MouseEvent event) {
+  public void mouseExited(MouseEvent event) {
     MouseListener listener = getMouseListener(myAdapter);
     if (listener != null) listener.mouseExited(convert(event));
   }
 
   @Override
-  public final void mouseMoved(MouseEvent event) {
+  public void mouseMoved(MouseEvent event) {
     MouseMotionListener listener = getMouseMotionListener(myAdapter);
     if (listener != null) listener.mouseMoved(convert(event));
   }
 
   @Override
-  public final void mouseDragged(MouseEvent event) {
+  public void mouseDragged(MouseEvent event) {
     MouseMotionListener listener = getMouseMotionListener(myAdapter);
     if (listener != null) listener.mouseDragged(convert(event));
   }
 
   @Override
-  public final void mouseWheelMoved(MouseWheelEvent event) {
+  public void mouseWheelMoved(MouseWheelEvent event) {
     MouseWheelListener listener = getMouseWheelListener(myAdapter);
     if (listener != null) listener.mouseWheelMoved(convert(event));
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -25,7 +24,8 @@ import com.intellij.openapi.projectRoots.ex.ProjectRootContainer;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternalizable, Sdk, SdkModificator {
+public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModificator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkImpl");
   private final ProjectRootContainerImpl myRootContainer;
   private String myName;
@@ -131,13 +131,19 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     return StandardFileSystems.local().findFileByPath(myHomePath);
   }
 
-   @Override
-   public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) {
+    readExternal(element, null);
+  }
+
+  public void readExternal(@NotNull Element element, @Nullable ProjectJdkTable projectJdkTable) {
     myName = element.getChild(ELEMENT_NAME).getAttributeValue(ATTRIBUTE_VALUE);
     final Element typeChild = element.getChild(ELEMENT_TYPE);
-    final String sdkTypeName = typeChild != null? typeChild.getAttributeValue(ATTRIBUTE_VALUE) : null;
+    final String sdkTypeName = typeChild != null ? typeChild.getAttributeValue(ATTRIBUTE_VALUE) : null;
     if (sdkTypeName != null) {
-      mySdkType = ProjectJdkTable.getInstance().getSdkTypeByName(sdkTypeName);
+      if (projectJdkTable == null) {
+        projectJdkTable = ProjectJdkTable.getInstance();
+      }
+      mySdkType = projectJdkTable.getSdkTypeByName(sdkTypeName);
     }
     final Element version = element.getChild(ELEMENT_VERSION);
 
@@ -171,17 +177,16 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     }
 
     final Element additional = element.getChild(ELEMENT_ADDITIONAL);
-     if (additional != null) {
-       LOG.assertTrue(mySdkType != null);
-       myAdditionalData = mySdkType.loadAdditionalData(this, additional);
-     }
-     else {
-       myAdditionalData = null;
-     }
+    if (additional != null) {
+      LOG.assertTrue(mySdkType != null);
+      myAdditionalData = mySdkType.loadAdditionalData(this, additional);
+    }
+    else {
+      myAdditionalData = null;
+    }
   }
 
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     element.setAttribute(ELEMENT_VERSION, "2");
 
     final Element name = new Element(ELEMENT_NAME);
@@ -218,7 +223,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
 
   @Override
   public void setHomePath(String path) {
-    final boolean changes = myHomePath == null? path != null : !myHomePath.equals(path);
+    final boolean changes = myHomePath == null ? path != null : !myHomePath.equals(path);
     myHomePath = path;
     if (changes) {
       resetVersionString(); // clear cached value if home path changed
@@ -252,13 +257,13 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     dest.setSdkAdditionalData(getSdkAdditionalData());
     dest.myRootContainer.startChange();
     dest.myRootContainer.removeAllRoots();
-    for(OrderRootType rootType: OrderRootType.getAllTypes()) {
+    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
       copyRoots(myRootContainer, dest.myRootContainer, rootType);
     }
     dest.myRootContainer.finishChange();
   }
 
-  private static void copyRoots(ProjectRootContainer srcContainer, ProjectRootContainer destContainer, OrderRootType type){
+  private static void copyRoots(ProjectRootContainer srcContainer, ProjectRootContainer destContainer, OrderRootType type) {
     final ProjectRoot[] newRoots = srcContainer.getRoots(type);
     for (ProjectRoot newRoot : newRoots) {
       destContainer.addRoot(newRoot, type);
@@ -399,6 +404,6 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
 
   @Override
   public String toString() {
-    return getName() + ": "+ getVersionString() + " ("+getHomePath()+")";
+    return getName() + ": " + getVersionString() + " (" + getHomePath() + ")";
   }
 }
