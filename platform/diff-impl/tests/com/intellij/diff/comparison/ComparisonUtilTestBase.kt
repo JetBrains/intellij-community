@@ -16,6 +16,7 @@
 package com.intellij.diff.comparison
 
 import com.intellij.diff.assertEquals
+import com.intellij.diff.assertNull
 import com.intellij.diff.assertOrderedEquals
 import com.intellij.diff.assertTrue
 import com.intellij.diff.fragments.DiffFragment
@@ -70,9 +71,16 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
     if (expected != null) checkDiffChanges(fragments, expected)
   }
 
-  private fun doSplitterTest(before: Document, after: Document, expected: List<Change>?, policy: ComparisonPolicy) {
-    val fragments = MANAGER.compareLinesInner(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR)
+  private fun doSplitterTest(before: Document, after: Document, squash: Boolean, trim: Boolean, expected: List<Change>?, policy: ComparisonPolicy) {
+    val text1 = before.getCharsSequence()
+    val text2 = after.getCharsSequence()
+
+    var fragments = MANAGER.compareLinesInner(text1, text2, policy, INDICATOR)
     checkConsistency(fragments, before, after)
+
+    fragments = MANAGER.processBlocks(fragments, text1, text2, policy, squash, trim)
+    checkConsistency(fragments, before, after)
+
     if (expected != null) checkLineChanges(fragments, expected)
   }
 
@@ -192,6 +200,9 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
     private var trimMatching: Couple<BitSet>? = null
     private var ignoreMatching: Couple<BitSet>? = null
 
+    private var shouldSquash: Boolean = false;
+    private var shouldTrim: Boolean = false;
+
     private fun changes(policy: ComparisonPolicy): List<Change>? = when (policy) {
       ComparisonPolicy.IGNORE_WHITESPACES -> ignoreChanges ?: trimChanges ?: defaultChanges;
       ComparisonPolicy.TRIM_WHITESPACES -> trimChanges ?: defaultChanges;
@@ -220,7 +231,10 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
           TestType.LINE -> doLineTest(before!!, after!!, change, policy)
           TestType.WORD -> doWordTest(before!!, after!!, matchings, change, policy)
           TestType.CHAR -> doCharTest(before!!, after!!, matchings, change, policy)
-          TestType.SPLITTER -> doSplitterTest(before!!, after!!, change, policy)
+          TestType.SPLITTER -> {
+            assertNull(matchings)
+            doSplitterTest(before!!, after!!, shouldSquash, shouldTrim, change, policy)
+          }
         }
       }
       catch (e: Throwable) {
@@ -322,6 +336,12 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
       assert(count2 != 0)
       return Change(line1, line1, line2, line2 + count2)
     }
+
+
+    public fun postprocess(squash: Boolean, trim: Boolean): Unit {
+      shouldSquash = squash;
+      shouldTrim = trim;
+    }
   }
 
   public fun lines(f: TestBuilder.() -> Unit): Unit = doTest(TestType.LINE, f)
@@ -330,7 +350,12 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
 
   public fun chars(f: TestBuilder.() -> Unit): Unit = doTest(TestType.CHAR, f)
 
-  public fun split(f: TestBuilder.() -> Unit): Unit = doTest(TestType.SPLITTER, f)
+  public fun splitter(squash: Boolean = false, trim: Boolean = false, f: TestBuilder.() -> Unit): Unit {
+    doTest(TestType.SPLITTER, {
+      postprocess(squash, trim)
+      f()
+    })
+  }
 
   private fun doTest(type: TestType, f: TestBuilder.() -> Unit) {
     val builder = TestBuilder(type)
