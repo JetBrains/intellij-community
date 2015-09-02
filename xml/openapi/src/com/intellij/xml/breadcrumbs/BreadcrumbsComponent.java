@@ -572,7 +572,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
                            @NotNull final FontMetrics fm,
                            final boolean forward,
                            @NotNull final Painter p) {
-      super(forward ? FORWARD : BACKWARD, p.getSize(forward ? FORWARD : BACKWARD, fm, Integer.MAX_VALUE).width);
+      super(forward ? FORWARD : BACKWARD, p.getSize(forward ? FORWARD : BACKWARD, fm, Integer.MAX_VALUE).width + 14);
       myForward = forward;
       myLine = line;
     }
