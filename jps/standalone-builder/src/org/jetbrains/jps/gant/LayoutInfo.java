@@ -18,6 +18,7 @@ package org.jetbrains.jps.gant;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,6 +31,11 @@ import java.util.Set;
 public class LayoutInfo extends org.jetbrains.jps.LayoutInfo {
   private final MultiMap<String, String> myModuleToPath = new LinkedMultiMap<String, String>();
   private final List<String> myPathComponents = new ArrayList<String>();
+  private final String myTargetDirectory;
+
+  public LayoutInfo(String targetDirectory) {
+    myTargetDirectory = targetDirectory;
+  }
 
   public void pushPathComponent(String name) {
     myPathComponents.add(name);
@@ -40,9 +46,14 @@ public class LayoutInfo extends org.jetbrains.jps.LayoutInfo {
   }
 
   public void addModule(String moduleName) {
-    String path = StringUtil.join(myPathComponents, "/");
+    String path = getCurrentPath();
     getUsedModules().add(moduleName);
     myModuleToPath.putValue(moduleName, path);
+  }
+
+  @NotNull
+  public String getCurrentPath() {
+    return myTargetDirectory + "/" + StringUtil.join(myPathComponents, "/");
   }
 
   public Set<String> getModules() {

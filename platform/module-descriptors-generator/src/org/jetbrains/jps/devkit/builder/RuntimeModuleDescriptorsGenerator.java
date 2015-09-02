@@ -64,11 +64,6 @@ public class RuntimeModuleDescriptorsGenerator {
     generateDescriptorsZip(descriptorsOutputFile, descriptors);
   }
 
-  @NotNull
-  private RuntimeModuleDescriptorData createDescriptor(RuntimeModuleId moduleId, List<File> files, File descriptorsOutput) {
-    return new RuntimeModuleDescriptorData(moduleId, getRelativePaths(files, descriptorsOutput));
-  }
-
   public void generateForDevelopmentMode() {
     myMessageHandler.showProgressMessage("Generating runtime module descriptors for source distribution at '" +
                                          JpsModelSerializationDataService.getBaseDirectory(myProject) + "'");
@@ -83,7 +78,7 @@ public class RuntimeModuleDescriptorsGenerator {
     }
 
     File descriptorsOutputFile = new File(outputDir, RepositoryConstants.MODULES_ZIP_NAME);
-    generateDescriptorsZip(descriptorsOutputFile, createDescriptorsForDevelopmentMode(outputDir));
+    generateDescriptorsZip(descriptorsOutputFile, createDescriptorsForDevelopmentMode());
 
     try {
       FileUtil.writeToFile(new File(outputDir, RepositoryConstants.VERSION_FILE_NAME), String.valueOf(RepositoryConstants.VERSION_NUMBER));
@@ -96,7 +91,7 @@ public class RuntimeModuleDescriptorsGenerator {
   }
 
 
-  private void generateDescriptorsForModules(List<RuntimeModuleDescriptorData> descriptors, File descriptorsOutputDir) {
+  private void generateDescriptorsForModules(List<RuntimeModuleDescriptorData> descriptors) {
     for (JpsModule module : myProject.getModules()) {
       for (final boolean test : BOOLEANS) {
         File outputDirectory = JpsJavaExtensionService.getInstance().getOutputDirectory(module, test);
@@ -105,13 +100,13 @@ public class RuntimeModuleDescriptorsGenerator {
                                        getRuntimeModuleName(module, test) + "' module");
           continue;
         }
-        descriptors.add(createModuleDescriptor(module, test, getRelativePaths(Collections.singletonList(outputDirectory), descriptorsOutputDir)));
+        descriptors.add(createModuleDescriptor(module, test, Collections.singletonList(outputDirectory)));
       }
     }
   }
 
   @NotNull
-  public static RuntimeModuleDescriptorData createModuleDescriptor(JpsModule module, final boolean test, final List<String> moduleRoots) {
+  public static RuntimeModuleDescriptorData createModuleDescriptor(JpsModule module, final boolean test, final List<File> moduleRoots) {
     final List<RuntimeModuleId> dependencies = new ArrayList<RuntimeModuleId>();
     JpsJavaDependenciesEnumerator enumerator = enumerateRuntimeDependencies(module);
     if (!test) {
@@ -145,9 +140,9 @@ public class RuntimeModuleDescriptorsGenerator {
     return JpsJavaExtensionService.dependencies(module).withoutSdk().withoutModuleSourceEntries().runtimeOnly();
   }
 
-  private List<RuntimeModuleDescriptorData> createDescriptorsForDevelopmentMode(File descriptorsOutputDir) {
+  private List<RuntimeModuleDescriptorData> createDescriptorsForDevelopmentMode() {
     List<RuntimeModuleDescriptorData> descriptors = new ArrayList<RuntimeModuleDescriptorData>();
-    generateDescriptorsForModules(descriptors, descriptorsOutputDir);
+    generateDescriptorsForModules(descriptors);
 
     Set<JpsLibrary> libraries = new LinkedHashSet<JpsLibrary>();
     for (JpsModule module : myProject.getModules()) {
@@ -158,7 +153,7 @@ public class RuntimeModuleDescriptorsGenerator {
         for (JpsRuntimeResourceRoot root : rootsCollection.getRoots()) {
           RuntimeModuleId id = RuntimeModuleId.moduleResource(module.getName(), root.getName());
           final List<File> files = Collections.singletonList(JpsPathUtil.urlToFile(root.getUrl()));
-          descriptors.add(createDescriptor(id, files, descriptorsOutputDir));
+          descriptors.add(new RuntimeModuleDescriptorData(id, files));
         }
       }
     }
@@ -172,7 +167,7 @@ public class RuntimeModuleDescriptorsGenerator {
     for (JpsLibrary library : libraries) {
       final RuntimeModuleId moduleId = getLibraryId(library);
       final List<File> files = library.getFiles(JpsOrderRootType.COMPILED);
-      descriptors.add(createDescriptor(moduleId, files, descriptorsOutputDir));
+      descriptors.add(new RuntimeModuleDescriptorData(moduleId, files));
     }
     return descriptors;
   }
@@ -211,7 +206,7 @@ public class RuntimeModuleDescriptorsGenerator {
 
           zipOutput.putNextEntry(new ZipEntry(dirName + "/module.xml"));
           PrintWriter output = new PrintWriter(zipOutput);
-          generateModuleXml(output, descriptor);
+          generateModuleXml(output, descriptor, outputFile.getParentFile());
           zipOutput.closeEntry();
         }
       }
@@ -226,9 +221,9 @@ public class RuntimeModuleDescriptorsGenerator {
                                          (System.currentTimeMillis() - start) + "ms");
   }
 
-  private static void generateModuleXml(PrintWriter output, RuntimeModuleDescriptorData descriptor) throws XMLStreamException {
+  private void generateModuleXml(PrintWriter output, RuntimeModuleDescriptorData descriptor, File descriptorsOutputDir) throws XMLStreamException {
     List<RuntimeModuleId> dependencies = descriptor.getDependencies();
-    List<String> roots = descriptor.getModuleRoots();
+    List<File> roots = descriptor.getModuleRoots();
     output.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
     output.println("<module xmlns=\"urn:jboss:module:1.3\" name=\"" + descriptor.getModuleId().getStringId() + "\">");
     if (!dependencies.isEmpty()) {
@@ -240,7 +235,7 @@ public class RuntimeModuleDescriptorsGenerator {
     }
     if (!roots.isEmpty()) {
       output.println("  <resources>");
-      for (String root : roots) {
+      for (String root : getRelativePaths(roots, descriptorsOutputDir)) {
         output.println("    <resource-root path=\"" + root + "\" />");
       }
       output.println("  </resources>");
@@ -249,7 +244,6 @@ public class RuntimeModuleDescriptorsGenerator {
     output.flush();
   }
 
-  @Nullable
   private List<String> getRelativePaths(List<File> files, File descriptorsOutputDir) {
     List<String> paths = new ArrayList<String>(files.size());
     for (File root : files) {

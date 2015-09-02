@@ -55,7 +55,7 @@ final class JpsGantTool {
     })
 
     binding.setVariable("layout", {String dir, Closure body ->
-      def layoutInfo = new LayoutInfo()
+      def layoutInfo = new LayoutInfo(dir)
 
       ["module", "moduleTests", "zip", "dir"].each {tag ->
         binding.setVariable(tag, { Object[] args ->

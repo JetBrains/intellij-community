@@ -17,6 +17,7 @@
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.jps.devkit.builder.RuntimeModuleDescriptorData
 import org.jetbrains.jps.devkit.builder.RuntimeModuleDescriptorsGenerator
@@ -72,8 +73,9 @@ binding.setVariable("layoutPluginByRuntimeModules", { String mainModuleName ->
   String mainJarName = compatibilityMap?.jar ?: "${mainModuleName}.jar"
   def dirName = compatibilityMap?.dir ?: mainModuleName
 
-  def relativeOutput = "../plugins/$dirName"
   dir(dirName) {
+    LayoutInfo layoutInfo = currentLayoutInfo
+    def pluginTargetDir = "$layoutInfo.currentPath"
     dir("lib") {
       def embeddedModules = modulesWithScopes.findAll { it.second == "embedded" }.collect { it.first }
       def embeddedLibraries = librariesWithScopes.findAll { it.second == "embedded" }.collect {it.first}
@@ -88,11 +90,11 @@ binding.setVariable("layoutPluginByRuntimeModules", { String mainModuleName ->
       }
 /*
       embeddedModules.each {
-        registerModuleDescriptor(it, ["$relativeOutput/lib/$mainJarName", "$relativeOutput/lib/resources_en.jar"])
+        registerModuleDescriptor(it, ["$pluginTargetDir/lib/$mainJarName", "$pluginTargetDir/lib/resources_en.jar"])
       }
 */
       embeddedLibraries.each {
-        registerModuleDescriptor(getLibraryId(it), ["$relativeOutput/lib/$mainJarName"])
+        registerModuleDescriptor(getLibraryId(it), ["$pluginTargetDir/lib/$mainJarName"])
       }
 
       def ideModules = modulesWithScopes.findAll { it.second.contains("IDE") }.collect { it.first }
@@ -100,21 +102,21 @@ binding.setVariable("layoutPluginByRuntimeModules", { String mainModuleName ->
         jar([name: "${module.name}.jar", filesetmanifest: "merge"]) {
           noResources(module.name)
         }
-//        registerModuleDescriptor(module, ["$relativeOutput/lib/${module.name}.jar", "$relativeOutput/lib/resources_en.jar"])
+//        registerModuleDescriptor(module, ["$pluginTargetDir/lib/${module.name}.jar", "$pluginTargetDir/lib/resources_en.jar"])
       }
       resources(ideModules.collect {it.name} + embeddedModules.collect {it.name})
 
       librariesWithScopes.findAll {it.second.contains("IDE")}.collect {it.first}.each { lib ->
-        layoutLibrary(lib, "$relativeOutput/lib")
+        layoutLibrary(lib, "$pluginTargetDir/lib")
       }
-      layoutInSubdir(modulesWithScopes, librariesWithScopes, "$relativeOutput/lib", "build", "jps")
-      layoutInSubdir(modulesWithScopes, librariesWithScopes, "$relativeOutput/lib", "runtime", "rt")
+      layoutInSubdir(modulesWithScopes, librariesWithScopes, "$pluginTargetDir/lib", "build", "jps")
+      layoutInSubdir(modulesWithScopes, librariesWithScopes, "$pluginTargetDir/lib", "runtime", "rt")
     }
-    layoutRuntimeResources(runtimeResources, relativeOutput)
+    layoutRuntimeResources(runtimeResources, pluginTargetDir)
   }
 })
 
-private void layoutRuntimeResources(List<JpsRuntimeResourceRoot> runtimeResources, String relativeOutput) {
+private void layoutRuntimeResources(List<JpsRuntimeResourceRoot> runtimeResources, String outputDir) {
   if (!runtimeResources.isEmpty()) {
     dir("res") {
       runtimeResources.each {
@@ -133,26 +135,26 @@ private void layoutRuntimeResources(List<JpsRuntimeResourceRoot> runtimeResource
         else {
           projectBuilder.error("Cannot find file ${file.absolutePath} for runtime resource $it.name")
         }
-        registerModuleDescriptor(RuntimeModuleId.moduleResource(it.module.name, it.name), ["$relativeOutput/res/$name"])
+        registerModuleDescriptor(RuntimeModuleId.moduleResource(it.module.name, it.name), ["$outputDir/res/$name"])
       }
     }
   }
 }
 
-private boolean registerModuleDescriptor(JpsModule module, List<? extends CharSequence> paths) {
-  getOrCreateRuntimeModuleDescriptorsList().add(RuntimeModuleDescriptorsGenerator.createModuleDescriptor(module, false, toStrings(paths)))
+private boolean registerModuleDescriptor(JpsModule module, Collection<? extends CharSequence> paths) {
+  getOrCreateRuntimeModuleDescriptorsList().add(RuntimeModuleDescriptorsGenerator.createModuleDescriptor(module, false, toFiles(paths)))
 }
 
 binding.setVariable("registerLibraryDescriptor", {RuntimeModuleId id, List<? extends CharSequence> paths ->
   registerModuleDescriptor(id, paths)
 })
 
-binding.setVariable("registerJarDirLibraryDescriptor", {RuntimeModuleId id, File jarDir, String relativeOutputPath ->
-  registerModuleDescriptor(id, jarDir.list {d,name-> name.endsWith(".jar")}.collect {"$relativeOutputPath/$it"})
+binding.setVariable("registerJarDirLibraryDescriptor", {RuntimeModuleId id, File jarDir, String outputDir ->
+  registerModuleDescriptor(id, jarDir.list {d,name-> name.endsWith(".jar")}.collect {"$outputDir/$it"})
 })
 
 private boolean registerModuleDescriptor(RuntimeModuleId id, List<? extends CharSequence> paths) {
-  getOrCreateRuntimeModuleDescriptorsList().add(new RuntimeModuleDescriptorData(id, toStrings(paths)))
+  getOrCreateRuntimeModuleDescriptorsList().add(new RuntimeModuleDescriptorData(id, toFiles(paths)))
 }
 
 private Map<String, Map<String, String>> getOrCreateFileNameCompatibilityMap() {
@@ -174,7 +176,8 @@ private List<RuntimeModuleDescriptorData> getOrCreateRuntimeModuleDescriptorsLis
 binding.setVariable("copyPlatformLibraries", { String targetDirectory, Collection<String> platformModules, LayoutInfo layoutInfo ->
   def descriptors = getOrCreateRuntimeModuleDescriptorsList()
   def copiedLibrariesIds = descriptors.collect {it.moduleId}
-  def librariesCopiedToLibIds = descriptors.findAll {it.moduleRoots.any {it.startsWith("../lib/")}}.collect {it.moduleId}
+  def libDir = new File(targetDirectory, "lib")
+  def librariesCopiedToLibIds = descriptors.findAll {it.moduleRoots.any { FileUtil.isAncestor(libDir, it, true)}}.collect {it.moduleId}
   def notCopied = { JpsLibrary lib -> !copiedLibrariesIds.contains(getLibraryId(lib)) }
   def platformLibraries = getLibrariesFromDependencies(platformModules).findAll{!librariesCopiedToLibIds.contains(getLibraryId(it))}
   platformLibraries.findAll {copiedLibrariesIds.contains(getLibraryId(it))}.each {
@@ -191,9 +194,9 @@ binding.setVariable("copyPlatformLibraries", { String targetDirectory, Collectio
   layout(targetDirectory) {
     dir("lib") {
       (platformLibraries+pluginLibraries-modulePluginLibraries).each {
-        layoutLibrary(it, "../lib")
+        layoutLibrary(it, "$targetDirectory/lib")
       }
-      layoutRuntimeResources(runtimeResources, "lib")
+      layoutRuntimeResources(runtimeResources, "$targetDirectory/lib")
     }
   }
 })
@@ -204,7 +207,7 @@ private Set<JpsLibrary> getLibrariesFromDependencies(Collection<String> moduleNa
 
 binding.setVariable("generateRuntimeModuleDescriptors", { String distRoot, LayoutInfo layoutInfo ->
   layoutInfo.modules.each { moduleName ->
-    registerModuleDescriptor(findModule(moduleName), layoutInfo.getModulePaths(moduleName).collect {"../$it"})
+    registerModuleDescriptor(findModule(moduleName), layoutInfo.getModulePaths(moduleName))
   }
   createRuntimeModuleDescriptorGenerator().generateForProductionMode(new File(distRoot), getOrCreateRuntimeModuleDescriptorsList())
 })
@@ -231,7 +234,7 @@ private Map<String, JpsLibrary> getOrCreateLibraryMap() {
 }
 
 private void layoutInSubdir(List<Pair<JpsModule, String>> modulesWithScopes, List<Pair<JpsLibrary, String>> librariesWithScopes,
-                            String relativeOutputPath, String scope, String subDirName) {
+                            String outputPath, String scope, String subDirName) {
   def modules = modulesWithScopes.findAll { it.second == scope }.collect { it.first }
   def libraries = librariesWithScopes.findAll { it.second == scope }.collect { it.first }
   if (!modules.isEmpty() || !libraries.isEmpty()) {
@@ -240,27 +243,27 @@ private void layoutInSubdir(List<Pair<JpsModule, String>> modulesWithScopes, Lis
         jar("${jpsModule.name}.jar") {
           module(jpsModule.name)
         }
-//        registerModuleDescriptor(jpsModule, ["$relativeOutputPath/$subDirName/${jpsModule.name}.jar"])
+//        registerModuleDescriptor(jpsModule, ["$outputPath/$subDirName/${jpsModule.name}.jar"])
       }
       libraries.each { lib ->
-        layoutLibrary(lib, "$relativeOutputPath/$subDirName")
+        layoutLibrary(lib, "$outputPath/$subDirName")
       }
     }
   }
 }
 
-private void layoutLibrary(JpsLibrary lib, String relativeOutputPath) {
+private void layoutLibrary(JpsLibrary lib, String outputPath) {
   def files = lib.getFiles(JpsOrderRootType.COMPILED)
   files.each {
     ant.fileset(file: it.absolutePath)
   }
 
-  registerModuleDescriptor(getLibraryId(lib), files.collect { "$relativeOutputPath/$it.name" })
+  registerModuleDescriptor(getLibraryId(lib), files.collect { "$outputPath/$it.name" })
 }
 
 
-private List<String> toStrings(List<? extends CharSequence> paths) {
-  paths.collect { it.toString() }
+private List<File> toFiles(Collection<? extends CharSequence> paths) {
+  paths.collect { new File(it.toString()) }
 }
 
 private def resources(Collection<String> modules) {

@@ -317,8 +317,9 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     }
   }
 
-  registerLibraryDescriptor(RuntimeModuleId.projectLibrary("KotlinJavaRuntime"), ["../lib/kotlin-runtime.jar", "../lib/kotlin-reflect.jar"])
-  registerJarDirLibraryDescriptor(RuntimeModuleId.projectLibrary("Ant"), new File("${home}/community/lib/ant/lib"), "../lib/ant/lib")
+  registerLibraryDescriptor(RuntimeModuleId.projectLibrary("KotlinJavaRuntime"), ["$targetDirectory/lib/kotlin-runtime.jar",
+                                                                                  "$targetDirectory/lib/kotlin-reflect.jar"])
+  registerJarDirLibraryDescriptor(RuntimeModuleId.projectLibrary("Ant"), new File("${home}/community/lib/ant/lib"), "$targetDirectory/lib/ant/lib")
   // product specific custom layout
   customLayout(targetDirectory)
 
