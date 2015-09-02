@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,15 +36,15 @@ public class GutterIconTooltipHelper {
   private GutterIconTooltipHelper() {
   }
 
-  public static String composeText(@NotNull PsiElement[] elements, String start, final String pattern) {
+  public static String composeText(@NotNull PsiElement[] elements, @NotNull String start, @NotNull String pattern) {
     return composeText(Arrays.asList(elements), start, pattern);
   }
 
-  public static String composeText(@NotNull Iterable<? extends PsiElement> elements, String start, final String pattern) {
+  public static String composeText(@NotNull Iterable<? extends PsiElement> elements, @NotNull String start, @NotNull String pattern) {
     return composeText(elements, start, pattern, "");
   }
 
-  public static String composeText(@NotNull Iterable<? extends PsiElement> elements, String start, final String pattern, String postfix) {
+  public static String composeText(@NotNull Iterable<? extends PsiElement> elements, @NotNull String start, @NotNull String pattern, @NotNull String postfix) {
     @NonNls StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(start);
