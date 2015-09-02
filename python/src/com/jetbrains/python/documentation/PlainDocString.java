@@ -21,6 +21,7 @@ import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -71,14 +72,16 @@ public class PlainDocString extends DocStringLineParser implements StructuredDoc
     return "";
   }
 
+  @NotNull
   @Override
   public List<String> getParameters() {
-    return null;
+    return Collections.emptyList();
   }
 
+  @NotNull
   @Override
   public List<Substring> getParameterSubstrings() {
-    return null;
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -99,14 +102,16 @@ public class PlainDocString extends DocStringLineParser implements StructuredDoc
     return null;
   }
 
+  @NotNull
   @Override
   public List<String> getKeywordArguments() {
-    return null;
+    return Collections.emptyList();
   }
 
+  @NotNull
   @Override
   public List<Substring> getKeywordArgumentSubstrings() {
-    return null;
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -133,9 +138,10 @@ public class PlainDocString extends DocStringLineParser implements StructuredDoc
     return null;
   }
 
+  @NotNull
   @Override
   public List<String> getRaisedExceptions() {
-    return null;
+    return Collections.emptyList();
   }
 
   @Nullable

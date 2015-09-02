@@ -57,11 +57,13 @@ public class EpydocString extends TagBasedDocString {
     return html;
   }
 
+  @NotNull
   @Override
   public List<String> getParameters() {
     return toUniqueStrings(getParameterSubstrings());
   }
 
+  @NotNull
   @Override
   public List<String> getKeywordArguments() {
     return toUniqueStrings(getKeywordArgumentSubstrings());
@@ -109,6 +111,7 @@ public class EpydocString extends TagBasedDocString {
     return inlineMarkupToHTML(getTagValue(KEYWORD_ARGUMENT_TAGS, paramName));
   }
 
+  @NotNull
   @Override
   public List<String> getRaisedExceptions() {
     return toUniqueStrings(getTagArguments(RAISES_TAGS));
@@ -298,6 +301,7 @@ public class EpydocString extends TagBasedDocString {
     return list;
   }
 
+  @NotNull
   @Override
   public List<Substring> getKeywordArgumentSubstrings() {
     return getTagArguments(KEYWORD_ARGUMENT_TAGS);

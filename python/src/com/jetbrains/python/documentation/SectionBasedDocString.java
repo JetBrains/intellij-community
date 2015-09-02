@@ -279,6 +279,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     return null;
   }
 
+  @NotNull
   @Override
   public List<String> getParameters() {
     return ContainerUtil.map(getParameterSubstrings(), new Function<Substring, String>() {
@@ -289,6 +290,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     });
   }
 
+  @NotNull
   @Override
   public List<Substring> getParameterSubstrings() {
     return ContainerUtil.mapNotNull(getParameterFields(), new Function<SectionField, Substring>() {
@@ -359,6 +361,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     return getSectionsWithNormalizedTitle(PARAMETERS_SECTION);
   }
 
+  @NotNull
   @Override
   public List<String> getKeywordArguments() {
     return ContainerUtil.mapNotNull(getKeywordArgumentFields(), new Function<SectionField, String>() {
@@ -369,6 +372,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     });
   }
 
+  @NotNull
   @Override
   public List<Substring> getKeywordArgumentSubstrings() {
     return ContainerUtil.mapNotNull(getKeywordArgumentFields(), new Function<SectionField, Substring>() {
@@ -446,6 +450,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     return ContainerUtil.getFirstItem(getReturnFields());
   }
 
+  @NotNull
   @Override
   public List<String> getRaisedExceptions() {
     return ContainerUtil.mapNotNull(getExceptionFields(), new Function<SectionField, String>() {

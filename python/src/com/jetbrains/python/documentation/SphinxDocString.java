@@ -40,11 +40,13 @@ public class SphinxDocString extends TagBasedDocString {
     return s != null ? s.concatTrimmedLines(" ") : null;
   }
 
+  @NotNull
   @Override
   public List<String> getParameters() {
     return toUniqueStrings(getParameterSubstrings());
   }
 
+  @NotNull
   @Override
   public List<String> getKeywordArguments() {
     return toUniqueStrings(getKeywordArgumentSubstrings());
@@ -80,6 +82,7 @@ public class SphinxDocString extends TagBasedDocString {
     return concatTrimmedLines(getTagValue(RETURN_TAGS));
   }
 
+  @NotNull
   @Override
   public List<String> getRaisedExceptions() {
     return toUniqueStrings(getTagArguments(RAISES_TAGS));
@@ -104,6 +107,7 @@ public class SphinxDocString extends TagBasedDocString {
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
   public List<Substring> getKeywordArgumentSubstrings() {
     return getTagArguments(KEYWORD_ARGUMENT_TAGS);

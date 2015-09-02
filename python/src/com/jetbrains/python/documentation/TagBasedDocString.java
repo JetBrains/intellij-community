@@ -210,6 +210,7 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
   public List<Substring> getParameterSubstrings() {
     final List<Substring> results = new ArrayList<Substring>();

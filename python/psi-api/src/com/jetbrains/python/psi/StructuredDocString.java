@@ -37,11 +37,13 @@ public interface StructuredDocString {
   String getSummary();
   String getDescription(); // for formatter
 
+  @NotNull
   List<String> getParameters();
 
   /**
    * @return all names of parameters mentioned in the docstring as substrings.
    */
+  @NotNull
   List<Substring> getParameterSubstrings();
 
   /**
@@ -65,7 +67,9 @@ public interface StructuredDocString {
    * Keyword arguments are those arguments that usually don't exist in function signature, 
    * but are passed e.g. via {@code **kwargs} mechanism. 
    */
+  @NotNull
   List<String> getKeywordArguments();
+  @NotNull
   List<Substring> getKeywordArgumentSubstrings();
 
   // getKeywordArgumentType(name)
@@ -79,6 +83,7 @@ public interface StructuredDocString {
 
   @Nullable
   String getReturnDescription(); // for formatter
+  @NotNull
   List<String> getRaisedExceptions(); // for formatter
 
   @Nullable
