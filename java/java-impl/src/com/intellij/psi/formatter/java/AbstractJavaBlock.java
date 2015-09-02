@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,7 +193,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (isStatement(child, child.getTreeParent())) {
       return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings, javaSettings);
     }
-    if (isBuildInjectedBlocks() &&
+    if (!isBuildIndentsOnly() &&
         child instanceof PsiComment &&
         child instanceof PsiLanguageInjectionHost &&
         InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)child)) {
@@ -372,10 +372,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   @Nullable
   protected Wrap createChildWrap() {
-    if (!isBuildInjectedBlocks()) {
-      return null; //when detecting indent we do not care about wraps
-    }
-    return myWrapManager.createChildBlockWrap(this, getSettings(), this);
+    //when detecting indent we do not care about wraps
+    return isBuildIndentsOnly() ? null : myWrapManager.createChildBlockWrap(this, getSettings(), this);
   }
 
   @Nullable
@@ -836,10 +834,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   @Nullable
   protected Wrap arrangeChildWrap(final ASTNode child, Wrap defaultWrap) {
-    if (!isBuildInjectedBlocks()) {
-      return null; //when detecting indent we do not care about wraps
-    }
-    return myWrapManager.arrangeChildWrap(child, myNode, mySettings, myJavaSettings, defaultWrap, this);
+    //when detecting indent we do not care about wraps
+    return isBuildIndentsOnly() ? null : myWrapManager.arrangeChildWrap(child, myNode, mySettings, myJavaSettings, defaultWrap, this);
   }
 
   @NotNull
