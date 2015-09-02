@@ -190,6 +190,8 @@
     </group>
 
     <group id="Debugger.Representation">
+      <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction" text="Create..."/>
+      <separator/>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
     </group>
 
