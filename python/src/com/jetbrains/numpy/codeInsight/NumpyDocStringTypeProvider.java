@@ -30,6 +30,7 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
+import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -244,8 +245,12 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static PyType parseNumpyDocType(@NotNull PsiElement anchor, @NotNull String typeString) {
-    typeString = NumPyDocString.cleanupOptional(typeString);
+    final String withoutOptional = NumPyDocString.cleanupOptional(typeString);
     final Set<PyType> types = new LinkedHashSet<PyType>();
+    if (withoutOptional != null) {
+      typeString = withoutOptional;
+      types.add(PyNoneType.INSTANCE);
+    }
     for (String typeName : NumPyDocString.getNumpyUnionType(typeString)) {
       PyType parsedType = parseSingleNumpyDocType(anchor, typeName);
       if (parsedType != null) {

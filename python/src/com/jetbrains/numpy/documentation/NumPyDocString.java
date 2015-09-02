@@ -276,13 +276,13 @@ public class NumPyDocString {
     }
   }
 
-  @NotNull
+  @Nullable
   public static String cleanupOptional(@NotNull String typeString) {
     int index = typeString.indexOf(", optional");
     if (index >= 0) {
       return typeString.substring(0, index);
     }
-    return typeString;
+    return null;
   }
 
   @NotNull
