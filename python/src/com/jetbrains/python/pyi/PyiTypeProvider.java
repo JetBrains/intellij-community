@@ -77,6 +77,12 @@ public class PyiTypeProvider extends PyTypeProviderBase {
       }
       return context.getType(functionStub);
     }
+    else if (callable.getContainingFile() instanceof PyiFile && callable instanceof PyFunction) {
+      final PyFunction functionStub = (PyFunction)callable;
+      if (isOverload(functionStub, context)) {
+        return getOverloadType(functionStub, context);
+      }
+    }
     return null;
   }
 
@@ -87,22 +93,34 @@ public class PyiTypeProvider extends PyTypeProviderBase {
       final PsiElement pythonStub = PyiUtil.getPythonStub(function);
       if (pythonStub instanceof PyFunction) {
         final PyFunction functionStub = (PyFunction)pythonStub;
-        if (isOverload(functionStub, context)) {
-          final List<PyType> returnTypes = new ArrayList<PyType>();
-          final List<PyFunction> overloads = getOverloads(functionStub, context);
-          for (PyFunction overload : overloads) {
-            final Map<PyExpression, PyNamedParameter> mapping = mapArguments(callSite, overload);
-            final PyExpression receiver = PyTypeChecker.getReceiver(callSite, overload);
-            final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping, context);
-            final PyType returnType = context.getReturnType(overload);
-            final PyType unifiedType = substitutions != null ? PyTypeChecker.substitute(returnType, substitutions, context) : null;
-            if (unifiedType != null) {
-              returnTypes.add(unifiedType);
-            }
-          }
-          return PyUnionType.union(returnTypes);
+        return getOverloadedCallType(functionStub, callSite, context);
+      }
+      else if (function.getContainingFile() instanceof PyiFile) {
+        return getOverloadedCallType(function, callSite, context);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getOverloadedCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite,
+                                              @NotNull TypeEvalContext context) {
+    if (isOverload(function, context)) {
+      final List<PyType> matchedReturnTypes = new ArrayList<PyType>();
+      final List<PyType> allReturnTypes = new ArrayList<PyType>();
+      final List<PyFunction> overloads = getOverloads(function, context);
+      for (PyFunction overload : overloads) {
+        final Map<PyExpression, PyNamedParameter> mapping = mapArguments(callSite, overload);
+        final PyExpression receiver = PyTypeChecker.getReceiver(callSite, overload);
+        final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping, context);
+        final PyType returnType = context.getReturnType(overload);
+        allReturnTypes.add(returnType);
+        final PyType unifiedType = substitutions != null ? PyTypeChecker.substitute(returnType, substitutions, context) : null;
+        if (unifiedType != null) {
+          matchedReturnTypes.add(unifiedType);
         }
       }
+      return PyUnionType.union(matchedReturnTypes.isEmpty() ? allReturnTypes : matchedReturnTypes);
     }
     return null;
   }
@@ -127,7 +145,7 @@ public class PyiTypeProvider extends PyTypeProviderBase {
     if (!overloads.isEmpty()) {
       final List<PyType> overloadTypes = new ArrayList<PyType>();
       for (PyFunction overload : overloads) {
-        overloadTypes.add(context.getType(overload));
+        overloadTypes.add(new PyFunctionTypeImpl(overload));
       }
       return PyUnionType.union(overloadTypes);
     }
