@@ -18,7 +18,7 @@ public class RepositoryLibraryWithDescriptionEditor
   @Override
   protected void edit() {
     @NotNull RepositoryLibraryProperties properties = myEditorComponent.getProperties();
-    String oldVersion = properties.getVersion();
+    //String oldVersion = properties.getVersion();
     boolean wasGeneratedName =
       RepositoryLibraryType.getInstance().getDescription(properties).equals(myEditorComponent.getLibraryEditor().getName());
     RepositoryLibraryPropertiesEditor editor = new RepositoryLibraryPropertiesEditor(
@@ -26,7 +26,6 @@ public class RepositoryLibraryWithDescriptionEditor
       RepositoryUtils.libraryHasSources(myEditorComponent.getLibraryEditor()),
       RepositoryUtils.libraryHasJavaDocs(myEditorComponent.getLibraryEditor()),
       properties);
-    editor.init();
     editor.setTitle(RepositoryLibraryDescription.findDescription(properties).getDisplayName());
     if (!editor.showAndGet()) {
       return;

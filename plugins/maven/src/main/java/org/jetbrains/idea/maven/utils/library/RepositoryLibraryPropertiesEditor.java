@@ -1,6 +1,8 @@
 package org.jetbrains.idea.maven.utils.library;
 
 import com.google.common.base.Strings;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -9,6 +11,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.JBIterable;
@@ -67,6 +70,8 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
       }
     });
     reloadVersionsAsync();
+
+    super.init();
   }
 
   private static VersionKind getVersionKind(String version) {
@@ -245,19 +250,29 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
       return;
     }
 
-    SwingUtilities.invokeLater(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         initVersionsPanel();
+      }
+    }, ModalityState.any(), new Condition() {
+      @Override
+      public boolean value(Object o) {
+        return Disposer.isDisposed(myDisposable);
       }
     });
   }
 
   private void versionsFailedToLoad() {
-    SwingUtilities.invokeLater(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         setState(State.FailedToLoad);
+      }
+    }, ModalityState.any(), new Condition() {
+      @Override
+      public boolean value(Object o) {
+        return Disposer.isDisposed(myDisposable);
       }
     });
   }
@@ -296,11 +311,6 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return mainPanel;
-  }
-
-  @Override
-  public void init() {
-    super.init();
   }
 
   private enum VersionKind {

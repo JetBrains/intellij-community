@@ -31,23 +31,17 @@ public class RepositoryLibrarySupportInModuleConfigurable extends FrameworkSuppo
   public RepositoryLibrarySupportInModuleConfigurable(@Nullable Project project, @NotNull RepositoryLibraryDescription libraryDescription) {
     this.libraryDescription = libraryDescription;
     this.project = project;
+    editor = new RepositoryLibraryPropertiesEditor(project, false, false, libraryDescription.createDefaultProperties());
   }
 
   @Nullable
   @Override
   public JComponent createComponent() {
-    if (editor == null) {
-      editor = new RepositoryLibraryPropertiesEditor(project, false, false, libraryDescription.createDefaultProperties());
-    }
     return editor.getMainPanel();
   }
 
   public boolean showEditorAndGet() {
-    if (editor == null) {
-      editor = new RepositoryLibraryPropertiesEditor(project, false, false, libraryDescription.createDefaultProperties());
-    }
     editor.setTitle(ProjectBundle.message("maven.add.library.support", libraryDescription.getDisplayName()));
-    editor.init();
     return editor.showAndGet();
   }
 
