@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
@@ -73,7 +74,13 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        Project[] projects = ProjectManager.getInstance().getOpenProjects();
+
+        // let PushedFilePropertiesUpdater process all pending vfs events and update file properties before we issue PSI events
+        for (Project project : projects) {
+          ((PushedFilePropertiesUpdaterImpl)PushedFilePropertiesUpdater.getInstance(project)).processAfterVfsChanges(events);
+        }
+        for (Project project : projects) {
           PsiVFSListener listener = project.getComponent(PsiVFSListener.class);
           assert listener != null;
           listener.myReportedUnloadedPsiChange = false;
@@ -523,9 +530,6 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
   @Override
   public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-    // let PushedFilePropertiesUpdater process all pending vfs events and update file properties before we issue PSI events
-    PushedFilePropertiesUpdater.getInstance(myProject).processPendingEvents();
-
     final VirtualFile vFile = event.getFile();
 
     final PsiDirectory oldParentDir = myFileManager.findDirectory(event.getOldParent());
