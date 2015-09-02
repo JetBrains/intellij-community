@@ -83,6 +83,15 @@ public abstract class PythonRemoteInterpreterManager {
                                                  boolean askForSudo)
     throws RemoteSdkException;
 
+  @Deprecated
+  public abstract ProcessOutput runRemoteProcess(@Nullable Project project,
+                                                 RemoteSdkCredentials data,
+                                                 @NotNull PyRemotePathMapper pathMapper,
+                                                 String[] command,
+                                                 @Nullable String workingDir,
+                                                 boolean askForSudo, String sdkHomePath)
+    throws RemoteSdkException;
+
   @NotNull
   public abstract RemoteSshProcess createRemoteProcess(@Nullable Project project,
                                                        @NotNull PyRemoteSdkCredentials data,

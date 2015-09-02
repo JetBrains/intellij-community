@@ -116,7 +116,8 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
         do {
           PyRemotePathMapper pathMapper = manager.setupMappings(null, (PyRemoteSdkAdditionalDataBase)sdkData, null);
           processOutput =
-            manager.runRemoteProcess(null, remoteSdkCredentials, pathMapper, ArrayUtil.toStringArray(cmdline), workingDir, askForSudo);
+            manager.runRemoteProcess(null, remoteSdkCredentials, pathMapper, ArrayUtil.toStringArray(cmdline), workingDir, askForSudo,
+                                     mySdk.getHomePath());
           if (askForSudo && processOutput.getStderr().contains("sudo: 3 incorrect password attempts")) {
             continue;
           }
