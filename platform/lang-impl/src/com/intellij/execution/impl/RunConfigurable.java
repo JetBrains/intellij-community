@@ -303,7 +303,9 @@ class RunConfigurable extends BaseConfigurable {
         myTree.requestFocusInWindow();
         final RunnerAndConfigurationSettings settings = manager.getSelectedConfiguration();
         if (settings != null) {
-          selectConfiguration(settings.getConfiguration());
+          if (selectConfiguration(settings.getConfiguration())) {
+            return;
+          }
         }
         else {
           mySelectedConfigurable = null;
@@ -316,7 +318,7 @@ class RunConfigurable extends BaseConfigurable {
     ((DefaultTreeModel)myTree.getModel()).reload();
   }
 
-  private void selectConfiguration(@NotNull RunConfiguration configuration) {
+  private boolean selectConfiguration(@NotNull RunConfiguration configuration) {
     final Enumeration enumeration = myRoot.breadthFirstEnumeration();
     while (enumeration.hasMoreElements()) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
@@ -327,10 +329,11 @@ class RunConfigurable extends BaseConfigurable {
         if (Comparing.strEqual(runnerAndConfigurationSettings.getConfiguration().getType().getId(), configurationType.getId()) &&
             Comparing.strEqual(runnerAndConfigurationSettings.getConfiguration().getName(), configuration.getName())) {
           TreeUtil.selectInTree(node, true, myTree);
-          return;
+          return true;
         }
       }
     }
+    return false;
   }
 
   private void showTemplateConfigurable(ConfigurationFactory factory) {
@@ -613,7 +616,19 @@ class RunConfigurable extends BaseConfigurable {
       myAdditionalSettings.add(Pair.create(configurable, configurable.createComponent()));
     }
 
-    myWholePanel = new DataContextPanel(new BorderLayout());
+    myWholePanel = new JPanel(new BorderLayout());
+    DataManager.registerDataProvider(myWholePanel, new DataProvider() {
+      @Nullable
+      @Override
+      public Object getData(@NonNls String dataId) {
+        return RunConfigurationSelector.KEY.getName().equals(dataId) ? new RunConfigurationSelector() {
+          @Override
+          public void select(@NotNull RunConfiguration configuration) {
+            selectConfiguration(configuration);
+          }
+        } : null;
+      }
+    });
 
     mySplitter.setFirstComponent(createLeftPanel());
     mySplitter.setSecondComponent(myRightPanel);
@@ -2078,20 +2093,20 @@ class RunConfigurable extends BaseConfigurable {
     }
   }
 
-  private class DataContextPanel extends JPanel implements DataProvider {
-    public DataContextPanel(LayoutManager layout) {
-      super(layout);
-    }
-
-    @Nullable
-    @Override
-    public Object getData(@NonNls String dataId) {
-      return RunConfigurationSelector.KEY.getName().equals(dataId) ? new RunConfigurationSelector() {
-        @Override
-        public void select(@NotNull RunConfiguration configuration) {
-          selectConfiguration(configuration);
-        }
-      } : null;
-    }
-  }
+  //private class DataContextPanel extends JPanel implements DataProvider {
+  //  public DataContextPanel(LayoutManager layout) {
+  //    super(layout);
+  //  }
+  //
+  //  @Nullable
+  //  @Override
+  //  public Object getData(@NonNls String dataId) {
+  //    return RunConfigurationSelector.KEY.getName().equals(dataId) ? new RunConfigurationSelector() {
+  //      @Override
+  //      public void select(@NotNull RunConfiguration configuration) {
+  //        selectConfiguration(configuration);
+  //      }
+  //    } : null;
+  //  }
+  //}
 }
