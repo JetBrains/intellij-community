@@ -1201,7 +1201,6 @@ binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List appro
   clearBuildCaches()
   projectBuilder.cleanOutput()
   projectBuilder.buildModules(modulesToBuild)
-  createRuntimeModuleDescriptorGenerator().generateDescriptorsForModules()
   return usedJars
 })
 

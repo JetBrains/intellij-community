@@ -15,24 +15,22 @@
  */
 package org.jetbrains.jps.devkit.builder;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
-import org.jetbrains.jps.devkit.model.JpsPluginModuleType;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.java.JpsJavaModuleType;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.platform.loader.impl.repository.RepositoryConstants;
-import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -97,22 +95,8 @@ public class RuntimeModuleDescriptorsTarget extends BuildTarget<BuildRootDescrip
   @Override
   public Collection<File> getOutputRoots(CompileContext context) {
     JpsProject project = context.getProjectDescriptor().getProject();
-    List<File> outputFiles = new ArrayList<File>();
-    File outputDirForLibraries = RuntimeModuleDescriptorsGenerator.getDescriptorsDirectory(project);
-    if (outputDirForLibraries != null) {
-      outputFiles.add(outputDirForLibraries);
-    }
-    for (JpsModule module : project.getModules()) {
-      if (!module.getModuleType().equals(JpsJavaModuleType.INSTANCE) && !module.getModuleType().equals(JpsPluginModuleType.INSTANCE)) {
-        continue;
-      }
-      File output = JpsJavaExtensionService.getInstance().getOutputDirectory(module, false);
-      if (output != null) {
-        RuntimeModuleId moduleId = RuntimeModuleId.module(module.getName());
-        outputFiles.add(new File(output, RepositoryConstants.getModuleDescriptorRelativePath(moduleId)));
-      }
-    }
-    return outputFiles;
+    File descriptorsOutputDir = RuntimeModuleDescriptorsGenerator.getDescriptorsDirectory(project);
+    return ContainerUtil.createMaybeSingletonList(descriptorsOutputDir);
   }
 
   private static class MyTargetType extends BuildTargetType<RuntimeModuleDescriptorsTarget> implements ModuleInducedTargetType {

@@ -82,9 +82,8 @@ public class RuntimeModuleDescriptorsGenerator {
       return;
     }
 
-    generateDescriptorsForModules();
     File descriptorsOutputFile = new File(outputDir, RepositoryConstants.MODULES_ZIP_NAME);
-    generateDescriptorsZip(descriptorsOutputFile, collectUsedLibrariesAndRuntimeResources(outputDir));
+    generateDescriptorsZip(descriptorsOutputFile, createDescriptorsForDevelopmentMode(outputDir));
 
     try {
       FileUtil.writeToFile(new File(outputDir, RepositoryConstants.VERSION_FILE_NAME), String.valueOf(RepositoryConstants.VERSION_NUMBER));
@@ -97,9 +96,7 @@ public class RuntimeModuleDescriptorsGenerator {
   }
 
 
-  public void generateDescriptorsForModules() {
-    myMessageHandler.showProgressMessage("Generating descriptors in module output directories...");
-    long start = System.currentTimeMillis();
+  private void generateDescriptorsForModules(List<RuntimeModuleDescriptorData> descriptors, File descriptorsOutputDir) {
     for (JpsModule module : myProject.getModules()) {
       for (final boolean test : BOOLEANS) {
         File outputDirectory = JpsJavaExtensionService.getInstance().getOutputDirectory(module, test);
@@ -108,29 +105,9 @@ public class RuntimeModuleDescriptorsGenerator {
                                        getRuntimeModuleName(module, test) + "' module");
           continue;
         }
-
-        File outputFile =
-          new File(outputDirectory, RepositoryConstants.getModuleDescriptorRelativePath(getRuntimeModuleName(module, test)));
-        if (!FileUtilRt.createParentDirs(outputFile)) {
-          myMessageHandler.reportError("Failed to create output directory '" + outputFile.getParent() + "'");
-          continue;
-        }
-        try {
-          final PrintWriter output = new PrintWriter(new FileWriter(outputFile));
-          try {
-            generateModuleXml(output, createModuleDescriptor(module, test, Collections.singletonList("../")));
-          }
-          finally {
-            output.close();
-          }
-        }
-        catch (Exception e) {
-          myMessageHandler.reportError("Failed to write dependencies for '" + module.getName() + "' module" + (test ? " tests" : ""));
-        }
+        descriptors.add(createModuleDescriptor(module, test, getRelativePaths(Collections.singletonList(outputDirectory), descriptorsOutputDir)));
       }
     }
-    myMessageHandler.showProgressMessage("Descriptors for " + myProject.getModules().size() + " modules generated in " +
-                                         (System.currentTimeMillis() - start) + "ms");
   }
 
   @NotNull
@@ -168,8 +145,10 @@ public class RuntimeModuleDescriptorsGenerator {
     return JpsJavaExtensionService.dependencies(module).withoutSdk().withoutModuleSourceEntries().runtimeOnly();
   }
 
-  private List<RuntimeModuleDescriptorData> collectUsedLibrariesAndRuntimeResources(File descriptorsOutputDir) {
+  private List<RuntimeModuleDescriptorData> createDescriptorsForDevelopmentMode(File descriptorsOutputDir) {
     List<RuntimeModuleDescriptorData> descriptors = new ArrayList<RuntimeModuleDescriptorData>();
+    generateDescriptorsForModules(descriptors, descriptorsOutputDir);
+
     Set<JpsLibrary> libraries = new LinkedHashSet<JpsLibrary>();
     for (JpsModule module : myProject.getModules()) {
       libraries.addAll(enumerateRuntimeDependencies(module).getLibraries());
@@ -310,13 +289,7 @@ public class RuntimeModuleDescriptorsGenerator {
   };
 
   public static void main(String[] args) throws IOException {
-    if ("--in-module-outputs".equals(args[0])) {
-      JpsModel model = JpsSerializationManager.getInstance().loadModel(args[1], null);
-      new RuntimeModuleDescriptorsGenerator(model.getProject(), SYSTEM_OUT_HANDLER).generateDescriptorsForModules();
-    }
-    else {
-      generate(args[0], null);
-    }
+    generate(args[0], null);
     System.exit(0);
   }
 

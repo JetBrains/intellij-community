@@ -15,7 +15,6 @@
  */
 package org.jetbrains.platform.loader.impl.repository;
 
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,19 +38,16 @@ import static org.jetbrains.platform.loader.impl.repository.RepositoryConstants.
  * @author nik
  */
 public abstract class PlatformRepositoryBase implements PlatformRepository {
-  private final Map<RuntimeModuleId, RuntimeModuleDescriptor> myModulesCache = ContainerUtil.newConcurrentMap();
+  private final Map<RuntimeModuleId, RuntimeModuleDescriptor> myModulesDescriptors;
+
+  protected PlatformRepositoryBase(Map<RuntimeModuleId, RuntimeModuleDescriptor> modulesDescriptors) {
+    myModulesDescriptors = modulesDescriptors;
+  }
 
   @Nullable
   @Override
   public RuntimeModuleDescriptor getModule(@NotNull RuntimeModuleId moduleName) {
-    RuntimeModuleDescriptor module = myModulesCache.get(moduleName);
-    if (module == null) {
-      module = findModule(moduleName);
-      if (module != null) {
-        myModulesCache.put(moduleName, module);
-      }
-    }
-    return module;
+    return myModulesDescriptors.get(moduleName);
   }
 
   protected static Map<RuntimeModuleId, RuntimeModuleDescriptor> loadModulesFromZip(File outputRoot) {
@@ -84,9 +80,6 @@ public abstract class PlatformRepositoryBase implements PlatformRepository {
     }
     return map;
   }
-
-  @Nullable
-  protected abstract RuntimeModuleDescriptor findModule(RuntimeModuleId moduleName);
 
   @Override
   @NotNull

@@ -1,43 +1,21 @@
 package org.jetbrains.platform.loader.impl.repository;
 
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.platform.loader.PlatformLoaderException;
 import org.jetbrains.platform.loader.repository.RuntimeModuleDescriptor;
-import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.jetbrains.platform.loader.impl.repository.RepositoryConstants.getModuleDescriptorRelativePath;
 
 /**
  * @author nik
  */
 public class ModuleXmlParser {
-  public static RuntimeModuleDescriptor loadFromFile(File root, RuntimeModuleId moduleId) {
-    try {
-      File file = new File(root, getModuleDescriptorRelativePath(moduleId));
-      BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(file));
-      try {
-        return parseModuleXml(XMLInputFactory.newInstance(), inputStream, file.getParentFile());
-      }
-      finally {
-        inputStream.close();
-      }
-    }
-    catch (Exception e) {
-      throw new PlatformLoaderException("Failed to load module descriptor for '" + moduleId + "' from " + root.getAbsolutePath(), e);
-    }
-  }
-
   public static RuntimeModuleDescriptor parseModuleXml(XMLInputFactory factory, InputStream inputStream, File baseDir) throws XMLStreamException {
     XMLStreamReader reader = factory.createXMLStreamReader(inputStream);
     List<String> dependencies = new ArrayList<String>();

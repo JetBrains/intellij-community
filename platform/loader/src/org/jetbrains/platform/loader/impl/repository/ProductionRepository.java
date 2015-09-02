@@ -16,30 +16,19 @@
 package org.jetbrains.platform.loader.impl.repository;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.platform.loader.repository.PlatformRepository;
-import org.jetbrains.platform.loader.repository.RuntimeModuleDescriptor;
-import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
-import java.util.Map;
 
 /**
  * @author nik
  */
 public class ProductionRepository extends PlatformRepositoryBase implements PlatformRepository {
-  private final Map<RuntimeModuleId, RuntimeModuleDescriptor> myModuleDescriptorMap;
-  @NotNull private final File myIdeHome;
+  private final File myIdeHome;
 
   public ProductionRepository(@NotNull File ideHome) {
+    super(loadModulesFromZip(ideHome));
     myIdeHome = ideHome;
-    myModuleDescriptorMap = loadModulesFromZip(ideHome);
-  }
-
-  @Nullable
-  @Override
-  protected RuntimeModuleDescriptor findModule(RuntimeModuleId moduleName) {
-    return myModuleDescriptorMap.get(moduleName);
   }
 
   @Override
