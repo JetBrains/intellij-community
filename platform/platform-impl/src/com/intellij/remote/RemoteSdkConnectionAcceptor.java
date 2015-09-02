@@ -24,4 +24,5 @@ public interface RemoteSdkConnectionAcceptor {
   void ssh(@NotNull RemoteCredentialsHolder cred);
   void vagrant(@NotNull VagrantBasedCredentialsHolder cred);
   void deployment(@NotNull WebDeploymentCredentialsHolder cred);
+  void docker(@NotNull DockerCredentialsHolder credentials);
 }
