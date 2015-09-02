@@ -364,11 +364,9 @@ public class PyDocstringGenerator {
 
   @NotNull
   private String createDocString() {
-    final String indentation = myDocStringIndent;
-    final DocStringFormat format = myDocStringFormat;
     DocStringBuilder builder = null;
-    if (format == DocStringFormat.EPYTEXT || format == DocStringFormat.REST) {
-      builder = new TagBasedDocStringBuilder(format == DocStringFormat.EPYTEXT ? "@" : ":");
+    if (myDocStringFormat == DocStringFormat.EPYTEXT || myDocStringFormat == DocStringFormat.REST) {
+      builder = new TagBasedDocStringBuilder(myDocStringFormat == DocStringFormat.EPYTEXT ? "@" : ":");
       TagBasedDocStringBuilder tagBuilder = (TagBasedDocStringBuilder)builder;
       if (myAddFirstEmptyLine) {
         tagBuilder.addEmptyLine();
@@ -392,8 +390,8 @@ public class PyDocstringGenerator {
         }
       }
     }
-    else if (format == DocStringFormat.GOOGLE || format == DocStringFormat.NUMPY) {
-      builder = format == DocStringFormat.GOOGLE ? new GoogleCodeStyleDocStringBuilder() : new NumpyDocStringBuilder();
+    else if (myDocStringFormat == DocStringFormat.GOOGLE || myDocStringFormat == DocStringFormat.NUMPY) {
+      builder = myDocStringFormat == DocStringFormat.GOOGLE ? new GoogleCodeStyleDocStringBuilder() : new NumpyDocStringBuilder();
       final SectionBasedDocStringBuilder sectionBuilder = (SectionBasedDocStringBuilder)builder;
       if (myAddFirstEmptyLine) {
         sectionBuilder.addEmptyLine();
@@ -433,9 +431,9 @@ public class PyDocstringGenerator {
       }
     }
     if (builder != null && !builder.getLines().isEmpty()) {
-      return myQuotes + '\n' + builder.buildContent(indentation, true) + '\n' + indentation + myQuotes;
+      return myQuotes + '\n' + builder.buildContent(myDocStringIndent, true) + '\n' + myDocStringIndent + myQuotes;
     }
-    return myQuotes + '\n' + indentation + myQuotes;
+    return createEmptyFallbackDocString();
   }
 
   @NotNull
@@ -454,6 +452,10 @@ public class PyDocstringGenerator {
       //noinspection ConstantConditions
       updater = new NumpyDocStringUpdater((SectionBasedDocString)getStructuredDocString(), myDocStringIndent);
     }
+    // plain docstring - do nothing
+    else if (myDocStringText != null){
+      return myDocStringText;
+    }
     if (updater != null) {
       for (DocstringParam param : myAddedParams) {
         if (param.isReturnValue()) {
@@ -470,7 +472,12 @@ public class PyDocstringGenerator {
       }
       return updater.getDocStringText();
     }
-    return myQuotes + myQuotes;
+    return createEmptyFallbackDocString();
+  }
+
+  @NotNull
+  private String createEmptyFallbackDocString() {
+    return myQuotes + '\n' + myDocStringIndent + myQuotes;
   }
 
   private DocstringParam getParamToEdit() {
