@@ -32,7 +32,7 @@ public class CCPushCourse extends DumbAwareAction {
     if (course == null) {
       return;
     }
-    EduStepicConnector.postCourse(project, course);
+    EduStepicConnector.postCourseWithProgress(project, course);
   }
 
 }
