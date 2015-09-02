@@ -285,7 +285,7 @@ public class ClassRenderer extends NodeRendererImpl{
   }
 
   @Nullable
-  public static String getEnumConstantName(final ObjectReference objRef, ClassType classType) {
+  public static String getEnumConstantName(@NotNull ObjectReference objRef, ClassType classType) {
     do {
       if (!classType.isPrepared()) {
         return null;
