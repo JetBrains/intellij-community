@@ -251,7 +251,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       final BreadcrumbsItem element = elements.get(i);
       final String s = element.getDisplayText();
       final Dimension d = DEFAULT_PAINTER.getSize(s, fm, width - forward.getWidth() - backward.getWidth());
-      final Crumb crumb = new Crumb(this, s, d.width, element);
+      final Crumb crumb = new Crumb(this, s, d.width + 14, element);
       if (screenWidth + d.width > width) {
         Crumb first = null;
         if (screenWidth + backward.getWidth() > width && !result.isEmpty()) {
@@ -723,16 +723,16 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       final int offset = c.getOffset() - pageOffset;
 
       final Color bg = s.getBackgroundColor(c);
-      final int width = c.getWidth();
+      final int width = c.getWidth() - 4;
       if (bg != null) {
         g2.setColor(bg);
-        g2.fillRoundRect(offset + 2, 0, width - 4, height - 3, ROUND_VALUE, ROUND_VALUE);
+        g2.fillRoundRect(offset + 2, 0, width - 6, height - 3, ROUND_VALUE, ROUND_VALUE);
       }
 
       final Color borderColor = s.getBorderColor(c);
       if (borderColor != null) {
         g2.setColor(borderColor);
-        g2.drawRoundRect(offset + 1, 0, width - 2, height - 3, ROUND_VALUE, ROUND_VALUE);
+        g2.drawRoundRect(offset + 2, 0, width - 4, height - 3, ROUND_VALUE, ROUND_VALUE);
       }
 
       final Color textColor = s.getForegroundColor(c);
@@ -766,7 +766,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       }
 
       UISettings.setupAntialiasing(g2);
-      g2.drawString(string, offset + ROUND_VALUE, height - fm.getDescent() - 4);
+      g2.drawString(string, offset + ROUND_VALUE + 5, height - fm.getDescent() - 4);
 
       g2.setFont(oldFont);
     }
