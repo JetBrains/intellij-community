@@ -15,7 +15,9 @@
  */
 package com.intellij.diff
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.UsefulTestCase
+import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 
 public fun assertTrue(actual: Boolean, message: String = "") {
@@ -28,6 +30,10 @@ public fun assertFalse(actual: Boolean, message: String = "") {
 
 public fun assertEquals(expected: Any?, actual: Any?, message: String = "") {
   TestCase.assertEquals(message, expected, actual)
+}
+
+public fun assertEquals(expected: CharSequence?, actual: CharSequence?, message: String = "") {
+  if (!StringUtil.equals(expected, actual)) throw ComparisonFailure(message, expected?.toString(), actual?.toString())
 }
 
 public fun assertEmpty(collection: Collection<*>, message: String = "") {

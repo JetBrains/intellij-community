@@ -15,39 +15,16 @@
  */
 package com.intellij.diff.comparison
 
-import com.intellij.diff.assertEquals
-import com.intellij.diff.assertNull
-import com.intellij.diff.assertOrderedEquals
-import com.intellij.diff.assertTrue
+import com.intellij.diff.*
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.util.Couple
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.ContainerUtil
 import java.util.BitSet
 
-public abstract class ComparisonUtilTestBase : UsefulTestCase() {
-  private var oldRegistryValue: Boolean = false
-
-  override fun setUp() {
-    super.setUp()
-    oldRegistryValue = REGISTRY.asBoolean()
-    REGISTRY.setValue(true)
-  }
-
-  override fun tearDown() {
-    REGISTRY.setValue(oldRegistryValue)
-    super.tearDown()
-  }
-
-  //
-  // Impl
-  //
-
+public abstract class ComparisonUtilTestBase : DiffTestCase() {
   private fun doLineTest(before: Document, after: Document, expected: List<Change>?, policy: ComparisonPolicy) {
     val fragments = MANAGER.compareLines(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR)
     checkConsistency(fragments, before, after)
@@ -174,10 +151,6 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
     }
   }
 
-  private fun getLineCount(document: Document): Int {
-    return Math.max(1, document.getLineCount())
-  }
-
   //
   // Test Builder
   //
@@ -187,7 +160,7 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
   }
 
   public inner class TestBuilder(private val type: TestType) {
-    private var isExecuted: Boolean = false;
+    private var isExecuted: Boolean = false
 
     private var before: Document? = null
     private var after: Document? = null
@@ -200,18 +173,18 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
     private var trimMatching: Couple<BitSet>? = null
     private var ignoreMatching: Couple<BitSet>? = null
 
-    private var shouldSquash: Boolean = false;
-    private var shouldTrim: Boolean = false;
+    private var shouldSquash: Boolean = false
+    private var shouldTrim: Boolean = false
 
     private fun changes(policy: ComparisonPolicy): List<Change>? = when (policy) {
-      ComparisonPolicy.IGNORE_WHITESPACES -> ignoreChanges ?: trimChanges ?: defaultChanges;
-      ComparisonPolicy.TRIM_WHITESPACES -> trimChanges ?: defaultChanges;
+      ComparisonPolicy.IGNORE_WHITESPACES -> ignoreChanges ?: trimChanges ?: defaultChanges
+      ComparisonPolicy.TRIM_WHITESPACES -> trimChanges ?: defaultChanges
       ComparisonPolicy.DEFAULT -> defaultChanges
     }
 
     private fun matchings(policy: ComparisonPolicy): Couple<BitSet>? = when (policy) {
-      ComparisonPolicy.IGNORE_WHITESPACES -> ignoreMatching ?: trimMatching ?: defaultMatching;
-      ComparisonPolicy.TRIM_WHITESPACES -> trimMatching ?: defaultMatching;
+      ComparisonPolicy.IGNORE_WHITESPACES -> ignoreMatching ?: trimMatching ?: defaultMatching
+      ComparisonPolicy.TRIM_WHITESPACES -> trimMatching ?: defaultMatching
       ComparisonPolicy.DEFAULT -> defaultMatching
     }
 
@@ -221,7 +194,7 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
 
     private fun run(policy: ComparisonPolicy) {
       try {
-        isExecuted = true;
+        isExecuted = true
 
         val change = changes(policy)
         val matchings = matchings(policy)
@@ -239,20 +212,8 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
       }
       catch (e: Throwable) {
         println("Policy: " + policy.name())
-        throw e;
+        throw e
       }
-    }
-
-    private fun parseSource(string: String): String = string.replace('_', '\n')
-
-    private fun parseMatching(before: String, after: String): Couple<BitSet> {
-      return Couple.of(parseMatching(before), parseMatching(after))
-    }
-
-    private fun parseMatching(matching: String): BitSet {
-      val set = BitSet()
-      matching.filterNot { it == '.' }.forEachIndexed { i, c -> if (c != ' ') set.set(i) }
-      return set
     }
 
 
@@ -339,8 +300,8 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
 
 
     public fun postprocess(squash: Boolean, trim: Boolean): Unit {
-      shouldSquash = squash;
-      shouldTrim = trim;
+      shouldSquash = squash
+      shouldTrim = trim
     }
   }
 
@@ -371,12 +332,5 @@ public abstract class ComparisonUtilTestBase : UsefulTestCase() {
     override fun toString(): String {
       return "(" + start1 + ", " + end1 + ") - (" + start2 + ", " + end2 + ")"
     }
-  }
-
-  companion object {
-    private val REGISTRY = Registry.get("diff.verify.iterable");
-
-    private val INDICATOR = DumbProgressIndicator.INSTANCE
-    private val MANAGER = ComparisonManagerImpl()
   }
 }

@@ -15,8 +15,8 @@
  */
 package com.intellij.diff.comparison
 
+import com.intellij.diff.assertEquals
 import com.intellij.testFramework.UsefulTestCase
-import junit.framework.TestCase
 
 public class ComparisonUtilTest : UsefulTestCase() {
   public fun testTrimEquals() {
@@ -61,12 +61,12 @@ public class ComparisonUtilTest : UsefulTestCase() {
   }
 
   private fun doTestTrim(expected: Boolean, string1: String, string2: String) {
-    doTest(expected, string1, string2, ComparisonPolicy.TRIM_WHITESPACES);
+    doTest(expected, string1, string2, ComparisonPolicy.TRIM_WHITESPACES)
   }
 
   private fun doTest(expected: Boolean, string1: String, string2: String, policy: ComparisonPolicy) {
-    val result = MANAGER.isEquals(string1, string2, policy);
-    TestCase.assertEquals("---\n" + string1 + "\n---\n" + string2 + "\n---", expected, result);
+    val result = MANAGER.isEquals(string1, string2, policy)
+    assertEquals(expected, result, "---\n" + string1 + "\n---\n" + string2 + "\n---")
   }
 
   companion object {
