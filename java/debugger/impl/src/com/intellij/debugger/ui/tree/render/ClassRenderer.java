@@ -160,16 +160,14 @@ public class ClassRenderer extends NodeRendererImpl{
       // default ObjectReference processing
       List<Field> fields = refType.allFields();
       if (!fields.isEmpty()) {
-        boolean empty = true;
         for (Field field : fields) {
           if (shouldDisplay(evaluationContext, objRef, field)) {
             children.add(nodeManager.createNode(
               createFieldDescriptor(parentDescriptor, nodeDescriptorFactory, objRef, field, evaluationContext), evaluationContext));
-            empty = false;
           }
         }
 
-        if (empty) {
+        if (children.isEmpty()) {
           children.add(nodeManager.createMessageNode(DebuggerBundle.message("message.node.class.no.fields.to.display")));
         }
         else if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
