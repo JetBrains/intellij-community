@@ -94,7 +94,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   /**
    * @param expansion System-independent.
    */
-  fun addMacro(key: String, expansion: String) {
+  fun addMacro(key: String, expansion: String):Boolean {
     assert(!key.isEmpty())
 
     val value: String
@@ -116,11 +116,12 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     for (macro in macros) {
       if (key.equals(macro.key)) {
         macro.value = value
-        return
+        return false
       }
     }
 
     macros.add(Macro(key, value))
+    return true
   }
 
   // system-independent paths
@@ -133,8 +134,6 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   }
 
   override final fun getStateStorage(storageSpec: Storage) = getOrCreateStorage(storageSpec.file, storageSpec.roamingType, storageSpec.storageClass.java as Class<out StateStorage>, storageSpec.stateSplitter.java)
-
-  override final fun getStateStorage(fileSpec: String, roamingType: RoamingType) = getOrCreateStorage(fileSpec, roamingType)
 
   protected open fun normalizeFileSpec(fileSpec: String): String {
     val path = FileUtilRt.toSystemIndependentName(fileSpec)
@@ -163,7 +162,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   fun getCachedFileStorages(changed: Collection<String>, deleted: Collection<String>) = storageLock.withLock { Pair(getCachedFileStorages(changed), getCachedFileStorages(deleted)) }
 
-  fun getCachedFileStorages(fileSpecs: Collection<String>): Collection<StateStorage> {
+  fun getCachedFileStorages(fileSpecs: Collection<String>): Collection<FileBasedStorage> {
     if (fileSpecs.isEmpty()) {
       return emptyList()
     }
@@ -391,7 +390,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? {
     val oldStorageSpec = getOldStorageSpec(component, componentName, operation) ?: return null
     @suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
-    return getStateStorage(oldStorageSpec, if (component is com.intellij.openapi.util.RoamingTypeDisabled) RoamingType.DISABLED else RoamingType.DEFAULT)
+    return getOrCreateStorage(oldStorageSpec, if (component is com.intellij.openapi.util.RoamingTypeDisabled) RoamingType.DISABLED else RoamingType.DEFAULT)
   }
 
   protected open fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? = null

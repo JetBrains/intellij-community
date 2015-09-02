@@ -150,7 +150,6 @@ class ApplicationStoreTest {
 
     val oldContent = "<application><component name=\"A\" foo=\"old\" deprecated=\"old\"/></application>"
     val file = writeConfig("b.xml", oldContent)
-    val oldModificationTime = file.getLastModifiedTime()
     testAppConfig.refreshVfs()
 
     val component = AWorkspace()

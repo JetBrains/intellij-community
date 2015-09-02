@@ -17,13 +17,11 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.StreamProvider
-import com.intellij.configurationStore.isProjectOrModuleFile
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -127,30 +125,17 @@ class IcsManager(dir: File) {
     }
   }
 
-  private fun registerProjectLevelProviders(project: Project) {
-    val storageManager = project.stateStore.getStateStorageManager()
-    val projectId = storageManager.getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED).getState(ProjectId(), "IcsProjectId", javaClass<ProjectId>(), null, false)
-    if (projectId == null || projectId.uid == null) {
-      // not mapped, if user wants, he can map explicitly, we don't suggest
-      // we cannot suggest "map to ICS" for any project that user opens, it will be annoying
-      return
-    }
-
-//    storageManager.setStreamProvider(ProjectLevelProvider(projectId.uid!!))
-    // updateStoragesFromStreamProvider(storageManager, storageManager.getStorageFileNames())
-  }
-
-  private inner class ProjectLevelProvider(projectId: String) : IcsStreamProvider(projectId) {
-    override fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = !isProjectOrModuleFile(fileSpec)
-
-    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
-      if (isProjectOrModuleFile(fileSpec)) {
-        // applicable only if file was committed to Settings Server explicitly
-        return repositoryManager.has(buildPath(fileSpec, roamingType, this.projectId))
-      }
-      return settings.shareProjectWorkspace || fileSpec != StoragePathMacros.WORKSPACE_FILE
-    }
-  }
+//  private inner class ProjectLevelProvider(projectId: String) : IcsStreamProvider(projectId) {
+//    override fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = !isProjectOrModuleFile(fileSpec)
+//
+//    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
+//      if (isProjectOrModuleFile(fileSpec)) {
+//        // applicable only if file was committed to Settings Server explicitly
+//        return repositoryManager.has(buildPath(fileSpec, roamingType, this.projectId))
+//      }
+//      return settings.shareProjectWorkspace || fileSpec != StoragePathMacros.WORKSPACE_FILE
+//    }
+//  }
 
   fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null) = syncManager.sync(syncType, project, localRepositoryInitializer)
 

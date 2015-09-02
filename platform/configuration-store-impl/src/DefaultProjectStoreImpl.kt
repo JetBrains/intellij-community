@@ -63,8 +63,6 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 
     override fun getStateStorage(storageSpec: Storage) = storage
 
-    override fun getStateStorage(fileSpec: String, roamingType: RoamingType) = storage
-
     override fun startExternalization(): StateStorageManager.ExternalizationSession? {
       val externalizationSession = storage.startExternalization()
       return if (externalizationSession == null) null else MyExternalizationSession(externalizationSession)
