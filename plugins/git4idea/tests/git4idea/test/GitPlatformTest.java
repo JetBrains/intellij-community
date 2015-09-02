@@ -17,16 +17,13 @@ package git4idea.test;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestLoggerFactory;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.vcs.AbstractVcsTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -43,15 +40,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public abstract class GitPlatformTest extends UsefulTestCase {
-
-  static {
-    Logger.setFactory(TestLoggerFactory.class);
-  }
+public abstract class GitPlatformTest extends PlatformTestCase {
 
   protected static final Logger LOG = Logger.getInstance(GitPlatformTest.class);
 
-  protected Project myProject;
   protected VirtualFile myProjectRoot;
   protected String myProjectPath;
   protected GitRepositoryManager myGitRepositoryManager;
@@ -63,7 +55,6 @@ public abstract class GitPlatformTest extends UsefulTestCase {
   protected TestDialogManager myDialogManager;
   protected TestVcsNotifier myVcsNotifier;
 
-  private IdeaProjectTestFixture myProjectFixture;
   private String myTestStartedIndicator;
 
   @Override
@@ -71,40 +62,24 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     super.setUp();
     enableDebugLogging();
 
-    try {
-      myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
-      myProjectFixture.setUp();
-    }
-    catch (Exception e) {
-      super.tearDown();
-      throw e;
-    }
+    myProjectRoot = myProject.getBaseDir();
+    myProjectPath = myProjectRoot.getPath();
 
-    try {
-      myProject = myProjectFixture.getProject();
-      myProjectRoot = myProject.getBaseDir();
-      myProjectPath = myProjectRoot.getPath();
+    myGitSettings = GitVcsSettings.getInstance(myProject);
+    myGitSettings.getAppSettings().setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
 
-      myGitSettings = GitVcsSettings.getInstance(myProject);
-      myGitSettings.getAppSettings().setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
+    myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
+    myVcsNotifier = (TestVcsNotifier)ServiceManager.getService(myProject, VcsNotifier.class);
 
-      myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
-      myVcsNotifier = (TestVcsNotifier)ServiceManager.getService(myProject, VcsNotifier.class);
+    myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
+    myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
+    myGit = ServiceManager.getService(myProject, Git.class);
+    myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(myProject));
+    myVcs.doActivate();
 
-      myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
-      myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
-      myGit = ServiceManager.getService(myProject, Git.class);
-      myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(myProject));
-      myVcs.doActivate();
-
-      GitTestUtil.assumeSupportedGitVersion(myVcs);
-      addSilently();
-      removeSilently();
-    }
-    catch (Exception e) {
-      tearDown();
-      throw e;
-    }
+    GitTestUtil.assumeSupportedGitVersion(myVcs);
+    addSilently();
+    removeSilently();
   }
 
   @Override
@@ -127,18 +102,15 @@ public abstract class GitPlatformTest extends UsefulTestCase {
       if (myVcsNotifier != null) {
         myVcsNotifier.cleanup();
       }
-      if (myProjectFixture != null) {
-        myProjectFixture.tearDown();
-      }
     }
     finally {
       try {
-        String tempTestIndicator = myTestStartedIndicator;
-        clearFields(this);
-        myTestStartedIndicator = tempTestIndicator;
+        super.tearDown();
       }
       finally {
-        super.tearDown();
+        if (myAssertionsInTestDetected) {
+          TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator);
+        }
       }
     }
   }
@@ -156,19 +128,6 @@ public abstract class GitPlatformTest extends UsefulTestCase {
   @NotNull
   protected Collection<String> getDebugLogCategories() {
     return Collections.emptyList();
-  }
-
-  @Override
-  protected void defaultRunBare() throws Throwable {
-    try {
-      super.defaultRunBare();
-    }
-    catch (Throwable throwable) {
-      if (myTestStartedIndicator != null) {
-        TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator);
-      }
-      throw throwable;
-    }
   }
 
   @NotNull
