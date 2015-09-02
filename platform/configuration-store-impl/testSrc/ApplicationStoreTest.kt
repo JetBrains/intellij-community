@@ -144,7 +144,7 @@ class ApplicationStoreTest {
     assertThat(file).hasContent("<application>\n  <component name=\"A\" foo=\"1\" bar=\"2\" />\n</application>")
   }
 
-  @Test fun `don't apply "don't save if only format is changed" logic to workspace storage`() {
+  @Test fun `do not apply to workspace storage - do not save if only format is changed`() {
     @State(name = "A", storages = arrayOf(Storage(file = StoragePathMacros.WORKSPACE_FILE)))
     class AWorkspace : A()
 
