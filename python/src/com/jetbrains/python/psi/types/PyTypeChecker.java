@@ -457,7 +457,8 @@ public class PyTypeChecker {
         final PyExpression receiver = getReceiver(callSite, callable);
         final List<PyExpression> arguments = getArguments(callSite, callable);
         for (List<PyParameter> parameters : PyUtil.getOverloadedParametersSet(callable, context)) {
-          final List<PyParameter> explicitParameters = filterExplicitParameters(parameters, callable, callSite);
+          final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+          final List<PyParameter> explicitParameters = filterExplicitParameters(parameters, callable, callSite, resolveContext);
           final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(arguments, explicitParameters);
           results.add(new AnalyzeCallResults(callable, receiver, mapping));
         }
@@ -582,13 +583,15 @@ public class PyTypeChecker {
 
   @NotNull
   public static List<PyParameter> filterExplicitParameters(@NotNull List<PyParameter> parameters, @NotNull PyCallable callable,
-                                                           @NotNull PyCallSiteExpression callSite) {
+                                                           @NotNull PyCallSiteExpression callSite,
+                                                           @NotNull PyResolveContext resolveContext) {
     final int implicitOffset;
     if (callSite instanceof PyCallExpression) {
       final PyCallExpression callExpr = (PyCallExpression)callSite;
       final PyExpression callee = callExpr.getCallee();
       if (callee instanceof PyReferenceExpression && callable instanceof PyFunction) {
-        implicitOffset = PyCallExpressionHelper.getImplicitArgumentCount((PyReferenceExpression)callee, (PyFunction)callable);
+        implicitOffset = PyCallExpressionHelper.getImplicitArgumentCount((PyReferenceExpression)callee, (PyFunction)callable,
+                                                                         resolveContext);
       }
       else {
         implicitOffset = 0;

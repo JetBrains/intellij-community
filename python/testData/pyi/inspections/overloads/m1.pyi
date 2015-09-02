@@ -1,4 +1,4 @@
-from typing import overload, TypeVar
+from typing import overload, TypeVar, Generic
 
 
 @overload
@@ -26,3 +26,14 @@ class C:
     def __add__(self, other: int) -> int: ...
     @overload
     def __add__(self, other: str) -> str: ...
+
+
+T = TypeVar('T')
+
+
+class Gen(Generic[T]):
+    def __init__(self, x: T): ...
+    @overload
+    def get(self, x: int, y: T) -> T: ...
+    @overload
+    def get(self, x: str, y: T) -> T: ...

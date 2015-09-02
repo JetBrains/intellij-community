@@ -1,4 +1,4 @@
-from m1 import f, g, C, stub_only
+from m1 import f, g, C, stub_only, Gen
 
 
 def test_overloaded_function(x):
@@ -29,4 +29,8 @@ def test_stub_only_function(x):
     g(<warning descr="Expected type 'dict', got 'Union[int, str]' instead">stub_only(<warning descr="Expected type 'int', got 'dict[int, int]' instead">{1: 2}</warning>)</warning>)
 
 
-# TODO: Tests for generics unification
+def tset_overloaded_generics(x):
+    g(<warning descr="Expected type 'dict', got 'int' instead">Gen(10).get(10, 10)</warning>)
+    g(Gen(10).get(10, <weak_warning descr="Expected type 'int' (matched generic type 'T'), got 'str' instead">'foo'</weak_warning>))
+    g(Gen('foo').get(10, <weak_warning descr="Expected type 'str' (matched generic type 'T'), got 'int' instead">10</weak_warning>))
+    g(<warning descr="Expected type 'dict', got 'str' instead">Gen('foo').get(10, 'foo')</warning>)

@@ -23,6 +23,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +76,7 @@ public class PyiTypeProvider extends PyTypeProviderBase {
       if (isOverload(functionStub, context)) {
         return getOverloadType(functionStub, context);
       }
-      return context.getType(functionStub);
+      return new PyFunctionTypeImpl(functionStub);
     }
     else if (callable.getContainingFile() instanceof PyiFile && callable instanceof PyFunction) {
       final PyFunction functionStub = (PyFunction)callable;
@@ -110,11 +111,13 @@ public class PyiTypeProvider extends PyTypeProviderBase {
       final List<PyType> allReturnTypes = new ArrayList<PyType>();
       final List<PyFunction> overloads = getOverloads(function, context);
       for (PyFunction overload : overloads) {
-        final Map<PyExpression, PyNamedParameter> mapping = mapArguments(callSite, overload);
+        final Map<PyExpression, PyNamedParameter> mapping = mapArguments(callSite, overload, context);
         final PyExpression receiver = PyTypeChecker.getReceiver(callSite, overload);
         final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping, context);
         final PyType returnType = context.getReturnType(overload);
-        allReturnTypes.add(returnType);
+        if (!PyTypeChecker.hasGenerics(returnType, context)) {
+          allReturnTypes.add(returnType);
+        }
         final PyType unifiedType = substitutions != null ? PyTypeChecker.substitute(returnType, substitutions, context) : null;
         if (unifiedType != null) {
           matchedReturnTypes.add(unifiedType);
@@ -196,12 +199,14 @@ public class PyiTypeProvider extends PyTypeProviderBase {
   }
 
   @NotNull
-  private static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite, @NotNull PsiElement resolved) {
+  private static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite, @NotNull PsiElement resolved,
+                                                                  @NotNull TypeEvalContext context) {
     if (resolved instanceof PyCallable) {
       final PyCallable callable = (PyCallable)resolved;
       final List<PyExpression> arguments = PyTypeChecker.getArguments(callSite, resolved);
       final List<PyParameter> parameters = Arrays.asList(callable.getParameterList().getParameters());
-      final List<PyParameter> explicitParameters = PyTypeChecker.filterExplicitParameters(parameters, callable, callSite);
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+      final List<PyParameter> explicitParameters = PyTypeChecker.filterExplicitParameters(parameters, callable, callSite, resolveContext);
       return PyCallExpressionHelper.mapArguments(arguments, explicitParameters);
     }
     else {

@@ -12,3 +12,11 @@ def f(key):
 
 def g(x):
     pass
+
+
+class Gen(object):
+    def __init__(self, x):
+        self.x = x
+
+    def get(self, x, y):
+        return self.x

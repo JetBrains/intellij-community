@@ -257,15 +257,13 @@ public class PyCallExpressionHelper {
    * @param functionBeingCalled resolved method which is being called; plain functions are OK but make little sense.
    * @return a non-negative number of parameters that are implicit to this call.
    */
-  public static int getImplicitArgumentCount(
-    @NotNull final PyReferenceExpression callReference,
-    @NotNull PyFunction functionBeingCalled) {
+  public static int getImplicitArgumentCount(@NotNull final PyReferenceExpression callReference, @NotNull PyFunction functionBeingCalled,
+                                             @NotNull PyResolveContext resolveContext) {
     //return getImplicitArgumentCount(functionBeingCalled, null, null, qualifierIsAnInstance(callReference, TypeEvalContext.fast()));
     final PyDecorator decorator = PsiTreeUtil.getParentOfType(callReference, PyDecorator.class);
     if (decorator != null && PsiTreeUtil.isAncestor(decorator.getCallee(), callReference, false)) {
       return 1;
     }
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits();
     QualifiedResolveResult followed = callReference.followAssignmentsChain(resolveContext);
     boolean isByInstance = isQualifiedByInstance(functionBeingCalled, followed.getQualifiers(), resolveContext.getTypeEvalContext());
     boolean isByClass = isQualifiedByInstance(functionBeingCalled, followed.getQualifiers(), resolveContext.getTypeEvalContext());

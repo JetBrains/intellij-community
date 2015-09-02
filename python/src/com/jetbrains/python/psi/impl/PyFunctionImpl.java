@@ -43,6 +43,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -220,7 +221,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     final PyExpression receiver = PyTypeChecker.getReceiver(callSite, this);
     final List<PyExpression> arguments = PyTypeChecker.getArguments(callSite, this);
     final List<PyParameter> parameters = PyUtil.getParameters(this, context);
-    final List<PyParameter> explicitParameters = PyTypeChecker.filterExplicitParameters(parameters, this, callSite);
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final List<PyParameter> explicitParameters = PyTypeChecker.filterExplicitParameters(parameters, this, callSite, resolveContext);
     final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(arguments, explicitParameters);
     return getCallType(receiver, mapping, context);
   }
