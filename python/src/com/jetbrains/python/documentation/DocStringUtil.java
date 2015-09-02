@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.regex.Matcher;
 
 /**
  * User: catherine
@@ -124,12 +123,12 @@ public class DocStringUtil {
   }
 
   public static boolean isGoogleDocString(@NotNull String text) {
-    final Matcher matcher = GoogleCodeStyleDocString.SECTION_HEADER_RE.matcher(text);
-    if (!matcher.find()) {
-      return false;
+    for (@NonNls String title : StringUtil.findMatches(text, GoogleCodeStyleDocString.SECTION_HEADER, 1)) {
+      if (SectionBasedDocString.SECTION_NAMES.contains(title.toLowerCase())) {
+        return true;
+      }
     }
-    @NonNls final String foundName = matcher.group(1).trim();
-    return SectionBasedDocString.SECTION_NAMES.contains(foundName.toLowerCase());
+    return false;
   }
 
   public static boolean isNumpyDocstring(@NotNull String text) {

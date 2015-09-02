@@ -18,6 +18,7 @@ package com.jetbrains.python;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.documentation.GoogleCodeStyleDocString;
 import com.jetbrains.python.documentation.NumpyDocString;
 import com.jetbrains.python.documentation.SectionBasedDocString;
@@ -288,6 +289,19 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     assertEmpty(docString.getSummary());
     assertSize(1, docString.getSections());
     assertEquals("keyword arguments", docString.getSections().get(0).getNormalizedTitle());
+  }
+
+  // PY-16766
+  public void testGoogleDocStringContentDetection() {
+    assertTrue(DocStringUtil.isGoogleDocString(
+      "\n" +
+      "    My Section:\n" +
+      "        some user defined section\n" +
+      "    \n" +
+      "    Parameters:\n" +
+      "        param1: \n" +
+      "\n" +
+      "    Returns:\n"));
   }
 
   @Override

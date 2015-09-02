@@ -31,8 +31,8 @@ import java.util.regex.Pattern;
  * @see <a href="http://google-styleguide.googlecode.com/svn/trunk/pyguide.html?showone=Comments#Comments">Google Python Style: Docstrings</a>
  */
 public class GoogleCodeStyleDocString extends SectionBasedDocString {
-  public static final Pattern SECTION_HEADER_RE = Pattern.compile("\\s*([\\w\\s]+):\\s*", Pattern.MULTILINE);
-  private static final Pattern FIELD_NAME_AND_TYPE_RE = Pattern.compile("\\s*(.+?)\\s*\\(\\s*(.*?)\\s*\\)\\s*");
+  public static final Pattern SECTION_HEADER = Pattern.compile("^[ \t]*([\\w \t]+):[ \t]*$", Pattern.MULTILINE);
+  private static final Pattern FIELD_NAME_AND_TYPE = Pattern.compile("^[ \t]*(.+?)[ \t]*\\([ \t]*(.*?)[ \t]*\\)[ \t]*$", Pattern.MULTILINE);
 
   public GoogleCodeStyleDocString(@NotNull Substring text) {
     super(text);
@@ -87,7 +87,7 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
     final Substring textBeforeColon = colonSeparatedParts.get(0);
     name = textBeforeColon.trim();
     if (mayHaveType) {
-      final Matcher matcher = FIELD_NAME_AND_TYPE_RE.matcher(textBeforeColon);
+      final Matcher matcher = FIELD_NAME_AND_TYPE.matcher(textBeforeColon);
       if (matcher.matches()) {
         name = textBeforeColon.getMatcherGroup(matcher, 1).trim();
         type = textBeforeColon.getMatcherGroup(matcher, 2).trim();
@@ -115,7 +115,7 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
   @Override
   protected Pair<Substring, Integer> parseSectionHeader(int lineNum) {
     final Substring line = getLine(lineNum);
-    final Matcher matcher = SECTION_HEADER_RE.matcher(line);
+    final Matcher matcher = SECTION_HEADER.matcher(line);
     if (matcher.matches()) {
       @NonNls final Substring title = line.getMatcherGroup(matcher, 1).trim();
       if (SECTION_NAMES.contains(title.toString().toLowerCase())) {
