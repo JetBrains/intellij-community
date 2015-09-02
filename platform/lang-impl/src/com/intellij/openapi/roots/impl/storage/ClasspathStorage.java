@@ -25,6 +25,7 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.StateStorageBase;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StorageManagerListener;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
@@ -55,6 +56,8 @@ import java.util.Set;
 
 // Boolean - false as not loaded, true as loaded
 public class ClasspathStorage extends StateStorageBase<Boolean> {
+  private static final Logger LOG = Logger.getInstance(ClasspathStorage.class);
+
   @NonNls public static final String SPECIAL_STORAGE = "special";
 
   private final ClasspathStorageProvider.ClasspathConverter myConverter;

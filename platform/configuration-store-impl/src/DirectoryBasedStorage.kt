@@ -174,7 +174,7 @@ open class DirectoryBasedStorage(private val myPathMacroSubstitutor: TrackingPat
             writeFile(null, this, file, storeElement, LineSeparator.fromString(if (file.exists()) loadFile(file).second else SystemProperties.getLineSeparator()), false)
           }
           catch (e: IOException) {
-            StateStorageBase.LOG.error(e)
+            LOG.error(e)
           }
           finally {
             if (element != null) {

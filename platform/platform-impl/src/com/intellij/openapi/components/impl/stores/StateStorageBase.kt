@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 public abstract class StateStorageBase<T : Any> : StateStorage {
   companion object {
-    protected val LOG: Logger = Logger.getInstance(javaClass<StateStorageBase<Any>>())
+    private val LOG: Logger = Logger.getInstance(javaClass<StateStorageBase<Any>>())
   }
 
   private var mySavingDisabled = false
