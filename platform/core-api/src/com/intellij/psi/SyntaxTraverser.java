@@ -119,6 +119,11 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
     return super.filter(compose(api.TO_TYPE(), condition));
   }
 
+  @NotNull
+  public SyntaxTraverser<T> forceExpandAndSkipTypes(@NotNull Condition<? super IElementType> condition) {
+    return super.forceExpandAndSkip(compose(api.TO_TYPE(), condition));
+  }
+
   @Nullable
   public T getRawDeepestLast() {
     for (T result = getRoot(), last; result != null; result = last) {
