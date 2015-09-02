@@ -34,14 +34,14 @@ public abstract class StateStorageBase<T : Any> : StateStorage {
   }
 
   fun <S : Any> getState(component: Any?, componentName: String, stateClass: Class<S>, archive: Boolean = true, reload: Boolean = false, mergeInto: S? = null): S? {
-    return deserializeState(getState(getStorageData(reload), component, componentName, archive), stateClass, mergeInto)
+    return deserializeState(getSerializedState(getStorageData(reload), component, componentName, archive), stateClass, mergeInto)
   }
 
   open fun <S> deserializeState(serializedState: Element?, stateClass: Class<S>, mergeInto: S?): S? {
     return DefaultStateSerializer.deserializeState(serializedState, stateClass, mergeInto)
   }
 
-  abstract fun getState(storageData: T, component: Any?, componentName: String, archive: Boolean = true): Element?
+  abstract fun getSerializedState(storageData: T, component: Any?, componentName: String, archive: Boolean = true): Element?
 
   protected abstract fun hasState(storageData: T, componentName: String): Boolean
 
@@ -49,9 +49,7 @@ public abstract class StateStorageBase<T : Any> : StateStorage {
     return hasState(getStorageData(reloadData), componentName)
   }
 
-  public fun getStorageData(): T {
-    return getStorageData(false)
-  }
+  public fun getStorageData(): T = getStorageData(false)
 
   protected fun getStorageData(reload: Boolean): T {
     val storageData = storageDataRef.get()

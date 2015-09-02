@@ -28,13 +28,17 @@ abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
   abstract fun archiveState(storageData: T, componentName: String, serializedState: Element?)
 }
 
-class StateGetter<S : Any, T : Any>(private val component: PersistentStateComponent<S>, private val componentName: String, private val storageData: T, private val stateClass: Class<S>, private val storage: StorageBaseEx<T>) {
+class StateGetter<S : Any, T : Any>(private val component: PersistentStateComponent<S>,
+                                    private val componentName: String,
+                                    private val storageData: T,
+                                    private val stateClass: Class<S>,
+                                    private val storage: StorageBaseEx<T>) {
   var serializedState: Element? = null
 
   fun getState(mergeInto: S? = null): S? {
     LOG.assertTrue(serializedState == null)
 
-    serializedState = storage.getState(storageData, component, componentName)
+    serializedState = storage.getSerializedState(storageData, component, componentName, false)
     if (serializedState != null) {
       //System.out.println("open $componentName to read state, ${hashCode()} $storage, ${Thread.currentThread()}")
     }

@@ -135,7 +135,7 @@ public class ClasspathStorage extends StateStorageBase<Boolean> {
 
   @Nullable
   @Override
-  public Element getState(@NotNull Boolean storageData, Object component, @NotNull String componentName, boolean archive) {
+  public Element getSerializedState(@NotNull Boolean storageData, Object component, @NotNull String componentName, boolean archive) {
     if (storageData) {
       return null;
     }
