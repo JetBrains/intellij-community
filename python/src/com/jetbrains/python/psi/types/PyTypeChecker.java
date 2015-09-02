@@ -479,6 +479,10 @@ public class PyTypeChecker {
       final List<PyCallable> results = new ArrayList<PyCallable>();
       boolean resolvedToUnknownResult = false;
       for (PsiElement result : PyUtil.multiResolveTopPriority(callSite, resolveContext)) {
+        if (result instanceof PyCallable) {
+          results.add((PyCallable)result);
+          continue;
+        }
         if (result instanceof PyTypedElement) {
           final PyType resultType = context.getType((PyTypedElement)result);
           if (resultType instanceof PyFunctionType) {
