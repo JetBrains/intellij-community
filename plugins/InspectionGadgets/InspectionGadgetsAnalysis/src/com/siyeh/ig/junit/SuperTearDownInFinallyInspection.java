@@ -55,7 +55,7 @@ public class SuperTearDownInFinallyInspection extends BaseInspection {
         return;
       }
       final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiMember.class, PsiLambdaExpression.class);
-      if (method == null) {
+      if (method == null || !method.getName().equals("tearDown")) {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();

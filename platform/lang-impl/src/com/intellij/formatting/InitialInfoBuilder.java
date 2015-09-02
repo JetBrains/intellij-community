@@ -29,6 +29,8 @@ import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.ReadOnlyBlockInformationProvider;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.LinkedMultiMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -73,6 +75,8 @@ class InitialInfoBuilder {
   private final List<TextRange> myExtendedAffectedRanges;
   private Set<Alignment> myAlignmentsInsideRangeToModify = ContainerUtil.newHashSet();
   private boolean myCollectAlignmentsInsideFormattingRange = false;
+
+  private MultiMap<ExpandableIndent, AbstractBlockWrapper> myBlocksToForceChildrenIndent = new LinkedMultiMap<ExpandableIndent, AbstractBlockWrapper>();
 
   private InitialInfoBuilder(final Block rootBlock,
                              final FormattingDocumentModel model,
@@ -285,6 +289,10 @@ class InitialInfoBuilder {
     return wrappedRootBlock;
   }
 
+  public MultiMap<ExpandableIndent, AbstractBlockWrapper> getExpandableIndentsBlocks() {
+    return myBlocksToForceChildrenIndent;
+  }
+  
   private void doIteration(@NotNull State state) {
     List<Block> subBlocks = state.parentBlock.getSubBlocks();
     final int subBlocksCount = subBlocks.size();
@@ -303,6 +311,7 @@ class InitialInfoBuilder {
     final AbstractBlockWrapper wrapper = buildFrom(
       block, childBlockIndex, state.wrappedBlock, state.parentBlockWrap, state.parentBlock, childBlockIsRightBlock
     );
+    registerExpandableIndents(block, wrapper);
 
     if (wrapper.getIndent() == null) {
       wrapper.setIndent((IndentImpl)block.getIndent());
@@ -321,7 +330,14 @@ class InitialInfoBuilder {
       }
     }
   }
-  
+
+  private void registerExpandableIndents(@NotNull Block block, @NotNull AbstractBlockWrapper wrapper) {
+    if (block.getIndent() instanceof ExpandableIndent) {
+      ExpandableIndent indent = (ExpandableIndent)block.getIndent();
+      myBlocksToForceChildrenIndent.putValue(indent, wrapper);
+    }
+  }
+
   private void setDefaultIndents(final List<AbstractBlockWrapper> list) {
     if (!list.isEmpty()) {
       for (AbstractBlockWrapper wrapper : list) {

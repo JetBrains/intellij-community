@@ -23,6 +23,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.openapi.module.Module;
@@ -34,6 +35,10 @@ public abstract class JUnitConfigurationProducer extends JavaRunConfigurationPro
 
   public JUnitConfigurationProducer() {
     super(JUnitConfigurationType.getInstance());
+  }
+
+  protected JUnitConfigurationProducer(ConfigurationType configurationType) {
+    super(configurationType);
   }
 
   @Override

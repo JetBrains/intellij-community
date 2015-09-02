@@ -48,7 +48,42 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "        .foo();"
     );
   }
+  
+  public void testChainedMethodWithComments() throws Exception {
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    doMethodTest("AAAAA.b()\n" +
+                 ".c() // comment after line\n" +
+                 ".d()\n" +
+                 ".e();",
 
+                 "AAAAA.b()\n" +
+                 "     .c() // comment after line\n" +
+                 "     .d()\n" +
+                 "     .e();");
+  }
+
+  public void testChainedMethodWithBlockComment() {
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    doTextTest("class X {\n" +
+               "    public void test() {\n" +
+               "        AAAAAA.b()\n" +
+               ".c()\n" +
+               ".d()\n" +
+               "          /* simple block comment */\n" +
+               ".e();\n" +
+               "    }\n" +
+               "}",
+               "class X {\n" +
+               "    public void test() {\n" +
+               "        AAAAAA.b()\n" +
+               "              .c()\n" +
+               "              .d()\n" +
+               "          /* simple block comment */\n" +
+               "              .e();\n" +
+               "    }\n" +
+               "}");
+  }
+  
   public void testMultipleMethodAnnotationsCommentedInTheMiddle() throws Exception {
     getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 1;
     getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
@@ -256,7 +291,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
-  
+
   public void testAnnotatedAndNonAnnotatedFieldsInColumnsAlignment() {
     // Inspired by IDEA-60237
 
@@ -281,10 +316,10 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
-  
+
   public void testAlignThrowsKeyword() throws Exception {
     // Inspired by IDEA-63820
-    
+
     getSettings().ALIGN_THROWS_KEYWORD = true;
     doClassTest(
       "public void test()\n" +

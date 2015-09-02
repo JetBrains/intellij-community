@@ -122,8 +122,6 @@ class StateMap private constructor(private val names: Array<String>, private val
 
   fun isEmpty() = names.isEmpty()
 
-  fun getState(key: String) = get(key) as? Element
-
   fun hasState(key: String) = get(key) is Element
 
   public fun hasStates(): Boolean {
@@ -152,14 +150,19 @@ class StateMap private constructor(private val names: Array<String>, private val
     }
   }
 
-  public fun getStateAndArchive(key: String): Element? {
+  fun getStateAndArchive(key: String) = getState(key, true)
+
+  fun getState(key: String, archive: Boolean = false): Element? {
     val index = Arrays.binarySearch(names, key)
     if (index < 0) {
       return null
     }
 
     val state = states.get(index) as? Element ?: return null
-    return if (states.compareAndSet(index, state, archiveState(state))) state else getStateAndArchive(key)
+    if (!archive) {
+      return state
+    }
+    return if (states.compareAndSet(index, state, archiveState(state))) state else getState(key, true)
   }
 
   public fun archive(key: String, state: Element?) {

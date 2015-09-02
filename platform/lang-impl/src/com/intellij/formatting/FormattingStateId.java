@@ -46,6 +46,8 @@ public enum FormattingStateId {
    */
   PROCESSING_BLOCKS(1),
 
+  EXPANDING_CHILDREN_INDENTS(5),
+
   /**
    * This element corresponds to formatting phase when all {@link AbstractBlockWrapper wrapped code blocks} are processed and it's
    * time to apply the changes to the underlying document.

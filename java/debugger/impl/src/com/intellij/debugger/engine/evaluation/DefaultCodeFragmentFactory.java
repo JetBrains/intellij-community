@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,11 +92,11 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
         if (debuggerSession != null) {
           final Semaphore semaphore = new Semaphore();
           semaphore.down();
-          final AtomicReference<PsiClass> nameRef = new AtomicReference<PsiClass>();
+          final AtomicReference<PsiType> nameRef = new AtomicReference<PsiType>();
           final RuntimeTypeEvaluator worker =
             new RuntimeTypeEvaluator(null, expression, debuggerContext, ProgressManager.getInstance().getProgressIndicator()) {
               @Override
-              protected void typeCalculationFinished(@Nullable PsiClass type) {
+              protected void typeCalculationFinished(@Nullable PsiType type) {
                 nameRef.set(type);
                 semaphore.up();
               }
@@ -106,10 +106,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
             ProgressManager.checkCanceled();
             if (semaphore.waitFor(20)) break;
           }
-          final PsiClass psiClass = nameRef.get();
-          if (psiClass != null) {
-            return JavaPsiFacade.getElementFactory(project).createType(psiClass);
-          }
+          return nameRef.get();
         }
         return null;
       }
