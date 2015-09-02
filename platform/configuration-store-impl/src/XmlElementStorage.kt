@@ -20,6 +20,7 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SmartHashSet
 import gnu.trove.THashMap
@@ -37,7 +38,9 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
 
   protected abstract fun loadLocalData(): Element?
 
-  override final fun getState(storageData: StateMap, component: Any?, componentName: String) = storageData.getState(componentName)
+  override final fun getState(storageData: StateMap, component: Any?, componentName: String): Element? {
+    return if (Registry.`is`("use.loaded.state.as.existing", false)) storageData.getState(componentName) else storageData.getStateAndArchive(componentName)
+  }
 
   override fun archiveState(storageData: StateMap, componentName: String, serializedState: Element?) {
     storageData.archive(componentName, serializedState)
