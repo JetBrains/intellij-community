@@ -241,6 +241,13 @@ public class PyCustomType implements PyClassLikeType {
     }
   }
 
+  @Override
+  public void visitMembers(@NotNull final Processor<PsiElement> processor, final boolean inherited, @NotNull TypeEvalContext context) {
+    for (final PyClassLikeType type : myTypesToMimic) {
+      type.visitMembers(processor, inherited, context);
+    }
+  }
+
   /**
    * Predicate that filters completion using {@link #myFilter}
    */

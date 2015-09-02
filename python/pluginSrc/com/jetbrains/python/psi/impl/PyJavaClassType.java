@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.Processor;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyExpression;
@@ -147,6 +148,13 @@ public class PyJavaClassType implements PyClassLikeType {
       result.add(new PyJavaClassType(cls, myDefinition));
     }
     return result;
+  }
+
+  @Override
+  public void visitMembers(@NotNull final Processor<PsiElement> processor, final boolean inherited, @NotNull TypeEvalContext context) {
+    // TODO: Implement
+    // We do not have enough time to this method for Java and looks like there is no need to do that since
+    // jython is not very popular
   }
 
   @Override

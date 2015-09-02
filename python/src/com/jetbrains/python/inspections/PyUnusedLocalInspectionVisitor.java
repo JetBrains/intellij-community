@@ -353,7 +353,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     if (functionsWithInheritors.contains(func)) {
       return true;
     }
-    if (PySuperMethodsSearch.search(func).findFirst() != null ||
+    if (PySuperMethodsSearch.search(func, null).findFirst() != null ||
         PyOverridingMethodsSearch.search(func, true).findFirst() != null) {
       functionsWithInheritors.add(func);
       return true;

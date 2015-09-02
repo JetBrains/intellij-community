@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.util.Processor;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -42,6 +44,17 @@ public interface PyClassLikeType extends PyCallableType {
   List<? extends RatedResolveResult> resolveMember(@NotNull final String name, @Nullable PyExpression location,
                                                    @NotNull AccessDirection direction, @NotNull PyResolveContext resolveContext,
                                                    boolean inherited);
+
+  /**
+   * Visits all class members. This method is better then bare class since it uses type info and supports not only classes but
+   * class-like structures as well. Consider using user-friendly wrapper {@link PyClassLikeTypeUtil#getMembersOfType(PyClassLikeType, Class, TypeEvalContext)}
+   *
+   * @param processor visitor
+   * @param inherited call on parents too
+   * @param context   context to be used to resolve types
+   * @see PyClassLikeTypeUtil#getMembersOfType(PyClassLikeType, Class, TypeEvalContext)
+   */
+  void visitMembers(@NotNull Processor<PsiElement> processor, boolean inherited, @NotNull TypeEvalContext context);
 
   boolean isValid();
 

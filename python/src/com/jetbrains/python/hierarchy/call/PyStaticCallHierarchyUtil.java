@@ -128,7 +128,7 @@ public class PyStaticCallHierarchyUtil {
   @Nullable
   private static FindUsagesHandler createFindUsageHandler(@NotNull final PsiElement element) {
     if (element instanceof PyFunction) {
-      final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true).findAll();
+      final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true, null).findAll();
       if (superMethods.size() > 0) {
         final PsiElement next = superMethods.iterator().next();
         if (next instanceof PyFunction && !isInObject((PyFunction)next)) {

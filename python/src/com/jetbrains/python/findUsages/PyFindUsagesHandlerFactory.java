@@ -57,7 +57,7 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
     }
     if (element instanceof PyFunction) {
       if (!forHighlightUsages) {
-        final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true).findAll();
+        final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true, null).findAll();
         if (superMethods.size() > 0) {
           final PsiElement next = superMethods.iterator().next();
           // TODO should do this for Jython functions overriding Java methods too

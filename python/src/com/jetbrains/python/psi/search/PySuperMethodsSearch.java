@@ -20,6 +20,8 @@ import com.intellij.psi.search.searches.ExtensibleQueryFactory;
 import com.intellij.util.Query;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,10 +45,10 @@ public class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElement, PyS
   }
 
   public static PyFunction findDeepestSuperMethod(PyFunction function) {
-    List<PsiElement> superMethods = new ArrayList<PsiElement>(search(function, true).findAll());
+    List<PsiElement> superMethods = new ArrayList<PsiElement>(search(function, true, null).findAll());
     while (superMethods.size() > 0) {
       function = getBaseMethod(superMethods, function.getContainingClass());
-      superMethods = new ArrayList<PsiElement>(search(function, true).findAll());
+      superMethods = new ArrayList<PsiElement>(search(function, true, null).findAll());
     }
     return function;
   }
@@ -54,10 +56,16 @@ public class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElement, PyS
   public static class SearchParameters {
     private final PyFunction myDerivedMethod;
     private final boolean myDeepSearch;
+    private final TypeEvalContext myContext;
 
-    public SearchParameters(final PyFunction derivedMethod, boolean deepSearch) {
+    public SearchParameters(final PyFunction derivedMethod, boolean deepSearch, @Nullable final TypeEvalContext context) {
       myDerivedMethod = derivedMethod;
       myDeepSearch = deepSearch;
+      myContext = context;
+    }
+
+    public TypeEvalContext getContext() {
+      return myContext;
     }
 
     public PyFunction getDerivedMethod() {
@@ -73,13 +81,13 @@ public class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElement, PyS
     super("Pythonid");
   }
 
-  public static Query<PsiElement> search(final PyFunction derivedMethod) {
-    final SearchParameters parameters = new SearchParameters(derivedMethod, false);
+  public static Query<PsiElement> search(final PyFunction derivedMethod, TypeEvalContext context) {
+    final SearchParameters parameters = new SearchParameters(derivedMethod, false, context);
     return INSTANCE.createUniqueResultsQuery(parameters);
   }
 
-  public static Query<PsiElement> search(final PyFunction derivedMethod, boolean deepSearch) {
-    final SearchParameters parameters = new SearchParameters(derivedMethod, deepSearch);
+  public static Query<PsiElement> search(final PyFunction derivedMethod, boolean deepSearch, TypeEvalContext context) {
+    final SearchParameters parameters = new SearchParameters(derivedMethod, deepSearch, context);
     return INSTANCE.createUniqueResultsQuery(parameters);
   }
 }
