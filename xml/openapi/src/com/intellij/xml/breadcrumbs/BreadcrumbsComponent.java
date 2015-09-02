@@ -406,6 +406,8 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
                          @NotNull final List<Crumb> crumbList,
                          @NotNull final Painter painter,
                          final int height) {
+      UISettings.setupAntialiasing(g2);
+
       //final int height = myImage.getHeight();
       final int pageOffset = getPageOffset();
 
@@ -765,7 +767,6 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
         string = sb.append("...").toString();
       }
 
-      UISettings.setupAntialiasing(g2);
       g2.drawString(string, offset + ROUND_VALUE + 5, height - fm.getDescent() - 4);
 
       g2.setFont(oldFont);
