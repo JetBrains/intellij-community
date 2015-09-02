@@ -266,7 +266,7 @@ public abstract class DebuggerUtils {
     return false;
   }
 
-  public static Type getSuperType(Type subType, String superType) {
+  public static Type getSuperType(@NotNull Type subType, @NotNull String superType) {
     if(CommonClassNames.JAVA_LANG_OBJECT.equals(superType)) {
       List list = subType.virtualMachine().classesByName(CommonClassNames.JAVA_LANG_OBJECT);
       if(list.size() > 0) {
@@ -278,7 +278,7 @@ public abstract class DebuggerUtils {
     return getSuperTypeInt(subType, superType);
   }
 
-  private static boolean typeEquals(Type type, String typeName) {
+  private static boolean typeEquals(@NotNull Type type, @NotNull String typeName) {
     int genericPos = typeName.indexOf('<');
     if (genericPos > -1) {
       typeName = typeName.substring(0, genericPos);
@@ -286,7 +286,7 @@ public abstract class DebuggerUtils {
     return type.name().replace('$', '.').equals(typeName.replace('$', '.'));
   }
 
-  private static Type getSuperTypeInt(Type subType, String superType) {
+  private static Type getSuperTypeInt(@Nullable Type subType, @NotNull String superType) {
     Type result;
     if (subType == null) {
       return null;
@@ -358,7 +358,7 @@ public abstract class DebuggerUtils {
     return null;
   }
 
-  public static boolean instanceOf(Type subType, String superType) {
+  public static boolean instanceOf(@NotNull Type subType, @NotNull String superType) {
     return getSuperType(subType, superType) != null;
   }
 
