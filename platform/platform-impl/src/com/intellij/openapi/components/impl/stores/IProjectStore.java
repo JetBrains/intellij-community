@@ -29,6 +29,9 @@ public interface IProjectStore extends IComponentStore {
   VirtualFile getProjectBaseDir();
 
   @Nullable
+  /**
+   * System-independent path.
+   */
   String getProjectBasePath();
 
   @NotNull
@@ -47,12 +50,18 @@ public interface IProjectStore extends IComponentStore {
   VirtualFile getProjectFile();
 
   @NotNull
+  /**
+   * System-independent path.
+   */
   String getProjectFilePath();
 
   @Nullable
   VirtualFile getWorkspaceFile();
 
   @Nullable
+  /**
+   * System-independent path.
+   */
   String getWorkspaceFilePath();
 
   void loadProjectFromTemplate(@NotNull Project project);

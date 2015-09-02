@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.NotNullFunction;
@@ -162,9 +163,14 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
       }
 
       IProjectStore store = (IProjectStore)ComponentsPackage.getStateStore(project);
-      if (file.equals(store.getWorkspaceFile()) || file.equals(store.getProjectFile())) return true;
-      for (Module each : ModuleManager.getInstance(project).getModules()) {
-        if (file.equals(each.getModuleFile())) return true;
+      String filePath = file.getPath();
+      if (FileUtil.namesEqual(filePath, store.getWorkspaceFilePath()) || FileUtil.namesEqual(filePath, store.getProjectFilePath())) {
+        return true;
+      }
+      for (Module module : ModuleManager.getInstance(project).getModules()) {
+        if (FileUtil.namesEqual(filePath, module.getModuleFilePath())) {
+          return true;
+        }
       }
     }
 
