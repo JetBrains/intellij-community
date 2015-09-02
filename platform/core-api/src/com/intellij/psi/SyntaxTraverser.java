@@ -1,6 +1,9 @@
 package com.intellij.psi;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.LighterASTTokenNode;
+import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
@@ -389,11 +392,12 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
           for (int i = 0; i < count; i++) {
             T child = array[i];
             IElementType childType = typeOf(child);
-            if (childType.getLanguage() == Language.ANY) {
-              // skip TokenType.* types, errors cannot be properly handled (no parents)
-              if (childType == TokenType.ERROR_ELEMENT) {
-                // todo remember error
-              }
+            // skip TokenType.* types, errors cannot be properly handled (no parents)
+            if (childType == TokenType.ERROR_ELEMENT) {
+              // todo remember error
+              continue;
+            }
+            else if (childType == TokenType.WHITE_SPACE || childType == TokenType.BAD_CHARACTER) {
               continue;
             }
             array[i] = null; // do not dispose meaningful TokenNodes
