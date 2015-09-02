@@ -248,7 +248,12 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
 
       val storage = storageManager.getStateStorage(storageSpec)
-      var stateGetter = if (isUseLoadedStateAsExisting(storageSpec) && Registry.`is`("use.loaded.state.as.existing", false)) (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass) else null
+      var stateGetter = if (isUseLoadedStateAsExisting(storageSpec) && (ApplicationManager.getApplication().isUnitTestMode() || Registry.`is`("use.loaded.state.as.existing", false))) {
+        (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass)
+      }
+      else {
+        null
+      }
       var state = if (stateGetter == null) storage.getState(component, name, stateClass, defaultState, reloadData) else stateGetter.getState(defaultState)
       if (state == null) {
         if (changedStorages != null && changedStorages.contains(storage)) {
