@@ -348,13 +348,29 @@ public abstract class UsefulTestCase extends TestCase {
     return PlatformTestUtil.canRunTest(getClass());
   }
 
-  public static void edt(Runnable r) {
-    UIUtil.invokeAndWaitIfNeeded(r);
+  public static void edt(@NotNull final ThrowableRunnable r) {
+    try {
+      UIUtil.invokeAndWaitIfNeeded(r);
+    }
+    catch (RuntimeException re) {
+      throw re;
+    }
+    catch (Throwable throwable) {
+      throw new RuntimeException(throwable);
+    }
+  }
+
+  public static void edt(@NotNull final Runnable r) {
+    edt(new ThrowableRunnable() {
+      @Override
+      public void run() throws Throwable {
+        r.run();
+      }
+    });
   }
 
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(runnable);
-    //runnable.run();
+    edt(runnable);
   }
 
   protected void defaultRunBare() throws Throwable {
