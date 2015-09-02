@@ -18,7 +18,9 @@ package com.jetbrains.python.pyi;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.psi.PsiDocumentManager;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.inspections.PyStatementEffectInspection;
 import com.jetbrains.python.inspections.PyTypeCheckerInspection;
+import com.jetbrains.python.inspections.PyUnusedLocalInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,25 +28,41 @@ import org.jetbrains.annotations.NotNull;
  * @author vlan
  */
 public class PyiInspectionsTest extends PyTestCase {
-  private void doTest(@NotNull Class<? extends LocalInspectionTool> inspectionClass) {
+  private void doTest(@NotNull Class<? extends LocalInspectionTool> inspectionClass, @NotNull String extension) {
     myFixture.copyDirectoryToProject("pyi/inspections/" + getTestName(true), "");
     myFixture.copyDirectoryToProject("typing", "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-    final String fileName = getTestName(false) + ".py";
+    final String fileName = getTestName(false) + extension;
     myFixture.configureByFile(fileName);
     myFixture.enableInspections(inspectionClass);
     myFixture.checkHighlighting(true, false, true);
   }
 
+  private void doPyTest(@NotNull Class<? extends LocalInspectionTool> inspectionClass) {
+    doTest(inspectionClass, ".py");
+  }
+
+  private void doPyiTest(@NotNull Class<? extends LocalInspectionTool> inspectionClass) {
+    doTest(inspectionClass, ".pyi");
+  }
+
   public void testUnresolvedModuleAttributes() {
-    doTest(PyUnresolvedReferencesInspection.class);
+    doPyTest(PyUnresolvedReferencesInspection.class);
   }
 
   public void testUnresolvedClassAttributes() {
-    doTest(PyUnresolvedReferencesInspection.class);
+    doPyTest(PyUnresolvedReferencesInspection.class);
   }
 
   public void testOverloads() {
-    doTest(PyTypeCheckerInspection.class);
+    doPyTest(PyTypeCheckerInspection.class);
+  }
+
+  public void testPyiUnusedParameters() {
+    doPyiTest(PyUnusedLocalInspection.class);
+  }
+
+  public void testPyiStatementEffect() {
+    doPyiTest(PyStatementEffectInspection.class);
   }
 }

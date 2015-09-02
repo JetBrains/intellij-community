@@ -632,6 +632,7 @@
     <typeProvider implementation="com.jetbrains.python.pyi.PyiTypeProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.pyi.PyiModuleMembersProvider"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.pyi.PyiClassMembersProvider"/>
+    <visitorFilter language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiVisitorFilter"/>
 
     <typeProvider implementation="com.jetbrains.python.debugger.PyCallSignatureTypeProvider"/>
     <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PythonBuiltinReferenceResolveProvider"/>
