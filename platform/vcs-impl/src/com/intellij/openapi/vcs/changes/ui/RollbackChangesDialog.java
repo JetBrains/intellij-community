@@ -115,7 +115,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     myOperationName = UIUtil.removeMnemonic(myOperationName);
     setTitle(VcsBundle.message("changes.action.rollback.custom.title", myOperationName));
     setCancelButtonText(CommonBundle.getCloseButtonText());
-    myBrowser.setToggleActionTitle("Include in " + myOperationName.toLowerCase());
+    myBrowser.setToggleActionTitle("&Include in " + myOperationName.toLowerCase());
 
     for (Change c : changes) {
       if (c.getType() == Change.Type.NEW) {
