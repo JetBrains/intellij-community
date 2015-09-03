@@ -46,6 +46,8 @@ public interface EditorGutter {
    */
   void registerTextAnnotation(@NotNull TextAnnotationGutterProvider provider, @NotNull EditorGutterAction action);
 
+  boolean isAnnotationsShown();
+
   /**
    * Removes all text annotations from the gutter.
    */

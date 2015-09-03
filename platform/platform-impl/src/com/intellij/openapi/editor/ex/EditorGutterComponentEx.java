@@ -32,8 +32,6 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract boolean isLineMarkersShown();
 
-  public abstract boolean isAnnotationsShown();
-
   @Nullable
   public abstract FoldRegion findFoldingAnchorAt(int x, int y);
 
@@ -57,6 +55,10 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public abstract int getLineMarkerFreePaintersAreaOffset();
 
   public abstract int getIconsAreaWidth();
+
+  public abstract int getAnnotationsAreaOffset();
+
+  public abstract int getAnnotationsAreaWidth();
 
   @Nullable
   public abstract Point getPoint(GutterIconRenderer renderer);

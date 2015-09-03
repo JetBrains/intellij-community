@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowFilePathAction;
@@ -121,8 +122,10 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
           if (newEditor != null) {
             newEditor.selectNotify();
           }
-          
-          newFile.refresh(true, false);
+
+          if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
+            newFile.refresh(true, false);
+          }
         }
       }).setAdditionalSwitchProviderWhenOriginal(new MySwitchProvider())
     .setSelectionChangeHandler(new JBTabs.SelectionChangeHandler() {

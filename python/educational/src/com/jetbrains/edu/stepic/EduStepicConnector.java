@@ -442,7 +442,12 @@ public class EduStepicConnector {
       for (VirtualFile file : files) {
         try {
           if (file != null) {
-            task.addTestsTexts(file.getName(), Base64.encodeBase64URLSafeString(FileUtil.loadBytes(file.getInputStream())));
+            if (EduUtils.isImage(file.getName())) {
+              task.addTestsTexts(file.getName(), Base64.encodeBase64URLSafeString(FileUtil.loadBytes(file.getInputStream())));
+            }
+            else {
+              task.addTestsTexts(file.getName(), FileUtil.loadTextAndClose(file.getInputStream()));
+            }
           }
         }
         catch (IOException e) {
@@ -617,7 +622,12 @@ public class EduStepicConnector {
         final VirtualFile file = taskDirectory.findChild(taskFile.name);
         try {
           if (file != null) {
-            taskFile.text = Base64.encodeBase64URLSafeString(FileUtil.loadBytes(file.getInputStream()));
+            if (EduUtils.isImage(taskFile.name)) {
+              taskFile.text = Base64.encodeBase64URLSafeString(FileUtil.loadBytes(file.getInputStream()));
+            }
+            else {
+              taskFile.text = FileUtil.loadTextAndClose(file.getInputStream());
+            }
           }
         }
         catch (IOException e) {

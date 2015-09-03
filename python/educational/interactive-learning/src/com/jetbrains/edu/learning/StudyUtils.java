@@ -212,6 +212,18 @@ public class StudyUtils {
     return language == null ? null : StudyLanguageManager.INSTANCE.forLanguage(language);
   }
 
+  public static boolean isTestsFile(@NotNull Project project, @NotNull final String name) {
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return false;
+    }
+    StudyLanguageManager manager = getLanguageManager(course);
+    if (manager == null) {
+      return false;
+    }
+    return manager.getTestFileName().equals(name);
+  }
+
   @Nullable
   public static TaskFile getTaskFile(@NotNull final Project project, @NotNull final VirtualFile file) {
     final Course course = StudyTaskManager.getInstance(project).getCourse();

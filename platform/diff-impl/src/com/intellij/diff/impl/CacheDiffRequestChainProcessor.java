@@ -75,6 +75,8 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
 
   @CalledInAwt
   public void updateRequest(final boolean force, boolean useCache, @Nullable final ScrollToPolicy scrollToChangePolicy) {
+    if (isDisposed()) return;
+
     List<? extends DiffRequestProducer> requests = myRequestChain.getRequests();
     int index = myRequestChain.getIndex();
     if (index < 0 || index >= requests.size()) {

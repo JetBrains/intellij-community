@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 
 public class VcsHistoryUtil {
+  public static Key<VcsFileRevision[]> REVISIONS_KEY = Key.create("VcsHistoryUtil.Change");
 
   private static final Logger LOG = Logger.getInstance(VcsHistoryUtil.class);
 
@@ -94,6 +96,8 @@ public class VcsHistoryUtil {
     DiffContent diffContent2 = createContent(project, content2, revision2, path);
 
     final DiffRequest request = new SimpleDiffRequest(title, diffContent1, diffContent2, title1, title2);
+
+    request.putUserData(REVISIONS_KEY, new VcsFileRevision[]{revision1, revision2});
 
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
       public void run() {

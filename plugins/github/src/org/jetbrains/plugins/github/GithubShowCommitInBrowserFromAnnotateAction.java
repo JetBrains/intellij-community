@@ -19,12 +19,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.LineNumberListener;
+import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
@@ -35,7 +33,7 @@ import org.jetbrains.plugins.github.util.GithubUtil;
 /**
  * @author Kirill Likhodedov
  */
-public class GithubShowCommitInBrowserFromAnnotateAction extends GithubShowCommitInBrowserAction implements LineNumberListener {
+public class GithubShowCommitInBrowserFromAnnotateAction extends GithubShowCommitInBrowserAction implements UpToDateLineNumberListener {
 
   private final FileAnnotation myAnnotation;
   private int myLineNumber = -1;
@@ -82,15 +80,13 @@ public class GithubShowCommitInBrowserFromAnnotateAction extends GithubShowCommi
     if (document == null) {
       return null;
     }
-    final UpToDateLineNumberProvider myGetUpToDateLineNumber = new UpToDateLineNumberProviderImpl(document, project);
-    int corrected = myGetUpToDateLineNumber.getLineNumber(lineNumber);
 
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForFile(virtualFile);
     if (repository == null) {
       return null;
     }
 
-    return new EventData(project, repository, corrected);
+    return new EventData(project, repository, lineNumber);
   }
 
   @Override
