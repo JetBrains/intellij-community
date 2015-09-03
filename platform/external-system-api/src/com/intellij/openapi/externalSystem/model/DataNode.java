@@ -279,8 +279,8 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
 
   @Override
   public int hashCode() {
-    int result = myChildren.hashCode();
-    result = 31 * result + myKey.hashCode();
+    // We can't use myChildren.hashCode() because it iterates whole subtree.
+    int result = myKey.hashCode();
     result = 31 * result + getData().hashCode();
     return result;
   }
