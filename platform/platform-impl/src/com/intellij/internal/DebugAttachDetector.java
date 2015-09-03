@@ -42,7 +42,7 @@ public class DebugAttachDetector {
     if (!ApplicationManagerEx.getApplicationEx().isInternal() || "true".equals(System.getProperty("idea.debug.mode"))) return;
 
     for (String argument : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
-      if (argument.startsWith("-agentlib:jdwp")) {
+      if (argument.startsWith("-agentlib:jdwp") && argument.contains("transport=dt_socket")) {
         String[] params = argument.split(",");
         for (String param : params) {
           if (param.startsWith("address")) {
