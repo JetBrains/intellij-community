@@ -39,6 +39,9 @@ import org.junit.Assert;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -47,7 +50,9 @@ import java.io.IOException;
  * <p/>
  * This class allows configuration to <strong>rerun</strong> (using {@link #shouldRunAgain()},
  * you need to implement {@link #getEnvironmentToRerun(RunContentDescriptor)}, accept last run descriptor and return
- * {@link ExecutionEnvironment} to rerun (probably obtained from descriptor)
+ * {@link ExecutionEnvironment} to rerun (probably obtained from descriptor).
+ * <p/>
+ * It also has {@link #getAvailableRunnersForLastRun()} with list of strings that represents runner ids available for last run.
  *
  * @param <CONF_T> configuration class this runner supports
  * @author Ilya.Kazakevich
@@ -60,6 +65,9 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
   private final ConfigurationFactory myConfigurationFactory;
   @NotNull
   private final Class<CONF_T> myExpectedConfigurationType;
+
+  @NotNull
+  private final List<String> myAvailableRunnersForLastRun = new ArrayList<String>();
 
   /**
    * Environment to be used to run instead of factory. Used to rerun
@@ -104,6 +112,18 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
         }, ModalityState.NON_MODAL);
       }
     };
+
+
+    /// Find all available runners to report them to the test
+    myAvailableRunnersForLastRun.clear();
+    for (final ProgramRunner<?> runner : ProgramRunner.PROGRAM_RUNNER_EP.getExtensions()) {
+      for (final Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensions()) {
+        if (runner.canRun(executor.getId(), executionEnvironment.getRunProfile())) {
+          myAvailableRunnersForLastRun.add(runner.getRunnerId());
+        }
+      }
+    }
+
     executionEnvironment.getRunner().execute(executionEnvironment, new ProgramRunner.Callback() {
       @Override
       public void processStarted(final RunContentDescriptor descriptor) {
@@ -199,5 +219,14 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
   @Nullable
   protected ExecutionEnvironment getEnvironmentToRerun(@NotNull final RunContentDescriptor lastRunDescriptor) {
     return null;
+  }
+
+  /**
+   * @return list of runner ids which are allowed to run against current environment.
+   * Use it to check if desired runner (like debugger) exists
+   */
+  @NotNull
+  public final List<String> getAvailableRunnersForLastRun() {
+    return Collections.unmodifiableList(myAvailableRunnersForLastRun);
   }
 }
