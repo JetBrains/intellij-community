@@ -223,7 +223,7 @@ public class TemplateState implements Disposable {
     }
     CharSequence text = myDocument.getCharsSequence();
     int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
-    if (segmentNumber < 0) {
+    if (segmentNumber < 0 || mySegments.getSegmentsCount() <= segmentNumber) {
       return null;
     }
     int start = mySegments.getSegmentStart(segmentNumber);
