@@ -32,4 +32,8 @@ public class ExpandableIndent extends IndentImpl {
     myEnforceIndent = value;
   }
 
+  @Override
+  public String toString() {
+    return "SmartIndent";
+  }
 }
