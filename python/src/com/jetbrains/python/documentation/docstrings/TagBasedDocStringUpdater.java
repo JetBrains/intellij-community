@@ -65,7 +65,7 @@ public class TagBasedDocStringUpdater extends DocStringUpdater<TagBasedDocString
     for (Substring sub : nameSubs) {
       if (sub.toString().equals(name)) {
         final int startLine = sub.getStartLine();
-        final int nextAfterBlock = myOriginalDocString.parseIndentedBlock(startLine + 1, getLineIndentSize(startLine));
+        final int nextAfterBlock = myOriginalDocString.consumeIndentedBlock(startLine + 1, getLineIndentSize(startLine));
         removeLinesAndSpacesAfter(startLine, nextAfterBlock);
       }
     }

@@ -304,6 +304,21 @@ public class PySectionBasedDocStringTest extends PyTestCase {
       "    Returns:\n"));
   }
 
+  public void testNumpyEmptySectionIndent() {
+    final NumpyDocString docString = findAndParseNumpyStyleDocString();
+    assertSize(3, docString.getSections());
+    final Section paramSection = docString.getSections().get(0);
+    assertEquals("parameters", paramSection.getNormalizedTitle());
+    assertSize(2, paramSection.getFields());
+    final Section exampleSection = docString.getSections().get(1);
+    assertSize(1, exampleSection.getFields());
+    assertEquals("First sentence.\n" +
+                 "Second sentence.", exampleSection.getFields().get(0).getDescription());
+    final Section returnSection = docString.getSections().get(2);
+    assertSize(1, returnSection.getFields());
+    assertEquals("Something", returnSection.getFields().get(0).getType());
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/docstrings";

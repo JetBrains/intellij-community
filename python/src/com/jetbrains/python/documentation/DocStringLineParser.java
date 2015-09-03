@@ -82,11 +82,14 @@ public abstract class DocStringLineParser {
    * it means that no block with requested indentation exist. Block can contain intermediate empty lines or lines that consists 
    * solely of spaces: their indentation is ignored, but it always ends with non-empty line. Non-empty lines in a block must
    * have indentation greater than indentThreshold and for them {@link #isBlockEnd(int)} must return false.
+   * 
+   * @param indentThreshold indentation size of non-empty line that will break block once reached, i.e. minimum possible indentation 
+   *                        inside a block is {@code indentThreshold + 1}
    */
-  public int parseIndentedBlock(int startLine, int indentThreshold) {
+  public int consumeIndentedBlock(int startLine, int indentThreshold) {
     int blockEnd = startLine - 1;
     int lineNum = startLine;
-    while (!(lineNum >= getLineCount() || isBlockEnd(lineNum))) {
+    while (lineNum < getLineCount() && !isBlockEnd(lineNum)) {
       if (!isEmpty(lineNum)) {
         if (getLineIndentSize(lineNum) > indentThreshold) {
           blockEnd = lineNum;
@@ -100,7 +103,7 @@ public abstract class DocStringLineParser {
     return blockEnd + 1;
   }
 
-  public int skipEmptyLines(int lineNum) {
+  public int consumeEmptyLines(int lineNum) {
     while (lineNum < getLineCount() && isEmpty(lineNum)) {
       lineNum++;
     }

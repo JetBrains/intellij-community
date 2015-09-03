@@ -100,7 +100,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   protected SectionBasedDocString(@NotNull Substring text) {
     super(text);
     List<Substring> summary = Collections.emptyList();
-    int startLine = skipEmptyLines(parseHeader(0));
+    int startLine = consumeEmptyLines(parseHeader(0));
     int lineNum = startLine;
     while (lineNum < getLineCount()) {
       final Pair<Section, Integer> parsedSection = parseSection(lineNum);
@@ -117,7 +117,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
         myOtherContent.add(getLine(lineNum));
         lineNum++;
       }
-      lineNum = skipEmptyLines(lineNum);
+      lineNum = consumeEmptyLines(lineNum);
     }
     //noinspection ConstantConditions
     mySummary = summary.isEmpty() ? null : summary.get(0).union(summary.get(summary.size() - 1)).trim();
@@ -144,29 +144,32 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   protected Pair<Section, Integer> parseSection(int sectionStartLine) {
-    final Pair<Substring, Integer> pair = parseSectionHeader(sectionStartLine);
-    if (pair.getFirst() == null) {
+    final Pair<Substring, Integer> parsedHeader = parseSectionHeader(sectionStartLine);
+    if (parsedHeader.getFirst() == null) {
       return Pair.create(null, sectionStartLine);
     }
-    final String normalized = getNormalizedSectionTitle(pair.getFirst().toString());
+    final String normalized = getNormalizedSectionTitle(parsedHeader.getFirst().toString());
     if (normalized == null) {
       return Pair.create(null, sectionStartLine);
     }
-    int lineNum = skipEmptyLines(pair.getSecond());
     final List<SectionField> fields = new ArrayList<SectionField>();
     final int sectionIndent = getLineIndentSize(sectionStartLine);
+    int lineNum = consumeEmptyLines(parsedHeader.getSecond());
     while (!isSectionBreak(lineNum, sectionIndent)) {
+      final Pair<SectionField, Integer> parsedField = parseSectionField(lineNum, normalized, sectionIndent);
       if (!isEmpty(lineNum)) {
-        final Pair<SectionField, Integer> result = parseSectionField(lineNum, normalized, sectionIndent);
-        if (result.getFirst() != null) {
-          fields.add(result.getFirst());
-          lineNum = result.getSecond();
+        if (parsedField.getFirst() != null) {
+          fields.add(parsedField.getFirst());
+          lineNum = parsedField.getSecond();
           continue;
+        }
+        else {
+          myOtherContent.add(getLine(lineNum));
         }
       }
       lineNum++;
     }
-    return Pair.create(new Section(pair.getFirst(), fields), lineNum);
+    return Pair.create(new Section(parsedHeader.getFirst(), fields), lineNum);
   }
 
   @NotNull
@@ -193,7 +196,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   protected Pair<SectionField, Integer> parseGenericField(int lineNum, int sectionIndent) {
-    final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum, sectionIndent, sectionIndent);
+    // We want to let section content has the same indent as section header, in particular for Numpy
+    final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum, Math.max(sectionIndent - 1, 0));
     final Substring firstLine = ContainerUtil.getFirstItem(pair.getFirst());
     final Substring lastLine = ContainerUtil.getLastItem(pair.getFirst());
     if (firstLine != null && lastLine != null) {
@@ -212,8 +216,9 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   protected boolean isSectionBreak(int lineNum, int curSectionIndent) {
     return lineNum >= getLineCount() || 
-           (!isEmpty(lineNum) && getLineIndentSize(lineNum) <= curSectionIndent) || 
-           isBlockEnd(lineNum);
+           // note that field may have the same indent as its containing section
+           (!isEmpty(lineNum) && getLineIndentSize(lineNum) < curSectionIndent) || 
+           isSectionStart(lineNum);
   }
 
   /**
@@ -223,8 +228,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
    * @param blockIndent indentation threshold, block ends with a line that has greater indentation
    */
   @NotNull
-  protected Pair<List<Substring>, Integer> parseIndentedBlock(int lineNum, int blockIndent, int sectionIndent) {
-    final int blockEnd = parseIndentedBlock(lineNum, blockIndent);
+  protected Pair<List<Substring>, Integer> parseIndentedBlock(int lineNum, int blockIndent) {
+    final int blockEnd = consumeIndentedBlock(lineNum, blockIndent);
     return Pair.create(myLines.subList(lineNum, blockEnd), blockEnd);
   }
 

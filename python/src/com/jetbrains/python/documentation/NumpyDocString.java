@@ -16,6 +16,7 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.util.Pair;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,7 @@ public class NumpyDocString extends SectionBasedDocString {
 
   @Override
   protected int parseHeader(int startLine) {
-    final int nextNonEmptyLineNum = skipEmptyLines(startLine);
+    final int nextNonEmptyLineNum = consumeEmptyLines(startLine);
     final Substring line = getLineOrNull(nextNonEmptyLineNum);
     if (line != null && SIGNATURE.matcher(line).matches()) {
       mySignature = line.trim();
@@ -82,7 +83,10 @@ public class NumpyDocString extends SectionBasedDocString {
       type = name;
       name = null;
     }
-    final Pair<List<Substring>, Integer> parsedDescription = parseIndentedBlock(lineNum + 1, getLineIndentSize(lineNum), sectionIndent);
+    if (name != null? !PyNames.isIdentifierString(name.toString()) : type.isEmpty()) {
+      return Pair.create(null, lineNum);
+    }
+    final Pair<List<Substring>, Integer> parsedDescription = parseIndentedBlock(lineNum + 1, getLineIndentSize(lineNum));
     final List<Substring> descriptionLines = parsedDescription.getFirst();
     if (!descriptionLines.isEmpty()) {
       description = descriptionLines.get(0).union(descriptionLines.get(descriptionLines.size() - 1));

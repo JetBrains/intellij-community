@@ -79,7 +79,7 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
   }
 
   private int skipEmptyLines(int startLine) {
-    return Math.min(myOriginalDocString.skipEmptyLines(startLine), myOriginalDocString.getLineCount() - 1);
+    return Math.min(myOriginalDocString.consumeEmptyLines(startLine), myOriginalDocString.getLineCount() - 1);
   }
 
   protected final void removeLine(int line) {
