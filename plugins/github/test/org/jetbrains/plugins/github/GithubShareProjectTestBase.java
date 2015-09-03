@@ -17,6 +17,7 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.github.test.GithubTest;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Random;
 
 /**
@@ -71,6 +73,21 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
                                               for (GitRepository repository : GitUtil.getRepositoryManager(myProject).getRepositories()) {
                                                 setGitIdentity(repository.getRoot());
                                               }
+                                              return DialogWrapper.OK_EXIT_CODE;
+                                            }
+                                          });
+  }
+
+  protected void registerSelectNoneUntrackedFilesDialogHandler() {
+    myDialogManager.registerDialogHandler(GithubShareAction.GithubUntrackedFilesDialog.class,
+                                          new TestDialogHandler<GithubShareAction.GithubUntrackedFilesDialog>() {
+                                            @Override
+                                            public int handleDialog(GithubShareAction.GithubUntrackedFilesDialog dialog) {
+                                              // actually we should ask user for name/email ourselves (like in CommitDialog)
+                                              for (GitRepository repository : GitUtil.getRepositoryManager(myProject).getRepositories()) {
+                                                setGitIdentity(repository.getRoot());
+                                              }
+                                              dialog.setSelectedFiles(Collections.<VirtualFile>emptyList());
                                               return DialogWrapper.OK_EXIT_CODE;
                                             }
                                           });
