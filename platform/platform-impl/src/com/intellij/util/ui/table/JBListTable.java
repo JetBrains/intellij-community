@@ -438,6 +438,8 @@ public abstract class JBListTable {
     @Override
     public void dispose() {
       stopAnimation();
+      // enforce all animations are completed
+      doAnimationStep(Long.MAX_VALUE);
     }
 
     private void startAnimation() {
