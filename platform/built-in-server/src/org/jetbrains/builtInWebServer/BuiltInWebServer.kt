@@ -41,7 +41,6 @@ import org.jetbrains.io.FileResponses
 import org.jetbrains.io.Responses
 import org.jetbrains.io.Responses.addKeepAliveIfNeed
 import java.io.File
-import java.io.IOException
 import java.net.InetAddress
 import java.net.UnknownHostException
 
@@ -50,12 +49,13 @@ public class BuiltInWebServer : HttpRequestHandler() {
     val LOG = Logger.getInstance(javaClass<BuiltInWebServer>())
 
     private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {
-      var projectName = projectNameAsHost
       val decodedPath = URLUtil.unescapePercentSequences(UriUtil.trimParameters(request.uri()))
-      val offset: Int
-      val emptyPath: Boolean
-      val isCustomHost = projectName != null
+      var offset: Int
+      var emptyPath: Boolean
+      val isCustomHost = projectNameAsHost != null
+      var projectName: String
       if (isCustomHost) {
+        projectName = projectNameAsHost!!
         // host mapped to us
         offset = 0
         emptyPath = decodedPath.isEmpty()
@@ -66,7 +66,38 @@ public class BuiltInWebServer : HttpRequestHandler() {
         emptyPath = offset == -1
       }
 
-      val project = findProject(projectName!!, isCustomHost) ?: return false
+      var candidateByDirectoryName: Project? = null
+      val project = ProjectManager.getInstance().getOpenProjects().first(fun(project: Project): Boolean {
+        if (project.isDisposed()) {
+          return false
+        }
+
+        val name = project.getName()
+        if (isCustomHost) {
+          // domain name is case-insensitive
+          if (projectName.equals(project.getName(), ignoreCase = true)) {
+            return true
+          }
+        }
+        else {
+          // WEB-17839 Internal web server reports 404 when serving files from project with slashes in name
+          if (decodedPath.regionMatches(1, name, 0, name.length(), !SystemInfoRt.isFileSystemCaseSensitive)) {
+            var emptyPathCandidate = decodedPath.length() == (name.length() + 1)
+            if (emptyPathCandidate || decodedPath.charAt(name.length() + 1) == '/') {
+              projectName = name
+              offset = name.length() + 1
+              emptyPath = emptyPathCandidate
+              return true
+            }
+          }
+        }
+
+        if (candidateByDirectoryName == null && compareNameAndProjectBasePath(projectName, project)) {
+          candidateByDirectoryName = project
+        }
+        return false
+      }) ?: candidateByDirectoryName ?: return false
+
       if (emptyPath) {
         if (!SystemInfoRt.isFileSystemCaseSensitive) {
           // may be passed path is not correct
@@ -88,25 +119,8 @@ public class BuiltInWebServer : HttpRequestHandler() {
         catch (e: Throwable) {
           LOG.error(e)
         }
-
       }
       return false
-    }
-
-    private fun findProject(projectName: String, isCustomHost: Boolean): Project? {
-      // user can rename project directory, so, we should support this case - find project by base directory name
-      var candidateByDirectoryName: Project? = null
-      for (project in ProjectManager.getInstance().getOpenProjects()) {
-        // domain name is case-insensitive
-        if (!project.isDisposed() && projectName.equals(project.getName(), isCustomHost /* domain name is case-insensitive */ || !SystemInfoRt.isFileSystemCaseSensitive)) {
-          return project
-        }
-
-        if (candidateByDirectoryName == null && compareNameAndProjectBasePath(projectName, project)) {
-          candidateByDirectoryName = project
-        }
-      }
-      return candidateByDirectoryName
     }
   }
 
@@ -182,7 +196,7 @@ public fun isOwnHostName(host: String): Boolean {
 
   try {
     val address = InetAddress.getByName(host)
-    if (host == address.getHostAddress() || host.equalsIgnoreCase(address.getCanonicalHostName())) {
+    if (host == address.getHostAddress() || host.equals(address.getCanonicalHostName(), ignoreCase = true)) {
       return true
     }
 
@@ -199,7 +213,6 @@ public fun isOwnHostName(host: String): Boolean {
 private class StaticFileHandler : WebServerFileHandler() {
   private var ssiProcessor: SsiProcessor? = null
 
-  throws(IOException::class)
   override fun process(file: VirtualFile, canonicalRequestPath: CharSequence, project: Project, request: FullHttpRequest, channel: Channel, isCustomHost: Boolean): Boolean {
     if (file.isInLocalFileSystem()) {
       val nameSequence = file.getNameSequence()
@@ -227,7 +240,7 @@ private class StaticFileHandler : WebServerFileHandler() {
 
       channel.write(response)
 
-      if (request.method() !== HttpMethod.HEAD) {
+      if (request.method() != HttpMethod.HEAD) {
         channel.write(ChunkedStream(file.getInputStream()))
       }
 
@@ -239,7 +252,6 @@ private class StaticFileHandler : WebServerFileHandler() {
     return true
   }
 
-  throws(IOException::class)
   private fun processSsi(file: VirtualFile, canonicalRequestPath: CharSequence, project: Project, request: FullHttpRequest, channel: Channel, isCustomHost: Boolean) {
     var path = PathUtilRt.getParentPath(canonicalRequestPath.toString())
     if (!isCustomHost) {
@@ -283,8 +295,6 @@ private class StaticFileHandler : WebServerFileHandler() {
     }
   }
 
-  private fun hasAccess(result: File): Boolean {
-    // deny access to .htaccess files
-    return !result.isDirectory() && result.canRead() && !(result.isHidden() || result.getName().startsWith(".ht"))
-  }
+  // deny access to .htaccess files
+  private fun hasAccess(result: File) = !result.isDirectory() && result.canRead() && !(result.isHidden() || result.getName().startsWith(".ht"))
 }
