@@ -1550,23 +1550,18 @@ public class HighlightMethodUtil {
   private static HighlightInfo checkVarargParameterErasureToBeAccessible(MethodCandidateInfo info, PsiCall place) {
     final PsiMethod method = info.getElement();
     if (info.isVarargs() || method.isVarArgs() && !PsiUtil.isLanguageLevel8OrHigher(place)) {
-      if (method.hasTypeParameters()) {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        final PsiType componentType = ((PsiEllipsisType)parameters[parameters.length - 1].getType()).getComponentType();
-        final PsiClass classOfComponent = PsiUtil.resolveClassInClassTypeOnly(componentType);
-        if (classOfComponent instanceof PsiTypeParameter) {
-          final PsiType substitutedTypeErasure = TypeConversionUtil.erasure(info.getSubstitutor().substitute(componentType));
-          final PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(substitutedTypeErasure);
-          if (targetClass != null && !PsiUtil.isAccessible(targetClass, place, null)) {
-            final PsiExpressionList argumentList = place.getArgumentList();
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                         .descriptionAndTooltip("Formal varargs element type " +
-                                                PsiFormatUtil.formatClass(targetClass, PsiFormatUtilBase.SHOW_FQ_NAME) +
-                                                " is inaccessible here")
-                         .range(argumentList != null ? argumentList : place)
-                         .create();
-          }
-        }
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      final PsiType componentType = ((PsiEllipsisType)parameters[parameters.length - 1].getType()).getComponentType();
+      final PsiType substitutedTypeErasure = TypeConversionUtil.erasure(info.getSubstitutor().substitute(componentType));
+      final PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(substitutedTypeErasure);
+      if (targetClass != null && !PsiUtil.isAccessible(targetClass, place, null)) {
+        final PsiExpressionList argumentList = place.getArgumentList();
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .descriptionAndTooltip("Formal varargs element type " +
+                                 PsiFormatUtil.formatClass(targetClass, PsiFormatUtilBase.SHOW_FQ_NAME) +
+                                 " is inaccessible here")
+          .range(argumentList != null ? argumentList : place)
+          .create();
       }
     }
     return null;
