@@ -493,11 +493,13 @@ public class GithubApiUtil {
   public static List<GithubIssue> getIssuesQueried(@NotNull GithubConnection connection,
                                                    @NotNull String user,
                                                    @NotNull String repo,
+                                                   @Nullable String assignedUser,
                                                    @Nullable String query,
                                                    boolean withClosed) throws IOException {
     try {
       String state = withClosed ? "" : " state:open";
-      query = URLEncoder.encode("repo:" + user + "/" + repo + " " + query + state, CharsetToolkit.UTF8);
+      String assignee = StringUtil.isEmptyOrSpaces(assignedUser) ? "" : " assignee:" + assignedUser;
+      query = URLEncoder.encode("repo:" + user + "/" + repo + state + assignee + " " + query, CharsetToolkit.UTF8);
       String path = "/search/issues?q=" + query;
 
       //TODO: Use bodyHtml for issues - GitHub does not support this feature for SearchApi yet
