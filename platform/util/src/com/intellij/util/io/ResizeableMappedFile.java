@@ -99,7 +99,7 @@ public class ResizeableMappedFile implements Forceable {
   }
 
   private void expand() {
-    final long newSize = Math.min(Integer.MAX_VALUE, ((realSize() + 1) * 13) >> 3);
+    final long newSize = Math.min(Integer.MAX_VALUE, (Math.max(realSize() + 1, 2) * 13) >> 3);
     resize((int)newSize);
   }
 
