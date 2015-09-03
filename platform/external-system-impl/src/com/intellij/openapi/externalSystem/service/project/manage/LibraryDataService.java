@@ -70,7 +70,6 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
                          @NotNull final Project project,
                          @NotNull final PlatformFacade platformFacade,
                          final boolean synchronous) {
-
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
       public void execute() {
@@ -85,9 +84,9 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
                              @NotNull Project project,
                              @NotNull PlatformFacade platformFacade,
                              boolean synchronous) {
-    final Map<OrderRootType, Collection<File>> libraryFiles = prepareLibraryFiles(toImport);
+    Map<OrderRootType, Collection<File>> libraryFiles = prepareLibraryFiles(toImport);
 
-    final Library library = platformFacade.findIdeLibrary(toImport, project);
+    Library library = platformFacade.findIdeLibrary(toImport, project);
     if (library != null) {
       syncPaths(toImport, library, project, synchronous);
       return;
@@ -97,9 +96,9 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
 
   @NotNull
   public Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
-    final Map<OrderRootType, Collection<File>> result = ContainerUtilRt.newHashMap();
+    Map<OrderRootType, Collection<File>> result = ContainerUtilRt.newHashMap();
     for (LibraryPathType pathType : LibraryPathType.values()) {
-      final Set<String> paths = data.getPaths(pathType);
+      Set<String> paths = data.getPaths(pathType);
       if (paths.isEmpty()) {
         continue;
       }
@@ -114,16 +113,16 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
                              @NotNull PlatformFacade platformFacade)
   {
     // Is assumed to be called from the EDT.
-    final LibraryTable libraryTable = platformFacade.getProjectLibraryTable(project);
-    final LibraryTable.ModifiableModel projectLibraryModel = libraryTable.getModifiableModel();
-    final Library intellijLibrary;
+    LibraryTable libraryTable = platformFacade.getProjectLibraryTable(project);
+    LibraryTable.ModifiableModel projectLibraryModel = libraryTable.getModifiableModel();
+    Library intellijLibrary;
     try {
       intellijLibrary = projectLibraryModel.createLibrary(libraryName);
     }
     finally {
       projectLibraryModel.commit();
     }
-    final Library.ModifiableModel libraryModel = intellijLibrary.getModifiableModel();
+    Library.ModifiableModel libraryModel = intellijLibrary.getModifiableModel();
     try {
       registerPaths(libraryFiles, libraryModel, libraryName);
     }
@@ -133,29 +132,29 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  public void registerPaths(@NotNull final Map<OrderRootType, Collection<File>> libraryFiles,
+  public void registerPaths(@NotNull Map<OrderRootType, Collection<File>> libraryFiles,
                             @NotNull Library.ModifiableModel model,
                             @NotNull String libraryName)
   {
     for (Map.Entry<OrderRootType, Collection<File>> entry : libraryFiles.entrySet()) {
       for (File file : entry.getValue()) {
-        final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
         if (virtualFile == null) {
           if (ExternalSystemConstants.VERBOSE_PROCESSING && entry.getKey() == OrderRootType.CLASSES) {
             LOG.warn(
               String.format("Can't find %s of the library '%s' at path '%s'", entry.getKey(), libraryName, file.getAbsolutePath())
             );
           }
-          final String url = VfsUtil.getUrlForLibraryRoot(file);
+          String url = VfsUtil.getUrlForLibraryRoot(file);
 
-          final String[] urls = model.getUrls(entry.getKey());
+          String[] urls = model.getUrls(entry.getKey());
           if (!ArrayUtil.contains(url, urls)) {
             model.addRoot(url, entry.getKey());
           }
           continue;
         }
         if (virtualFile.isDirectory()) {
-          final VirtualFile[] files = model.getFiles(entry.getKey());
+          VirtualFile[] files = model.getFiles(entry.getKey());
           if (!ArrayUtil.contains(virtualFile, files)) {
             model.addRoot(virtualFile, entry.getKey());
           }
@@ -171,7 +170,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
               continue;
             }
           }
-          final VirtualFile[] files = model.getFiles(entry.getKey());
+          VirtualFile[] files = model.getFiles(entry.getKey());
           if (!ArrayUtil.contains(root, files)) {
             model.addRoot(root, entry.getKey());
           }
@@ -214,12 +213,12 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     });
   }
 
-  public void syncPaths(@NotNull final LibraryData externalLibrary, @NotNull final Library ideLibrary, @NotNull final Project project, boolean synchronous) {
+  public void syncPaths(@NotNull LibraryData externalLibrary, @NotNull Library ideLibrary, @NotNull Project project, boolean synchronous) {
     if (externalLibrary.isUnresolved()) {
       return;
     }
-    final Map<OrderRootType, Set<String>> toRemove = ContainerUtilRt.newHashMap();
-    final Map<OrderRootType, Set<String>> toAdd = ContainerUtilRt.newHashMap();
+    Map<OrderRootType, Set<String>> toRemove = ContainerUtilRt.newHashMap();
+    Map<OrderRootType, Set<String>> toAdd = ContainerUtilRt.newHashMap();
     for (LibraryPathType pathType : LibraryPathType.values()) {
       OrderRootType ideType = myLibraryPathTypeMapper.map(pathType);
       HashSet<String> toAddPerType = ContainerUtilRt.newHashSet(externalLibrary.getPaths(pathType));
@@ -238,7 +237,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     if (toRemove.isEmpty() && toAdd.isEmpty()) {
       return;
     }
-    final Library.ModifiableModel model = ideLibrary.getModifiableModel();
+    Library.ModifiableModel model = ideLibrary.getModifiableModel();
     try {
       for (Map.Entry<OrderRootType, Set<String>> entry : toRemove.entrySet()) {
         for (String path : entry.getValue()) {

@@ -134,19 +134,19 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
   }
 
   @Override
-  public void removeData(@NotNull final Computable<Collection<I>> toRemoveComputable,
-                         @NotNull final Collection<DataNode<E>> toIgnore,
-                         @NotNull final ProjectData projectData,
-                         @NotNull final Project project,
-                         @NotNull final PlatformFacade platformFacade,
-                         final boolean synchronous) {
-    final List<ModifiableRootModel> models = ContainerUtilRt.newArrayList();
+  public void removeData(@NotNull Computable<Collection<I>> toRemoveComputable,
+                         @NotNull Collection<DataNode<E>> toIgnore,
+                         @NotNull ProjectData projectData,
+                         @NotNull Project project,
+                         @NotNull PlatformFacade platformFacade,
+                         boolean synchronous) {
+    List<ModifiableRootModel> models = ContainerUtilRt.newArrayList();
     try {
-      final Map<Module, Collection<ExportableOrderEntry>> byModule = groupByModule(toRemoveComputable.compute());
+      Map<Module, Collection<ExportableOrderEntry>> byModule = groupByModule(toRemoveComputable.compute());
       for (Map.Entry<Module, Collection<ExportableOrderEntry>> entry : byModule.entrySet()) {
-        final Module module = entry.getKey();
-        final Collection<ExportableOrderEntry> depsToRemove = entry.getValue();
-        final ModifiableRootModel model = platformFacade.getModuleModifiableModel(module);
+        Module module = entry.getKey();
+        Collection<ExportableOrderEntry> depsToRemove = entry.getValue();
+        ModifiableRootModel model = platformFacade.getModuleModifiableModel(module);
         removeData(depsToRemove, model);
         models.add(model);
       }

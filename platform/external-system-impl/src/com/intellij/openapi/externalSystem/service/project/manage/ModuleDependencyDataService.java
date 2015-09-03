@@ -63,11 +63,11 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
                          @NotNull Project project,
                          @NotNull PlatformFacade platformFacade,
                          boolean synchronous) {
-    final List<ModifiableRootModel> models = ContainerUtilRt.newArrayList();
+    List<ModifiableRootModel> models = ContainerUtilRt.newArrayList();
     try {
-      final MultiMap<DataNode<ModuleData>, DataNode<ModuleDependencyData>> byModule = ExternalSystemApiUtil.groupBy(toImport, MODULE);
+      MultiMap<DataNode<ModuleData>, DataNode<ModuleDependencyData>> byModule = ExternalSystemApiUtil.groupBy(toImport, MODULE);
       for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ModuleDependencyData>>> entry : byModule.entrySet()) {
-        final Module ideModule = platformFacade.findIdeModule(entry.getKey().getData(), project);
+        Module ideModule = platformFacade.findIdeModule(entry.getKey().getData(), project);
         if (ideModule == null) {
           LOG.warn(String.format(
             "Can't import module dependencies %s. Reason: target module (%s) is not found at the ide and can't be imported",
@@ -97,11 +97,11 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
   }
 
   @NotNull
-  private ModifiableRootModel importData(@NotNull final Collection<DataNode<ModuleDependencyData>> toImport,
-                                         @NotNull final Module module,
-                                         @NotNull final PlatformFacade platformFacade)
+  private ModifiableRootModel importData(@NotNull Collection<DataNode<ModuleDependencyData>> toImport,
+                                         @NotNull Module module,
+                                         @NotNull PlatformFacade platformFacade)
   {
-    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     Map<Pair<String /* dependency module internal name */, /* dependency module scope */DependencyScope>, ModuleOrderEntry> toRemove =
       ContainerUtilRt.newHashMap();
     for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
@@ -111,12 +111,12 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
       }
     }
 
-    final ModifiableRootModel moduleRootModel = platformFacade.getModuleModifiableModel(module);
+    ModifiableRootModel moduleRootModel = platformFacade.getModuleModifiableModel(module);
     for (DataNode<ModuleDependencyData> dependencyNode : toImport) {
-      final ModuleDependencyData dependencyData = dependencyNode.getData();
+      ModuleDependencyData dependencyData = dependencyNode.getData();
       toRemove.remove(Pair.create(dependencyData.getInternalName(), dependencyData.getScope()));
-      final String moduleName = dependencyData.getInternalName();
-      final Module ideDependencyModule = platformFacade.findIdeModule(moduleName, module.getProject());
+      String moduleName = dependencyData.getInternalName();
+      Module ideDependencyModule = platformFacade.findIdeModule(moduleName, module.getProject());
 
       ModuleOrderEntry orderEntry;
       if (module.equals(ideDependencyModule)) {

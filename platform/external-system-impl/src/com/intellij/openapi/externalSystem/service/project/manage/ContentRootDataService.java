@@ -28,7 +28,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
@@ -77,20 +76,20 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   }
 
   @Override
-  public void importData(@NotNull final Collection<DataNode<ContentRootData>> toImport,
+  public void importData(@NotNull Collection<DataNode<ContentRootData>> toImport,
                          @Nullable ProjectData projectData,
-                         @NotNull final Project project,
-                         @NotNull final PlatformFacade platformFacade,
-                         final boolean synchronous) {
+                         @NotNull Project project,
+                         @NotNull PlatformFacade platformFacade,
+                         boolean synchronous) {
     if (toImport.isEmpty()) {
       return;
     }
 
-    final List<ModifiableRootModel> models = ContainerUtilRt.newArrayList();
+    List<ModifiableRootModel> models = ContainerUtilRt.newArrayList();
     try {
       MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> byModule = ExternalSystemApiUtil.groupBy(toImport, ProjectKeys.MODULE);
       for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
-        final Module module = platformFacade.findIdeModule(entry.getKey().getData(), project);
+        Module module = platformFacade.findIdeModule(entry.getKey().getData(), project);
         if (module == null) {
           LOG.warn(String.format(
             "Can't import content roots. Reason: target module (%s) is not found at the ide. Content roots: %s",
@@ -109,12 +108,12 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   }
 
   @NotNull
-  private static ModifiableRootModel importData(@NotNull final Collection<DataNode<ContentRootData>> data,
-                                                @NotNull final Module module,
-                                                @NotNull final PlatformFacade platformFacade) {
-    final ModifiableRootModel model = platformFacade.getModuleModifiableModel(module);
-    final ContentEntry[] contentEntries = model.getContentEntries();
-    final Map<String, ContentEntry> contentEntriesMap = ContainerUtilRt.newHashMap();
+  private static ModifiableRootModel importData(@NotNull Collection<DataNode<ContentRootData>> data,
+                                                @NotNull Module module,
+                                                @NotNull PlatformFacade platformFacade) {
+    ModifiableRootModel model = platformFacade.getModuleModifiableModel(module);
+    ContentEntry[] contentEntries = model.getContentEntries();
+    Map<String, ContentEntry> contentEntriesMap = ContainerUtilRt.newHashMap();
     for(ContentEntry contentEntry : contentEntries) {
       contentEntriesMap.put(contentEntry.getUrl(), contentEntry);
     }
@@ -132,10 +131,10 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       }
     }
 
-    for (final DataNode<ContentRootData> node : data) {
-      final ContentRootData contentRoot = node.getData();
+    for (DataNode<ContentRootData> node : data) {
+      ContentRootData contentRoot = node.getData();
 
-      final ContentEntry contentEntry = findOrCreateContentRoot(model, contentRoot.getRootPath());
+      ContentEntry contentEntry = findOrCreateContentRoot(model, contentRoot.getRootPath());
       contentEntry.clearExcludeFolders();
       contentEntry.clearSourceFolders();
       LOG.debug(String.format("Importing content root '%s' for module '%s'", contentRoot.getRootPath(), module.getName()));
