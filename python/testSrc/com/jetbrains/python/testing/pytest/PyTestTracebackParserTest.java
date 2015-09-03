@@ -103,7 +103,7 @@ public final class PyTestTracebackParserTest {
       final LinkInTrace trace = new PyTestTracebackParser().findLinkInTrace(line);
       if (trace != null) {
         final boolean removeResult = requiredStrings.remove(trace.getFileName() + " - " + trace.getLineNumber());
-        Assert.assertTrue(String.format("Unexpected file found %s", trace.getFileName()),
+        Assert.assertTrue(String.format("Unexpected file found %s line %s", trace.getFileName(), trace.getLineNumber()),
                           removeResult);
       }
     }
