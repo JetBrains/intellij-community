@@ -293,7 +293,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
 
     if (rightmostCrumb != null && screenWidth < width) {
       // add first dummy crumb
-      result.add(result.indexOf(rightmostCrumb) + 2, new DummyCrumb(width - screenWidth));
+      result.add(result.indexOf(rightmostCrumb) + 2, new DummyCrumb(width - screenWidth - forward.getWidth() - 8));
     }
 
     //assert screenWidth < width;
