@@ -256,7 +256,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
       @Override
       public VcsCommitMetadata fun(String record) {
         String[] items = ArrayUtil.toStringArray(StringUtil.split(record, "|", true, false));
-        long time = Long.valueOf(items[2]);
+        long time = Long.valueOf(items[2]) * 1000;
         return new VcsCommitMetadataImpl(TO_HASH.fun(items[0]), ContainerUtil.map(items[1].split(" "), TO_HASH), time,
                                          myProjectRoot, items[3], defaultUser, items[4], defaultUser, time);
       }
