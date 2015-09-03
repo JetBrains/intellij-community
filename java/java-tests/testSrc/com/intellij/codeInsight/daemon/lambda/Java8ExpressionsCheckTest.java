@@ -54,6 +54,10 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
   public void testCacheUnresolvedMethods2() throws Exception {
     doTestCachedUnresolved();
   }
+  
+  public void testCacheUnresolvedMethods3() throws Exception {
+    doTestCachedUnresolved();
+  }
 
   private void doTestCachedUnresolved() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
@@ -78,6 +82,10 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
       final PsiType type = parameter.getType();
       assertFalse("Failed inference for: " + parameter.getParent().getText(), type instanceof PsiLambdaParameterType);
     }
+  }
+
+  public void testAdditionalConstraintsBasedOnLambdaResolution() throws Exception {
+    doTestAllMethodCallExpressions();
   }
 
   private void doTestAllMethodCallExpressions() {

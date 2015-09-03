@@ -345,7 +345,10 @@ public class InferenceSession {
           if (calledMethod != null && PsiPolyExpressionUtil.isMethodCallPolyExpression(arg, calledMethod)) {
             collectAdditionalConstraints(additionalConstraints, (PsiCallExpression)arg);
           }
-        } else if (arg instanceof PsiLambdaExpression && !isProperType(retrieveNonPrimitiveEqualsBounds(myInferenceVariables).substitute(parameterType))) {
+        }
+        else if (arg instanceof PsiLambdaExpression && 
+                 isPertinentToApplicability(arg, parentMethod) && 
+                 !isProperType(retrieveNonPrimitiveEqualsBounds(myInferenceVariables).substitute(parameterType))) {
           collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)arg, parameterType);
         }
       }
@@ -354,21 +357,7 @@ public class InferenceSession {
 
   private static PsiMethod getCalledMethod(PsiCallExpression arg) {
     final PsiExpressionList argumentList = arg.getArgumentList();
-    if (argumentList == null || argumentList.getExpressions().length == 0) {
-      return null;
-    }
-
-    boolean found = false;
-    for (PsiExpression expression : argumentList.getExpressions()) {
-      expression = PsiUtil.skipParenthesizedExprDown(expression);
-      if (expression instanceof PsiConditionalExpression ||
-          expression instanceof PsiCallExpression ||
-          expression instanceof PsiFunctionalExpression) {
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
+    if (argumentList == null) {
       return null;
     }
 
@@ -1121,7 +1110,7 @@ public class InferenceSession {
       }
 
       for (ConstraintFormula formula : subset) {
-        if (!processOneConstraint(formula, siteSubstitutor, varsToResolve)) return false;
+        if (!processOneConstraint(formula, siteSubstitutor, varsToResolve, additionalConstraints)) return false;
       }
     }
     return true;
@@ -1137,7 +1126,10 @@ public class InferenceSession {
     }
   }
 
-  private boolean processOneConstraint(ConstraintFormula formula, PsiSubstitutor siteSubstitutor, Set<InferenceVariable> varsToResolve) {
+  private boolean processOneConstraint(ConstraintFormula formula,
+                                       PsiSubstitutor siteSubstitutor,
+                                       Set<InferenceVariable> varsToResolve,
+                                       Set<ConstraintFormula> additionalConstraints) {
     if (formula instanceof ExpressionCompatibilityConstraint) {
       final PsiExpression expression = ((ExpressionCompatibilityConstraint)formula).getExpression();
       final PsiCallExpression callExpression = PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class, false);
@@ -1169,6 +1161,16 @@ public class InferenceSession {
       if (!repeatInferencePhases(true)) {
         return false;
       }
+
+      if (formula instanceof ExpressionCompatibilityConstraint) {
+        PsiExpression expression = ((ExpressionCompatibilityConstraint)formula).getExpression();
+        if (expression instanceof PsiLambdaExpression) {
+          PsiType parameterType = ((ExpressionCompatibilityConstraint)formula).getT();
+          if (!isProperType(parameterType)) {
+            collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)expression, parameterType);
+          }
+        }
+      }
     }
     finally {
       LambdaUtil.ourFunctionTypes.set(null);
@@ -1178,7 +1180,7 @@ public class InferenceSession {
 
   private Set<ConstraintFormula> buildSubset(final Set<ConstraintFormula> additionalConstraints) {
 
-    final Set<ConstraintFormula> subset = new LinkedHashSet<ConstraintFormula>();
+    Set<ConstraintFormula> subset = new LinkedHashSet<ConstraintFormula>();
     final Set<InferenceVariable> outputVariables = new HashSet<InferenceVariable>();
     for (ConstraintFormula constraint : additionalConstraints) {
       if (constraint instanceof InputOutputConstraintFormula) {
@@ -1190,6 +1192,7 @@ public class InferenceSession {
       }
     }
 
+    Set<ConstraintFormula> noInputVariables = new LinkedHashSet<ConstraintFormula>();
     for (ConstraintFormula constraint : additionalConstraints) {
       if (constraint instanceof InputOutputConstraintFormula) {
         final Set<InferenceVariable> inputVariables = ((InputOutputConstraintFormula)constraint).getInputVariables(this);
@@ -1217,10 +1220,15 @@ public class InferenceSession {
           }
           if (!dependsOnOutput) {
             subset.add(constraint);
+
+            if (inputVariables.isEmpty()) {
+              noInputVariables.add(constraint);
+            }
           }
         }
         else {
           subset.add(constraint);
+          noInputVariables.add(constraint);
         }
       }
       else {
@@ -1229,6 +1237,10 @@ public class InferenceSession {
     }
     if (subset.isEmpty()) {
       subset.add(additionalConstraints.iterator().next()); //todo choose one constraint
+    }
+    
+    if (!noInputVariables.isEmpty()) {
+      subset = noInputVariables;
     }
 
     additionalConstraints.removeAll(subset);
