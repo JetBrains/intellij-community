@@ -87,6 +87,10 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
   public void testAdditionalConstraintsBasedOnLambdaResolution() throws Exception {
     doTestAllMethodCallExpressions();
   }
+  
+  public void testAdditionalConstraintsBasedOnLambdaResolutionForNestedLambdas() throws Exception {
+    doTestAllMethodCallExpressions();
+  }
 
   private void doTestAllMethodCallExpressions() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
