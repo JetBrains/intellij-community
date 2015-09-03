@@ -38,6 +38,7 @@ import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -97,9 +98,9 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
         models.add(createModule(project, platformFacade, moduleData));
       }
     }
-    catch (Error e) {
+    catch (Throwable t) {
       ExternalSystemApiUtil.disposeModels(models);
-      throw e;
+      ExceptionUtil.rethrowUnchecked(t);
     }
     return models;
   }
@@ -166,9 +167,9 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
         }
       }
     }
-    catch (Error e) {
+    catch (Throwable t) {
       ExternalSystemApiUtil.disposeModels(models);
-      throw e;
+      ExceptionUtil.rethrowUnchecked(t);
     }
     return models;
   }

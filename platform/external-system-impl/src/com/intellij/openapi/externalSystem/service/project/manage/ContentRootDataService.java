@@ -43,6 +43,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -87,7 +88,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
 
     final List<ModifiableRootModel> models = ContainerUtilRt.newArrayList();
     try {
-      final MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> byModule = ExternalSystemApiUtil.groupBy(toImport, ProjectKeys.MODULE);
+      MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> byModule = ExternalSystemApiUtil.groupBy(toImport, ProjectKeys.MODULE);
       for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
         final Module module = platformFacade.findIdeModule(entry.getKey().getData(), project);
         if (module == null) {
@@ -101,9 +102,9 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       }
       ExternalSystemApiUtil.commitModels(synchronous, project, models);
     }
-    catch (Error e) {
+    catch (Throwable t) {
       ExternalSystemApiUtil.disposeModels(models);
-      throw e;
+      ExceptionUtil.rethrowUnchecked(t);
     }
   }
 

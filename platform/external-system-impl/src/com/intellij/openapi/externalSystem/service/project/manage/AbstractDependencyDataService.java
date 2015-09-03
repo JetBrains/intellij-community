@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
@@ -151,9 +152,9 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
       }
       ExternalSystemApiUtil.commitModels(synchronous, project, models);
     }
-    catch (Error e) {
+    catch (Throwable t) {
       ExternalSystemApiUtil.disposeModels(models);
-      throw e;
+      ExceptionUtil.rethrowUnchecked(t);
     }
   }
 

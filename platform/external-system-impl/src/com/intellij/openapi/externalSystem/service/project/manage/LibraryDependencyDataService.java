@@ -34,6 +34,7 @@ import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
@@ -98,9 +99,9 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
       ExternalSystemApiUtil.commitChangedModels(synchronous, project, importer.getLibraryModels());
       ExternalSystemApiUtil.commitModels(synchronous, project, importer.getModels());
     }
-    catch (Error e) {
+    catch (Throwable t) {
       ExternalSystemApiUtil.disposeModels(importer.getModels());
-      throw e;
+      ExceptionUtil.rethrowUnchecked(t);
     }
   }
 
@@ -211,13 +212,12 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
       LOG.debug(String.format("Configuring library dependency '%s' of module '%s' to be%s exported and have scope %s", lib.getName(), module.getName(), dependencyData.isExported() ? " not" : "", dependencyData.getScope()));
     }
 
-    private List<Library.ModifiableModel> syncExistingAndRemoveObsolete(@NotNull Map<Set<String>, LibraryDependencyData> moduleLibrariesToImport,
-                                                                        @NotNull Map<String, LibraryDependencyData> projectLibrariesToImport,
-                                                                        @NotNull Set<LibraryDependencyData> toImport,
-                                                                        @NotNull ModifiableRootModel moduleRootModel,
-                                                                        boolean hasUnresolvedLibraries) {
+    private void syncExistingAndRemoveObsolete(@NotNull Map<Set<String>, LibraryDependencyData> moduleLibrariesToImport,
+                                               @NotNull Map<String, LibraryDependencyData> projectLibrariesToImport,
+                                               @NotNull Set<LibraryDependencyData> toImport,
+                                               @NotNull ModifiableRootModel moduleRootModel,
+                                               boolean hasUnresolvedLibraries) {
       final Set<String> moduleLibraryKey = ContainerUtilRt.newHashSet();
-      final List<Library.ModifiableModel> result = ContainerUtilRt.newArrayList();
       for (OrderEntry entry : moduleRootModel.getOrderEntries()) {
         if (entry instanceof ModuleLibraryOrderEntryImpl) {
           final ModuleLibraryOrderEntryImpl moduleLibraryOrderEntry = (ModuleLibraryOrderEntryImpl)entry;
@@ -253,7 +253,6 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
           }
         }
       }
-      return result;
     }
 
     private void syncExistingLibraryDependency(@NotNull LibraryDependencyData libraryDependencyData,

@@ -1,6 +1,5 @@
 package com.intellij.openapi.externalSystem.service.project;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
@@ -11,7 +10,6 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -76,16 +74,7 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @Override
   public ModifiableRootModel getModuleModifiableModel(Module module) {
     final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-    final ModifiableRootModel modifiableModel = moduleRootManager.getModifiableModel();
-    Disposer.register(module, new Disposable() {
-      @Override
-      public void dispose() {
-        if (!modifiableModel.isDisposed()) {
-          modifiableModel.dispose();
-        }
-      }
-    });
-    return modifiableModel;
+    return moduleRootManager.getModifiableModel();
   }
 
   @Nullable

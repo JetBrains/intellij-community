@@ -30,6 +30,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -78,9 +79,9 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
       }
       ExternalSystemApiUtil.commitModels(synchronous, project, models);
     }
-    catch (Error e) {
+    catch (Throwable t) {
       ExternalSystemApiUtil.disposeModels(models);
-      throw e;
+      ExceptionUtil.rethrowUnchecked(t);
     }
   }
 
