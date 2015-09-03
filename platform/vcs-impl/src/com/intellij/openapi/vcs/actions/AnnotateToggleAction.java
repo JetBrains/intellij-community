@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
   protected static final Key<Collection<ActiveAnnotationGutter>> KEY_IN_EDITOR = Key.create("Annotations");
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     final boolean enabled = isEnabled(VcsContextFactory.SERVICE.getInstance().createContextOn(e));
     e.getPresentation().setEnabled(enabled);
@@ -138,8 +138,10 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     VirtualFile selectedFile = context.getSelectedFile();
     if (selectedFile == null) return;
 
+    Project project = context.getProject();
+    if (project == null) return;
     if (!selected) {
-      for (FileEditor fileEditor : FileEditorManager.getInstance(context.getProject()).getEditors(selectedFile)) {
+      for (FileEditor fileEditor : FileEditorManager.getInstance(project).getEditors(selectedFile)) {
         if (fileEditor instanceof TextEditor) {
           ((TextEditor)fileEditor).getEditor().getGutter().closeAllAnnotations();
         }
@@ -147,7 +149,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     }
     else {
       if (editor == null) {
-        FileEditor[] fileEditors = FileEditorManager.getInstance(context.getProject()).openFile(selectedFile, false);
+        FileEditor[] fileEditors = FileEditorManager.getInstance(project).openFile(selectedFile, false);
         for (FileEditor fileEditor : fileEditors) {
           if (fileEditor instanceof TextEditor) {
             editor = ((TextEditor)fileEditor).getEditor();
@@ -155,7 +157,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
         }
       }
       LOG.assertTrue(editor != null);
-      doAnnotate(editor, context.getProject());
+      doAnnotate(editor, project);
     }
   }
 
@@ -207,7 +209,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
         if (!exceptionRef.isNull()) {
           LOG.warn(exceptionRef.get());
-          AbstractVcsHelper.getInstance(project).showErrors(Arrays.asList(exceptionRef.get()), VcsBundle.message("message.title.annotate"));
+          AbstractVcsHelper.getInstance(project).showErrors(Collections.singletonList(exceptionRef.get()), VcsBundle.message("message.title.annotate"));
         }
 
         if (!fileAnnotationRef.isNull()) {
