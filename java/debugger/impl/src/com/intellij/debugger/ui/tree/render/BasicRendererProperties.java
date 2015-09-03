@@ -40,7 +40,7 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
   private String myClassName;
 
   private static final @NonNls String SHOWTYPE_OPTION = "SHOW_TYPE";
-  private Boolean myShowType;
+  private boolean myShowType = true;
 
   public String getName() {
     return myName;
@@ -67,7 +67,7 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
   }
 
   public boolean isShowType() {
-    return myShowType == null || myShowType.booleanValue();
+    return myShowType;
   }
 
   public void setShowType(boolean showType) {
@@ -90,7 +90,8 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
         myClassName = option.getAttributeValue("value");
       }
       else if (SHOWTYPE_OPTION.equals(optionName)) {
-        myShowType = Boolean.parseBoolean(option.getAttributeValue("value"));
+        // default is true
+        myShowType = !"false".equalsIgnoreCase(option.getAttributeValue("value"));
       }
     }
   }
@@ -105,8 +106,9 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
     if (myClassName != null) {
       addOption(element, CLASSNAME_OPTION, myClassName);
     }
-    if (myShowType != null) {
-      addOption(element, SHOWTYPE_OPTION, myShowType.toString());
+    if (!myShowType) {
+      // default is true
+      addOption(element, SHOWTYPE_OPTION, "false");
     }
   }
 
