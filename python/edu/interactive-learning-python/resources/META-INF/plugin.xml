@@ -22,7 +22,7 @@
     <directoryProjectGenerator implementation="com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator"/>
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
-    <visitorFilter language="Python" implementationClass="com.jetbrains.edu.learning.highlighting.PyStudyVisitorFilter"/>
+    <inspectionExtension implementation="com.jetbrains.edu.learning.highlighting.PyStudyInspectionExtension"/>
     <pyReferenceResolveProvider implementation="com.jetbrains.edu.learning.PyStudyReferenceResolveProvider"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
