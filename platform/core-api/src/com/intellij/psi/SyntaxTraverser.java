@@ -106,22 +106,22 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   }
 
   private UserDataHolder getUserDataHolder() {
-    return api instanceof LighterASTApi ? ((LighterASTApi)api).builder : (UserDataHolder)parents(getRoot()).last();
+    return api instanceof LighterASTApi ? ((LighterASTApi)api).builder : (UserDataHolder)api.parents(getRoot()).last();
   }
 
   @NotNull
-  public SyntaxTraverser<T> expandTypes(@NotNull Condition<? super IElementType> condition) {
-    return super.expand(compose(api.TO_TYPE(), condition));
+  public SyntaxTraverser<T> expandTypes(@NotNull Condition<? super IElementType> c) {
+    return super.expand(compose(api.TO_TYPE(), c));
   }
 
   @NotNull
-  public SyntaxTraverser<T> filterTypes(@NotNull Condition<? super IElementType> condition) {
-    return super.filter(compose(api.TO_TYPE(), condition));
+  public SyntaxTraverser<T> filterTypes(@NotNull Condition<? super IElementType> c) {
+    return super.filter(compose(api.TO_TYPE(), c));
   }
 
   @NotNull
-  public SyntaxTraverser<T> forceExpandAndSkipTypes(@NotNull Condition<? super IElementType> condition) {
-    return super.forceExpandAndSkip(compose(api.TO_TYPE(), condition));
+  public SyntaxTraverser<T> forceDisregardTypes(@NotNull Condition<? super IElementType> c) {
+    return super.forceDisregard(compose(api.TO_TYPE(), c));
   }
 
   @Nullable
@@ -133,16 +133,6 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
       last = children.last();
     }
     return null;
-  }
-
-  @NotNull
-  public JBIterable<T> parents(@Nullable final T element) {
-    return JBIterable.generate(element, new Function<T, T>() {
-      @Override
-      public T fun(T t) {
-        return api.parent(t);
-      }
-    });
   }
 
   public abstract static class Api<T> implements Function<T, Iterable<? extends T>> {
@@ -164,6 +154,16 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
     @Override
     public JBIterable<? extends T> fun(T t) {
       return children(t);
+    }
+
+    @NotNull
+    public JBIterable<T> parents(@Nullable final T element) {
+      return JBIterable.generate(element, new Function<T, T>() {
+        @Override
+        public T fun(T t) {
+          return parent(t);
+        }
+      });
     }
 
     @NotNull
