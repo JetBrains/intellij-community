@@ -23,18 +23,21 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CollectConsumer;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -180,6 +183,68 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     assertEquals(hashes, actualHashes);
   }
 
+  public void test_short_details() throws Exception {
+    prepareLongHistory(VcsFileUtil.FILE_PATH_LIMIT * 2 / 40);
+    List<VcsCommitMetadata> log = log();
+
+    final List<String> hashes = ContainerUtil.newArrayList();
+    myLogProvider.readAllHashes(myProjectRoot, new Consumer<TimedVcsCommit>() {
+      @Override
+      public void consume(TimedVcsCommit timedVcsCommit) {
+        hashes.add(timedVcsCommit.getId().asString());
+      }
+    });
+
+    List<? extends VcsShortCommitDetails> shortDetails = myLogProvider.readShortDetails(myProjectRoot, hashes);
+
+    Function<VcsShortCommitDetails, String> shortDetailsToString = getShortDetailsToString();
+    assertOrderedEquals(ContainerUtil.map(shortDetails, shortDetailsToString), ContainerUtil.map(log, shortDetailsToString));
+  }
+
+  public void test_full_details() throws Exception {
+    prepareLongHistory(VcsFileUtil.FILE_PATH_LIMIT * 2 / 40);
+    List<VcsCommitMetadata> log = log();
+
+    final List<String> hashes = ContainerUtil.newArrayList();
+    myLogProvider.readAllHashes(myProjectRoot, new Consumer<TimedVcsCommit>() {
+      @Override
+      public void consume(TimedVcsCommit timedVcsCommit) {
+        hashes.add(timedVcsCommit.getId().asString());
+      }
+    });
+
+    List<? extends VcsFullCommitDetails> fullDetails = myLogProvider.readFullDetails(myProjectRoot, hashes);
+
+    // we do not check for changes here
+    final Function<VcsShortCommitDetails, String> shortDetailsToString = getShortDetailsToString();
+    Function<VcsCommitMetadata, String> metadataToString = new Function<VcsCommitMetadata, String>() {
+      @Override
+      public String fun(VcsCommitMetadata details) {
+        return shortDetailsToString.fun(details) + "\n" + details.getFullMessage();
+      }
+    };
+    assertOrderedEquals(ContainerUtil.map(fullDetails, metadataToString), ContainerUtil.map(log, metadataToString));
+  }
+
+  @NotNull
+  private Function<VcsShortCommitDetails, String> getShortDetailsToString() {
+    return new Function<VcsShortCommitDetails, String>() {
+      @Override
+      public String fun(VcsShortCommitDetails details) {
+        String result = "";
+
+        result += details.getId().toShortString() + "\n";
+        result += details.getAuthorTime() + "\n";
+        result += details.getAuthor() + "\n";
+        result += details.getCommitTime() + "\n";
+        result += details.getCommitter() + "\n";
+        result += details.getSubject();
+
+        return result;
+      }
+    };
+  }
+
   /**
    * Generates some history with two branches: master and feature, and made by two users.
    * Returns hashes of this history filtered by the given parameters:
@@ -226,6 +291,18 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     tac("a.txt");
     git("tag ATAG");
     tac("b.txt");
+  }
+
+  private static void prepareLongHistory(int size) throws IOException {
+    for (int i = 0; i < size; i++) {
+      String file = "a" + (i % 10) + ".txt";
+      if (i < 10) {
+        tac(file);
+      }
+      else {
+        modify(file);
+      }
+    }
   }
 
   private static void createTaggedBranch() {

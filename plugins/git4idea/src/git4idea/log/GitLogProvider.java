@@ -33,6 +33,7 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcs.log.util.StopWatch;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
@@ -334,17 +335,32 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
-    return GitHistoryUtils.readMiniDetails(myProject, root, hashes);
+    List<VcsShortCommitDetails> result = ContainerUtil.newArrayList();
+    List<List<String>> hashesChunks = VcsFileUtil.chunkRelativePaths(hashes);
+
+    for (List<String> hashesChunk : hashesChunks) {
+      result.addAll(GitHistoryUtils.readMiniDetails(myProject, root, hashesChunk));
+    }
+
+    return result;
   }
 
   @NotNull
   @Override
   public List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
-    String noWalk = GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(myVcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
-    List<String> params = new ArrayList<String>();
-    params.add(noWalk);
-    params.addAll(hashes);
-    return GitHistoryUtils.history(myProject, root, ArrayUtil.toStringArray(params));
+    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+    List<List<String>> hashesChunks = VcsFileUtil.chunkRelativePaths(hashes);
+
+    for (List<String> hashesChunk : hashesChunks) {
+      String noWalk = GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(myVcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
+      List<String> params = new ArrayList<String>();
+      params.add(noWalk);
+      params.addAll(hashesChunk);
+
+      result.addAll(GitHistoryUtils.history(myProject, root, ArrayUtil.toStringArray(params)));
+    }
+
+    return result;
   }
 
   @NotNull
