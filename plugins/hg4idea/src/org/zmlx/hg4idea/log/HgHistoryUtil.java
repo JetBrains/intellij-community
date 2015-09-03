@@ -35,6 +35,7 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,8 +99,8 @@ public class HgHistoryUtil {
   public static List<? extends VcsFullCommitDetails> history(@NotNull final Project project,
                                                              @NotNull final VirtualFile root,
                                                              int limit,
-                                                             @NotNull List<String> parameters) throws VcsException {
-    return history(project, root, limit, parameters, false);
+                                                             @NotNull List<String> hashParameters) throws VcsException {
+    return history(project, root, limit, hashParameters, false);
   }
 
   /**
@@ -113,14 +114,22 @@ public class HgHistoryUtil {
   public static List<? extends VcsFullCommitDetails> history(@NotNull final Project project,
                                                              @NotNull final VirtualFile root,
                                                              int limit,
-                                                             @NotNull List<String> parameters,
+                                                             @NotNull List<String> hashParameters,
                                                              boolean silent) throws VcsException {
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     final HgVersion version = hgvcs.getVersion();
     String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
-    HgCommandResult result = getLogResult(project, root, version, limit, parameters, HgChangesetUtil.makeTemplate(templates));
-    return createFullCommitsFromResult(project, root, result, version, silent);
+
+    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+    List<List<String>> hashesChunks = VcsFileUtil.chunkRelativePaths(hashParameters);
+
+    for (List<String> hashesChunk : hashesChunks) {
+      HgCommandResult logResult = getLogResult(project, root, version, limit, hashesChunk, HgChangesetUtil.makeTemplate(templates));
+      result.addAll(createFullCommitsFromResult(project, root, logResult, version, silent));
+    }
+
+    return result;
   }
 
   public static List<? extends VcsFullCommitDetails> createFullCommitsFromResult(@NotNull Project project,
@@ -243,33 +252,44 @@ public class HgHistoryUtil {
     if (factory == null) {
       return Collections.emptyList();
     }
+
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     HgVersion version = hgvcs.getVersion();
     List<String> templateList = HgBaseLogParser.constructDefaultTemplate(version);
     templateList.add("{desc}");
     String[] templates = ArrayUtil.toStringArray(templateList);
-    HgCommandResult result = getLogResult(project, root, version, -1, prepareHashes(hashes), HgChangesetUtil.makeTemplate(templates));
-    return getCommitRecords(project, result, new HgBaseLogParser<VcsShortCommitDetails>() {
-      @Override
-      protected VcsShortCommitDetails convertDetails(@NotNull String rev,
-                                                     @NotNull String changeset,
-                                                     @NotNull SmartList<HgRevisionNumber> parents,
-                                                     @NotNull Date revisionDate,
-                                                     @NotNull String author,
-                                                     @NotNull String email,
-                                                     @NotNull List<String> attributes) {
-        String message = parseAdditionalStringAttribute(attributes, MESSAGE_INDEX);
-        String subject = extractSubject(message);
-        List<Hash> parentsHash = new SmartList<Hash>();
-        for (HgRevisionNumber parent : parents) {
-          parentsHash.add(factory.createHash(parent.getChangeset()));
+
+    List<VcsShortCommitDetails> result = ContainerUtil.newArrayList();
+    List<List<String>> hashesChunks = VcsFileUtil.chunkRelativePaths(hashes);
+
+    for (List<String> hashesChunk : hashesChunks) {
+      HgCommandResult logResult =
+        getLogResult(project, root, version, -1, prepareHashes(hashesChunk), HgChangesetUtil.makeTemplate(templates));
+
+      result.addAll(getCommitRecords(project, logResult, new HgBaseLogParser<VcsShortCommitDetails>() {
+        @Override
+        protected VcsShortCommitDetails convertDetails(@NotNull String rev,
+                                                       @NotNull String changeset,
+                                                       @NotNull SmartList<HgRevisionNumber> parents,
+                                                       @NotNull Date revisionDate,
+                                                       @NotNull String author,
+                                                       @NotNull String email,
+                                                       @NotNull List<String> attributes) {
+          String message = parseAdditionalStringAttribute(attributes, MESSAGE_INDEX);
+          String subject = extractSubject(message);
+          List<Hash> parentsHash = new SmartList<Hash>();
+          for (HgRevisionNumber parent : parents) {
+            parentsHash.add(factory.createHash(parent.getChangeset()));
+          }
+          return factory
+            .createShortDetails(factory.createHash(changeset), parentsHash, revisionDate.getTime(), root, subject, author, email, author,
+                                email, revisionDate.getTime());
         }
-        return factory.createShortDetails(factory.createHash(changeset), parentsHash,
-                                          revisionDate.getTime(), root,
-                                          subject, author, email, author, email, revisionDate.getTime());
-      }
-    });
+      }));
+    }
+
+    return result;
   }
 
   @NotNull
