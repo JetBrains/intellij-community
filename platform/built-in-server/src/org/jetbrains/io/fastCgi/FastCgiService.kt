@@ -201,8 +201,8 @@ public abstract class FastCgiService(project: Project) : SingleConnectionNetServ
     try {
       parseHeaders(httpResponse, buffer)
       Responses.addServer(httpResponse)
-      if (!HttpHeaderUtil.isContentLengthSet(httpResponse)) {
-        HttpHeaderUtil.setContentLength(httpResponse, buffer.readableBytes().toLong())
+      if (!HttpUtil.isContentLengthSet(httpResponse)) {
+        HttpUtil.setContentLength(httpResponse, buffer.readableBytes().toLong())
       }
     }
     catch (e: Throwable) {

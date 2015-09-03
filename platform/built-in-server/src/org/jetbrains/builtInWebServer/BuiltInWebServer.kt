@@ -127,7 +127,7 @@ public class BuiltInWebServer : HttpRequestHandler() {
   override fun isSupported(request: FullHttpRequest) = super.isSupported(request) || request.method() === HttpMethod.POST
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
-    var host = request.headers().get(HttpHeaderNames.HOST)
+    var host = request.headers().getAsString(HttpHeaderNames.HOST)
     if (host.isNullOrEmpty()) {
       return false
     }
@@ -235,7 +235,7 @@ private class StaticFileHandler : WebServerFileHandler() {
 
       val keepAlive = addKeepAliveIfNeed(response, request)
       if (request.method() !== HttpMethod.HEAD) {
-        HttpHeaderUtil.setContentLength(response, file.getLength())
+        HttpUtil.setContentLength(response, file.getLength())
       }
 
       channel.write(response)
@@ -273,7 +273,7 @@ private class StaticFileHandler : WebServerFileHandler() {
 
       keepAlive = addKeepAliveIfNeed(response, request)
       if (request.method() !== HttpMethod.HEAD) {
-        HttpHeaderUtil.setContentLength(response, buffer.readableBytes().toLong())
+        HttpUtil.setContentLength(response, buffer.readableBytes().toLong())
       }
 
       channel.write(response)

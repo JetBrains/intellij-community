@@ -85,7 +85,7 @@ public class FileResponses {
 
     try {
       long fileLength = raf.length();
-      HttpHeaderUtil.setContentLength(response, fileLength);
+      HttpUtil.setContentLength(response, fileLength);
 
       channel.write(response);
       if (request.method() != HttpMethod.HEAD) {
