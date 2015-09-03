@@ -6,9 +6,14 @@
     <code>RS</code>
 
     <channel id="RS" name="RoboVM Studio" status="release"
-             url="http://robovm.com/?p=2414"
+             url="http://robovm.com/?p=2516"
              feedback="http://robovm.com"
              majorVersion="1">
+      <build number="RS-1.7.0" version="1.7.0" releaseDate="20150903">
+        <message>RoboVM Studio 1.7 is available.</message>
+        <button name="Download" url="http://bit.ly/robovm-studio-1-7-0-update" download="true"/>
+        <button name="What's New" url="http://robovm.com/?p=2516"/>
+      </build>
       <build number="RS-1.6.0" version="1.6.0" releaseDate="20150806">
         <message>RoboVM Studio 1.6 is available.</message>
         <button name="Download" url="http://bit.ly/robovm-studio-1-6-0-update" download="true"/>

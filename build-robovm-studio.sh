@@ -1,7 +1,7 @@
 #/bin/sh
 ./getPlugins.sh
 set -e
-: ${IDEA_HOME?"Need to set IDEA_HOME to point to a valid IntelliJ IDEA installation"}
+: ${IDEA_HOME?"Need to set IDEA_HOME to point to a valid IntelliJ IDEA installation."}
 
 ## Build the RoboVM IDEA plugin
 cd robovm/robovm-idea
