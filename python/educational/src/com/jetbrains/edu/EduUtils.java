@@ -23,9 +23,11 @@ import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.oldCourseFormat.OldCourse;
 import com.jetbrains.edu.oldCourseFormat.TaskWindow;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -330,5 +332,16 @@ public class EduUtils {
     course.setLessons(lessons);
     course.initCourse(false);
     return course;
+  }
+
+  public static boolean isImage(String fileName) {
+    final String[] readerFormatNames = ImageIO.getReaderFormatNames();
+    for (@NonNls String format : readerFormatNames) {
+      final String ext = format.toLowerCase();
+      if (fileName.endsWith(ext)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
