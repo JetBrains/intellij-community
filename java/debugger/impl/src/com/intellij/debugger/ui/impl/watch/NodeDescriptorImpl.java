@@ -27,13 +27,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
-import com.sun.jdi.InconsistentDebugInfoException;
 import com.sun.jdi.InvalidStackFrameException;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public abstract class NodeDescriptorImpl implements NodeDescriptor {
@@ -98,15 +95,11 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   protected abstract String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) throws EvaluateException;
 
   private static EvaluateException processException(Exception e) {
-    if (e instanceof InconsistentDebugInfoException) {
-      return new EvaluateException(DebuggerBundle.message("error.inconsistent.debug.info"), null);
-    }
-
-    else if (e instanceof InvalidStackFrameException) {
+    if (e instanceof InvalidStackFrameException) {
       return new EvaluateException(DebuggerBundle.message("error.invalid.stackframe"), null);
     }
     else {
-      return EvaluateExceptionUtil.DEBUG_INFO_UNAVAILABLE;
+      return EvaluateExceptionUtil.createEvaluateException(e);
     }
   }
 
