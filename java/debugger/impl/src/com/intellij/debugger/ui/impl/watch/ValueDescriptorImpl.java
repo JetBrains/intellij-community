@@ -33,6 +33,7 @@ import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -138,7 +139,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public boolean isShowIdLabel() {
-    return myShowIdLabel;
+    return myShowIdLabel && Registry.is("debugger.showTypes");
   }
 
   public void setShowIdLabel(boolean showIdLabel) {

@@ -181,6 +181,9 @@
       <action id="Debugger.AdjustArrayRange" class="com.intellij.debugger.actions.AdjustArrayRangeAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
+      <action id="Debugger.ShowTypes" class="com.intellij.debugger.actions.ShowTypesAction" text="Show types">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+      </action>
       <!--<action id="Debugger.SetValue" class="com.intellij.debugger.actions.SetValueAction"/>-->
       <!--<action id="Debugger.ShowAsHex" class="com.intellij.debugger.actions.ShowAsHexAction" text="Show as Hex"/>-->
       <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction"/>
