@@ -244,10 +244,9 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     Crumb rightmostCrumb = null;
 
     // fill up crumb list first going from end to start
+    final NavigationCrumb forward = new NavigationCrumb(this, fm, true, DEFAULT_PAINTER);
+    final NavigationCrumb backward = new NavigationCrumb(this, fm, false, DEFAULT_PAINTER);
     for (int i = elements.size() - 1; i >= 0; i--) {
-      final NavigationCrumb forward = new NavigationCrumb(this, fm, true, DEFAULT_PAINTER);
-      final NavigationCrumb backward = new NavigationCrumb(this, fm, false, DEFAULT_PAINTER);
-
       final BreadcrumbsItem element = elements.get(i);
       final String s = element.getDisplayText();
       final Dimension d = DEFAULT_PAINTER.getSize(s, fm, width - forward.getWidth() - backward.getWidth());
@@ -293,28 +292,8 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
 
     if (rightmostCrumb != null && screenWidth < width) {
-      // fill up empty space with elements from the full screen
-      int index = result.indexOf(rightmostCrumb);
-      for (int i = index + 1; i < result.size(); i++) {
-        final Crumb crumb = result.get(i);
-        if (crumb instanceof NavigationCrumb || crumb instanceof DummyCrumb) {
-          continue;
-        }
-
-        if (screenWidth + crumb.getWidth() < width) {
-          result.add(++index, new Crumb(this, crumb.getString(), crumb.getWidth(), crumb.getItem()));
-          screenWidth += crumb.getWidth();
-          i++;
-        }
-        else {
-          break;
-        }
-      }
-
       // add first dummy crumb
-      if (screenWidth < width) {
-        result.add(index + 1, new DummyCrumb(width - screenWidth));
-      }
+      result.add(result.indexOf(rightmostCrumb) + 2, new DummyCrumb(width - screenWidth));
     }
 
     //assert screenWidth < width;
