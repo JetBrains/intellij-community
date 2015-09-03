@@ -30,7 +30,7 @@ public class PyStudyShowTutorial extends AbstractProjectComponent {
           @Override
           public void run() {
             if (PropertiesComponent.getInstance().getBoolean(ourShowPopup, true)) {
-              final String content = "<html>If you'd like to learn more about PyCharm Educational Edition, " +
+              final String content = "<html>If you'd like to learn more about PyCharm Edu, " +
                                      "click <a href=\"https://www.jetbrains.com/pycharm-educational/quickstart/\">here</a> to watch a tutorial</html>";
               final Notification notification = new Notification("Watch Tutorials!", "", content, NotificationType.INFORMATION,
                                                                  new NotificationListener.UrlOpeningListener(true));
