@@ -34,7 +34,7 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
   private String myName;
 
   private static final @NonNls String ENABLED_OPTION = "ENABLED";
-  private Boolean myEnabled;
+  private boolean myEnabled;
 
   private static final @NonNls String CLASSNAME_OPTION = "QUALIFIED_NAME";
   private String myClassName;
@@ -51,7 +51,7 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
   }
 
   public boolean isEnabled() {
-    return myEnabled != null && myEnabled.booleanValue();
+    return myEnabled;
   }
 
   public void setEnabled(final boolean enabled) {
@@ -76,7 +76,6 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
 
   @SuppressWarnings({"HardCodedStringLiteral"}) public void readExternal(Element element) throws InvalidDataException {
     myName = null;
-    myEnabled = null;
     myClassName = null;
     for (Element option : element.getChildren("option")) {
       final String optionName = option.getAttributeValue("name");
@@ -84,6 +83,7 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
         myName = option.getAttributeValue("value");
       }
       else if (ENABLED_OPTION.equals(optionName)) {
+        // default is false
         myEnabled = Boolean.parseBoolean(option.getAttributeValue("value"));
       }
       else if (CLASSNAME_OPTION.equals(optionName)) {
@@ -100,15 +100,18 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
     if (myName != null) {
       addOption(element, NAME_OPTION, myName);
     }
-    if (myEnabled != null) {
-      addOption(element, ENABLED_OPTION, myEnabled.toString());
+    if (myEnabled) {
+      // default is false
+      //noinspection ConstantConditions
+      addOption(element, ENABLED_OPTION, Boolean.toString(myEnabled));
     }
     if (myClassName != null) {
       addOption(element, CLASSNAME_OPTION, myClassName);
     }
     if (!myShowType) {
       // default is true
-      addOption(element, SHOWTYPE_OPTION, "false");
+      //noinspection ConstantConditions
+      addOption(element, SHOWTYPE_OPTION, Boolean.toString(myShowType));
     }
   }
 
