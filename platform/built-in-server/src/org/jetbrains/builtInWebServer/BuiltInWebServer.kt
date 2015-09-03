@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -29,10 +28,8 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.UriUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.net.NetUtils
-import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufUtf8Writer
 import io.netty.channel.Channel
-import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
@@ -42,13 +39,11 @@ import org.jetbrains.builtInWebServer.ssi.SsiProcessor
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.FileResponses
 import org.jetbrains.io.Responses
-
+import org.jetbrains.io.Responses.addKeepAliveIfNeed
 import java.io.File
 import java.io.IOException
 import java.net.InetAddress
 import java.net.UnknownHostException
-
-import org.jetbrains.io.Responses.addKeepAliveIfNeed
 
 public class BuiltInWebServer : HttpRequestHandler() {
   companion object {

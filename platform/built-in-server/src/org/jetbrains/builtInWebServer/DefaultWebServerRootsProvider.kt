@@ -15,7 +15,6 @@
  */
 package org.jetbrains.builtInWebServer
 
-import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
@@ -23,10 +22,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JavadocOrderRootType
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.DirectoryIndex
-import com.intellij.openapi.roots.impl.DirectoryInfo
 import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
