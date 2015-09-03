@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.Content;
@@ -86,7 +87,7 @@ public class PyEduDebugRunner extends PyDebugRunner {
     }
     RunProfile runProfile = environment.getRunProfile();
     if (runProfile instanceof PythonRunConfiguration) {
-      return ((PythonRunConfiguration)runProfile).getScriptName();
+      return FileUtil.toSystemIndependentName(((PythonRunConfiguration)runProfile).getScriptName());
     }
     return null;
   }

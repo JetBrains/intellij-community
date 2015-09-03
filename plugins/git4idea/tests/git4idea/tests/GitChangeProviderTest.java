@@ -234,7 +234,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
     dirty(file);
   }
 
-  protected void move(VirtualFile file, VirtualFile newParent) {
+  protected void moveFile(VirtualFile file, VirtualFile newParent) {
     dirty(file);
     moveFileInCommand(myProject, file, newParent);
     dirty(file);
@@ -247,7 +247,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
     return newFile;
   }
 
-  protected void delete(VirtualFile file) {
+  protected void deleteFile(VirtualFile file) {
     dirty(file);
     deleteFileInCommand(myProject, file);
   }

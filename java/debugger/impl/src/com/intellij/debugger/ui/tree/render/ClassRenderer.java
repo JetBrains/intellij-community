@@ -158,16 +158,19 @@ public class ClassRenderer extends NodeRendererImpl{
       final ObjectReference objRef = (ObjectReference)value;
       final ReferenceType refType = objRef.referenceType();
       // default ObjectReference processing
-      final List<Field> fields = refType.allFields();
-      if (fields.size() > 0) {
-        for (final Field field : fields) {
-          if (!shouldDisplay(evaluationContext, objRef, field)) {
-            continue;
+      List<Field> fields = refType.allFields();
+      if (!fields.isEmpty()) {
+        for (Field field : fields) {
+          if (shouldDisplay(evaluationContext, objRef, field)) {
+            children.add(nodeManager.createNode(
+              createFieldDescriptor(parentDescriptor, nodeDescriptorFactory, objRef, field, evaluationContext), evaluationContext));
           }
-          children.add(nodeManager.createNode(createFieldDescriptor(parentDescriptor, nodeDescriptorFactory, objRef, field, evaluationContext), evaluationContext));
         }
 
-        if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
+        if (children.isEmpty()) {
+          children.add(nodeManager.createMessageNode(DebuggerBundle.message("message.node.class.no.fields.to.display")));
+        }
+        else if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
           Collections.sort(children, NodeManagerImpl.getNodeComparator());
         }
       }
@@ -282,7 +285,7 @@ public class ClassRenderer extends NodeRendererImpl{
   }
 
   @Nullable
-  public static String getEnumConstantName(final ObjectReference objRef, ClassType classType) {
+  public static String getEnumConstantName(@NotNull ObjectReference objRef, ClassType classType) {
     do {
       if (!classType.isPrepared()) {
         return null;

@@ -198,6 +198,10 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     myRendererDataConfigurable.reset();
   }
 
+  public void addRenderer(NodeRenderer renderer) {
+    myRendererChooser.addElement(renderer, renderer.isEnabled());
+  }
+
   private class AddAction implements AnActionButtonRunnable {
     //public AddAction() {
     //  super(DebuggerBundle.message("button.add"), DebuggerBundle.message("user.renderers.configurable.button.description.add"), ADD_ICON);
@@ -207,7 +211,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     public void run(AnActionButton button) {
       final NodeRenderer renderer = (NodeRenderer)NodeRendererSettings.getInstance().createRenderer(CompoundNodeRenderer.UNIQUE_ID);
       renderer.setEnabled(true);
-      myRendererChooser.addElement(renderer, renderer.isEnabled());
+      addRenderer(renderer);
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {

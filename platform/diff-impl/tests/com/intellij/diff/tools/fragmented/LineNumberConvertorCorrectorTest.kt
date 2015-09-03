@@ -15,9 +15,9 @@
  */
 package com.intellij.diff.tools.fragmented
 
+import com.intellij.diff.assertEquals
 import com.intellij.diff.util.Side
 import com.intellij.testFramework.UsefulTestCase
-import kotlin.test.assertEquals
 
 public class LineNumberConvertorCorrectorTest : UsefulTestCase() {
   public fun testUnmodified() {

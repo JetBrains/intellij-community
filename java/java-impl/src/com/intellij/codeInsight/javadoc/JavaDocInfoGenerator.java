@@ -31,6 +31,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -282,57 +283,101 @@ public class JavaDocInfoGenerator {
   }
 
   protected String convertReference(@NonNls String href) {
-    final String originalReference = href;
-    
-    String fragment = null;
-    int hashPosition = href.indexOf('#');
-    if (hashPosition >= 0) {
-      fragment = href.substring(hashPosition + 1);
-      href = href.substring(0, hashPosition);
-    }
-    if (href.isEmpty()) {
-      PsiElement containingClass = myElement instanceof PsiMember ? ((PsiMember)myElement).getContainingClass() : null;
-      PsiElement rootElement = containingClass == null ? myElement : containingClass;
-      return createLinkWithRef(rootElement, fragment);
-    }
-    if (!href.toLowerCase().endsWith(".htm") && !href.toLowerCase().endsWith(".html")) {
-      return originalReference;
-    }
-    href = href.substring(0, href.lastIndexOf('.'));
+    String reference = createReferenceForRelativeLink(href, myElement);
+    return reference == null ? href : reference;
+  }
 
+  /**
+   * Converts a relative link into {@link DocumentationManagerProtocol#PSI_ELEMENT_PROTOCOL PSI_ELEMENT_PROTOCOL}-type link if possible
+   */
+  @Nullable
+  static String createReferenceForRelativeLink(@NotNull @NonNls String relativeLink, @NotNull PsiElement contextElement) {
+    String fragment = null;
+    int hashPosition = relativeLink.indexOf('#');
+    if (hashPosition >= 0) {
+      fragment = relativeLink.substring(hashPosition + 1);
+      relativeLink = relativeLink.substring(0, hashPosition);
+    }
+    PsiElement targetElement;
+    if (relativeLink.isEmpty()) {
+      targetElement = (contextElement instanceof PsiField || contextElement instanceof PsiMethod) ? 
+                      ((PsiMember)contextElement).getContainingClass() : contextElement;
+    } 
+    else {
+      if (!relativeLink.toLowerCase().endsWith(".htm") && !relativeLink.toLowerCase().endsWith(".html")) {
+        return null;
+      }
+      relativeLink = relativeLink.substring(0, relativeLink.lastIndexOf('.'));
+      
+      String packageName = getPackageName(contextElement);
+      if (packageName == null) return null;
+
+      Couple<String> pathWithPackage = removeParentReferences(Couple.of(relativeLink, packageName));
+      if (pathWithPackage == null) return null;
+      relativeLink = pathWithPackage.first;
+      packageName = pathWithPackage.second;
+
+      relativeLink = relativeLink.replace('/', '.');
+
+      String qualifiedTargetClassName = packageName.isEmpty() ? relativeLink : packageName + "." + relativeLink;
+      targetElement = JavaPsiFacade.getInstance(contextElement.getProject()).findClass(qualifiedTargetClassName, 
+                                                                                       contextElement.getResolveScope());
+    }
+    if (targetElement == null) return null;
+    
+    String rawFragment = null;
+    if (fragment != null && targetElement instanceof PsiClass) {
+      if (fragment.contains("-") || fragment.contains("(")) {
+        rawFragment = fragment;
+        fragment = null; // reference to a method
+      }
+      else  {
+        for (PsiField field : ((PsiClass)targetElement).getFields()) {
+          if (field.getName().equals(fragment)) {
+            rawFragment = fragment;
+            fragment = null; // reference to a field
+            break;
+          }
+        }
+      }
+    }
+    return DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + JavaDocUtil.getReferenceText(targetElement.getProject(), targetElement) +
+           (rawFragment == null ? "" : ('#' + rawFragment)) +
+           (fragment == null ? "" : DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR + fragment);
+  }
+
+  /**
+   * Takes a pair of strings representing a relative path and a package name, and returns corresponding pair, where path is stripped of
+   * leading ../ elements, and package name adjusted correspondingly. Returns <code>null</code> if there are more ../ elements than package
+   * components.
+   */
+  @Nullable
+  static Couple<String> removeParentReferences(Couple<String> pathWithContextPackage) {
+    String path = pathWithContextPackage.first;
+    String packageName = pathWithContextPackage.second;
+    while (path.startsWith("../")) {
+      if (packageName.isEmpty()) return null;
+      int dotPos = packageName.lastIndexOf('.');
+      packageName = dotPos < 0 ? "" : packageName.substring(0, dotPos);
+      path = path.substring(3);
+    }
+    return Couple.of(path, packageName);
+  }
+
+  static String getPackageName(PsiElement element) {
     String packageName = null;
-    if (myElement instanceof PsiPackage) {
-      packageName = ((PsiPackage)myElement).getQualifiedName();
+    if (element instanceof PsiPackage) {
+      packageName = ((PsiPackage)element).getQualifiedName();
     }
     else {
-      PsiFile file = myElement.getContainingFile();
+      PsiFile file = element.getContainingFile();
       if (file instanceof PsiClassOwner) {
         packageName = ((PsiClassOwner)file).getPackageName();
       }
     }
-    if (packageName == null) return originalReference;
-    
-    while (href.startsWith("../")) {
-      if (packageName.isEmpty()) return originalReference;
-      int dotPos = packageName.lastIndexOf('.');
-      packageName = dotPos < 0 ? "" : packageName.substring(0, dotPos);
-      href = href.substring(3);
-    }
-    
-    href = href.replace('/', '.');
-    
-    String qualifiedName = packageName.isEmpty() ? href : packageName + "." + href;
-    PsiClass target = JavaPsiFacade.getInstance(myProject).findClass(qualifiedName, myElement.getResolveScope());
-    if (target == null) return originalReference;
-    
-    return createLinkWithRef(target, fragment);
+    return packageName;
   }
 
-  private String createLinkWithRef(PsiElement psiElement, String ref) {
-    return DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + JavaDocUtil.getReferenceText(myProject, psiElement) +
-           (ref == null ? "" : DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR + ref);
-  }
-  
   public boolean generateDocInfoCore (final StringBuilder buffer, final boolean generatePrologueAndEpilogue) {
     if (myElement instanceof PsiClass) {
       generateClassJavaDoc(buffer, (PsiClass)myElement, generatePrologueAndEpilogue);

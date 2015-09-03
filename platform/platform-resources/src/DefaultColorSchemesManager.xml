@@ -559,10 +559,10 @@
 
       <option name="ANNOTATION_NAME_ATTRIBUTES">
         <value>
-          <option name="FOREGROUND" deuteranopia="55ff" protanopia="55ff"/>
+          <option name="FOREGROUND" value="808000" deuteranopia="55ff" protanopia="55ff"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="EFFECT_TYPE" deuteranopia="1" protanopia="1"/>
+          <option name="EFFECT_TYPE" value="1" deuteranopia="1" protanopia="1"/>
           <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
@@ -659,16 +659,6 @@
           <option name="FONT_TYPE" value="0"/>
           <option name="EFFECT_COLOR"/>
           <option name="EFFECT_TYPE" value="0"/>
-        </value>
-      </option>
-      <option name="ANNOTATION_NAME_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND" value="808000" />
-          <option name="BACKGROUND" />
-          <option name="FONT_TYPE" />
-          <option name="EFFECT_COLOR" />
-          <option name="EFFECT_TYPE" value="1" />
-          <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>
 

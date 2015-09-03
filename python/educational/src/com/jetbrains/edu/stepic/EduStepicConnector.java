@@ -72,8 +72,7 @@ public class EduStepicConnector {
   }
 
   public static boolean login(@NotNull final String user, @NotNull final String password) {
-    if (ourClient == null || ourCookieStore == null)
-      initializeClient();
+    initializeClient();
     return postCredentials(user, password);
   }
 
@@ -348,65 +347,76 @@ public class EduStepicConnector {
     }
   }
 
+  public static void postCourseWithProgress(final Project project, @NotNull final Course course) {
+    postCourseWithProgress(project, course, false);
+  }
 
-  public static void postCourse(final Project project, @NotNull final Course course) {
+  public static void postCourseWithProgress(final Project project, @NotNull final Course course, final boolean relogin) {
     ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Modal(project, "Uploading Course", true) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
-        indicator.setText("Uploading course to " + stepicUrl);
-        final HttpPost request = new HttpPost(stepicApiUrl + "courses");
-        if (ourClient == null) {
-          final String login = StudySettings.getInstance().getLogin();
-          if (StringUtil.isEmptyOrSpaces(login)) {
-            final boolean success = showLoginDialog();
-            if (!success) {
-              return;
-            }
-          }
-          else {
-            boolean success = login(login, StudySettings.getInstance().getPassword());
-            if (!success) {
-              if (!showLoginDialog()) {
-                return;
-              }
-            }
-          }
-        }
-
-        setHeaders(request, "application/json");
-        String requestBody = new Gson().toJson(new CourseWrapper(course));
-        request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-
-        try {
-          final CloseableHttpResponse response = ourClient.execute(request);
-          final String responseString = EntityUtils.toString(response.getEntity());
-          final StatusLine line = response.getStatusLine();
-          if (line.getStatusCode() != 201) {
-            LOG.error("Failed to push " + responseString);
-            return;
-          }
-          final CourseInfo postedCourse = new Gson().fromJson(responseString, CoursesContainer.class).courses.get(0);
-
-          final int sectionId = postModule(postedCourse.id, 1, String.valueOf(postedCourse.getName()));
-          int position = 1;
-          for (Lesson lesson : course.getLessons()) {
-            indicator.checkCanceled();
-            final int lessonId = postLesson(project, lesson, indicator);
-            postUnit(lessonId, position, sectionId);
-            position += 1;
-          }
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              postAdditionalFiles(project, postedCourse.id, indicator);
-            }
-          });
-        }
-        catch (IOException e) {
-          LOG.error(e.getMessage());
-        }
+        postCourse(project, course, relogin, indicator);
       }
     });
+  }
+
+  private static void postCourse(final Project project, @NotNull Course course, boolean relogin, @NotNull final ProgressIndicator indicator) {
+    indicator.setText("Uploading course to " + stepicUrl);
+    final HttpPost request = new HttpPost(stepicApiUrl + "courses");
+    if (ourClient == null || !relogin) {
+      if (!login()) return;
+    }
+
+    setHeaders(request, "application/json");
+    String requestBody = new Gson().toJson(new CourseWrapper(course));
+    request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+    try {
+      final CloseableHttpResponse response = ourClient.execute(request);
+      final String responseString = EntityUtils.toString(response.getEntity());
+      final StatusLine line = response.getStatusLine();
+      if (line.getStatusCode() != 201) {
+        if (!relogin) {
+          login();
+          postCourse(project, course, true, indicator);
+        }
+        LOG.error("Failed to push " + responseString);
+        return;
+      }
+      final CourseInfo postedCourse = new Gson().fromJson(responseString, CoursesContainer.class).courses.get(0);
+
+      final int sectionId = postModule(postedCourse.id, 1, String.valueOf(postedCourse.getName()));
+      int position = 1;
+      for (Lesson lesson : course.getLessons()) {
+        indicator.checkCanceled();
+        final int lessonId = postLesson(project, lesson, indicator);
+        postUnit(lessonId, position, sectionId);
+        position += 1;
+      }
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          postAdditionalFiles(project, postedCourse.id, indicator);
+        }
+      });
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+  }
+
+  private static boolean login() {
+    final String login = StudySettings.getInstance().getLogin();
+    if (StringUtil.isEmptyOrSpaces(login)) {
+      return showLoginDialog();
+    }
+    else {
+      boolean success = login(login, StudySettings.getInstance().getPassword());
+      if (!success) {
+        return showLoginDialog();
+      }
+    }
+    return true;
   }
 
   private static void postAdditionalFiles(@NotNull final Project project, int id, ProgressIndicator indicator) {

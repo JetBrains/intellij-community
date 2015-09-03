@@ -99,7 +99,7 @@ public abstract class RepositoryLibraryDescription {
   }
 
   @NotNull
-  List<MavenRepositoryInfo> getRemoteRepositories() {
+  public List<MavenRepositoryInfo> getRemoteRepositories() {
     return defaultRemoteRepositories;
   }
 

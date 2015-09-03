@@ -15,12 +15,12 @@
  */
 package com.intellij.diff.comparison
 
+import com.intellij.diff.assertTrue
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.text.CharSequenceSubSequence
 import java.util.Random
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.test.assertTrue
 
 public abstract class AutoTestCase : UsefulTestCase() {
   protected val RNG: Random = Random()

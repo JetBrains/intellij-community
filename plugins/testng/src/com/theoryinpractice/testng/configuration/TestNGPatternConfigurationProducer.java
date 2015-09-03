@@ -20,6 +20,8 @@
  */
 package com.theoryinpractice.testng.configuration;
 
+import com.intellij.execution.Location;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.module.Module;
@@ -65,6 +67,7 @@ public class TestNGPatternConfigurationProducer extends AbstractPatternBasedConf
     data.TEST_OBJECT = TestType.PATTERN.getType();
     data.setScope(setupPackageConfiguration(context, configuration, data.getScope()));
     configuration.setGeneratedName();
+    TestNGConfigurationProducer.setupConfigurationParamName(configuration, context.getLocation());
     return true;
   }
 

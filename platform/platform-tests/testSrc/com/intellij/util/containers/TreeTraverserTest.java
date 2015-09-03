@@ -16,7 +16,6 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
@@ -25,6 +24,8 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static com.intellij.openapi.util.Conditions.not;
 
 /**
  * @author gregsh
@@ -297,22 +298,22 @@ public class TreeTraverserTest extends TestCase {
 
   public void testSkipExpandedDfs() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    assertEquals(Arrays.asList(2, 8, 9, 10, 4), t.withRoot(1).expand(IS_ODD).leavesDfsTraversal().toList());
+    assertEquals(Arrays.asList(2, 8, 9, 10, 4), t.withRoot(1).expand(IS_ODD).traverse(TreeTraversal.LEAVES_DFS).toList());
   }
 
   public void testRangeChildrenLeavesDfs() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    assertEquals(Arrays.asList(5, 6, 3, 11, 12, 13), t.withRoot(1).children(Conditions.not(inRange(7, 10))).leavesDfsTraversal().toList());
+    assertEquals(Arrays.asList(5, 6, 3, 11, 12, 13), t.withRoot(1).regard(not(inRange(7, 10))).traverse(TreeTraversal.LEAVES_DFS).toList());
   }
 
   public void testRangeChildrenLeavesBfs() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    assertEquals(Arrays.asList(5, 6, 3, 11, 12, 13), t.withRoot(1).children(Conditions.not(inRange(7, 10))).leavesDfsTraversal().toList());
+    assertEquals(Arrays.asList(5, 6, 3, 11, 12, 13), t.withRoot(1).regard(not(inRange(7, 10))).traverse(TreeTraversal.LEAVES_DFS).toList());
   }
 
   public void testSkipExpandedBfs() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    assertEquals(Arrays.asList(2, 4, 8, 9, 10), t.withRoot(1).expand(IS_ODD).leavesBfsTraversal().toList());
+    assertEquals(Arrays.asList(2, 4, 8, 9, 10), t.withRoot(1).expand(IS_ODD).traverse(TreeTraversal.LEAVES_BFS).toList());
   }
 
   public void testExpandSkipFilterReset() {
@@ -323,22 +324,22 @@ public class TreeTraverserTest extends TestCase {
 
   public void testForceExlcudeReset() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    assertEquals(Arrays.asList(1, 2, 6, 4, 12), t.withRoot(1).forceExclude(IS_ODD).reset().toList());
+    assertEquals(Arrays.asList(1, 2, 6, 4, 12), t.withRoot(1).forceIgnore(IS_ODD).reset().toList());
   }
 
   public void testForceSkipReset() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    assertEquals(Arrays.asList(1, 2, 6, 8, 10, 4, 12), t.withRoot(1).forceExpandAndSkip(IS_ODD).reset().toList());
+    assertEquals(Arrays.asList(1, 2, 6, 8, 10, 4, 12), t.withRoot(1).forceDisregard(IS_ODD).reset().toList());
   }
 
   public void testForceSkipLeavesDfs() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    assertEquals(Arrays.asList(6, 8, 10, 12), t.withRoot(1).forceExpandAndSkip(IS_ODD).leavesDfsTraversal().toList());
+    assertEquals(Arrays.asList(6, 8, 10, 12), t.withRoot(1).forceDisregard(IS_ODD).traverse(TreeTraversal.LEAVES_DFS).toList());
   }
 
   public void testFilterChildren() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    assertEquals(Arrays.asList(1, 5, 7, 3, 9, 11, 13), t.withRoot(1).children(IS_ODD).toList());
+    assertEquals(Arrays.asList(1, 5, 7, 3, 9, 11, 13), t.withRoot(1).regard(IS_ODD).toList());
   }
 
   public void testEndlessGraph() {
@@ -367,7 +368,7 @@ public class TreeTraverserTest extends TestCase {
 
   public void testEdgeFilter() {
     FilteredTraverser<Integer> t = filteredTraverser();
-    JBIterable<Integer> it = t.children(new FilteredTraverserBase.EdgeFilter<Integer>() {
+    JBIterable<Integer> it = t.regard(new FilteredTraverserBase.EdgeFilter<Integer>() {
       @Override
       public boolean value(Integer integer) {
         return (integer / curParent) % 2 == 0;
@@ -389,10 +390,10 @@ public class TreeTraverserTest extends TestCase {
       }
     }
 
-    JBIterable<Integer> it = t.children(new F(true)).withRoot(1).traverse();
+    JBIterable<Integer> it = t.regard(new F(true)).withRoot(1).traverse();
     assertEquals(Arrays.asList(1, 5, 6, 7, 3, 9, 10, 4, 12, 13), it.toList());
     assertEquals(Arrays.asList(1, 5, 6, 7, 3, 9, 10, 4, 12, 13), it.toList());
-    assertEquals(it.toList(), t.forceExpandAndSkip(new F(false)).withRoot(1).reset().traverse().toList());
+    assertEquals(it.toList(), t.forceDisregard(new F(false)).withRoot(1).reset().traverse().toList());
   }
 
 }

@@ -25,7 +25,6 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
-import com.intellij.openapi.components.impl.stores.FileStorage
 import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.components.store.ReadOnlyModificationException
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
@@ -51,7 +50,7 @@ open class FileBasedStorage(file: File,
                             rootElementName: String,
                             pathMacroManager: TrackingPathMacroSubstitutor? = null,
                             roamingType: RoamingType? = null,
-                            provider: StreamProvider? = null) : XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider), FileStorage {
+                            provider: StreamProvider? = null) : XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
   private volatile var cachedVirtualFile: VirtualFile? = null
   private var lineSeparator: LineSeparator? = null
   private var blockSavingTheContent = false
@@ -68,7 +67,7 @@ open class FileBasedStorage(file: File,
   protected open val isUseXmlProlog: Boolean = false
 
   // we never set io file to null
-  override fun setFile(virtualFile: VirtualFile?, ioFileIfChanged: File?) {
+  fun setFile(virtualFile: VirtualFile?, ioFileIfChanged: File?) {
     cachedVirtualFile = virtualFile
     if (ioFileIfChanged != null) {
       file = ioFileIfChanged
@@ -100,7 +99,7 @@ open class FileBasedStorage(file: File,
     }
   }
 
-  override fun getVirtualFile(): VirtualFile? {
+  fun getVirtualFile(): VirtualFile? {
     var result = cachedVirtualFile
     if (result == null) {
       result = LocalFileSystem.getInstance().findFileByIoFile(file)

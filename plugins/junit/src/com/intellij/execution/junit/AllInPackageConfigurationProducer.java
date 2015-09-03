@@ -18,6 +18,7 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit2.info.LocationUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -25,6 +26,14 @@ import com.intellij.psi.PsiPackage;
 
 
 public class AllInPackageConfigurationProducer extends JUnitConfigurationProducer {
+
+  public AllInPackageConfigurationProducer() {
+  }
+
+  protected AllInPackageConfigurationProducer(ConfigurationType configurationType) {
+    super(configurationType);
+  }
+
   @Override
   protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
                                                   ConfigurationContext context,

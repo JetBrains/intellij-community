@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -36,7 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField;
@@ -49,7 +47,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
 import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.*;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.IMPLEMENTED_FQN;
 import static org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.INDEX_ID;
 
 /**
@@ -231,9 +228,7 @@ public class GrTypeDefinitionMembersCache {
     public List<PsiMethod> collectMethods(@NotNull Collection<PsiMethod> codeMethods) {
       if (myDefinition.isInterface() && !myDefinition.isTrait()) return Collections.emptyList();
 
-      GrImplementsClause clause = myDefinition.getImplementsClause();
-      if (clause == null) return Collections.emptyList();
-      PsiClassType[] types = clause.getReferencedTypes();
+      final PsiClassType[] types = myDefinition.getImplementsListTypes();
 
       List<PsiClassType.ClassResolveResult> traits = getSuperTraitsByCorrectOrder(types);
       if (traits.isEmpty()) return Collections.emptyList();
@@ -273,26 +268,8 @@ public class GrTypeDefinitionMembersCache {
               }
             }
             else if (trait instanceof ClsClassImpl) {
-              for (PsiMethod method : trait.getMethods()) {
-                if (AnnotationUtil.isAnnotated(method, IMPLEMENTED_FQN, false)) {
-                  addCandidate(method, substitutor);
-                }
-              }
-              final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(trait.getProject());
-              final String helperFQN = trait.getQualifiedName();
-              final PsiClass traitHelper = psiFacade.findClass(helperFQN + "$Trait$Helper", trait.getResolveScope());
-              if (traitHelper == null) return;
-              final PsiType classType = TypesUtil.createJavaLangClassType(
-                psiFacade.getElementFactory().createType(trait), trait.getProject(), trait.getResolveScope()
-              );
-              for (PsiMethod method : traitHelper.getMethods()) {
-                if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;
-                final PsiParameter[] parameters = method.getParameterList().getParameters();
-                if (parameters.length <= 0) continue;
-                final PsiParameter self = parameters[0];
-                if (self.getType().equals(classType)) {
-                  addCandidate(GrTraitUtil.createTraitMethodFromCompiledHelperMethod(method, trait), substitutor);
-                }
+              for (PsiMethod method : GrTraitUtil.getCompiledTraitConcreteMethods((ClsClassImpl)trait)) {
+                addCandidate(method, substitutor);
               }
             }
           }

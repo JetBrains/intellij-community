@@ -23,12 +23,12 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
@@ -50,31 +50,19 @@ public class MergeApplication extends ApplicationStarterBase {
   }
 
   public void processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception {
-    final String path1 = args[1];
-    final String path2 = args[2];
-    final String path3 = args[3];
-    final String path4 = args.length == 5 ? args[4] : args[3];
-
-    final VirtualFile file1 = findFile(path1, currentDirectory);
-    final VirtualFile file2 = findFile(path2, currentDirectory);
-    final VirtualFile file3 = findFile(path3, currentDirectory);
-    final VirtualFile file4 = findFile(path4, currentDirectory);
-
-    if (file1 == null) throw new Exception("Can't find file " + path1);
-    if (file2 == null) throw new Exception("Can't find file " + path2);
-    if (file3 == null) throw new Exception("Can't find file " + path3);
-    if (file4 == null) throw new Exception("Can't find file " + path4);
-
-    VfsUtil.markDirtyAndRefresh(false, false, false, file1, file2, file3, file4);
-
     Project project = getProject();
 
-    List<VirtualFile> contents = ContainerUtil.list(file1, file3, file2); // left, base, right
-    MergeRequest request = DiffRequestFactory.getInstance().createMergeRequestFromFiles(project, file4, contents, null);
+    List<String> filePaths = Arrays.asList(args).subList(1, args.length);
+    List<VirtualFile> files = findFiles(filePaths, currentDirectory);
+
+    List<VirtualFile> contents = ContainerUtil.list(files.get(0), files.get(2), files.get(1)); // left, base, right
+    VirtualFile outputFile = files.get(files.size() - 1);
+
+    MergeRequest request = DiffRequestFactory.getInstance().createMergeRequestFromFiles(project, outputFile, contents, null);
 
     DiffManagerEx.getInstance().showMergeBuiltin(project, request);
 
-    Document document = FileDocumentManager.getInstance().getCachedDocument(file4);
+    Document document = FileDocumentManager.getInstance().getCachedDocument(outputFile);
     if (document != null) FileDocumentManager.getInstance().saveDocument(document);
   }
 }

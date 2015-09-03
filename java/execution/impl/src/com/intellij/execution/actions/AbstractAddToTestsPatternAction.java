@@ -26,12 +26,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.PsiElementProcessor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public abstract class AbstractAddToTestsPatternAction<T extends ModuleBasedConfiguration> extends AnAction {
   @NotNull protected abstract AbstractPatternBasedConfigurationProducer<T> getPatternBasedProducer();
@@ -46,7 +45,9 @@ public abstract class AbstractAddToTestsPatternAction<T extends ModuleBasedConfi
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-    final Set<PsiElement> classes = getPatternBasedProducer().collectTestMembers(psiElements, true);
+    final LinkedHashSet<PsiElement> classes = new LinkedHashSet<PsiElement>();
+    PsiElementProcessor.CollectElements<PsiElement> processor = new PsiElementProcessor.CollectElements<PsiElement>(classes);
+    getPatternBasedProducer().collectTestMembers(psiElements, true, true, processor);
 
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final List<T> patternConfigurations = collectPatternConfigurations(classes, project);
@@ -86,11 +87,13 @@ public abstract class AbstractAddToTestsPatternAction<T extends ModuleBasedConfi
     final DataContext dataContext = e.getDataContext();
     final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (psiElements != null) {
-      final Set<PsiElement> foundMembers = getPatternBasedProducer().collectTestMembers(psiElements, true);
-      if (foundMembers.isEmpty()) return;
+      PsiElementProcessor.CollectElementsWithLimit<PsiElement> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiElement>(2);
+      getPatternBasedProducer().collectTestMembers(psiElements, false, false, processor);
+      Collection<PsiElement> collection = processor.getCollection();
+      if (collection.isEmpty()) return;
       final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project != null) {
-        final List<T> foundConfigurations = collectPatternConfigurations(foundMembers, project);
+        final List<T> foundConfigurations = collectPatternConfigurations(collection, project);
         if (!foundConfigurations.isEmpty()) {
           presentation.setVisible(true);
           if (foundConfigurations.size() == 1) {
@@ -101,7 +104,7 @@ public abstract class AbstractAddToTestsPatternAction<T extends ModuleBasedConfi
     }
   }
 
-  private List<T> collectPatternConfigurations(Set<PsiElement> foundClasses, Project project) {
+  private List<T> collectPatternConfigurations(Collection<PsiElement> foundClasses, Project project) {
     final List<RunConfiguration> configurations = RunManager.getInstance(project).getConfigurationsList(getConfigurationType());
     final List<T> foundConfigurations = new ArrayList<T>();
     for (RunConfiguration configuration : configurations) {

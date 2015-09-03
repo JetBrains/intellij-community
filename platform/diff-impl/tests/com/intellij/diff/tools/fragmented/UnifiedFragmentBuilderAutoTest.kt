@@ -15,6 +15,8 @@
  */
 package com.intellij.diff.tools.fragmented
 
+import com.intellij.diff.assertEquals
+import com.intellij.diff.assertTrue
 import com.intellij.diff.comparison.AutoTestCase
 import com.intellij.diff.comparison.ComparisonManagerImpl
 import com.intellij.diff.comparison.ComparisonPolicy
@@ -25,8 +27,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.HashMap
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 public class UnifiedFragmentBuilderAutoTest : AutoTestCase() {
   public fun test() {

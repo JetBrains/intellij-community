@@ -94,12 +94,12 @@ public class EduUtils {
         fileWindows = taskDir.createChildData(taskFile, name);
         printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
         for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
-          if (!answerPlaceholder.isValid(document)) {
+          int length = useLength ? answerPlaceholder.getLength() : answerPlaceholder.getPossibleAnswerLength();
+          if (!answerPlaceholder.isValid(document, length)) {
             printWriter.println("#educational_plugin_window = ");
             continue;
           }
           int start = answerPlaceholder.getRealStartOffset(document);
-          int length = useLength ? answerPlaceholder.getLength() : answerPlaceholder.getPossibleAnswerLength();
           final String windowDescription = document.getText(new TextRange(start, start + length));
           printWriter.println("#educational_plugin_window = " + windowDescription);
         }

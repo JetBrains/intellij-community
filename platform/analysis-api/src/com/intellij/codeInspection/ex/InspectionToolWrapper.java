@@ -60,13 +60,9 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   protected InspectionToolWrapper(@NotNull InspectionToolWrapper<T, E> other) {
     myEP = other.myEP;
     // we need to create a copy for buffering
-    if (myEP != null) {
+    if (other.myTool != null) {
       //noinspection unchecked
-      myTool = (T)myEP.instantiateTool();
-    }
-    else if (other.myTool != null) {
-      //noinspection unchecked
-      myTool = (T)InspectionToolsRegistrarCore.instantiateTool(other.myTool.getClass());
+      myTool = myEP != null ? (T)myEP.instantiateTool() : (T)InspectionToolsRegistrarCore.instantiateTool(other.myTool.getClass());
     }
     else {
       myTool = null;

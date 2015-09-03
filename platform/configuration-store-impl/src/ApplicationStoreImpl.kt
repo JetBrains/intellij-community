@@ -106,12 +106,12 @@ class ApplicationStorageManager(private val application: Application, pathMacroM
     return path
   }
 
-  override fun fileSpecToPath(fileSpec: String): String {
-    if (fileSpec[0] == '$') {
-      return super.fileSpecToPath(fileSpec)
+  override fun expandNormalizedPath(path: String): String {
+    if (path[0] == '$') {
+      return super.expandNormalizedPath(path)
     }
     else {
-      return "${expandMacro(StoragePathMacros.APP_CONFIG)}/$fileSpec"
+      return "${expandMacro(StoragePathMacros.APP_CONFIG)}/$path"
     }
   }
 }

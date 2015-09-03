@@ -28,7 +28,6 @@ public abstract class PushedFilePropertiesUpdater {
   public abstract void initializeProperties();
   public abstract void pushAll(final FilePropertyPusher... pushers);
   public abstract void filePropertiesChanged(@NotNull final VirtualFile file);
-  public abstract void processPendingEvents();
   public abstract void pushAllPropertiesNow();
   public abstract <T> void findAndUpdateValue(final VirtualFile fileOrDir, final FilePropertyPusher<T> pusher, final T moduleValue);
 }

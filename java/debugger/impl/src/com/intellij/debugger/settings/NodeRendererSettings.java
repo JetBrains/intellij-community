@@ -359,7 +359,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return null;
   }
 
-  private CompoundReferenceRenderer createCompoundReferenceRenderer(
+  public CompoundReferenceRenderer createCompoundReferenceRenderer(
     @NonNls final String rendererName, @NonNls final String className, final ValueLabelRenderer labelRenderer, final ChildrenRenderer childrenRenderer
     ) {
     CompoundReferenceRenderer renderer = new CompoundReferenceRenderer(this, rendererName, labelRenderer, childrenRenderer);

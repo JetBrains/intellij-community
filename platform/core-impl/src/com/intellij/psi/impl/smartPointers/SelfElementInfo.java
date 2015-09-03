@@ -26,6 +26,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,6 +134,18 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     PsiElement anchor = file.getViewProvider().findElementAt(syncStartOffset, language);
     if (anchor == null) return null;
 
+    PsiElement result = findParent(syncStartOffset, syncEndOffset, type, anchor);
+    if (result == null && syncEndOffset == syncStartOffset && anchor.getTextRange().getStartOffset() == syncEndOffset) {
+      anchor = PsiTreeUtil.prevLeaf(anchor, false);
+      if (anchor != null) {
+        result = findParent(syncStartOffset, syncEndOffset, type, anchor);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  private static PsiElement findParent(int syncStartOffset, int syncEndOffset, @NotNull Class type, PsiElement anchor) {
     TextRange range = anchor.getTextRange();
 
     if (range.getStartOffset() != syncStartOffset) return null;

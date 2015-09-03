@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,14 @@ public abstract class NodeRendererImpl implements NodeRenderer{
     myProperties.setEnabled(enabled);
   }
 
+  public boolean isShowType() {
+    return myProperties.isShowType();
+  }
+
+  public void setShowType(boolean showType) {
+    myProperties.setShowType(showType);
+  }
+
   public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
     return null;
   }
@@ -93,6 +101,6 @@ public abstract class NodeRendererImpl implements NodeRenderer{
 
   @Nullable
   public String getIdLabel(Value value, DebugProcess process) {
-    return value instanceof ObjectReference ? ValueDescriptorImpl.getIdLabel((ObjectReference)value) : null;
+    return value instanceof ObjectReference && isShowType() ? ValueDescriptorImpl.getIdLabel((ObjectReference)value) : null;
   }
 }

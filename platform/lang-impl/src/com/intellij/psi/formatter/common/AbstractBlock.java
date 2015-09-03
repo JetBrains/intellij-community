@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public abstract class AbstractBlock implements ASTBlock {
 
   private List<Block> mySubBlocks;
   private Boolean myIncomplete;
-  private boolean myBuildInjectedBlocks = true;
+  private boolean myBuildIndentsOnly = false;
 
   protected AbstractBlock(@NotNull ASTNode node, @Nullable Wrap wrap, @Nullable Alignment alignment) {
     myNode = node;
@@ -72,17 +72,17 @@ public abstract class AbstractBlock implements ASTBlock {
    * Prevents from building injected blocks, which allows to build blocks faster
    * Initially was made for formatting-based indent detector
    */
-  protected void setBuildInjectedBlocks(boolean value) {
-    myBuildInjectedBlocks = value;
+  public void setBuildIndentsOnly(boolean value) {
+    myBuildIndentsOnly = value;
   }
 
-  protected boolean isBuildInjectedBlocks() {
-    return myBuildInjectedBlocks;
+  protected boolean isBuildIndentsOnly() {
+    return myBuildIndentsOnly;
   }
 
   @NotNull
   private List<Block> buildInjectedBlocks() {
-    if (!myBuildInjectedBlocks) {
+    if (myBuildIndentsOnly) {
       return EMPTY;
     }
     if (!(this instanceof SettingsAwareBlock)) {

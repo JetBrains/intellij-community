@@ -142,28 +142,28 @@ public abstract class CCRunTestsAction extends AnAction {
           return;
         }
         clearTestEnvironment(taskDir, project);
+        CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
+        if (manager == null) {
+          return;
+        }
         for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
           final String name = entry.getKey();
-          CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
-          if (manager == null) {
-            return;
-          }
-          createTestEnvironment(taskDir, name, entry.getValue(), project);
-          FileTemplate testsTemplate = manager.getTestsTemplate(project);
-          if (testsTemplate == null) {
-            return;
-          }
-          VirtualFile testFile = taskDir.findChild(testsTemplate.getName() + "." + testsTemplate.getExtension());
-          if (testFile == null) {
-            return;
-          }
-          executeTests(project, virtualFile, taskDir, testFile);
+          createTaskFileForTest(taskDir, name, entry.getValue(), project);
         }
+        FileTemplate testsTemplate = manager.getTestsTemplate(project);
+        if (testsTemplate == null) {
+          return;
+        }
+        VirtualFile testFile = taskDir.findChild(testsTemplate.getName() + "." + testsTemplate.getExtension());
+        if (testFile == null) {
+          return;
+        }
+        executeTests(project, virtualFile, taskDir, testFile);
       }
     });
   }
 
-  private static void createTestEnvironment(@NotNull final VirtualFile taskDir, final String fileName, @NotNull final TaskFile taskFile,
+  private static void createTaskFileForTest(@NotNull final VirtualFile taskDir, final String fileName, @NotNull final TaskFile taskFile,
                                             @NotNull final Project project) {
     try {
       String answerFileName = FileUtil.getNameWithoutExtension(fileName) + ".answer";
@@ -184,8 +184,8 @@ public abstract class CCRunTestsAction extends AnAction {
       if (oldTaskFile != null) {
         oldTaskFile.delete(project);
       }
-      answerFile.copy(project, taskDir, fileName);
-      EduUtils.flushWindows(taskFile, answerFile, false);
+      VirtualFile copy = answerFile.copy(project, taskDir, fileName);
+      EduUtils.flushWindows(taskFile, copy, false);
       createResourceFiles(answerFile, project);
     }
     catch (IOException e) {

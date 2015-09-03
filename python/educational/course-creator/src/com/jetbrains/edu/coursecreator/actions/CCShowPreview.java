@@ -31,6 +31,7 @@ import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -54,7 +55,7 @@ public class CCShowPreview extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CCShowPreview.class.getName());
 
   public CCShowPreview() {
-    super("Show Preview","Show preview", null);
+    super("Show Preview","Show Preview", null);
   }
 
   @Override
@@ -63,12 +64,10 @@ public class CCShowPreview extends DumbAwareAction {
       return;
     }
     Presentation presentation = e.getPresentation();
-    presentation.setEnabled(false);
-    presentation.setVisible(false);
+    presentation.setEnabledAndVisible(false);
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     if (file != null && file.getName().contains(".answer")) {
-      presentation.setEnabled(true);
-      presentation.setVisible(true);
+      presentation.setEnabledAndVisible(true);
     }
   }
 
@@ -98,6 +97,9 @@ public class CCShowPreview extends DumbAwareAction {
     TaskFile taskFile = service.getTaskFile(file.getVirtualFile());
     if (taskFile == null) {
       return;
+    }
+    if (taskFile.getAnswerPlaceholders().isEmpty()) {
+      Messages.showInfoMessage("Preview is available for task files with answer placeholders only", "No Preview for This File");
     }
     final TaskFile taskFileCopy = new TaskFile();
     TaskFile.copy(taskFile, taskFileCopy);

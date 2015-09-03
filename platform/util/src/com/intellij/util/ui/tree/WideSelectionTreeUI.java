@@ -91,6 +91,15 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   protected MouseListener createMouseListener() {
     return new MouseEventAdapter<MouseListener>(super.createMouseListener()) {
       @Override
+      public void mouseDragged(MouseEvent event) {
+        JTree tree = (JTree)event.getSource();
+        Object property = tree.getClientProperty("DnD Source"); // DnDManagerImpl.SOURCE_KEY
+        if (property == null) {
+          super.mouseDragged(event); // use Swing-based DnD only if custom DnD is not set 
+        }
+      }
+
+      @Override
       protected MouseEvent convert(MouseEvent event) {
         if (!event.isConsumed() && SwingUtilities.isLeftMouseButton(event)) {
           int x = event.getX();

@@ -219,16 +219,17 @@ public class DebuggerTreeNodeExpression {
     
     Project project = expression.getProject();
 
-    PsiClass type = RuntimeTypeEvaluator.getCastableRuntimeType(project, value);
+    PsiType type = RuntimeTypeEvaluator.getCastableRuntimeType(project, value);
     if (type == null) {
       return expression;
     }
 
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    String typeName = type.getQualifiedName();
+    String typeName = type.getCanonicalText();
     try {
       PsiParenthesizedExpression parenthExpression = (PsiParenthesizedExpression)elementFactory.createExpressionFromText(
         "((" + typeName + ")expression)", null);
+      //noinspection ConstantConditions
       ((PsiTypeCastExpression)parenthExpression.getExpression()).getOperand().replace(expression);
       Set<String> imports = expression.getUserData(ADDITIONAL_IMPORTS_KEY);
       if (imports == null) {

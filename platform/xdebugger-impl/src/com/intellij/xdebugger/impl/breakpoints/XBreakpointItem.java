@@ -110,7 +110,7 @@ class XBreakpointItem extends BreakpointItem {
     }
 
     XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();
-    if (sourcePosition != null) {
+    if (sourcePosition != null && sourcePosition.getFile().isValid()) {
       showInEditor(panel, sourcePosition.getFile(), sourcePosition.getLine());
     }
     else {

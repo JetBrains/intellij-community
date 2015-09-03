@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,8 @@ import com.intellij.openapi.projectRoots.ex.ProjectRoot;
 import com.intellij.openapi.projectRoots.ex.ProjectRootContainer;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.PersistentOrderRootType;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -164,7 +165,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(Element element) {
     for (PersistentOrderRootType type : OrderRootType.getAllPersistentTypes()) {
       read(element, type);
     }
@@ -193,7 +194,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     List<PersistentOrderRootType> allTypes = OrderRootType.getSortedRootTypes();
     for (PersistentOrderRootType type : allTypes) {
       write(element, type);
@@ -219,7 +220,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     }
   }
 
-  private void read(Element element, PersistentOrderRootType type) throws InvalidDataException {
+  private void read(Element element, PersistentOrderRootType type)  {
     String sdkRootName = type.getSdkRootName();
     Element child = sdkRootName != null ? element.getChild(sdkRootName) : null;
     if (child == null) {
@@ -227,13 +228,13 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
       return;
     }
 
-    List children = child.getChildren();
+    List<Element> children = child.getChildren();
     LOG.assertTrue(children.size() == 1);
-    CompositeProjectRoot root = (CompositeProjectRoot)ProjectRootUtil.read((Element)children.get(0));
+    CompositeProjectRoot root = (CompositeProjectRoot)ProjectRootUtil.read(children.get(0));
     myRoots.put(type, root);
   }
 
-  private void write(Element roots, PersistentOrderRootType type) throws WriteExternalException {
+  private void write(Element roots, PersistentOrderRootType type) {
     String sdkRootName = type.getSdkRootName();
     if (sdkRootName != null) {
       Element e = new Element(sdkRootName);
@@ -245,11 +246,9 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     }
   }
 
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   void readOldVersion(Element child) {
-    for (final Object o : child.getChildren("root")) {
-      Element root = (Element)o;
+    for (Element root : child.getChildren("root")) {
       String url = root.getAttributeValue("file");
       SimpleProjectRoot projectRoot = new SimpleProjectRoot(url);
       String type = root.getChild("property").getAttributeValue("value");

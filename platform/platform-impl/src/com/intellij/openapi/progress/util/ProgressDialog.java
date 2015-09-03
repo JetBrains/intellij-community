@@ -58,15 +58,14 @@ class ProgressDialog implements Disposable {
       double fraction = myProgressWindow.getFraction();
       String text2 = myProgressWindow.getText2();
 
-      myTextLabel.setText(text != null && !text.isEmpty() ? text : " ");
-
       if (myProgressBar.isShowing()) {
         final int perc = (int)(fraction * 100);
         myProgressBar.setIndeterminate(perc == 0 || myProgressWindow.isIndeterminate());
         myProgressBar.setValue(perc);
       }
 
-      myText2Label.setText(getTitle2Text(text2, myText2Label.getWidth()));
+      myTextLabel.setText(fitTextToLabel(text, myTextLabel));
+      myText2Label.setText(fitTextToLabel(text2, myText2Label));
 
       myTitlePanel.setText(myProgressWindow.getTitle() != null && !myProgressWindow.getTitle().isEmpty() ? myProgressWindow.getTitle() : " ");
 
@@ -77,14 +76,14 @@ class ProgressDialog implements Disposable {
     }
   };
 
-  private String getTitle2Text(String fullText, int labelWidth) {
+  @NotNull
+  private static String fitTextToLabel(@Nullable String fullText, @NotNull JLabel label) {
     if (fullText == null || fullText.isEmpty()) return " ";
-    while (myText2Label.getFontMetrics(myText2Label.getFont()).stringWidth(fullText) > labelWidth) {
+    while (label.getFontMetrics(label.getFont()).stringWidth(fullText) > label.getWidth()) {
       int sep = fullText.indexOf(File.separatorChar, 4);
       if (sep < 0) return fullText;
       fullText = "..." + fullText.substring(sep);
     }
-
     return fullText;
   }
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.StateStorageBase;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StorageManagerListener;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
@@ -53,7 +54,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
+// Boolean - false as not loaded, true as loaded
 public class ClasspathStorage extends StateStorageBase<Boolean> {
+  private static final Logger LOG = Logger.getInstance(ClasspathStorage.class);
+
   @NonNls public static final String SPECIAL_STORAGE = "special";
 
   private final ClasspathStorageProvider.ClasspathConverter myConverter;
@@ -116,7 +120,7 @@ public class ClasspathStorage extends StateStorageBase<Boolean> {
 
   @Nullable
   @Override
-  protected <S> S deserializeState(@Nullable Element serializedState, @NotNull Class<S> stateClass, @Nullable S mergeInto) {
+  public <S> S deserializeState(@Nullable Element serializedState, @NotNull Class<S> stateClass, @Nullable S mergeInto) {
     if (serializedState == null) {
       return null;
     }
@@ -134,7 +138,7 @@ public class ClasspathStorage extends StateStorageBase<Boolean> {
 
   @Nullable
   @Override
-  protected Element getStateAndArchive(@NotNull Boolean storageData, Object component, @NotNull String componentName) {
+  public Element getSerializedState(@NotNull Boolean storageData, Object component, @NotNull String componentName, boolean archive) {
     if (storageData) {
       return null;
     }
@@ -173,10 +177,11 @@ public class ClasspathStorage extends StateStorageBase<Boolean> {
       throw new RuntimeException(e);
     }
 
-    storageDataRef.set(true);
+    getStorageDataRef().set(true);
     return element;
   }
 
+  @NotNull
   @Override
   protected Boolean loadData() {
     return false;
@@ -192,7 +197,7 @@ public class ClasspathStorage extends StateStorageBase<Boolean> {
   public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames) {
     // if some file changed, so, changed
     componentNames.add("NewModuleRootManager");
-    storageDataRef.set(false);
+    getStorageDataRef().set(false);
   }
 
   @Nullable

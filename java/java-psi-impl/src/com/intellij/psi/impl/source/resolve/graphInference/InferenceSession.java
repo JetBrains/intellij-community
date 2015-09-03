@@ -667,17 +667,18 @@ public class InferenceSession {
           }
           final JavaResolveResult result = properties != null ? properties.getInfo() : ((PsiCallExpression)gParent).resolveMethodGenerics();
           final boolean varargs = properties != null && properties.isVarargs() || result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isVarargs();
-          return getTypeByMethod(context, argumentList, result.getElement(),
-                                 varargs,
-                                 PsiResolveHelper.ourGraphGuard.doPreventingRecursion(argumentList.getParent(), false,
-                                                                                      new Computable<PsiSubstitutor>() {
-                                                                                        @Override
-                                                                                        public PsiSubstitutor compute() {
-                                                                                          return result.getSubstitutor();
-                                                                                        }
-                                                                                      }
-                                 )
+          PsiSubstitutor substitutor = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(context, false,
+                                                                                            new Computable<PsiSubstitutor>() {
+                                                                                              @Override
+                                                                                              public PsiSubstitutor compute() {
+                                                                                                return result.getSubstitutor();
+                                                                                              }
+                                                                                            }
           );
+          if (substitutor == null && properties != null) {
+            substitutor = properties.getSubstitutor();
+          }
+          return getTypeByMethod(context, argumentList, result.getElement(), varargs, substitutor);
         }
       }
     } else if (parent instanceof PsiConditionalExpression) {

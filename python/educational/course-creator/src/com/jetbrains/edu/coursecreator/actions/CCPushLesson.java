@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CCPushLesson extends DumbAwareAction {
   public CCPushLesson() {
-    super("Push lesson to Stepic", "Push lesson to Stepic", null);
+    super("Push Lesson to Stepic", "Push Lesson to Stepic", null);
   }
 
   @Override

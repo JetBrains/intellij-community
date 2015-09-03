@@ -30,8 +30,6 @@ public interface StateStorage {
   @Nullable
   <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto, boolean reload);
 
-  <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass);
-
   boolean hasState(@NotNull String componentName, boolean reloadData);
 
   @Nullable

@@ -193,4 +193,5 @@ LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JAVA_BIN" \
   "$@"
 EC=$?
 test $EC -ne 88 && exit $EC
+$HOME/.@@system_selector@@/restart/restarter.sh
 exec "$0" "$@"

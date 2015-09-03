@@ -117,7 +117,7 @@ public class GithubIssuesTest extends GithubTest {
   }
 
   public void testQueriedIssues1() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesQueried(new GithubConnection(myAuth), myLogin2, REPO_NAME, "abracadabra", true);
+    List<GithubIssue> result = GithubApiUtil.getIssuesQueried(new GithubConnection(myAuth), myLogin2, REPO_NAME, null, "abracadabra", true);
     List<Long> issues = ContainerUtil.map(result, new Function<GithubIssue, Long>() {
       @Override
       public Long fun(GithubIssue githubIssue) {
@@ -131,7 +131,7 @@ public class GithubIssuesTest extends GithubTest {
   }
 
   public void testQueriedIssues2() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesQueried(new GithubConnection(myAuth), myLogin2, REPO_NAME, "commentary", true);
+    List<GithubIssue> result = GithubApiUtil.getIssuesQueried(new GithubConnection(myAuth), myLogin2, REPO_NAME, null, "commentary", true);
     List<Long> issues = ContainerUtil.map(result, new Function<GithubIssue, Long>() {
       @Override
       public Long fun(GithubIssue githubIssue) {
@@ -145,7 +145,7 @@ public class GithubIssuesTest extends GithubTest {
   }
 
   public void testQueriedIssues3() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesQueried(new GithubConnection(myAuth), myLogin2, REPO_NAME, "abracadabra", false);
+    List<GithubIssue> result = GithubApiUtil.getIssuesQueried(new GithubConnection(myAuth), myLogin2, REPO_NAME, null, "abracadabra", false);
     List<Long> issues = ContainerUtil.map(result, new Function<GithubIssue, Long>() {
       @Override
       public Long fun(GithubIssue githubIssue) {
