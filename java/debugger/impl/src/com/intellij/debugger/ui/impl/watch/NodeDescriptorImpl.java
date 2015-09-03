@@ -19,7 +19,6 @@ import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
@@ -27,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
+import com.sun.jdi.InconsistentDebugInfoException;
 import com.sun.jdi.InvalidStackFrameException;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.Nullable;
@@ -82,9 +82,15 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
         myEvaluateException = null;
         myLabel = calcRepresentation(context, labelListener);
       }
+      catch (InconsistentDebugInfoException e) {
+        throw new EvaluateException(DebuggerBundle.message("error.inconsistent.debug.info"));
+      }
+      catch (InvalidStackFrameException e) {
+        throw new EvaluateException(DebuggerBundle.message("error.invalid.stackframe"));
+      }
       catch (RuntimeException e) {
-        LOG.debug(e);
-        throw processException(e);
+        LOG.error(e);
+        throw new EvaluateException("Internal error, see logs for more details");
       }
     }
     catch (EvaluateException e) {
@@ -93,15 +99,6 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   }
 
   protected abstract String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) throws EvaluateException;
-
-  private static EvaluateException processException(Exception e) {
-    if (e instanceof InvalidStackFrameException) {
-      return new EvaluateException(DebuggerBundle.message("error.invalid.stackframe"), null);
-    }
-    else {
-      return EvaluateExceptionUtil.createEvaluateException(e);
-    }
-  }
 
   @Override
   public void displayAs(NodeDescriptor descriptor) {
