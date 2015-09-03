@@ -106,7 +106,11 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   @Override
   public void expand(@NotNull String key, @NotNull CustomTemplateCallback callback) {
     ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext(), false);
-    assert defaultGenerator != null;
+    if (defaultGenerator == null) {
+      LOG.error("Cannot find defaultGenerator for key `" + key +"` at " + callback.getEditor().getCaretModel().getOffset() + " offset", 
+                AttachmentFactory.createAttachment(callback.getEditor().getDocument()));
+      return;
+    }
     try {
       expand(key, callback, defaultGenerator, Collections.<ZenCodingFilter>emptyList(), true, Registry.intValue("emmet.segments.limit"));
     }
