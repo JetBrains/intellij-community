@@ -15,7 +15,6 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.text.StringUtil
@@ -35,8 +34,6 @@ import java.util.concurrent.atomic.AtomicReferenceArray
 
 class StateMap private constructor(private val names: Array<String>, private val states: AtomicReferenceArray<Any?>) {
   companion object {
-    private val LOG = Logger.getInstance(javaClass<StateMap>())
-
     private val XML_FORMAT = Format.getRawFormat().setTextMode(Format.TextMode.TRIM).setOmitEncoding(true).setOmitDeclaration(true)
 
     val EMPTY = StateMap(emptyArray(), AtomicReferenceArray(0))
@@ -118,7 +115,7 @@ class StateMap private constructor(private val names: Array<String>, private val
     return if (index < 0) null else states.get(index)
   }
 
-  fun getElement(key: String, newLiveStates: Map<String, Element>) = stateToElement(key, get(key), newLiveStates)
+  fun getElement(key: String, newLiveStates: Map<String, Element>? = null) = stateToElement(key, get(key), newLiveStates)
 
   fun isEmpty() = names.isEmpty()
 
@@ -150,8 +147,6 @@ class StateMap private constructor(private val names: Array<String>, private val
     }
   }
 
-  fun getStateAndArchive(key: String) = getState(key, true)
-
   fun getState(key: String, archive: Boolean = false): Element? {
     val index = Arrays.binarySearch(names, key)
     if (index < 0) {
@@ -175,4 +170,61 @@ class StateMap private constructor(private val names: Array<String>, private val
     LOG.assertTrue(currentState is Element)
     states.set(index, if (state == null) null else archiveState(state))
   }
+}
+
+fun setStateAndCloneIfNeed(key: String, newState: Element?, oldStates: StateMap, newLiveStates: MutableMap<String, Element>? = null): MutableMap<String, Any>? {
+  val oldState = oldStates.get(key)
+  if (newState == null || JDOMUtil.isEmpty(newState)) {
+    if (oldState == null) {
+      return null
+    }
+
+    val newStates = oldStates.toMutableMap()
+    newStates.remove(key)
+    return newStates
+  }
+
+  newLiveStates?.put(key, newState)
+
+  var newBytes: ByteArray? = null
+  if (oldState is Element) {
+    if (JDOMUtil.areElementsEqual(oldState as Element?, newState)) {
+      return null
+    }
+  }
+  else if (oldState != null) {
+    newBytes = StateMap.getNewByteIfDiffers(key, newState, oldState as ByteArray)
+    if (newBytes == null) {
+      return null
+    }
+  }
+
+  val newStates = oldStates.toMutableMap()
+  newStates.put(key, newBytes ?: newState)
+  return newStates
+}
+
+// true if updated (not equals to previous state)
+private fun updateState(states: MutableMap<String, Any>, key: String, newState: Element?, newLiveStates: MutableMap<String, Element>? = null): Boolean {
+  if (newState == null || JDOMUtil.isEmpty(newState)) {
+    states.remove(key)
+    return true
+  }
+
+  newLiveStates?.put(key, newState)
+
+  val oldState = states.get(key)
+
+  var newBytes: ByteArray? = null
+  if (oldState is Element) {
+    if (JDOMUtil.areElementsEqual(oldState as Element?, newState)) {
+      return false
+    }
+  }
+  else if (oldState != null) {
+    newBytes = StateMap.getNewByteIfDiffers(key, newState, oldState as ByteArray) ?: return false
+  }
+
+  states.put(key, newBytes ?: newState)
+  return true
 }

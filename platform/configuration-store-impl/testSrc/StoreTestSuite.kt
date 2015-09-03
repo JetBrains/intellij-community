@@ -26,6 +26,7 @@ Suite.SuiteClasses(
   ModuleStoreTest::class, ModuleStoreRenameTest::class,
   StorageManagerTest::class,
   SchemeManagerTest::class,
-  XmlElementStorageTest::class
+  XmlElementStorageTest::class,
+  DirectoryBasedStorageTest::class
 )
 class StoreTestSuite

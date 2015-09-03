@@ -29,7 +29,7 @@ import java.io.IOException
 
 abstract class XmlElementStorage protected constructor(protected val fileSpec: String,
                                                        protected val rootElementName: String,
-                                                       protected val pathMacroSubstitutor: TrackingPathMacroSubstitutor?,
+                                                       protected val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,
                                                        roamingType: RoamingType? = RoamingType.DEFAULT,
                                                        provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
   val roamingType: RoamingType = roamingType ?: RoamingType.DEFAULT
@@ -116,7 +116,8 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
 
     override fun createSaveSession() = if (storage.checkIsSavingDisabled() || copiedStates == null) null else this
 
-    override fun setSerializedState(component: Any, componentName: String, element: Element?) {
+    override fun setSerializedState(componentName: String, element: Element?) {
+      element?.normalizeRootName()
       if (copiedStates == null) {
         copiedStates = setStateAndCloneIfNeed(componentName, element, originalStates, newLiveStates)
       }
@@ -127,7 +128,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
 
     override fun save() {
       val stateMap = StateMap.fromMap(copiedStates!!)
-      var element = save(stateMap, newLiveStates, storage.rootElementName)
+      var element = save(stateMap, storage.rootElementName, newLiveStates)
       if (element == null || JDOMUtil.isEmpty(element)) {
         element = null
       }
@@ -197,7 +198,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   }
 }
 
-private fun save(states: StateMap, newLiveStates: Map<String, Element>, rootElementName: String): Element? {
+fun save(states: StateMap, rootElementName: String, newLiveStates: Map<String, Element>? = null): Element? {
   if (states.isEmpty()) {
     return null
   }
@@ -230,40 +231,6 @@ private fun save(states: StateMap, newLiveStates: Map<String, Element>, rootElem
   return rootElement
 }
 
-fun setStateAndCloneIfNeed(componentName: String, newState: Element?, oldStates: StateMap, newLiveStates: MutableMap<String, Element>): MutableMap<String, Any>? {
-  val oldState = oldStates.get(componentName)
-  if (newState == null || JDOMUtil.isEmpty(newState)) {
-    if (oldState == null) {
-      return null
-    }
-
-    val newStates = oldStates.toMutableMap()
-    newStates.remove(componentName)
-    return newStates
-  }
-
-  newState.normalizeRootName()
-
-  newLiveStates.put(componentName, newState)
-
-  var newBytes: ByteArray? = null
-  if (oldState is Element) {
-    if (JDOMUtil.areElementsEqual(oldState as Element?, newState)) {
-      return null
-    }
-  }
-  else if (oldState != null) {
-    newBytes = StateMap.getNewByteIfDiffers(componentName, newState, oldState as ByteArray)
-    if (newBytes == null) {
-      return null
-    }
-  }
-
-  val newStates = oldStates.toMutableMap()
-  newStates.put(componentName, newBytes ?: newState)
-  return newStates
-}
-
 fun Element.normalizeRootName(): Element {
   if (getParent() != null) {
     LOG.warn("State element must not have parent ${JDOMUtil.writeElement(this)}")
@@ -271,31 +238,6 @@ fun Element.normalizeRootName(): Element {
   }
   setName(FileStorageCoreUtil.COMPONENT)
   return this
-}
-
-private fun updateState(states: MutableMap<String, Any>, componentName: String, newState: Element?, newLiveStates: MutableMap<String, Element>) {
-  if (newState == null || JDOMUtil.isEmpty(newState)) {
-    states.remove(componentName)
-    return
-  }
-
-  newState.normalizeRootName()
-
-  newLiveStates.put(componentName, newState)
-
-  val oldState = states.get(componentName)
-
-  var newBytes: ByteArray? = null
-  if (oldState is Element) {
-    if (JDOMUtil.areElementsEqual(oldState as Element?, newState)) {
-      return
-    }
-  }
-  else if (oldState != null) {
-    newBytes = StateMap.getNewByteIfDiffers(componentName, newState, oldState as ByteArray) ?: return
-  }
-
-  states.put(componentName, newBytes ?: newState)
 }
 
 // newStorageData - myStates contains only live (unarchived) states

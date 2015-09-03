@@ -40,14 +40,14 @@ class XmlElementStorageTest {
     val storage = MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))))
     val newState = tag("component", attr("name", "test"), tag("bar"))
     val externalizationSession = storage.startExternalization()!!
-    externalizationSession.setState(this, "test", newState)
+    externalizationSession.setState(null, "test", newState)
     externalizationSession.createSaveSession()!!.save()
     assertThat(storage.savedElement).isNotNull()
     assertThat(storage.savedElement!!.getChild("component").getChild("bar")).isNotNull()
     assertThat(storage.savedElement!!.getChild("component").getChild("foo")).isNull()
   }
 
-  private class MyXmlElementStorage(private val myElement: Element) : XmlElementStorage("", "root", null, null, null) {
+  private class MyXmlElementStorage(private val myElement: Element) : XmlElementStorage("", "root") {
     var savedElement: Element? = null
 
     override fun loadLocalData() = myElement

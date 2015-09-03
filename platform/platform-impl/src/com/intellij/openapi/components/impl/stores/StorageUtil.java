@@ -48,8 +48,6 @@ import java.io.IOException;
 import java.util.*;
 
 public class StorageUtil {
-  public static final String DEFAULT_EXT = ".xml";
-
   private static final Logger LOG = Logger.getInstance(StorageUtil.class);
 
   @TestOnly

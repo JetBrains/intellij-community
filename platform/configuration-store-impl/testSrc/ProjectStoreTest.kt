@@ -70,8 +70,7 @@ class ProjectStoreTest {
   val tempDirManager = TemporaryDirectory()
 
   private val ruleChain = RuleChain(tempDirManager)
-
-  public Rule fun getChain(): RuleChain = ruleChain
+  @Rule fun getChain() = ruleChain
 
   Language("XML")
   private val iprFileContent =

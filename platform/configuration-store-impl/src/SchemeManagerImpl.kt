@@ -23,7 +23,8 @@ import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.ServiceManagerImpl
-import com.intellij.openapi.components.impl.stores.StorageUtil
+import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil.DEFAULT_EXT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.*
@@ -84,7 +85,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       updateExtension = processor.isUpgradeNeeded()
     }
     else {
-      schemeExtension = StorageUtil.DEFAULT_EXT
+      schemeExtension = FileStorageCoreUtil.DEFAULT_EXT
       updateExtension = false
     }
 
@@ -226,8 +227,8 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     return if (StringUtilRt.endsWithIgnoreCase(fileName, schemeExtension)) {
       schemeExtension
     }
-    else if (StringUtilRt.endsWithIgnoreCase(fileName, StorageUtil.DEFAULT_EXT)) {
-      StorageUtil.DEFAULT_EXT
+    else if (StringUtilRt.endsWithIgnoreCase(fileName, DEFAULT_EXT)) {
+      DEFAULT_EXT
     }
     else if (allowAny) {
       PathUtil.getFileExtension(fileName.toString())!!
@@ -392,7 +393,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   private val ExternalizableScheme.fileName: String?
     get() = schemeToInfo.get(this)?.fileNameWithoutExtension
 
-  private fun canRead(name: CharSequence) = updateExtension && StringUtilRt.endsWithIgnoreCase(name, StorageUtil.DEFAULT_EXT) || StringUtilRt.endsWithIgnoreCase(name, schemeExtension)
+  private fun canRead(name: CharSequence) = updateExtension && StringUtilRt.endsWithIgnoreCase(name, DEFAULT_EXT) || StringUtilRt.endsWithIgnoreCase(name, schemeExtension)
 
   private fun readSchemeFromFile(file: VirtualFile, duringLoad: Boolean): E? {
     val fileName = file.getNameSequence()
