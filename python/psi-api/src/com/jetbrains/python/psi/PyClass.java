@@ -38,7 +38,7 @@ import java.util.Map;
  * Represents a class declaration in source.
  */
 public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
-                                 ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner, PyStatementListContainer {
+                                 ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner, PyStatementListContainer, PyWithAncestors {
   ArrayFactory<PyClass> ARRAY_FACTORY = new ArrayFactory<PyClass>() {
     @NotNull
     @Override
@@ -50,12 +50,6 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   @Nullable
   ASTNode getNameNode();
 
-
-  /**
-   * Returns types of all ancestors from the hierarchy.
-   */
-  @NotNull
-  List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context);
 
   /**
    * Returns only those ancestors from the hierarchy, that are resolved to PyClass PSI elements.

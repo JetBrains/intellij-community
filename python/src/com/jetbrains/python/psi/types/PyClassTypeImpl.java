@@ -346,6 +346,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return null;
   }
 
+  @NotNull
+  @Override
+  public final List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
+    return myClass.getAncestorTypes(context);
+  }
+
   @Nullable
   private static PsiElement resolveClassMember(@NotNull PyClass cls,
                                                boolean isDefinition,
@@ -476,12 +482,14 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     // TODO: accept instance attributes as well
 
-    if (inherited) {
-      // TODO: Add guard to prevent stack overflow
-      for (final PyClassLikeType type : getSuperClassTypes(context)) {
-        if (type != null) {
-          type.visitMembers(processor, true, context);
-        }
+    if (!inherited) {
+      return;
+    }
+
+    for (final PyClassLikeType type : getAncestorTypes(context)) {
+      if (type != null) {
+        // "false" because getAncestorTypes returns ALL ancestors, not only direct parents
+        type.visitMembers(processor, false, context);
       }
     }
   }

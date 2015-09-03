@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyWithAncestors;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ import java.util.List;
 /**
  * @author vlan
  */
-public interface PyClassLikeType extends PyCallableType {
+public interface PyClassLikeType extends PyCallableType, PyWithAncestors {
   boolean isDefinition();
 
   PyClassLikeType toInstance();
@@ -45,6 +46,7 @@ public interface PyClassLikeType extends PyCallableType {
                                                    @NotNull AccessDirection direction, @NotNull PyResolveContext resolveContext,
                                                    boolean inherited);
 
+  // TODO: Pull to PyType at next iteration
   /**
    * Visits all class members. This method is better then bare class since it uses type info and supports not only classes but
    * class-like structures as well. Consider using user-friendly wrapper {@link PyClassLikeTypeUtil#getMembersOfType(PyClassLikeType, Class, TypeEvalContext)}

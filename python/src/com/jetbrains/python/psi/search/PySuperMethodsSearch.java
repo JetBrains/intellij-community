@@ -64,6 +64,7 @@ public class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElement, PyS
       myContext = context;
     }
 
+    @Nullable
     public TypeEvalContext getContext() {
       return myContext;
     }
@@ -81,12 +82,12 @@ public class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElement, PyS
     super("Pythonid");
   }
 
-  public static Query<PsiElement> search(final PyFunction derivedMethod, TypeEvalContext context) {
+  public static Query<PsiElement> search(final PyFunction derivedMethod, @Nullable final TypeEvalContext context) {
     final SearchParameters parameters = new SearchParameters(derivedMethod, false, context);
     return INSTANCE.createUniqueResultsQuery(parameters);
   }
 
-  public static Query<PsiElement> search(final PyFunction derivedMethod, boolean deepSearch, TypeEvalContext context) {
+  public static Query<PsiElement> search(final PyFunction derivedMethod, final boolean deepSearch, @Nullable final TypeEvalContext context) {
     final SearchParameters parameters = new SearchParameters(derivedMethod, deepSearch, context);
     return INSTANCE.createUniqueResultsQuery(parameters);
   }

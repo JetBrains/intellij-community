@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -153,8 +154,13 @@ public class PyJavaClassType implements PyClassLikeType {
   @Override
   public void visitMembers(@NotNull final Processor<PsiElement> processor, final boolean inherited, @NotNull TypeEvalContext context) {
     // TODO: Implement
-    // We do not have enough time to this method for Java and looks like there is no need to do that since
-    // jython is not very popular
+  }
+
+  @NotNull
+  @Override
+  public List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
+    // TODO: Implement
+    return Collections.emptyList();
   }
 
   @Override
