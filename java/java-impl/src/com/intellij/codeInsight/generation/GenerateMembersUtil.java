@@ -282,12 +282,14 @@ public class GenerateMembersUtil {
       final List<PsiClassType> thrownTypes = ExceptionUtil.collectSubstituted(collisionResolvedSubstitutor, sourceMethod.getThrowsList().getReferencedTypes(),
                                                                               scope);
       if (target instanceof PsiClass) {
-        final PsiClass[] supers = ((PsiClass)target).getSupers();
-        for (PsiClass aSuper : supers) {
-          final PsiMethod psiMethod = aSuper.findMethodBySignature(sourceMethod, true);
+        final PsiMethod[] methods = ((PsiClass)target).findMethodsBySignature(sourceMethod, true);
+        for (PsiMethod psiMethod : methods) {
           if (psiMethod != null && psiMethod != sourceMethod) {
-            PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(aSuper, (PsiClass)target, PsiSubstitutor.EMPTY);
-            ExceptionUtil.retainExceptions(thrownTypes, ExceptionUtil.collectSubstituted(superClassSubstitutor, psiMethod.getThrowsList().getReferencedTypes(), scope));
+            PsiClass aSuper = psiMethod.getContainingClass();
+            if (aSuper != null && aSuper != target) {
+              PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(aSuper, (PsiClass)target, PsiSubstitutor.EMPTY);
+              ExceptionUtil.retainExceptions(thrownTypes, ExceptionUtil.collectSubstituted(superClassSubstitutor, psiMethod.getThrowsList().getReferencedTypes(), scope));
+            }
           }
         }
       }
