@@ -22,12 +22,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.text.ImmutableText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -120,7 +124,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   public void performAtomically(@NotNull PsiFile file, @NotNull Runnable runnable) {
     assert !isInsideAtomicChange(file);
     file.putUserData(PSI_DOCUMENT_ATOMIC_ACTION, Boolean.TRUE);
-    
+
     try {
       runnable.run();
     }
@@ -247,7 +251,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final DocumentChangeTransaction documentChangeTransaction = removeTransaction(document);
     if(documentChangeTransaction == null) return false;
-    final PsiElement changeScope = documentChangeTransaction.getChangeScope();
+    final PsiElement changeScope = documentChangeTransaction.myChangeScope;
     try {
       mySyncDocument = document;
 
@@ -275,28 +279,12 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     try {
       boolean isReadOnly = !document.isWritable();
       ex.setReadOnly(false);
-      final Set<Pair<MutableTextRange, StringBuffer>> affectedFragments = documentChangeTransaction.getAffectedFragments();
-      for (final Pair<MutableTextRange, StringBuffer> pair : affectedFragments) {
-        final StringBuffer replaceBuffer = pair.getSecond();
-        final MutableTextRange range = pair.getFirst();
-        if (replaceBuffer.length() == 0) {
-          ex.deleteString(range.getStartOffset(), range.getEndOffset());
-        }
-        else if (range.getLength() == 0) {
-          ex.insertString(range.getStartOffset(), replaceBuffer);
-        }
-        else {
-          ex.replaceString(range.getStartOffset(),
-                           range.getEndOffset(),
-                           replaceBuffer);
-        }
+
+      for (Map.Entry<TextRange, CharSequence> entry : documentChangeTransaction.myAffectedFragments.descendingMap().entrySet()) {
+        ex.replaceString(entry.getKey().getStartOffset(), entry.getKey().getEndOffset(), entry.getValue());
       }
 
       ex.setReadOnly(isReadOnly);
-      //if(documentChangeTransaction.getChangeScope() != null) {
-      //  LOG.assertTrue(document.getText().equals(documentChangeTransaction.getChangeScope().getText()),
-      //                 "Psi to document synchronization failed (send to IK)");
-      //}
     }
     finally {
       ex.unSuppressGuardedExceptions();
@@ -323,40 +311,36 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
 
   public static class DocumentChangeTransaction{
-    private final Set<Pair<MutableTextRange,StringBuffer>> myAffectedFragments = new TreeSet<Pair<MutableTextRange, StringBuffer>>(new Comparator<Pair<MutableTextRange, StringBuffer>>() {
+    private final TreeMap<TextRange, CharSequence> myAffectedFragments = new TreeMap<TextRange, CharSequence>(new Comparator<TextRange>() {
       @Override
-      public int compare(final Pair<MutableTextRange, StringBuffer> o1,
-                         final Pair<MutableTextRange, StringBuffer> o2) {
-        return o1.getFirst().getStartOffset() - o2.getFirst().getStartOffset();
+      public int compare(TextRange o1, TextRange o2) {
+        return o1.getStartOffset() - o2.getStartOffset();
       }
     });
-    private final Document myDocument;
     private final PsiFile myChangeScope;
+    private ImmutableText myDocText;
+    private ImmutableText myPsiText;
 
     public DocumentChangeTransaction(@NotNull Document doc, @NotNull PsiFile scope) {
-      myDocument = doc;
       myChangeScope = scope;
+      myDocText = ImmutableText.valueOf(doc.getImmutableCharSequence());
+      myPsiText = myDocText;
     }
 
     @NotNull
-    public Set<Pair<MutableTextRange, StringBuffer>> getAffectedFragments() {
+    public Map<TextRange, CharSequence> getAffectedFragments() {
       return myAffectedFragments;
     }
 
-    @NotNull
-    public PsiFile getChangeScope() {
-      return myChangeScope;
-    }
-
-    public void replace(int initialStart, int length, @NotNull String replace) {
+    public void replace(int psiStart, int length, @NotNull String replace) {
       // calculating fragment
       // minimize replace
       int start = 0;
       int end = start + length;
 
       final int replaceLength = replace.length();
-      final String chars = getText(start + initialStart, end + initialStart);
-      if (chars.equals(replace)) return;
+      final CharSequence chars = myPsiText.subSequence(psiStart, psiStart + length);
+      if (StringUtil.equals(chars, replace)) return;
 
       int newStartInReplace = 0;
       int newEndInReplace = replaceLength;
@@ -385,12 +369,13 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
         }
       }
 
+      start += psiStart;
+      end += psiStart;
+
       //[mike] dirty hack for xml:
       //make sure that deletion of <t> in: <tag><t/><tag> doesn't remove t/><
       //which is perfectly valid but invalidates range markers
-      start += initialStart;
-      end += initialStart;
-      final CharSequence charsSequence = myDocument.getCharsSequence();
+      final CharSequence charsSequence = myPsiText;
       while (start < charsSequence.length() && end < charsSequence.length() && start > 0 &&
              charsSequence.subSequence(start, end).toString().endsWith("><") && charsSequence.charAt(start - 1) == '<') {
         start--;
@@ -399,147 +384,71 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
         newEndInReplace--;
       }
 
-      replace = replace.substring(newStartInReplace, newEndInReplace);
-      length = end - start;
-
-      final Pair<MutableTextRange, StringBuffer> fragment = getFragmentByRange(start, length);
-      final StringBuffer fragmentReplaceText = fragment.getSecond();
-      final int startInFragment = start - fragment.getFirst().getStartOffset();
-
-      // text range adjustment
-      final int lengthDiff = replace.length() - length;
-      final Iterator<Pair<MutableTextRange, StringBuffer>> iterator = myAffectedFragments.iterator();
-      boolean adjust = false;
-      while (iterator.hasNext()) {
-        final Pair<MutableTextRange, StringBuffer> pair = iterator.next();
-        if (adjust) pair.getFirst().shift(lengthDiff);
-        if (pair == fragment) adjust = true;
-      }
-
-      fragmentReplaceText.replace(startInFragment, startInFragment + length, replace);
+      updateFragments(start, end, replace.substring(newStartInReplace, newEndInReplace));
     }
 
-    private String getText(final int start, final int end) {
-      int currentOldDocumentOffset = 0;
-      int currentNewDocumentOffset = 0;
-      StringBuilder text = new StringBuilder();
-      Iterator<Pair<MutableTextRange, StringBuffer>> iterator = myAffectedFragments.iterator();
-      while (iterator.hasNext() && currentNewDocumentOffset < end) {
-        final Pair<MutableTextRange, StringBuffer> pair = iterator.next();
-        final MutableTextRange range = pair.getFirst();
-        final StringBuffer buffer = pair.getSecond();
-        final int fragmentEndInNewDocument = range.getStartOffset() + buffer.length();
+    private void updateFragments(int start, int end, @NotNull String replace) {
+      int docStart = psiToDocumentOffset(start);
+      int docEnd = psiToDocumentOffset(end);
 
-        if(range.getStartOffset() <= start && fragmentEndInNewDocument >= end){
-          return buffer.substring(start - range.getStartOffset(), end - range.getStartOffset());
+      TextRange startRange = findFragment(docStart);
+      TextRange endRange = findFragment(docEnd);
+
+      myPsiText = myPsiText.delete(start, end).insert(start, replace);
+
+      TextRange newFragment = new TextRange(startRange != null ? startRange.getStartOffset() : docStart,
+                                            endRange != null ? endRange.getEndOffset() : docEnd);
+      CharSequence newReplacement = myPsiText.subSequence(documentToPsiOffset(newFragment.getStartOffset(), false),
+                                                          documentToPsiOffset(newFragment.getEndOffset(), true) + replace.length() - (end - start));
+
+      for (Iterator<TextRange> iterator = myAffectedFragments.keySet().iterator(); iterator.hasNext(); ) {
+        if (iterator.next().intersects(newFragment)) {
+          iterator.remove();
         }
-
-        if(range.getStartOffset() >= start){
-          final int effectiveStart = Math.max(currentNewDocumentOffset, start);
-          text.append(myDocument.getCharsSequence(),
-                      effectiveStart - currentNewDocumentOffset + currentOldDocumentOffset,
-                      Math.min(range.getStartOffset(), end) - currentNewDocumentOffset + currentOldDocumentOffset);
-          if(end > range.getStartOffset()){
-            text.append(buffer.substring(0, Math.min(end - range.getStartOffset(), buffer.length())));
-          }
-        }
-
-        currentOldDocumentOffset += range.getEndOffset() - currentNewDocumentOffset;
-        currentNewDocumentOffset = fragmentEndInNewDocument;
       }
-
-      if(currentNewDocumentOffset < end){
-        final int effectiveStart = Math.max(currentNewDocumentOffset, start);
-        text.append(myDocument.getCharsSequence(),
-                    effectiveStart - currentNewDocumentOffset + currentOldDocumentOffset,
-                    end- currentNewDocumentOffset + currentOldDocumentOffset);
-      }
-
-      return text.toString();
+      myAffectedFragments.put(newFragment, newReplacement);
     }
 
-    private Pair<MutableTextRange, StringBuffer> getFragmentByRange(int start, final int length) {
-      final StringBuffer fragmentBuffer = new StringBuffer();
-      int end = start + length;
+    private TextRange findFragment(final int docOffset) {
+      return ContainerUtil.find(myAffectedFragments.keySet(), new Condition<TextRange>() {
+        @Override
+        public boolean value(TextRange range) {
+          return range.containsOffset(docOffset);
+        }
+      });
+    }
 
-      // restoring buffer and remove all subfragments from the list
-      int documentOffset = 0;
-      int effectiveOffset = 0;
-
-      Iterator<Pair<MutableTextRange, StringBuffer>> iterator = myAffectedFragments.iterator();
-      while (iterator.hasNext() && effectiveOffset <= end) {
-        final Pair<MutableTextRange, StringBuffer> pair = iterator.next();
-        final MutableTextRange range = pair.getFirst();
-        final StringBuffer buffer = pair.getSecond();
-        int effectiveFragmentEnd = range.getStartOffset() + buffer.length();
-
-        if(range.getStartOffset() <= start && effectiveFragmentEnd >= end) return pair;
-
-        if(effectiveFragmentEnd >= start){
-          final int effectiveStart = Math.max(effectiveOffset, start);
-          if(range.getStartOffset() > start){
-            fragmentBuffer.append(myDocument.getCharsSequence(),
-                                  effectiveStart - effectiveOffset + documentOffset,
-                                  Math.min(range.getStartOffset(), end)- effectiveOffset + documentOffset);
-          }
-          if(end >= range.getStartOffset()){
-            fragmentBuffer.append(buffer);
-            end = end > effectiveFragmentEnd ? end - (buffer.length() - range.getLength()) : range.getEndOffset();
-            effectiveFragmentEnd = range.getEndOffset();
-            start = Math.min(start, range.getStartOffset());
-            iterator.remove();
-          }
+    private int psiToDocumentOffset(int offset) {
+      for (Map.Entry<TextRange, CharSequence> entry : myAffectedFragments.entrySet()) {
+        int lengthAfter = entry.getValue().length();
+        TextRange range = entry.getKey();
+        if (range.getStartOffset() + lengthAfter < offset) {
+          offset += range.getLength() - lengthAfter;
+          continue;
         }
 
-        documentOffset += range.getEndOffset() - effectiveOffset;
-        effectiveOffset = effectiveFragmentEnd;
+        // for offsets inside replaced ranges, return the starts of the original affected fragments in document
+        return Math.min(range.getStartOffset(), offset);
       }
+      return offset;
+    }
 
-      if(effectiveOffset < end){
-        final int effectiveStart = Math.max(effectiveOffset, start);
-        fragmentBuffer.append(myDocument.getCharsSequence(),
-                              effectiveStart - effectiveOffset + documentOffset,
-                              end- effectiveOffset + documentOffset);
+    private int documentToPsiOffset(int offset, boolean greedyRight) {
+      int delta = 0;
+      for (Map.Entry<TextRange, CharSequence> entry : myAffectedFragments.entrySet()) {
+        int lengthAfter = entry.getValue().length();
+        TextRange range = entry.getKey();
+        // for offsets inside affected fragments, return either start or end of the updated range
+        if (range.containsOffset(offset)) {
+          return range.getStartOffset() + delta + (greedyRight ? lengthAfter : 0);
+        }
+        if (range.getStartOffset() > offset) {
+          break;
+        }
+        delta += lengthAfter - range.getLength();
       }
-
-      MutableTextRange newRange = new MutableTextRange(start, end);
-      final Pair<MutableTextRange, StringBuffer> pair = Pair.create(newRange, fragmentBuffer);
-      for (Pair<MutableTextRange, StringBuffer> affectedFragment : myAffectedFragments) {
-        MutableTextRange range = affectedFragment.getFirst();
-        assert end <= range.getStartOffset() || range.getEndOffset() <= start : "Range :"+range+"; Added: "+newRange;
-      }
-      myAffectedFragments.add(pair);
-      return pair;
+      return offset + delta;
     }
   }
 
-  public static class MutableTextRange {
-    private final int myLength;
-    private int myStartOffset;
-
-    public MutableTextRange(final int startOffset, final int endOffset) {
-      myStartOffset = startOffset;
-      myLength = endOffset - startOffset;
-    }
-
-    public int getStartOffset() {
-      return myStartOffset;
-    }
-
-    public int getEndOffset() {
-      return myStartOffset + myLength;
-    }
-
-    public int getLength() {
-      return myLength;
-    }
-
-    public String toString() {
-      return "[" + getStartOffset() + ", " + getEndOffset() + "]";
-    }
-
-    public void shift(final int lengthDiff) {
-      myStartOffset += lengthDiff;
-    }
-  }
 }
