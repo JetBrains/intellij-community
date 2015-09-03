@@ -52,6 +52,7 @@ public class RepositoryUtils {
   @NotNull static public final String LatestVersionId = "LATEST";
   @NotNull static public final String ReleaseVersionId = "RELEASE";
   @NotNull static public final String SnapshotVersionSuffix = "-SNAPSHOT";
+  @NotNull static public final String DefaultVersionId = ReleaseVersionId;
 
   public static void downloadAsync(final Project project,
                                    final boolean downloadSources,

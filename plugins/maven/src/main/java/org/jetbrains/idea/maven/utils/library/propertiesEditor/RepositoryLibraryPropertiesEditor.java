@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.utils.library;
+package org.jetbrains.idea.maven.utils.library.propertiesEditor;
 
 import com.google.common.base.Strings;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,15 +9,16 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.ProjectBundle;
+import org.jetbrains.idea.maven.utils.library.RepositoryAttachHandler;
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
+import org.jetbrains.idea.maven.utils.library.RepositoryUtils;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -29,17 +30,13 @@ import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.List;
 
-public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
+public class RepositoryLibraryPropertiesEditor {
   @NotNull private final Project project;
   State currentState;
   List<String> versions;
   private VersionKind versionKind;
-  private RepositoryLibraryProperties initialProperties;
-  private RepositoryLibraryProperties properties;
-  private boolean initialDownloadSources;
-  private boolean downloadSources;
-  private boolean initialDownloadJavaDocs;
-  private boolean downloadJavaDocs;
+  private RepositoryLibraryPropertiesModel initialModel;
+  private RepositoryLibraryPropertiesModel model;
   private RepositoryLibraryDescription repositoryLibraryDescription;
   private ComboBox versionKindSelector;
   private ComboBox versionSelector;
@@ -51,27 +48,40 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
   private JBCheckBox downloadSourcesCheckBox;
   private JBCheckBox downloadJavaDocsCheckBox;
 
+  @NotNull private ModelChangeListener onChangeListener;
+
+  public interface ModelChangeListener {
+    void onChange(RepositoryLibraryPropertiesEditor editor);
+  }
+
   public RepositoryLibraryPropertiesEditor(@Nullable Project project,
-                                           boolean downloadSources,
-                                           boolean downloadJavaDocs,
-                                           @NotNull RepositoryLibraryProperties properties) {
-    super(project);
-    this.downloadJavaDocs = this.initialDownloadJavaDocs = downloadJavaDocs;
-    this.downloadSources = this.initialDownloadSources = downloadSources;
+                                           RepositoryLibraryPropertiesModel model,
+                                           RepositoryLibraryDescription description) {
+    this(project, model, description, new ModelChangeListener() {
+      @Override
+      public void onChange(RepositoryLibraryPropertiesEditor editor) {
+
+      }
+    });
+  }
+
+
+  public RepositoryLibraryPropertiesEditor(@Nullable Project project,
+                                           RepositoryLibraryPropertiesModel model,
+                                           RepositoryLibraryDescription description,
+                                           @NotNull ModelChangeListener onChangeListener) {
+    this.initialModel = model.clone();
+    this.model = model;
     this.project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
-    this.initialProperties = properties;
-    this.properties = new RepositoryLibraryProperties();
-    this.properties.loadState(properties);
-    repositoryLibraryDescription = RepositoryLibraryDescription.findDescription(properties);
+    repositoryLibraryDescription = description;
     myReloadButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         reloadVersionsAsync();
       }
     });
+    this.onChangeListener = onChangeListener;
     reloadVersionsAsync();
-
-    super.init();
   }
 
   private static VersionKind getVersionKind(String version) {
@@ -130,22 +140,15 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
         }
       }
     });
-    setSelectedVersionKind(getVersionKind(properties.getVersion()));
-  }
-
-  private void checkOkButtonState() {
-    setOKActionEnabled(currentState == State.Loaded
-                       && (!properties.equals(initialProperties)
-                           || downloadSources != initialDownloadSources
-                           || downloadJavaDocs != initialDownloadJavaDocs));
+    setSelectedVersionKind(getVersionKind(model.getVersion()));
   }
 
   private void versionKindChanged() {
     versionSelector.setEnabled(versionKind == VersionKind.Select);
-    properties.changeVersion(getSelectedVersion());
-    int selection = getSelection(properties.getVersion(), versions);
+    model.setVersion(getSelectedVersion());
+    int selection = getSelection(model.getVersion(), versions);
     versionSelector.setSelectedIndex(selection);
-    checkOkButtonState();
+    onChangeListener.onChange(this);
   }
 
   private VersionKind getSelectedVersionKind() {
@@ -184,7 +187,7 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
     versionPanel.setVisible(state == State.Loaded);
     failedToLoadPanel.setVisible(state == State.FailedToLoad);
     loadingPanel.setVisible(state == State.Loading);
-    checkOkButtonState();
+    onChangeListener.onChange(this);
   }
 
   private void reloadVersionsAsync() {
@@ -197,8 +200,8 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
         try {
           List<String> versions = RepositoryAttachHandler.retrieveVersions(
             project,
-            properties.getGroupId(),
-            properties.getArtifactId(),
+            repositoryLibraryDescription.getGroupId(),
+            repositoryLibraryDescription.getArtifactId(),
             repositoryLibraryDescription.getRemoteRepositories());
           versionsLoaded(versions);
         }
@@ -211,7 +214,7 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
   }
 
   private void initVersionsPanel() {
-    final int selection = getSelection(properties.getVersion(), versions);
+    final int selection = getSelection(model.getVersion(), versions);
     CollectionComboBoxModel<String> versionSelectorModel = new CollectionComboBoxModel<String>(versions);
     //noinspection unchecked
     versionSelector.setModel(versionSelectorModel);
@@ -221,27 +224,28 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
     versionSelector.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        properties.changeVersion(getSelectedVersion());
-        checkOkButtonState();
+        model.setVersion(getSelectedVersion());
+        onChangeListener.onChange(RepositoryLibraryPropertiesEditor.this);
       }
     });
-    downloadSourcesCheckBox.setSelected(downloadSources);
+    downloadSourcesCheckBox.setSelected(model.isDownloadSources());
     downloadSourcesCheckBox.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        downloadSources = downloadSourcesCheckBox.isSelected();
-        checkOkButtonState();
+        model.setDownloadSources(downloadSourcesCheckBox.isSelected());
+        onChangeListener.onChange(RepositoryLibraryPropertiesEditor.this);
       }
     });
-    downloadJavaDocsCheckBox.setSelected(downloadJavaDocs);
+    downloadJavaDocsCheckBox.setSelected(model.isDownloadJavaDocs());
     downloadJavaDocsCheckBox.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        downloadJavaDocs = downloadJavaDocsCheckBox.isSelected();
-        checkOkButtonState();
+        model.setDownloadJavaDocs(downloadJavaDocsCheckBox.isSelected());
+        onChangeListener.onChange(RepositoryLibraryPropertiesEditor.this);
       }
     });
   }
+
 
   private void versionsLoaded(final List<String> versions) {
     this.versions = versions;
@@ -255,12 +259,7 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
       public void run() {
         initVersionsPanel();
       }
-    }, ModalityState.any(), new Condition() {
-      @Override
-      public boolean value(Object o) {
-        return Disposer.isDisposed(myDisposable);
-      }
-    });
+    }, ModalityState.any());
   }
 
   private void versionsFailedToLoad() {
@@ -269,12 +268,7 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
       public void run() {
         setState(State.FailedToLoad);
       }
-    }, ModalityState.any(), new Condition() {
-      @Override
-      public boolean value(Object o) {
-        return Disposer.isDisposed(myDisposable);
-      }
-    });
+    }, ModalityState.any());
   }
 
   public String getSelectedVersion() {
@@ -291,26 +285,16 @@ public class RepositoryLibraryPropertiesEditor extends DialogWrapper {
     return null;
   }
 
-  public RepositoryLibraryProperties getProperties() {
-    return properties;
-  }
-
-  public boolean downloadSources() {
-    return downloadSources;
-  }
-
-  public boolean downloadJavaDocs() {
-    return downloadJavaDocs;
-  }
-
   public JPanel getMainPanel() {
     return mainPanel;
   }
 
-  @Nullable
-  @Override
-  protected JComponent createCenterPanel() {
-    return mainPanel;
+  public boolean isValid() {
+    return currentState == State.Loaded;
+  }
+
+  public boolean hasChanges() {
+    return !model.equals(initialModel);
   }
 
   private enum VersionKind {
