@@ -22,9 +22,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Iterator;
-import java.util.List;
-
 /**
  * @author Eugene Zhuravlev
  *         Date: Feb 12, 2005
@@ -42,6 +39,9 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
   private static final @NonNls String CLASSNAME_OPTION = "QUALIFIED_NAME";
   private String myClassName;
 
+  private static final @NonNls String SHOWTYPE_OPTION = "SHOW_TYPE";
+  private Boolean myShowType;
+
   public String getName() {
     return myName;
   }
@@ -51,7 +51,7 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
   }
 
   public boolean isEnabled() {
-    return myEnabled != null? myEnabled.booleanValue() : false;
+    return myEnabled != null && myEnabled.booleanValue();
   }
 
   public void setEnabled(final boolean enabled) {
@@ -66,23 +66,31 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
     myClassName = className;
   }
 
+  public boolean isShowType() {
+    return myShowType == null || myShowType.booleanValue();
+  }
+
+  public void setShowType(boolean showType) {
+    myShowType = showType;
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"}) public void readExternal(Element element) throws InvalidDataException {
-    final List options = element.getChildren("option");
     myName = null;
     myEnabled = null;
     myClassName = null;
-    for (Iterator it = options.iterator(); it.hasNext();) {
-      final Element option = (Element)it.next();
+    for (Element option : element.getChildren("option")) {
       final String optionName = option.getAttributeValue("name");
       if (NAME_OPTION.equals(optionName)) {
         myName = option.getAttributeValue("value");
       }
       else if (ENABLED_OPTION.equals(optionName)) {
-        final String val = option.getAttributeValue("value");
-        myEnabled = "true".equalsIgnoreCase(val);
+        myEnabled = Boolean.parseBoolean(option.getAttributeValue("value"));
       }
       else if (CLASSNAME_OPTION.equals(optionName)) {
         myClassName = option.getAttributeValue("value");
+      }
+      else if (SHOWTYPE_OPTION.equals(optionName)) {
+        myShowType = Boolean.parseBoolean(option.getAttributeValue("value"));
       }
     }
   }
@@ -92,10 +100,13 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
       addOption(element, NAME_OPTION, myName);
     }
     if (myEnabled != null) {
-      addOption(element, ENABLED_OPTION, myEnabled.booleanValue()? "true" : "false");
+      addOption(element, ENABLED_OPTION, myEnabled.toString());
     }
     if (myClassName != null) {
       addOption(element, CLASSNAME_OPTION, myClassName);
+    }
+    if (myShowType != null) {
+      addOption(element, SHOWTYPE_OPTION, myShowType.toString());
     }
   }
 

@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
 import com.intellij.util.ui.AbstractTableCellEditor;
@@ -56,6 +57,7 @@ class CompoundRendererConfigurable extends JPanel {
   private final ClassNameEditorWithBrowseButton myClassNameField;
   private final JRadioButton myRbDefaultLabel;
   private final JRadioButton myRbExpressionLabel;
+  private final JBCheckBox myShowTypeCheckBox;
   private final JRadioButton myRbDefaultChildrenRenderer;
   private final JRadioButton myRbExpressionChildrenRenderer;
   private final JRadioButton myRbListChildrenRenderer;
@@ -82,6 +84,8 @@ class CompoundRendererConfigurable extends JPanel {
     final ButtonGroup labelButtonsGroup = new ButtonGroup();
     labelButtonsGroup.add(myRbDefaultLabel);
     labelButtonsGroup.add(myRbExpressionLabel);
+
+    myShowTypeCheckBox = new JBCheckBox(DebuggerBundle.message("label.compound.renderer.configurable.show.type"));
 
     myRbDefaultChildrenRenderer = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
     myRbExpressionChildrenRenderer = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
@@ -135,6 +139,9 @@ class CompoundRendererConfigurable extends JPanel {
     panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.when.rendering")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                      new Insets(20, 0, 0, 0), 0, 0));
+    panel.add(myShowTypeCheckBox,
+              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                     new Insets(0, 7, 0, 0), 0, 0));
     panel.add(myRbDefaultLabel,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                      new Insets(0, 10, 0, 0), 0, 0));
@@ -307,6 +314,7 @@ class CompoundRendererConfigurable extends JPanel {
 
   private void flushDataTo(final CompoundReferenceRenderer renderer) { // label
     LabelRenderer labelRenderer = null;
+    renderer.setShowType(myShowTypeCheckBox.isSelected());
     if (myRbExpressionLabel.isSelected()) {
       labelRenderer = new LabelRenderer();
       labelRenderer.setLabelExpression(myLabelEditor.getText());
@@ -338,6 +346,8 @@ class CompoundRendererConfigurable extends JPanel {
     final ValueLabelRenderer labelRenderer = myRenderer.getLabelRenderer();
     final ChildrenRenderer childrenRenderer = myRenderer.getChildrenRenderer();
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
+
+    myShowTypeCheckBox.setSelected(myRenderer.isShowType());
 
     if (rendererSettings.isBase(labelRenderer)) {
       myLabelEditor.setText(emptyExpressionFragment);
