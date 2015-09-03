@@ -13,307 +13,283 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.builtInWebServer;
+package org.jetbrains.builtInWebServer
 
-import com.google.common.net.InetAddresses;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathUtilRt;
-import com.intellij.util.UriUtil;
-import com.intellij.util.io.URLUtil;
-import com.intellij.util.net.NetUtils;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtf8Writer;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.*;
-import io.netty.handler.stream.ChunkedStream;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.builtInWebServer.ssi.SsiExternalResolver;
-import org.jetbrains.builtInWebServer.ssi.SsiProcessor;
-import org.jetbrains.ide.HttpRequestHandler;
-import org.jetbrains.io.FileResponses;
-import org.jetbrains.io.Responses;
+import com.google.common.net.InetAddresses
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PathUtilRt
+import com.intellij.util.UriUtil
+import com.intellij.util.io.URLUtil
+import com.intellij.util.net.NetUtils
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.ByteBufUtf8Writer
+import io.netty.channel.Channel
+import io.netty.channel.ChannelFuture
+import io.netty.channel.ChannelFutureListener
+import io.netty.channel.ChannelHandlerContext
+import io.netty.handler.codec.http.*
+import io.netty.handler.stream.ChunkedStream
+import org.jetbrains.builtInWebServer.ssi.SsiExternalResolver
+import org.jetbrains.builtInWebServer.ssi.SsiProcessor
+import org.jetbrains.ide.HttpRequestHandler
+import org.jetbrains.io.FileResponses
+import org.jetbrains.io.Responses
 
-import java.io.File;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.io.File
+import java.io.IOException
+import java.net.InetAddress
+import java.net.UnknownHostException
 
-import static org.jetbrains.io.Responses.addKeepAliveIfNeed;
+import org.jetbrains.io.Responses.addKeepAliveIfNeed
 
-public final class BuiltInWebServer extends HttpRequestHandler {
-  static final Logger LOG = Logger.getInstance(BuiltInWebServer.class);
+public class BuiltInWebServer : HttpRequestHandler() {
+  companion object {
+    val LOG = Logger.getInstance(javaClass<BuiltInWebServer>())
 
-  @Nullable
-  public static VirtualFile findIndexFile(@NotNull VirtualFile basedir) {
-    VirtualFile[] children = basedir.getChildren();
-    if (children == null || children.length == 0) {
-      return null;
-    }
+    private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {
+      var projectName = projectNameAsHost
+      val decodedPath = URLUtil.unescapePercentSequences(UriUtil.trimParameters(request.uri()))
+      val offset: Int
+      val emptyPath: Boolean
+      val isCustomHost = projectName != null
+      if (isCustomHost) {
+        // host mapped to us
+        offset = 0
+        emptyPath = decodedPath.isEmpty()
+      }
+      else {
+        offset = decodedPath.indexOf('/', 1)
+        projectName = decodedPath.substring(1, if (offset == -1) decodedPath.length() else offset)
+        emptyPath = offset == -1
+      }
 
-    for (String indexNamePrefix : new String[]{"index.", "default."}) {
-      VirtualFile index = null;
-      String preferredName = indexNamePrefix + "html";
-      for (VirtualFile child : children) {
-        if (!child.isDirectory()) {
-          String name = child.getName();
-          //noinspection IfStatementWithIdenticalBranches
-          if (name.equals(preferredName)) {
-            return child;
-          }
-          else if (index == null && name.startsWith(indexNamePrefix)) {
-            index = child;
+      val project = findProject(projectName!!, isCustomHost) ?: return false
+      if (emptyPath) {
+        if (!SystemInfoRt.isFileSystemCaseSensitive) {
+          // may be passed path is not correct
+          projectName = project.getName()
+        }
+
+        // we must redirect "jsdebug" to "jsdebug/" as nginx does, otherwise browser will treat it as file instead of directory, so, relative path will not work
+        WebServerPathHandler.redirectToDirectory(request, context.channel(), projectName)
+        return true
+      }
+
+      val path = FileUtil.toCanonicalPath(decodedPath.substring(offset + 1), '/')
+      for (pathHandler in WebServerPathHandler.EP_NAME.getExtensions()) {
+        try {
+          if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
+            return true
           }
         }
-      }
-      if (index != null) {
-        return index;
-      }
-    }
-    return null;
-  }
+        catch (e: Throwable) {
+          LOG.error(e)
+        }
 
-  @Override
-  public boolean isSupported(@NotNull FullHttpRequest request) {
-    return super.isSupported(request) || request.method() == HttpMethod.POST;
-  }
-
-  @Override
-  public boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) {
-    String host = request.headers().get(HttpHeaderNames.HOST);
-    if (StringUtil.isEmpty(host)) {
-      return false;
+      }
+      return false
     }
 
-    int portIndex = host.indexOf(':');
+    private fun findProject(projectName: String, isCustomHost: Boolean): Project? {
+      // user can rename project directory, so, we should support this case - find project by base directory name
+      var candidateByDirectoryName: Project? = null
+      for (project in ProjectManager.getInstance().getOpenProjects()) {
+        // domain name is case-insensitive
+        if (!project.isDisposed() && projectName.equals(project.getName(), isCustomHost /* domain name is case-insensitive */ || !SystemInfoRt.isFileSystemCaseSensitive)) {
+          return project
+        }
+
+        if (candidateByDirectoryName == null && compareNameAndProjectBasePath(projectName, project)) {
+          candidateByDirectoryName = project
+        }
+      }
+      return candidateByDirectoryName
+    }
+  }
+
+  override fun isSupported(request: FullHttpRequest) = super.isSupported(request) || request.method() === HttpMethod.POST
+
+  override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
+    var host = request.headers().get(HttpHeaderNames.HOST)
+    if (host.isNullOrEmpty()) {
+      return false
+    }
+
+    val portIndex = host.indexOf(':')
     if (portIndex > 0) {
-      host = host.substring(0, portIndex);
+      host = host.substring(0, portIndex)
     }
 
-    String projectName;
-    boolean isIpv6 = host.charAt(0) == '[' && host.length() > 2 && host.charAt(host.length() - 1) == ']';
+    val projectName: String?
+    val isIpv6 = host.charAt(0) == '[' && host.length() > 2 && host.charAt(host.length() - 1) == ']'
     if (isIpv6) {
-      host = host.substring(1, host.length() - 1);
+      host = host.substring(1, host.length() - 1)
     }
 
     if (isIpv6 || InetAddresses.isInetAddress(host) || isOwnHostName(host) || host.endsWith(".ngrok.io")) {
       if (urlDecoder.path().length() < 2) {
-        return false;
+        return false
       }
-      projectName = null;
+      projectName = null
     }
     else {
-      projectName = host;
+      projectName = host
     }
-    return doProcess(request, context, projectName);
+    return doProcess(request, context, projectName)
+  }
+}
+
+public fun compareNameAndProjectBasePath(projectName: String, project: Project): Boolean {
+  val basePath = project.getBasePath()
+  return basePath != null && basePath.length() > projectName.length() && basePath.endsWith(projectName) && basePath.charAt(basePath.length() - projectName.length() - 1) == '/'
+}
+
+public fun findIndexFile(basedir: VirtualFile): VirtualFile? {
+  val children = basedir.getChildren()
+  if (children == null || children.isEmpty()) {
+    return null
   }
 
-  public static boolean isOwnHostName(@NotNull String host) {
-    if (NetUtils.isLocalhost(host)) {
-      return true;
-    }
-
-    try {
-      InetAddress address = InetAddress.getByName(host);
-      if (host.equals(address.getHostAddress()) || host.equalsIgnoreCase(address.getCanonicalHostName())) {
-        return true;
+  for (indexNamePrefix in arrayOf("index.", "default.")) {
+    var index: VirtualFile? = null
+    val preferredName = indexNamePrefix + "html"
+    for (child in children) {
+      if (!child.isDirectory()) {
+        val name = child.getName()
+        //noinspection IfStatementWithIdenticalBranches
+        if (name == preferredName) {
+          return child
+        }
+        else if (index == null && name.startsWith(indexNamePrefix)) {
+          index = child
+        }
       }
-
-      String localHostName = InetAddress.getLocalHost().getHostName();
-      // WEB-8889
-      // develar.local is own host name: develar. equals to "develar.labs.intellij.net" (canonical host name)
-      return localHostName.equalsIgnoreCase(host) ||
-             (host.endsWith(".local") && localHostName.regionMatches(true, 0, host, 0, host.length() - ".local".length()));
     }
-    catch (UnknownHostException ignored) {
-      return false;
+    if (index != null) {
+      return index
     }
   }
+  return null
+}
 
-  private static boolean doProcess(@NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context, @Nullable String projectName) {
-    final String decodedPath = URLUtil.unescapePercentSequences(UriUtil.trimParameters(request.uri()));
-    int offset;
-    boolean emptyPath;
-    boolean isCustomHost = projectName != null;
-    if (isCustomHost) {
-      // host mapped to us
-      offset = 0;
-      emptyPath = decodedPath.isEmpty();
-    }
-    else {
-      offset = decodedPath.indexOf('/', 1);
-      projectName = decodedPath.substring(1, offset == -1 ? decodedPath.length() : offset);
-      emptyPath = offset == -1;
-    }
-
-    Project project = findProject(projectName, isCustomHost);
-    if (project == null) {
-      return false;
-    }
-
-    if (emptyPath) {
-      if (!SystemInfoRt.isFileSystemCaseSensitive) {
-        // may be passed path is not correct
-        projectName = project.getName();
-      }
-
-      // we must redirect "jsdebug" to "jsdebug/" as nginx does, otherwise browser will treat it as file instead of directory, so, relative path will not work
-      WebServerPathHandler.redirectToDirectory(request, context.channel(), projectName);
-      return true;
-    }
-
-    final String path = FileUtil.toCanonicalPath(decodedPath.substring(offset + 1), '/');
-    for (WebServerPathHandler pathHandler : WebServerPathHandler.EP_NAME.getExtensions()) {
-      try {
-        if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
-          return true;
-        }
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
-    return false;
+public fun isOwnHostName(host: String): Boolean {
+  if (NetUtils.isLocalhost(host)) {
+    return true
   }
 
-  static final class StaticFileHandler extends WebServerFileHandler {
-    private SsiProcessor ssiProcessor;
+  try {
+    val address = InetAddress.getByName(host)
+    if (host == address.getHostAddress() || host.equalsIgnoreCase(address.getCanonicalHostName())) {
+      return true
+    }
 
-    @Override
-    public boolean process(@NotNull VirtualFile file,
-                           @NotNull CharSequence canonicalRequestPath,
-                           @NotNull Project project,
-                           @NotNull FullHttpRequest request,
-                           @NotNull Channel channel,
-                           boolean isCustomHost) throws IOException {
-      if (file.isInLocalFileSystem()) {
-        CharSequence nameSequence = file.getNameSequence();
-        //noinspection SpellCheckingInspection
-        if (StringUtilRt.endsWithIgnoreCase(nameSequence, ".shtml") || StringUtilRt.endsWithIgnoreCase(nameSequence, ".stm") || StringUtilRt.endsWithIgnoreCase(nameSequence, ".shtm")) {
-          processSsi(file, canonicalRequestPath, project, request, channel, isCustomHost);
-          return true;
-        }
+    val localHostName = InetAddress.getLocalHost().getHostName()
+    // WEB-8889
+    // develar.local is own host name: develar. equals to "develar.labs.intellij.net" (canonical host name)
+    return localHostName.equals(host, ignoreCase = true) || (host.endsWith(".local") && localHostName.regionMatches(0, host, 0, host.length() - ".local".length(), true))
+  }
+  catch (ignored: UnknownHostException) {
+    return false
+  }
+}
 
-        File ioFile = VfsUtilCore.virtualToIoFile(file);
-        if (hasAccess(ioFile)) {
-          FileResponses.sendFile(request, channel, ioFile);
-        }
-        else {
-          Responses.sendStatus(HttpResponseStatus.FORBIDDEN, channel, request);
-        }
+private class StaticFileHandler : WebServerFileHandler() {
+  private var ssiProcessor: SsiProcessor? = null
+
+  throws(IOException::class)
+  override fun process(file: VirtualFile, canonicalRequestPath: CharSequence, project: Project, request: FullHttpRequest, channel: Channel, isCustomHost: Boolean): Boolean {
+    if (file.isInLocalFileSystem()) {
+      val nameSequence = file.getNameSequence()
+      //noinspection SpellCheckingInspection
+      if (StringUtilRt.endsWithIgnoreCase(nameSequence, ".shtml") || StringUtilRt.endsWithIgnoreCase(nameSequence, ".stm") || StringUtilRt.endsWithIgnoreCase(nameSequence, ".shtm")) {
+        processSsi(file, canonicalRequestPath, project, request, channel, isCustomHost)
+        return true
+      }
+
+      val ioFile = VfsUtilCore.virtualToIoFile(file)
+      if (hasAccess(ioFile)) {
+        FileResponses.sendFile(request, channel, ioFile)
       }
       else {
-        HttpResponse response = FileResponses.prepareSend(request, channel, file.getTimeStamp(), file.getPath());
-        if (response == null) {
-          return true;
-        }
-
-        boolean keepAlive = addKeepAliveIfNeed(response, request);
-        if (request.method() != HttpMethod.HEAD) {
-          HttpHeaderUtil.setContentLength(response, file.getLength());
-        }
-
-        channel.write(response);
-
-        if (request.method() != HttpMethod.HEAD) {
-          channel.write(new ChunkedStream(file.getInputStream()));
-        }
-
-        ChannelFuture future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
-        if (!keepAlive) {
-          future.addListener(ChannelFutureListener.CLOSE);
-        }
+        Responses.sendStatus(HttpResponseStatus.FORBIDDEN, channel, request)
       }
-      return true;
     }
+    else {
+      val response = FileResponses.prepareSend(request, channel, file.getTimeStamp(), file.getPath()) ?: return true
 
-    private void processSsi(@NotNull VirtualFile file,
-                            @NotNull CharSequence canonicalRequestPath,
-                            @NotNull Project project,
-                            @NotNull FullHttpRequest request, @NotNull Channel channel, boolean isCustomHost) throws IOException {
-      String path = PathUtilRt.getParentPath(canonicalRequestPath.toString());
-      if (!isCustomHost) {
-        // remove project name - SSI resolves files only inside current project
-        path = path.substring(path.indexOf('/', 1) + 1);
+      val keepAlive = addKeepAliveIfNeed(response, request)
+      if (request.method() !== HttpMethod.HEAD) {
+        HttpHeaderUtil.setContentLength(response, file.getLength())
       }
 
-      if (ssiProcessor == null) {
-        ssiProcessor = new SsiProcessor(false);
+      channel.write(response)
+
+      if (request.method() !== HttpMethod.HEAD) {
+        channel.write(ChunkedStream(file.getInputStream()))
       }
 
-      ByteBuf buffer = channel.alloc().ioBuffer();
-      boolean keepAlive;
-      boolean releaseBuffer = true;
-      try {
-        long lastModified = ssiProcessor.process(new SsiExternalResolver(project, request, path, file.getParent()),
-                                                 VfsUtilCore.loadText(file), file.getTimeStamp(), new ByteBufUtf8Writer(buffer));
-
-        HttpResponse response = FileResponses.prepareSend(request, channel, lastModified, file.getPath());
-        if (response == null) {
-          return;
-        }
-
-        keepAlive = addKeepAliveIfNeed(response, request);
-        if (request.method() != HttpMethod.HEAD) {
-          HttpHeaderUtil.setContentLength(response, buffer.readableBytes());
-        }
-
-        channel.write(response);
-
-        if (request.method() != HttpMethod.HEAD) {
-          releaseBuffer = false;
-          channel.write(buffer);
-        }
-      }
-      finally {
-        if (releaseBuffer) {
-          buffer.release();
-        }
-      }
-
-      ChannelFuture future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+      val future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
       if (!keepAlive) {
-        future.addListener(ChannelFutureListener.CLOSE);
+        future.addListener(ChannelFutureListener.CLOSE)
+      }
+    }
+    return true
+  }
+
+  throws(IOException::class)
+  private fun processSsi(file: VirtualFile, canonicalRequestPath: CharSequence, project: Project, request: FullHttpRequest, channel: Channel, isCustomHost: Boolean) {
+    var path = PathUtilRt.getParentPath(canonicalRequestPath.toString())
+    if (!isCustomHost) {
+      // remove project name - SSI resolves files only inside current project
+      path = path.substring(path.indexOf('/', 1) + 1)
+    }
+
+    if (ssiProcessor == null) {
+      ssiProcessor = SsiProcessor(false)
+    }
+
+    val buffer = channel.alloc().ioBuffer()
+    val keepAlive: Boolean
+    var releaseBuffer = true
+    try {
+      val lastModified = ssiProcessor!!.process(SsiExternalResolver(project, request, path, file.getParent()), VfsUtilCore.loadText(file), file.getTimeStamp(), ByteBufUtf8Writer(buffer))
+
+      val response = FileResponses.prepareSend(request, channel, lastModified, file.getPath()) ?: return
+
+      keepAlive = addKeepAliveIfNeed(response, request)
+      if (request.method() !== HttpMethod.HEAD) {
+        HttpHeaderUtil.setContentLength(response, buffer.readableBytes().toLong())
+      }
+
+      channel.write(response)
+
+      if (request.method() !== HttpMethod.HEAD) {
+        releaseBuffer = false
+        channel.write(buffer)
+      }
+    }
+    finally {
+      if (releaseBuffer) {
+        buffer.release()
       }
     }
 
-    private static boolean hasAccess(File result) {
-      // deny access to .htaccess files
-      return !result.isDirectory() && result.canRead() && !(result.isHidden() || result.getName().startsWith(".ht"));
+    val future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
+    if (!keepAlive) {
+      future.addListener(ChannelFutureListener.CLOSE)
     }
   }
 
-  @Nullable
-  private static Project findProject(String projectName, boolean isCustomHost) {
-    // user can rename project directory, so, we should support this case - find project by base directory name
-    Project candidateByDirectoryName = null;
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      String name = project.getName();
-      // domain name is case-insensitive
-      if (!project.isDisposed() && ((isCustomHost || !SystemInfoRt.isFileSystemCaseSensitive) ? projectName.equalsIgnoreCase(name) : projectName.equals(name))) {
-        return project;
-      }
-
-      if (candidateByDirectoryName == null && compareNameAndProjectBasePath(projectName, project)) {
-        candidateByDirectoryName = project;
-      }
-    }
-    return candidateByDirectoryName;
-  }
-
-  public static boolean compareNameAndProjectBasePath(String projectName, Project project) {
-    String basePath = project.getBasePath();
-    return basePath != null && basePath.length() > projectName.length() && basePath.endsWith(projectName) && basePath.charAt(basePath.length() - projectName.length() - 1) == '/';
+  private fun hasAccess(result: File): Boolean {
+    // deny access to .htaccess files
+    return !result.isDirectory() && result.canRead() && !(result.isHidden() || result.getName().startsWith(".ht"))
   }
 }
