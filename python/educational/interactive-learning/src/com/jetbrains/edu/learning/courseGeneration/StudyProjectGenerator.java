@@ -382,6 +382,9 @@ public class StudyProjectGenerator {
         catch (IOException e) {
           LOG.error(e.getMessage());
         }
+        catch (JsonSyntaxException e) {
+          LOG.error(e.getMessage());
+        }
         finally {
           StudyUtils.closeSilently(reader);
         }
