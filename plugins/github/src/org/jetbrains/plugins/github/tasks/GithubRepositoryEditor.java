@@ -35,7 +35,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   private MyTextField myRepoAuthor;
   private MyTextField myRepoName;
   private MyTextField myToken;
-  private JBCheckBox myAssignedIssuesOnly;
+  private JBCheckBox myShowNotAssignedIssues;
   private JButton myTokenButton;
   private JBLabel myHostLabel;
   private JBLabel myRepositoryLabel;
@@ -54,7 +54,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myRepoName.setText(repository.getRepoName());
     myToken.setText(repository.getToken());
     myToken.setText(repository.getToken());
-    myAssignedIssuesOnly.setSelected(repository.isAssignedIssuesOnly());
+    myShowNotAssignedIssues.setSelected(!repository.isAssignedIssuesOnly());
 
     DocumentListener buttonUpdater = new DocumentAdapter() {
       @Override
@@ -104,19 +104,19 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myTokenPanel.add(myToken, BorderLayout.CENTER);
     myTokenPanel.add(myTokenButton, BorderLayout.EAST);
 
-    myAssignedIssuesOnly = new JBCheckBox("Assigned Issues Only");
+    myShowNotAssignedIssues = new JBCheckBox("Include issues not assigned to me");
 
     installListener(myRepoAuthor);
     installListener(myRepoName);
     installListener(myToken);
-    installListener(myAssignedIssuesOnly);
+    installListener(myShowNotAssignedIssues);
 
     return FormBuilder.createFormBuilder()
       .setAlignLabelOnRight(true)
       .addLabeledComponent(myHostLabel, myHostPanel)
       .addLabeledComponent(myRepositoryLabel, myRepoPanel)
       .addLabeledComponent(myTokenLabel, myTokenPanel)
-      .addComponent(myAssignedIssuesOnly)
+      .addComponentToRightColumn(myShowNotAssignedIssues)
       .getPanel();
   }
 
@@ -162,7 +162,6 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myHostLabel.setAnchor(anchor);
     myRepositoryLabel.setAnchor(anchor);
     myTokenLabel.setAnchor(anchor);
-    myAssignedIssuesOnly.setAnchor(anchor);
   }
 
   private void updateTokenButton() {
@@ -197,7 +196,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   }
 
   private boolean isAssignedIssuesOnly() {
-    return myAssignedIssuesOnly.isSelected();
+    return !myShowNotAssignedIssues.isSelected();
   }
 
   public static class MyTextField extends JBTextField {
