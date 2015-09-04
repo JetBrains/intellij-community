@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -102,7 +103,9 @@ public class PyEnvTaskRunner {
   @NotNull
   private static Sdk createSdkByExecutable(@NotNull final String executable) throws InvalidSdkException, IOException {
     final URL rootUrl = new URL(String.format("file:///%s", executable));
-    return PyTestSdkTools.createTempSdk(VfsUtil.findFileByURL(rootUrl), SdkCreationType.SDK_PACKAGES_AND_SKELETONS, null);
+    final VirtualFile url = VfsUtil.findFileByURL(rootUrl);
+    assert url != null :"No url found for " + rootUrl;
+    return PyTestSdkTools.createTempSdk(url, SdkCreationType.SDK_PACKAGES_AND_SKELETONS, null);
   }
 
   protected boolean shouldRun(String root, PyTestTask task) {
