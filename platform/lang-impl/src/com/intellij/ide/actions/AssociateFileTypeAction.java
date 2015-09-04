@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.scratch.ScratchRootType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -25,7 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class AssociateFileTypeAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
     FileTypeChooser.associateFileType(file.getName());
   }
 
@@ -41,7 +42,8 @@ public class AssociateFileTypeAction extends AnAction {
     }
     else {
       // the action should also be available for files which have been auto-detected as text or as a particular language (IDEA-79574)
-      haveSmthToDo = FileTypeManager.getInstance().getFileTypeByFileName(file.getName()) == FileTypes.UNKNOWN;
+      haveSmthToDo = FileTypeManager.getInstance().getFileTypeByFileName(file.getName()) == FileTypes.UNKNOWN &&
+                     !ScratchRootType.getInstance().isScratchFile(file);
     }
     presentation.setVisible(haveSmthToDo || ActionPlaces.isMainMenuOrActionSearch(e.getPlace()));
     presentation.setEnabled(haveSmthToDo);

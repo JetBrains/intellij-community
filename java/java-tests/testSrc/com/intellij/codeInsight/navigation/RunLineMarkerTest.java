@@ -57,10 +57,12 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(group);
     TestActionEvent event = new TestActionEvent();
     List<AnAction> list = ContainerUtil.findAll(group.getChildren(event), action -> {
-      action.update(event);
-      return event.getPresentation().getText().startsWith("Run");
+      TestActionEvent actionEvent = new TestActionEvent();
+      action.update(actionEvent);
+      String text = actionEvent.getPresentation().getText();
+      return text != null && text.startsWith("Run ") && text.endsWith("'");
     });
-    assertEquals(2, list.size());
+    assertEquals(list.toString(), 2, list.size());
     list.get(0).update(event);
     assertEquals("Run 'MainTest.main()'", event.getPresentation().getText());
     list.get(1).update(event);
