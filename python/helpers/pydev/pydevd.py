@@ -587,8 +587,7 @@ class PyDB:
                                         self.mpl_in_use = True
                                     except:
                                         PydevdLog(2, "Matplotlib support in debug console failed", traceback.format_exc())
-                                    finally:
-                                        self.mpl_hooks_in_debug_console = True
+                                    self.mpl_hooks_in_debug_console = True
 
                                 if int_cmd.canBeExecutedBy(curr_thread_id):
                                     PydevdLog(2, "processing internal command ", str(int_cmd))
