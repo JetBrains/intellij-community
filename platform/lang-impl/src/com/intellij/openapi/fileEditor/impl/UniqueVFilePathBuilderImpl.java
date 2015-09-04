@@ -122,7 +122,7 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
       if (openFile.getName().equals(fileName)) {
         setOfFilesWithTheSameName.add(openFile);
       }
-    }                                                         IDEA-134961 Recent files popup takes 5 seconds to appear
+    }
     for (VirtualFile recentlyEditedFile : EditorHistoryManager.getInstance(project).getFiles()) {
       if (recentlyEditedFile.getName().equals(fileName)) {
         setOfFilesWithTheSameName.add(recentlyEditedFile);
