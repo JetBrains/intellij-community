@@ -617,7 +617,13 @@ public class FileUtilRt {
   @NotNull
   public static byte[] loadBytes(@NotNull InputStream stream) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    copy(stream, buffer);
+    final byte[] bytes = BUFFER.get();
+    while (true) {
+      int n = stream.read(bytes, 0, bytes.length);
+      if (n <= 0) break;
+      buffer.write(bytes, 0, n);
+    }
+    buffer.close();
     return buffer.toByteArray();
   }
 
@@ -672,7 +678,7 @@ public class FileUtilRt {
   /**
    * Warning! this method is _not_ symlinks-aware. Consider using com.intellij.openapi.util.io.FileUtil.delete()
    * @param file file or directory to delete
-   * @return true if the file did not exist or was successfully deleted
+   * @return true if the file did not exist or was successfully deleted 
    */
   public static boolean delete(@NotNull File file) {
     if (NIOReflect.IS_AVAILABLE) {
@@ -690,7 +696,7 @@ public class FileUtilRt {
           Files.deleteIfExists(file);
           return FileVisitResult.CONTINUE;
         }
-
+      
         @Override
         public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
           Files.deleteIfExists(dir);
@@ -714,7 +720,7 @@ public class FileUtilRt {
     }
     return !file.exists();
   }
-
+  
   private static boolean deleteRecursively(@NotNull File file) {
     File[] files = file.listFiles();
     if (files != null) {
@@ -837,7 +843,7 @@ public class FileUtilRt {
       }
     }
     else {
-      final byte[] buffer = getThreadLocalBuffer();
+      final byte[] buffer = BUFFER.get();
       while (true) {
         int read = inputStream.read(buffer);
         if (read < 0) break;
@@ -845,12 +851,6 @@ public class FileUtilRt {
       }
     }
   }
-
-  @NotNull
-  public static byte[] getThreadLocalBuffer() {
-    return BUFFER.get();
-  }
-
 
   public static int getUserFileSizeLimit() {
     try {

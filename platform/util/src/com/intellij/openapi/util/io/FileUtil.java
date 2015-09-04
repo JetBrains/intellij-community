@@ -30,10 +30,7 @@ import com.intellij.util.text.FilePathHashingStrategy;
 import com.intellij.util.text.StringFactory;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.RegExp;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -235,10 +232,27 @@ public class FileUtil extends FileUtilRt {
     return bytes;
   }
 
+  public static boolean processFirstBytes(@NotNull InputStream stream, int length, @NotNull Processor<ByteSequence> processor)
+    throws IOException {
+    final byte[] bytes = BUFFER.get();
+    assert bytes.length >= length : "Cannot process more than " + bytes.length + " in one call, requested:" + length;
+
+    int n = stream.read(bytes, 0, length);
+    if (n <= 0) return false;
+
+    return processor.process(new ByteSequence(bytes, 0, n));
+  }
+
   @NotNull
   public static byte[] loadFirst(@NotNull InputStream stream, int maxLength) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    copy(stream, maxLength, buffer);
+    final byte[] bytes = BUFFER.get();
+    while (maxLength > 0) {
+      int n = stream.read(bytes, 0, Math.min(maxLength, bytes.length));
+      if (n <= 0) break;
+      buffer.write(bytes, 0, n);
+      maxLength -= n;
+    }
     buffer.close();
     return buffer.toByteArray();
   }
@@ -294,7 +308,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static byte[] adaptiveLoadBytes(@NotNull InputStream stream) throws IOException {
-    byte[] bytes = getThreadLocalBuffer();
+    byte[] bytes = new byte[4096];
     List<byte[]> buffers = null;
     int count = 0;
     int total = 0;
@@ -518,7 +532,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void copy(@NotNull InputStream inputStream, int maxSize, @NotNull OutputStream outputStream) throws IOException {
-    final byte[] buffer = getThreadLocalBuffer();
+    final byte[] buffer = BUFFER.get();
     int toRead = maxSize;
     while (toRead > 0) {
       int read = inputStream.read(buffer, 0, Math.min(buffer.length, toRead));
