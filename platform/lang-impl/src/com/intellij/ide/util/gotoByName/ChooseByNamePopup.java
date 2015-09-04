@@ -467,26 +467,12 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   public void repaintList() {
     myRepaintQueue.cancelAllUpdates();
-    myRepaintQueue.queue(new MyUpdate(this));
-  }
-
-  private static class MyUpdate extends Update {
-    private final ChooseByNamePopup myPopup;
-
-    public MyUpdate(ChooseByNamePopup popup) {
-      super(popup);
-      myPopup = popup;
-    }
-
-    @Override
-    public void run() {
-      myPopup.repaintListImmediate();
-    }
-
-    @Override
-    public boolean canEat(final Update update) {
-      return true;
-    }
+    myRepaintQueue.queue(new Update(this) {
+      @Override
+      public void run() {
+        ChooseByNamePopup.this.repaintListImmediate();
+      }
+    });
   }
 
   public void repaintListImmediate() {
