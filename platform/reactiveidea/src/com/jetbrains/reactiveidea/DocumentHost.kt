@@ -68,7 +68,10 @@ public class DocumentHost(val reactiveModel: ReactiveModel,
             result = (path / "events" / Last).putIn(result, documentEvent(e))
           }
 
-          doc.putUserData(TIMESTAMP, (result.getIn(path / "events") as ListModel).size())
+          val eventsList = result.getIn(path / "events")
+          if(eventsList is ListModel) {
+            doc.putUserData(TIMESTAMP, eventsList.size())
+          }
           pendingEvents.clear()
           result
         })

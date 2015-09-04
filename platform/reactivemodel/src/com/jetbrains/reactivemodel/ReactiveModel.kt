@@ -1,5 +1,6 @@
 package com.jetbrains.reactivemodel
 
+import clojure.lang.Keyword
 import com.github.krukow.clj_lang.IPersistentMap
 import com.github.krukow.clj_lang.PersistentHashMap
 import com.github.krukow.clj_lang.PersistentHashSet
@@ -16,6 +17,8 @@ import java.util.HashMap
 import java.util.Queue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+
+fun String.not(): Keyword = Keyword.intern(this)
 
 public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffConsumer: (MapDiff) -> Unit = {}) {
   public var root: MapModel = MapModel()
@@ -65,9 +68,9 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
 
   public fun subscribe<T : Model>(lt: Lifetime = lifetime, tag: Tag<T>): TagSignal<T> {
     val signal = TagSignal(tag, lt)
-    tagSubs.putValue(tag.name, signal)
+    tagSubs.putValue(tag.name.getName(), signal)
     lt += {
-      tagSubs.remove(tag.name, signal)
+      tagSubs.remove(tag.name.getName(), signal)
     }
     return signal
   }
@@ -136,15 +139,19 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
       newval.forEach { e ->
         val value = e.value
         if (e.key == tagsField) {
-          val values = value as ListModel
+          val values: Collection<*> = run {
+            if (value is PrimitiveModel<*> && value.value is Collection<*>) {
+              return@run value.value as Collection<Keyword>
+            }
+            throw AssertionError("unknown tags field $value")
+          }
           values.forEach {
-            it as PrimitiveModel<*>
-            val tag = getTag(it.value as String)
+            val tag = it as? Keyword
             if (tag != null) {
               val index = newModel.meta.index()
-              var vals: PersistentHashSet<Path> = index.valAt(tag.name, PersistentHashSet.emptySet<Path>())
+              var vals: PersistentHashSet<Path> = index.valAt(tag.getName(), PersistentHashSet.emptySet<Path>())
               vals = if (add) vals.cons(path) else vals.disjoin(path)
-              newModel = newModel.assocMeta(INDEX_FIELD, index.assoc(tag.name, vals))
+              newModel = newModel.assocMeta(INDEX_FIELD, index.assoc(tag.getName(), vals))
             }
           }
         } else if (value is MapModel) {
@@ -187,7 +194,7 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
       if (lifetime != null) {
         lifetime.terminate()
       } else {
-        val map: Map<String, Model?> = oldModel.hmap // explicit type inference
+        val map: Map<Any, Model?> = oldModel.hmap // explicit type inference
         map.forEach { e ->
           val value = e.getValue()
           if (value is MapModel) {
@@ -205,14 +212,14 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
   private fun fireUpdates(oldModel: MapModel, newModel: MapModel, diff: MapDiff) {
     updates {
       for ((path, signals) in subscriptions.entrySet()) {
-        for(signal in signals) {
+        for (signal in signals) {
           if (path.getIn(diff) != null) {
             ReactGraph.scheduleUpdate(Change(signal, path.getIn(oldModel), path.getIn(newModel)))
           }
         }
       }
       for ((name, signals) in tagSubs.entrySet()) {
-        for(signal in signals) {
+        for (signal in signals) {
           if (oldModel.meta.index()[name] != newModel.meta.index()[name]) {
             assert(signal.tag.getIn(oldModel) != signal.tag.getIn(newModel))
             ReactGraph.scheduleUpdate(Change(signal, signal.tag.getIn(oldModel), signal.tag.getIn(newModel)))
@@ -230,10 +237,10 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
   fun dispatch(actionModel: Model, model: MapModel): MapModel {
     actionModel as MapModel
     cur = this
-    val actionName = (actionModel["action"] as PrimitiveModel<String>).value
+    val actionName = ((actionModel[!"action"] as PrimitiveModel<*>).value as Keyword).getName()
     val handler = actionToHandler[actionName]
     if (handler != null) {
-      return handler(actionModel["args"] as MapModel, model)
+      return handler(actionModel[!"args"] as MapModel, model)
     } else {
       println("unknown action $actionModel")
     }

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.reactivemodel
 
+import clojure.lang.Keyword
 import com.github.krukow.clj_lang.IPersistentSet
 import com.github.krukow.clj_lang.PersistentHashMap
 import com.github.krukow.clj_lang.PersistentHashSet
@@ -24,28 +25,26 @@ import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.get
 import java.util.*
 
-private val tagMap = HashMap<String, Tag<*>>() // only read access after init
+private val tagMap = HashMap<Keyword, Tag<*>>() // only read access after init
 
-class Tag<T : Model>(val name: String) {
+class Tag<T : Model>(val name: Keyword) {
   init {
     tagMap[name] = this
   }
 
   fun<M : AssocModel<*, M>> getIn(rootModel: M): List<T> {
     val index = rootModel.meta.index()
-    val pathes: PersistentHashSet<Path> = index[name] as? PersistentHashSet<Path> ?: PersistentHashSet.emptySet()
+    val pathes: PersistentHashSet<Path> = index[name.getName()] as? PersistentHashSet<Path> ?: PersistentHashSet.emptySet()
     return pathes.map { it.getIn(rootModel) as T }.toArrayList()
   }
 }
 
-public val tagsField: String = "@@@--^tags"
+public val tagsField: Keyword = !"tags"
 
-public val editorTag: Tag<MapModel> = Tag("editor")
+public val editorTag: Tag<MapModel> = Tag(!"editor")
 
-public val editorsTag: Tag<MapModel> = Tag("editors")
+public val editorsTag: Tag<MapModel> = Tag(!"editors")
 
-public val componentTag: Tag<MapModel> = Tag("components")
+public val componentTag: Tag<MapModel> = Tag(!"components")
 
-public fun getTag(name: String): Tag<*>? = tagMap[name]
-
-public fun tagsModel(vararg tags: String): Model = ListModel(tags.map { PrimitiveModel(it) }.toArrayList())
+public fun tagsModel(vararg tags: String): Model = PrimitiveModel(PersistentHashSet.create(tags.map { Keyword.intern(it) }.toArrayList()))

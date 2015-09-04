@@ -129,7 +129,7 @@ public class ProjectViewHost(val project: Project,
 
   private fun createNode(descriptor: AbstractTreeNode<*>, parentLifetime: Lifetime, path: Path, index: Int): MapModel {
     descriptor.update();
-    val map = HashMap<String, Model>()
+    val map = HashMap<Any, Model>()
     val value = descriptor.getValue()
     val state = if (value is PsiFileSystemItem && value.isDirectory() || descriptor.getChildren().isNotEmpty()) "closed" else "leaf"
     val meta =

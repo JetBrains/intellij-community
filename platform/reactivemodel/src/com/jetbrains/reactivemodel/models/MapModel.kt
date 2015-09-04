@@ -10,32 +10,35 @@ import com.jetbrains.reactivemodel.util.withEmptyMeta
 import com.jetbrains.reactivemodel.util.withMeta
 import java.util.HashMap
 
-public data class MapModel(val hmap: PersistentHashMap<String, Model> = PersistentHashMap.emptyMap(),
+public data class MapModel(val hmap: PersistentHashMap<Any, Model> = PersistentHashMap.emptyMap(),
                            override val meta: IPersistentMap<String, *> = emptyMeta())
-: AssocModel<String, MapModel>, Map<String, Model?> by hmap {
+: AssocModel<Any, MapModel>, Map<Any, Model?> by hmap {
 
   override fun <T> acceptVisitor(visitor: ModelVisitor<T>): T = visitor.visitMapModel(this)
 
-  public constructor(m: Map<String, Model>, meta: IPersistentMap<String, *> = emptyMeta())
+  public constructor(m: Map<out Any, Model>, meta: IPersistentMap<String, *>)
   : this(PersistentHashMap.create(m), meta)
+
+  public constructor(m: Map<out Any, Model>)
+  : this(PersistentHashMap.create(m), emptyMeta())
 
   public fun assocMeta(key: String, value: Any?): MapModel {
     return MapModel(hmap, (meta as IPersistentMap<String, Any>).assoc(key, value))
   }
 
-  public override fun assoc(key: String, value: Model?): MapModel =
+  public override fun assoc(key: Any, value: Model?): MapModel =
       if (value is AbsentModel) remove(key)
       else MapModel(hmap.plus(key, value), meta)
 
-  public override fun find(key: String): Model? = hmap.get(key)
-  public fun remove(k: String): MapModel = MapModel(hmap.minus(k), meta)
+  public override fun find(key: Any): Model? = hmap.get(key)
+  public fun remove(k: Any): MapModel = MapModel(hmap.minus(k), meta)
 
   override fun diffImpl(other: Model): Diff<Model>? {
     if (other !is MapModel) {
       throw AssertionError()
     }
 
-    val diff = HashMap<String, Diff<Model>>()
+    val diff = HashMap<Any, Diff<Model>>()
     hmap.keySet().union(other.hmap.keySet()).forEach {
       val value = this.find(it)
       val otherValue = other.find(it)
@@ -90,11 +93,11 @@ public data class MapModel(val hmap: PersistentHashMap<String, Model> = Persiste
   }
 }
 
-public data class MapDiff(val diff: Map<String, Diff<Model>>) : Diff<MapModel> {
+public data class MapDiff(val diff: Map<Any, Diff<Model>>) : Diff<MapModel> {
   override fun <T> acceptVisitor(visitor: DiffVisitor<T>): T = visitor.visitMapDiff(this)
 }
 
 public fun assocModelWithPath(p: Path, m: Model): MapModel =
     p.components.foldRight(m) { comp, m ->
-      MapModel(hashMapOf(comp as String to m))
+      MapModel(hashMapOf(comp to m))
     } as MapModel

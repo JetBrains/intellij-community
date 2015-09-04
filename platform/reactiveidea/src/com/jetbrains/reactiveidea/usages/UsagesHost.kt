@@ -96,7 +96,7 @@ public class UsagesHost(val reactiveModel: ReactiveModel,
           i.toString() to convertTree(child as DefaultMutableTreeNode)
         }.toMap({ it.first }, { it.second })
 
-    val res = hashMapOf(
+    val res: HashMap<Any, Model> = hashMapOf(
         "text" to PrimitiveModel(value),
         "children" to MapModel(children))
     if (node is UsageNode) {

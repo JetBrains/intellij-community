@@ -15,8 +15,12 @@
  */
 package com.jetbrains.reactivemodel
 
+import clojure.lang.Keyword
+import clojure.lang.PersistentHashSet
 import com.github.krukow.clj_lang.PersistentHashMap
-import com.jetbrains.reactivemodel.models.*
+import com.jetbrains.reactivemodel.models.AbsentModel
+import com.jetbrains.reactivemodel.models.MapModel
+import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Lifetime
 
 interface Host {
@@ -80,7 +84,7 @@ public fun ReactiveModel.host<U : Host>(path: Path, h: (Path, Lifetime, Initiali
       it.putIn(path,
           (it.getIn(path) as MapModel)
               .assocMeta("host", aHost)
-              .assoc(tagsField, ListModel(aHost!!.tags.map { PrimitiveModel(it) })))
+              .assoc(tagsField, PrimitiveModel(PersistentHashSet.create(aHost!!.tags.map { Keyword.intern(it) }))))
     }
   }
   if (toStartTransaction) {

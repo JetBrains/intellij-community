@@ -19,5 +19,7 @@
     <orderEntry type="module" module-name="editor-ui-ex" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="clojure-1.7.0" level="project" />
+    <orderEntry type="library" name="clj-ds-0.0.4" level="project" />
   </component>
 </module>

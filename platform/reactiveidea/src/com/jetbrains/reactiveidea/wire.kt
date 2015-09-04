@@ -15,22 +15,16 @@
  */
 package com.jetbrains.reactiveidea
 
+import clojure.lang.*
 import com.corundumstudio.socketio.*
 import com.corundumstudio.socketio.listener.ConnectListener
 import com.corundumstudio.socketio.listener.DisconnectListener
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.krukow.clj_ds.PersistentMap
-import com.github.nkzawa.emitter.Emitter
-import com.github.nkzawa.socketio.client.IO
-import com.github.nkzawa.socketio.client.Socket
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.*
 import com.jetbrains.reactivemodel.util.Lifetime
-import org.json.JSONArray
-import org.json.JSONObject
-import java.util.*
+import java.util.UUID
 
 fun serverModel(lifetime: Lifetime, port: Int,
                 reactiveModels: VariableSignal<PersistentMap<String, ReactiveModel>>,
@@ -67,19 +61,18 @@ fun serverModel(lifetime: Lifetime, port: Int,
         var model = getModel(client)
         val diff = MapModel().diff(model.root)
         if (diff != null) {
-          val jsonObj = toJson(diff)
-          val jsonStr = jsonObj.toString()
+          val data = toClojure(diff)
 
-          val jsonNode = ObjectMapper().readTree(jsonStr)
-          client.sendEvent("diff", jsonNode)
+          client.sendEvent("diff", RT.printString(data))
         }
       }
     }
   })
 
 
-  server.addEventListener("diff", javaClass<JsonNode>()) { client, json, ackRequest ->
-    val diff = toDiff(JSONObject(json.toString()))
+  server.addEventListener("diff", javaClass<String>()) { client, data, ackRequest ->
+    val edn = RT.readString(data) as APersistentMap
+    val diff = toDiff(edn)
     UIUtil.invokeLaterIfNeeded {
       getModel(client).performTransaction { m ->
         m.patch(diff)
@@ -87,8 +80,8 @@ fun serverModel(lifetime: Lifetime, port: Int,
     }
   }
 
-  server.addEventListener("action", javaClass<JsonNode>()) { client, json, ackRequest ->
-    val action = toModel(JSONObject(json.toString()))
+  server.addEventListener("action", javaClass<String>()) { client, data, ackRequest ->
+    val action = toModel(RT.readString(data) as APersistentMap)
     UIUtil.invokeLaterIfNeeded {
       val model = getModel(client)
       model.transaction { m ->
@@ -114,149 +107,78 @@ fun serverModel(lifetime: Lifetime, port: Int,
   }
 }
 
+fun toModel(obj: Any?): Model =
+    when (obj) {
+      is Map<*, *> -> MapModel(obj.entrySet().map { it.key!! to toModel(it.value) }.toMap())
+      is List<*> -> ListModel(obj.map { toModel(it) })
+      null -> AbsentModel()
+      else -> PrimitiveModel(obj)
+    }
+
+
 private fun createModel(lifetime: Lifetime, clientUUID: UUID, server: SocketIOServer): ReactiveModel {
   val reactiveModel = ReactiveModel(lifetime, { diff ->
-    val jsonObj = toJson(diff)
-    val jsonStr = jsonObj.toString()
+    val data = toClojure(diff)
 
-    val jsonNode = ObjectMapper().readTree(jsonStr)
     val client = server.getClient(clientUUID)
     // client may be disconnected
-    client?.sendEvent("diff", jsonNode)
+    client?.sendEvent("diff", RT.printString(data))
   })
-  return reactiveModel
-}
-
-
-fun clientModel(url: String, lifetime: Lifetime): ReactiveModel {
-
-  val socket = IO.socket(url);
-
-  val reactiveModel = ReactiveModel(lifetime, { diff ->
-    socket.emit("diff", toJson(diff))
-  })
-
-  socket
-      .on(Socket.EVENT_CONNECT, object : Emitter.Listener {
-        override fun call(vararg p0: Any?) {
-          println("client connect")
-        }
-      })
-      .on("diff", object : Emitter.Listener {
-        override fun call(vararg p0: Any?) {
-          val json = p0[0] as JSONObject
-          val diff = toDiff(json)
-          UIUtil.invokeLaterIfNeeded {
-            reactiveModel.performTransaction { m ->
-              m.patch(diff)
-            }
-          }
-        }
-      })
-      .on(Socket.EVENT_DISCONNECT, object : Emitter.Listener {
-        override fun call(vararg p0: Any?) {
-          println("client disconnect")
-        }
-      });
-  socket.connect();
-  lifetime += {
-    socket.disconnect()
-  }
   return reactiveModel
 }
 
 val type = "@@@--^type"
+val typeKeyword = !"dtype"
 
-fun toJson(diff: Diff<*>): JSONObject =
-    diff.acceptVisitor(object : DiffVisitor<JSONObject> {
-      override fun visitPrimitiveDiff(primitiveDiff: PrimitiveDiff) = JSONObject(hashMapOf(
-          type to "primitive",
-          "newValue" to primitiveDiff.newValue
-      ))
-
-      override fun visitListDiff(listDiff: ListDiff) = JSONObject(hashMapOf(
-          type to "list",
-          "index" to listDiff.index,
-          "list" to JSONArray(listDiff.nueu.map { toJson(it) })
-      ))
-
-      override fun visitMapDiff(mapDiff: MapDiff) = pairsListToJSONObject(mapDiff.diff.map { entry ->
-        entry.getKey() to toJson(entry.getValue())
-      }.plus(type to "map"))
-
-      override fun visitValueDiff(valueDiff: ValueDiff<*>) = JSONObject(hashMapOf(
-          type to "value",
-          "newValue" to toJson(valueDiff.newValue)
-      ))
-    })
-
-fun toJson(model: Model): JSONObject =
-    model.acceptVisitor(object : ModelVisitor<JSONObject> {
-      override fun visitListModel(listModel: ListModel) = JSONObject(hashMapOf(
-          type to "list",
-          "list" to listModel.list.map { toJson(it) }
-      ))
-
-      override fun visitPrimitiveModel(primitive: PrimitiveModel<*>) = JSONObject(hashMapOf(
-          type to "primitive",
-          "value" to primitive.value
-      ))
-
-      override fun visitMapModel(mapModel: MapModel) = pairsListToJSONObject(mapModel.map { entry ->
-        entry.getKey() to toJson(entry.getValue() as Model)
-      }.plus(type to "map"))
-
-      override fun visitAbsentModel(absent: AbsentModel) = JSONObject(hashMapOf(type to "absent"))
-    })
-
-fun toModel(json: JSONObject): Model =
-    when (json.getString(type)) {
-      "list" -> ListModel(toList(json.getJSONArray("list")).map { toModel(it as JSONObject) })
-      "primitive" -> PrimitiveModel(json.get("value"))
-      "map" -> MapModel(toMap(json).map { entry ->
-        entry.getKey() to toModel(entry.getValue())
-      }.toMap())
-      "absent" -> AbsentModel()
-      else -> throw AssertionError("unknown model type\n$json")
+private fun fromModel(obj: Model): Any? =
+    when (obj) {
+      is MapModel -> PersistentHashMap.create((obj.hmap as Map<Any, Model> ).map { it.key to fromModel(it.value) }.toMap())
+      is ListModel -> PersistentVector.create(obj.list.map { fromModel(it) })
+      is PrimitiveModel<*> -> obj.value
+      is AbsentModel -> null
+      else -> throw AssertionError("Unknown model object $obj")
     }
 
-fun toDiff(json: JSONObject): Diff<Model> =
-    when (json.getString(type)!!) {
-      "primitive" -> PrimitiveDiff(json.get("newValue"))
-      "list" -> ListDiff(toList(json.getJSONArray("list")).map { toModel(it as JSONObject) }, json.getInt("index"))
-      "map" -> MapDiff(toMap(json).map { entry -> entry.getKey() to toDiff(entry.getValue()) }.toMap())
-      "value" -> {
-        val newValue = json.get("newValue")
-        ValueDiff(if (newValue == JSONObject.NULL) AbsentModel() else toModel(newValue as JSONObject))
+
+fun toClojure(diff: Diff<*>): APersistentMap =
+    diff.acceptVisitor(object : DiffVisitor<APersistentMap> {
+      override fun visitPrimitiveDiff(primitiveDiff: PrimitiveDiff) = PersistentArrayMap.createAsIfByAssoc(arrayOf(
+          typeKeyword, !"primitive-diff",
+          !"new-value", primitiveDiff.newValue
+      ))
+
+      override fun visitListDiff(listDiff: ListDiff) = PersistentArrayMap.createAsIfByAssoc(arrayOf(
+          typeKeyword, !"list-diff",
+          !"index", listDiff.index,
+          !"list", PersistentList.create(listDiff.nueu.map { fromModel(it) })
+      ))
+
+      override fun visitMapDiff(mapDiff: MapDiff) = PersistentHashMap.create(*mapDiff.diff.map { entry: Map.Entry<Any, Diff<Model>> ->
+        entry.getKey() to toClojure(entry.getValue())
+      }.plus(typeKeyword to !"map-diff").flatMap { arrayListOf(it.first, it.second) }.toTypedArray())
+
+      override fun visitValueDiff(valueDiff: ValueDiff<*>) = PersistentArrayMap.createAsIfByAssoc(arrayOf(
+          typeKeyword, !"value-diff",
+          !"new-value", fromModel(valueDiff.newValue)
+      ))
+    })
+
+
+fun toDiff(edn: APersistentMap): Diff<Model> =
+    when (edn[typeKeyword]) {
+      !"primitive-diff" -> {
+        PrimitiveDiff(edn.get(!"new-value"))
       }
-      else -> throw AssertionError("unknown diff type\n$json")
+      !"list-diff" -> ListDiff((edn[!"list"] as List<*>).map { toModel(it as APersistentMap) }, Integer.parseInt(edn[!"index"].toString()))
+      !"map-diff" -> MapDiff((edn as Map<Any, APersistentMap>).filter { e -> e.getKey() != typeKeyword }
+          .map { entry -> entry.getKey() to toDiff(entry.getValue()) }.toMap())
+      !"value-diff" -> {
+        val newValue = edn.get(!"new-value")
+        ValueDiff(if (newValue == null) AbsentModel() else toModel(newValue))
+      }
+      else -> throw AssertionError("unknown diff type\n$edn")
     }
 
-fun toMap(json: JSONObject): Map<String, JSONObject> {
-  val result = HashMap<String, JSONObject>()
-  for (k in json.keys()) {
-    if (k != type) {
-      result[k as String] = json.get(k) as JSONObject
-    }
-  }
-  return result
-}
-
-fun toList(array: JSONArray): List<Any> {
-  val result = ArrayList<Any>()
-  for (i in (0..array.length() - 1)) {
-    result.add(array.get(i))
-  }
-  return result
-}
-
-fun pairsListToJSONObject(entries: List<Pair<String, Any>>): JSONObject {
-  val result = JSONObject()
-  for ((k, v) in entries) {
-    result.put(k, v)
-  }
-  return result
-}
 
 fun main(args: Array<String>) {
   val port = 12345
@@ -266,5 +188,5 @@ fun main(args: Array<String>) {
   //    }
   //  })
 
-  val clientModel = clientModel("http://localhost:" + port, Lifetime.Eternal)
+  //  val clientModel = clientModel("http://localhost:" + port, Lifetime.Eternal)
 }

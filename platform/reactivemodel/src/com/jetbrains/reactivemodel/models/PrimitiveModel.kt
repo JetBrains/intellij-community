@@ -8,9 +8,11 @@ import com.jetbrains.reactivemodel.Model
 import com.jetbrains.reactivemodel.ModelVisitor
 import com.jetbrains.reactivemodel.util.emptyMeta
 
-public data class PrimitiveModel<T: Any>(public val value: T, val metadata: IPersistentMap<String, *> = emptyMeta()): Model {
+public data class PrimitiveModel<T: Any>(public val value: T, val metadata: IPersistentMap<String, *>): Model {
     override val meta: IPersistentMap<String, *>
         get() = metadata;
+
+    public constructor(value: T) : this(value, emptyMeta())
 
     override fun <T> acceptVisitor(visitor: ModelVisitor<T>): T = visitor.visitPrimitiveModel(this)
 

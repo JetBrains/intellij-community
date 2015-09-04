@@ -61,8 +61,8 @@ public class ReactiveModelsManager() : ApplicationComponent {
     serverModel(lifetime.lifetime, 12346, reactiveModels) { reactiveModel ->
       UIUtil.invokeLaterIfNeeded {
         reactiveModel.registerHandler(lifetime.lifetime, "invoke-action") { args: MapModel, model ->
-          val actionName = (args["name"] as PrimitiveModel<*>).value as String
-          val contextPath = (args["context"] as ListModel).toPath()
+          val actionName = (args[!"name"] as PrimitiveModel<*>).value as String
+          val contextPath = (args[!"context"] as ListModel).toPath()
           val anAction = ActionManager.getInstance().getAction(actionName)
           if (anAction != null) {
             val dataContext = ServerDataManagerImpl.getInstance().getDataContext(contextPath, reactiveModel)
@@ -97,7 +97,7 @@ public class ReactiveModelsManager() : ApplicationComponent {
           val name = e.getKey()
           val func = e.getValue() as (Host) -> Unit
           reactiveModel.registerHandler(lifetime.lifetime, name) { args: MapModel, model ->
-            val path = (args["path"] as ListModel).toPath()
+            val path = (args[!"path"] as ListModel).toPath()
             val host = path.getIn(model)!!.meta.host<Host?>()
             if (host != null) {
               EdtInvocationManager.getInstance().invokeLater {
