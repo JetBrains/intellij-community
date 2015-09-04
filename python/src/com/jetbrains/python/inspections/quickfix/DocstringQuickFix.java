@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 public class DocstringQuickFix implements LocalQuickFix {
   String myMissingText;
   String myUnexpected;
-  String myPrefix;
 
   public DocstringQuickFix(String missing, String unexpected) {
     myMissingText = missing;

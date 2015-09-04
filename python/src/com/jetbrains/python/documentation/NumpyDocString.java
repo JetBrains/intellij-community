@@ -16,7 +16,6 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.util.Pair;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +82,7 @@ public class NumpyDocString extends SectionBasedDocString {
       type = name;
       name = null;
     }
-    if (name != null? !PyNames.isIdentifierString(name.toString()) : type.isEmpty()) {
+    if (name != null? !isValidFieldName(name) : type.isEmpty()) {
       return Pair.create(null, lineNum);
     }
     final Pair<List<Substring>, Integer> parsedDescription = parseIndentedBlock(lineNum + 1, getLineIndentSize(lineNum));

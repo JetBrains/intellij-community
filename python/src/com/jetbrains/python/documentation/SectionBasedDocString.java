@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -38,6 +39,7 @@ import java.util.regex.Pattern;
  * @see <a href="http://sphinxcontrib-napoleon.readthedocs.org/en/latest/index.html">Napoleon</a>
  */
 public abstract class SectionBasedDocString extends DocStringLineParser implements StructuredDocString {
+  protected static final Pattern FIELD_NAME = Pattern.compile("\\*{1,2}\\s*(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)");
 
   /**
    * Frequently used section types
@@ -281,10 +283,10 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NotNull
   @Override
   public List<String> getParameters() {
-    return ContainerUtil.map(getParameterSubstrings(), new Function<Substring, String>() {
+    return ContainerUtil.map(getParameterFields(), new Function<SectionField, String>() {
       @Override
-      public String fun(Substring substring) {
-        return substring.toString();
+      public String fun(SectionField field) {
+        return field.getName();
       }
     });
   }
@@ -521,6 +523,19 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     return null;
   }
 
+  @NotNull
+  protected static String extractFieldName(@NotNull CharSequence s) {
+    final Matcher matcher = FIELD_NAME.matcher(s);
+    if (matcher.matches()) {
+      return matcher.group(1);
+    }
+    return s.toString();
+  }
+
+  public static boolean isValidFieldName(@NotNull CharSequence s) {
+    return FIELD_NAME.matcher(s).matches();
+  }
+
   public static class Section {
     private final Substring myTitle;
     private final List<SectionField> myFields;
@@ -585,7 +600,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
     @NotNull
     public String getName() {
-      return myName == null ? "" : myName.toString();
+      return myName == null ? "" : extractFieldName(myName.toString());
     }
 
     @Nullable

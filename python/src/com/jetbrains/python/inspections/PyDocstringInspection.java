@@ -15,10 +15,8 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
@@ -28,8 +26,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
+import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.DocStringUtil;
+import com.jetbrains.python.documentation.PlainDocString;
 import com.jetbrains.python.inspections.quickfix.DocstringQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.testing.PythonUnitTestUtil;
@@ -38,7 +37,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Alexey.Ivanov
@@ -142,34 +143,24 @@ public class PyDocstringInspection extends PyInspection {
 
       StructuredDocString docString = DocStringUtil.parse(text, node);
 
-      if (docString == null) {
-        return false;
-      }
-
-      List<Substring> docstringParams = docString.getParameterSubstrings();
-
-      if (docstringParams == null) {
+      if (docString instanceof PlainDocString) {
         return false;
       }
 
       if (pyDocStringOwner instanceof PyFunction) {
-        PyDecoratorList decoratorList = ((PyFunction)pyDocStringOwner).getDecoratorList();
-        boolean isClassMethod = false;
-        if (decoratorList != null) {
-          isClassMethod = decoratorList.findDecorator(PyNames.CLASSMETHOD) != null;
-        }
         PyParameter[] realParams = ((PyFunction)pyDocStringOwner).getParameterList().getParameters();
 
-        List<PyParameter> missingParams = getMissingParams(realParams, docstringParams, isClassMethod);
+        List<PyParameter> missingParams = getMissingParams(docString, realParams);
         boolean registered = false;
         if (!missingParams.isEmpty()) {
           for (PyParameter param : missingParams) {
-            registerProblem(param, "Missing parameter " + param.getName() + " in docstring",
-                            new DocstringQuickFix(param.getName(), null));
+            final DocStringFormat format = DocStringUtil.getConfiguredDocStringFormat(pyDocStringOwner);
+            final String docParamName = DocStringUtil.getPreferredParameterName(format, param);
+            registerProblem(param, "Missing parameter " + param.getName() + " in docstring", new DocstringQuickFix(docParamName, null));
           }
           registered = true;
         }
-        List<Substring> unexpectedParams = getUnexpectedParams(docstringParams, realParams, node);
+        List<Substring> unexpectedParams = getUnexpectedParams(docString, realParams);
         if (!unexpectedParams.isEmpty()) {
           for (Substring param : unexpectedParams) {
             ProblemsHolder holder = getHolder();
@@ -187,13 +178,11 @@ public class PyDocstringInspection extends PyInspection {
       return false;
     }
 
-    private static List<Substring> getUnexpectedParams(List<Substring> docstringParams,
-                                                       PyParameter[] realParams,
-                                                       PyStringLiteralExpression node) {
+    private static List<Substring> getUnexpectedParams(StructuredDocString docString, PyParameter[] realParams) {
       Map<String, Substring> unexpected = Maps.newHashMap();
 
-      for (Substring s : docstringParams) {
-        unexpected.put(s.getValue(), s);
+      for (Substring s : docString.getParameterSubstrings()) {
+        unexpected.put(StringUtil.trimLeading(s.getValue(), '*'), s);
       }
 
       for (PyParameter p : realParams) {
@@ -204,26 +193,18 @@ public class PyDocstringInspection extends PyInspection {
       return Lists.newArrayList(unexpected.values());
     }
 
-    private static List<PyParameter> getMissingParams(PyParameter[] realParams, List<Substring> docstringParams, boolean isClassMethod) {
+    private static List<PyParameter> getMissingParams(StructuredDocString docString, PyParameter[] realParams) {
       List<PyParameter> missing = new ArrayList<PyParameter>();
-      Set<String> params = Sets.newHashSet(Lists.transform(docstringParams, new Function<Substring, String>() {
-        @Override
-        public String apply(Substring input) {
-          return input.getValue();
-        }
-      }));
-      boolean hasMissing = false;
       for (PyParameter p : realParams) {
-        String paramText = p.getText();
-        if ((!isClassMethod && !paramText.equals(PyNames.CANONICAL_SELF))  && !paramText.equals("*") ||
-            (isClassMethod && !paramText.equals("cls"))) {
-          if (!params.contains(p.getName())) {
-            hasMissing = true;
-            missing.add(p);
-          }
+        if (p.isSelf() || p instanceof PySingleStarParameter || p instanceof PyTupleParameter) {
+          continue;
+        }
+        //noinspection ConstantConditions
+        if (docString.getParameters().contains(p.getName())) {
+          missing.add(p);
         }
       }
-      return hasMissing ? missing : Collections.<PyParameter>emptyList();
+      return missing;
     }
   }
 }

@@ -170,12 +170,15 @@ public class PyDocstringGenerator {
   public PyDocstringGenerator withInferredParameters(boolean alwaysAddReturn) {
     if (myDocStringOwner instanceof PyFunction) {
       for (PyParameter param : ((PyFunction)myDocStringOwner).getParameterList().getParameters()) {
+        if (param.getAsNamed() == null) {
+          continue;
+        }
         final String paramName = param.getName();
         final StructuredDocString docString = getStructuredDocString();
         if (StringUtil.isEmpty(paramName) || param.isSelf() || docString != null && docString.getParameters().contains(paramName)) {
           continue;
         }
-        withParam(paramName);
+        withParam(DocStringUtil.getPreferredParameterName(getDocStringFormat(), param));
       }
       final RaiseVisitor visitor = new RaiseVisitor();
       final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();

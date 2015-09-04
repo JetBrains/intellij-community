@@ -33,6 +33,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
@@ -339,7 +340,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     for (PyParameter p : function.getParameterList().getParameters()) {
       final String paramName = p.getName();
       if (!names.contains(paramName) && paramName != null) {
-        generator.withoutParam(paramName);
+        generator.withoutParam(DocStringUtil.getPreferredParameterName(generator.getDocStringFormat(), p));
       }
     }
     generator.buildAndInsert();

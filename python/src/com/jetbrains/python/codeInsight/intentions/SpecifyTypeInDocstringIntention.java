@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
@@ -31,6 +32,7 @@ import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: ktisha
@@ -57,7 +59,6 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
 
     final PsiElement resolved = reference != null ? reference.resolve() : null;
     PyParameter parameter = getParameter(problemElement, resolved);
-    String kind = parameter != null ? "type" : "rtype";
 
     final PyCallable callable;
     if (parameter != null) {
@@ -67,29 +68,25 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
       callable = getCallable(elementAt);
     }
     if (callable instanceof PyFunction) {
-      generateDocstring(kind, (PyFunction)callable, problemElement);
+      generateDocstring(parameter, (PyFunction)callable);
     }
   }
 
-  private static void generateDocstring(String kind, PyFunction pyFunction, PyExpression problemElement) {
+  private static void generateDocstring(@Nullable PyParameter param, PyFunction pyFunction) {
     if (!DocStringUtil.ensureNotPlainDocstringFormat(pyFunction)) {
       return;
     }
 
-    final boolean isReturn = "rtype".equals(kind);
-
     final PyDocstringGenerator docstringGenerator = PyDocstringGenerator.forDocStringOwner(pyFunction);
-    final PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
-    final String name = isReturn ? "" : StringUtil.notNullize(problemElement.getName());
-    final String type;
-    if (signature != null) {
-      type = StringUtil.notNullize(signature.getArgTypeQualifiedName(name), "object");
-    }
-    else {
-      type = "object";
-    }
-    if (!isReturn) {
-      docstringGenerator.withParamTypedByName(name, type);
+    String type = "object";
+    if (param != null) {
+      final String paramName = StringUtil.notNullize(param.getName());
+      final PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
+      if (signature != null) {
+        type = ObjectUtils.chooseNotNull(signature.getArgTypeQualifiedName(paramName), type);
+      }
+      final String docParamName = DocStringUtil.getPreferredParameterName(docstringGenerator.getDocStringFormat(), param);
+      docstringGenerator.withParamTypedByName(docParamName, type);
     }
     else {
       docstringGenerator.withReturnValue(type);
