@@ -21,8 +21,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
@@ -45,30 +43,15 @@ import static git4idea.test.GitExecutor.git;
 
 abstract class GitPushOperationBaseTest extends GitPlatformTest {
 
-  private TempDirTestFixture myOutside;
-  protected String myExternalPath;
   protected GitPushSupport myPushSupport;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    myOutside = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
-    myOutside.setUp();
-    myExternalPath = myOutside.getTempDirPath();
     myPushSupport = findGitPushSupport();
 
     GitTestUtil.overrideService(myProject, AbstractVcsHelper.class, MockVcsHelper.class);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      if (myOutside != null) myOutside.tearDown();
-    }
-    finally {
-      super.tearDown();
-    }
   }
 
   @Override
@@ -101,16 +84,16 @@ abstract class GitPushOperationBaseTest extends GitPlatformTest {
 
   @NotNull
   private File createParentRepo(@NotNull String parentName) {
-    cd(myExternalPath);
+    cd(myTestRoot);
     git("init --bare " + parentName + ".git");
-    return new File(myExternalPath, parentName + ".git");
+    return new File(myTestRoot, parentName + ".git");
   }
 
   @NotNull
   private File createBroRepo(@NotNull String broName, @NotNull File parentRepo) {
-    cd(myExternalPath);
+    cd(myTestRoot);
     git("clone " + parentRepo.getName() + " " + broName);
-    return new File(myExternalPath, broName);
+    return new File(myTestRoot, broName);
   }
 
   @NotNull
