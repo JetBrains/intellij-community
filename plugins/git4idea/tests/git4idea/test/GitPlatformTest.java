@@ -99,6 +99,11 @@ public abstract class GitPlatformTest extends PlatformTestCase {
   }
 
   @Override
+  protected void setUpModule() {
+    // we don't need a module in Git tests
+  }
+
+  @Override
   @NotNull
   public String getTestName(boolean lowercaseFirstLetter) {
     String name = super.getTestName(lowercaseFirstLetter);
