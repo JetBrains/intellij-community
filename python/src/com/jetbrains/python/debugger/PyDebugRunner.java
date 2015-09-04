@@ -86,7 +86,7 @@ public class PyDebugRunner extends GenericProgramRunner {
       // if configuration knows whether debug is allowed
       return ((DebugAwareConfiguration)profile).canRunUnderDebug();
     }
-    return true;
+    return false;
   }
 
 
