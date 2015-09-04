@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.Alarm;
 import com.intellij.util.BooleanFunction;
@@ -1271,6 +1272,14 @@ public class AbstractPopup implements JBPopup {
         int delta = screen.width + screen.x - location.x;
         if (size.width > delta) {
           size.width = delta;
+          // we shrank horizontally - need to increase height to fit the horizontal scrollbar
+          JScrollPane scrollPane = JBScrollPane.findScrollPane(myContent);
+          if (scrollPane != null && scrollPane.getHorizontalScrollBarPolicy() != ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
+            JScrollBar scrollBar = scrollPane.getHorizontalScrollBar();
+            if (scrollBar != null) {
+              prefSize.height += scrollBar.getPreferredSize().height;
+            }
+          }
         }
       }
     }
