@@ -199,7 +199,6 @@ public class FindDialog extends DialogWrapper {
     }
     myComboBoxListeners.clear();
     if (myScopePanel != null) myPreviousResultsExpandedState = myScopePanel.isExpanded();
-    rememberResultsPreviewWasOpen();
     super.dispose();
   }
 
@@ -754,6 +753,7 @@ public class FindDialog extends DialogWrapper {
       myModel.copyFrom(validateModel);
       updateFindSettings();
 
+      rememberResultsPreviewWasOpen();
       super.doOKAction();
       myOkHandler.consume(myModel);
     }
