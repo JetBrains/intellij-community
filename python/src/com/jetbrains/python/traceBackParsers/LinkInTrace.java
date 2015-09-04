@@ -74,4 +74,14 @@ public final class LinkInTrace {
   public int getEndPos() {
     return myEndPos;
   }
+
+  @Override
+  public String toString() {
+    return "LinkInTrace{" +
+           "myFileName='" + myFileName + '\'' +
+           ", myLineNumber=" + myLineNumber +
+           ", myStartPos=" + myStartPos +
+           ", myEndPos=" + myEndPos +
+           '}';
+  }
 }
