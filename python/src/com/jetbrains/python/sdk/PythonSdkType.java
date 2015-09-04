@@ -1039,7 +1039,7 @@ public class PythonSdkType extends SdkType {
 
         @Override
         public void docker(@NotNull DockerCredentialsHolder credentials) {
-          // TODO [Docker] does it require some validation?
+          result.set(credentials.getDockerServer() == null);
         }
       });
       return result.get();
