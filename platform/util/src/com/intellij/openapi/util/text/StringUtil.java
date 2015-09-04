@@ -2019,6 +2019,14 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
+  public static String firstLast(@NotNull String text, int length) {
+    return text.length() > length
+           ? text.subSequence(0, length / 2) + "..." + text.subSequence(text.length() - length / 2, text.length())
+           : text;
+  }
+
+  @NotNull
+  @Contract(pure = true)
   public static String escapeChar(@NotNull final String str, final char character) {
     return escapeChars(str, character);
   }
