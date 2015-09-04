@@ -8,7 +8,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
@@ -16,7 +15,6 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.CatchingConsumer;
-import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,7 +48,6 @@ public class InstalledPackagesPanel extends JPanel {
   protected volatile PackageManagementService myPackageManagementService;
   protected final Project myProject;
   protected final PackagesNotificationPanel myNotificationArea;
-  protected final List<Consumer<Sdk>> myPathChangedListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Set<String> myCurrentlyInstalling = ContainerUtil.newHashSet();
   private final Set<InstalledPackage> myWaitingToUpgrade = ContainerUtil.newHashSet();
 
@@ -157,10 +154,6 @@ public class InstalledPackagesPanel extends JPanel {
                                         doUpdatePackages(myPackageManagementService);
                                       }
                                     });
-  }
-
-  public void addPathChangedListener(Consumer<Sdk> consumer) {
-    myPathChangedListeners.add(consumer);
   }
 
   private void upgradeAction() {
