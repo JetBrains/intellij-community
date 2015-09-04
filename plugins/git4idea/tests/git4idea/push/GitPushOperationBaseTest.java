@@ -53,32 +53,18 @@ abstract class GitPushOperationBaseTest extends GitPlatformTest {
   protected void setUp() throws Exception {
     super.setUp();
 
-    try {
-      myOutside = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
-      myOutside.setUp();
-      myExternalPath = myOutside.getTempDirPath();
-      myPushSupport = findGitPushSupport();
-    }
-    catch (Exception e) {
-      super.tearDown();
-      throw e;
-    }
+    myOutside = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
+    myOutside.setUp();
+    myExternalPath = myOutside.getTempDirPath();
+    myPushSupport = findGitPushSupport();
 
-    try {
-      GitTestUtil.overrideService(myProject, AbstractVcsHelper.class, MockVcsHelper.class); // todo temporary: to handle merge dialog
-    }
-    catch (Exception e) {
-      tearDown();
-      throw e;
-    }
+    GitTestUtil.overrideService(myProject, AbstractVcsHelper.class, MockVcsHelper.class);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      if (myOutside != null) {
-        myOutside.tearDown();
-      }
+      if (myOutside != null) myOutside.tearDown();
     }
     finally {
       super.tearDown();
