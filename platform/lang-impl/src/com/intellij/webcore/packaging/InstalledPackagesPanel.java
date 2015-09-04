@@ -11,7 +11,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.Consumer;
@@ -518,9 +520,12 @@ public class InstalledPackagesPanel extends JPanel {
     return false;
   }
 
-  private boolean isUpdateAvailable(@NotNull String currentVersion, @Nullable String availableVersion) {
+  private boolean isUpdateAvailable(@Nullable String currentVersion, @Nullable String availableVersion) {
     if (availableVersion == null) {
       return false;
+    }
+    if (currentVersion == null) {
+      return true;
     }
     PackageManagementService service = myPackageManagementService;
     if (service != null) {
