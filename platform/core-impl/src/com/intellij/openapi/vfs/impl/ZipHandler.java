@@ -97,11 +97,10 @@ public class ZipHandler extends ArchiveHandler {
   @NotNull
   @Override
   protected Map<String, EntryInfo> createEntriesMap() throws IOException {
-    Map<String, EntryInfo> map = new ZipEntryMap();
-    map.put("", createRootEntry());
-
     FileAccessorCache.Handle<ZipFile> zipRef = ourZipFileFileAccessorCache.get(this);
     ZipFile zip = zipRef.get();
+    Map<String, EntryInfo> map = new ZipEntryMap(zip.size());
+    map.put("", createRootEntry());
     try {
       Enumeration<? extends ZipEntry> entries = zip.entries();
       while (entries.hasMoreElements()) {

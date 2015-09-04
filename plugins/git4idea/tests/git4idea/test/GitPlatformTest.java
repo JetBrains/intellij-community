@@ -15,12 +15,15 @@
  */
 package git4idea.test;
 
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestLoggerFactory;
@@ -38,6 +41,8 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public abstract class GitPlatformTest extends PlatformTestCase {
@@ -55,10 +60,15 @@ public abstract class GitPlatformTest extends PlatformTestCase {
   protected TestDialogManager myDialogManager;
   protected TestVcsNotifier myVcsNotifier;
 
+  protected File myTestRoot;
+
   private String myTestStartedIndicator;
 
   @Override
   protected void setUp() throws Exception {
+    myTestRoot = new File(FileUtil.getTempDirectory());
+    myFilesToDelete.add(myTestRoot);
+
     super.setUp();
     enableDebugLogging();
 
@@ -80,6 +90,17 @@ public abstract class GitPlatformTest extends PlatformTestCase {
     GitTestUtil.assumeSupportedGitVersion(myVcs);
     addSilently();
     removeSilently();
+  }
+
+  @Override
+  protected File getIprFile() throws IOException {
+    File projectRoot = new File(myTestRoot, "project");
+    return FileUtil.createTempFile(projectRoot, getName() + "_", ProjectFileType.DOT_DEFAULT_EXTENSION);
+  }
+
+  @Override
+  protected void setUpModule() {
+    // we don't need a module in Git tests
   }
 
   @Override
@@ -153,7 +174,7 @@ public abstract class GitPlatformTest extends PlatformTestCase {
   }
 
   protected void refresh() {
-    myProjectRoot.refresh(false, true);
+    VfsUtil.markDirtyAndRefresh(false, true, false, myProjectRoot);
   }
 
   protected void doActionSilently(final VcsConfiguration.StandardConfirmation op) {

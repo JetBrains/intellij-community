@@ -33,8 +33,12 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
   private ArchiveHandler.EntryInfo[] entries;
   private int size;
 
-  ZipEntryMap() {
-    clear();
+  ZipEntryMap(int expectedSize) {
+    size = 0;
+    // expectedSize is the number of entries in the zip file, and the actual number of entries in the
+    // hash map will be larger because we also need to store intermediate directories which aren't
+    // represented by ZipEntry instances. Therefore, choose a smaller load factor than the one used in rehash().
+    entries = new ArchiveHandler.EntryInfo[Math.max(10, expectedSize * 2)];  // load factor 0.5
   }
 
   @Override
