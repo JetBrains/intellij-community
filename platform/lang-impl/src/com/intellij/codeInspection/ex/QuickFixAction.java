@@ -152,7 +152,7 @@ public class QuickFixAction extends AnAction {
         public void run() {
           CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
           final SequentialModalProgressTask progressTask =
-            new SequentialModalProgressTask(project, templatePresentationText, false);
+            new SequentialModalProgressTask(project, templatePresentationText, true);
           progressTask.setMinIterationTime(200);
           progressTask.setTask(new PerformFixesTask(project, descriptors, ignoredElements, progressTask, context));
           ProgressManager.getInstance().run(progressTask);
