@@ -67,7 +67,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   private int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
 
   public interface Listener {
-    void created(ProgressWindow pw);
+    void progressWindowCreated(ProgressWindow pw);
   }
 
   public static final Topic<Listener> TOPIC = Topic.create("progress window", Listener.class);
@@ -119,7 +119,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
         }
       }
     });
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).created(this);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).progressWindowCreated(this);
   }
 
   @Override

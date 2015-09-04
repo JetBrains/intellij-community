@@ -130,7 +130,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProgressWindow.TOPIC, new ProgressWindow.Listener() {
       @Override
-      public void created(ProgressWindow pw) {
+      public void progressWindowCreated(ProgressWindow pw) {
         Disposer.register(pw, new Disposable() {
           @Override
           public void dispose() {
