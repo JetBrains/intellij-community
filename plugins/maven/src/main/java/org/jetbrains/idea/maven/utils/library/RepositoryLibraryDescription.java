@@ -24,18 +24,28 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 
 import javax.swing.*;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 public abstract class RepositoryLibraryDescription {
   protected static final ExtensionPointName<RepositoryLibraryDescription> EP_NAME
     = ExtensionPointName.create("org.jetbrains.idea.maven.repositoryLibrary");
-  private static final List<MavenRepositoryInfo> defaultRemoteRepositories = Collections.singletonList(new MavenRepositoryInfo(
-    "maven.central",
-    "maven.central",
-    "http://repo1.maven.org/maven2"));
+  protected static final MavenRepositoryInfo mavenCentralRepository = new MavenRepositoryInfo(
+    "central",
+    "Maven Central repository",
+    "http://repo1.maven.org/maven2");
+  protected static final MavenRepositoryInfo jbossCommunityRepository = new MavenRepositoryInfo(
+    "jboss.community",
+    "JBoss Community repository",
+    "http://repository.jboss.org/nexus");
+  private static final List<MavenRepositoryInfo> defaultRemoteRepositories =
+    Arrays.asList(mavenCentralRepository, jbossCommunityRepository);
   private static Map<String, RepositoryLibraryDescription> registeredLibraries;
+
+  public static <C extends RepositoryLibraryDescription> C ofClass(Class<C> clazz) {
+    return EP_NAME.findExtension(clazz);
+  }
 
   @NotNull
   public static synchronized RepositoryLibraryDescription findDescription(@NotNull final RepositoryLibraryProperties properties) {
