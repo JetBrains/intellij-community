@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestLoggerFactory;
@@ -153,7 +154,7 @@ public abstract class GitPlatformTest extends PlatformTestCase {
   }
 
   protected void refresh() {
-    myProjectRoot.refresh(false, true);
+    VfsUtil.markDirtyAndRefresh(false, true, false, myProjectRoot);
   }
 
   protected void doActionSilently(final VcsConfiguration.StandardConfirmation op) {
