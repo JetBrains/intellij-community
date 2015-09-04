@@ -90,9 +90,16 @@ public class EnvironmentUtil {
   }
 
   /**
-   * Returns the process environment.
-   * On Mac OS X, a shell (Terminal.app) environment is returned (unless disabled by a system property).
-   * On Windows, the returned map is case-insensitive ({@code map.get("Path") == map.get("PATH")} holds).
+   * A wrapper layer around {@link System#getenv()}.
+   * <p>
+   * On Windows, the returned map is case-insensitive (i.e. {@code map.get("Path") == map.get("PATH")} holds).
+   * <p>
+   * On Mac OS X things are complicated.<br/>
+   * An app launched by a GUI launcher (Finder, Dock, Spotlight etc.) receives a pretty empty and useless environment,
+   * since standard Unix ways of setting variables via e.g. ~/.profile do not work. What's more important, there are no
+   * sane alternatives. This causes a lot of user complains about tools working in a terminal not working when launched
+   * from the IDE. To ease their pain, the IDE loads a shell environment (see {@link #getShellEnv()} for gory details)
+   * and returns it as the result.
    *
    * @return unmodifiable map of the process environment.
    */
