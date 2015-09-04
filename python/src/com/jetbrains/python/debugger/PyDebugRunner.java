@@ -82,10 +82,28 @@ public class PyDebugRunner extends GenericProgramRunner {
       // If not debug at all
       return false;
     }
+    /**
+     * Any python configuration is debuggable unless it explicitly declares itself as DebugAwareConfiguration and denies it
+     * with canRunUnderDebug == false
+     */
+
+    if (profile instanceof WrappingRunConfiguration) {
+      // If configuration is wrapper -- unwrap it and check
+      return isDebuggable(((WrappingRunConfiguration<?>)profile).getPeer());
+    }
+    return isDebuggable(profile);
+  }
+
+  private static boolean isDebuggable(@NotNull final RunProfile profile) {
     if (profile instanceof DebugAwareConfiguration) {
       // if configuration knows whether debug is allowed
       return ((DebugAwareConfiguration)profile).canRunUnderDebug();
     }
+    if (profile instanceof AbstractPythonRunConfiguration) {
+      // Any python configuration is debuggable
+      return true;
+    }
+    // No even a python configuration
     return false;
   }
 
