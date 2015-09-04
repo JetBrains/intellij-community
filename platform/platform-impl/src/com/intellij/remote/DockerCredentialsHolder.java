@@ -22,9 +22,13 @@ import org.jetbrains.annotations.NotNull;
  * @author Alexander Koshevoy
  */
 public class DockerCredentialsHolder {
+  public static final String DOCKER_SERVER_NAME = "DOCKER_SERVER_NAME";
   public static final String DOCKER_IMAGE_NAME = "DOCKER_IMAGE_NAME";
   public static final String DOCKER_CONTAINER_NAME = "DOCKER_CONTAINER_NAME";
   public static final String DOCKER_REMOTE_PROJECT_PATH = "DOCKER_REMOTE_PROJECT_PATH";
+
+  // TODO [Docker] do not store docker server itself but store id or special reference
+  private DockerSupport.DockerServer myDockerServer;
 
   private String myImageName;
 
@@ -32,10 +36,15 @@ public class DockerCredentialsHolder {
 
   private String myRemoteProjectPath;
 
-  public DockerCredentialsHolder(String imageName, String containerName, String remoteProjectPath) {
+  public DockerCredentialsHolder(DockerSupport.DockerServer server, String imageName, String containerName, String remoteProjectPath) {
+    myDockerServer = server;
     myImageName = imageName;
     myContainerName = containerName;
     myRemoteProjectPath = remoteProjectPath;
+  }
+
+  public DockerSupport.DockerServer getDockerServer() {
+    return myDockerServer;
   }
 
   public String getImageName() {
@@ -54,12 +63,18 @@ public class DockerCredentialsHolder {
     element.setAttribute(DOCKER_IMAGE_NAME, myImageName);
     element.setAttribute(DOCKER_CONTAINER_NAME, myContainerName);
     element.setAttribute(DOCKER_REMOTE_PROJECT_PATH, myRemoteProjectPath);
+    // TODO [Docker] use better Docker server id than its name
+    element.setAttribute(DOCKER_SERVER_NAME, myDockerServer.getName());
   }
 
   public void load(@NotNull Element element) {
     myImageName = element.getAttributeValue(DOCKER_IMAGE_NAME);
     myContainerName = element.getAttributeValue(DOCKER_CONTAINER_NAME);
     myRemoteProjectPath = element.getAttributeValue(DOCKER_REMOTE_PROJECT_PATH);
+    DockerSupport instance = DockerSupport.getInstance();
+    if (instance != null) {
+      myDockerServer = instance.findDockerServerByName(element.getAttributeValue(DOCKER_SERVER_NAME));
+    }
   }
 
 }
