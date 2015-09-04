@@ -31,6 +31,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +56,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private ActionMap myActionMap;
   private InputMap myInputMap;
   private String myAdText;
+  private MergingUpdateQueue myRepaintQueue = new MergingUpdateQueue("ChooseByNamePopup repaint", 50, true, myList);
 
   protected ChooseByNamePopup(@Nullable final Project project,
                               @NotNull ChooseByNameModel model,
@@ -463,6 +466,30 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   public void repaintList() {
+    myRepaintQueue.cancelAllUpdates();
+    myRepaintQueue.queue(new MyUpdate(this));
+  }
+
+  private static class MyUpdate extends Update {
+    private final ChooseByNamePopup myPopup;
+
+    public MyUpdate(ChooseByNamePopup popup) {
+      super(popup);
+      myPopup = popup;
+    }
+
+    @Override
+    public void run() {
+      myPopup.repaintListImmediate();
+    }
+
+    @Override
+    public boolean canEat(final Update update) {
+      return true;
+    }
+  }
+
+  public void repaintListImmediate() {
     myList.repaint();
   }
 }

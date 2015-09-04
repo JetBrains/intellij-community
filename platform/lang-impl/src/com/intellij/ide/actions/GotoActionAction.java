@@ -179,7 +179,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
 
   private static void repaint(@Nullable ChooseByNamePopup popup) {
     if (popup != null) {
-      popup.repaintList();
+      popup.repaintListImmediate();
     }
   }
 
