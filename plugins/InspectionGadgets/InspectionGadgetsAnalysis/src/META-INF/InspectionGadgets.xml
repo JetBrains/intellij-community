@@ -1860,7 +1860,7 @@
                      implementationClass="com.siyeh.ig.numeric.IntLiteralMayBeLongLiteralInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="LongLiteralEndingWithLowercaseL" shortName="LongLiteralsEndingWithLowercaseL"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="long.literals.ending.with.lowercase.l.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.LongLiteralsEndingWithLowercaseLInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="NonReproducibleMathCall" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="non.reproducible.math.call.display.name" groupBundle="messages.InspectionsBundle"
