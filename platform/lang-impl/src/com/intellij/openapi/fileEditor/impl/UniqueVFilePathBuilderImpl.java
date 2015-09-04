@@ -18,7 +18,6 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
@@ -123,8 +122,8 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
       if (openFile.getName().equals(fileName)) {
         setOfFilesWithTheSameName.add(openFile);
       }
-    }
-    for (VirtualFile recentlyEditedFile : IdeDocumentHistory.getInstance(project).getChangedFiles()) {
+    }                                                         IDEA-134961 Recent files popup takes 5 seconds to appear
+    for (VirtualFile recentlyEditedFile : EditorHistoryManager.getInstance(project).getFiles()) {
       if (recentlyEditedFile.getName().equals(fileName)) {
         setOfFilesWithTheSameName.add(recentlyEditedFile);
       }
