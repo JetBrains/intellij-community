@@ -67,7 +67,9 @@ public class DockerCredentialsHolder {
     element.setAttribute(DOCKER_CONTAINER_NAME, myContainerName);
     element.setAttribute(DOCKER_REMOTE_PROJECT_PATH, myRemoteProjectPath);
     // TODO [Docker] use better Docker server id than its name
-    element.setAttribute(DOCKER_SERVER_NAME, myDockerServer.getName());
+    if (myDockerServer != null) {
+      element.setAttribute(DOCKER_SERVER_NAME, myDockerServer.getName());
+    }
   }
 
   public void load(@NotNull Element element) {
