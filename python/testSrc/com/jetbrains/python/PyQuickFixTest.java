@@ -499,7 +499,7 @@ public class PyQuickFixTest extends PyTestCase {
     runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
       @Override
       public void run() {
-        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "*args"), true, true);
+        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "args"), true, true);
       }
     });
   }
@@ -509,7 +509,7 @@ public class PyQuickFixTest extends PyTestCase {
     runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
       @Override
       public void run() {
-        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "**kwargs"), true, true);
+        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "kwargs"), true, true);
       }
     });
   }

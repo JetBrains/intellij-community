@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -39,7 +38,6 @@ import java.util.regex.Pattern;
  * @see <a href="http://sphinxcontrib-napoleon.readthedocs.org/en/latest/index.html">Napoleon</a>
  */
 public abstract class SectionBasedDocString extends DocStringLineParser implements StructuredDocString {
-  protected static final Pattern FIELD_NAME = Pattern.compile("\\**\\s*(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)");
 
   /**
    * Frequently used section types
@@ -524,16 +522,12 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   }
 
   @NotNull
-  protected static String extractFieldName(@NotNull CharSequence s) {
-    final Matcher matcher = FIELD_NAME.matcher(s);
-    if (matcher.matches()) {
-      return matcher.group(1);
+  protected static Substring cleanUpName(@NotNull Substring name) {
+    int firstNotStar = 0;
+    while (firstNotStar < name.length() && name.charAt(firstNotStar) == '*') {
+      firstNotStar++;
     }
-    return s.toString();
-  }
-
-  public static boolean isValidFieldName(@NotNull CharSequence s) {
-    return FIELD_NAME.matcher(s).matches();
+    return name.substring(firstNotStar).trimLeft();
   }
 
   public static class Section {
@@ -600,7 +594,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
     @NotNull
     public String getName() {
-      return myName == null ? "" : extractFieldName(myName.toString());
+      return myName == null ? "" : myName.toString();
     }
 
     @Nullable

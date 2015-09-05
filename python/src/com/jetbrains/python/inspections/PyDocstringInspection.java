@@ -182,7 +182,7 @@ public class PyDocstringInspection extends PyInspection {
       Map<String, Substring> unexpected = Maps.newHashMap();
 
       for (Substring s : docString.getParameterSubstrings()) {
-        unexpected.put(StringUtil.trimLeading(s.getValue(), '*').trim(), s);
+        unexpected.put(s.toString(), s);
       }
 
       for (PyParameter p : realParams) {
@@ -195,12 +195,13 @@ public class PyDocstringInspection extends PyInspection {
 
     private static List<PyParameter> getMissingParams(StructuredDocString docString, PyParameter[] realParams) {
       List<PyParameter> missing = new ArrayList<PyParameter>();
+      final List<String> docStringParameters = docString.getParameters();
       for (PyParameter p : realParams) {
         if (p.isSelf() || p instanceof PySingleStarParameter || p instanceof PyTupleParameter) {
           continue;
         }
         //noinspection ConstantConditions
-        if (!docString.getParameters().contains(p.getName())) {
+        if (!docStringParameters.contains(p.getName())) {
           missing.add(p);
         }
       }
