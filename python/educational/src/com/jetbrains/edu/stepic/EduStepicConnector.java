@@ -27,10 +27,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.NameValuePair;
 import org.apache.http.StatusLine;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.*;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -74,6 +71,28 @@ public class EduStepicConnector {
   public static boolean login(@NotNull final String user, @NotNull final String password) {
     initializeClient();
     return postCredentials(user, password);
+  }
+
+  public static boolean createUser(@NotNull final String user, @NotNull final String password) {
+    final HttpPost userRequest = new HttpPost(stepicApiUrl + "users");
+    initializeClient();
+    setHeaders(userRequest, "application/json");
+    String requestBody = new Gson().toJson(new UserWrapper(user, password));
+    userRequest.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+    try {
+      final CloseableHttpResponse response = ourClient.execute(userRequest);
+      final String responseString = EntityUtils.toString(response.getEntity());
+      final StatusLine statusLine = response.getStatusLine();
+      if (statusLine.getStatusCode() != 201) {
+        LOG.error("Failed to create user " + responseString);
+        return false;
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+    return true;
   }
 
   private static void initializeClient() {
@@ -816,6 +835,28 @@ public class EduStepicConnector {
       }
     }
 
+  }
+
+  static class User {
+    String first_name;
+    String last_name;
+    String email;
+    String password;
+
+    public User(String user, String password) {
+      email = user;
+      this.password = password;
+      this.first_name = user;
+      this.last_name = user;
+    }
+  }
+
+  static class UserWrapper {
+    User user;
+
+    public UserWrapper(String user, String password) {
+      this.user = new User(user, password);
+    }
   }
 
 }

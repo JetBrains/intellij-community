@@ -48,7 +48,7 @@ public class LoginPanel {
   }
 
   @NotNull
-  public String getLogin() {
+  private String getLogin() {
     return myLoginTextField.getText().trim();
   }
 
