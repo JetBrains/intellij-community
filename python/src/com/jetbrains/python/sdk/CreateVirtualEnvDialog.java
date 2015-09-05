@@ -31,7 +31,6 @@ import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
@@ -86,8 +85,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     void virtualEnvCreated(Sdk sdk, boolean associateWithProject);
   }
 
-  private static void setupVirtualEnvSdk(List<Sdk> allSdks,
-                                         final String path,
+  private static void setupVirtualEnvSdk(final String path,
                                          boolean associateWithProject,
                                          VirtualEnvCallback callback) {
     final VirtualFile sdkHome =
@@ -98,10 +96,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
         }
       });
     if (sdkHome != null) {
-      final String name =
-        SdkConfigurationUtil.createUniqueSdkName(PythonSdkType.getInstance(), sdkHome.getPath(), allSdks);
-      final ProjectJdkImpl sdk = new ProjectJdkImpl(name, PythonSdkType.getInstance());
-      sdk.setHomePath(FileUtil.toSystemDependentName(sdkHome.getPath()));
+      final Sdk sdk = SdkConfigurationUtil.createAndAddSDK(FileUtil.toSystemDependentName(sdkHome.getPath()), PythonSdkType.getInstance());
       callback.virtualEnvCreated(sdk, associateWithProject);
     }
   }
@@ -412,7 +407,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     return myName;
   }
 
-  public void createVirtualEnv(final List<Sdk> allSdks, final VirtualEnvCallback callback) {
+  public void createVirtualEnv(final VirtualEnvCallback callback) {
     final ProgressManager progman = ProgressManager.getInstance();
     final Sdk basicSdk = getSdk();
     final Task.Modal createTask = new Task.Modal(myProject, "Creating virtual environment for " + basicSdk.getName(), false) {
@@ -447,7 +442,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
               DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
                 @Override
                 public void run() {
-                  setupVirtualEnvSdk(allSdks, myPath, associateWithProject(), callback);
+                  setupVirtualEnvSdk(myPath, associateWithProject(), callback);
                 }
               });
             }
