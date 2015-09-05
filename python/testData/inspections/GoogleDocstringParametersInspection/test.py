@@ -42,3 +42,27 @@ def foo(a, <weak_warning descr="Missing parameter c in docstring">c</weak_warnin
     <weak_warning descr="Unexpected parameter b in docstring">b</weak_warning>:
   """
   pass
+  
+def varagrs_defined_without_stars(x, *args, y, **kwargs):
+    """
+    Args:
+      x:
+      args:
+      y:
+      kwargs:
+    """
+    
+def varagrs_dont_exist():
+  """
+  Args:
+    <weak_warning descr="Unexpected parameter *args in docstring">*args</weak_warning>:
+    <weak_warning descr="Unexpected parameter **kwargs in docstring">**kwargs</weak_warning>:
+  """
+  
+def varagrs_undefined(x, <weak_warning descr="Missing parameter args in docstring">*args</weak_warning>, y, <weak_warning descr="Missing parameter kwargs in docstring">**kwargs</weak_warning>):
+  """
+  Args:
+    x:
+    y:
+  """
+    

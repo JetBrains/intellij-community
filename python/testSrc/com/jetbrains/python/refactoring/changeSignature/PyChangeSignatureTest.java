@@ -116,6 +116,15 @@ public class PyChangeSignatureTest extends PyTestCase {
     });
   }
 
+  // PY-16761
+  public void testGoogleDocStringRemoveVarargs() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      public void run() {
+        doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "x", null, false)));
+      }
+    });
+  }
+
   public void testFixSphinxDocStringRemoveMultiple() {
     runWithDocStringFormat(DocStringFormat.REST, new Runnable() {
       @Override

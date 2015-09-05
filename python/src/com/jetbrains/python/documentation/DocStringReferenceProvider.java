@@ -113,7 +113,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
                                                         @NotNull ReferenceType refType) {
     List<PsiReference> result = new ArrayList<PsiReference>();
     for (Substring name : paramNames) {
-      final String s = name.toString();
+      final String s = trimLeadingStars(name).toString();
       if (PyNames.isIdentifier(s)) {
         final TextRange range = name.getTextRange().shiftRight(offset);
         result.add(new DocStringParameterReference(element, range, refType));
@@ -137,7 +137,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
     for (SectionField field : fields) {
       final Substring nameSub = field.getNameAsSubstring();
       if (nameRefType != null && nameSub != null && !nameSub.isEmpty()) {
-        final TextRange range = nameSub.getTextRange().shiftRight(offset);
+        final TextRange range = trimLeadingStars(nameSub).getTextRange().shiftRight(offset);
         result.add(new DocStringParameterReference(element, range, nameRefType));
       }
       final Substring typeSub = field.getTypeAsSubstring();
@@ -184,5 +184,14 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
       }
     }
     return foundTag == null ? null : new TextRange(result, result + foundTag.length());
+  }
+
+  @NotNull
+  private static Substring trimLeadingStars(@NotNull Substring name) {
+    int firstNotStar = 0;
+    while (firstNotStar < name.length() && name.charAt(firstNotStar) == '*') {
+      firstNotStar++;
+    }
+    return name.substring(firstNotStar).trimLeft();
   }
 }

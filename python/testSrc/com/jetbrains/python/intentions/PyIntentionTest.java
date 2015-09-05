@@ -625,6 +625,21 @@ public class  PyIntentionTest extends PyTestCase {
     doDocReturnTypeTest(DocStringFormat.NUMPY);
   }
 
+  // PY-16761
+  public void testPositionalVarargTypeInGoogleDocString() {
+    doDocParamTypeTest(DocStringFormat.GOOGLE);
+  }
+
+  // PY-16761
+  public void testKeywordVarargTypeInGoogleDocString() {
+    doDocParamTypeTest(DocStringFormat.GOOGLE);
+  }
+
+  // PY-16761
+  public void testAddMissingVarargsInGoogleDocString() {
+    doDocAddMissingParamsTest(DocStringFormat.GOOGLE);
+  }
+
   // PY-7383
   public void testYieldFrom() {
     doTest(PyBundle.message("INTN.yield.from"), LanguageLevel.PYTHON33);

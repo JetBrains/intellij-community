@@ -182,7 +182,7 @@ public class PyDocstringInspection extends PyInspection {
       Map<String, Substring> unexpected = Maps.newHashMap();
 
       for (Substring s : docString.getParameterSubstrings()) {
-        unexpected.put(StringUtil.trimLeading(s.getValue(), '*'), s);
+        unexpected.put(StringUtil.trimLeading(s.getValue(), '*').trim(), s);
       }
 
       for (PyParameter p : realParams) {
@@ -200,7 +200,7 @@ public class PyDocstringInspection extends PyInspection {
           continue;
         }
         //noinspection ConstantConditions
-        if (docString.getParameters().contains(p.getName())) {
+        if (!docString.getParameters().contains(p.getName())) {
           missing.add(p);
         }
       }

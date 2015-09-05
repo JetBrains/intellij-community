@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -92,7 +93,7 @@ public class DocstringQuickFix implements LocalQuickFix {
         generator.withParam(myMissingText);
       }
       else if (myUnexpected != null) {
-        generator.withoutParam(myUnexpected);
+        generator.withoutParam(StringUtil.trimLeading(myUnexpected, '*').trim());
       }
       generator.buildAndInsert();
     }

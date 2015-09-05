@@ -494,6 +494,46 @@ public class PyQuickFixTest extends PyTestCase {
     });
   }
 
+  // PY-16761
+  public void testGoogleDocStringRemovePositionalVararg() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "*args"), true, true);
+      }
+    });
+  }
+
+  // PY-16761
+  public void testGoogleDocStringRemoveKeywordVararg() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "**kwargs"), true, true);
+      }
+    });
+  }
+
+  // PY-16761
+  public void testGoogleDocStringAddPositionalVararg() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "*args"), true, true);
+      }
+    });
+  }
+
+  // PY-16761
+  public void testGoogleDocStringAddKeywordVararg() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "**kwargs"), true, true);
+      }
+    });
+  }
+
   public void testUnnecessaryBackslash() {
     String[] testFiles = new String[]{"UnnecessaryBackslash.py"};
     myFixture.enableInspections(PyUnnecessaryBackslashInspection.class);

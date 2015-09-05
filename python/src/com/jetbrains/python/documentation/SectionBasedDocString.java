@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
  * @see <a href="http://sphinxcontrib-napoleon.readthedocs.org/en/latest/index.html">Napoleon</a>
  */
 public abstract class SectionBasedDocString extends DocStringLineParser implements StructuredDocString {
-  protected static final Pattern FIELD_NAME = Pattern.compile("\\*{1,2}\\s*(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)");
+  protected static final Pattern FIELD_NAME = Pattern.compile("\\**\\s*(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)");
 
   /**
    * Frequently used section types

@@ -221,6 +221,16 @@ public class PyRenameTest extends PyTestCase {
     renameWithDocStringFormat("Bar");
   }
 
+  // PY-16761
+  public void testGoogleDocStringPositionalVararg() {
+    renameWithDocStringFormat("bar");
+  }
+
+  // PY-16761
+  public void testGoogleDocStringKeywordVararg() {
+    renameWithDocStringFormat("bar");
+  }
+
   private void renameWithDocStringFormat(final String newName) {
     runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
       public void run() {
