@@ -144,37 +144,37 @@ public class ClasspathStorage extends StateStorageBase<Boolean> {
     }
 
     Element element = new Element("component");
+    ModifiableRootModel model = null;
+    AccessToken token = ReadAction.start();
     try {
-      ModifiableRootModel model = null;
-      AccessToken token = ReadAction.start();
+      model = ((ModuleRootManagerImpl)component).getModifiableModel();
+      // IDEA-137969 Eclipse integration: external remove of classpathentry is not synchronized
+      model.clear();
       try {
-        model = ((ModuleRootManagerImpl)component).getModifiableModel();
-        // IDEA-137969 Eclipse integration: external remove of classpathentry is not synchronized
-        model.clear();
         myConverter.readClasspath(model);
-        ((RootModelImpl)model).writeExternal(element);
       }
-      catch (WriteExternalException e) {
-        LOG.error(e);
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      ((RootModelImpl)model).writeExternal(element);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    finally {
+      try {
+        token.finish();
       }
       finally {
-        try {
-          token.finish();
+        if (model != null) {
+          model.dispose();
         }
-        finally {
-          if (model != null) {
-            model.dispose();
-          }
-        }
-      }
-
-      if (myPathMacroSubstitutor != null) {
-        myPathMacroSubstitutor.expandPaths(element);
-        myPathMacroSubstitutor.addUnknownMacros("NewModuleRootManager", PathMacrosCollector.getMacroNames(element));
       }
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+
+    if (myPathMacroSubstitutor != null) {
+      myPathMacroSubstitutor.expandPaths(element);
+      myPathMacroSubstitutor.addUnknownMacros("NewModuleRootManager", PathMacrosCollector.getMacroNames(element));
     }
 
     getStorageDataRef().set(true);
