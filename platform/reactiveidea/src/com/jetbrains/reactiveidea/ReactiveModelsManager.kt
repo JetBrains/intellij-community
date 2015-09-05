@@ -15,6 +15,7 @@
  */
 package com.jetbrains.reactiveidea
 
+import clojure.lang.Keyword
 import com.github.krukow.clj_ds.PersistentMap
 import com.github.krukow.clj_lang.PersistentHashMap
 import com.intellij.openapi.actionSystem.ActionManager
@@ -109,7 +110,7 @@ public class ReactiveModelsManager() : ApplicationComponent {
         }
 
         reactiveModel.registerHandler(lifetime.lifetime, "type-a") { args: MapModel, model ->
-          val path = (args["path"] as ListModel).toPath()
+          val path = (args[Keyword.intern("path")] as ListModel).toPath()
           val mapModel = path.getIn(model) as MapModel
           val editorHost = mapModel.meta.host<EditorHost>()
           val actionManager = EditorActionManager.getInstance()

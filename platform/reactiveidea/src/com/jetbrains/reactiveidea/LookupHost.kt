@@ -44,7 +44,7 @@ public class LookupHost(val reactiveModel: ReactiveModel, val editorPath: Path, 
     }
     reactiveModel.registerHandler(life.lifetime, "insert-item") { args, model ->
 
-      val item_path = args["item-path"] as ListModel
+      val item_path = args[clojure.lang.Keyword.intern("item-path")] as ListModel
       val path = path(item_path)
       val lookupElement = metadata[path]
       if (lookupElement != null) {
