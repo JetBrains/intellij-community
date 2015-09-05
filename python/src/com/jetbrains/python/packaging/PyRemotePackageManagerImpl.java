@@ -24,10 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.remote.RemoteFile;
-import com.intellij.remote.RemoteSdkAdditionalData;
-import com.intellij.remote.RemoteSdkCredentials;
-import com.intellij.remote.VagrantNotStartedException;
+import com.intellij.remote.*;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -66,7 +63,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
         }
         catch (ExecutionException e) {
           // TODO [Docker] refactor!
-          if (e.getCause() instanceof UnsupportedOperationException) {
+          if (e.getCause() instanceof UnsupportedDockerRemoteSdkCredentialsProductionException) {
             helpersPath = remoteSdkData.getHelpersPath();
           } else {
             throw e;
@@ -112,7 +109,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
       }
       catch (ExecutionException e) {
         // TODO [Docker] refactor!
-        if (e.getCause() instanceof UnsupportedOperationException) {
+        if (e.getCause() instanceof UnsupportedDockerRemoteSdkCredentialsProductionException) {
           docker = true;
           remoteSdkCredentials = null;
         } else {
