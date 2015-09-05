@@ -94,16 +94,22 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
   @Override
   public void removeParameter(@NotNull String name) {
     for (Section section : myOriginalDocString.getParameterSections()) {
-      for (SectionField param : section.getFields()) {
+      final List<SectionField> sectionFields = section.getFields();
+      for (SectionField param : sectionFields) {
         if (param.getName().equals(name)) {
-          final int startLine, endLine = getFieldEndLine(param);
-          if (section.getFields().size() == 1) {
-            startLine = getSectionStartLine(section);
+          final int endLine = getFieldEndLine(param);
+          if (sectionFields.size() == 1) {
+            removeLinesAndSpacesAfter(getSectionStartLine(section), endLine + 1);
           }
           else {
-            startLine = getFieldStartLine(param);
+            final int startLine = getFieldStartLine(param);
+            if (ContainerUtil.getLastItem(sectionFields) == param) {
+              removeLines(startLine, endLine + 1);
+            }
+            else {
+              removeLinesAndSpacesAfter(startLine, endLine + 1);
+            }
           }
-          removeLinesAndSpacesAfter(startLine, endLine + 1);
           break;
         }
       }
@@ -177,11 +183,16 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
   private void insertNewSection(@NotNull SectionBasedDocStringBuilder builder, @NotNull String sectionTitle) {
     final Pair<Integer, Boolean> pos = findPreferredSectionLine(sectionTitle);
     if (pos.getSecond()) {
-      builder.addEmptyLine(0);
+      // don't add extra first empty line in empty docstring
+      if (!myOriginalDocString.isEmpty(pos.getFirst())) {
+        builder.addEmptyLine(0);
+      }
       insertAfterLine(pos.getFirst(), builder.buildContent(getExpectedSectionIndent(), true));
     }
     else {
-      builder.addEmptyLine();
+      if (!myOriginalDocString.isEmpty(pos.getFirst())) {
+        builder.addEmptyLine();
+      }
       insertBeforeLine(pos.getFirst(), builder.buildContent(getExpectedSectionIndent(), true));
     }
   }
