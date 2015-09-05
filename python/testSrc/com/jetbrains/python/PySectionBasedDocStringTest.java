@@ -319,6 +319,15 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     assertEquals("Something", returnSection.getFields().get(0).getType());
   }
 
+  public void testGoogleParamNamedLikeSection() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertSize(1, docString.getSections());
+    final Section paramSection = docString.getSections().get(0);
+    assertSize(2, paramSection.getFields());
+    assertEquals("x", paramSection.getFields().get(0).getName());
+    assertEquals("args", paramSection.getFields().get(1).getName());
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/docstrings";
