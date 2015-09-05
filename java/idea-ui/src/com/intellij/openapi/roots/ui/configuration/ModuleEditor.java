@@ -187,10 +187,9 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return false;
   }
 
-  private void createEditors(Module module) {
-    ModuleConfigurationEditorProvider[] providers = collectProviders(module);
+  private void createEditors(@Nullable Module module) {
     ModuleConfigurationState state = createModuleConfigurationState();
-    for (ModuleConfigurationEditorProvider provider : providers) {
+    for (ModuleConfigurationEditorProvider provider : Extensions.getExtensions(ModuleConfigurationEditorProvider.EP_NAME, module)) {
       ModuleConfigurationEditor[] editors = provider.createEditors(state);
       if (editors.length > 0 && provider instanceof ModuleConfigurationEditorProviderEx &&
           ((ModuleConfigurationEditorProviderEx)provider).isCompleteEditorSet()) {
@@ -211,13 +210,6 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
         myEditors.add(new ModuleConfigurableWrapper(extension.createConfigurable()));
       }
     }
-  }
-
-  private static ModuleConfigurationEditorProvider[] collectProviders(final Module module) {
-    List<ModuleConfigurationEditorProvider> result = new ArrayList<ModuleConfigurationEditorProvider>();
-    result.addAll(ComponentsPackage.getComponents(module, ModuleConfigurationEditorProvider.class));
-    ContainerUtil.addAll(result, Extensions.getExtensions(ModuleConfigurationEditorProvider.EP_NAME, module));
-    return result.toArray(new ModuleConfigurationEditorProvider[result.size()]);
   }
 
   public ModuleConfigurationState createModuleConfigurationState() {
