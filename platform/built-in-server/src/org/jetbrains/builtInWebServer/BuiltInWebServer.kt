@@ -67,7 +67,7 @@ public class BuiltInWebServer : HttpRequestHandler() {
       }
 
       var candidateByDirectoryName: Project? = null
-      val project = ProjectManager.getInstance().getOpenProjects().first(fun(project: Project): Boolean {
+      val project = ProjectManager.getInstance().getOpenProjects().firstOrNull(fun(project: Project): Boolean {
         if (project.isDisposed()) {
           return false
         }
