@@ -59,12 +59,20 @@ public abstract class PythonRemoteInterpreterManager {
 
   public final static Key<PathMapper> PATH_MAPPING_SETTINGS_KEY = Key.create("PATH_MAPPING_SETTINGS_KEY");
 
+  /**
+   * @deprecated use {@link com.jetbrains.python.run.PyRemoteProcessStarterManager#startRemoteProcess(Project, GeneralCommandLine, PythonRemoteInterpreterManager, PyRemoteSdkAdditionalDataBase, PyRemotePathMapper)}
+   */
+  @Deprecated
   public abstract ProcessHandler startRemoteProcess(@Nullable Project project,
                                                     @NotNull PyRemoteSdkCredentials data,
                                                     @NotNull GeneralCommandLine commandLine,
                                                     @NotNull PyRemotePathMapper pathMapper)
     throws RemoteSdkException;
 
+  /**
+   * @deprecated use {@link com.jetbrains.python.run.PyRemoteProcessStarterManager#startRemoteProcess(Project, GeneralCommandLine, PythonRemoteInterpreterManager, PyRemoteSdkAdditionalDataBase, PyRemotePathMapper)}
+   */
+  @Deprecated
   public abstract ProcessHandler startRemoteProcessWithPid(@Nullable Project project,
                                                            @NotNull PyRemoteSdkCredentials data,
                                                            @NotNull GeneralCommandLine commandLine,
@@ -75,6 +83,9 @@ public abstract class PythonRemoteInterpreterManager {
                                     NullableConsumer<Sdk> sdkCallback);
 
 
+  /**
+   * @deprecated use {@link com.jetbrains.python.run.PyRemoteProcessStarterManager#executeRemoteProcess(Project, String[], String, PythonRemoteInterpreterManager, PyRemoteSdkAdditionalDataBase, PyRemotePathMapper, boolean)}
+   */
   public abstract ProcessOutput runRemoteProcess(@Nullable Project project,
                                                  RemoteSdkCredentials data,
                                                  @NotNull PyRemotePathMapper pathMapper,
@@ -83,6 +94,9 @@ public abstract class PythonRemoteInterpreterManager {
                                                  boolean askForSudo)
     throws RemoteSdkException;
 
+  /**
+   * @deprecated use {@link com.jetbrains.python.run.PyRemoteProcessStarterManager#executeRemoteProcess(Project, String[], String, PythonRemoteInterpreterManager, PyRemoteSdkAdditionalDataBase, PyRemotePathMapper, boolean)}
+   */
   @Deprecated
   public abstract ProcessOutput runRemoteProcess(@Nullable Project project,
                                                  RemoteSdkCredentials data,
@@ -181,4 +195,3 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract void runVagrant(@NotNull String vagrantFolder, @Nullable String machineName) throws ExecutionException;
 }
-

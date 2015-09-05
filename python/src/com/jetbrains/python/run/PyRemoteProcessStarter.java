@@ -62,22 +62,24 @@ public class PyRemoteProcessStarter {
   }
 
   protected ProcessHandler doStartRemoteProcess(@NotNull Sdk sdk,
-                                                @NotNull GeneralCommandLine commandLine,
-                                                @NotNull PythonRemoteInterpreterManager manager,
-                                                @Nullable Project project,
+                                                @NotNull final GeneralCommandLine commandLine,
+                                                @NotNull final PythonRemoteInterpreterManager manager,
+                                                @Nullable final Project project,
                                                 @Nullable PyRemotePathMapper pathMapper)
     throws ExecutionException {
-
     SdkAdditionalData data = sdk.getSdkAdditionalData();
     assert data instanceof PyRemoteSdkAdditionalDataBase;
-    PyRemoteSdkAdditionalDataBase pyRemoteSdkAdditionalDataBase = (PyRemoteSdkAdditionalDataBase)data;
-    try {
-      pathMapper = manager.setupMappings(project, pyRemoteSdkAdditionalDataBase, pathMapper);
+    final PyRemoteSdkAdditionalDataBase pyRemoteSdkAdditionalDataBase = (PyRemoteSdkAdditionalDataBase)data;
 
-      return manager.startRemoteProcess(project, pyRemoteSdkAdditionalDataBase.getRemoteSdkCredentials(true), commandLine, pathMapper);
-    }
-    catch (InterruptedException e) {
-      throw new ExecutionException(e); //TODO: handle exception
-    }
+    final PyRemotePathMapper extendedPathMapper = manager.setupMappings(project, pyRemoteSdkAdditionalDataBase, pathMapper);
+
+    return PyRemoteProcessStarterManagerUtil
+      .execute(pyRemoteSdkAdditionalDataBase, new PyRemoteProcessStarterManagerUtil.ProcessManagerTask<ProcessHandler>() {
+        @Override
+        public ProcessHandler execute(PyRemoteProcessStarterManager processManager) throws ExecutionException, InterruptedException {
+          return processManager.startRemoteProcess(project, commandLine, manager, pyRemoteSdkAdditionalDataBase,
+                                                   extendedPathMapper);
+        }
+      });
   }
 }
