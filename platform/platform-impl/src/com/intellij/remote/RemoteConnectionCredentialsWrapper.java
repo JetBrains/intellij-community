@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class RemoteConnectionCredentialsWrapper {
   public static final String VAGRANT_PREFIX = "vagrant://";
   public static final String SFTP_DEPLOYMENT_PREFIX = "sftp://";
+  public static final String DOCKER_PREFIX = "docker://";
 
   /**
    * Connection types
@@ -178,8 +179,8 @@ public class RemoteConnectionCredentialsWrapper {
 
       @Override
       public void docker(@NotNull DockerCredentialsHolder cred) {
-        // TODO [Docker] what is for Docker?
-        result.set("docker://" + cred.getContainerName() + "/");
+        // TODO [Docker] review
+        result.set(DOCKER_PREFIX + cred.getContainerName() + "/");
       }
     });
 

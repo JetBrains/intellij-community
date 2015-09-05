@@ -36,6 +36,9 @@ public class DockerCredentialsHolder {
 
   private String myRemoteProjectPath;
 
+  public DockerCredentialsHolder() {
+  }
+
   public DockerCredentialsHolder(DockerSupport.DockerServer server, String imageName, String containerName, String remoteProjectPath) {
     myDockerServer = server;
     myImageName = imageName;
