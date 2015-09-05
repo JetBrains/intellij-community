@@ -31,6 +31,7 @@ import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
+import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.pom.xml.impl.events.XmlTagNameChangedImpl;
@@ -1133,13 +1134,21 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
           treeNext.getElementType() == XmlElementType.XML_TEXT) {
         final XmlText prevText = (XmlText)treePrev.getPsi();
         final XmlText nextText = (XmlText)treeNext.getPsi();
-        try {
-          prevText.setValue(prevText.getValue() + nextText.getValue());
-          nextText.delete();
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+
+        final String newValue = prevText.getValue() + nextText.getValue();
+
+        // merging two XmlText-s should be done in one transaction to preserve smart pointers
+        ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction() {
+          @Override
+          public void makeChange(TreeChangeEvent destinationTreeChange) {
+            PsiElement anchor = prevText.getPrevSibling();
+            prevText.delete();
+            nextText.delete();
+            XmlText text = (XmlText)addAfter(XmlElementFactory.getInstance(getProject()).createDisplayText("x"), anchor);
+            text.setValue(newValue);
+          }
+        }, this);
+
       }
     }
   }

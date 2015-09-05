@@ -93,7 +93,8 @@ class MarkerCache {
       else {
         frozen = frozen.applyEvent(event, 0);
         corrected = new DocumentEventImpl(frozen, event.getOffset(), event.getOldFragment(), event.getNewFragment(), event.getOldTimeStamp(),
-                                          event.isWholeTextReplaced());
+                                          event.isWholeTextReplaced(),
+                                          ((DocumentEventImpl) event).getInitialStartOffset(), ((DocumentEventImpl) event).getInitialOldLength());
       }
 
       map.forEachEntry(new TLongObjectProcedure<ManualRangeMarker>() {
