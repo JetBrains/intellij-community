@@ -233,7 +233,6 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkHover();
   }
 
-
   public void testHoverOverFunction() {
     checkHover();
   }
@@ -248,6 +247,12 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   public void testHoverOverControlFlowUnion() {
     checkHover();
+  }
+
+  public void testReturnKeyword() {
+    Map<String, PsiElement> marks = loadTest();
+    final PsiElement originalElement = marks.get("<the_ref>");
+    checkByHTML(myProvider.generateDoc(originalElement, originalElement));
   }
 
   // PY-13422

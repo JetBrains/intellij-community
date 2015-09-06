@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -27,9 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.*;
 import com.jetbrains.python.console.PyConsoleUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -45,6 +44,9 @@ import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -100,11 +102,37 @@ class PyDocumentationBuilder {
       myBody.addItem(combUp("\nInferred type: "));
       PythonDocumentationProvider.describeExpressionTypeWithLinks(myBody, (PyReferenceExpression)outerElement, context);
     }
+
+    if (elementDefinition != null &&
+        PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(elementDefinition.getNode().getElementType())) {
+      buildForKeyword(elementDefinition.getText());
+    }
     if (myBody.isEmpty() && myEpilog.isEmpty()) {
       return null; // got nothing substantial to say!
     }
     else {
       return myResult.toString();
+    }
+  }
+
+  private void buildForKeyword(@NotNull final String name) {
+    try {
+      final FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/python_keywords/" + name));
+      try {
+        final String text = FileUtil.loadTextAndClose(reader);
+        myEpilog.addItem(text);
+      }
+      catch (IOException ignored) {
+      }
+      finally {
+        try {
+          reader.close();
+        }
+        catch (IOException ignored) {
+        }
+      }
+    }
+    catch (FileNotFoundException ignored) {
     }
   }
 

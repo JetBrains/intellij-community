@@ -1,0 +1,28 @@
+<div class="section" id="the-assert-statement">
+<span id="assert"></span><h2>The <a class="reference internal" href="#assert"><tt class="xref std std-keyword docutils literal"><span class="pre">assert</span></tt></a> statement</h2>
+<p id="index-15">Assert statements are a convenient way to insert debugging assertions into a
+program:</p>
+<pre>
+<strong id="grammar-token-assert_stmt">assert_stmt</strong> ::=  &quot;assert&quot; <a class="reference internal" href="expressions.html#grammar-token-expression"><tt class="xref docutils literal"><span class="pre">expression</span></tt></a> [&quot;,&quot; <a class="reference internal" href="expressions.html#grammar-token-expression"><tt class="xref docutils literal"><span class="pre">expression</span></tt></a>]
+</pre>
+<p>The simple form, <tt class="docutils literal"><span class="pre">assert</span> <span class="pre">expression</span></tt>, is equivalent to</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="k">if</span> <span class="n">__debug__</span><span class="p">:</span>
+   <span class="k">if</span> <span class="ow">not</span> <span class="n">expression</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">AssertionError</span>
+</pre></div>
+</div>
+<p>The extended form, <tt class="docutils literal"><span class="pre">assert</span> <span class="pre">expression1,</span> <span class="pre">expression2</span></tt>, is equivalent to</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="k">if</span> <span class="n">__debug__</span><span class="p">:</span>
+   <span class="k">if</span> <span class="ow">not</span> <span class="n">expression1</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="n">expression2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p id="index-16">These equivalences assume that <a class="reference internal" href="../library/constants.html#__debug__" title="__debug__"><tt class="xref py py-const docutils literal"><span class="pre">__debug__</span></tt></a> and <a class="reference internal" href="../library/exceptions.html#AssertionError" title="AssertionError"><tt class="xref py py-exc docutils literal"><span class="pre">AssertionError</span></tt></a> refer to
+the built-in variables with those names.  In the current implementation, the
+built-in variable <a class="reference internal" href="../library/constants.html#__debug__" title="__debug__"><tt class="xref py py-const docutils literal"><span class="pre">__debug__</span></tt></a> is <tt class="docutils literal"><span class="pre">True</span></tt> under normal circumstances,
+<tt class="docutils literal"><span class="pre">False</span></tt> when optimization is requested (command line option -O).  The current
+code generator emits no code for an assert statement when optimization is
+requested at compile time.  Note that it is unnecessary to include the source
+code for the expression that failed in the error message; it will be displayed
+as part of the stack trace.</p>
+<p>Assignments to <a class="reference internal" href="../library/constants.html#__debug__" title="__debug__"><tt class="xref py py-const docutils literal"><span class="pre">__debug__</span></tt></a> are illegal.  The value for the built-in variable
+is determined when the interpreter starts.</p>
+</div>

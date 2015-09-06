@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
@@ -485,6 +486,18 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         }
       }, ModalityState.NON_MODAL);
     }
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getCustomDocumentationElement(@NotNull Editor editor,
+                                                  @NotNull PsiFile file,
+                                                  @Nullable PsiElement contextElement) {
+    if (contextElement != null &&
+        PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(contextElement.getNode().getElementType())) {
+      return contextElement;
+    }
+    return super.getCustomDocumentationElement(editor, file, contextElement);
   }
 
   @Nullable
