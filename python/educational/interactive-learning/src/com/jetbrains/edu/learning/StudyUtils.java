@@ -25,6 +25,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
@@ -333,5 +336,38 @@ public class StudyUtils {
       return null;
     }
     return FileDocumentManager.getInstance().getDocument(patternFile);
+  }
+
+  public static boolean isRenameableOrMoveable(@NotNull final Project project, @NotNull final Course course, @NotNull final PsiElement element) {
+    if (element instanceof PsiFile) {
+      VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
+      if (project.getBaseDir().equals(virtualFile.getParent())) {
+        return false;
+      }
+      TaskFile file = getTaskFile(project, virtualFile);
+      if (file != null) {
+        return false;
+      }
+      String name = virtualFile.getName();
+      return !isTestsFile(project, name) && !EduNames.TASK_HTML.equals(name);
+    }
+    if (element instanceof PsiDirectory) {
+      VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
+      VirtualFile parent = virtualFile.getParent();
+      if (parent == null) {
+        return true;
+      }
+      if (project.getBaseDir().equals(parent)) {
+        return false;
+      }
+      Lesson lesson = course.getLesson(parent.getName());
+      if (lesson != null) {
+        Task task = lesson.getTask(virtualFile.getName());
+        if (task != null) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }
