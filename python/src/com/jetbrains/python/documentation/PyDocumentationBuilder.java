@@ -82,22 +82,22 @@ class PyDocumentationBuilder {
     // TODO: use messages from resources!
     PyClass cls;
     PsiElement outer = null;
-    boolean is_property = false;
-    String accessor_kind = "None";
+    boolean isProperty = false;
+    String accessorKind = "None";
     final TypeEvalContext context = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
     if (myOriginalElement != null) {
       String elementName = myOriginalElement.getText();
       if (PyUtil.isPythonIdentifier(elementName)) {
         outer = myOriginalElement.getParent();
         if (outer instanceof PyQualifiedExpression) {
-          PyExpression qual = ((PyQualifiedExpression)outer).getQualifier();
-          if (qual != null) {
-            PyType type = context.getType(qual);
+          PyExpression qualifier = ((PyQualifiedExpression)outer).getQualifier();
+          if (qualifier != null) {
+            PyType type = context.getType(qualifier);
             if (type instanceof PyClassType) {
               cls = ((PyClassType)type).getPyClass();
               Property property = cls.findProperty(elementName, true, null);
               if (property != null) {
-                is_property = true;
+                isProperty = true;
                 final AccessDirection dir = AccessDirection.of((PyElement)outer);
                 Maybe<PyCallable> accessor = property.getByDirection(dir);
                 myProlog
@@ -124,15 +124,15 @@ class PyDocumentationBuilder {
                 myBody.addItem(BR);
                 if (accessor.isDefined() && accessor.value() == null) followed = null;
                 if (dir == AccessDirection.READ) {
-                  accessor_kind = "Getter";
+                  accessorKind = "Getter";
                 }
                 else if (dir == AccessDirection.WRITE) {
-                  accessor_kind = "Setter";
+                  accessorKind = "Setter";
                 }
                 else {
-                  accessor_kind = "Deleter";
+                  accessorKind = "Deleter";
                 }
-                if (followed != null) myEpilog.addWith(TagSmall, $(BR, BR, accessor_kind, " of property")).addItem(BR);
+                if (followed != null) myEpilog.addWith(TagSmall, $(BR, BR, accessorKind, " of property")).addItem(BR);
               }
             }
           }
@@ -140,15 +140,15 @@ class PyDocumentationBuilder {
       }
     }
 
-    if (myProlog.isEmpty() && !is_property && !isAttribute()) {
+    if (myProlog.isEmpty() && !isProperty && !isAttribute()) {
       myProlog.add(reassignCat);
     }
 
     // now followed may contain a doc string
     if (followed instanceof PyDocStringOwner) {
       String docString = null;
-      PyStringLiteralExpression doc_expr = ((PyDocStringOwner)followed).getDocStringExpression();
-      if (doc_expr != null) docString = doc_expr.getStringValue();
+      PyStringLiteralExpression docStringExpression = ((PyDocStringOwner)followed).getDocStringExpression();
+      if (docStringExpression != null) docString = docStringExpression.getStringValue();
       // doc of what?
       if (followed instanceof PyClass) {
         cls = (PyClass)followed;
@@ -157,7 +157,7 @@ class PyDocumentationBuilder {
       }
       else if (followed instanceof PyFunction) {
         PyFunction fun = (PyFunction)followed;
-        if (!is_property) {
+        if (!isProperty) {
           cls = fun.getContainingClass();
           if (cls != null) {
             myBody.addWith(TagSmall, PythonDocumentationProvider.describeClass(cls, TagCode, true, true)).addItem(BR).addItem(BR);
@@ -181,16 +181,16 @@ class PyDocumentationBuilder {
         addFormattedDocString(myElement, docString, myBody, myEpilog);
       }
     }
-    else if (is_property) {
+    else if (isProperty) {
       // if it was a normal accessor, ti would be a function, handled by previous branch
-      String accessor_message;
+      String accessorMessage;
       if (followed != null) {
-        accessor_message = "Declaration: ";
+        accessorMessage = "Declaration: ";
       }
       else {
-        accessor_message = accessor_kind + " is not defined.";
+        accessorMessage = accessorKind + " is not defined.";
       }
-      myBody.addWith(TagItalic, $(accessor_message)).addItem(BR);
+      myBody.addWith(TagItalic, $(accessorMessage)).addItem(BR);
       if (followed != null) myBody.addItem(combUp(PyUtil.getReadableRepr(followed, false)));
     }
     else if (isAttribute()) {
@@ -202,29 +202,31 @@ class PyDocumentationBuilder {
       if (outer instanceof PyExpression) {
         PyType type = context.getType((PyExpression)outer);
         if (type != null) {
-          String s = null;
+          String typeString = null;
           if (type instanceof PyDynamicallyEvaluatedType) {
             if (!typeFromDocstringAdded) {
               //don't add dynamic type if docstring type specified
-              s = "\nDynamically inferred type: ";
+              typeString = "\nDynamically inferred type: ";
             }
           }
           else {
             if (outer.getReference() != null) {
               PsiElement target = outer.getReference().resolve();
 
-              if (target instanceof PyTargetExpression &&
-                  ((PyTargetExpression)target).getName().equals(((PyNamedParameter)followed).getName())) {
-                s = "\nReassigned value has type: ";
+              if (target instanceof PyTargetExpression) {
+                final String targetName = ((PyTargetExpression)target).getName();
+                if (targetName != null && targetName.equals(((PyNamedParameter)followed).getName())) {
+                  typeString = "\nReassigned value has type: ";
+                }
               }
             }
           }
-          if (s == null && !typeFromDocstringAdded) {
-            s = "\nInferred type: ";
+          if (typeString == null && !typeFromDocstringAdded) {
+            typeString = "\nInferred type: ";
           }
-          if (s != null) {
+          if (typeString != null) {
             myBody
-              .addItem(combUp(s));
+              .addItem(combUp(typeString));
             PythonDocumentationProvider.describeTypeWithLinks(myBody, followed, type, context);
           }
         }
