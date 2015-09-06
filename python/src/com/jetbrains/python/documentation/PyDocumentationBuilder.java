@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
@@ -75,8 +76,76 @@ class PyDocumentationBuilder {
     myReassignmentChain = new ChainIterable<String>();
   }
 
-  private boolean buildForProperty(PsiElement elementDefinition, @Nullable final PsiElement outerElement,
-                                   @NotNull final TypeEvalContext context) {
+  public String build() {
+    final TypeEvalContext context = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
+    final PsiElement outerElement = myOriginalElement != null ? myOriginalElement.getParent() : null;
+
+    final PsiElement elementDefinition = resolveToDocStringOwner();
+    final boolean isProperty = buildFromProperty(elementDefinition, outerElement, context);
+
+    if (myProlog.isEmpty() && !isProperty && !isAttribute()) {
+      myProlog.add(myReassignmentChain);
+    }
+
+    if (elementDefinition instanceof PyDocStringOwner) {
+      buildFromDocstring(elementDefinition, isProperty);
+    }
+    else if (isAttribute()) {
+      buildFromAttributeDoc();
+    }
+    else if (elementDefinition instanceof PyNamedParameter) {
+      buildFromParameter(context, outerElement, elementDefinition);
+    }
+    else if (elementDefinition != null && outerElement instanceof PyReferenceExpression) {
+      myBody.addItem(combUp("\nInferred type: "));
+      PythonDocumentationProvider.describeExpressionTypeWithLinks(myBody, (PyReferenceExpression)outerElement, context);
+    }
+    if (myBody.isEmpty() && myEpilog.isEmpty()) {
+      return null; // got nothing substantial to say!
+    }
+    else {
+      return myResult.toString();
+    }
+  }
+
+  private void buildFromParameter(@NotNull final TypeEvalContext context, @Nullable final PsiElement outerElement,
+                                  @NotNull final PsiElement elementDefinition) {
+    myBody.addItem(combUp("Parameter " + PyUtil.getReadableRepr(elementDefinition, false)));
+    boolean typeFromDocstringAdded = addTypeAndDescriptionFromDocstring((PyNamedParameter)elementDefinition);
+    if (outerElement instanceof PyExpression) {
+      PyType type = context.getType((PyExpression)outerElement);
+      if (type != null) {
+        String typeString = null;
+        if (type instanceof PyDynamicallyEvaluatedType) {
+          if (!typeFromDocstringAdded) {
+            typeString = "\nDynamically inferred type: ";
+          }
+        }
+        else {
+          if (outerElement.getReference() != null) {
+            PsiElement target = outerElement.getReference().resolve();
+
+            if (target instanceof PyTargetExpression) {
+              final String targetName = ((PyTargetExpression)target).getName();
+              if (targetName != null && targetName.equals(((PyNamedParameter)elementDefinition).getName())) {
+                typeString = "\nReassigned value has type: ";
+              }
+            }
+          }
+        }
+        if (typeString == null && !typeFromDocstringAdded) {
+          typeString = "\nInferred type: ";
+        }
+        if (typeString != null) {
+          myBody.addItem(combUp(typeString));
+          PythonDocumentationProvider.describeTypeWithLinks(myBody, elementDefinition, type, context);
+        }
+      }
+    }
+  }
+
+  private boolean buildFromProperty(PsiElement elementDefinition, @Nullable final PsiElement outerElement,
+                                    @NotNull final TypeEvalContext context) {
     if (myOriginalElement == null) {
       return false;
     }
@@ -104,7 +173,7 @@ class PyDocumentationBuilder {
     final AccessDirection direction = AccessDirection.of((PyElement)outerElement);
     final Maybe<PyCallable> accessor = property.getByDirection(direction);
     myProlog.addItem("property ").addWith(TagBold, $().addWith(TagCode, $(elementName)))
-            .addItem(" of ").add(PythonDocumentationProvider.describeClass(cls, TagCode, true, true));
+      .addItem(" of ").add(PythonDocumentationProvider.describeClass(cls, TagCode, true, true));
     if (accessor.isDefined() && property.getDoc() != null) {
       myBody.addItem(": ").addItem(property.getDoc()).addItem(BR);
     }
@@ -151,72 +220,6 @@ class PyDocumentationBuilder {
       accessorKind = "Deleter";
     }
     return accessorKind;
-  }
-
-
-  public String build() {
-    final TypeEvalContext context = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
-    final PsiElement outerElement = myOriginalElement != null ? myOriginalElement.getParent() : null;
-
-    final PsiElement elementDefinition = resolveToDocStringOwner();
-    final boolean isProperty = buildForProperty(elementDefinition, outerElement, context);
-
-    if (myProlog.isEmpty() && !isProperty && !isAttribute()) {
-      myProlog.add(myReassignmentChain);
-    }
-
-    if (elementDefinition instanceof PyDocStringOwner) {
-      buildFromDocstring(elementDefinition, isProperty);
-    }
-    else if (isAttribute()) {
-      buildFromAttributeDoc();
-    }
-    else if (elementDefinition instanceof PyNamedParameter) {
-      myBody.addItem(combUp("Parameter " + PyUtil.getReadableRepr(elementDefinition, false)));
-      boolean typeFromDocstringAdded = addTypeAndDescriptionFromDocstring((PyNamedParameter)elementDefinition);
-      if (outerElement instanceof PyExpression) {
-        PyType type = context.getType((PyExpression)outerElement);
-        if (type != null) {
-          String typeString = null;
-          if (type instanceof PyDynamicallyEvaluatedType) {
-            if (!typeFromDocstringAdded) {
-              //don't add dynamic type if docstring type specified
-              typeString = "\nDynamically inferred type: ";
-            }
-          }
-          else {
-            if (outerElement.getReference() != null) {
-              PsiElement target = outerElement.getReference().resolve();
-
-              if (target instanceof PyTargetExpression) {
-                final String targetName = ((PyTargetExpression)target).getName();
-                if (targetName != null && targetName.equals(((PyNamedParameter)elementDefinition).getName())) {
-                  typeString = "\nReassigned value has type: ";
-                }
-              }
-            }
-          }
-          if (typeString == null && !typeFromDocstringAdded) {
-            typeString = "\nInferred type: ";
-          }
-          if (typeString != null) {
-            myBody
-              .addItem(combUp(typeString));
-            PythonDocumentationProvider.describeTypeWithLinks(myBody, elementDefinition, type, context);
-          }
-        }
-      }
-    }
-    else if (elementDefinition != null && outerElement instanceof PyReferenceExpression) {
-      myBody.addItem(combUp("\nInferred type: "));
-      PythonDocumentationProvider.describeExpressionTypeWithLinks(myBody, (PyReferenceExpression)outerElement, context);
-    }
-    if (myBody.isEmpty() && myEpilog.isEmpty()) {
-      return null; // got nothing substantial to say!
-    }
-    else {
-      return myResult.toString();
-    }
   }
 
   private void buildFromDocstring(@NotNull final PsiElement elementDefinition, boolean isProperty) {
@@ -355,10 +358,10 @@ class PyDocumentationBuilder {
   }
 
   private void addPredefinedMethodDoc(PyFunction fun, String meth_name) {
-    PyClassType objtype = PyBuiltinCache.getInstance(fun).getObjectType(); // old- and new-style classes share the __xxx__ stuff
-    if (objtype != null) {
-      PyClass objcls = objtype.getPyClass();
-      PyFunction obj_underscored = objcls.findMethodByName(meth_name, false);
+    PyClassType objectType = PyBuiltinCache.getInstance(fun).getObjectType(); // old- and new-style classes share the __xxx__ stuff
+    if (objectType != null) {
+      PyClass objectClass = objectType.getPyClass();
+      PyFunction obj_underscored = objectClass.findMethodByName(meth_name, false);
       if (obj_underscored != null) {
         PyStringLiteralExpression predefined_doc_expr = obj_underscored.getDocStringExpression();
         String predefined_doc = predefined_doc_expr != null ? predefined_doc_expr.getStringValue() : null;
@@ -413,29 +416,27 @@ class PyDocumentationBuilder {
    * @param parameter parameter of a function
    * @return true if type from docstring was added
    */
-  private boolean addTypeAndDescriptionFromDocstring(@NotNull PyNamedParameter parameter) {
-    PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
+  private boolean addTypeAndDescriptionFromDocstring(@NotNull final PyNamedParameter parameter) {
+    final PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
     if (function != null) {
       final String docString = PyPsiUtils.strValue(function.getDocStringExpression());
-      Pair<String, String> typeAndDescr = getTypeAndDescr(docString, parameter);
+      final Pair<String, String> typeAndDescr = getTypeAndDescription(docString, parameter);
 
-      String type = typeAndDescr.first;
-      String desc = typeAndDescr.second;
+      final String type = typeAndDescr.first;
+      final String description = typeAndDescr.second;
 
       if (type != null) {
         final PyType pyType = PyTypeParser.getTypeByName(parameter, type);
         if (pyType instanceof PyClassType) {
-          myBody.addItem(": ").
-            addWith(new LinkWrapper(PythonDocumentationProvider.LINK_TYPE_PARAM),
-                    $(pyType.getName()));
+          myBody.addItem(": ").addWith(new LinkWrapper(PythonDocumentationProvider.LINK_TYPE_PARAM), $(pyType.getName()));
         }
         else {
           myBody.addItem(": ").addItem(type);
         }
       }
 
-      if (desc != null) {
-        myEpilog.addItem(BR).addItem(desc);
+      if (description != null) {
+        myEpilog.addItem(BR).addItem(description);
       }
 
       return type != null;
@@ -444,7 +445,7 @@ class PyDocumentationBuilder {
     return false;
   }
 
-  private static Pair<String, String> getTypeAndDescr(String docString, @NotNull PyNamedParameter followed) {
+  private static Pair<String, String> getTypeAndDescription(@Nullable final String docString, @NotNull final PyNamedParameter followed) {
     StructuredDocString structuredDocString = DocStringUtil.parse(docString);
     String type = null;
     String desc = null;
@@ -473,7 +474,7 @@ class PyDocumentationBuilder {
     }
   }
 
-  public static String[] removeCommonIndentation(String docstring) {
+  public static String[] removeCommonIndentation(@NotNull final String docstring) {
     // detect common indentation
     String[] lines = LineTokenizer.tokenize(docstring, false);
     boolean isFirst = true;
@@ -507,7 +508,7 @@ class PyDocumentationBuilder {
       if (line.startsWith(PyConsoleUtil.ORDINARY_PROMPT)) break;
       result.add(line);
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   private void addModulePath(PyFile followed) {
