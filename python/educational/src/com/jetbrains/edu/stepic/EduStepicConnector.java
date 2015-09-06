@@ -560,7 +560,10 @@ public class EduStepicConnector {
   public static int updateLesson(Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
     final HttpPut request = new HttpPut(stepicApiUrl + "lessons/" + String.valueOf(lesson.id));
     if (ourClient == null) {
-      showLoginDialog();
+      if (!login()) {
+        LOG.error("Failed to push lesson");
+        return 0;
+      }
     }
 
     setHeaders(request, "application/json");
@@ -596,7 +599,7 @@ public class EduStepicConnector {
   public static int postLesson(Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
     final HttpPost request = new HttpPost(stepicApiUrl + "lessons");
     if (ourClient == null) {
-      showLoginDialog();
+      login();
     }
 
     setHeaders(request, "application/json");
