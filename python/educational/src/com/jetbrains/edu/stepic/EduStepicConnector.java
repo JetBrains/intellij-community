@@ -73,6 +73,17 @@ public class EduStepicConnector {
     return postCredentials(user, password);
   }
 
+  @Nullable
+  public static AuthorWrapper getCurrentUser() {
+    try {
+      return getFromStepic("stepics/1", AuthorWrapper.class);
+    }
+    catch (IOException e) {
+      LOG.warn("Couldn't get author info");
+    }
+    return null;
+  }
+
   public static boolean createUser(@NotNull final String user, @NotNull final String password) {
     final HttpPost userRequest = new HttpPost(stepicApiUrl + "users");
     initializeClient();
@@ -384,6 +395,10 @@ public class EduStepicConnector {
     final HttpPost request = new HttpPost(stepicApiUrl + "courses");
     if (ourClient == null || !relogin) {
       if (!login()) return;
+    }
+    final AuthorWrapper user = getCurrentUser();
+    if (user != null) {
+      course.setAuthors(user.users);
     }
 
     setHeaders(request, "application/json");
@@ -698,6 +713,7 @@ public class EduStepicConnector {
       this.course = new CourseInfo();
       this.course.setName(course.getName());
       this.course.setDescription(course.getDescription());
+      this.course.setAuthors(course.getAuthors());
     }
   }
 
