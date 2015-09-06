@@ -75,11 +75,10 @@ class PyDocumentationBuilder {
     myReassignmentChain = new ChainIterable<String>();
   }
 
-  private boolean buildForProperty(PsiElement followed, PsiElement outerElement) {
+  private boolean buildForProperty(PsiElement followed, PsiElement outerElement, TypeEvalContext context) {
     PyClass cls;
     boolean isProperty = false;
 
-    final TypeEvalContext context = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
     if (myOriginalElement != null) {
       String elementName = myOriginalElement.getText();
       if (PyNames.isIdentifier(elementName)) {
@@ -152,12 +151,11 @@ class PyDocumentationBuilder {
 
 
   public String build() {
-
     final TypeEvalContext context = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
-    PsiElement outerElement = myOriginalElement != null ? myOriginalElement.getParent() : null;
+    final PsiElement outerElement = myOriginalElement != null ? myOriginalElement.getParent() : null;
 
-    PsiElement elementDefinition = resolveToDocStringOwner();
-    final boolean isProperty = buildForProperty(elementDefinition, outerElement);
+    final PsiElement elementDefinition = resolveToDocStringOwner();
+    final boolean isProperty = buildForProperty(elementDefinition, outerElement, context);
 
 
     if (myProlog.isEmpty() && !isProperty && !isAttribute()) {
