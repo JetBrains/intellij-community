@@ -24,6 +24,7 @@ import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.StatusLine;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -93,7 +94,8 @@ public class EduStepicConnector {
 
     try {
       final CloseableHttpResponse response = ourClient.execute(userRequest);
-      final String responseString = EntityUtils.toString(response.getEntity());
+      final HttpEntity responseEntity = response.getEntity();
+      final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine statusLine = response.getStatusLine();
       if (statusLine.getStatusCode() != 201) {
         LOG.error("Failed to create user " + responseString);
@@ -174,11 +176,12 @@ public class EduStepicConnector {
 
     try {
       final CloseableHttpResponse response = ourClient.execute(request);
-      final String s = EntityUtils.toString(response.getEntity());
       saveCSRFToken();
       final StatusLine line = response.getStatusLine();
       if (line.getStatusCode() != 302) {
-        LOG.error("Failed to login " + EntityUtils.toString(response.getEntity()));
+        final HttpEntity responseEntity = response.getEntity();
+        final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+        LOG.error("Failed to login " + responseString);
         ourClient = null;
         return false;
       }
@@ -200,7 +203,8 @@ public class EduStepicConnector {
 
     final CloseableHttpResponse response = ourClient.execute(request);
     final StatusLine statusLine = response.getStatusLine();
-    final String responseString = EntityUtils.toString(response.getEntity());
+    final HttpEntity responseEntity = response.getEntity();
+    final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
     if (statusLine.getStatusCode() != 200) {
       throw new IOException("Stepic returned non 200 status code " + responseString);
     }
@@ -344,7 +348,8 @@ public class EduStepicConnector {
 
     try {
       final CloseableHttpResponse attemptResponse = ourClient.execute(attemptRequest);
-      final String attemptResponseString = EntityUtils.toString(attemptResponse.getEntity());
+      final HttpEntity responseEntity = attemptResponse.getEntity();
+      final String attemptResponseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine statusLine = attemptResponse.getStatusLine();
       if (statusLine.getStatusCode() != 201) {
         LOG.error("Failed to make attempt " + attemptResponseString);
@@ -370,7 +375,8 @@ public class EduStepicConnector {
     String requestBody = new Gson().toJson(new SubmissionWrapper(attempt.id, passed ? "1" : "0", files));
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
     final CloseableHttpResponse response = ourClient.execute(request);
-    final String responseString = EntityUtils.toString(response.getEntity());
+    final HttpEntity responseEntity = response.getEntity();
+    final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
     final StatusLine line = response.getStatusLine();
     if (line.getStatusCode() != 201) {
       LOG.error("Failed to make submission " + responseString);
@@ -407,7 +413,8 @@ public class EduStepicConnector {
 
     try {
       final CloseableHttpResponse response = ourClient.execute(request);
-      final String responseString = EntityUtils.toString(response.getEntity());
+      final HttpEntity responseEntity = response.getEntity();
+      final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine line = response.getStatusLine();
       if (line.getStatusCode() != 201) {
         if (!relogin) {
@@ -509,7 +516,8 @@ public class EduStepicConnector {
 
     try {
       final CloseableHttpResponse response = ourClient.execute(request);
-      final String responseString = EntityUtils.toString(response.getEntity());
+      final HttpEntity responseEntity = response.getEntity();
+      final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine line = response.getStatusLine();
       if (line.getStatusCode() != 201) {
         LOG.error("Failed to push " + responseString);
@@ -534,7 +542,8 @@ public class EduStepicConnector {
 
     try {
       final CloseableHttpResponse response = ourClient.execute(request);
-      final String responseString = EntityUtils.toString(response.getEntity());
+      final HttpEntity responseEntity = response.getEntity();
+      final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine line = response.getStatusLine();
       if (line.getStatusCode() != 201) {
         LOG.error("Failed to push " + responseString);
@@ -560,7 +569,8 @@ public class EduStepicConnector {
 
     try {
       final CloseableHttpResponse response = ourClient.execute(request);
-      final String responseString = EntityUtils.toString(response.getEntity());
+      final HttpEntity responseEntity = response.getEntity();
+      final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine line = response.getStatusLine();
       if (line.getStatusCode() != 201) {
         LOG.error("Failed to push " + responseString);
@@ -593,7 +603,9 @@ public class EduStepicConnector {
           final CloseableHttpResponse response = ourClient.execute(request);
           final StatusLine line = response.getStatusLine();
           if (line.getStatusCode() != 201) {
-            LOG.error("Failed to push " + EntityUtils.toString(response.getEntity()));
+            final HttpEntity responseEntity = response.getEntity();
+            final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+            LOG.error("Failed to push " + responseString);
           }
         }
         catch (IOException e) {
