@@ -85,5 +85,6 @@
                     serviceImplementation="com.jetbrains.edu.learning.StudyTaskManager"/>
     <extendWordSelectionHandler implementation="com.jetbrains.edu.learning.StudyAnswerPlaceholderExtendWordHandler"/>
     <renameHandler implementation="com.jetbrains.edu.learning.StudyRenameHandler"/>
+    <refactoring.moveHandler implementation="com.jetbrains.edu.learning.StudyMoveDelegate" order="first"/>
   </extensions>
 </idea-plugin>

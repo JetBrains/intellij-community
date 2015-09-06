@@ -5,6 +5,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -369,5 +371,21 @@ public class StudyUtils {
       }
     }
     return true;
+  }
+
+  public static boolean canRenameOrMove(DataContext dataContext) {
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (element == null || project == null) {
+      return false;
+    }
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return false;
+    }
+    if (!isRenameableOrMoveable(project, course, element)) {
+      return true;
+    }
+    return false;
   }
 }
