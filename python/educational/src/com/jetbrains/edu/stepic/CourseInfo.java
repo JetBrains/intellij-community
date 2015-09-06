@@ -105,13 +105,6 @@ public class CourseInfo {
       myAuthors = new ArrayList<Author>();
     }
     myAuthors.add(author);
-
-    if (instructors == null) {
-      instructors = new ArrayList<Integer>();
-    }
-    if (author.id > 0) {
-      instructors.add(author.id);
-    }
   }
 
   public void setDescription(String description) {
