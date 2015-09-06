@@ -296,77 +296,77 @@ class PyDocumentationBuilder {
     return resolveResult.isImplicit() ? null : resolveResult.getElement();
   }
 
-  private void addInheritedDocString(PyFunction fun, PyClass cls) {
-    boolean not_found = true;
-    String meth_name = fun.getName();
-    if (cls != null && meth_name != null) {
-      final boolean is_constructor = PyNames.INIT.equals(meth_name);
-      // look for inherited and its doc
-      Iterable<PyClass> classes = cls.getAncestorClasses(null);
-      if (is_constructor) {
-        // look at our own class again and maybe inherit class's doc
-        classes = new ChainIterable<PyClass>(cls).add(classes);
+  private void addInheritedDocString(@NotNull final PyFunction pyFunction, @Nullable final PyClass pyClass) {
+    boolean notFound = true;
+    final String methodName = pyFunction.getName();
+    if (pyClass == null || methodName == null) {
+      return;
+    }
+    final boolean isConstructor = PyNames.INIT.equals(methodName);
+    Iterable<PyClass> classes = pyClass.getAncestorClasses(null);
+    if (isConstructor) {
+      // look at our own class again and maybe inherit class's doc
+      classes = new ChainIterable<PyClass>(pyClass).add(classes);
+    }
+    for (PyClass ancestor : classes) {
+      PyStringLiteralExpression docstringElement = null;
+      PyFunction inherited = null;
+      boolean isFromClass = false;
+      if (isConstructor) docstringElement = pyClass.getDocStringExpression();
+      if (docstringElement != null) {
+        isFromClass = true;
       }
-      for (PyClass ancestor : classes) {
-        PyStringLiteralExpression doc_elt = null;
-        PyFunction inherited = null;
-        boolean is_from_class = false;
-        if (is_constructor) doc_elt = cls.getDocStringExpression();
-        if (doc_elt != null) {
-          is_from_class = true;
-        }
-        else {
-          inherited = ancestor.findMethodByName(meth_name, false);
-        }
-        if (inherited != null) {
-          doc_elt = inherited.getDocStringExpression();
-        }
-        if (doc_elt != null) {
-          String inherited_doc = doc_elt.getStringValue();
-          if (inherited_doc.length() > 1) {
-            myEpilog.addItem(BR).addItem(BR);
-            String ancestor_name = ancestor.getName();
-            String marker = (cls == ancestor) ? PythonDocumentationProvider.LINK_TYPE_CLASS : PythonDocumentationProvider.LINK_TYPE_PARENT;
-            final String ancestor_link =
-              $().addWith(new LinkWrapper(marker + ancestor_name), $(ancestor_name)).toString();
-            if (is_from_class) {
-              myEpilog.addItem(PyBundle.message("QDOC.copied.from.class.$0", ancestor_link));
-            }
-            else {
-              myEpilog.addItem(PyBundle.message("QDOC.copied.from.$0.$1", ancestor_link, meth_name));
-            }
-            myEpilog.addItem(BR).addItem(BR);
-            ChainIterable<String> formatted = new ChainIterable<String>();
-            ChainIterable<String> unformatted = new ChainIterable<String>();
-            addFormattedDocString(fun, inherited_doc, formatted, unformatted);
-            myEpilog.addWith(TagCode, formatted).add(unformatted);
-            not_found = false;
-            break;
+      else {
+        inherited = ancestor.findMethodByName(methodName, false);
+      }
+      if (inherited != null) {
+        docstringElement = inherited.getDocStringExpression();
+      }
+      if (docstringElement != null) {
+        final String inheritedDoc = docstringElement.getStringValue();
+        if (inheritedDoc.length() > 1) {
+          myEpilog.addItem(BR).addItem(BR);
+          String ancestor_name = ancestor.getName();
+          String marker = (pyClass == ancestor) ? PythonDocumentationProvider.LINK_TYPE_CLASS : PythonDocumentationProvider.LINK_TYPE_PARENT;
+          final String ancestor_link =
+            $().addWith(new LinkWrapper(marker + ancestor_name), $(ancestor_name)).toString();
+          if (isFromClass) {
+            myEpilog.addItem(PyBundle.message("QDOC.copied.from.class.$0", ancestor_link));
           }
+          else {
+            myEpilog.addItem(PyBundle.message("QDOC.copied.from.$0.$1", ancestor_link, methodName));
+          }
+          myEpilog.addItem(BR).addItem(BR);
+          ChainIterable<String> formatted = new ChainIterable<String>();
+          ChainIterable<String> unformatted = new ChainIterable<String>();
+          addFormattedDocString(pyFunction, inheritedDoc, formatted, unformatted);
+          myEpilog.addWith(TagCode, formatted).add(unformatted);
+          notFound = false;
+          break;
         }
       }
+    }
 
-      if (not_found) {
-        // above could have not worked because inheritance is not searched down to 'object'.
-        // for well-known methods, copy built-in doc string.
-        // TODO: also handle predefined __xxx__ that are not part of 'object'.
-        if (PyNames.UnderscoredAttributes.contains(meth_name)) {
-          addPredefinedMethodDoc(fun, meth_name);
-        }
+    if (notFound) {
+      // above could have not worked because inheritance is not searched down to 'object'.
+      // for well-known methods, copy built-in doc string.
+      // TODO: also handle predefined __xxx__ that are not part of 'object'.
+      if (PyNames.UnderscoredAttributes.contains(methodName)) {
+        addPredefinedMethodDoc(pyFunction, methodName);
       }
     }
   }
 
-  private void addPredefinedMethodDoc(PyFunction fun, String meth_name) {
+  private void addPredefinedMethodDoc(PyFunction fun, String mothodName) {
     PyClassType objectType = PyBuiltinCache.getInstance(fun).getObjectType(); // old- and new-style classes share the __xxx__ stuff
     if (objectType != null) {
       PyClass objectClass = objectType.getPyClass();
-      PyFunction obj_underscored = objectClass.findMethodByName(meth_name, false);
-      if (obj_underscored != null) {
-        PyStringLiteralExpression predefined_doc_expr = obj_underscored.getDocStringExpression();
-        String predefined_doc = predefined_doc_expr != null ? predefined_doc_expr.getStringValue() : null;
-        if (predefined_doc != null && predefined_doc.length() > 1) { // only a real-looking doc string counts
-          addFormattedDocString(fun, predefined_doc, myBody, myBody);
+      PyFunction predefinedMethod = objectClass.findMethodByName(mothodName, false);
+      if (predefinedMethod != null) {
+        PyStringLiteralExpression predefinedDocstring = predefinedMethod.getDocStringExpression();
+        String predefinedDoc = predefinedDocstring != null ? predefinedDocstring.getStringValue() : null;
+        if (predefinedDoc != null && predefinedDoc.length() > 1) { // only a real-looking doc string counts
+          addFormattedDocString(fun, predefinedDoc, myBody, myBody);
           myEpilog.addItem(BR).addItem(BR).addItem(PyBundle.message("QDOC.copied.from.builtin"));
         }
       }
