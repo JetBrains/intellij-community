@@ -871,6 +871,7 @@ class AppTest {
     ProcessHandler process = runProcess("Bar", myModule, DefaultRunExecutor.class, new ProcessAdapter() {
       @Override
       public void onTextAvailable(ProcessEvent event, Key outputType) {
+        println "stdout: " + event.text
         if (ProcessOutputTypes.SYSTEM != outputType) {
           if (!exceptionFound.get()) {
             exceptionFound.set(event.getText().contains("java.lang.IllegalArgumentException: Argument for @NotNull parameter 'param' of Bar.xxx must not be null"));
