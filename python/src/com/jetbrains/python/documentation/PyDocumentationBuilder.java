@@ -73,32 +73,25 @@ class PyDocumentationBuilder {
     myResult = wrapInTag("html", wrapInTag("body", myResult));
   }
 
-  public String build() {
-    final ChainIterable<String> reassignCat = new ChainIterable<String>(); // sequence for reassignment info, etc
-    PsiElement followed = resolveToDocStringOwner(reassignCat);
-
-    // check if we got a property ref.
-    // if so, element is an accessor, and originalElement if an identifier
-    // TODO: use messages from resources!
+  private boolean buildForProperty(PsiElement followed, PsiElement outerElement) {
     PyClass cls;
-    PsiElement outer = null;
     boolean isProperty = false;
-    String accessorKind = "None";
+
     final TypeEvalContext context = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
     if (myOriginalElement != null) {
       String elementName = myOriginalElement.getText();
-      if (PyUtil.isPythonIdentifier(elementName)) {
-        outer = myOriginalElement.getParent();
-        if (outer instanceof PyQualifiedExpression) {
-          PyExpression qualifier = ((PyQualifiedExpression)outer).getQualifier();
+      if (PyNames.isIdentifier(elementName)) {
+
+        if (outerElement instanceof PyQualifiedExpression) {
+          final PyExpression qualifier = ((PyQualifiedExpression)outerElement).getQualifier();
           if (qualifier != null) {
-            PyType type = context.getType(qualifier);
+            final PyType type = context.getType(qualifier);
             if (type instanceof PyClassType) {
               cls = ((PyClassType)type).getPyClass();
               Property property = cls.findProperty(elementName, true, null);
               if (property != null) {
                 isProperty = true;
-                final AccessDirection dir = AccessDirection.of((PyElement)outer);
+                final AccessDirection dir = AccessDirection.of((PyElement)outerElement);
                 Maybe<PyCallable> accessor = property.getByDirection(dir);
                 myProlog
                   .addItem("property ").addWith(TagBold, $().addWith(TagCode, $(elementName)))
@@ -123,6 +116,7 @@ class PyDocumentationBuilder {
                 }
                 myBody.addItem(BR);
                 if (accessor.isDefined() && accessor.value() == null) followed = null;
+                String accessorKind;
                 if (dir == AccessDirection.READ) {
                   accessorKind = "Getter";
                 }
@@ -133,19 +127,44 @@ class PyDocumentationBuilder {
                   accessorKind = "Deleter";
                 }
                 if (followed != null) myEpilog.addWith(TagSmall, $(BR, BR, accessorKind, " of property")).addItem(BR);
+
+                if (!(followed instanceof PyDocStringOwner)) {
+                  String accessorMessage;
+                  if (followed != null) {
+                    accessorMessage = "Declaration: ";
+                  }
+                  else {
+                    accessorMessage = accessorKind + " is not defined.";
+                  }
+                  myBody.addWith(TagItalic, $(accessorMessage)).addItem(BR);
+                  if (followed != null) myBody.addItem(combUp(PyUtil.getReadableRepr(followed, false)));
+                }
               }
             }
           }
         }
       }
     }
+    return isProperty;
+  }
+
+
+  public String build() {
+    final ChainIterable<String> reassignmentChain = new ChainIterable<String>();
+    final TypeEvalContext context = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
+    PsiElement outerElement = myOriginalElement != null ? myOriginalElement.getParent() : null;
+
+    PsiElement followed = resolveToDocStringOwner(reassignmentChain);
+    final boolean isProperty = buildForProperty(followed, outerElement);
+
 
     if (myProlog.isEmpty() && !isProperty && !isAttribute()) {
-      myProlog.add(reassignCat);
+      myProlog.add(reassignmentChain);
     }
 
     // now followed may contain a doc string
     if (followed instanceof PyDocStringOwner) {
+      PyClass cls;
       String docString = null;
       PyStringLiteralExpression docStringExpression = ((PyDocStringOwner)followed).getDocStringExpression();
       if (docStringExpression != null) docString = docStringExpression.getStringValue();
@@ -181,26 +200,14 @@ class PyDocumentationBuilder {
         addFormattedDocString(myElement, docString, myBody, myEpilog);
       }
     }
-    else if (isProperty) {
-      // if it was a normal accessor, ti would be a function, handled by previous branch
-      String accessorMessage;
-      if (followed != null) {
-        accessorMessage = "Declaration: ";
-      }
-      else {
-        accessorMessage = accessorKind + " is not defined.";
-      }
-      myBody.addWith(TagItalic, $(accessorMessage)).addItem(BR);
-      if (followed != null) myBody.addItem(combUp(PyUtil.getReadableRepr(followed, false)));
-    }
     else if (isAttribute()) {
       addAttributeDoc();
     }
     else if (followed instanceof PyNamedParameter) {
       myBody.addItem(combUp("Parameter " + PyUtil.getReadableRepr(followed, false)));
       boolean typeFromDocstringAdded = addTypeAndDescriptionFromDocstring((PyNamedParameter)followed);
-      if (outer instanceof PyExpression) {
-        PyType type = context.getType((PyExpression)outer);
+      if (outerElement instanceof PyExpression) {
+        PyType type = context.getType((PyExpression)outerElement);
         if (type != null) {
           String typeString = null;
           if (type instanceof PyDynamicallyEvaluatedType) {
@@ -210,8 +217,8 @@ class PyDocumentationBuilder {
             }
           }
           else {
-            if (outer.getReference() != null) {
-              PsiElement target = outer.getReference().resolve();
+            if (outerElement.getReference() != null) {
+              PsiElement target = outerElement.getReference().resolve();
 
               if (target instanceof PyTargetExpression) {
                 final String targetName = ((PyTargetExpression)target).getName();
@@ -232,9 +239,9 @@ class PyDocumentationBuilder {
         }
       }
     }
-    else if (followed != null && outer instanceof PyReferenceExpression) {
+    else if (followed != null && outerElement instanceof PyReferenceExpression) {
       myBody.addItem(combUp("\nInferred type: "));
-      PythonDocumentationProvider.describeExpressionTypeWithLinks(myBody, (PyReferenceExpression)outer, context);
+      PythonDocumentationProvider.describeExpressionTypeWithLinks(myBody, (PyReferenceExpression)outerElement, context);
     }
     if (myBody.isEmpty() && myEpilog.isEmpty()) {
       return null; // got nothing substantial to say!
@@ -249,12 +256,11 @@ class PyDocumentationBuilder {
   }
 
   @Nullable
-  private PsiElement resolveToDocStringOwner(ChainIterable<String> prolog_cat) {
+  private PsiElement resolveToDocStringOwner(ChainIterable<String> reassignmentChain) {
     // here the ^Q target is already resolved; the resolved element may point to intermediate assignments
     if (myElement instanceof PyTargetExpression) {
-      final String target_name = myElement.getText();
-      //prolog_cat.add(TagSmall.apply($("Assigned to ", element.getText(), BR)));
-      prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", target_name)).addItem(BR));
+      final String targetName = myElement.getText();
+      reassignmentChain.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", targetName)).addItem(BR));
       final PyExpression assignedValue = ((PyTargetExpression)myElement).findAssignedValue();
       if (assignedValue instanceof PyReferenceExpression) {
         final PsiElement resolved = resolveWithoutImplicits((PyReferenceExpression)assignedValue);
@@ -265,20 +271,18 @@ class PyDocumentationBuilder {
       return assignedValue;
     }
     if (myElement instanceof PyReferenceExpression) {
-      //prolog_cat.add(TagSmall.apply($("Assigned to ", element.getText(), BR)));
-      prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", myElement.getText())).addItem(BR));
+      reassignmentChain.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", myElement.getText())).addItem(BR));
       return resolveWithoutImplicits((PyReferenceExpression)myElement);
     }
     // it may be a call to a standard wrapper
     if (myElement instanceof PyCallExpression) {
       final PyCallExpression call = (PyCallExpression)myElement;
-      Pair<String, PyFunction> wrap_info = PyCallExpressionHelper.interpretAsModifierWrappingCall(call, myOriginalElement);
-      if (wrap_info != null) {
-        String wrapper_name = wrap_info.getFirst();
-        PyFunction wrapped_func = wrap_info.getSecond();
-        //prolog_cat.addWith(TagSmall, $("Wrapped in ").addWith(TagCode, $(wrapper_name)).add(BR));
-        prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.wrapped.in.$0", wrapper_name)).addItem(BR));
-        return wrapped_func;
+      Pair<String, PyFunction> wrapInfo = PyCallExpressionHelper.interpretAsModifierWrappingCall(call, myOriginalElement);
+      if (wrapInfo != null) {
+        String wrapperName = wrapInfo.getFirst();
+        PyFunction wrappedFunction = wrapInfo.getSecond();
+        reassignmentChain.addWith(TagSmall, $(PyBundle.message("QDOC.wrapped.in.$0", wrapperName)).addItem(BR));
+        return wrappedFunction;
       }
     }
     return myElement;

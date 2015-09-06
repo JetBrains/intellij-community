@@ -1082,10 +1082,6 @@ public class PyUtil {
     return name.length() > 4 && name.startsWith("__") && name.endsWith("__");
   }
 
-  public static boolean isPythonIdentifier(@NotNull String name) {
-    return PyNames.isIdentifier(name);
-  }
-
   /**
    * Constructs new lookup element for completion of keyword argument with equals sign appended.
    *

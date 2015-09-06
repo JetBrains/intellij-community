@@ -202,7 +202,7 @@ public class KeywordArgumentCompletionUtil {
       if (Comparing.equal(myKwArgs.getName(), operandName) &&
           argument instanceof PyStringLiteralExpression) {
         String name = ((PyStringLiteralExpression)argument).getStringValue();
-        if (PyUtil.isPythonIdentifier(name)) {
+        if (PyNames.isIdentifier(name)) {
           myRet.add(PyUtil.createNamedParameterLookup(name, argument.getProject()));
         }
       }
