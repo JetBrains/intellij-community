@@ -15,13 +15,11 @@
  */
 package com.jetbrains.python.documentation;
 
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -318,28 +316,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         originalElement != null && PydevConsoleRunner.isInPydevConsole(originalElement)) {
       return PydevDocumentationProvider.createDoc(element, originalElement);
     }
-
-    originalElement = findRealOriginalElement(originalElement); //original element can be whitespace or bracket,
-    // but we need identifier that resolves to element
-
     return new PyDocumentationBuilder(element, originalElement).build();
-  }
-
-  private static PsiElement findRealOriginalElement(@Nullable PsiElement element) {
-    if (element == null) {
-      return null;
-    }
-    PsiFile file = element.getContainingFile();
-    if (file == null) {
-      return element;
-    }
-    Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(file);
-    if (document == null) {
-      return element;
-    }
-    int newOffset = TargetElementUtil.adjustOffset(file, document, element.getTextOffset());
-    PsiElement newElement = file.findElementAt(newOffset);
-    return newElement != null ? newElement : element;
   }
 
   @Override
