@@ -557,6 +557,42 @@ public class EduStepicConnector {
     return -1;
   }
 
+  public static int updateLesson(Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
+    final HttpPut request = new HttpPut(stepicApiUrl + "lessons/" + String.valueOf(lesson.id));
+    if (ourClient == null) {
+      showLoginDialog();
+    }
+
+    setHeaders(request, "application/json");
+    String requestBody = new Gson().toJson(new LessonWrapper(lesson));
+    request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+    try {
+      final CloseableHttpResponse response = ourClient.execute(request);
+      final HttpEntity responseEntity = response.getEntity();
+      final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+      final StatusLine line = response.getStatusLine();
+      if (line.getStatusCode() != 200) {
+        LOG.error("Failed to push " + responseString);
+        return 0;
+      }
+      final Lesson postedLesson = new Gson().fromJson(responseString, Course.class).getLessons().get(0);
+      for (Integer step : postedLesson.steps) {
+        deleteTask(step);
+      }
+
+      for (Task task : lesson.getTaskList()) {
+        indicator.checkCanceled();
+        postTask(project, task, lesson.id);
+      }
+      return lesson.id;
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+    return -1;
+  }
+
   public static int postLesson(Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
     final HttpPost request = new HttpPost(stepicApiUrl + "lessons");
     if (ourClient == null) {
@@ -577,6 +613,7 @@ public class EduStepicConnector {
         return 0;
       }
       final Lesson postedLesson = new Gson().fromJson(responseString, Course.class).getLessons().get(0);
+      lesson.id = postedLesson.id;
       for (Task task : lesson.getTaskList()) {
         indicator.checkCanceled();
         postTask(project, task, postedLesson.id);
@@ -587,6 +624,28 @@ public class EduStepicConnector {
       LOG.error(e.getMessage());
     }
     return -1;
+  }
+
+  public static void deleteTask(@NotNull final Integer task) {
+    final HttpDelete request = new HttpDelete(stepicApiUrl + "step-sources/" + task);
+    setHeaders(request, "application/json");
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          final CloseableHttpResponse response = ourClient.execute(request);
+          final StatusLine line = response.getStatusLine();
+          if (line.getStatusCode() != 204) {
+            final HttpEntity responseEntity = response.getEntity();
+            final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+            LOG.error("Failed to delete task " + responseString);
+          }
+        }
+        catch (IOException e) {
+          LOG.error(e.getMessage());
+        }
+      }
+    });
   }
 
   public static void postTask(final Project project, @NotNull final Task task, final int lessonId) {
@@ -735,6 +794,8 @@ public class EduStepicConnector {
     public LessonWrapper(Lesson lesson) {
       this.lesson = new Lesson();
       this.lesson.setName(lesson.getName());
+      this.lesson.id = lesson.id;
+      this.lesson.steps = new ArrayList<Integer>();
     }
   }
 
