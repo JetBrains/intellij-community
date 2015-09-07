@@ -56,6 +56,7 @@ public class TestStateStorage implements Disposable {
   }
 
   private static final Logger LOG = Logger.getInstance(TestStateStorage.class);
+  @Nullable
   private PersistentHashMap<String, Record> myMap;
   private volatile ScheduledFuture<?> myMapFlusher;
 
@@ -129,6 +130,7 @@ public class TestStateStorage implements Disposable {
   public synchronized void dispose() {
     myMapFlusher.cancel(false);
     myMapFlusher = null;
+    if (myMap == null) return;
     try {
       myMap.close();
     }
