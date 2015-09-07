@@ -25,7 +25,7 @@ import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 
 abstract class SaveSessionBase : StateStorage.SaveSession, StateStorage.ExternalizationSession, SafeWriteRequestor {
-  override final fun setState(component: Any, componentName: String, state: Any) {
+  override final fun setState(component: Any?, componentName: String, state: Any) {
     val element: Element?
     try {
       element = serializeState(state)
@@ -39,10 +39,10 @@ abstract class SaveSessionBase : StateStorage.SaveSession, StateStorage.External
       return
     }
 
-    setSerializedState(component, componentName, element)
+    setSerializedState(componentName, element)
   }
 
-  protected abstract fun setSerializedState(component: Any, componentName: String, element: Element?)
+  protected abstract fun setSerializedState(componentName: String, element: Element?)
 }
 
 private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SkipDefaultsSerializationFilter>>()

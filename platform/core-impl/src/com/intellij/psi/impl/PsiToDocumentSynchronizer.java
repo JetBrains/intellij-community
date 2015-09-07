@@ -184,7 +184,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       public void syncDocument(@NotNull Document document, @NotNull PsiTreeChangeEventImpl event) {
         int oldLength = event.getOldChild() instanceof ForeignLeafPsiElement ? 0 : event.getOldLength();
         String newText = event.getNewChild() instanceof ForeignLeafPsiElement ? "" : event.getNewChild().getText();
-        replaceString(document, event.getOffset(), event.getOffset() + oldLength, newText);
+        replaceString(document, event.getOffset(), event.getOffset() + oldLength, newText, event.getNewChild());
       }
     });
   }
@@ -194,7 +194,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     doSync(event, false, new DocSyncAction() {
       @Override
       public void syncDocument(@NotNull Document document, @NotNull PsiTreeChangeEventImpl event) {
-        replaceString(document, event.getOffset(), event.getOffset() + event.getOldLength(), event.getParent().getText());
+        replaceString(document, event.getOffset(), event.getOffset() + event.getOldLength(), event.getParent().getText(), event.getParent());
       }
     });
   }
@@ -212,24 +212,28 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     return !myIgnorePsiEvents && !ApplicationManager.getApplication().hasWriteAction(IgnorePsiEventsMarker.class);
   }
 
+  @TestOnly
   public void replaceString(Document document, int startOffset, int endOffset, String s) {
+    replaceString(document, startOffset, endOffset, s, null);
+  }
+  private void replaceString(Document document, int startOffset, int endOffset, String s, @Nullable PsiElement replacement) {
     final DocumentChangeTransaction documentChangeTransaction = getTransaction(document);
     if(documentChangeTransaction != null) {
-      documentChangeTransaction.replace(startOffset, endOffset - startOffset, s);
+      documentChangeTransaction.replace(startOffset, endOffset - startOffset, s, replacement);
     }
   }
 
   public void insertString(Document document, int offset, String s) {
     final DocumentChangeTransaction documentChangeTransaction = getTransaction(document);
     if(documentChangeTransaction != null){
-      documentChangeTransaction.replace(offset, 0, s);
+      documentChangeTransaction.replace(offset, 0, s, null);
     }
   }
 
   private void deleteString(Document document, int startOffset, int endOffset){
     final DocumentChangeTransaction documentChangeTransaction = getTransaction(document);
     if(documentChangeTransaction != null){
-      documentChangeTransaction.replace(startOffset, endOffset - startOffset, "");
+      documentChangeTransaction.replace(startOffset, endOffset - startOffset, "", null);
     }
   }
 
@@ -332,7 +336,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       return myAffectedFragments;
     }
 
-    public void replace(int psiStart, int length, @NotNull String replace) {
+    public void replace(int psiStart, int length, @NotNull String replace, @Nullable PsiElement replacement) {
       // calculating fragment
       // minimize replace
       int start = 0;
@@ -352,6 +356,21 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       while (start < end && newStartInReplace < newEndInReplace && replace.charAt(newEndInReplace - 1) == chars.charAt(end - 1)) {
         newEndInReplace--;
         end--;
+      }
+
+      // increase the changed range to start and end on PSI token boundaries
+      // this will help to survive smart pointers with the same boundaries
+      if (replacement != null && (newStartInReplace > 0 || newEndInReplace < replaceLength)) {
+        PsiElement startLeaf = replacement.findElementAt(newStartInReplace);
+        PsiElement endLeaf = replacement.findElementAt(newEndInReplace - 1);
+        if (startLeaf != null && endLeaf != null) {
+          int leafStart = startLeaf.getTextRange().getStartOffset() - replacement.getTextRange().getStartOffset();
+          int leafEnd = endLeaf.getTextRange().getEndOffset() - replacement.getTextRange().getStartOffset();
+          start += leafStart - newStartInReplace;
+          end += leafEnd - newEndInReplace;
+          newStartInReplace = leafStart;
+          newEndInReplace = leafEnd;
+        }
       }
 
       // optimization: when delete fragment from the middle of the text, prefer split at the line boundaries

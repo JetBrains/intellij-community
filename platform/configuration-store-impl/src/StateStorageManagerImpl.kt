@@ -213,7 +213,8 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     return storage
   }
 
-  private class MyDirectoryStorage(override val storageManager: StateStorageManagerImpl, file: File, splitter: StateSplitter) : DirectoryBasedStorage(storageManager.pathMacroSubstitutor, file, splitter), StorageVirtualFileTracker.TrackedStorage
+  private class MyDirectoryStorage(override val storageManager: StateStorageManagerImpl, file: File, splitter: StateSplitter) :
+    DirectoryBasedStorage(file, splitter, storageManager.pathMacroSubstitutor), StorageVirtualFileTracker.TrackedStorage
 
   private class MyFileStorage(override val storageManager: StateStorageManagerImpl,
                               file: File,

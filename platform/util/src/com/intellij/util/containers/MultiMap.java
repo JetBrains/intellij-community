@@ -243,6 +243,7 @@ public class MultiMap<K, V> implements Serializable {
     myMap.clear();
   }
 
+  @Nullable
   public Collection<V> remove(K key) {
     return myMap.remove(key);
   }

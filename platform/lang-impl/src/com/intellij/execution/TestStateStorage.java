@@ -56,6 +56,7 @@ public class TestStateStorage implements Disposable {
   }
 
   private static final Logger LOG = Logger.getInstance(TestStateStorage.class);
+  @Nullable
   private PersistentHashMap<String, Record> myMap;
   private volatile ScheduledFuture<?> myMapFlusher;
 
@@ -75,12 +76,16 @@ public class TestStateStorage implements Disposable {
     myMapFlusher = FlushingDaemon.everyFiveSeconds(new Runnable() {
       @Override
       public void run() {
-        if (myMapFlusher == null) return; // disposed
-        if (myMap != null && myMap.isDirty()) myMap.force();
+        flushMap();
       }
     });
 
     Disposer.register(project, this);
+  }
+
+  private synchronized void flushMap() {
+    if (myMapFlusher == null) return; // disposed
+    if (myMap != null && myMap.isDirty()) myMap.force();
   }
 
   @NotNull
@@ -129,6 +134,7 @@ public class TestStateStorage implements Disposable {
   public synchronized void dispose() {
     myMapFlusher.cancel(false);
     myMapFlusher = null;
+    if (myMap == null) return;
     try {
       myMap.close();
     }

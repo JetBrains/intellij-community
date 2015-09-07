@@ -783,4 +783,18 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertInstanceOf(pointer.getElement(), PsiTypeElement.class);
   }
 
+  public void testPointerToReferenceSurvivesRename() {
+    PsiFile file = configureByText(JavaFileType.INSTANCE, "class Foo extends Bar {}");
+    PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("Bar"), PsiJavaCodeReferenceElement.class, false);
+    SmartPointerEx pointer = (SmartPointerEx)SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(ref);
+    ref = null;
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(pointer.getCachedElement());
+
+    ref = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("Bar"), PsiJavaCodeReferenceElement.class, false);
+    ref.handleElementRename("BarImpl");
+    assertNotNull(pointer.getElement());
+  }
+
 }

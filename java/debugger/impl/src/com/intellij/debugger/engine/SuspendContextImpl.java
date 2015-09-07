@@ -146,7 +146,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   @Override
   public int getSuspendPolicy() {
-    assertNotResumed();
     return mySuspendPolicy;
   }
 

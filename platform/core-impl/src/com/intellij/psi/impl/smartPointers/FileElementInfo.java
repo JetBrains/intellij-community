@@ -41,9 +41,6 @@ class FileElementInfo extends SmartPointerElementInfo {
   public FileElementInfo(@NotNull PsiFile file) {
     this(file.getProject(), file.getVirtualFile(), file.getLanguage());
   }
-  protected FileElementInfo(@NotNull Project project, VirtualFile virtualFile) {
-    this(project, virtualFile, null);
-  }
 
   protected FileElementInfo(@NotNull Project project, VirtualFile virtualFile, Language lang) {
     myVirtualFile = virtualFile;

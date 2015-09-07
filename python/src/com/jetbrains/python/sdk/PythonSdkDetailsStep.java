@@ -203,7 +203,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
       dialog = new CreateVirtualEnvDialog(myOwnerComponent, allSdks, null);
     }
     if (dialog.showAndGet()) {
-      dialog.createVirtualEnv(allSdks, callback);
+      dialog.createVirtualEnv(callback);
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,11 @@ import java.util.Set;
 
 public interface TrackingPathMacroSubstitutor extends PathMacroSubstitutor {
   @NotNull
-  Collection<String> getUnknownMacros(@Nullable String componentName);
+  Set<String> getUnknownMacros(@Nullable String componentName);
 
+  // Mutable set
   @NotNull
-  Collection<String> getComponents(@NotNull Collection<String> macros);
+  Set<String> getComponents(@NotNull Collection<String> macros);
 
   void addUnknownMacros(@NotNull String componentName, @NotNull Collection<String> unknownMacros);
 

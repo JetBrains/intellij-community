@@ -148,7 +148,7 @@ public class DialogBuilder implements Disposable {
     return myActions;
   }
 
-  public void setActionDescriptors(ActionDescriptor[] descriptors) {
+  public void setActionDescriptors(ActionDescriptor... descriptors) {
     removeAllActions();
     ContainerUtil.addAll(myActions, descriptors);
   }

@@ -17,7 +17,7 @@
     <localInspection shortName="PatternNotApplicable" displayName="Pattern Annotation not applicable" groupName="Pattern Validation"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.intellij.plugins.intelliLang.pattern.PatternAnnotationNotApplicable"/>
-    <localInspection shortName="PatternOverriddenByNonAnnotatedMethod" displayName="Non-annotated Method overrides @Pattern Method"
+    <localInspection language="JAVA" shortName="PatternOverriddenByNonAnnotatedMethod" displayName="Non-annotated Method overrides @Pattern Method"
                      groupName="Pattern Validation" enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.plugins.intelliLang.pattern.PatternOverriddenByNonAnnotatedMethod"/>
 

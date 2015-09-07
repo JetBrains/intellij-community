@@ -15,13 +15,11 @@
  */
 package com.jetbrains.python.documentation;
 
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -37,6 +35,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
@@ -318,28 +317,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         originalElement != null && PydevConsoleRunner.isInPydevConsole(originalElement)) {
       return PydevDocumentationProvider.createDoc(element, originalElement);
     }
-
-    originalElement = findRealOriginalElement(originalElement); //original element can be whitespace or bracket,
-    // but we need identifier that resolves to element
-
     return new PyDocumentationBuilder(element, originalElement).build();
-  }
-
-  private static PsiElement findRealOriginalElement(@Nullable PsiElement element) {
-    if (element == null) {
-      return null;
-    }
-    PsiFile file = element.getContainingFile();
-    if (file == null) {
-      return element;
-    }
-    Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(file);
-    if (document == null) {
-      return element;
-    }
-    int newOffset = TargetElementUtil.adjustOffset(file, document, element.getTextOffset());
-    PsiElement newElement = file.findElementAt(newOffset);
-    return newElement != null ? newElement : element;
   }
 
   @Override
@@ -508,6 +486,18 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         }
       }, ModalityState.NON_MODAL);
     }
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getCustomDocumentationElement(@NotNull Editor editor,
+                                                  @NotNull PsiFile file,
+                                                  @Nullable PsiElement contextElement) {
+    if (contextElement != null &&
+        PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(contextElement.getNode().getElementType())) {
+      return contextElement;
+    }
+    return super.getCustomDocumentationElement(editor, file, contextElement);
   }
 
   @Nullable

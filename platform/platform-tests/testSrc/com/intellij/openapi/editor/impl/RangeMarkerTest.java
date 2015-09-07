@@ -1186,4 +1186,18 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     marker.dispose();
     assertEmpty(LazyRangeMarkerFactoryImpl.getMarkers(virtualFile));
   }
+
+  public void testNonGreedyMarkersGrowOnAppendingReplace() {
+    Document doc = new DocumentImpl("foo");
+    RangeMarker marker = doc.createRangeMarker(0, 3);
+    assertFalse(marker.isGreedyToLeft());
+    assertFalse(marker.isGreedyToRight());
+
+    doc.replaceString(0, 3, "foobar");
+    assertValidMarker(marker, 0, 6);
+
+    doc.replaceString(0, 3, "goofoo");
+    assertValidMarker(marker, 0, 9);
+  }
+
 }

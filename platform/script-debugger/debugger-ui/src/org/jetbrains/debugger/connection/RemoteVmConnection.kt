@@ -72,7 +72,7 @@ public abstract class RemoteVmConnection : VmConnection<Vm>() {
         NettyUtil.connect(createBootstrap(address, result), address, connectionPromise, if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition)
       }
     })
-    connectCancelHandler.set(Runnable {  future.cancel(true) })
+    connectCancelHandler.set(Runnable { future.cancel(true) })
   }
 
   protected open fun connectedAddressToPresentation(address: InetSocketAddress, vm: Vm): String = address.getHostName() + ":" + address.getPort()

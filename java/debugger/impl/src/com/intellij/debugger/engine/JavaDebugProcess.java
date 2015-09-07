@@ -19,7 +19,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -100,31 +100,29 @@ public class JavaDebugProcess extends XDebugProcess {
 
     myJavaSession.getContextManager().addListener(new DebuggerContextListener() {
       @Override
-      public void changeEvent(final DebuggerContextImpl newContext, DebuggerSession.Event event) {
+      public void changeEvent(@NotNull final DebuggerContextImpl newContext, DebuggerSession.Event event) {
         if (event == DebuggerSession.Event.PAUSE
             || event == DebuggerSession.Event.CONTEXT
             || event == DebuggerSession.Event.REFRESH
                && myJavaSession.isPaused()) {
-          if (getSession().getSuspendContext() != newContext.getSuspendContext()) {
-            process.getManagerThread().schedule(new DebuggerContextCommandImpl(newContext) {
+          final SuspendContextImpl newSuspendContext = newContext.getSuspendContext();
+          if (newSuspendContext != null && newSuspendContext != getSession().getSuspendContext()) {
+            process.getManagerThread().schedule(new SuspendContextCommandImpl(newSuspendContext) {
               @Override
-              public void threadAction() {
-                SuspendContextImpl context = newContext.getSuspendContext();
-                if (context != null) {
-                  context.initExecutionStacks(newContext.getThreadProxy());
+              public void contextAction() throws Exception {
+                newSuspendContext.initExecutionStacks(newContext.getThreadProxy());
 
-                  List<Pair<Breakpoint, Event>> descriptors =
-                    DebuggerUtilsEx.getEventDescriptors(context);
-                  if (!descriptors.isEmpty()) {
-                    Breakpoint breakpoint = descriptors.get(0).getFirst();
-                    XBreakpoint xBreakpoint = breakpoint.getXBreakpoint();
-                    if (xBreakpoint != null) {
-                      ((XDebugSessionImpl)getSession()).breakpointReachedNoProcessing(xBreakpoint, context);
-                      return;
-                    }
+                List<Pair<Breakpoint, Event>> descriptors =
+                  DebuggerUtilsEx.getEventDescriptors(newSuspendContext);
+                if (!descriptors.isEmpty()) {
+                  Breakpoint breakpoint = descriptors.get(0).getFirst();
+                  XBreakpoint xBreakpoint = breakpoint.getXBreakpoint();
+                  if (xBreakpoint != null) {
+                    ((XDebugSessionImpl)getSession()).breakpointReachedNoProcessing(xBreakpoint, newSuspendContext);
+                    return;
                   }
-                  getSession().positionReached(context);
                 }
+                getSession().positionReached(newSuspendContext);
               }
             });
           }

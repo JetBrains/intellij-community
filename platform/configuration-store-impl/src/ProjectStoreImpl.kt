@@ -54,8 +54,6 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
     assert(!project.isDefault())
   }
 
-  override fun getSubstitutors() = listOf(storageManager.getMacroSubstitutor())
-
   override fun optimizeTestLoading() = project.isOptimiseTestLoadSpeed()
 
   override final fun getPathMacroManagerForDefaults() = pathMacroManager

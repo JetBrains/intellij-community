@@ -126,9 +126,17 @@ public class PluginHeaderPanel {
       myCategory.setVisible(false);
       myDownloadsPanel.setVisible(false);
       final String version = plugin.getVersion();
-      myVersion.setText("Version: " + (version == null ? "N/A" : version));
+      if (ourState.wasUpdated(plugin.getPluginId())) {
+        myVersion.setText("New version will be available after restart");
+      }
+      else {
+        myVersion.setText("Version: " + (version == null ? "N/A" : version));
+      }
       myUpdated.setVisible(false);
-      if (!plugin.isBundled() || hasNewerVersion) {
+      if (ourState.wasUpdated(plugin.getPluginId()) || ourState.wasInstalled(plugin.getPluginId())) {
+        myActionId = ACTION_ID.RESTART;
+      }
+      else if (!plugin.isBundled() || hasNewerVersion) {
         if (((IdeaPluginDescriptorImpl)plugin).isDeleted()) {
           myActionId = ACTION_ID.RESTART;
         } else if (hasNewerVersion) {

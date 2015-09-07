@@ -329,7 +329,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       return;
     }
     final TestsUIUtil.TestResultPresentation presentation = new TestsUIUtil.TestResultPresentation(testsRoot, myStartTime > 0, null)
-      .getPresentation(myFailedTestCount, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount, myTotalTestCount - myFinishedTestCount, myIgnoredTestCount);
+      .getPresentation(myFailedTestCount, 
+                       Math.max(0, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount), 
+                       myTotalTestCount - myFinishedTestCount, 
+                       myIgnoredTestCount);
     TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation);
     addToHistory(testsRoot, myProperties, this);
   }
@@ -338,7 +341,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                    TestConsoleProperties consoleProperties,
                                    Disposable parentDisposable) {
     final RunProfile configuration = consoleProperties.getConfiguration();
-    if (configuration instanceof RunConfiguration && !(consoleProperties instanceof ImportedTestConsoleProperties)) {
+    if (configuration instanceof RunConfiguration && 
+        !(consoleProperties instanceof ImportedTestConsoleProperties) &&
+        !ApplicationManager.getApplication().isUnitTestMode()) {
       final MySaveHistoryTask backgroundable = new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration);
       final BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(backgroundable);
       Disposer.register(parentDisposable, new Disposable() {

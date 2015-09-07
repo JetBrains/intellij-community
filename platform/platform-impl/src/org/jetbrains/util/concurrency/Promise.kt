@@ -31,15 +31,15 @@ public interface Promise<T> {
 
   public fun done(done: (T) -> Unit): Promise<T>
 
-  public fun processed(fulfilled: AsyncPromise<T>): Promise<T>
-
   public fun rejected(rejected: (Throwable) -> Unit): Promise<T>
 
   public fun processed(processed: (T) -> Unit): Promise<T>
 
   public fun <SUB_RESULT> then(done: (T) -> SUB_RESULT): Promise<SUB_RESULT>
 
-  fun notify(child: AsyncPromise<T>)
+  public fun <SUB_RESULT> thenAsync(done: (T) -> Promise<SUB_RESULT>): Promise<SUB_RESULT>
+
+  public fun notify(child: AsyncPromise<T>): Promise<T>
 
   companion object {
     /**
@@ -61,7 +61,7 @@ public interface Promise<T> {
 
       val totalPromise = AsyncPromise<T>()
       val done = CountDownConsumer(promises.size(), totalPromise, totalResult)
-      val rejected = {it: Throwable -> Unit
+      val rejected = {it: Throwable ->
         if (totalPromise.state == Promise.State.PENDING) {
           totalPromise.setError(it)
         }
@@ -92,16 +92,15 @@ public fun <T> ResolvedPromise(result: T): Promise<T> = DonePromise(result)
 
 public fun <T> concurrency.Promise<T>.toPromise(): AsyncPromise<T> {
   val promise = AsyncPromise<T>()
-  done(object : Consumer<T> {
-    override fun consume(value: T) {
-      promise.setResult(value)
-    }
-  })
-    .rejected(object : Consumer<Throwable> {
-      override fun consume(throwable: Throwable) {
-        promise.setError(throwable)
-      }
-    })
+  val oldPromise = this
+  done(Consumer<T> { promise.setResult(it) })
+    .rejected(Consumer { promise.setError(it) })
+
+  if (oldPromise is concurrency.AsyncPromise) {
+    promise
+      .done { oldPromise.setResult(it) }
+      .rejected { oldPromise.setError(it) }
+  }
   return promise
 }
 
@@ -120,5 +119,8 @@ private class CountDownConsumer<T>(private volatile var countDown: Int, private 
   }
 }
 
-public val Promise<*>.pending: Boolean
+public val Promise<*>.isPending: Boolean
   get() = state == Promise.State.PENDING
+
+public val Promise<*>.isRejected: Boolean
+  get() = state == Promise.State.REJECTED

@@ -108,7 +108,7 @@ public abstract class Promise<T> {
     }).doWhenRejected(new Consumer<String>() {
       @Override
       public void consume(String error) {
-        promise.setError(createError(error));
+        promise.setError(createError(error == null ? "Internal error" : error));
       }
     });
     return promise;

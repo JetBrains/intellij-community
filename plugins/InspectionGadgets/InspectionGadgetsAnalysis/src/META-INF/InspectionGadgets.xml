@@ -1436,6 +1436,7 @@
                      key="junit4.test.method.in.class.extending.junit3.testcase.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnit4AnnotatedMethodInJUnit3TestCaseInspection"/>
+    <!-- JUnitAbstractTestClassNamingConvention and JUnitTestClassNamingConvention also warn on Groovy code -->
     <localInspection groupPath="Java" shortName="JUnitAbstractTestClassNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="junit.abstract.test.class.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
