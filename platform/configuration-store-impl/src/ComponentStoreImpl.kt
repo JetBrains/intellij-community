@@ -129,7 +129,9 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
     }
 
-    errors = doSave(externalizationSession!!.createSaveSessions(), readonlyFiles, errors)
+    if (externalizationSession != null) {
+      errors = doSave(externalizationSession.createSaveSessions(), readonlyFiles, errors)
+    }
     CompoundRuntimeException.doThrow(errors)
   }
 
