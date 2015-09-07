@@ -49,16 +49,26 @@ public abstract class SingleClassesTestBase {
     return Collections.emptyMap();
   }
 
-  protected void doTest(String testFile) {
-    File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
-    assertTrue(classFile.isFile());
-    String testName = classFile.getName().substring(0, classFile.getName().length() - 6);
-
+  protected void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();
 
-    for (File file : collectClasses(classFile)) decompiler.addSpace(file, true);
+    File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
+    assertTrue(classFile.isFile());
+    for (File file : collectClasses(classFile)) {
+      decompiler.addSpace(file, true);
+    }
+
+    for (String companionFile : companionFiles) {
+      File companionClassFile = new File(fixture.getTestDataDir(), "/classes/" + companionFile + ".class");
+      assertTrue(companionClassFile.isFile());
+      for (File file : collectClasses(companionClassFile)) {
+        decompiler.addSpace(file, true);
+      }
+    }
+
     decompiler.decompileContext();
 
+    String testName = classFile.getName().substring(0, classFile.getName().length() - 6);
     File decompiledFile = new File(fixture.getTargetDir(), testName + ".java");
     assertTrue(decompiledFile.isFile());
     File referenceFile = new File(fixture.getTestDataDir(), "results/" + testName + ".dec");
