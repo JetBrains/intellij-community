@@ -75,6 +75,13 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     public void actionPerformed(ActionEvent event) {
       apply();
     }
+
+    @Override
+    public void setEnabled(boolean newValue) {
+      boolean enabled = isEnabled();
+      if (enabled != newValue) new Throwable("" + newValue).printStackTrace(System.out);
+      super.setEnabled(newValue);
+    }
   };
   private final AbstractAction myResetAction = new AbstractAction(RESET_NAME) {
     @Override
@@ -134,6 +141,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   @Override
   boolean apply() {
     // do not apply changes of a single configurable if it is not modified
+    updateIfCurrent(myConfigurable);
     return setError(apply(myApplyAction.isEnabled() ? myConfigurable : null));
   }
 
@@ -311,6 +319,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   static ConfigurationException apply(Configurable configurable) {
+    System.out.println("ConfigurableEditor.apply");
     if (configurable != null) {
       try {
         configurable.apply();
