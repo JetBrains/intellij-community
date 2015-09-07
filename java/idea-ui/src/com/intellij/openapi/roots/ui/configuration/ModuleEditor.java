@@ -204,10 +204,10 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       }
     }
 
-    for (Configurable moduleConfigurable : ComponentsPackage.getComponents(myModule, Configurable.class)) {
+    for (Configurable moduleConfigurable : ComponentsPackage.getComponents(module, Configurable.class)) {
       myEditors.add(new ModuleConfigurableWrapper(moduleConfigurable));
     }
-    for(ModuleConfigurableEP extension : myModule.getExtensions(MODULE_CONFIGURABLES)) {
+    for(ModuleConfigurableEP extension : module.getExtensions(MODULE_CONFIGURABLES)) {
       if (extension.canCreateConfigurable()) {
         myEditors.add(new ModuleConfigurableWrapper(extension.createConfigurable()));
       }
