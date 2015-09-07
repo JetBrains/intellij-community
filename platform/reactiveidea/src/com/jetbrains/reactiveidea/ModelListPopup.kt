@@ -126,7 +126,7 @@ public open class ModelListPopup(val aStep: ListPopupStep<Any>,
       val actionPerformed = reactiveModel.subscribe(lifetime, path / "action")
 
       selectedIndex = reaction(true, "selectedIndex", selection) {
-        (it as? PrimitiveModel<Int>)?.value ?: 0
+        (it as? PrimitiveModel<Number>)?.value?.toInt() ?: 0
       }
 
       reaction(false, "perform action in list popup", actionPerformed, selectedIndex!!) { action, index ->
