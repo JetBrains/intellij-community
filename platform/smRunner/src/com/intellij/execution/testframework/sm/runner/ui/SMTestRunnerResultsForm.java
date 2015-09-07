@@ -338,7 +338,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                    TestConsoleProperties consoleProperties,
                                    Disposable parentDisposable) {
     final RunProfile configuration = consoleProperties.getConfiguration();
-    if (configuration instanceof RunConfiguration && !(consoleProperties instanceof ImportedTestConsoleProperties)) {
+    if (configuration instanceof RunConfiguration && 
+        !(consoleProperties instanceof ImportedTestConsoleProperties) &&
+        !ApplicationManager.getApplication().isUnitTestMode()) {
       final MySaveHistoryTask backgroundable = new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration);
       final BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(backgroundable);
       Disposer.register(parentDisposable, new Disposable() {
