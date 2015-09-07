@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyIndentUtil;
@@ -91,6 +92,10 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @Nullable
   public static String getNormalizedSectionTitle(@NotNull @NonNls String title) {
     return SECTION_ALIASES.get(title.toLowerCase());
+  }
+  
+  public static boolean isValidSectionTitle(@NotNull @NonNls String title) {
+    return StringUtil.isCapitalized(title) && getNormalizedSectionTitle(title) != null;
   }
 
   private final Substring mySummary;

@@ -209,41 +209,46 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testEnterDocStringStubInClass() {
-    doDocStringTypingTest('\n', DocStringFormat.REST);
+    doDocStringTypingTest("\n", DocStringFormat.REST);
   }
 
   public void testEnterDocStringStubInFile() {
-    doDocStringTypingTest('\n', DocStringFormat.REST);
+    doDocStringTypingTest("\n", DocStringFormat.REST);
   }
 
   // PY-16656
   public void testEnterDocStringStubInFunctionWithSelf() {
-    doDocStringTypingTest('\n', DocStringFormat.REST);
+    doDocStringTypingTest("\n", DocStringFormat.REST);
   }
   
   // PY-16656
   public void testEnterDocStringStubInStaticMethodWithSelf() {
-    doDocStringTypingTest('\n', DocStringFormat.REST);
+    doDocStringTypingTest("\n", DocStringFormat.REST);
   }
 
   // PY-16828
   public void testEnterDocStringStubWithStringPrefix() {
-    doDocStringTypingTest('\n', DocStringFormat.REST);
+    doDocStringTypingTest("\n", DocStringFormat.REST);
   }
 
   // PY-3421
   public void testSpaceDocStringStubInFunction() {
-    doDocStringTypingTest(' ', DocStringFormat.REST);
+    doDocStringTypingTest(" ", DocStringFormat.REST);
   }
 
   // PY-3421
   public void testSpaceDocStringStubInFile() {
-    doDocStringTypingTest(' ', DocStringFormat.REST);
+    doDocStringTypingTest(" ", DocStringFormat.REST);
   }
 
   // PY-3421
   public void testSpaceDocStringStubInClass() {
-    doDocStringTypingTest(' ', DocStringFormat.REST);
+    doDocStringTypingTest(" ", DocStringFormat.REST);
+  }
+
+  // PY-16765
+  public void testSectionIndentInsideGoogleDocString() {
+    doDocStringTypingTest("\nparam", DocStringFormat.GOOGLE);
   }
 
   public void testEnterInString() {  // PY-1738
@@ -436,23 +441,40 @@ public class PyEditingTest extends PyTestCase {
     myFixture.checkResultByFile(testName + ".after.py");
   }
 
-  private void doDocStringTypingTest(final char character, @NotNull DocStringFormat format) {
+  private void doTypingTest(@NotNull String text) {
+    final String testName = "editing/" + getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    doTyping(text);
+    myFixture.checkResultByFile(testName + ".after.py");
+  }
+
+  private void doDocStringTypingTest(final String text, @NotNull DocStringFormat format) {
     runWithDocStringFormat(format, new Runnable() {
       @Override
       public void run() {
-        doTypingTest(character);
+        doTypingTest(text);
       }
     });
   }
 
   private void doTyping(final char character) {
     final int offset = myFixture.getEditor().getCaretModel().getOffset();
-    final PsiFile file = WriteCommandAction.runWriteCommandAction(null, new Computable<PsiFile>() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
-      public PsiFile compute() {
+      public void run() {
         myFixture.getEditor().getCaretModel().moveToOffset(offset);
         myFixture.type(character);
-        return myFixture.getFile();
+      }
+    });
+  }
+  
+  private void doTyping(final String text) {
+    final int offset = myFixture.getEditor().getCaretModel().getOffset();
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
+      public void run() {
+        myFixture.getEditor().getCaretModel().moveToOffset(offset);
+        myFixture.type(text);
       }
     });
   }

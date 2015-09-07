@@ -23,10 +23,12 @@ import org.jetbrains.annotations.Nullable;
  * @author Mikhail Golubev
  */
 public class GoogleCodeStyleDocStringBuilder extends SectionBasedDocStringBuilder {
+  public static final String DEFAULT_SECTION_INDENT = "  ";
+  public static final String DEFAULT_CONTINUATION_INDENT = "  ";
 
   public GoogleCodeStyleDocStringBuilder() {
     // Two spaces according to Google Code Style
-    super("  ", "  ");
+    super(DEFAULT_SECTION_INDENT, DEFAULT_CONTINUATION_INDENT);
   }
 
   @Override

@@ -16,11 +16,9 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.toolbox.Substring;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -126,8 +124,7 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
     final Matcher matcher = SECTION_HEADER.matcher(line);
     if (matcher.matches()) {
       final Substring title = line.getMatcherGroup(matcher, 1).trim();
-      @NonNls final String titleText = title.toString();
-      if (StringUtil.isCapitalized(titleText) && SECTION_NAMES.contains(titleText.toLowerCase())) {
+      if (isValidSectionTitle(title.toString())) {
         return Pair.create(title, lineNum + 1);
       }
     }

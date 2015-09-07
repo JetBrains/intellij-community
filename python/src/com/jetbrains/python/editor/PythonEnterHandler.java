@@ -35,12 +35,13 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.documentation.docstrings.DocStringUtil;
-import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
+import com.jetbrains.python.documentation.docstrings.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.regex.Matcher;
 
 /**
  * @author yole
@@ -105,7 +106,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
         comment = file.findElementAt(offset - 1);
       }
       int expectedStringStart = editor.getCaretModel().getOffset() - 3; // """ or '''
-      if (atDocCommentStart(comment, expectedStringStart)) {
+      if (comment != null && atDocCommentStart(comment, expectedStringStart)) {
         insertDocStringStub(editor, comment);
         return Result.Continue;
       }
@@ -350,9 +351,32 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     if (myPostprocessShift > 0) {
       editor.getCaretModel().moveCaretRelatively(myPostprocessShift, 0, false, false, false);
       myPostprocessShift = 0;
+      return Result.Continue;
     }
-    return super.postProcessEnter(file, editor,
-                                  dataContext);
+    addGoogleDocStringSectionIndent(file, editor, editor.getCaretModel().getOffset());
+    return super.postProcessEnter(file, editor, dataContext);
+  }
+
+  private static void addGoogleDocStringSectionIndent(@NotNull PsiFile file, @NotNull Editor editor, int offset) {
+    final Document document = editor.getDocument();
+    final PsiElement element = file.findElementAt(offset);
+    if (element != null) {
+      // Insert additional indentation after section header in Google code style docstrings
+      final PyStringLiteralExpression pyString = DocStringUtil.getParentDefinitionDocString(element);
+      if (pyString != null) {
+        final String docStringText = pyString.getText();
+        final DocStringFormat format = DocStringUtil.guessDocStringFormat(docStringText, pyString);
+        if (format == DocStringFormat.GOOGLE && offset + 1 < document.getTextLength()) {
+          final int lineNum = document.getLineNumber(offset);
+          final TextRange lineRange = TextRange.create(document.getLineStartOffset(lineNum - 1), document.getLineEndOffset(lineNum - 1));
+          final Matcher matcher = GoogleCodeStyleDocString.SECTION_HEADER.matcher(document.getText(lineRange));
+          if (matcher.matches() && SectionBasedDocString.isValidSectionTitle(matcher.group(1))) {
+            document.insertString(offset, GoogleCodeStyleDocStringBuilder.DEFAULT_SECTION_INDENT);
+            editor.getCaretModel().moveCaretRelatively(2, 0, false, false, false);
+          }
+        }
+      }
+    }
   }
 
   public static boolean atDocCommentStart(@NotNull PsiElement element, int offset) {

@@ -173,7 +173,7 @@ public class DocStringUtil {
 
   public static boolean isLikeGoogleDocString(@NotNull String text) {
     for (@NonNls String title : StringUtil.findMatches(text, GoogleCodeStyleDocString.SECTION_HEADER, 1)) {
-      if (SectionBasedDocString.SECTION_NAMES.contains(title.toLowerCase())) {
+      if (SectionBasedDocString.isValidSectionTitle(title)) {
         return true;
       }
     }

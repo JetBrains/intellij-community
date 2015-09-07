@@ -23,12 +23,15 @@ import org.jetbrains.annotations.Nullable;
  * @author Mikhail Golubev
  */
 public class NumpyDocStringBuilder extends SectionBasedDocStringBuilder {
-  private final char DEFAULT_SECTION_TITLE_UNDERLINE_SYMBOL = '-';
+  public static final String DEFAULT_SECTION_INDENT = "";
+  public static final String DEFAULT_CONTINUATION_INDENT = "    ";
+  public static final char DEFAULT_SECTION_TITLE_UNDERLINE_SYMBOL = '-';
+  
   private char myUnderlineSymbol = DEFAULT_SECTION_TITLE_UNDERLINE_SYMBOL;
 
   public NumpyDocStringBuilder() {
     // Sections are not indented and continuation indent of 4 spaces like in Numpy sources
-    super("", "    ");
+    super(DEFAULT_SECTION_INDENT, DEFAULT_CONTINUATION_INDENT);
   }
 
   @Override
