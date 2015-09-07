@@ -135,9 +135,11 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     if (anchor == null) return null;
 
     PsiElement result = findParent(syncStartOffset, syncEndOffset, type, anchor);
-    if (result == null && syncEndOffset == syncStartOffset && anchor.getTextRange().getStartOffset() == syncEndOffset) {
-      anchor = PsiTreeUtil.prevLeaf(anchor, false);
-      if (anchor != null) {
+    if (syncEndOffset == syncStartOffset) {
+      while (result == null && anchor.getTextRange().getStartOffset() == syncEndOffset) {
+        anchor = PsiTreeUtil.prevLeaf(anchor, false);
+        if (anchor == null) break;
+
         result = findParent(syncStartOffset, syncEndOffset, type, anchor);
       }
     }
