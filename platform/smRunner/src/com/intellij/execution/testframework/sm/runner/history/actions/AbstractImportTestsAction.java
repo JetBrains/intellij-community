@@ -18,6 +18,8 @@ package com.intellij.execution.testframework.sm.runner.history.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
@@ -28,6 +30,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
@@ -100,7 +103,9 @@ public abstract class AbstractImportTestsAction extends AnAction {
         }
         final Executor executor = properties != null ? properties.getExecutor() 
                                                      : ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
-        ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.create(project, executor, profile);
+        ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder
+          .create(project, executor, profile)
+          .target(profile.getTarget());
         final RunConfiguration initialConfiguration = profile.getInitialConfiguration();
         final ProgramRunner runner =
           initialConfiguration != null ? RunnerRegistry.getInstance().getRunner(executor.getId(), initialConfiguration) : null;
@@ -139,6 +144,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
     private RunConfiguration myConfiguration;
     private boolean myImported;
     private SMTRunnerConsoleProperties myProperties;
+    private ExecutionTarget myTarget;
 
     public ImportRunProfile(VirtualFile file, Project project) {
       myFile = file;
@@ -163,10 +169,31 @@ public abstract class AbstractImportTestsAction extends AnAction {
               }
             }
           }
+          myTarget = getTarget(project, config);
         }
       }
       catch (Exception ignore) {
       }
+    }
+
+    private ExecutionTarget getTarget(Project project, Element config) {
+      String targetId = config.getAttributeValue("target");
+      if (targetId != null && !DefaultExecutionTarget.INSTANCE.getId().equals(targetId)) {
+        RunnerAndConfigurationSettingsImpl
+          settings = new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(project), myConfiguration, false);
+        for (ExecutionTargetProvider provider : Extensions.getExtensions(ExecutionTargetProvider.EXTENSION_NAME)) {
+          for (ExecutionTarget target : provider.getTargets(project, settings)) {
+            if (targetId.equals(target.getId())) {
+              return target;
+            }
+          }
+        }
+      }
+      return DefaultExecutionTarget.INSTANCE;
+    }
+
+    public ExecutionTarget getTarget() {
+      return myTarget;
     }
 
     @Nullable
