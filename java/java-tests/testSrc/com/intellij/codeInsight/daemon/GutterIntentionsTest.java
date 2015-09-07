@@ -15,27 +15,39 @@
  */
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-public class GutterIntentionsTest extends LightPlatformCodeInsightFixtureTestCase {
+public class GutterIntentionsTest extends LightCodeInsightFixtureTestCase {
   public void testEmptyIntentions() throws Exception {
     myFixture.configureByText(JavaFileType.INSTANCE, "class Foo {\n" +
                                                      "  <caret>   private String test() {\n" +
                                                      "        return null;\n" +
-                                                     "     }");
+                                                     "     }" +
+                                                     "}");
+    myFixture.findAllGutters();
     List<IntentionAction> intentions = myFixture.getAvailableIntentions();
     assertEmpty(intentions);
   }
 
-  @Override
-  protected boolean isWriteActionRequired() {
-    return false;
+  public void testOptions() throws Exception {
+    myFixture.configureByText(JavaFileType.INSTANCE, "public class Foo {\n" +
+                                                     "  public static void <caret>main(String[] args) {}" +
+                                                     "}");
+    assertEquals(1, myFixture.findGuttersAtCaret().size());
+
+    ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
+    ShowIntentionsPass.getActionsToShow(getEditor(), getFile(), intentions, -1);
+    assertEquals(1, intentions.guttersToShow.size());
+    List<IntentionAction> options = intentions.guttersToShow.get(0).getOptions(myFixture.getElementAtCaret(), getEditor());
+    assertNotNull(options);
+    assertNotEmpty(options);
   }
 }
