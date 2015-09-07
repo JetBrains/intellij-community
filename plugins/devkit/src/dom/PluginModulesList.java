@@ -33,5 +33,8 @@ public interface PluginModulesList extends DomElement {
   interface ModuleId extends GenericDomValue<String> {
     @Attribute("scope")
     GenericAttributeValue<String> getScope();
+
+    @Attribute("optional")
+    GenericAttributeValue<Boolean> getOptional();
   }
 }
