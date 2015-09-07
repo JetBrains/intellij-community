@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +48,7 @@ public class RepositoryLibraryPropertiesEditor {
   private JPanel loadingPanel;
   private JBCheckBox downloadSourcesCheckBox;
   private JBCheckBox downloadJavaDocsCheckBox;
+  private JBLabel mavenCoordinates;
 
   @NotNull private ModelChangeListener onChangeListener;
 
@@ -67,9 +69,9 @@ public class RepositoryLibraryPropertiesEditor {
 
 
   public RepositoryLibraryPropertiesEditor(@Nullable Project project,
-                                           RepositoryLibraryPropertiesModel model,
+                                           final RepositoryLibraryPropertiesModel model,
                                            RepositoryLibraryDescription description,
-                                           @NotNull ModelChangeListener onChangeListener) {
+                                           @NotNull final ModelChangeListener onChangeListener) {
     this.initialModel = model.clone();
     this.model = model;
     this.project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
@@ -80,7 +82,13 @@ public class RepositoryLibraryPropertiesEditor {
         reloadVersionsAsync();
       }
     });
-    this.onChangeListener = onChangeListener;
+    this.onChangeListener = new ModelChangeListener() {
+      @Override
+      public void onChange(RepositoryLibraryPropertiesEditor editor) {
+        onChangeListener.onChange(editor);
+        mavenCoordinates.setText("Maven: " + repositoryLibraryDescription.getMavenCoordinates(model.getVersion()));
+      }
+    };
     reloadVersionsAsync();
   }
 

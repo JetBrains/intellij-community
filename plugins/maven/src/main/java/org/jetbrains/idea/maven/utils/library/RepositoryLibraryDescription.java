@@ -48,7 +48,7 @@ public abstract class RepositoryLibraryDescription {
   }
 
   @NotNull
-  public static synchronized RepositoryLibraryDescription findDescription(@NotNull final RepositoryLibraryProperties properties) {
+  public static synchronized RepositoryLibraryDescription findDescription(@NotNull final String groupId, @NotNull final String artifactId) {
     if (registeredLibraries == null) {
       registeredLibraries = new HashMap<String, RepositoryLibraryDescription>();
       for (RepositoryLibraryDescription description : EP_NAME.getExtensions()) {
@@ -59,7 +59,7 @@ public abstract class RepositoryLibraryDescription {
         }
       }
     }
-    String id = properties.getGroupId() + ":" + properties.getArtifactId();
+    final String id = groupId + ":" + artifactId;
     RepositoryLibraryDescription description = registeredLibraries.get(id);
     if (description != null) {
       return description;
@@ -68,19 +68,19 @@ public abstract class RepositoryLibraryDescription {
       @NotNull
       @Override
       public String getGroupId() {
-        return properties.getGroupId();
+        return groupId;
       }
 
       @NotNull
       @Override
       public String getArtifactId() {
-        return properties.getArtifactId();
+        return artifactId;
       }
 
       @NotNull
       @Override
       public String getDisplayName() {
-        return properties.getGroupId() + ":" + properties.getArtifactId();
+        return id;
       }
 
       @NotNull
@@ -89,6 +89,12 @@ public abstract class RepositoryLibraryDescription {
         return MavenIcons.MavenLogo;
       }
     };
+  }
+
+
+  @NotNull
+  public static synchronized RepositoryLibraryDescription findDescription(@NotNull final RepositoryLibraryProperties properties) {
+    return findDescription(properties.getGroupId(), properties.getArtifactId());
   }
 
   @NotNull
@@ -122,4 +128,21 @@ public abstract class RepositoryLibraryDescription {
   public RepositoryLibraryProperties createDefaultProperties() {
     return new RepositoryLibraryProperties(getGroupId(), getArtifactId(), RepositoryUtils.LatestVersionId);
   }
+
+  public String getDisplayName(String version) {
+    if (version.equals(RepositoryUtils.LatestVersionId)) {
+      version = RepositoryUtils.LatestVersionDisplayName;
+    }
+    if (version.equals(RepositoryUtils.ReleaseVersionId)) {
+      version = RepositoryUtils.ReleaseVersionDisplayName;
+    }
+    return getDisplayName() + ":" + version;
+  }
+
+  public String getMavenCoordinates(String version) {
+    return getGroupId() + ":" + getArtifactId() + ":" + version;
+  }
+
+
+
 }
