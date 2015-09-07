@@ -17,8 +17,6 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
@@ -43,19 +41,17 @@ public class DocStringTagCompletionContributor extends CompletionContributor {
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            ProcessingContext context,
                                            @NotNull CompletionResultSet result) {
-               final Module module = ModuleUtilCore.findModuleForPsiElement(parameters.getPosition());
-               if (module == null) return;
-               final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(module);
                final PsiFile file = parameters.getOriginalFile();
-               if (settings.isEpydocFormat(file) || settings.isReSTFormat(file)) {
+               DocStringFormat format = DocStringUtil.getConfiguredDocStringFormat(file);
+               if (format == DocStringFormat.EPYTEXT || format == DocStringFormat.REST) {
                  int offset = parameters.getOffset();
                  final String text = file.getText();
-                 char prefix = settings.isEpydocFormat(file) ? '@' : ':';
+                 char prefix = format == DocStringFormat.EPYTEXT ? '@' : ':';
                  if (offset > 0) {
                    offset--;
                  }
                  StringBuilder prefixBuilder = new StringBuilder();
-                 while(offset > 0 && (Character.isLetterOrDigit(text.charAt(offset)) || text.charAt(offset) == prefix)) {
+                 while (offset > 0 && (Character.isLetterOrDigit(text.charAt(offset)) || text.charAt(offset) == prefix)) {
                    prefixBuilder.insert(0, text.charAt(offset));
                    if (text.charAt(offset) == prefix) {
                      offset--;
@@ -63,7 +59,7 @@ public class DocStringTagCompletionContributor extends CompletionContributor {
                    }
                    offset--;
                  }
-                 while(offset > 0) {
+                 while (offset > 0) {
                    offset--;
                    if (text.charAt(offset) == '\n' || text.charAt(offset) == '\"' || text.charAt(offset) == '\'') {
                      break;
@@ -72,7 +68,7 @@ public class DocStringTagCompletionContributor extends CompletionContributor {
                      return;
                    }
                  }
-                 String[] allTags = settings.isEpydocFormat(file) ? EpydocString.ALL_TAGS : SphinxDocString.ALL_TAGS;
+                 String[] allTags = format == DocStringFormat.EPYTEXT ? EpydocString.ALL_TAGS : SphinxDocString.ALL_TAGS;
                  if (prefixBuilder.length() > 0) {
                    result = result.withPrefixMatcher(prefixBuilder.toString());
                  }
@@ -81,7 +77,6 @@ public class DocStringTagCompletionContributor extends CompletionContributor {
                  }
                }
              }
-           }
-           );
+           });
   }
 }
