@@ -15,7 +15,9 @@
  */
 package com.intellij.execution.testframework.export;
 
+import com.intellij.execution.DefaultExecutionTarget;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.filters.Filter;
@@ -72,6 +74,7 @@ public class TestResultsXmlFormatter {
   private final ContentHandler myResultHandler;
   private final AbstractTestProxy myTestRoot;
   private final boolean myHidePassedConfig;
+  private final ExecutionTarget myExecutionTarget;
 
   public static void execute(AbstractTestProxy root, RunConfiguration runtimeConfiguration, TestConsoleProperties properties, ContentHandler resultHandler)
     throws SAXException {
@@ -86,6 +89,7 @@ public class TestResultsXmlFormatter {
     myTestRoot = root;
     myResultHandler = resultHandler;
     myHidePassedConfig = TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG.value(properties);
+    myExecutionTarget = properties.getExecutionTarget();
   }
 
   private void execute() throws SAXException {
@@ -130,6 +134,9 @@ public class TestResultsXmlFormatter {
       myRuntimeConfiguration.writeExternal(config);
       config.setAttribute("configId", myRuntimeConfiguration.getType().getId());
       config.setAttribute("name", myRuntimeConfiguration.getName());
+      if (!DefaultExecutionTarget.INSTANCE.equals(myExecutionTarget)) {
+        config.setAttribute("target", myExecutionTarget.getId());
+      }
     }
     catch (WriteExternalException ignore) {}
     processJDomElement(config);

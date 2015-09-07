@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -63,6 +64,7 @@ import java.util.List;
  */
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public abstract class ModuleEditor implements Place.Navigator, Disposable {
+  private static final Logger LOG = Logger.getInstance(ModuleEditor.class);
   private static final ExtensionPointName<ModuleConfigurableEP> MODULE_CONFIGURABLES = ExtensionPointName.create("com.intellij.moduleConfigurable");
   public static final String SELECTED_EDITOR_NAME = "selectedEditor";
 
@@ -188,8 +190,10 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   }
 
   private void createEditors(@Nullable Module module) {
+    if (module == null) return;
+
     ModuleConfigurationState state = createModuleConfigurationState();
-    for (ModuleConfigurationEditorProvider provider : Extensions.getExtensions(ModuleConfigurationEditorProvider.EP_NAME, module)) {
+    for (ModuleConfigurationEditorProvider provider : collectProviders(module)) {
       ModuleConfigurationEditor[] editors = provider.createEditors(state);
       if (editors.length > 0 && provider instanceof ModuleConfigurationEditorProviderEx &&
           ((ModuleConfigurationEditorProviderEx)provider).isCompleteEditorSet()) {
@@ -202,14 +206,36 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       }
     }
 
-    for (Configurable moduleConfigurable : ComponentsPackage.getComponents(myModule, Configurable.class)) {
+    for (Configurable moduleConfigurable : ComponentsPackage.getComponents(module, Configurable.class)) {
+      reportDeprecatedModuleEditor(moduleConfigurable.getClass());
       myEditors.add(new ModuleConfigurableWrapper(moduleConfigurable));
     }
-    for(ModuleConfigurableEP extension : myModule.getExtensions(MODULE_CONFIGURABLES)) {
+    for(ModuleConfigurableEP extension : module.getExtensions(MODULE_CONFIGURABLES)) {
       if (extension.canCreateConfigurable()) {
-        myEditors.add(new ModuleConfigurableWrapper(extension.createConfigurable()));
+        Configurable configurable = extension.createConfigurable();
+        if (configurable != null) {
+          reportDeprecatedModuleEditor(configurable.getClass());
+          myEditors.add(new ModuleConfigurableWrapper(configurable));
+        }
       }
     }
+  }
+
+  private static Set<Class<?>> ourReportedDeprecatedClasses = new HashSet<Class<?>>();
+  private static void reportDeprecatedModuleEditor(Class<?> aClass) {
+    if (ourReportedDeprecatedClasses.add(aClass)) {
+      LOG.warn(aClass.getName() + " uses deprecated way to register itself as a module editor. " + ModuleConfigurationEditorProvider.class.getName() + " extension point should be used instead");
+    }
+  }
+
+  private static ModuleConfigurationEditorProvider[] collectProviders(@NotNull Module module) {
+    List<ModuleConfigurationEditorProvider> result = new ArrayList<ModuleConfigurationEditorProvider>();
+    result.addAll(ComponentsPackage.getComponents(module, ModuleConfigurationEditorProvider.class));
+    for (ModuleConfigurationEditorProvider component : result) {
+      reportDeprecatedModuleEditor(component.getClass());
+    }
+    ContainerUtil.addAll(result, Extensions.getExtensions(ModuleConfigurationEditorProvider.EP_NAME, module));
+    return result.toArray(new ModuleConfigurationEditorProvider[result.size()]);
   }
 
   public ModuleConfigurationState createModuleConfigurationState() {

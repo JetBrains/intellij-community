@@ -21,7 +21,6 @@ import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.testFramework.PlatformTestCase;
@@ -41,7 +40,7 @@ public class UpdatePluginsFromCustomRepositoryTest extends PlatformTestCase {
 
     final BuildNumber currentBuildNumber = BuildNumber.fromString("IU-142.100");
     for (IdeaPluginDescriptor descriptor : descriptors) {
-      UpdateChecker.checkAndPrepareToInstall(PluginDownloader.createDownloader(descriptor, null, currentBuildNumber), new InstalledPluginsState(new UpdateSettings()), 
+      UpdateChecker.checkAndPrepareToInstall(PluginDownloader.createDownloader(descriptor, null, currentBuildNumber), new InstalledPluginsState(),
                                              toUpdate, new ArrayList<IdeaPluginDescriptor>(), null);
     }
     Assert.assertEquals("Found: " + toUpdate.size(), 1, toUpdate.size());

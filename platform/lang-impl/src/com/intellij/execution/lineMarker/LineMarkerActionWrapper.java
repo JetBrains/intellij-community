@@ -67,7 +67,7 @@ public class LineMarkerActionWrapper extends AnAction {
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public synchronized Object getData(@NonNls String dataId) {
       if (Location.DATA_KEY.is(dataId)) return myElement.isValid() ? new PsiLocation<PsiElement>(myElement) : null;
       return myDelegate.getData(dataId);
     }

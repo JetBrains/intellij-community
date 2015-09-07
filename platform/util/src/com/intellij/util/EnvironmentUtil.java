@@ -151,10 +151,7 @@ public class EnvironmentUtil {
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
       Process process = Runtime.getRuntime().exec(command);
-      ProcessKiller processKiller = new ProcessKiller(process);
-      processKiller.killAfter(SHELL_ENV_READING_TIMEOUT);
-      int rv = process.waitFor();
-      processKiller.stopWaiting();
+      int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
 
       String lines = FileUtil.loadFile(envFile);
       if (rv != 0 || lines.isEmpty()) {
@@ -191,51 +188,38 @@ public class EnvironmentUtil {
     return Collections.unmodifiableMap(newEnv);
   }
 
-
-  private static class ProcessKiller {
-    private final Process myProcess;
-    private final Object myWaiter = new Object();
-
-    public ProcessKiller(Process process) {
-      myProcess = process;
+  private static int waitAndTerminateAfter(@NotNull Process process, int timeoutMillis) {
+    Integer exitCode = waitFor(process, timeoutMillis);
+    if (exitCode != null) {
+      return exitCode;
     }
-
-    public void killAfter(long timeout) {
-      final long stop = System.currentTimeMillis() + timeout;
-      new Thread("kill after") {
-        @Override
-        public void run() {
-          synchronized (myWaiter) {
-            while (System.currentTimeMillis() < stop) {
-              try {
-                myProcess.exitValue();
-                break;
-              }
-              catch (IllegalThreadStateException ignore) { }
-
-              try {
-                myWaiter.wait(100);
-              }
-              catch (InterruptedException ignore) { }
-            }
-          }
-
-          try {
-            myProcess.exitValue();
-          }
-          catch (IllegalThreadStateException e) {
-            UnixProcessManager.sendSigKillToProcessTree(myProcess);
-            LOG.warn("timed out");
-          }
-        }
-      }.start();
+    LOG.warn("shell env loader is timed out");
+    UnixProcessManager.sendSigIntToProcessTree(process);
+    exitCode = waitFor(process, 1000);
+    if (exitCode != null) {
+      return exitCode;
     }
+    LOG.warn("failed to terminate shell env loader process gracefully, terminating forcibly");
+    UnixProcessManager.sendSigKillToProcessTree(process);
+    exitCode = waitFor(process, 1000);
+    if (exitCode != null) {
+      return exitCode;
+    }
+    LOG.warn("failed to kill shell env loader");
+    return -1;
+  }
 
-    public void stopWaiting() {
-      synchronized (myWaiter) {
-        myWaiter.notifyAll();
+  @Nullable
+  private static Integer waitFor(@NotNull Process process, int timeoutMillis) {
+    long stop = System.currentTimeMillis() + timeoutMillis;
+    while (System.currentTimeMillis() < stop) {
+      TimeoutUtil.sleep(100);
+      try {
+        return process.exitValue();
       }
+      catch (IllegalThreadStateException ignore) { }
     }
+    return null;
   }
 
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs) {

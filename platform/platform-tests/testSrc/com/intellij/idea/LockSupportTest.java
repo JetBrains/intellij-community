@@ -39,7 +39,6 @@ public class LockSupportTest {
   @Before
   public void setUp() throws IOException {
     myTempDir = FileUtil.createTempDirectory("LockSupportTest.", ".tmp", false);
-    System.out.println("** dir=" + myTempDir.getPath());
   }
 
   @After
