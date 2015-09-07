@@ -51,13 +51,20 @@ binding.setVariable("layoutPluginByRuntimeModules", { String mainModuleName ->
     it.getChildren("module").each {
       def moduleName = it.getTextTrim()
       def scope = it.getAttributeValue("scope") ?: moduleName == mainModuleName ? "embedded" : "IDE"
+      def optional = Boolean.parseBoolean(it.getAttributeValue("optional"))
       if (!moduleName.startsWith("lib.")) {
-        modulesWithScopes.add(Pair.create(findModule(moduleName), scope))
+        def module = findModule(moduleName)
+        if (module != null) {
+          modulesWithScopes.add(Pair.create(module, scope))
+        }
+        else if (!optional) {
+          projectBuilder.error("Cannot find module '$moduleName' required to build '$mainModuleName' plugin")
+        }
       }
       else {
         def library = libraryMap[moduleName]
         if (library == null) {
-          projectBuilder.error("Cannot find library ${moduleName} required to build '$mainModuleName' plugin")
+          projectBuilder.error("Cannot find library '$moduleName' required to build '$mainModuleName' plugin")
         }
         librariesWithScopes.add(Pair.create(library, scope))
       }

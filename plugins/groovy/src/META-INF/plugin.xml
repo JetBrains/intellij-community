@@ -25,7 +25,7 @@
     <module scope="embedded">structuralsearch-groovy</module>
     <module>groovy-jps-plugin</module>
     <module>groovy_rt</module>
-    <module>duplicates-groovy</module>
+    <module optional="true">duplicates-groovy</module>
     <module>groovy-rt-constants</module>
   </modules>
   <depends>com.intellij.properties</depends>
