@@ -243,24 +243,6 @@
         </value>
       </option>
 
-      <option name="JAVADOC_WRONG_REFERENCES_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND" value="ff0000"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-
-      <option name="JAVADOC_ERRORS_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR" value="ff0000"/>
-          <option name="EFFECT_TYPE" value="2"/>
-        </value>
-      </option>
-
-
       <option name="WRONG_REFERENCES_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="ff0000" deuteranopia="d95716" protanopia="d95716"/>
@@ -349,32 +331,6 @@
           <option name="EFFECT_COLOR" value="cccccc"/>
           <option name="EFFECT_TYPE" value="2"/>
           <option name="ERROR_STRIPE_COLOR" value="d9cfad" deuteranopia="cccccc" protanopia="cccccc"/>
-        </value>
-      </option>
-      <option name="EJB_ERROR_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR" value="ff0000"/>
-          <option name="EFFECT_TYPE" value="2"/>
-        </value>
-      </option>
-
-      <option name="EJB_WARNING_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR" value="f6ebbc"/>
-          <option name="EFFECT_TYPE" value="1"/>
-        </value>
-      </option>
-
-      <option name="SUSPICIOUS_METHOD_NAME_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR" value="ffcccc"/>
-          <option name="EFFECT_TYPE" value="2"/>
         </value>
       </option>
 
