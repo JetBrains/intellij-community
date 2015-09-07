@@ -131,6 +131,11 @@ public class RootsChangedTest extends ModuleTestCase {
         PathManagerEx.findFileUnderProjectHome("java/java-tests/testData/moduleRootManager/rootsChanged/emptyModule/a.iml", RootsChangedTest.this.getClass());
       Module a = loadModule(moduleFile, true);
       assertEventsCount(1);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      File moduleFile =
+        PathManagerEx.findFileUnderProjectHome("java/java-tests/testData/moduleRootManager/rootsChanged/emptyModule/a.iml", this.getClass());
+      Module a = loadModule(moduleFile, true);
+      assertEventsCount(1);
 
       final Sdk jdk = IdeaTestUtil.getMockJdk17();
       ProjectJdkTable.getInstance().addJdk(jdk);
