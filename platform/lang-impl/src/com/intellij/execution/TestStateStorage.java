@@ -76,12 +76,16 @@ public class TestStateStorage implements Disposable {
     myMapFlusher = FlushingDaemon.everyFiveSeconds(new Runnable() {
       @Override
       public void run() {
-        if (myMapFlusher == null) return; // disposed
-        if (myMap != null && myMap.isDirty()) myMap.force();
+        flushMap();
       }
     });
 
     Disposer.register(project, this);
+  }
+
+  private synchronized void flushMap() {
+    if (myMapFlusher == null) return; // disposed
+    if (myMap != null && myMap.isDirty()) myMap.force();
   }
 
   @NotNull
