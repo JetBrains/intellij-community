@@ -82,7 +82,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
 
   private final DebuggerContextListener mySessionListener = new DebuggerContextListener() {
     @Override
-    public void changeEvent(DebuggerContextImpl newContext, DebuggerSession.Event event) {
+    public void changeEvent(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
 
       final DebuggerSession session = newContext.getDebuggerSession();
       if (event == DebuggerSession.Event.PAUSE && myDebuggerStateManager.myDebuggerSession != session) {
@@ -601,13 +601,14 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   private static class MyDebuggerStateManager extends DebuggerStateManager {
     private DebuggerSession myDebuggerSession;
 
+    @NotNull
     @Override
     public DebuggerContextImpl getContext() {
       return myDebuggerSession == null ? DebuggerContextImpl.EMPTY_CONTEXT : myDebuggerSession.getContextManager().getContext();
     }
 
     @Override
-    public void setState(final DebuggerContextImpl context, DebuggerSession.State state, DebuggerSession.Event event, String description) {
+    public void setState(@NotNull final DebuggerContextImpl context, DebuggerSession.State state, DebuggerSession.Event event, String description) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       myDebuggerSession = context.getDebuggerSession();
       if (myDebuggerSession != null) {
