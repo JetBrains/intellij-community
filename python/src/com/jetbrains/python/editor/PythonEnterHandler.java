@@ -35,6 +35,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
@@ -104,7 +105,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
         comment = file.findElementAt(offset - 1);
       }
       int expectedStringStart = editor.getCaretModel().getOffset() - 3; // """ or '''
-      if (PythonDocCommentUtil.atDocCommentStart(comment, expectedStringStart)) {
+      if (atDocCommentStart(comment, expectedStringStart)) {
         insertDocStringStub(editor, comment);
         return Result.Continue;
       }
@@ -352,5 +353,31 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     }
     return super.postProcessEnter(file, editor,
                                   dataContext);
+  }
+
+  public static boolean atDocCommentStart(@NotNull PsiElement element, int offset) {
+    final PyStringLiteralExpression pyString = DocStringUtil.getParentDefinitionDocString(element);
+    if (pyString != null) {
+      String text = element.getText();
+      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(text);
+      text = text.substring(prefixLength);
+      if (pyString.getText().endsWith(text) && (text.startsWith("\"\"\"") || text.startsWith("'''"))) {
+        if (offset == pyString.getTextOffset() + prefixLength) {
+          PsiErrorElement error = PsiTreeUtil.getNextSiblingOfType(pyString, PsiErrorElement.class);
+          if (error != null) {
+            return true;
+          }
+          error = PsiTreeUtil.getNextSiblingOfType(pyString.getParent(), PsiErrorElement.class);
+          if (error != null) {
+            return true;
+          }
+
+          if (text.length() < 6 || (!text.endsWith("\"\"\"") && !text.endsWith("'''"))) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 }

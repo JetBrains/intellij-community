@@ -226,6 +226,11 @@ public class PyEditingTest extends PyTestCase {
     doDocStringTypingTest('\n', DocStringFormat.REST);
   }
 
+  // PY-16828
+  public void testEnterDocStringStubWithStringPrefix() {
+    doDocStringTypingTest('\n', DocStringFormat.REST);
+  }
+
   // PY-3421
   public void testSpaceDocStringStubInFunction() {
     doDocStringTypingTest(' ', DocStringFormat.REST);

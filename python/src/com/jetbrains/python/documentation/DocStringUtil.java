@@ -25,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -216,12 +215,25 @@ public class DocStringUtil {
     return value == null ? null : parse(value, owner);
   }
 
-  public static boolean isDocStringExpression(@Nullable PyExpression expression) {
-    final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(expression, PyDocStringOwner.class);
+  /**
+   * Returns containing docstring expression of class definition, function definition or module. 
+   * Useful to test whether particular PSI element is or belongs to such docstring.
+   */
+  @Nullable
+  public static PyStringLiteralExpression getParentDefinitionDocString(@NotNull PsiElement element) {
+    final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
     if (docStringOwner != null) {
-      if (docStringOwner.getDocStringExpression() == expression) {
-        return true;
+      final PyStringLiteralExpression docString = docStringOwner.getDocStringExpression();
+      if (PsiTreeUtil.isAncestor(docString, element, false)) {
+        return docString;
       }
+    }
+    return null;
+  }
+
+  public static boolean isDocStringExpression(@NotNull PyExpression expression) {
+    if (getParentDefinitionDocString(expression) == expression) {
+      return true;
     }
     if (expression instanceof PyStringLiteralExpression) {
       return isVariableDocString((PyStringLiteralExpression)expression);
@@ -233,10 +245,7 @@ public class DocStringUtil {
   public static String getAttributeDocComment(@NotNull PyTargetExpression attr) {
     if (attr.getParent() instanceof PyAssignmentStatement) {
       final PyAssignmentStatement assignment = (PyAssignmentStatement)attr.getParent();
-      PsiElement prevSibling = assignment.getPrevSibling();
-      while (prevSibling != null && (prevSibling instanceof PsiWhiteSpace)) {
-        prevSibling = prevSibling.getPrevSibling();
-      }
+      final PsiElement prevSibling = PyPsiUtils.getPrevNonWhitespaceSibling(assignment);
       if (prevSibling instanceof PsiComment && prevSibling.getText().startsWith("#:")) {
         return prevSibling.getText().substring(2);
       }
@@ -249,10 +258,7 @@ public class DocStringUtil {
     if (!(parent instanceof PyExpressionStatement)) {
       return false;
     }
-    PsiElement prevElement = parent.getPrevSibling();
-    while (prevElement instanceof PsiWhiteSpace || prevElement instanceof PsiComment) {
-      prevElement = prevElement.getPrevSibling();
-    }
+    final PsiElement prevElement = PyPsiUtils.getPrevNonCommentSibling(parent, true);
     if (prevElement instanceof PyAssignmentStatement) {
       if (expr.getText().contains("type:")) return true;
 
