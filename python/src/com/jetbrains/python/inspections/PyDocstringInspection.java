@@ -70,12 +70,12 @@ public class PyDocstringInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFile(PyFile node) {
+    public void visitPyFile(@NotNull PyFile node) {
       checkDocString(node);
     }
 
     @Override
-    public void visitPyFunction(PyFunction node) {
+    public void visitPyFunction(@NotNull PyFunction node) {
       if (PythonUnitTestUtil.isUnitTestCaseFunction(node)) return;
       final PyClass containingClass = node.getContainingClass();
       if (containingClass != null && PythonUnitTestUtil.isUnitTestCaseClass(containingClass)) return;
@@ -84,7 +84,7 @@ public class PyDocstringInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyClass(PyClass node) {
+    public void visitPyClass(@NotNull PyClass node) {
       if (PythonUnitTestUtil.isUnitTestCaseClass(node)) return;
       final String name = node.getName();
       if (name == null || name.startsWith("_")) {
@@ -98,7 +98,7 @@ public class PyDocstringInspection extends PyInspection {
       checkDocString(node);
     }
 
-    private void checkDocString(PyDocStringOwner node) {
+    private void checkDocString(@NotNull PyDocStringOwner node) {
       final PyStringLiteralExpression docStringExpression = node.getDocStringExpression();
       if (docStringExpression == null) {
         PsiElement marker = null;
@@ -111,8 +111,8 @@ public class PyDocstringInspection extends PyInspection {
           if (n != null) marker = n.getPsi();
         }
         else if (node instanceof PyFile) {
-          TextRange tr = new TextRange(0, 0);
-          ProblemsHolder holder = getHolder();
+          final TextRange tr = new TextRange(0, 0);
+          final ProblemsHolder holder = getHolder();
           if (holder != null) {
             holder.registerProblem(node, tr, PyBundle.message("INSP.no.docstring"));
           }
@@ -127,29 +127,29 @@ public class PyDocstringInspection extends PyInspection {
         }
       }
       else {
-        boolean registered = checkParameters(node, docStringExpression);
+        final boolean registered = checkParameters(node, docStringExpression);
         if (!registered && StringUtil.isEmptyOrSpaces(docStringExpression.getStringValue())) {
           registerProblem(docStringExpression, PyBundle.message("INSP.empty.docstring"));
         }
       }
     }
 
-    private boolean checkParameters(PyDocStringOwner pyDocStringOwner, PyStringLiteralExpression node) {
+    private boolean checkParameters(@NotNull PyDocStringOwner pyDocStringOwner, @NotNull PyStringLiteralExpression node) {
       final String text = node.getText();
       if (text == null) {
         return false;
       }
 
-      StructuredDocString docString = DocStringUtil.parse(text, node);
+      final StructuredDocString docString = DocStringUtil.parse(text, node);
 
       if (docString instanceof PlainDocString) {
         return false;
       }
 
       if (pyDocStringOwner instanceof PyFunction) {
-        PyParameter[] realParams = ((PyFunction)pyDocStringOwner).getParameterList().getParameters();
+        final PyParameter[] realParams = ((PyFunction)pyDocStringOwner).getParameterList().getParameters();
 
-        List<PyNamedParameter> missingParams = getMissingParams(docString, realParams);
+        final List<PyNamedParameter> missingParams = getMissingParams(docString, realParams);
         boolean registered = false;
         if (!missingParams.isEmpty()) {
           for (PyNamedParameter param : missingParams) {
@@ -157,10 +157,10 @@ public class PyDocstringInspection extends PyInspection {
           }
           registered = true;
         }
-        List<Substring> unexpectedParams = getUnexpectedParams(docString, realParams);
+        final List<Substring> unexpectedParams = getUnexpectedParams(docString, realParams);
         if (!unexpectedParams.isEmpty()) {
           for (Substring param : unexpectedParams) {
-            ProblemsHolder holder = getHolder();
+            final ProblemsHolder holder = getHolder();
 
             if (holder != null) {
               holder.registerProblem(node, param.getTextRange(),
@@ -175,8 +175,9 @@ public class PyDocstringInspection extends PyInspection {
       return false;
     }
 
-    private static List<Substring> getUnexpectedParams(StructuredDocString docString, PyParameter[] realParams) {
-      Map<String, Substring> unexpected = Maps.newHashMap();
+    @NotNull
+    private static List<Substring> getUnexpectedParams(@NotNull StructuredDocString docString, @NotNull PyParameter[] realParams) {
+      final Map<String, Substring> unexpected = Maps.newHashMap();
 
       for (Substring s : docString.getParameterSubstrings()) {
         unexpected.put(s.toString(), s);
@@ -190,14 +191,14 @@ public class PyDocstringInspection extends PyInspection {
       return Lists.newArrayList(unexpected.values());
     }
 
-    private static List<PyNamedParameter> getMissingParams(StructuredDocString docString, PyParameter[] realParams) {
-      List<PyNamedParameter> missing = new ArrayList<PyNamedParameter>();
+    @NotNull
+    private static List<PyNamedParameter> getMissingParams(@NotNull StructuredDocString docString, @NotNull PyParameter[] realParams) {
+      final List<PyNamedParameter> missing = new ArrayList<PyNamedParameter>();
       final List<String> docStringParameters = docString.getParameters();
       for (PyParameter p : realParams) {
         if (p.isSelf() || !(p instanceof PyNamedParameter)) {
           continue;
         }
-        //noinspection ConstantConditions
         if (!docStringParameters.contains(p.getName())) {
           missing.add((PyNamedParameter)p);
         }

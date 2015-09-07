@@ -124,17 +124,12 @@ public class PyDocstringGenerator {
   }
 
   @NotNull
-  public PyDocstringGenerator withoutParam(@NotNull String name) {
-    return withParamTypedByName(name, null);
-  }
-
-  @NotNull
   public PyDocstringGenerator withParamTypedByName(@NotNull String name, @Nullable String type) {
     myAddedParams.add(new DocstringParam(name, type, false));
     return this;
   }
-  
-    @NotNull
+
+  @NotNull
   public PyDocstringGenerator withParamTypedByName(@NotNull PyNamedParameter name, @Nullable String type) {
     return withParamTypedByName(getPreferredParameterName(name), type);
   }
@@ -142,6 +137,12 @@ public class PyDocstringGenerator {
   @NotNull
   public PyDocstringGenerator withReturnValue(@Nullable String type) {
     myAddedParams.add(new DocstringParam("", type, true));
+    return this;
+  }
+
+  @NotNull
+  public PyDocstringGenerator withoutParam(@NotNull String name) {
+    myRemovedParams.add(new DocstringParam(name, null, false));
     return this;
   }
 

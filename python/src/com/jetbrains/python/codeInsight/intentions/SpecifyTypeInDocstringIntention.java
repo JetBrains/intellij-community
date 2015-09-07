@@ -53,12 +53,12 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
-    PyExpression problemElement = getProblemElement(elementAt);
-    PsiReference reference = problemElement == null ? null : problemElement.getReference();
+    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
+    final PyExpression problemElement = getProblemElement(elementAt);
+    final PsiReference reference = problemElement == null ? null : problemElement.getReference();
 
     final PsiElement resolved = reference != null ? reference.resolve() : null;
-    PyNamedParameter parameter = getParameter(problemElement, resolved);
+    final PyNamedParameter parameter = getParameter(problemElement, resolved);
 
     final PyCallable callable;
     if (parameter != null) {
@@ -72,7 +72,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
     }
   }
 
-  private static void generateDocstring(@Nullable PyNamedParameter param, PyFunction pyFunction) {
+  private static void generateDocstring(@Nullable PyNamedParameter param, @NotNull PyFunction pyFunction) {
     if (!DocStringUtil.ensureNotPlainDocstringFormat(pyFunction)) {
       return;
     }
@@ -101,8 +101,8 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
   }
 
   @Override
-  protected boolean isParamTypeDefined(@NotNull final PyParameter parameter) {
-    PyFunction pyFunction = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
+  protected boolean isParamTypeDefined(@NotNull PyParameter parameter) {
+    final PyFunction pyFunction = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
     if (pyFunction != null) {
       final StructuredDocString structuredDocString = pyFunction.getStructuredDocString();
       if (structuredDocString == null) {
