@@ -122,7 +122,7 @@ public class MavenProjectModelModifier extends ProjectModelModifier {
     return addDependency(modules, mavenId, scope);
   }
 
-  @NotNull
+  @Nullable
   private String selectVersion(@NotNull ExternalLibraryDescriptor descriptor) {
     Set<String> versions = myIndicesManager.getVersions(descriptor.getLibraryGroupId(), descriptor.getLibraryArtifactId());
     List<String> suitableVersions = new ArrayList<String>();
@@ -133,6 +133,9 @@ public class MavenProjectModelModifier extends ProjectModelModifier {
           && (maxVersion == null || VersionComparatorUtil.compare(version, maxVersion) < 0)) {
         suitableVersions.add(version);
       }
+    }
+    if (suitableVersions.isEmpty()) {
+      return null;
     }
     return Collections.max(suitableVersions, VersionComparatorUtil.COMPARATOR);
   }

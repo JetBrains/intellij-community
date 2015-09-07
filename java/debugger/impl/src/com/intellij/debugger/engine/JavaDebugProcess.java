@@ -100,7 +100,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
     myJavaSession.getContextManager().addListener(new DebuggerContextListener() {
       @Override
-      public void changeEvent(final DebuggerContextImpl newContext, DebuggerSession.Event event) {
+      public void changeEvent(@NotNull final DebuggerContextImpl newContext, DebuggerSession.Event event) {
         if (event == DebuggerSession.Event.PAUSE
             || event == DebuggerSession.Event.CONTEXT
             || event == DebuggerSession.Event.REFRESH

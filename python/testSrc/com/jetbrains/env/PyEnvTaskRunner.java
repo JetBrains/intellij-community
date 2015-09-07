@@ -11,6 +11,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdkTools.PyTestSdkTools;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URL;
@@ -96,15 +97,16 @@ public class PyEnvTaskRunner {
    * Create SDK by path to python exectuable
    *
    * @param executable path executable
-   * @return sdk
+   * @return sdk or null if there is no sdk on this path
    * @throws InvalidSdkException bad sdk
-   * @throws IOException         bad path
    */
-  @NotNull
+  @Nullable
   private static Sdk createSdkByExecutable(@NotNull final String executable) throws InvalidSdkException, IOException {
     final URL rootUrl = new URL(String.format("file:///%s", executable));
     final VirtualFile url = VfsUtil.findFileByURL(rootUrl);
-    assert url != null :"No url found for " + rootUrl;
+    if (url == null) {
+      return null;
+    }
     return PyTestSdkTools.createTempSdk(url, SdkCreationType.SDK_PACKAGES_AND_SKELETONS, null);
   }
 
