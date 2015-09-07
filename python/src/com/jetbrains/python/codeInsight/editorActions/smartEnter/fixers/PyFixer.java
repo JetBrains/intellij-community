@@ -35,13 +35,17 @@ public abstract class PyFixer<T extends PyElement> {
     myClass = aClass;
   }
 
+  @SuppressWarnings("unchecked")
   public final void apply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PsiElement element)
     throws IncorrectOperationException {
-    if (myClass.isInstance(element)) {
-      //noinspection unchecked
+    if (myClass.isInstance(element) && isApplicable(editor, (T)element)) {
       doApply(editor, processor, (T)element);
     }
   }
+  
+  protected boolean isApplicable(@NotNull Editor editor, @NotNull T element) {
+    return myClass.isInstance(element);
+  }
 
-  public abstract void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull T element);
+  protected abstract void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull T element);
 }

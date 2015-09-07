@@ -216,4 +216,22 @@ public class PySmartEnterTest extends PyTestCase {
   public void testSpaceInsertedAfterHashSignInComment() {
     doTest();
   }
+
+  // PY-16765
+  public void testGoogleDocStringColonAndIndentAfterSection() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      public void run() {
+        doTest();
+      }
+    });
+  }
+
+  // PY-16765
+  public void testGoogleDocStringIndentAfterSection() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      public void run() {
+        doTest();
+      }
+    });
+  }
 }
