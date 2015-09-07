@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.documentation;
+package com.jetbrains.python.documentation.docstrings;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -40,7 +40,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
-import com.jetbrains.python.documentation.docstrings.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;

@@ -15,8 +15,7 @@
  */
 package com.jetbrains.python.documentation.docstrings;
 
-import com.jetbrains.python.documentation.SectionBasedDocString;
-import com.jetbrains.python.documentation.SectionBasedDocString.Section;
+import com.jetbrains.python.documentation.docstrings.SectionBasedDocString.Section;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 

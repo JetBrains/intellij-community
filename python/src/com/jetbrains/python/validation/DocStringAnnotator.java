@@ -18,7 +18,7 @@ package com.jetbrains.python.validation;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.openapi.util.TextRange;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.documentation.*;
+import com.jetbrains.python.documentation.docstrings.*;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.documentation;
+package com.jetbrains.python.documentation.docstrings;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.process.ProcessOutput;
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.documentation.PyDocumentationBuilder;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;

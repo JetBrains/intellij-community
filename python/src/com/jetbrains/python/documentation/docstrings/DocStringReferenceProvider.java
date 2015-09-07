@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.documentation;
+package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -22,8 +22,6 @@ import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.documentation.DocStringParameterReference.ReferenceType;
-import com.jetbrains.python.documentation.SectionBasedDocString.SectionField;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -64,29 +62,29 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
           final TagBasedDocString taggedDocString = (TagBasedDocString)docString;
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments(TagBasedDocString.PARAM_TAGS),
-                                            ReferenceType.PARAMETER));
+                                            DocStringParameterReference.ReferenceType.PARAMETER));
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments(TagBasedDocString.PARAM_TYPE_TAGS),
-                                            ReferenceType.PARAMETER_TYPE));
+                                            DocStringParameterReference.ReferenceType.PARAMETER_TYPE));
           result.addAll(referencesFromNames(expr, offset, docString,
-                                            docString.getKeywordArgumentSubstrings(), ReferenceType.KEYWORD));
+                                            docString.getKeywordArgumentSubstrings(), DocStringParameterReference.ReferenceType.KEYWORD));
 
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments("var"),
-                                            ReferenceType.VARIABLE));
+                                            DocStringParameterReference.ReferenceType.VARIABLE));
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments("cvar"),
-                                            ReferenceType.CLASS_VARIABLE));
+                                            DocStringParameterReference.ReferenceType.CLASS_VARIABLE));
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments("ivar"),
-                                            ReferenceType.INSTANCE_VARIABLE));
+                                            DocStringParameterReference.ReferenceType.INSTANCE_VARIABLE));
           result.addAll(returnTypes(element, docString, offset));
         }
         else if (docString instanceof SectionBasedDocString) {
           final SectionBasedDocString sectioned = (SectionBasedDocString)docString;
-          result.addAll(referencesFromFields(expr, offset, sectioned.getParameterFields(), ReferenceType.PARAMETER));
-          result.addAll(referencesFromFields(expr, offset, sectioned.getKeywordArgumentFields(), ReferenceType.KEYWORD));
-          result.addAll(referencesFromFields(expr, offset, sectioned.getAttributeFields(), ReferenceType.INSTANCE_VARIABLE));
+          result.addAll(referencesFromFields(expr, offset, sectioned.getParameterFields(), DocStringParameterReference.ReferenceType.PARAMETER));
+          result.addAll(referencesFromFields(expr, offset, sectioned.getKeywordArgumentFields(), DocStringParameterReference.ReferenceType.KEYWORD));
+          result.addAll(referencesFromFields(expr, offset, sectioned.getAttributeFields(), DocStringParameterReference.ReferenceType.INSTANCE_VARIABLE));
           result.addAll(referencesFromFields(expr, offset, sectioned.getReturnFields(), null));
         }
         return result.toArray(new PsiReference[result.size()]);
@@ -110,7 +108,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
                                                         int offset,
                                                         @NotNull StructuredDocString docString,
                                                         @NotNull List<Substring> paramNames,
-                                                        @NotNull ReferenceType refType) {
+                                                        @NotNull DocStringParameterReference.ReferenceType refType) {
     List<PsiReference> result = new ArrayList<PsiReference>();
     for (Substring name : paramNames) {
       final String s = name.toString();
@@ -118,7 +116,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         final TextRange range = name.getTextRange().shiftRight(offset);
         result.add(new DocStringParameterReference(element, range, refType));
       }
-      if (refType.equals(ReferenceType.PARAMETER_TYPE)) {
+      if (refType.equals(DocStringParameterReference.ReferenceType.PARAMETER_TYPE)) {
         final Substring type = docString.getParamTypeSubstring(s);
         if (type != null) {
           result.addAll(parseTypeReferences(element, type, offset));
@@ -131,10 +129,10 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
   @NotNull
   private static List<PsiReference> referencesFromFields(@NotNull PyStringLiteralExpression element,
                                                          int offset,
-                                                         @NotNull List<SectionField> fields,
-                                                         @Nullable ReferenceType nameRefType) {
+                                                         @NotNull List<SectionBasedDocString.SectionField> fields,
+                                                         @Nullable DocStringParameterReference.ReferenceType nameRefType) {
     final List<PsiReference> result = new ArrayList<PsiReference>();
-    for (SectionField field : fields) {
+    for (SectionBasedDocString.SectionField field : fields) {
       final Substring nameSub = field.getNameAsSubstring();
       if (nameRefType != null && nameSub != null && !nameSub.isEmpty()) {
         final TextRange range = nameSub.getTextRange().shiftRight(offset);

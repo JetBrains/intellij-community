@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.documentation.docstrings;
 
-import com.jetbrains.python.documentation.TagBasedDocString;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

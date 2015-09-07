@@ -16,7 +16,7 @@
 package com.jetbrains.python;
 
 import com.intellij.testFramework.UsefulTestCase;
-import com.jetbrains.python.documentation.EpydocString;
+import com.jetbrains.python.documentation.docstrings.EpydocString;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 
