@@ -99,10 +99,10 @@ public abstract class TypeIntention implements IntentionAction {
   }
 
   @Nullable
-  protected static PyParameter getParameter(PyExpression problemElement, PsiElement resolved) {
-    PyParameter parameter = as(problemElement, PyParameter.class);
-    if (resolved instanceof PyParameter) {
-      parameter = (PyParameter)resolved;
+  protected static PyNamedParameter getParameter(PyExpression problemElement, PsiElement resolved) {
+    PyNamedParameter parameter = as(problemElement, PyNamedParameter.class);
+    if (resolved instanceof PyNamedParameter) {
+      parameter = (PyNamedParameter)resolved;
     }
     return parameter == null || parameter.isSelf() ? null : parameter;
   }

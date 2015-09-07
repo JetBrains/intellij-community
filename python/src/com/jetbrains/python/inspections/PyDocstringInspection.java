@@ -26,7 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.documentation.PlainDocString;
 import com.jetbrains.python.inspections.quickfix.DocstringQuickFix;
@@ -150,13 +149,11 @@ public class PyDocstringInspection extends PyInspection {
       if (pyDocStringOwner instanceof PyFunction) {
         PyParameter[] realParams = ((PyFunction)pyDocStringOwner).getParameterList().getParameters();
 
-        List<PyParameter> missingParams = getMissingParams(docString, realParams);
+        List<PyNamedParameter> missingParams = getMissingParams(docString, realParams);
         boolean registered = false;
         if (!missingParams.isEmpty()) {
-          for (PyParameter param : missingParams) {
-            final DocStringFormat format = DocStringUtil.getConfiguredDocStringFormat(pyDocStringOwner);
-            final String docParamName = DocStringUtil.getPreferredParameterName(format, param);
-            registerProblem(param, "Missing parameter " + param.getName() + " in docstring", new DocstringQuickFix(docParamName, null));
+          for (PyNamedParameter param : missingParams) {
+            registerProblem(param, "Missing parameter " + param.getName() + " in docstring", new DocstringQuickFix(param, null));
           }
           registered = true;
         }
@@ -193,16 +190,16 @@ public class PyDocstringInspection extends PyInspection {
       return Lists.newArrayList(unexpected.values());
     }
 
-    private static List<PyParameter> getMissingParams(StructuredDocString docString, PyParameter[] realParams) {
-      List<PyParameter> missing = new ArrayList<PyParameter>();
+    private static List<PyNamedParameter> getMissingParams(StructuredDocString docString, PyParameter[] realParams) {
+      List<PyNamedParameter> missing = new ArrayList<PyNamedParameter>();
       final List<String> docStringParameters = docString.getParameters();
       for (PyParameter p : realParams) {
-        if (p.isSelf() || p instanceof PySingleStarParameter || p instanceof PyTupleParameter) {
+        if (p.isSelf() || !(p instanceof PyNamedParameter)) {
           continue;
         }
         //noinspection ConstantConditions
         if (!docStringParameters.contains(p.getName())) {
-          missing.add(p);
+          missing.add((PyNamedParameter)p);
         }
       }
       return missing;

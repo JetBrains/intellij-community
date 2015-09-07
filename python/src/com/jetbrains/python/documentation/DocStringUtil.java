@@ -306,12 +306,4 @@ public class DocStringUtil {
     }
     return true;
   }
-
-  @NotNull
-  public static String getPreferredParameterName(@NotNull DocStringFormat format, @NotNull PyParameter parameter) {
-    if (format == DocStringFormat.GOOGLE && parameter.getAsNamed() != null) {
-      return parameter.getAsNamed().getRepr(false);
-    }
-    return StringUtil.notNullize(parameter.getName());
-  }
 }

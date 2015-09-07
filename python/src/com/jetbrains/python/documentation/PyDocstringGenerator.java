@@ -112,22 +112,31 @@ public class PyDocstringGenerator {
                                             @NotNull String text) {
     return new PyDocstringGenerator(null, text, format, indentation);
   }
-  
+
   @NotNull
   public PyDocstringGenerator withParam(@NotNull String name) {
     return withParamTypedByName(name, null);
   }
 
   @NotNull
+  public PyDocstringGenerator withParam(@NotNull PyNamedParameter param) {
+    return withParam(getPreferredParameterName(param));
+  }
+
+  @NotNull
   public PyDocstringGenerator withoutParam(@NotNull String name) {
-    myRemovedParams.add(new DocstringParam(name, null, false));
-    return this;
+    return withParamTypedByName(name, null);
   }
 
   @NotNull
   public PyDocstringGenerator withParamTypedByName(@NotNull String name, @Nullable String type) {
     myAddedParams.add(new DocstringParam(name, type, false));
     return this;
+  }
+  
+    @NotNull
+  public PyDocstringGenerator withParamTypedByName(@NotNull PyNamedParameter name, @Nullable String type) {
+    return withParamTypedByName(getPreferredParameterName(name), type);
   }
 
   @NotNull
@@ -148,12 +157,12 @@ public class PyDocstringGenerator {
     return this;
   }
 
-
   @NotNull
   public PyDocstringGenerator addFirstEmptyLine() {
     myAddFirstEmptyLine = true;
     return this;
   }
+
 
   @NotNull
   public PyDocstringGenerator forceNewMode() {
@@ -178,7 +187,7 @@ public class PyDocstringGenerator {
         if (StringUtil.isEmpty(paramName) || param.isSelf() || docString != null && docString.getParameters().contains(paramName)) {
           continue;
         }
-        withParam(DocStringUtil.getPreferredParameterName(getDocStringFormat(), param));
+        withParam((PyNamedParameter)param);
       }
       final RaiseVisitor visitor = new RaiseVisitor();
       final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
@@ -343,6 +352,15 @@ public class PyDocstringGenerator {
       TemplateManager.getInstance(project).startTemplate(targetEditor, template);
     }
   }
+
+  @NotNull
+  public String getPreferredParameterName(@NotNull PyNamedParameter parameter) {
+    if (getDocStringFormat() == DocStringFormat.GOOGLE && parameter.getAsNamed() != null) {
+      return parameter.getAsNamed().getRepr(false);
+    }
+    return StringUtil.notNullize(parameter.getName());
+  }
+
 
   @NotNull
   private static String getDefaultType(@NotNull DocstringParam param) {
@@ -551,10 +569,10 @@ public class PyDocstringGenerator {
   }
 
   public static class DocstringParam {
+
     private final String myName;
     private final String myType;
     private final boolean myReturnValue;
-
     private DocstringParam(@NotNull String name, @Nullable String type, boolean isReturn) {
       myName = name;
       myType = type;
@@ -605,13 +623,13 @@ public class PyDocstringGenerator {
              ", myReturnValue=" + myReturnValue +
              '}';
     }
-  }
 
+  }
   private static class RaiseVisitor extends PyRecursiveElementVisitor {
+
     private boolean myHasRaise = false;
     private boolean myHasReturn = false;
     @Nullable private PyExpression myRaiseTarget = null;
-
     @Override
     public void visitPyRaiseStatement(@NotNull PyRaiseStatement node) {
       myHasRaise = true;
@@ -640,6 +658,7 @@ public class PyDocstringGenerator {
       }
       return "";
     }
+
   }
 }
 

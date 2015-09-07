@@ -58,7 +58,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
     PsiReference reference = problemElement == null ? null : problemElement.getReference();
 
     final PsiElement resolved = reference != null ? reference.resolve() : null;
-    PyParameter parameter = getParameter(problemElement, resolved);
+    PyNamedParameter parameter = getParameter(problemElement, resolved);
 
     final PyCallable callable;
     if (parameter != null) {
@@ -72,7 +72,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
     }
   }
 
-  private static void generateDocstring(@Nullable PyParameter param, PyFunction pyFunction) {
+  private static void generateDocstring(@Nullable PyNamedParameter param, PyFunction pyFunction) {
     if (!DocStringUtil.ensureNotPlainDocstringFormat(pyFunction)) {
       return;
     }
@@ -85,8 +85,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
       if (signature != null) {
         type = ObjectUtils.chooseNotNull(signature.getArgTypeQualifiedName(paramName), type);
       }
-      final String docParamName = DocStringUtil.getPreferredParameterName(docstringGenerator.getDocStringFormat(), param);
-      docstringGenerator.withParamTypedByName(docParamName, type);
+      docstringGenerator.withParamTypedByName(param, type);
     }
     else {
       docstringGenerator.withReturnValue(type);
