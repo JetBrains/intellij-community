@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.descriptors.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,11 +78,7 @@ public class ConfigFileContainerImpl extends SimpleModificationTracker implement
   @Override
   @Nullable
   public ConfigFile getConfigFile(ConfigFileMetaData metaData) {
-    final Collection<ConfigFile> descriptors = myConfigFiles.get(metaData);
-    if (descriptors == null || descriptors.isEmpty()) {
-      return null;
-    }
-    return descriptors.iterator().next();
+    return ContainerUtil.getFirstItem(myConfigFiles.get(metaData));
   }
 
   @Override
