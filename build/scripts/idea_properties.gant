@@ -26,8 +26,6 @@ def getProperties(String home, String buildNumber) {
       exe64_launcher_properties = "$home/build/conf/ideaCE64-launcher.properties"
       bundleIdentifier = "com.jetbrains.intellij.ce"
       maySkipAndroidPlugin = true
-      relativeAndroidHome = "android"
-      relativeAndroidToolsBaseHome = "android/tools-base"
 
       icon128 = "$home/platform/icons/src/icon_CE_128.png"
       ico = "$home/platform/icons/src/idea_CE.ico"

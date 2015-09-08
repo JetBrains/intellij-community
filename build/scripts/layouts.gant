@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import org.jetbrains.platform.loader.repository.RuntimeModuleId
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
@@ -54,14 +53,6 @@ void customLayout(String targetDirectory) {
   if (isDefined("productProperties")) {
     productProperties.customLayout(targetDirectory)
   }
-}
-
-String relativeAndroidHome() {
-  return isDefined("productProperties") ? productProperties.relativeAndroidHome : "android"
-}
-
-String relativeAndroidToolsBaseHome() {
-  return isDefined("productProperties") ? productProperties.relativeAndroidToolsBaseHome : relativeAndroidHome() + "/tools-base"
 }
 
 List<String> getExcludedPlugins() {
@@ -345,14 +336,17 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
     'ui-designer'           : [dir: 'uiDesigner', jar: 'uiDesigner.jar']
   ])
 
+  List<String> mainPluginModules =
+    ["copyright", "java-i18n", "hg4idea", "github", "ant", "ui-designer", "properties",
+     "maven", "gradle", "git4idea", "svn4idea", "junit", "ByteCodeViewer", "cvs-plugin", "testng", "xpath", "xslt-debugger",
+     "jetgroovy", "tasks-core", "devkit", "eclipse", "terminal", "editorconfig", "coverage", "java-decompiler-plugin", "settings-repository"
+    ]
   if (!isDefined("pluginFilter") || pluginFilter.contains("android")) {
-    def androidHome = relativeAndroidHome()
-    def androidToolsBaseHome = relativeAndroidToolsBaseHome()
-    if (new File("$home/$androidHome").exists()) {
-      layoutAndroid("$home/$androidHome", "$home/$androidToolsBaseHome")
+    if (findModule("android") != null) {
+      mainPluginModules << "android"
     }
     else {
-      def message = "Android plugin sources aren't found at ${androidHome}"
+      def message = "'android' module isn't found"
       if (maySkipAndroidPlugin) {
         projectBuilder.warning("$message. Android plugin is excluded from layout.")
       }
@@ -362,11 +356,7 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
     }
   }
 
-  List<String> mainPluginModules =
-    ["copyright", "java-i18n", "hg4idea", "github", "ant", "ui-designer", "properties",
-     "maven", "gradle", "git4idea", "svn4idea", "junit", "ByteCodeViewer", "cvs-plugin", "testng", "xpath", "xslt-debugger",
-     "jetgroovy", "tasks-core", "devkit", "eclipse", "terminal", "editorconfig", "coverage", "java-decompiler-plugin", "settings-repository"
-    ]
+
   dir("plugins") {
     mainPluginModules.each {
       layoutPluginByRuntimeModules(it)
@@ -503,12 +493,6 @@ def reorder(String home, String targetDirectory) {
         pathelement(location: it)
       }
     }
-  }
-}
-
-def layoutAndroid(String androidHome, String androidToolsBaseHome) {
-  dir("plugins") {
-    layoutPluginByRuntimeModules("android")
   }
 }
 
