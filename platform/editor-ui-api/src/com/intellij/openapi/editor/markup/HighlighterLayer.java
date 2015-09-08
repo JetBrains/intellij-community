@@ -25,6 +25,6 @@ public interface HighlighterLayer {
   int ELEMENT_UNDER_CARET = 5500;
   int SELECTION = 6000;
 
-  int FIRST = CARET_ROW;
+  int FIRST = SYNTAX;
   int LAST = SELECTION;
 }

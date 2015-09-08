@@ -32,7 +32,7 @@ public interface DebuggerColors {
   TextAttributesKey NOT_TOP_FRAME_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("NOT_TOP_FRAME_ATTRIBUTES");
   ColorKey RECURSIVE_CALL_ATTRIBUTES = ColorKey.createColorKey("RECURSIVE_CALL_ATTRIBUTES", new Color(255, 255, 215));
 
-  int BREAKPOINT_HIGHLIGHTER_LAYER = HighlighterLayer.SYNTAX + 1;
+  int BREAKPOINT_HIGHLIGHTER_LAYER = HighlighterLayer.CARET_ROW + 1;
 
   Key<Boolean> BREAKPOINT_HIGHLIGHTER_KEY = Key.create("BREAKPOINT_HIGHLIGHTER_KEY");
   int EXECUTION_LINE_HIGHLIGHTERLAYER = HighlighterLayer.SELECTION - 1;
