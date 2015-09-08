@@ -500,7 +500,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       boolean wasDetectedAsBinary = BitUtil.isSet(flags, AUTO_DETECTED_AS_BINARY_MASK);
       boolean wasAutoDetectRun = BitUtil.isSet(flags, AUTO_DETECT_WAS_RUN_MASK);
       if (wasAutoDetectRun && (wasDetectedAsText || wasDetectedAsBinary)) {
-        return wasDetectedAsText ? FileTypes.PLAIN_TEXT : UnknownFileType.INSTANCE;
+        return wasDetectedAsText ? PlainTextFileType.INSTANCE : UnknownFileType.INSTANCE;
       }
     }
     FileType fileType = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);
@@ -568,9 +568,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NotNull
   private FileType getAutoDetectedType(@NotNull VirtualFile file, int id) {
     long flags = packedFlags.get(id);
-    return BitUtil.isSet(flags, AUTO_DETECTED_AS_TEXT_MASK) ? FileTypes.PLAIN_TEXT :
+    return BitUtil.isSet(flags, AUTO_DETECTED_AS_TEXT_MASK) ? PlainTextFileType.INSTANCE :
            BitUtil.isSet(flags, AUTO_DETECTED_AS_BINARY_MASK) ? UnknownFileType.INSTANCE :
-           ObjectUtils.notNull(file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY), FileTypes.PLAIN_TEXT);
+           ObjectUtils.notNull(file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY), PlainTextFileType.INSTANCE);
   }
 
   @NotNull
@@ -581,8 +581,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void cacheAutoDetectedFileType(@NotNull VirtualFile file, @NotNull FileType fileType) {
-    boolean wasAutodetectedAsText = fileType == FileTypes.PLAIN_TEXT;
-    boolean wasAutodetectedAsBinary = fileType == FileTypes.UNKNOWN;
+    boolean wasAutodetectedAsText = fileType == PlainTextFileType.INSTANCE;
+    boolean wasAutodetectedAsBinary = fileType == UnknownFileType.INSTANCE;
 
     int flags = BitUtil.set(0, AUTO_DETECTED_AS_TEXT_MASK, wasAutodetectedAsText);
     flags = BitUtil.set(flags, AUTO_DETECTED_AS_BINARY_MASK, wasAutodetectedAsBinary);
@@ -1263,7 +1263,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private static boolean shouldSave(@NotNull FileType fileType) {
-    return fileType != FileTypes.UNKNOWN && !fileType.isReadOnly();
+    return fileType != UnknownFileType.INSTANCE && !fileType.isReadOnly();
   }
 
   // -------------------------------------------------------------------------
