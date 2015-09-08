@@ -69,6 +69,8 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
+                      serviceImplementation="com.jetbrains.edu.learning.StudyDocumentationManager" overrides="true"/>
     <postStartupActivity implementation="com.jetbrains.edu.learning.stepic.StudyCoursesUpdater"/>
 
     <applicationConfigurable groupId="tools" instance="com.jetbrains.edu.learning.stepic.StudyConfigurable"
