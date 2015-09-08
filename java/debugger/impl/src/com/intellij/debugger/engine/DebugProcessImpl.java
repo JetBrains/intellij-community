@@ -1409,6 +1409,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
+  @NotNull
   public SuspendManager getSuspendManager() {
     return mySuspendManager;
   }
