@@ -45,15 +45,15 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
   private final Attachment[] myDiagnostic;
   private final String myMessage;
 
-  public PsiInvalidElementAccessException(@Nullable PsiElement element) {
+  public PsiInvalidElementAccessException(PsiElement element) {
     this(element, null, null);
   }
 
-  public PsiInvalidElementAccessException(@Nullable PsiElement element, @Nullable String message) {
+  public PsiInvalidElementAccessException(PsiElement element, @Nullable String message) {
     this(element, message, null);
   }
 
-  public PsiInvalidElementAccessException(@Nullable PsiElement element, @Nullable Throwable cause) {
+  public PsiInvalidElementAccessException(PsiElement element, @Nullable Throwable cause) {
     this(element, null, cause);
   }
 
