@@ -1,14 +1,12 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
@@ -68,18 +66,23 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
 
   @Override
   public void importData(@NotNull final Collection<DataNode<LibraryData>> toImport,
-                         @Nullable final ProjectData projectData,
+                         @Nullable ProjectData projectData,
                          @NotNull final Project project,
                          @NotNull final PlatformFacade platformFacade,
                          final boolean synchronous) {
-    for (DataNode<LibraryData> dataNode : toImport) {
-      importLibrary(dataNode.getData(), project, platformFacade, synchronous);
-    }
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
+      @Override
+      public void execute() {
+        for (DataNode<LibraryData> dataNode : toImport) {
+          importLibrary(dataNode.getData(), project, platformFacade, synchronous);
+        }
+      }
+    });
   }
 
-  private void importLibrary(@NotNull final LibraryData toImport,
-                             @NotNull final Project project,
-                             @NotNull final PlatformFacade platformFacade,
+  private void importLibrary(@NotNull LibraryData toImport,
+                             @NotNull Project project,
+                             @NotNull PlatformFacade platformFacade,
                              boolean synchronous) {
     Map<OrderRootType, Collection<File>> libraryFiles = prepareLibraryFiles(toImport);
 
@@ -88,14 +91,14 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
       syncPaths(toImport, library, project, synchronous);
       return;
     }
-    importLibrary(toImport.getInternalName(), libraryFiles, project, platformFacade, synchronous);
+    importLibrary(toImport.getInternalName(), libraryFiles, project, platformFacade);
   }
 
   @NotNull
   public Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
     Map<OrderRootType, Collection<File>> result = ContainerUtilRt.newHashMap();
     for (LibraryPathType pathType : LibraryPathType.values()) {
-      final Set<String> paths = data.getPaths(pathType);
+      Set<String> paths = data.getPaths(pathType);
       if (paths.isEmpty()) {
         continue;
       }
@@ -104,38 +107,32 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     return result;
   }
 
-  private void importLibrary(@NotNull final String libraryName,
-                             @NotNull final Map<OrderRootType, Collection<File>> libraryFiles,
-                             @NotNull final Project project,
-                             @NotNull final PlatformFacade platformFacade,
-                             boolean synchronous)
+  private void importLibrary(@NotNull String libraryName,
+                             @NotNull Map<OrderRootType, Collection<File>> libraryFiles,
+                             @NotNull Project project,
+                             @NotNull PlatformFacade platformFacade)
   {
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
-      @Override
-      public void execute() {
-        // Is assumed to be called from the EDT.
-        final LibraryTable libraryTable = platformFacade.getProjectLibraryTable(project);
-        final LibraryTable.ModifiableModel projectLibraryModel = libraryTable.getModifiableModel();
-        final Library intellijLibrary;
-        try {
-          intellijLibrary = projectLibraryModel.createLibrary(libraryName);
-        }
-        finally {
-          projectLibraryModel.commit();
-        }
-        final Library.ModifiableModel libraryModel = intellijLibrary.getModifiableModel();
-        try {
-          registerPaths(libraryFiles, libraryModel, libraryName);
-        }
-        finally {
-          libraryModel.commit();
-        }
-      }
-    });
+    // Is assumed to be called from the EDT.
+    LibraryTable libraryTable = platformFacade.getProjectLibraryTable(project);
+    LibraryTable.ModifiableModel projectLibraryModel = libraryTable.getModifiableModel();
+    Library intellijLibrary;
+    try {
+      intellijLibrary = projectLibraryModel.createLibrary(libraryName);
+    }
+    finally {
+      projectLibraryModel.commit();
+    }
+    Library.ModifiableModel libraryModel = intellijLibrary.getModifiableModel();
+    try {
+      registerPaths(libraryFiles, libraryModel, libraryName);
+    }
+    finally {
+      libraryModel.commit();
+    }
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  public void registerPaths(@NotNull final Map<OrderRootType, Collection<File>> libraryFiles,
+  public void registerPaths(@NotNull Map<OrderRootType, Collection<File>> libraryFiles,
                             @NotNull Library.ModifiableModel model,
                             @NotNull String libraryName)
   {
@@ -150,14 +147,14 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
           }
           String url = VfsUtil.getUrlForLibraryRoot(file);
 
-          final String[] urls = model.getUrls(entry.getKey());
+          String[] urls = model.getUrls(entry.getKey());
           if (!ArrayUtil.contains(url, urls)) {
             model.addRoot(url, entry.getKey());
           }
           continue;
         }
         if (virtualFile.isDirectory()) {
-          final VirtualFile[] files = model.getFiles(entry.getKey());
+          VirtualFile[] files = model.getFiles(entry.getKey());
           if (!ArrayUtil.contains(virtualFile, files)) {
             model.addRoot(virtualFile, entry.getKey());
           }
@@ -173,7 +170,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
               continue;
             }
           }
-          final VirtualFile[] files = model.getFiles(entry.getKey());
+          VirtualFile[] files = model.getFiles(entry.getKey());
           if (!ArrayUtil.contains(root, files)) {
             model.addRoot(root, entry.getKey());
           }
@@ -216,12 +213,12 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     });
   }
 
-  public void syncPaths(@NotNull final LibraryData externalLibrary, @NotNull final Library ideLibrary, @NotNull final Project project, boolean synchronous) {
+  public void syncPaths(@NotNull LibraryData externalLibrary, @NotNull Library ideLibrary, @NotNull Project project, boolean synchronous) {
     if (externalLibrary.isUnresolved()) {
       return;
     }
-    final Map<OrderRootType, Set<String>> toRemove = ContainerUtilRt.newHashMap();
-    final Map<OrderRootType, Set<String>> toAdd = ContainerUtilRt.newHashMap();
+    Map<OrderRootType, Set<String>> toRemove = ContainerUtilRt.newHashMap();
+    Map<OrderRootType, Set<String>> toAdd = ContainerUtilRt.newHashMap();
     for (LibraryPathType pathType : LibraryPathType.values()) {
       OrderRootType ideType = myLibraryPathTypeMapper.map(pathType);
       HashSet<String> toAddPerType = ContainerUtilRt.newHashSet(externalLibrary.getPaths(pathType));
@@ -240,27 +237,22 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     if (toRemove.isEmpty() && toAdd.isEmpty()) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
-      @Override
-      public void execute() {
-        Library.ModifiableModel model = ideLibrary.getModifiableModel();
-        try {
-          for (Map.Entry<OrderRootType, Set<String>> entry : toRemove.entrySet()) {
-            for (String path : entry.getValue()) {
-              model.removeRoot(path, entry.getKey());
-            }
-          }
-
-          for (Map.Entry<OrderRootType, Set<String>> entry : toAdd.entrySet()) {
-            Map<OrderRootType, Collection<File>> roots = ContainerUtilRt.newHashMap();
-            roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
-            registerPaths(roots, model, externalLibrary.getInternalName());
-          }
-        }
-        finally {
-          model.commit();
+    Library.ModifiableModel model = ideLibrary.getModifiableModel();
+    try {
+      for (Map.Entry<OrderRootType, Set<String>> entry : toRemove.entrySet()) {
+        for (String path : entry.getValue()) {
+          model.removeRoot(path, entry.getKey());
         }
       }
-    });
+
+      for (Map.Entry<OrderRootType, Set<String>> entry : toAdd.entrySet()) {
+        Map<OrderRootType, Collection<File>> roots = ContainerUtilRt.newHashMap();
+        roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
+        registerPaths(roots, model, externalLibrary.getInternalName());
+      }
+    }
+    finally {
+      model.commit();
+    }
   }
 }
