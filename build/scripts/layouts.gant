@@ -274,19 +274,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
     dir("plugins") {
       layoutPluginByRuntimeModules("javaFX-CE")
-
-      dir("IntelliLang") {
-        dir("lib") {
-          jar("IntelliLang.jar") {
-            module("IntelliLang")
-            module("IntelliLang-java")
-            module("IntelliLang-xml")
-          }
-          jar("intellilang-jps-plugin.jar") {
-            module("intellilang-jps-plugin")
-          }
-        }
-      }
     }
   }
 
@@ -322,7 +309,8 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
   List<String> mainPluginModules =
     ["copyright", "java-i18n", "hg4idea", "github", "ant", "ui-designer", "properties",
      "maven", "gradle", "git4idea", "svn4idea", "junit", "ByteCodeViewer", "cvs-plugin", "testng", "xpath", "xslt-debugger",
-     "jetgroovy", "tasks-core", "devkit", "eclipse", "terminal", "editorconfig", "coverage", "java-decompiler-plugin", "settings-repository"
+     "jetgroovy", "tasks-core", "devkit", "eclipse", "terminal", "editorconfig", "coverage", "java-decompiler-plugin", "settings-repository",
+     "IntelliLang"
     ]
   if (!isDefined("pluginFilter") || pluginFilter.contains("android")) {
     if (findModule("android") != null) {
