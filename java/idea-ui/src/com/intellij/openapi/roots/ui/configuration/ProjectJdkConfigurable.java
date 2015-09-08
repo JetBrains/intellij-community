@@ -155,12 +155,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
 
   @Override
   public void apply() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        ProjectRootManager.getInstance(myProject).setProjectSdk(getSelectedProjectJdk());
-      }
-    });
+    ProjectRootManager.getInstance(myProject).setProjectSdk(getSelectedProjectJdk());
   }
 
   @Override

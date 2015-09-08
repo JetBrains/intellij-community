@@ -336,21 +336,16 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       }
     }
     final Ref<ConfigurationException> exceptionRef = Ref.create();
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          for (Configurable each : myName2Config) {
-            if (each.isModified()) {
-              each.apply();
-            }
-          }
-        }
-        catch (ConfigurationException e) {
-          exceptionRef.set(e);
+    try {
+      for (Configurable each : myName2Config) {
+        if (each.isModified()) {
+          each.apply();
         }
       }
-    });
+    }
+    catch (ConfigurationException e) {
+      exceptionRef.set(e);
+    }
 
     if (!exceptionRef.isNull()) {
       throw exceptionRef.get();
