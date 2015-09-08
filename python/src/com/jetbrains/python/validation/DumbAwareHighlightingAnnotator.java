@@ -55,9 +55,9 @@ public class DumbAwareHighlightingAnnotator extends PyAnnotator implements Highl
   }
 
   private void highlightKeyword(@NotNull PsiElement node, @NotNull PyElementType elementType) {
-    final ASTNode asyncNode = node.getNode().findChildByType(elementType);
-    if (asyncNode != null) {
-      final Annotation annotation = getHolder().createInfoAnnotation(asyncNode, null);
+    final ASTNode astNode = node.getNode().findChildByType(elementType);
+    if (astNode != null) {
+      final Annotation annotation = getHolder().createInfoAnnotation(astNode, null);
       annotation.setTextAttributes(PyHighlighter.PY_KEYWORD);
     }
   }

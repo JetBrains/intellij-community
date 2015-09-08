@@ -383,6 +383,13 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     for (PyWithItem item : problemItems) {
       registerProblem(item, message.toString());
     }
+    checkAsyncKeyword(node);
+  }
+
+  @Override
+  public void visitPyForStatement(PyForStatement node) {
+    super.visitPyForStatement(node);
+    checkAsyncKeyword(node);
   }
 
   @Override
@@ -508,6 +515,25 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
+  public void visitPyFunction(PyFunction node) {
+    super.visitPyFunction(node);
+    checkAsyncKeyword(node);
+  }
+
+  @Override
+  public void visitPyPrefixExpression(PyPrefixExpression node) {
+    super.visitPyPrefixExpression(node);
+    if (node.getOperator() == PyTokenTypes.AWAIT_KEYWORD) {
+      for (LanguageLevel level : myVersionsToProcess) {
+        if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+          registerProblem(node, "Python versions < 3.5 do not support this syntax");
+          break;
+        }
+      }
+    }
+  }
+
+  @Override
   public void visitPyYieldExpression(PyYieldExpression node) {
     super.visitPyYieldExpression(node);
     if (!node.isDelegating()) {
@@ -567,6 +593,18 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       final IElementType operationType = operation.getNode().getElementType();
       if (PyTokenTypes.ATEQ.equals(operationType)) {
         checkMatrixMultiplicationOperator(operation);
+      }
+    }
+  }
+
+  private void checkAsyncKeyword(PsiElement node) {
+    final ASTNode asyncNode = node.getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD);
+    if (asyncNode != null) {
+      for (LanguageLevel level : myVersionsToProcess) {
+        if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+          registerProblem(node, asyncNode.getTextRange(), "Python versions < 3.5 do not support this syntax", null, true);
+          break;
+        }
       }
     }
   }
