@@ -22,6 +22,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
@@ -46,11 +48,6 @@ public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
     myTitle = title;
   }
 
-  public UnknownFileTypeDiffRequest(@Nullable String title) {
-    myFileName = null;
-    myTitle = title;
-  }
-
   @NotNull
   @Override
   public JComponent getComponent(@NotNull final DiffContext context) {
@@ -61,8 +58,13 @@ public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
       label.append("Associate", SimpleTextAttributes.LINK_ATTRIBUTES, new Runnable() {
         @Override
         public void run() {
-          FileType type = FileTypeChooser.associateFileType(myFileName);
-          if (type != null) onSuccess(context);
+          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+            @Override
+            public void run() {
+              FileType type = FileTypeChooser.associateFileType(myFileName);
+              if (type != null) onSuccess(context);
+            }
+          });
         }
       });
       LinkMouseListenerBase.installSingleTagOn(label);
