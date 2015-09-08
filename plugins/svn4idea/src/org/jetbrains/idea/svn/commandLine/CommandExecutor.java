@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ public class CommandExecutor {
   }
 
   protected void beforeCreateProcess() throws SvnBindException {
-    EncodingEnvironmentUtil.fixDefaultEncodingIfMac(myCommandLine, null);
+    EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(myCommandLine);
     setupLocale();
     ensureMessageFile();
     ensureTargetsAdded();

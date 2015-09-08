@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -446,10 +446,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       myCommandLine = myCommandLineArgumentsProvider.getCommandLineString();
       Map<String, String> envs = myCommandLineArgumentsProvider.getAdditionalEnvs();
       if (envs != null) {
-        EncodingEnvironmentUtil.fixDefaultEncodingIfMac(envs, getProject());
+        EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, EncodingProjectManager.getInstance(getProject()).getDefaultCharset());
       }
-      final Process server = ProcessRunner
-        .createProcess(getWorkingDir(), envs, myCommandLineArgumentsProvider.getArguments());
+      Process server = ProcessRunner.createProcess(getWorkingDir(), envs, myCommandLineArgumentsProvider.getArguments());
       try {
         myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], server, myPorts[1]);
       }
