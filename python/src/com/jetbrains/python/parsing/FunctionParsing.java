@@ -99,6 +99,18 @@ public class FunctionParsing extends Parsing {
   }
 
   protected void parseDeclarationAfterDecorator(PsiBuilder.Marker endMarker) {
+    if (myBuilder.getTokenType() == PyTokenTypes.ASYNC_KEYWORD) {
+      myBuilder.advanceLexer();
+      myContext.pushScope(myContext.getScope().withAsync());
+      parseSyncDeclarationAfterDecorator(endMarker);
+      myContext.popScope();
+    }
+    else {
+      parseSyncDeclarationAfterDecorator(endMarker);
+    }
+  }
+
+  private void parseSyncDeclarationAfterDecorator(PsiBuilder.Marker endMarker) {
     if (myBuilder.getTokenType() == PyTokenTypes.DEF_KEYWORD) {
       parseFunctionInnards(endMarker);
     }
