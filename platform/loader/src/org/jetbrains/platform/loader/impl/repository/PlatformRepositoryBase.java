@@ -96,7 +96,17 @@ public abstract class PlatformRepositoryBase implements PlatformRepository {
   public String getModuleRootPath(@NotNull RuntimeModuleId id) {
     List<File> roots = getRequiredModule(id).getModuleRoots();
     if (roots.size() != 1) {
-      throw new IllegalArgumentException("Module with single root expected but '" + id.getStringId() + "' has " + roots.size() + " roots");
+      //this is a temporary workaround. Currently resources_en.jar may be registered as a module root path even if the module doesn't contain localizable resources
+      List<File> nonResourceRoots = new ArrayList<File>();
+      for (File root : roots) {
+        if (!root.getName().startsWith("resources_") || !root.getName().endsWith(".jar")) {
+          nonResourceRoots.add(root);
+        }
+      }
+      if (nonResourceRoots.size() != 1) {
+        throw new IllegalArgumentException("Module with single root expected but '" + id.getStringId() + "' has " + nonResourceRoots.size() + " roots: " + nonResourceRoots);
+      }
+      return nonResourceRoots.get(0).getAbsolutePath();
     }
     return roots.get(0).getAbsolutePath();
   }
