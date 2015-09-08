@@ -120,7 +120,7 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
                                                             return descriptor.getAction();
                                                           }
                                                         });
-      descriptors.add(new HighlightInfo.IntentionActionDescriptor(first.getAction(), options, first.getDisplayName(), first.getIcon()));
+      descriptors.add(new HighlightInfo.IntentionActionDescriptor(first.getAction(), options, null, first.getIcon()));
     }
   }
 
