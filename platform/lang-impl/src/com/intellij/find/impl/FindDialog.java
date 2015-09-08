@@ -1090,9 +1090,9 @@ public class FindDialog extends DialogWrapper {
 
 
     ButtonGroup bgScope = new ButtonGroup();
-    bgScope.add(myRbDirectory);
     bgScope.add(myRbProject);
     bgScope.add(myRbModule);
+    bgScope.add(myRbDirectory);
     bgScope.add(myRbCustomScope);
 
     ActionListener validateAll = new ActionListener() {
