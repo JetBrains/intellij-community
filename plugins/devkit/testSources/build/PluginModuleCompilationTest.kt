@@ -20,7 +20,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
@@ -29,16 +28,13 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.runInLoadComponentStateMode
 import com.intellij.util.SmartList
 import com.intellij.util.io.TestFileSystemBuilder.fs
-import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 import org.jetbrains.idea.devkit.projectRoots.Sandbox
 import java.io.File
-import java.util.ArrayList
 import java.util.Arrays
 
 /**
