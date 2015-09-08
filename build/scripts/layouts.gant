@@ -512,9 +512,6 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         jar("androidAnnotations.jar") {
           fileset(dir: "$androidHome/android/annotations")
         }
-        dir("templates") {
-          fileset(dir: "$androidToolsBaseHome/templates")
-        }
       }
     }
   }
