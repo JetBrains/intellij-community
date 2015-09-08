@@ -16,8 +16,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
@@ -469,12 +471,10 @@ public abstract class CompilerTestCase extends ModuleTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    final Exception[] exceptions = {null};
     try {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
         @Override
-        public void run() {
-          try {
+        public void run() throws Throwable {
             myRecompiledPaths.clear();
             myData = null;
             myClassesDir = null;
@@ -483,21 +483,14 @@ public abstract class CompilerTestCase extends ModuleTestCase {
             myOriginalSourceDir = null;
             CompilerTestUtil.disableExternalCompiler(myProject);
             CompilerTestCase.super.tearDown();
-          }
-          catch (Exception e) {
-            exceptions[0] = e;
-          }
         }
-      }, ModalityState.NON_MODAL);
+      });
     }
     finally {
       //System.out.println("================END "+getName()+"====================");
       //CompileDriver.ourDebugMode = false;
       //TranslatingCompilerFilesMonitor.ourDebugMode = false;
       clearCompilerZipFileCache();
-    }
-    if (exceptions[0] != null) {
-      throw exceptions[0];
     }
   }
 
