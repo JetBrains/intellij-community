@@ -16,6 +16,8 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -38,6 +40,8 @@ public class EditBreakpointAction extends XDebuggerActionBase implements DumbAwa
       myRenderer = breakpointRenderer;
       myBreakpoint = breakpoint;
       myDebuggerSupport = debuggerSupport;
+      AnAction action = ActionManager.getInstance().getAction("ViewBreakpoints");
+      copyShortcutFrom(action);
     }
 
     @Override
