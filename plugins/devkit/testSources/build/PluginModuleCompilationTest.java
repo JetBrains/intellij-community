@@ -13,160 +13,142 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.devkit.build;
+package org.jetbrains.idea.devkit.build
 
-import com.intellij.compiler.BaseCompilerTestCase;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
-import org.jetbrains.idea.devkit.projectRoots.Sandbox;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static com.intellij.util.io.TestFileSystemBuilder.fs;
+import com.intellij.compiler.BaseCompilerTestCase
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.runInLoadComponentStateMode
+import com.intellij.util.SmartList
+import com.intellij.util.io.TestFileSystemBuilder.fs
+import junit.framework.TestCase
+import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.idea.devkit.module.PluginModuleType
+import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
+import org.jetbrains.idea.devkit.projectRoots.Sandbox
+import java.io.File
+import java.util.ArrayList
+import java.util.Arrays
 
 /**
  * @author nik
  */
-public class PluginModuleCompilationTest extends BaseCompilerTestCase {
-  private Sdk myPluginSdk;
+public class PluginModuleCompilationTest : BaseCompilerTestCase() {
+  private var pluginSdk: Sdk? = null
 
-  @Override
-  protected void setUpJdk() {
-    super.setUpJdk();
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        ProjectJdkTable table = ProjectJdkTable.getInstance();
-        myPluginSdk = table.createSdk("IDEA plugin SDK", SdkType.findInstance(IdeaJdk.class));
-        SdkModificator modificator = myPluginSdk.getSdkModificator();
-        modificator.setSdkAdditionalData(new Sandbox(getSandboxPath(), getTestProjectJdk(), myPluginSdk));
-        String rootPath = FileUtil.toSystemIndependentName(PathManager.getJarPathForClass(FileUtilRt.class));
-        modificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath), OrderRootType.CLASSES);
-        modificator.commitChanges();
-        table.addJdk(myPluginSdk);
-      }
-    }.execute();
-  }
-
-  private String getSandboxPath() {
-    return getProjectBasePath() + "/sandbox";
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        ProjectJdkTable.getInstance().removeJdk(myPluginSdk);
-      }
-    }.execute();
-
-    super.tearDown();
-  }
-
-  public void testMakeSimpleModule() {
-    Module module = setupSimplePluginProject();
-    make(module);
-    assertOutput(module, fs().dir("xxx").file("MyAction.class"));
-
-    File sandbox = new File(FileUtilRt.toSystemDependentName(getSandboxPath()));
-    assertTrue(sandbox.exists());
-    fs().dir("plugins")
-          .dir("pluginProject")
-            .dir("META-INF").file("plugin.xml").end()
-            .dir("classes")
-              .dir("xxx").file("MyAction.class")
-    .build().assertDirectoryEqual(sandbox);
-  }
-
-  public void testRebuildSimpleProject() {
-    setupSimplePluginProject();
-    CompilationLog log = rebuild();
-    assertTrue("Rebuild finished with warnings: " + Arrays.toString(log.getWarnings()), log.getWarnings().length == 0);
-  }
-
-  public void testPrepareSimpleProjectForDeployment() {
-    Module module = setupSimplePluginProject();
-    rebuild();
-    prepareForDeployment(module);
-
-    File outputFile = new File(getProjectBasePath() + "/pluginProject.jar");
-    assertTrue(outputFile + " not found", outputFile.exists());
-    fs()
-      .archive("pluginProject.jar")
-         .dir("META-INF").file("plugin.xml").file("MANIFEST.MF").end()
-         .dir("xxx").file("MyAction.class")
-    .build().assertFileEqual(outputFile);
-  }
-
-  public void testBuildProjectWithJpsModule() {
-    Module module = setupPluginProjectWithJpsModule();
-    rebuild();
-    prepareForDeployment(module);
-
-    File outputFile = new File(getProjectBasePath() + "/pluginProject.zip");
-    assertTrue(outputFile + " not found", outputFile.exists());
-    fs()
-      .archive("pluginProject.zip")
-        .dir("pluginProject")
-         .dir("lib")
-            .archive("pluginProject.jar")
-               .dir("META-INF").file("plugin.xml").file("MANIFEST.MF").end()
-               .dir("xxx").file("MyAction.class").end()
-               .end()
-            .dir("jps")
-               .archive("jps-plugin.jar")
-                  .file("Builder.class")
-
-    .build().assertFileEqual(outputFile);
-  }
-
-  @Override
-  protected void readJdomExternalizables(@NotNull Module module) {
-    super.readJdomExternalizables(module);
-    PluginBuildConfiguration buildConfiguration = PluginBuildConfiguration.getInstance(module);
-    if (buildConfiguration != null) {
-      loadModuleComponentState(module, buildConfiguration);
+  override fun setUpJdk() {
+    super.setUpJdk()
+    runWriteAction {
+      val table = ProjectJdkTable.getInstance()
+      pluginSdk = table.createSdk("IDEA plugin SDK", SdkType.findInstance(javaClass<IdeaJdk>()))
+      val modificator = pluginSdk!!.getSdkModificator()
+      modificator.setSdkAdditionalData(Sandbox(getSandboxPath(), getTestProjectJdk(), pluginSdk))
+      val rootPath = FileUtil.toSystemIndependentName(PathManager.getJarPathForClass(javaClass<FileUtilRt>()))
+      modificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath), OrderRootType.CLASSES)
+      modificator.commitChanges()
+      table.addJdk(pluginSdk)
     }
   }
 
-  private static void prepareForDeployment(Module module) {
-    List<String> errorMessages = new ArrayList<String>();
-    PrepareToDeployAction.doPrepare(module, errorMessages, new ArrayList<String>());
-    assertTrue("Building plugin zip finished with errors: " + errorMessages, errorMessages.isEmpty());
+  private fun getSandboxPath() = "${getProjectBasePath()}/sandbox"
+
+  override fun tearDown() {
+    try {
+      if (pluginSdk != null) {
+        runWriteAction { ProjectJdkTable.getInstance().removeJdk(pluginSdk) }
+      }
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
-  private Module setupSimplePluginProject() {
-    copyToProject("plugins/devkit/testData/build/simple");
-    Module module = loadModule(getProjectBasePath() + "/pluginProject.iml");
-    readJdomExternalizables(module);
-    return module;
+  public fun testMakeSimpleModule() {
+    val module = setupSimplePluginProject()
+    make(module)
+    BaseCompilerTestCase.assertOutput(module, fs().dir("xxx").file("MyAction.class"))
+
+    val sandbox = File(getSandboxPath())
+    assertThat(sandbox).isDirectory()
+    fs()
+      .dir("plugins")
+        .dir("pluginProject")
+          .dir("META-INF").file("plugin.xml").end()
+          .dir("classes")
+            .dir("xxx").file("MyAction.class")
+      .build().assertDirectoryEqual(sandbox)
   }
 
-  private Module setupPluginProjectWithJpsModule() {
-    copyToProject("plugins/devkit/testData/build/withJpsModule");
-    Module module = loadModule(getProjectBasePath() + "/pluginProject.iml");
-    readJdomExternalizables(module);
-    loadModuleComponentState(module, PluginBuildConfiguration.getInstance(module));
-    Module jpsModule = loadModule(getProjectBasePath() + "/jps-plugin/jps-plugin.iml");
-    readJdomExternalizables(jpsModule);
-    ModuleRootModificationUtil.setModuleSdk(jpsModule, getTestProjectJdk());
-    return module;
+  public fun testRebuildSimpleProject() {
+    setupSimplePluginProject()
+    val log = rebuild()
+    assertThat(log.getWarnings()).`as`("Rebuild finished with warnings: ${Arrays.toString(log.getWarnings())}").isEmpty()
+  }
+
+  public fun testPrepareSimpleProjectForDeployment() {
+    val module = setupSimplePluginProject()
+    rebuild()
+    prepareForDeployment(module)
+
+    val outputFile = File("${getProjectBasePath()}/pluginProject.jar")
+    assertThat(outputFile).isFile()
+    fs()
+      .archive("pluginProject.jar")
+        .dir("META-INF").file("plugin.xml").file("MANIFEST.MF").end()
+        .dir("xxx").file("MyAction.class")
+      .build().assertFileEqual(outputFile)
+  }
+
+  public fun testBuildProjectWithJpsModule() {
+    val module = setupPluginProjectWithJpsModule()
+    rebuild()
+    prepareForDeployment(module)
+
+    val outputFile = File("${getProjectBasePath()}/pluginProject.zip")
+    assertThat(outputFile).isFile()
+    fs()
+      .archive("pluginProject.zip")
+        .dir("pluginProject")
+          .dir("lib")
+            .archive("pluginProject.jar")
+              .dir("META-INF").file("plugin.xml").file("MANIFEST.MF").end()
+              .dir("xxx").file("MyAction.class").end()
+              .end()
+            .dir("jps")
+              .archive("jps-plugin.jar").file("Builder.class")
+      .build().assertFileEqual(outputFile)
+  }
+
+  private fun prepareForDeployment(module: Module) {
+    val errorMessages = SmartList<String>()
+    PrepareToDeployAction.doPrepare(module, errorMessages, SmartList<String>())
+    assertThat(errorMessages).`as`("Building plugin zip finished with errors: $errorMessages").isEmpty()
+  }
+
+  private fun setupSimplePluginProject() = copyAndCreateModule("plugins/devkit/testData/build/simple")
+
+  private fun copyAndCreateModule(relativePath: String): Module {
+    copyToProject(relativePath)
+    val module = loadModule("${getProjectBasePath()}/pluginProject.iml")
+    assertThat(ModuleType.get(module)).isEqualTo(PluginModuleType.getInstance())
+    return module
+  }
+
+  private fun setupPluginProjectWithJpsModule(): Module {
+    val module = copyAndCreateModule("plugins/devkit/testData/build/withJpsModule")
+    val jpsModule = loadModule("${getProjectBasePath()}/jps-plugin/jps-plugin.iml")
+    ModuleRootModificationUtil.setModuleSdk(jpsModule, getTestProjectJdk())
+    return module
   }
 }
