@@ -1,4 +1,6 @@
 <idea-plugin>
+  <module value="com.intellij.modules.remoteServers"/>
+
   <extensionPoints>
     <extensionPoint name="remoteServer.type" interface="com.intellij.remoteServer.ServerType"/>
     <extensionPoint name="remoteServer.deploymentSource.type" interface="com.intellij.remoteServer.configuration.deployment.DeploymentSourceType"/>
