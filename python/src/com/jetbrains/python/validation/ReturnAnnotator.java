@@ -21,7 +21,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 
 /**
- * Highlights incorrect return statements: 'return' and 'yield' outside functions, returning values from generators.
+ * Highlights incorrect return statements: 'return' and 'yield' outside functions, 'yield' inside async functions.
  */
 public class ReturnAnnotator extends PyAnnotator {
   public void visitPyReturnStatement(final PyReturnStatement node) {
@@ -35,6 +35,9 @@ public class ReturnAnnotator extends PyAnnotator {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
     if (!(owner instanceof PyFunction || owner instanceof PyLambdaExpression)) {
       getHolder().createErrorAnnotation(node, "'yield' outside of function");
+    }
+    if (owner instanceof PyFunction && ((PyFunction)owner).isAsync()) {
+      getHolder().createErrorAnnotation(node, "'yield' inside async function");
     }
   }
 }
