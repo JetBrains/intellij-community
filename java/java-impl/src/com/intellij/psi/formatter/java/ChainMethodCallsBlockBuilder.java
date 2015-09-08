@@ -86,7 +86,7 @@ class ChainMethodCallsBlockBuilder {
         myChainedCallsAlignment = null;
       }
 
-      SyntheticBlockBuilder builder = new SyntheticBlockBuilder(mySettings, myJavaSettings);
+      CallChunkBlockBuilder builder = new CallChunkBlockBuilder(mySettings, myJavaSettings);
       blocks.add(builder.create(currentCallChunk.nodes, myWrap, myChainedCallsAlignment));
     }
 
