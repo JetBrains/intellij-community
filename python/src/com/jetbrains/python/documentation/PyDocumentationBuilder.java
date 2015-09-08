@@ -107,6 +107,14 @@ class PyDocumentationBuilder {
         PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(elementDefinition.getNode().getElementType())) {
       buildForKeyword(elementDefinition.getText());
     }
+    final String url = PythonDocumentationProvider.getUrlFor(myElement, myOriginalElement, true);
+    if (url != null) {
+      myEpilog.addItem(BR);
+      myEpilog.addWith(TagBold, $("External documentation:"));
+      myEpilog.addItem(BR);
+      myEpilog.addItem("<a href=\"").addItem(url).addItem("\">").addItem(url).addItem("</a>");
+    }
+
     if (myBody.isEmpty() && myEpilog.isEmpty()) {
       return null; // got nothing substantial to say!
     }
