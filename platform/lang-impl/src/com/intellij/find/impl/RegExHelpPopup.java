@@ -341,10 +341,23 @@ public class RegExHelpPopup extends JPanel {
 
   @NotNull
   public static LinkLabel createRegExLink(@NotNull String title, @Nullable final Component owner, @Nullable final Logger logger) {
-    return new LinkLabel(title, null, new LinkListener() {
-      JBPopup helpPopup;
+    final Runnable action = createRegExLinkRunnable(owner, logger);
+    return new LinkLabel<Object>(title, null, new LinkListener<Object>() {
+
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
+        action.run();
+      }
+    });
+  }
+
+  @NotNull
+  public static Runnable createRegExLinkRunnable(@Nullable final Component owner, @Nullable final Logger logger) {
+    return new Runnable() {
+      JBPopup helpPopup;
+
+      @Override
+      public void run() {
         try {
           if (helpPopup != null && !helpPopup.isDisposed() && helpPopup.isVisible()) {
             return;
@@ -356,17 +369,22 @@ public class RegExHelpPopup extends JPanel {
               destroyPopup();
             }
           });
-          helpPopup.showInCenterOf(owner);
+          if (owner != null) {
+            helpPopup.showInCenterOf(owner);
+          }
+          else {
+            helpPopup.showInFocusCenter();
+          }
         }
-        catch (BadLocationException e) {
-          if (logger != null) logger.info(e);
+        catch (BadLocationException ex) {
+          if (logger != null) logger.info(ex);
         }
       }
 
       private void destroyPopup() {
         helpPopup = null;
       }
-    });
+    };
   }
 
   @Override
