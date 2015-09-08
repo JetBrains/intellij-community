@@ -37,6 +37,9 @@ class ApplicationPathMacroManager : BasePathMacroManager(null)
 class ApplicationStoreImpl(private val application: Application, pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
   override val storageManager = ApplicationStorageManager(application, pathMacroManager)
 
+  override val isLoadComponentState: Boolean
+    get() = !application.isUnitTestMode()
+
   override fun setPath(path: String) {
     storageManager.addMacro(ROOT_CONFIG, path)
     storageManager.addMacro(StoragePathMacros.APP_CONFIG, "$path/${ApplicationStorageManager.FILE_STORAGE_DIR}")

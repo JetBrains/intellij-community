@@ -142,15 +142,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static final int MAX_LEAKY_PROJECTS = 42;
   @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
 
-  @Override
   @Nullable
-  public Project newProject(final String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
-    return newProject(projectName, filePath, useDefaultProjectSettings, isDummy, ApplicationManager.getApplication().isUnitTestMode());
-  }
-
-  @Nullable
-  public Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy,
-                            boolean optimiseTestLoadSpeed) {
+  public Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     filePath = toCanonicalName(filePath);
 
     //noinspection ConstantConditions
@@ -184,7 +177,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         }
       }
     }
-    ProjectImpl project = createProject(projectName, filePath, false, optimiseTestLoadSpeed);
+    ProjectImpl project = createProject(projectName, filePath, false);
     try {
       initProject(project, useDefaultProjectSettings ? getDefaultProject() : null);
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
@@ -243,10 +236,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   private ProjectImpl createProject(@Nullable String projectName,
                                     @NotNull String filePath,
-                                    boolean isDefault,
-                                    boolean isOptimiseTestLoadSpeed) {
-    return isDefault ? new DefaultProject(this, "", isOptimiseTestLoadSpeed)
-                     : new ProjectImpl(this, new File(filePath).getAbsolutePath(), isOptimiseTestLoadSpeed, projectName);
+                                    boolean isDefault) {
+    return isDefault ? new DefaultProject(this, "")
+                     : new ProjectImpl(this, new File(filePath).getAbsolutePath(), projectName);
   }
 
   private static void scheduleDispose(@NotNull final ProjectImpl project) {
@@ -273,7 +265,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Nullable
   public Project loadProject(@NotNull String filePath) throws IOException {
     try {
-      ProjectImpl project = createProject(null, filePath, false, false);
+      ProjectImpl project = createProject(null, filePath, false);
       initProject(project, null);
       return project;
     }
@@ -309,7 +301,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         @Override
         public void run() {
           try {
-            myDefaultProject = createProject(null, "", true, ApplicationManager.getApplication().isUnitTestMode());
+            myDefaultProject = createProject(null, "", true);
             initProject(myDefaultProject, null);
           }
           catch (Throwable t) {
@@ -519,7 +511,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
    */
   @Nullable
   private Project loadProjectWithProgress(@NotNull final String filePath) {
-    final ProjectImpl project = createProject(null, toCanonicalName(filePath), false, false);
+    final ProjectImpl project = createProject(null, toCanonicalName(filePath), false);
     try {
       myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Object, RuntimeException>() {
         @Override

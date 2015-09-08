@@ -17,11 +17,12 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.util.ThreeState
 import java.io.File
 
-class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+open private class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
   override val project = module.getProject()
 
   override val storageManager = ModuleStateStorageManager(pathMacroManager.createTrackingSubstitutor(), module)
@@ -32,7 +33,20 @@ class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroMan
     }
   }
 
-  override fun optimizeTestLoading() = (project as ProjectEx).isOptimiseTestLoadSpeed()
-
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
+}
+
+private class TestModuleStore(module: Module, pathMacroManager: PathMacroManager) : ModuleStoreImpl(module, pathMacroManager) {
+  private var isLoadModuleComponentState = ThreeState.UNSURE
+
+  override fun setPath(path: String) {
+    super.setPath(path)
+
+    if (File(path).exists()) {
+      isLoadModuleComponentState = ThreeState.YES
+    }
+  }
+
+  override val isLoadComponentState: Boolean
+    get() = if (isLoadModuleComponentState == ThreeState.UNSURE) (project.stateStore as ProjectStoreImpl).isLoadComponentState else isLoadModuleComponentState.toBoolean()
 }

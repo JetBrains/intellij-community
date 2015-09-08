@@ -61,6 +61,9 @@ abstract class ComponentStoreImpl : IComponentStore {
   protected open val project: Project?
     get() = null
 
+  open val isLoadComponentState: Boolean
+    get() = true
+
   abstract val storageManager: StateStorageManager
 
   override final fun getStateStorageManager() = storageManager
@@ -196,7 +199,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val componentName = ComponentManagerImpl.getComponentName(component)
     doAddComponent(componentName, component)
 
-    if (optimizeTestLoading()) {
+    if (!isLoadComponentState) {
       return null
     }
 
@@ -226,11 +229,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  private fun <T : Any> initPersistentComponent(stateSpec: State, component: PersistentStateComponent<T>, changedStorages: Set<StateStorage>?, reloadData: Boolean): String? {
-    if (optimizeTestLoading()) {
-      return null
-    }
-
+  private fun <T> initPersistentComponent(stateSpec: State, component: PersistentStateComponent<T>, changedStorages: Set<StateStorage>?, reloadData: Boolean): String? {
     val name = stateSpec.name
     val stateClass = ComponentSerializationUtil.getStateClass<T>(component.javaClass)
     if (!stateSpec.defaultStateAsResource && LOG.isDebugEnabled() && getDefaultState(component, name, stateClass) != null) {
@@ -238,41 +237,44 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
 
     val defaultState = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
-    val storageSpecs = getStorageSpecs(component, stateSpec, StateStorageOperation.READ)
-    val storageChooser = component as? StateStorageChooserEx
-    for (storageSpec in storageSpecs) {
-      if (storageChooser?.getResolution(storageSpec, StateStorageOperation.READ) == Resolution.SKIP) {
-        continue
-      }
-
-      val storage = storageManager.getStateStorage(storageSpec)
-      var stateGetter = if (isUseLoadedStateAsExisting(storage) && (ApplicationManager.getApplication().isUnitTestMode() || Registry.`is`("use.loaded.state.as.existing", false))) {
-        (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass)
-      }
-      else {
-        null
-      }
-      var state = if (stateGetter == null) storage.getState(component, name, stateClass, defaultState, reloadData) else stateGetter.getState(defaultState)
-      if (state == null) {
-        if (changedStorages != null && changedStorages.contains(storage)) {
-          // state will be null if file deleted
-          // we must create empty (initial) state to reinit component
-          state = DefaultStateSerializer.deserializeState(Element("state"), stateClass, null)!!
-        }
-        else {
+    if (isLoadComponentState) {
+      val storageSpecs = getStorageSpecs(component, stateSpec, StateStorageOperation.READ)
+      val storageChooser = component as? StateStorageChooserEx
+      for (storageSpec in storageSpecs) {
+        if (storageChooser?.getResolution(storageSpec, StateStorageOperation.READ) == Resolution.SKIP) {
           continue
         }
-      }
 
-      try {
-        component.loadState(state)
+        val storage = storageManager.getStateStorage(storageSpec)
+        var stateGetter = if (isUseLoadedStateAsExisting(storage) && (ApplicationManager.getApplication().isUnitTestMode() || Registry.`is`("use.loaded.state.as.existing", false))) {
+          (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass)
+        }
+        else {
+          null
+        }
+        var state = if (stateGetter == null) storage.getState(component, name, stateClass, defaultState, reloadData) else stateGetter.getState(defaultState)
+        if (state == null) {
+          if (changedStorages != null && changedStorages.contains(storage)) {
+            // state will be null if file deleted
+            // we must create empty (initial) state to reinit component
+            state = DefaultStateSerializer.deserializeState(Element("state"), stateClass, null)!!
+          }
+          else {
+            continue
+          }
+        }
+
+        try {
+          component.loadState(state)
+        }
+        finally {
+          stateGetter?.close()
+        }
+        return name
       }
-      finally {
-        stateGetter?.close()
-      }
-      return name
     }
 
+    // we load default state even if isLoadComponentState false - required for app components (for example, at least one color scheme must exists)
     if (defaultState != null) {
       component.loadState(defaultState)
     }
@@ -331,8 +333,6 @@ abstract class ComponentStoreImpl : IComponentStore {
     })
     return sorted
   }
-
-  protected open fun optimizeTestLoading(): Boolean = false
 
   override final fun isReloadPossible(componentNames: MutableSet<String>) = !componentNames.any { isNotReloadable(it) }
 

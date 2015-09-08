@@ -61,4 +61,8 @@ public interface IProjectStore extends IComponentStore {
   void loadProjectFromTemplate(@NotNull Project project);
 
   void clearStorages();
+
+  boolean isOptimiseTestLoadSpeed();
+
+  void setOptimiseTestLoadSpeed(boolean optimiseTestLoadSpeed);
 }

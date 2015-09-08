@@ -19,6 +19,7 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.highlighter.WorkspaceFileType
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.*
@@ -50,11 +51,17 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
 
   private var presentableUrl: String? = null
 
+  override var isLoadComponentState = true
+
   init {
     assert(!project.isDefault())
   }
 
-  override fun optimizeTestLoading() = project.isOptimiseTestLoadSpeed()
+  override final fun isOptimiseTestLoadSpeed() = !isLoadComponentState
+
+  override final fun setOptimiseTestLoadSpeed(value: Boolean) {
+    isLoadComponentState = !value
+  }
 
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
 
@@ -74,6 +81,11 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
       invokeAndWaitIfNeed {
         VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath))
       }
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        // load state only if there are existing files
+        isLoadComponentState = File(filePath).exists()
+      }
     }
     else {
       scheme = StorageScheme.DIRECTORY_BASED
@@ -91,6 +103,11 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
       }
 
       invokeAndWaitIfNeed { VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByPath(projectConfigDir)) }
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        // load state only if there are existing files
+        isLoadComponentState = dirStore.exists()
+      }
     }
 
     presentableUrl = null

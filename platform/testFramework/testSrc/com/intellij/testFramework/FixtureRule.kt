@@ -19,9 +19,12 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -192,7 +195,7 @@ public class EdtRule : TestRule {
 
 /**
  * Do not optimise test load speed.
- * @see ProjectEx.setOptimiseTestLoadSpeed
+ * @see IProjectStore.setOptimiseTestLoadSpeed
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD, ElementType.TYPE)
@@ -206,21 +209,29 @@ public class ActiveStoreRule(private val projectRule: ProjectRule) : TestRule {
     else {
       object : Statement() {
         override fun evaluate() {
-          val project = projectRule.project
-          val isModeDisabled = project.isOptimiseTestLoadSpeed()
-          if (isModeDisabled) {
-            project.setOptimiseTestLoadSpeed(false)
-          }
-          try {
-            base.evaluate()
-          }
-          finally {
-            if (isModeDisabled) {
-              project.setOptimiseTestLoadSpeed(true)
-            }
-          }
+          projectRule.project.runInLoadComponentStateMode { base.evaluate() }
         }
       }
+    }
+  }
+}
+
+/**
+ * In test mode component state is not loaded. Project or module store will load component state if project/module file exists.
+ * So must be a strong reason to explicitly use this method.
+ */
+public inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
+  val store = stateStore as IProjectStore
+  val isModeDisabled = store.isOptimiseTestLoadSpeed()
+  if (isModeDisabled) {
+    store.setOptimiseTestLoadSpeed(false)
+  }
+  try {
+    return task()
+  }
+  finally {
+    if (isModeDisabled) {
+      store.setOptimiseTestLoadSpeed(true)
     }
   }
 }
