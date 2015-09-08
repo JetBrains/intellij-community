@@ -1652,6 +1652,7 @@ public class FormatProcessor {
         if (space.containsLineFeeds()) {
           myCurrentBlock = (LeafBlockWrapper)block;
           adjustIndent();
+          adjustAlignmentsAfterCurrentBlock();
         }
       }
       else if (block instanceof CompositeBlockWrapper) {
@@ -1659,6 +1660,20 @@ public class FormatProcessor {
         for (AbstractBlockWrapper childBlock : children) {
           reindentNewLineChildren(childBlock);
         }
+      }
+    }
+
+    private void adjustAlignmentsAfterCurrentBlock() {
+      LeafBlockWrapper current = myCurrentBlock.getNextBlock();
+      while (current != null && !current.getWhiteSpace().containsLineFeeds()) {
+        if (current.getAlignment() != null) {
+          myCurrentBlock = current;
+          WhiteSpace currentWhiteSpace = myCurrentBlock.getWhiteSpace();
+          SpacingImpl currentSpaceProperty = myCurrentBlock.getSpaceProperty();
+          currentWhiteSpace.arrangeSpaces(currentSpaceProperty);
+          adjustIndent();
+        }
+        current = current.getNextBlock();
       }
     }
 
