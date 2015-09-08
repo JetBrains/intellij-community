@@ -13,16 +13,16 @@ async = 1
 <error descr="Indent expected">d</error>ef <info descr="null">regular</info>(<info descr="null">xs</info>):
 
     <info descr="null">async</info> def <info descr="null">quux</info>():
-        async for x in xs:
+        <info descr="null">async</info> for x in xs:
             pass
 
-        async with xs:
+        <info descr="null">async</info> with xs:
             pass
 
-        async for x in xs:
+        <info descr="null">async</info> for x in xs:
             pass
 
-    async with xs:
+    async<error descr="End of statement expected"> </error>with <info descr="null">xs</info>:
         pass
 
     return async
