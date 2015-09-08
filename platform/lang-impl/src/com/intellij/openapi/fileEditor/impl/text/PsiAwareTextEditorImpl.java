@@ -30,12 +30,17 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiAwareTextEditorImpl extends TextEditorImpl {
   private TextEditorBackgroundHighlighter myBackgroundHighlighter;
 
-  public PsiAwareTextEditorImpl(@NotNull final Project project, @NotNull final VirtualFile file, final TextEditorProvider provider) {
-    super(project, file, provider);
+  public PsiAwareTextEditorImpl(@NotNull Project project, @NotNull VirtualFile file, TextEditorProvider provider) {
+    this(project, file, provider, null);
+  }
+
+  PsiAwareTextEditorImpl(@NotNull Project project, @NotNull VirtualFile file, TextEditorProvider provider, @Nullable String name) {
+    super(project, file, provider, name);
   }
 
   @NotNull

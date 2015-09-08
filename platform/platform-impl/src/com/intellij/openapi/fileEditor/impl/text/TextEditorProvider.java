@@ -75,9 +75,9 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
 
   @Override
   @NotNull
-  public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file) {
+  public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     LOG.assertTrue(accept(project, file));
-    return new TextEditorImpl(project, file, this);
+    return new TextEditorImpl(project, file, this, getFileEditorName());
   }
 
   @Override
@@ -304,6 +304,15 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     });
   }
 
+  public boolean isDefaultFileEditorProvider() {
+    return true;
+  }
+
+  @Nullable
+  protected String getFileEditorName() {
+    return null;
+  }
+
   protected class EditorWrapper extends UserDataHolderBase implements TextEditor {
     private final Editor myEditor;
 
@@ -331,7 +340,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     @Override
     @NotNull
     public String getName() {
-      return "Text";
+      return TextEditorImpl.DEFAULT_NAME;
     }
 
     @Override
