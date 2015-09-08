@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -272,16 +273,13 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   @NotNull
   public static List<Change> collectChanges(final List<? extends CommittedChangeList> selectedChangeLists, final boolean withMovedTrees) {
-    List<Change> result = new ArrayList<Change>();
     Collections.sort(selectedChangeLists, CommittedChangeListByDateComparator.ASCENDING);
 
-    for(CommittedChangeList cl: selectedChangeLists) {
-      final Collection<Change> changes = withMovedTrees ? cl.getChangesWithMovedTrees() : cl.getChanges();
-      for(Change c: changes) {
-        addOrReplaceChange(result, c);
-      }
+    List<Change> changes = Collections.emptyList();
+    for (CommittedChangeList cl : selectedChangeLists) {
+      changes.addAll(withMovedTrees ? cl.getChangesWithMovedTrees() : cl.getChanges());
     }
-    return result;
+    return zipChanges(changes);
   }
 
   /**
@@ -301,12 +299,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     final ContentRevision beforeRev = c.getBeforeRevision();
     // todo!!! further improvements needed
     if (beforeRev != null) {
-      final String beforeName = beforeRev.getFile().getName();
-      final String beforeAbsolutePath = beforeRev.getFile().getIOFile().getAbsolutePath();
-      for(Change oldChange: changes) {
+      final FilePath beforePath = beforeRev.getFile();
+      for (Change oldChange : changes) {
         ContentRevision rev = oldChange.getAfterRevision();
-        // first compare name, which is many times faster - to remove 99% not matching
-        if (rev != null && (rev.getFile().getName().equals(beforeName)) && rev.getFile().getIOFile().getAbsolutePath().equals(beforeAbsolutePath)) {
+        if (rev != null && rev.getFile().equals(beforePath)) {
           changes.remove(oldChange);
           if (oldChange.getBeforeRevision() != null || c.getAfterRevision() != null) {
             changes.add(new Change(oldChange.getBeforeRevision(), c.getAfterRevision()));
