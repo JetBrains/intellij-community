@@ -336,19 +336,6 @@ public abstract class GitHandler {
   }
 
   /**
-   * Add file path parameters. The parameters are made relative to the working directory
-   *
-   * @param files a parameters to add
-   * @throws IllegalArgumentException if some path is not under root.
-   */
-  public void addRelativePathsForFiles(@NotNull final Collection<File> files) {
-    checkNotStarted();
-    for (File file : files) {
-      myCommandLine.addParameter(VcsFileUtil.relativePath(myWorkingDirectory, file));
-    }
-  }
-
-  /**
    * Add virtual file parameters. The parameters are made relative to the working directory
    *
    * @param files a parameters to add
@@ -710,15 +697,6 @@ public abstract class GitHandler {
    */
   public void setEnvironment(String name, String value) {
     myEnv.put(name, value);
-  }
-
-  /**
-   * Set processor for standard input. This is a place where input to the git application could be generated.
-   *
-   * @param inputProcessor the processor
-   */
-  public void setInputProcessor(Processor<OutputStream> inputProcessor) {
-    myInputProcessor = inputProcessor;
   }
 
   /**
