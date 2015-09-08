@@ -90,7 +90,7 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     @Override
     @NotNull
     public String getText(UsageView view) {
-      return view == null ? UsageViewBundle.message("node.group.code.usages") : view.getPresentation().getNonCodeUsagesString();
+      return view == null ? UsageViewBundle.message("node.non.code.usages") : view.getPresentation().getNonCodeUsagesString();
     }
 
     @Override
