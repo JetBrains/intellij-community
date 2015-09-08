@@ -114,6 +114,13 @@ public class VfsRootAccess {
     final Set<String> allowed = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
     allowed.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()));
 
+    // In plugin development environment PathManager.getHomePath() returns path like "~/.IntelliJIdea/system/plugins-sandbox/test" when running tests
+    // The following is to avoid errors in tests like "File accessed outside allowed roots: file://C:/Program Files/idea/lib/idea.jar"
+    final String homePath2 = PathManager.getHomePathFor(Application.class);
+    if (homePath2 != null) {
+      allowed.add(FileUtil.toSystemIndependentName(homePath2));
+    }
+
     try {
       URL outUrl = Application.class.getResource("/");
       if (outUrl != null) {
