@@ -26,6 +26,10 @@ class EdtTestUtil {
       runInEdtAndWait({ runnable.run() })
     }
 
+    public platformStatic fun runInEdtAndWait(runnable: Runnable) {
+      runInEdtAndWait({ runnable.run() })
+    }
+
     // Test only because in production you must use Application.invokeAndWait(Runnable, ModalityState).
     // The problem is - Application logs errors, but not throws. But in tests must be thrown.
     // In any case name "runInEdtAndWait" is better than "invokeAndWait".
