@@ -509,7 +509,6 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
     layoutPluginByRuntimeModules("android")
     dir("android") {
       dir("lib") {
-        fileset(file: "$androidHome/android/lib/gson-2.2.4.jar")
         jar("androidAnnotations.jar") {
           fileset(dir: "$androidHome/android/annotations")
         }
