@@ -9,18 +9,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.util.Function;
 import com.intellij.util.containers.HashMap;
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Lesson;
-import com.jetbrains.edu.courseFormat.StudyItem;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.oldCourseFormat.OldCourse;
 import com.jetbrains.edu.oldCourseFormat.TaskWindow;
 import org.jetbrains.annotations.NonNls;
@@ -280,6 +277,12 @@ public class EduUtils {
 
   @NotNull
   public static Course transformOldCourse(@NotNull final OldCourse oldCourse) {
+    return transformOldCourse(oldCourse, null);
+  }
+
+  @NotNull
+  public static Course transformOldCourse(@NotNull final OldCourse oldCourse,
+                                          @Nullable Function<Pair<AnswerPlaceholder, StudyStatus>, Void> setStatus) {
     Course course = new Course();
     course.setDescription(oldCourse.description);
     course.setName(oldCourse.name);
@@ -307,15 +310,16 @@ public class EduUtils {
           final ArrayList<AnswerPlaceholder> placeholders = new ArrayList<AnswerPlaceholder>();
           for (TaskWindow window : oldTaskFile.taskWindows) {
             final AnswerPlaceholder placeholder = new AnswerPlaceholder();
-
             placeholder.setIndex(window.myIndex);
             placeholder.setHint(window.hint);
             placeholder.setLength(window.length);
             placeholder.setLine(window.line);
             placeholder.setPossibleAnswer(window.possibleAnswer);
             placeholder.setStart(window.start);
-
             placeholders.add(placeholder);
+            if (setStatus != null) {
+              setStatus.fun(Pair.create(placeholder, window.myStatus));
+            }
           }
 
           taskFile.setAnswerPlaceholders(placeholders);
