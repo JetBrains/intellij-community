@@ -396,6 +396,8 @@ public class FileAttributesReadingTest {
 
   @Test
   public void hardLink() throws Exception {
+    //todo[Roman Shevchenko] currently it fails on new windows agents
+    assertFalse(SystemInfo.isWindows);
     final File target = FileUtil.createTempFile(myTempDirectory, "test.", ".txt");
     final File link = IoTestUtil.createHardLink(target.getPath(), myTempDirectory.getPath() + "/link");
 
