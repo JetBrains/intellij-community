@@ -36,18 +36,18 @@ import java.util.concurrent.Future;
  * @author peter
  */
 public class FileNameCacheMicroBenchmark {
-
   public static void main(String[] args) throws Exception {
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
+    SwingUtilities.invokeAndWait(new Runnable() {
       @Override
       public void run() {
         try {
           IdeaTestFixture fixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR).getFixture();
           fixture.setUp();
 
-          runTest(200);
-          runTest(50000);
+          runTest(200, "All names in cache");
+          runTest(50000, "Cache almost overflows");
+          runTest(120000, "Cache certain overflow");
 
           fixture.tearDown();
         }
@@ -60,9 +60,8 @@ public class FileNameCacheMicroBenchmark {
     System.exit(0);
   }
 
-  private static void runTest(int nameCount) throws InterruptedException, ExecutionException {
-    System.out.println("-----------");
-    System.out.println("nameCount = " + nameCount);
+  private static void runTest(int nameCount, String name) throws InterruptedException, ExecutionException {
+    System.out.println("----- " + name + " ------ name count: "+nameCount);
 
     TIntObjectHashMap<CharSequence> map = generateNames(nameCount);
     final int[] ids = map.keys();
@@ -86,6 +85,7 @@ public class FileNameCacheMicroBenchmark {
   }
 
   private static void measureAverageTime(int[] ids, int threadCount) throws InterruptedException, ExecutionException {
+    System.out.println("Running "+threadCount+" threads");
     TLongArrayList times = new TLongArrayList();
     for (int i = 0; i < 11; i++) {
       long time = runThreads(ids, threadCount, 20000000);

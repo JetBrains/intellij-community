@@ -138,7 +138,7 @@ public class PyPep8NamingInspection extends PyInspection {
     }
 
     private boolean isOverriddenMethod(@NotNull PyFunction function) {
-      return PySuperMethodsSearch.search(function).findFirst() != null;
+      return PySuperMethodsSearch.search(function, myTypeEvalContext).findFirst() != null;
     }
 
     private boolean isIgnoredOrHasIgnoredAncestor(@NotNull PyClass pyClass) {

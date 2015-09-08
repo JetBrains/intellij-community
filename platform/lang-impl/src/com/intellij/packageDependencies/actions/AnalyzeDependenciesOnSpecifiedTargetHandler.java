@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.packageDependencies.BackwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.psi.PsiFile;
@@ -72,27 +73,6 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
 
   @Override
   protected DependenciesBuilder createDependenciesBuilder(AnalysisScope scope) {
-    return new ForwardDependenciesBuilder(myProject, scope) {
-      @Override
-      public void analyze() {
-        super.analyze();
-        final Map<PsiFile,Set<PsiFile>> dependencies = getDependencies();
-        for (Iterator<PsiFile> leftTreeIterator = dependencies.keySet().iterator(); leftTreeIterator.hasNext(); ) {
-          final PsiFile leftTreeFile = leftTreeIterator.next();
-          final Set<PsiFile> files = dependencies.get(leftTreeFile);
-          final Iterator<PsiFile> iterator = files.iterator();
-          while (iterator.hasNext()) {
-            PsiFile next = iterator.next();
-            final VirtualFile virtualFile = next.getVirtualFile();
-            if (virtualFile == null || !myTargetScope.contains(virtualFile)) {
-              iterator.remove();
-            }
-          }
-          if (files.isEmpty()) {
-            leftTreeIterator.remove();
-          }
-        }
-      }
-    };
+    return new BackwardDependenciesBuilder(myProject, new AnalysisScope(myTargetScope, myProject), scope);
   }
 }

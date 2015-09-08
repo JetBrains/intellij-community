@@ -225,6 +225,10 @@ public class StudyCheckAction extends DumbAwareAction {
           return;
         }
         final StudyTestRunner.TestsOutput testsOutput = testRunner.getTestsOutput(output);
+        String stderr = output.getStderr();
+        if (!stderr.isEmpty()) {
+          LOG.info("#educational " + stderr);
+        }
         final StudySettings studySettings = StudySettings.getInstance();
 
         final String login = studySettings.getLogin();

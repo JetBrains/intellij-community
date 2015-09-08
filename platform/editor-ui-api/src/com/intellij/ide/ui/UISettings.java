@@ -128,7 +128,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
   public boolean NAVIGATE_TO_PREVIEW = false;
   public boolean SORT_BOOKMARKS = false;
-  public boolean MERGE_EQUAL_STACKTRACES = false;
+  public boolean MERGE_EQUAL_STACKTRACES = true;
 
   private final EventDispatcher<UISettingsListener> myDispatcher = EventDispatcher.create(UISettingsListener.class);
 

@@ -64,7 +64,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       final PyClass containingClass = node.getContainingClass();
       if (containingClass == null) return;
       if (PythonUnitTestUtil.isUnitTestCaseClass(containingClass)) return;
-      final PsiElement firstSuper = PySuperMethodsSearch.search(node).findFirst();
+      final PsiElement firstSuper = PySuperMethodsSearch.search(node, myTypeEvalContext).findFirst();
       if (firstSuper != null) return;
       final PyFunction firstOverride = PyOverridingMethodsSearch.search(node, true).findFirst();
       if (firstOverride != null) return;

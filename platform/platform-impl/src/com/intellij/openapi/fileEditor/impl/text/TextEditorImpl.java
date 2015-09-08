@@ -24,7 +24,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -34,16 +36,20 @@ import java.beans.PropertyChangeSupport;
  * @author Vladimir Kondratyev
  */
 public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
+  public static final String DEFAULT_NAME = "Text";
+
   protected final Project myProject;
   private final PropertyChangeSupport myChangeSupport;
   @NotNull private final TextEditorComponent myComponent;
   private final TextEditorProvider myProvider;
+  private final String myName;
 
-  TextEditorImpl(@NotNull final Project project, @NotNull final VirtualFile file, final TextEditorProvider provider) {
+  TextEditorImpl(@NotNull final Project project, @NotNull final VirtualFile file, final TextEditorProvider provider, @Nullable String name) {
     myProject = project;
     myProvider = provider;
     myChangeSupport = new PropertyChangeSupport(this);
     myComponent = createEditorComponent(project, file);
+    myName = ObjectUtils.notNull(name, DEFAULT_NAME);
   }
 
   @NotNull
@@ -84,7 +90,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   @Override
   @NotNull
   public String getName() {
-    return "Text";
+    return myName;
   }
 
   @Override

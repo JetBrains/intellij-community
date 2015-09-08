@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
  * User: spLeaner
  */
 public class AfterElement extends PositionElementFilter {
-  public AfterElement(){}
 
   public AfterElement(ElementFilter filter){
     setFilter(filter);

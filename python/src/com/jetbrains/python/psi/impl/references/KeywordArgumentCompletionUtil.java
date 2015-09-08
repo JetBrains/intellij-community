@@ -88,7 +88,7 @@ public class KeywordArgumentCompletionUtil {
       // nothing interesting besides self and **kwargs, let's look at superclass (PY-778)
       if (fromStatementCallCollector.isKwArgsTransit()) {
 
-        final PsiElement superMethod = PySuperMethodsSearch.search(def).findFirst();
+        final PsiElement superMethod = PySuperMethodsSearch.search(def, context).findFirst();
         if (superMethod instanceof PyFunction) {
           addKeywordArgumentVariants((PyFunction)superMethod, callExpr, ret, visited);
         }

@@ -167,6 +167,10 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   private void commit(LibraryModel model) {
     myFirstLoad = false;
     ApplicationManager.getApplication().assertWriteAccessAllowed();
+    if (!model.isChanged()) {
+      myModel = model;
+      return;
+    }
     //todo[nik] remove LibraryImpl#equals method instead of using identity sets
     Set<Library> addedLibraries = ContainerUtil.newIdentityTroveSet(model.myLibraries);
     addedLibraries.removeAll(myModel.myLibraries);
@@ -221,8 +225,8 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
     @Override
     public void commit() {
-      myWritable = false;
       LibraryTableBase.this.commit(this);
+      myWritable = false;
     }
 
     @Override

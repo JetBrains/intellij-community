@@ -19,23 +19,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
-import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -68,17 +63,25 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
                          @NotNull Project project,
                          @NotNull PlatformFacade platformFacade,
                          boolean synchronous) {
-    MultiMap<DataNode<ModuleData>, DataNode<ModuleDependencyData>> byModule = ExternalSystemApiUtil.groupBy(toImport, MODULE);
-    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ModuleDependencyData>>> entry : byModule.entrySet()) {
-      Module ideModule = platformFacade.findIdeModule(entry.getKey().getData(), project);
-      if (ideModule == null) {
-        LOG.warn(String.format(
-          "Can't import module dependencies %s. Reason: target module (%s) is not found at the ide and can't be imported",
-          entry.getValue(), entry.getKey()
-        ));
-        continue;
+    List<ModifiableRootModel> models = ContainerUtilRt.newArrayList();
+    try {
+      MultiMap<DataNode<ModuleData>, DataNode<ModuleDependencyData>> byModule = ExternalSystemApiUtil.groupBy(toImport, MODULE);
+      for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ModuleDependencyData>>> entry : byModule.entrySet()) {
+        Module ideModule = platformFacade.findIdeModule(entry.getKey().getData(), project);
+        if (ideModule == null) {
+          LOG.warn(String.format(
+            "Can't import module dependencies %s. Reason: target module (%s) is not found at the ide and can't be imported",
+            entry.getValue(), entry.getKey()
+          ));
+          continue;
+        }
+        models.add(importData(entry.getValue(), ideModule, platformFacade));
       }
-      importData(entry.getValue(), ideModule, platformFacade, synchronous);
+      ExternalSystemApiUtil.commitModels(synchronous, project, models);
+    }
+    catch (Throwable t) {
+      ExternalSystemApiUtil.disposeModels(models);
+      ExceptionUtil.rethrowAllAsUnchecked(t);
     }
   }
 
@@ -93,62 +96,54 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
     return orderEntry.getModuleName();
   }
 
-  private void importData(@NotNull final Collection<DataNode<ModuleDependencyData>> toImport,
-                          @NotNull final Module module,
-                          @NotNull final PlatformFacade platformFacade,
-                          final boolean synchronous)
+  @NotNull
+  private ModifiableRootModel importData(@NotNull Collection<DataNode<ModuleDependencyData>> toImport,
+                                         @NotNull Module module,
+                                         @NotNull PlatformFacade platformFacade)
   {
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(module) {
-      @Override
-      public void execute() {
-        ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-        Map<Pair<String /* dependency module internal name */, /* dependency module scope */DependencyScope> , ModuleOrderEntry> toRemove = ContainerUtilRt.newHashMap();
-        for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
-          if (entry instanceof ModuleOrderEntry) {
-            ModuleOrderEntry e = (ModuleOrderEntry)entry;
-            toRemove.put(Pair.create(e.getModuleName(), e.getScope()), e);
-          }
+    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    Map<Pair<String /* dependency module internal name */, /* dependency module scope */DependencyScope>, ModuleOrderEntry> toRemove =
+      ContainerUtilRt.newHashMap();
+    for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
+      if (entry instanceof ModuleOrderEntry) {
+        ModuleOrderEntry e = (ModuleOrderEntry)entry;
+        toRemove.put(Pair.create(e.getModuleName(), e.getScope()), e);
+      }
+    }
+
+    ModifiableRootModel moduleRootModel = platformFacade.getModuleModifiableModel(module);
+    for (DataNode<ModuleDependencyData> dependencyNode : toImport) {
+      ModuleDependencyData dependencyData = dependencyNode.getData();
+      toRemove.remove(Pair.create(dependencyData.getInternalName(), dependencyData.getScope()));
+      String moduleName = dependencyData.getInternalName();
+      Module ideDependencyModule = platformFacade.findIdeModule(moduleName, module.getProject());
+
+      ModuleOrderEntry orderEntry;
+      if (module.equals(ideDependencyModule)) {
+        // skip recursive module dependency check
+        continue;
+      }
+      else {
+        if (ideDependencyModule == null) {
+          LOG.warn(String.format("Can't import module dependency for '%s' module. Reason: target module (%s) is not found at the ide",
+                                 module.getName(), dependencyData));
         }
-
-        final ModifiableRootModel moduleRootModel = platformFacade.getModuleModifiableModel(module);
-        try {
-          for (DataNode<ModuleDependencyData> dependencyNode : toImport) {
-            final ModuleDependencyData dependencyData = dependencyNode.getData();
-            toRemove.remove(Pair.create(dependencyData.getInternalName(), dependencyData.getScope()));
-            final String moduleName = dependencyData.getInternalName();
-            Module ideDependencyModule = platformFacade.findIdeModule(moduleName, module.getProject());
-
-            ModuleOrderEntry orderEntry;
-            if (module.equals(ideDependencyModule)) {
-              // skip recursive module dependency check
-              continue;
-            } else  {
-              if(ideDependencyModule == null) {
-                LOG.warn(String.format(
-                  "Can't import module dependency for '%s' module. Reason: target module (%s) is not found at the ide",
-                  module.getName(), dependencyData
-                ));
-              }
-              orderEntry = platformFacade.findIdeModuleDependency(dependencyData, moduleRootModel);
-              if (orderEntry == null) {
-                orderEntry = ideDependencyModule == null
-                             ? moduleRootModel.addInvalidModuleEntry(moduleName)
-                             : moduleRootModel.addModuleOrderEntry(ideDependencyModule);
-              }
-            }
-
-            orderEntry.setScope(dependencyData.getScope());
-            orderEntry.setExported(dependencyData.isExported());
-          }
-        }
-        finally {
-          moduleRootModel.commit();
-        }
-
-        if (!toRemove.isEmpty()) {
-          removeData(toRemove.values(), module, platformFacade, synchronous);
+        orderEntry = platformFacade.findIdeModuleDependency(dependencyData, moduleRootModel);
+        if (orderEntry == null) {
+          orderEntry = ideDependencyModule == null
+                       ? moduleRootModel.addInvalidModuleEntry(moduleName)
+                       : moduleRootModel.addModuleOrderEntry(ideDependencyModule);
         }
       }
-    });
+
+      orderEntry.setScope(dependencyData.getScope());
+      orderEntry.setExported(dependencyData.isExported());
+    }
+
+    if (!toRemove.isEmpty()) {
+      removeData(toRemove.values(), moduleRootModel);
+    }
+
+    return moduleRootModel;
   }
 }

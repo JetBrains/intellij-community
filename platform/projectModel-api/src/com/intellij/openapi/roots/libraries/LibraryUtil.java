@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -169,7 +170,10 @@ public class LibraryUtil {
     if (name != null) {
       return name;
     }
-    final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
-    return files.length > 0 ? files[0].getName() : "Empty Library";
+    String[] urls = library.getUrls(OrderRootType.CLASSES);
+    if (urls.length > 0) {
+      return PathUtil.getFileName(VfsUtilCore.urlToPath(urls[0]));
+    }
+    return "Empty Library";
   }
 }

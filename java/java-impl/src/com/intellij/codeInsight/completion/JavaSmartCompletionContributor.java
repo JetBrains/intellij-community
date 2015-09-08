@@ -27,11 +27,11 @@ import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.GeneratorFilter;
 import com.intellij.psi.filters.OrFilter;
-import com.intellij.psi.filters.getters.*;
+import com.intellij.psi.filters.getters.ExpectedTypesGetter;
+import com.intellij.psi.filters.getters.InstanceOfLeftPartTypeGetter;
+import com.intellij.psi.filters.getters.JavaMembersGetter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
-import com.intellij.psi.filters.types.AssignableGroupFilter;
 import com.intellij.psi.filters.types.AssignableToFilter;
 import com.intellij.psi.impl.source.PsiLabelReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
@@ -77,9 +77,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
               psiElement().afterLeaf(
                   psiElement().withText(PsiKeyword.THROW))));
   static final ElementPattern<PsiElement> AFTER_THROW_NEW = psiElement().afterLeaf(psiElement().withText(PsiKeyword.NEW).afterLeaf(PsiKeyword.THROW));
-  private static final OrFilter THROWABLE_TYPE_FILTER = new OrFilter(
-      new GeneratorFilter(AssignableGroupFilter.class, new ThrowsListGetter()),
-      new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE));
   public static final ElementPattern<PsiElement> INSIDE_EXPRESSION = or(
         psiElement().withParent(PsiExpression.class).andNot(psiElement().withParent(PsiLiteralExpression.class)).andNot(psiElement().withParent(PsiMethodReferenceExpression.class)),
         psiElement().inside(PsiClassObjectAccessExpression.class),
@@ -113,13 +110,19 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   private static ElementFilter getReferenceFilter(PsiElement element) {
     //throw new foo
     if (AFTER_THROW_NEW.accepts(element)) {
-      return new ElementExtractorFilter(THROWABLE_TYPE_FILTER);
+      return THROWABLES_FILTER;
     }
 
     //new xxx.yyy
     if (psiElement().afterLeaf(psiElement().withText(".")).withSuperParent(2, psiElement(PsiNewExpression.class)).accepts(element)) {
       if (((PsiNewExpression)element.getParent().getParent()).getClassReference() == element.getParent()) {
-        return new GeneratorFilter(AssignableGroupFilter.class, new ExpectedTypesGetter());
+        PsiType[] types = ExpectedTypesGetter.getExpectedTypes(element, false);
+        return new OrFilter(ContainerUtil.map2Array(types, ElementFilter.class, new Function<PsiType, ElementFilter>() {
+          @Override
+          public ElementFilter fun(PsiType type) {
+            return new AssignableFromFilter(type);
+          }
+        }));
       }
     }
 
@@ -177,7 +180,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         final PsiElement element = parameters.getPosition();
         final PsiReference reference = element.getContainingFile().findReferenceAt(parameters.getOffset());
         if (reference != null) {
-          final ElementFilter filter = getReferenceFilter(element);
+          ElementFilter filter = getReferenceFilter(element);
           if (filter != null) {
             final List<ExpectedTypeInfo> infos = Arrays.asList(getExpectedTypes(parameters));
             for (final LookupElement item : completeReference(element, reference, filter, true, false, parameters, result.getPrefixMatcher())) {
@@ -187,9 +190,12 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
             }
           }
           else if (INSIDE_TYPECAST_EXPRESSION.accepts(element)) {
-            for (final LookupElement item : completeReference(element, reference, new GeneratorFilter(AssignableToFilter.class, new CastTypeGetter()), false, true, parameters,
-                                                              result.getPrefixMatcher())) {
-              result.addElement(item);
+            final PsiTypeCastExpression cast = PsiTreeUtil.getContextOfType(element, PsiTypeCastExpression.class, true);
+            if (cast != null && cast.getCastType() != null) {
+              filter = new AssignableToFilter(cast.getCastType().getType());
+              for (final LookupElement item : completeReference(element, reference, filter, false, true, parameters, result.getPrefixMatcher())) {
+                result.addElement(item);
+              }
             }
           }
 

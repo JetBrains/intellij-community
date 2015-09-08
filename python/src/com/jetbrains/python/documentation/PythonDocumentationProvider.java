@@ -355,7 +355,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   @Nullable
-  private static String getUrlFor(PsiElement element, PsiElement originalElement, boolean checkExistence) {
+  public static String getUrlFor(PsiElement element, PsiElement originalElement, boolean checkExistence) {
     PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
     if (file == null) return null;
     if (PyNames.INIT_DOT_PY.equals(file.getName())) {

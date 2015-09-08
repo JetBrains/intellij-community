@@ -15,20 +15,21 @@
  */
 package com.intellij.vcsUtil;
 
+import com.intellij.util.ExceptionUtil;
+
 /**
  * @author irengrig
+ *
+ * @deprecated use {@link ExceptionUtil} instead
  */
 public class Rethrow {
   private Rethrow() {
   }
 
+  /**
+   * @deprecated use {@link ExceptionUtil#rethrowAllAsUnchecked(Throwable)} instead
+   */
   public static void reThrowRuntime(final Throwable t) {
-    if (t instanceof Error) {
-      throw (Error) t;
-    }
-    if (t instanceof RuntimeException) {
-      throw (RuntimeException) t;
-    }
-    throw new RuntimeException(t);
+    ExceptionUtil.rethrowAllAsUnchecked(t);
   }
 }

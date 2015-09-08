@@ -24,22 +24,21 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.psi.formatter.java.SyntheticCodeBlock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.psi.formatter.java.AbstractJavaBlock.*;
+import static com.intellij.psi.formatter.java.AbstractJavaBlock.newJavaBlock;
 
-public class SyntheticBlockBuilder {
+public class CallChunkBlockBuilder {
 
   private final CommonCodeStyleSettings mySettings;
   private final CommonCodeStyleSettings.IndentOptions myIndentSettings;
   private final JavaCodeStyleSettings myJavaSettings;
 
-  public SyntheticBlockBuilder(@NotNull CommonCodeStyleSettings settings, @NotNull JavaCodeStyleSettings javaSettings) {
+  public CallChunkBlockBuilder(@NotNull CommonCodeStyleSettings settings, @NotNull JavaCodeStyleSettings javaSettings) {
     mySettings = settings;
     myIndentSettings = settings.getIndentOptions();
     myJavaSettings = javaSettings;

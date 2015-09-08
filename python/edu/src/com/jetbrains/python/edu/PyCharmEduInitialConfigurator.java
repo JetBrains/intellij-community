@@ -140,6 +140,7 @@ public class PyCharmEduInitialConfigurator {
       patchMainMenu();
       uiSettings.SHOW_NAVIGATION_BAR = false;
       propertiesComponent.setValue(CONFIGURED_V1, true);
+      propertiesComponent.setValue("ShowDocumentationInToolWindow", true);
     }
 
     if (!propertiesComponent.getBoolean(CONFIGURED)) {

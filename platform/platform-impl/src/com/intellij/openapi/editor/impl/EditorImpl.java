@@ -117,7 +117,6 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
@@ -5726,30 +5725,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private static <T> T execute(final Computable<T> computable) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        return computable.compute();
-      }
-      else {
-        final Ref<T> ref = Ref.create();
-        try {
-          GuiUtils.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-              ref.set(computable.compute());
-            }
-          });
+      final Ref<T> ref = Ref.create();
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          ref.set(computable.compute());
         }
-        catch (InterruptedException e) {
-          LOG.error(e);
-        }
-        catch (InvocationTargetException e) {
-          LOG.error(e);
-        }
-        return ref.get();
-      }
+      }, ModalityState.defaultModalityState());
+      return ref.get();
     }
   }
-
 
   private class MyInputMethodHandler implements InputMethodRequests {
     private String composedText;

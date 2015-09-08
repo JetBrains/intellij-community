@@ -64,7 +64,8 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     }
 
     final PsiCapturedWildcardType captured = (PsiCapturedWildcardType)o;
-    if (!myContext.equals(captured.myContext)) {
+    final PsiManager manager = myContext.getManager();
+    if (!manager.areElementsEquivalent(myContext, captured.myContext)) {
       return false;
     }
 
@@ -72,7 +73,8 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
       return false;
     }
 
-    if ((myContext instanceof PsiReferenceExpression || myContext instanceof PsiMethodCallExpression) && !Comparing.equal(myParameter, captured.myParameter)) {
+    if ((myContext instanceof PsiReferenceExpression || myContext instanceof PsiMethodCallExpression) && 
+        !manager.areElementsEquivalent(myParameter, captured.myParameter)) {
       return false;
     }
 

@@ -99,8 +99,12 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
         return psiClass;
       }
 
-      final PsiClass retrieve = (PsiClass)((PsiAnchor)myClass).retrieve();
-      assert retrieve != null : myQualifiedName;
+      PsiAnchor anchor = (PsiAnchor)myClass;
+      final PsiClass retrieve = (PsiClass)anchor.retrieve();
+      if (retrieve == null) {
+        throw new AssertionError(myQualifiedName + "; anchor=" + anchor + "; diagnostics=" +
+                                 (anchor instanceof PsiAnchor.StubIndexReference ? ((PsiAnchor.StubIndexReference)anchor).diagnoseNull() : null));
+      }
       myCache = new WeakReference<PsiClass>(retrieve);
       return retrieve;
     }

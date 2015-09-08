@@ -24,8 +24,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
@@ -317,21 +315,15 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   private void setSdk(final Sdk item) {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            ProjectRootManager.getInstance(myProject).setProjectSdk(item);
-          }
-        });
-        if (myModule != null) {
-          ModuleRootModificationUtil.setModuleSdk(myModule, item);
-        }
+        ProjectRootManager.getInstance(myProject).setProjectSdk(item);
       }
     });
-
+    if (myModule != null) {
+      ModuleRootModificationUtil.setModuleSdk(myModule, item);
+    }
   }
 
   public static void rehighlightStrings(final @NotNull Project project) {

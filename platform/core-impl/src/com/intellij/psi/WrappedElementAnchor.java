@@ -58,6 +58,6 @@ public class WrappedElementAnchor extends PsiAnchor {
 
   @Override
   public String toString() {
-    return "WrappedElementAnchor(" + myBaseAnchor.toString() + ")";
+    return "WrappedElementAnchor(" + myBaseAnchor + "; provider=" + myAnchorProvider + ")";
   }
 }
