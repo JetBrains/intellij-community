@@ -450,6 +450,8 @@ public class PyNames {
   public static final String IN = "in";
   public static final String NOT = "not";
   public static final String LAMBDA = "lambda";
+  public static final String ASYNC = "async";
+  public static final String AWAIT = "await";
 
   /**
    * Contains keywords as of CPython 2.5.

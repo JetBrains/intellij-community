@@ -638,6 +638,15 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return null;
   }
 
+  @Override
+  public boolean isAsync() {
+    final PyFunctionStub stub = getStub();
+    if (stub != null) {
+      return stub.isAsync();
+    }
+    return getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD) != null;
+  }
+
   @Nullable
   private Modifier getWrappersFromStub() {
     final StubElement parentStub = getStub().getParentStub();
