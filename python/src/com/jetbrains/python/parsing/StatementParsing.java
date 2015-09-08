@@ -51,6 +51,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   @NonNls protected static final String TOK_NONLOCAL = "nonlocal";
   @NonNls protected static final String TOK_EXEC = "exec";
   @NonNls protected static final String TOK_ASYNC = "async";
+  @NonNls protected static final String TOK_AWAIT = "await";
 
   private static final String EXPRESSION_EXPECTED = "Expression expected";
   public static final String IDENTIFIER_EXPECTED = "Identifier expected";
@@ -937,9 +938,16 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       if (isWordAtPosition(text, start, end, TOK_NONLOCAL)) {
         return PyTokenTypes.NONLOCAL_KEYWORD;
       }
-      if (myContext.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON35) && isWordAtPosition(text, start, end, TOK_ASYNC)) {
-        if (myContext.getScope().isAsync() || myBuilder.lookAhead(1) == PyTokenTypes.DEF_KEYWORD) {
-          return PyTokenTypes.ASYNC_KEYWORD;
+      if (myContext.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON35)) {
+        if (isWordAtPosition(text, start, end, TOK_ASYNC)) {
+          if (myContext.getScope().isAsync() || myBuilder.lookAhead(1) == PyTokenTypes.DEF_KEYWORD) {
+            return PyTokenTypes.ASYNC_KEYWORD;
+          }
+        }
+        if (isWordAtPosition(text, start, end, TOK_AWAIT)) {
+          if (myContext.getScope().isAsync()) {
+            return PyTokenTypes.AWAIT_KEYWORD;
+          }
         }
       }
     }

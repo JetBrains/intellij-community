@@ -22,10 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.highlighting.PyHighlighter;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyForStatement;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyWithStatement;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,17 +31,22 @@ import org.jetbrains.annotations.NotNull;
 public class DumbAwareHighlightingAnnotator extends PyAnnotator implements HighlightRangeExtension {
   @Override
   public void visitPyFunction(PyFunction node) {
-    highlightAsyncKeyword(node);
+    highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
   }
 
   @Override
   public void visitPyForStatement(PyForStatement node) {
-    highlightAsyncKeyword(node);
+    highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
   }
 
   @Override
   public void visitPyWithStatement(PyWithStatement node) {
-    highlightAsyncKeyword(node);
+    highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
+  }
+
+  @Override
+  public void visitPyPrefixExpression(PyPrefixExpression node) {
+    highlightKeyword(node, PyTokenTypes.AWAIT_KEYWORD);
   }
 
   @Override
@@ -52,8 +54,8 @@ public class DumbAwareHighlightingAnnotator extends PyAnnotator implements Highl
     return file instanceof PyFile;
   }
 
-  private void highlightAsyncKeyword(@NotNull  PsiElement node) {
-    final ASTNode asyncNode = node.getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD);
+  private void highlightKeyword(@NotNull PsiElement node, @NotNull PyElementType elementType) {
+    final ASTNode asyncNode = node.getNode().findChildByType(elementType);
     if (asyncNode != null) {
       final Annotation annotation = getHolder().createInfoAnnotation(asyncNode, null);
       annotation.setTextAttributes(PyHighlighter.PY_KEYWORD);
