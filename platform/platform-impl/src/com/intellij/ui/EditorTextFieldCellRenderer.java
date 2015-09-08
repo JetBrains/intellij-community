@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
@@ -76,13 +77,23 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
   protected abstract String getText(JTable table, Object value, int row, int column);
 
+  @Nullable
+  protected TextAttributes getTextAttributes(JTable table, Object value, int row, int column) {
+    return null;
+  }
+
+  @NotNull
+  protected EditorColorsScheme getColorScheme(final JTable table) {
+    return getEditorPanel(table).getEditor().getColorsScheme();
+  }
+
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int column) {
     RendererComponent panel = getEditorPanel(table);
     EditorEx editor = panel.getEditor();
     editor.getColorsScheme().setEditorFontSize(table.getFont().getSize());
     String text = getText(table, value, row, column);
-    panel.setText(text, null, selected);
+    panel.setText(text, getTextAttributes(table, value, row, column), selected);
 
     editor.getColorsScheme().setColor(EditorColors.SELECTION_BACKGROUND_COLOR, table.getSelectionBackground());
     editor.getColorsScheme().setColor(EditorColors.SELECTION_FOREGROUND_COLOR, table.getSelectionForeground());

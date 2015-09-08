@@ -16,6 +16,7 @@
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextFieldCellRenderer;
@@ -39,5 +40,16 @@ public abstract class EditorTextFieldJBTableRowRenderer extends EditorTextFieldC
     return getText(table, row);
   }
 
+  @Nullable
+  @Override
+  protected final TextAttributes getTextAttributes(JTable table, Object value, int row, int column) {
+    return getTextAttributes(table, row);
+  }
+
   protected abstract String getText(JTable table, int row);
+
+  @Nullable
+  protected TextAttributes getTextAttributes(JTable table, int row) {
+    return null;
+  }
 }
