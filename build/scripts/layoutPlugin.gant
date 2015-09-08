@@ -106,7 +106,8 @@ binding.setVariable("layoutPluginByRuntimeModules", { String mainModuleName ->
 
       def ideModules = modulesWithScopes.findAll { it.second.contains("IDE") }.collect { it.first }
       ideModules.each { module ->
-        jar([name: "${module.name}.jar", filesetmanifest: "merge"]) {
+        def jarName = compatibilityMap?.additionalJarNames?.get(module.name) ?: "${module.name}.jar"
+        jar([name: jarName, filesetmanifest: "merge"]) {
           noResources(module.name)
         }
 //        registerModuleDescriptor(module, ["$pluginTargetDir/lib/${module.name}.jar", "$pluginTargetDir/lib/resources_en.jar"])
