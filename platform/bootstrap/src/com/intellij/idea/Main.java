@@ -285,7 +285,7 @@ public class Main {
     else {
       message.append("Internal error. Please report to https://");
       boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
-      message.append(studio ? "code.google.com/p/android/issues" : "youtrack.jetbrains.com");
+      message.append(studio ? "code.google.com/p/android/issues" : "intellij-support.jetbrains.com/hc/en-us/requests/new");
       message.append("\n\n");
     }
 
