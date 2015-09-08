@@ -185,6 +185,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testSubstitutionForWildcards() throws Exception {
+    doTest();
+  }
+
   public void testParamNameConflictsWithLocalVar() throws Exception {
     doTest();
   }
