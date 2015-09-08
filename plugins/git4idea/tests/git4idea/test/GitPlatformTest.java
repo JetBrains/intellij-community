@@ -30,6 +30,7 @@ import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.vcs.AbstractVcsTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThrowableRunnable;
 import git4idea.DialogManager;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
@@ -69,7 +70,13 @@ public abstract class GitPlatformTest extends PlatformTestCase {
     myTestRoot = new File(FileUtil.getTempDirectory());
     myFilesToDelete.add(myTestRoot);
 
-    super.setUp();
+    edt(new ThrowableRunnable() {
+      @Override
+      public void run() throws Exception {
+        GitPlatformTest.super.setUp();
+      }
+    });
+
     enableDebugLogging();
 
     myProjectRoot = myProject.getBaseDir();
@@ -104,6 +111,11 @@ public abstract class GitPlatformTest extends PlatformTestCase {
   }
 
   @Override
+  protected boolean isRunInEdt() {
+    return false;
+  }
+
+  @Override
   @NotNull
   public String getTestName(boolean lowercaseFirstLetter) {
     String name = super.getTestName(lowercaseFirstLetter);
@@ -126,7 +138,12 @@ public abstract class GitPlatformTest extends PlatformTestCase {
     }
     finally {
       try {
-        super.tearDown();
+        edt(new ThrowableRunnable() {
+          @Override
+          public void run() throws Exception {
+            GitPlatformTest.super.tearDown();
+          }
+        });
       }
       finally {
         if (myAssertionsInTestDetected) {
