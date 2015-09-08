@@ -63,6 +63,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   private JCheckBox myGenerateAccessorsCb;
   private final JavaVisibilityPanel myVisibilityPanel;
   private final JCheckBox extractAsEnum;
+  private final JCheckBox createInner;
   private final List<MemberInfo> enumConstants = new ArrayList<MemberInfo>();
 
   ExtractClassDialog(PsiClass sourceClass, PsiMember selectedMember) {
@@ -129,6 +130,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     if (!hasConstants) {
       extractAsEnum.setVisible(false);
     }
+    createInner = new JCheckBox("Create nested class");
     super.init();
     validateButtons();
   }
@@ -152,9 +154,8 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
                                                                         false),
                                                                       newClassName, myVisibilityPanel.getVisibility(),
                                                                       isGenerateAccessors(),
-                                                                      isExtractAsEnum()
-                                                                      ? enumConstants
-                                                                      : Collections.<MemberInfo>emptyList());
+                                                                      isExtractAsEnum() ? enumConstants : Collections.<MemberInfo>emptyList());
+    processor.setExtractInnerClass(createInner.isSelected());
     if (processor.getCreatedClass() == null) {
       Messages.showErrorDialog(myVisibilityPanel, "Unable to create class with the given name");
       classNameField.requestFocusInWindow();
@@ -243,12 +244,15 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   }
 
   protected JComponent createNorthPanel() {
+    final JPanel checkboxPanel = new JPanel(new BorderLayout());
+    checkboxPanel.add(createInner, BorderLayout.WEST);
+    checkboxPanel.add(extractAsEnum, BorderLayout.EAST);
     FormBuilder builder = FormBuilder.createFormBuilder()
       .addComponent(
         JBLabelDecorator.createJBLabelDecorator(RefactorJBundle.message("extract.class.from.label", sourceClass.getQualifiedName()))
           .setBold(true))
       .addLabeledComponent(RefactorJBundle.message("name.for.new.class.label"), classNameField, UIUtil.LARGE_VGAP)
-      .addLabeledComponent(new JLabel(), extractAsEnum)
+      .addLabeledComponent(new JLabel(), checkboxPanel)
       .addLabeledComponent(RefactorJBundle.message("package.for.new.class.label"), packageTextField);
 
     if (JavaProjectRootsUtil.getSuitableDestinationSourceRoots(myProject).size() > 1) {
@@ -347,6 +351,14 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
           preselectOneTypeEnumConstants();
         }
         table.repaint();
+      }
+    });
+    createInner.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final boolean isCreateInner = createInner.isSelected();
+        packageTextField.setEnabled(!isCreateInner);
+        myDestinationFolderComboBox.setEnabled(!isCreateInner);
       }
     });
     myGenerateAccessorsCb = new JCheckBox("Generate accessors");
