@@ -21,7 +21,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.vcsUtil.Rethrow;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PeriodicalTasksCloser implements ApplicationComponent {
@@ -85,7 +85,7 @@ public class PeriodicalTasksCloser implements ApplicationComponent {
     synchronized (myLock) {
       // allow NPE & assertion _catch_ only if project is closed and being disposed
       if (project.isOpen()) {
-        Rethrow.reThrowRuntime(t);
+        ExceptionUtil.rethrowAllAsUnchecked(t);
       }
     }
     throw new ProcessCanceledException();
