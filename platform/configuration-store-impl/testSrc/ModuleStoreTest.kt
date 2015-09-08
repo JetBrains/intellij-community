@@ -47,7 +47,7 @@ class ModuleStoreTest {
   private val tempDirManager = TemporaryDirectory()
 
   private val ruleChain = RuleChain(tempDirManager, EdtRule(), ActiveStoreRule(projectRule), DisposeModulesRule(projectRule))
-  public Rule fun getChain(): RuleChain = ruleChain
+  @Rule fun getChain() = ruleChain
 
   @Test fun `set option`() {
     val moduleFile = runWriteAction {
