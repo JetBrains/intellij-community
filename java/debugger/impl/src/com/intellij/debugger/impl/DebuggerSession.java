@@ -111,10 +111,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
     mySteppingThroughThread.set(threadProxy);
   }
 
-  void unsetSteppingThrough(ThreadReferenceProxyImpl threadProxy) {
-    mySteppingThroughThread.compareAndSet(threadProxy, null);
-  }
-
   void clearSteppingThrough() {
     mySteppingThroughThread.set(null);
   }
@@ -346,12 +342,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public void resume() {
     final SuspendContextImpl suspendContext = getSuspendContext();
     if(suspendContext != null) {
-      if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
-        clearSteppingThrough();
-      }
-      else {
-        unsetSteppingThrough(suspendContext.getThread());
-      }
+      clearSteppingThrough();
       resetIgnoreStepFiltersFlag();
       resumeAction(myDebugProcess.createResumeCommand(suspendContext), Event.RESUME);
     }
@@ -519,7 +510,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
         return;
       }
 
-      clearSteppingThrough();
+      setSteppingThrough(suspendContext.getThread());
 
       ThreadReferenceProxyImpl currentThread   = suspendContext.getThread();
       final StackFrameContext positionContext;
@@ -647,7 +638,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
       }
       final SuspendContextImpl currentSuspendContext = getContextManager().getContext().getSuspendContext();
       if (currentSuspendContext == null) {
-        return true;
+        return mySteppingThroughThread.get() == null;
       }
       if (enableBreakpointsDuringEvaluation()) {
         final ThreadReferenceProxyImpl currentThread = currentSuspendContext.getThread();
@@ -658,10 +649,13 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
 
     @Override
-    public void resumed(final SuspendContextImpl suspendContext) {
+    public void resumed(SuspendContextImpl suspendContext) {
       SuspendManager suspendManager = getProcess().getSuspendManager();
       SuspendContextImpl context = suspendManager.getPausedContext();
-      if (context != null && suspendContext != null && isSteppingThrough(suspendContext.getThread())) {
+      // single thread stepping
+      if (suspendContext != null
+          && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD
+          && isSteppingThrough(suspendContext.getThread())) {
         context = suspendManager.pushSuspendContext(suspendContext.getSuspendPolicy(), 0);
         context.setThread(suspendContext.getThread().getThreadReference());
       }
