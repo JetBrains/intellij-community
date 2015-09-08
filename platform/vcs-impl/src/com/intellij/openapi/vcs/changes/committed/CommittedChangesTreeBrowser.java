@@ -290,28 +290,34 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   public static List<Change> zipChanges(@NotNull List<Change> changes) {
     final List<Change> result = new ArrayList<Change>();
     for (Change change : changes) {
-      addOrReplaceChange(result, change);
-    }
-    return result;
-  }
+      final ContentRevision beforeRev = change.getBeforeRevision();
+      // todo!!! further improvements needed
+      if (beforeRev == null) {
+        result.add(change);
+        continue;
+      }
 
-  private static void addOrReplaceChange(final List<Change> result, final Change c) {
-    final ContentRevision beforeRev = c.getBeforeRevision();
-    // todo!!! further improvements needed
-    if (beforeRev != null) {
+      Change oldChange = null;
       final FilePath beforePath = beforeRev.getFile();
-      for (Change oldChange : result) {
-        ContentRevision rev = oldChange.getAfterRevision();
+      for (Change processedChange : result) {
+        ContentRevision rev = processedChange.getAfterRevision();
         if (rev != null && rev.getFile().equals(beforePath)) {
-          result.remove(oldChange);
-          if (oldChange.getBeforeRevision() != null || c.getAfterRevision() != null) {
-            result.add(new Change(oldChange.getBeforeRevision(), c.getAfterRevision()));
-          }
-          return;
+          oldChange = processedChange;
+          break;
         }
       }
+
+      if (oldChange == null) {
+        result.add(change);
+        continue;
+      }
+
+      result.remove(oldChange);
+      if (oldChange.getBeforeRevision() != null || change.getAfterRevision() != null) {
+        result.add(new Change(oldChange.getBeforeRevision(), change.getAfterRevision()));
+      }
     }
-    result.add(c);
+    return result;
   }
 
   private List<CommittedChangeList> getSelectedChangeLists() {
