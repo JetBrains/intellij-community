@@ -1,5 +1,6 @@
 package com.intellij.usages.impl.rules;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.usages.UsageGroup;
 import org.jetbrains.annotations.Nullable;
@@ -10,6 +11,12 @@ import javax.swing.*;
  * @author nik
  */
 public abstract class UsageGroupBase implements UsageGroup {
+  private final int myOrder;
+
+  protected UsageGroupBase(int order) {
+    myOrder = order;
+  }
+
   @Override
   public void update() {
   }
@@ -42,5 +49,13 @@ public abstract class UsageGroupBase implements UsageGroup {
   @Override
   public boolean canNavigateToSource() {
     return false;
+  }
+
+  @Override
+  public int compareTo(UsageGroup o) {
+    if (!(o instanceof UsageGroupBase)) {
+      return -1;
+    }
+    return Comparing.compare(myOrder, ((UsageGroupBase)o).myOrder);
   }
 }
