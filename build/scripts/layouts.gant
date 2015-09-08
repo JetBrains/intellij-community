@@ -273,26 +273,8 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     layoutCommunityPlugins(home, maySkipAndroidPlugin())
 
     dir("plugins") {
-      dir("javaFX") {
-        dir("lib") {
-          jar("javaFX.jar") {
-            noResources("javaFX")
-            noResources("javaFX-CE")
-          }
-          resources(["javaFX", "javaFX-CE"])
-          jar("javaFX-jps-plugin.jar") {
-            module("javaFX-jps-plugin")
-          }
-          jar("common-javaFX-plugin.jar") {
-            module("common-javaFX-plugin")
-          }
-        }
+      layoutPluginByRuntimeModules("javaFX-CE")
 
-        fileset(dir: "${home}/plugins/javaFX/FxBuilderEmbedder/lib", includes: "embedder.jar");
-      }
-    }
-
-    dir("plugins") {
       dir("IntelliLang") {
         dir("lib") {
           jar("IntelliLang.jar") {
@@ -329,6 +311,7 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
     'ant'                   : [jar: 'antIntegration.jar'],
     'cvs-plugin'            : [dir: 'cvsIntegration', jar: 'cvsIntegration.jar'],
     'java-decompiler-plugin': [dir: 'java-decompiler', jar: 'java-decompiler.jar'],
+    'javaFX-CE'             : [dir: 'javaFX', jar: 'javaFX.jar'],
     'jetgroovy'             : [dir: 'Groovy', jar: 'Groovy.jar'],
     'junit'                 : [jar: 'idea-junit.jar'],
     'tasks-core'            : [dir: 'tasks'],

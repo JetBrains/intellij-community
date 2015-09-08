@@ -16,5 +16,10 @@
         </ul>
       ]]>
    </description>
+  <modules>
+    <module scope="embedded">javaFX</module>
+    <module scope="IDE,build">common-javaFX-plugin</module>
+    <module scope="build">javaFX-jps-plugin</module>
+  </modules>
   <xi:include href="/META-INF/common-javaFX-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>
