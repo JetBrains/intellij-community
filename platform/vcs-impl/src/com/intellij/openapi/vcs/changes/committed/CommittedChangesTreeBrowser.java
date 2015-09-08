@@ -45,6 +45,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
+import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.StatusText;
@@ -288,36 +289,65 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
    */
   @NotNull
   public static List<Change> zipChanges(@NotNull List<Change> changes) {
-    final List<Change> result = new ArrayList<Change>();
+    // TODO: further improvements needed
+    // We may want to process collisions more consistent
+
+    // Possible solution: avoid creating duplicate entries for the same FilePath. No changes in the output should have same beforePath or afterPath.
+    // We may take earliest and latest revisions for each file.
+    //
+    // The main problem would be to keep existing movements in non-conflicting cases (where input changes are taken from linear sequence of commits)
+    // case1: "a -> b; b -> c" - file renamed twice in the same revision (as source and as target)
+    // case2: "a -> b" "b -> c" - file renamed twice in consequent commits
+    // case3: "a -> b; b -> a" - files swapped vs "a -> b" "b -> a" - file rename canceled
+    // case4: "delete a" "b -> a" "modify a"
+    // ...
+    // but return "good enough" result for input with conflicting changes
+    // case1: "new a", "new a"
+    // case2: "a -> b", "new b"
+    // ...
+    //
+    // getting "actually good" results is impossible without knowledge of commits topology.
+
+
+    // key - after path (nullable)
+    LinkedMultiMap<FilePath, Change> map = new LinkedMultiMap<FilePath, Change>();
+
     for (Change change : changes) {
-      final ContentRevision beforeRev = change.getBeforeRevision();
-      // todo!!! further improvements needed
-      if (beforeRev == null) {
-        result.add(change);
+      ContentRevision bRev = change.getBeforeRevision();
+      ContentRevision aRev = change.getAfterRevision();
+      FilePath bPath = bRev != null ? bRev.getFile() : null;
+      FilePath aPath = aRev != null ? aRev.getFile() : null;
+
+      if (bRev == null) {
+        map.putValue(aPath, change);
         continue;
       }
 
-      Change oldChange = null;
-      final FilePath beforePath = beforeRev.getFile();
-      for (Change processedChange : result) {
-        ContentRevision rev = processedChange.getAfterRevision();
-        if (rev != null && rev.getFile().equals(beforePath)) {
-          oldChange = processedChange;
-          break;
-        }
-      }
-
-      if (oldChange == null) {
-        result.add(change);
+      Collection<Change> bucket = map.get(bPath);
+      if (bucket.isEmpty()) {
+        map.putValue(aPath, change);
         continue;
       }
 
-      result.remove(oldChange);
-      if (oldChange.getBeforeRevision() != null || change.getAfterRevision() != null) {
-        result.add(new Change(oldChange.getBeforeRevision(), change.getAfterRevision()));
+      Change oldChange = bucket.iterator().next();
+      bucket.remove(oldChange);
+
+      ContentRevision oldRevision = oldChange.getBeforeRevision();
+      if (oldRevision != null || aRev != null) {
+        map.putValue(aPath, new Change(oldRevision, aRev));
       }
     }
-    return result;
+
+    // put deletions into appropriate place in list
+    Collection<Change> deleted = map.remove(null);
+    if (deleted != null) {
+      for (Change change : deleted) {
+        //noinspection ConstantConditions
+        map.putValue(change.getBeforeRevision().getFile(), change);
+      }
+    }
+
+    return new ArrayList<Change>(map.values());
   }
 
   private List<CommittedChangeList> getSelectedChangeLists() {
