@@ -152,13 +152,7 @@ public class JavaCompletionUtil {
       }
     }
 
-    CodeInsightSettings cis = CodeInsightSettings.getInstance();
-    for (String excluded : cis.EXCLUDED_PACKAGES) {
-      if (name.equals(excluded) || name.startsWith(excluded + ".")) {
-        return true;
-      }
-    }
-    return false;
+    return ProjectCodeInsightSettings.getSettings(member.getProject()).isExcluded(name);
   }
 
   @SuppressWarnings({"unchecked"})

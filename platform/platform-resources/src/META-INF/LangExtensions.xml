@@ -640,8 +640,12 @@
     <editorOptionsProvider instance="com.intellij.application.options.CodeCompletionOptions" id="editor.preferences.completion"
                            key="title.code.completion" bundle="messages.ApplicationBundle"/>
     <search.topHitProvider implementation="com.intellij.application.options.editor.AutoImportOptionsTopHitProvider"/>
-    <editorOptionsProvider instance="com.intellij.application.options.editor.AutoImportOptionsConfigurable" id="editor.preferences.import"
-                           key="auto.import" bundle="messages.ApplicationBundle"/>
+    <projectConfigurable instance="com.intellij.application.options.editor.AutoImportOptionsConfigurable"
+                         id="editor.preferences.import"
+                         parentId="preferences.editor"
+                         key="auto.import" bundle="messages.ApplicationBundle"
+                         groupId="editor"
+                         groupWeight="1"/>
 
     <editorTabColorProvider implementation="com.intellij.ui.tabs.EditorTabColorProviderImpl"/>
 
