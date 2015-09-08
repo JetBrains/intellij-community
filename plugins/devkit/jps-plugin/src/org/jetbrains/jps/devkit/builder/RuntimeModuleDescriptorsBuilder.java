@@ -22,6 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.devkit.model.JpsRuntimeResourceRoot;
+import org.jetbrains.jps.devkit.model.JpsRuntimeResourceRootsCollection;
+import org.jetbrains.jps.devkit.model.JpsRuntimeResourcesService;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.TargetBuilder;
@@ -60,6 +63,12 @@ public class RuntimeModuleDescriptorsBuilder extends TargetBuilder<BuildRootDesc
     for (JpsModule module : project.getModules()) {
       Collection<String> urls = JpsJavaExtensionService.dependencies(module).withoutSdk().withoutModuleSourceEntries().runtimeOnly().classes().getUrls();
       hash = 31 * hash + urls.hashCode();
+      JpsRuntimeResourceRootsCollection resourceRootsCollection = JpsRuntimeResourcesService.getInstance().getRoots(module);
+      if (resourceRootsCollection != null) {
+        for (JpsRuntimeResourceRoot root : resourceRootsCollection.getRoots()) {
+          hash = 31 * hash + root.getName().hashCode() * 29 + root.getUrl().hashCode();
+        }
+      }
     }
     hash = hash * 1000 + RepositoryConstants.VERSION_NUMBER;
     if (Comparing.equal(hash, storage.getState())) {
