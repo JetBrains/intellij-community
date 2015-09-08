@@ -100,7 +100,7 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
     }
     catch (Throwable t) {
       ExternalSystemApiUtil.disposeModels(models);
-      ExceptionUtil.rethrowUnchecked(t);
+      ExceptionUtil.rethrowAllAsUnchecked(t);
     }
     return models;
   }
@@ -169,7 +169,7 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
     }
     catch (Throwable t) {
       ExternalSystemApiUtil.disposeModels(models);
-      ExceptionUtil.rethrowUnchecked(t);
+      ExceptionUtil.rethrowAllAsUnchecked(t);
     }
     return models;
   }

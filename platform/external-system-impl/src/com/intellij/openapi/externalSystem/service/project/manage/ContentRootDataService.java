@@ -103,7 +103,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
     }
     catch (Throwable t) {
       ExternalSystemApiUtil.disposeModels(models);
-      ExceptionUtil.rethrowUnchecked(t);
+      ExceptionUtil.rethrowAllAsUnchecked(t);
     }
   }
 

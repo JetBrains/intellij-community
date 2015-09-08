@@ -81,7 +81,7 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
     }
     catch (Throwable t) {
       ExternalSystemApiUtil.disposeModels(models);
-      ExceptionUtil.rethrowUnchecked(t);
+      ExceptionUtil.rethrowAllAsUnchecked(t);
     }
   }
 

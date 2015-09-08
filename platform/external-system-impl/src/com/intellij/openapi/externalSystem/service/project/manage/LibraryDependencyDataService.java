@@ -101,7 +101,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
     }
     catch (Throwable t) {
       ExternalSystemApiUtil.disposeModels(importer.getModels());
-      ExceptionUtil.rethrowUnchecked(t);
+      ExceptionUtil.rethrowAllAsUnchecked(t);
     }
   }
 

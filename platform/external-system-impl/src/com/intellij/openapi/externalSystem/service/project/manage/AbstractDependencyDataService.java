@@ -154,7 +154,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
     }
     catch (Throwable t) {
       ExternalSystemApiUtil.disposeModels(models);
-      ExceptionUtil.rethrowUnchecked(t);
+      ExceptionUtil.rethrowAllAsUnchecked(t);
     }
   }
 
