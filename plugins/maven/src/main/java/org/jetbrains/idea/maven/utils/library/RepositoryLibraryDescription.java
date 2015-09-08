@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public abstract class RepositoryLibraryDescription {
+public class RepositoryLibraryDescription {
   protected static final ExtensionPointName<RepositoryLibraryDescription> EP_NAME
     = ExtensionPointName.create("org.jetbrains.idea.maven.repositoryLibrary");
   protected static final MavenRepositoryInfo mavenCentralRepository = new MavenRepositoryInfo(
@@ -42,6 +42,15 @@ public abstract class RepositoryLibraryDescription {
   private static final List<MavenRepositoryInfo> defaultRemoteRepositories =
     Arrays.asList(mavenCentralRepository, jbossCommunityRepository);
   private static Map<String, RepositoryLibraryDescription> registeredLibraries;
+  private final String groupId;
+  private final String artifactId;
+  private final String libraryName;
+
+  protected RepositoryLibraryDescription(String groupId, String artifactId, String libraryName) {
+    this.groupId = groupId;
+    this.artifactId = artifactId;
+    this.libraryName = libraryName;
+  }
 
   public static <C extends RepositoryLibraryDescription> C ofClass(Class<C> clazz) {
     return EP_NAME.findExtension(clazz);
@@ -64,33 +73,8 @@ public abstract class RepositoryLibraryDescription {
     if (description != null) {
       return description;
     }
-    return new RepositoryLibraryDescription() {
-      @NotNull
-      @Override
-      public String getGroupId() {
-        return groupId;
-      }
-
-      @NotNull
-      @Override
-      public String getArtifactId() {
-        return artifactId;
-      }
-
-      @NotNull
-      @Override
-      public String getDisplayName() {
-        return id;
-      }
-
-      @NotNull
-      @Override
-      public Icon getIcon() {
-        return MavenIcons.MavenLogo;
-      }
-    };
+    return new RepositoryLibraryDescription(groupId, artifactId, id);
   }
-
 
   @NotNull
   public static synchronized RepositoryLibraryDescription findDescription(@NotNull final RepositoryLibraryProperties properties) {
@@ -98,16 +82,24 @@ public abstract class RepositoryLibraryDescription {
   }
 
   @NotNull
-  public abstract String getGroupId();
+  public String getGroupId() {
+    return groupId;
+  }
 
   @NotNull
-  public abstract String getArtifactId();
+  public String getArtifactId() {
+    return artifactId;
+  }
 
   @NotNull
-  public abstract String getDisplayName();
+  public String getDisplayName() {
+    return libraryName;
+  }
 
   @NotNull
-  public abstract Icon getIcon();
+  public Icon getIcon() {
+    return MavenIcons.MavenLogo;
+  }
 
   @Nullable
   public DependencyScope getSuggestedScope() {
@@ -126,7 +118,7 @@ public abstract class RepositoryLibraryDescription {
   }
 
   public RepositoryLibraryProperties createDefaultProperties() {
-    return new RepositoryLibraryProperties(getGroupId(), getArtifactId(), RepositoryUtils.LatestVersionId);
+    return new RepositoryLibraryProperties(getGroupId(), getArtifactId(), RepositoryUtils.ReleaseVersionId);
   }
 
   public String getDisplayName(String version) {
