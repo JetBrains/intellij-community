@@ -225,8 +225,8 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
     @Override
     public void commit() {
-      myWritable = false;
       LibraryTableBase.this.commit(this);
+      myWritable = false;
     }
 
     @Override
