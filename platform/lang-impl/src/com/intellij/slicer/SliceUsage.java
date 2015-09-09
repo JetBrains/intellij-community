@@ -34,19 +34,13 @@ import org.jetbrains.annotations.NotNull;
 public abstract class SliceUsage extends UsageInfo2UsageAdapter {
   private final SliceUsage myParent;
   public final SliceAnalysisParams params;
-  protected final int indexNesting; // 0 means bare expression 'x', 1 means x[?], 2 means x[?][?] etc
-  @NotNull protected final String syntheticField; // "" means no field, otherwise it's a name of fake field of container, e.g. "keys" for Map
 
   public SliceUsage(@NotNull PsiElement element,
-                    @NotNull SliceUsage parent,
-                    int indexNesting,
-                    @NotNull String syntheticField) {
+                    @NotNull SliceUsage parent) {
     super(new UsageInfo(element));
     myParent = parent;
-    this.syntheticField = syntheticField;
     params = parent.params;
     assert params != null;
-    this.indexNesting = indexNesting;
   }
 
   // root usage
@@ -54,8 +48,6 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
     super(new UsageInfo(element));
     myParent = null;
     this.params = params;
-    indexNesting = 0;
-    syntheticField = "";
   }
 
   public void processChildren(@NotNull Processor<SliceUsage> processor) {

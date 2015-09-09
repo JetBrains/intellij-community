@@ -22,20 +22,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class JavaSliceUsage extends SliceUsage {
   private final PsiSubstitutor mySubstitutor;
+  protected final int indexNesting; // 0 means bare expression 'x', 1 means x[?], 2 means x[?][?] etc
+  @NotNull protected final String syntheticField; // "" means no field, otherwise it's a name of fake field of container, e.g. "keys" for Map
+
 
   public JavaSliceUsage(@NotNull PsiElement element,
                     @NotNull SliceUsage parent,
                     @NotNull PsiSubstitutor substitutor,
                     int indexNesting,
                     @NotNull String syntheticField) {
-    super(element, parent, indexNesting, syntheticField);
+    super(element, parent);
     mySubstitutor = substitutor;
+    this.syntheticField = syntheticField;
+    this.indexNesting = indexNesting;
   }
 
   // root usage
   private JavaSliceUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
     super(element, params);
     mySubstitutor = PsiSubstitutor.EMPTY;
+    indexNesting = 0;
+    syntheticField = "";
   }
 
   @NotNull

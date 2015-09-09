@@ -52,7 +52,7 @@ import java.util.Set;
 class SliceUtil {
   static boolean processUsagesFlownDownTo(@NotNull PsiElement expression,
                                           @NotNull Processor<SliceUsage> processor,
-                                          @NotNull SliceUsage parent,
+                                          @NotNull JavaSliceUsage parent,
                                           @NotNull PsiSubstitutor parentSubstitutor,
                                           int indexNesting,
                                           @NotNull String syntheticField) {
@@ -235,7 +235,7 @@ class SliceUtil {
 
   private static boolean processMethodReturnValue(@NotNull final PsiMethodCallExpression methodCallExpr,
                                                   @NotNull final Processor<SliceUsage> processor,
-                                                  @NotNull final SliceUsage parent,
+                                                  @NotNull final JavaSliceUsage parent,
                                                   @NotNull final PsiSubstitutor parentSubstitutor) {
     final JavaResolveResult resolved = methodCallExpr.resolveMethodGenerics();
     PsiElement r = resolved.getElement();
@@ -293,7 +293,7 @@ class SliceUtil {
   }
 
   private static boolean processFieldUsages(@NotNull final PsiField field,
-                                            @NotNull final SliceUsage parent,
+                                            @NotNull final JavaSliceUsage parent,
                                             @NotNull final PsiSubstitutor parentSubstitutor,
                                             @NotNull final Processor<SliceUsage> processor) {
     if (field.hasInitializer()) {

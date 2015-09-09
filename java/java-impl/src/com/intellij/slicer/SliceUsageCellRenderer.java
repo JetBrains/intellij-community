@@ -38,6 +38,7 @@ public class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
   @Override
   public void customizeCellRendererFor(@NotNull SliceUsage sliceUsage) {
     boolean isForcedLeaf = sliceUsage instanceof JavaSliceDereferenceUsage;
+    JavaSliceUsage javaSliceUsage = ((JavaSliceUsage)sliceUsage);
 
     TextChunk[] text = sliceUsage.getText();
     final List<TextRange> usageRanges = new SmartList<TextRange>();
@@ -48,7 +49,7 @@ public class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
         return true;
       }
     });
-    boolean isInsideContainer = sliceUsage.indexNesting != 0;
+    boolean isInsideContainer = javaSliceUsage.indexNesting != 0;
     for (TextChunk textChunk : text) {
       SimpleTextAttributes attributes = textChunk.getSimpleAttributesIgnoreBackground();
       if (isForcedLeaf) {
@@ -64,8 +65,8 @@ public class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
       append(textChunk.getText(), attributes);
     }
 
-    for (int i=0; i<sliceUsage.indexNesting;i++) {
-      append(" (Tracking container contents"+(sliceUsage.syntheticField.isEmpty() ? "" : " '"+sliceUsage.syntheticField+"'")+")",SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    for (int i=0; i<javaSliceUsage.indexNesting;i++) {
+      append(" (Tracking container contents"+(javaSliceUsage.syntheticField.isEmpty() ? "" : " '"+javaSliceUsage.syntheticField+"'")+")",SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
 
     PsiElement element = sliceUsage.getElement();
