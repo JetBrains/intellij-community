@@ -66,11 +66,13 @@ public class StudyGenerator {
     if (filesInTask != null) {
       for (File file : filesInTask) {
         String fileName = file.getName();
-        if (!task.isTaskFile(fileName) && !StudyUtils.isTestsFile(project, fileName) && !EduNames.TASK_HTML.equals(fileName)) {
+        if (!task.isTaskFile(fileName)) {
           File resourceFile = new File(newResourceRoot, fileName);
           File fileInProject = new File(taskDir.getCanonicalPath(), fileName);
           FileUtil.copy(resourceFile, fileInProject);
-          StudyTaskManager.getInstance(project).addInvisibleFiles(FileUtil.toSystemIndependentName(fileInProject.getPath()));
+          if (!StudyUtils.isTestsFile(project, fileName) && !EduNames.TASK_HTML.equals(fileName)) {
+            StudyTaskManager.getInstance(project).addInvisibleFiles(FileUtil.toSystemIndependentName(fileInProject.getPath()));
+          }
         }
       }
     }
