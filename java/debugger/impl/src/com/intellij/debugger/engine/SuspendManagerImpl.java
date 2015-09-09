@@ -22,6 +22,7 @@ import com.sun.jdi.InternalException;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -57,7 +58,7 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   @Override
-  public SuspendContextImpl pushSuspendContext(final int suspendPolicy, int nVotes) {
+  public SuspendContextImpl pushSuspendContext(@MagicConstant(flagsFromClass = EventRequest.class) final int suspendPolicy, int nVotes) {
     SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, suspendPolicy, nVotes, null) {
       @Override
       protected void resumeImpl() {
@@ -114,7 +115,7 @@ public class SuspendManagerImpl implements SuspendManager {
     return suspendContext;
   }
 
-  public SuspendContextImpl createDummyContext(int suspendPolicy) {
+  public SuspendContextImpl createDummyContext(@MagicConstant(flagsFromClass = EventRequest.class) int suspendPolicy) {
     return new SuspendContextImpl(myDebugProcess, suspendPolicy, 0, null) {
       @Override
       protected void resumeImpl() {}

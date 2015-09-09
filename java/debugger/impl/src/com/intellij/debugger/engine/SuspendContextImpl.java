@@ -32,6 +32,7 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +64,10 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   private JavaExecutionStack myActiveExecutionStack;
 
-  SuspendContextImpl(@NotNull DebugProcessImpl debugProcess, int suspendPolicy, int eventVotes, EventSet set) {
+  SuspendContextImpl(@NotNull DebugProcessImpl debugProcess,
+                     @MagicConstant(flagsFromClass = EventRequest.class) int suspendPolicy,
+                     int eventVotes,
+                     EventSet set) {
     myDebugProcess = debugProcess;
     mySuspendPolicy = suspendPolicy;
     myVotesToVote = eventVotes;
@@ -144,6 +148,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     return myThread;
   }
 
+  @MagicConstant(flagsFromClass = EventRequest.class)
   @Override
   public int getSuspendPolicy() {
     return mySuspendPolicy;
