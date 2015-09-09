@@ -664,7 +664,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return AbstractPopup.getCenterOf(container, content);
   }
 
-  public static class ActionItem {
+  public static class ActionItem implements ShortcutProvider {
     private final AnAction myAction;
     private final String myText;
     private final boolean myIsEnabled;
@@ -715,6 +715,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     public String getDescription() {
       return myDescription;
+    }
+
+    @Nullable
+    @Override
+    public ShortcutSet getShortcut() {
+      return myAction.getShortcutSet();
     }
   }
 
