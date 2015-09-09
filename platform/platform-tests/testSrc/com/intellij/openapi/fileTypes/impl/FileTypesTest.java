@@ -544,18 +544,19 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   public void testDefaultFileType() throws Exception {
+    String extension = "veryRareExtension";
     FileType idl = myFileTypeManager.findFileTypeByName("IDL");
-    myFileTypeManager.associatePattern(idl, "*.xxx");
+    myFileTypeManager.associatePattern(idl, "*." + extension);
     Element element = myFileTypeManager.getState();
     log(JDOMUtil.writeElement(element));
-    myFileTypeManager.removeAssociatedExtension(idl, "xxx");
+    myFileTypeManager.removeAssociatedExtension(idl, extension);
     myFileTypeManager.clearForTests();
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.loadState(element);
     myFileTypeManager.initComponent();
-    FileType extensions = myFileTypeManager.getFileTypeByExtension("xxx");
+    FileType extensions = myFileTypeManager.getFileTypeByExtension(extension);
     assertEquals("IDL", extensions.getName());
-    myFileTypeManager.removeAssociatedExtension(idl, "xxx");
+    myFileTypeManager.removeAssociatedExtension(idl, extension);
     myFileTypeManager.clearForTests();
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.initComponent();
