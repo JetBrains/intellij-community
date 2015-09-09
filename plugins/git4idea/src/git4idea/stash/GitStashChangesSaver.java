@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -40,22 +41,28 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Set;
 
 public class GitStashChangesSaver extends GitChangesSaver {
 
   private static final Logger LOG = Logger.getInstance(GitStashChangesSaver.class);
-  private final Set<VirtualFile> myStashedRoots = new HashSet<VirtualFile>(); // save stashed roots to unstash only them
-  @NotNull private final GitRepositoryManager myRepositoryManager;
 
-  public GitStashChangesSaver(@NotNull Project project, @NotNull GitPlatformFacade platformFacade, @NotNull Git git,
-                              @NotNull ProgressIndicator progressIndicator, @NotNull String stashMessage) {
+  @NotNull private final GitRepositoryManager myRepositoryManager;
+  @NotNull private final Set<VirtualFile> myStashedRoots = ContainerUtil.newHashSet(); // save stashed roots to unstash only them
+
+  public GitStashChangesSaver(@NotNull Project project,
+                              @NotNull GitPlatformFacade platformFacade,
+                              @NotNull Git git,
+                              @NotNull ProgressIndicator progressIndicator,
+                              @NotNull String stashMessage) {
     super(project, platformFacade, git, progressIndicator, stashMessage);
     myRepositoryManager = platformFacade.getRepositoryManager(project);
   }
 
   @Override
-  protected void save(Collection<VirtualFile> rootsToSave) throws VcsException {
+  protected void save(@NotNull Collection<VirtualFile> rootsToSave) throws VcsException {
     LOG.info("saving " + rootsToSave);
 
     for (VirtualFile root : rootsToSave) {

@@ -15,7 +15,6 @@
  */
 package git4idea.stash;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,12 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
-/**
- * The class contains utilities for creating and removing stashes.
- */
 public class GitStashUtils {
-
-  private static final Logger LOG = Logger.getInstance(GitStashUtils.class);
 
   private GitStashUtils() {
   }
