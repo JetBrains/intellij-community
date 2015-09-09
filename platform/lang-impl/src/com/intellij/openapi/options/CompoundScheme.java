@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.options;
 
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
+import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Constructor;
@@ -24,48 +26,55 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class CompoundScheme<T extends SchemeElement> extends ExternalizableSchemeAdapter {
-  protected final List<T> myElements = new SmartList<T>();
+public class CompoundScheme<E extends SchemeElement> extends ExternalizableSchemeAdapter {
+  protected final ArrayList<E> myElements = new ArrayList<E>();
 
   public CompoundScheme(final String name) {
     myName = name;
   }
 
-  public void addElement(T t) {
+  public final void addElement(E t) {
     if (!contains(t)) {
       myElements.add(t);
     }
   }
 
   @NotNull
-  public List<T> getElements() {
-    return Collections.unmodifiableList(new ArrayList<T>(myElements));
+  public final List<E> getElements() {
+    return Collections.unmodifiableList(new ArrayList<E>(myElements));
   }
 
   @Override
-  public void setName(@NotNull final String name) {
+  public final void setName(@NotNull final String name) {
     myName = name;
-    for (T template : myElements) {
+    for (E template : myElements) {
       template.setGroupName(name);
     }
   }
 
-  public void removeElement(final T template) {
-    for (Iterator<T> templateIterator = myElements.iterator(); templateIterator.hasNext();) {
-      T t = templateIterator.next();
+  public final void removeElement(final E template) {
+    for (Iterator<E> templateIterator = myElements.iterator(); templateIterator.hasNext();) {
+      E t = templateIterator.next();
       if (t.getKey() != null && t.getKey().equals(template.getKey())) {
         templateIterator.remove();
       }
     }
   }
 
-  public boolean isEmpty() {
+  public final boolean isEmpty() {
     return myElements.isEmpty();
   }
 
-  private CompoundScheme createNewInstance(final String name) {
+  @NotNull
+  private CompoundScheme<E> createNewInstance(String name) {
     try {
-      Constructor<? extends CompoundScheme> constructor = getClass().getConstructor(String.class);
+      Constructor<? extends CompoundScheme> constructor =  getClass().getConstructor(String.class);
+      try {
+        constructor.setAccessible(true);
+      }
+      catch (Exception ignored) {
+      }
+      //noinspection unchecked
       return constructor.newInstance(name);
     }
     catch (Exception e) {
@@ -74,22 +83,70 @@ public class CompoundScheme<T extends SchemeElement> extends ExternalizableSchem
   }
 
   @NotNull
-  public CompoundScheme<T> copy() {
-    //noinspection unchecked
-    CompoundScheme<T> result = createNewInstance(getName());
-    for (T element : myElements) {
-      //noinspection unchecked
-      result.addElement((T)element.copy());
-    }
+  CompoundScheme<E> copy() {
+    CompoundScheme<E> result = createNewInstance(getName());
+    result.resetFrom(this);
     return result;
   }
 
-  public boolean contains(@NotNull T element) {
-    for (T t : myElements) {
-      if (t.getKey() != null && t.getKey().equals(element.getKey())) {
+   void resetFrom(@NotNull CompoundScheme<E> template) {
+    myElements.clear();
+    myElements.ensureCapacity(template.myElements.size());
+    for (E element : template.myElements) {
+      //noinspection unchecked
+      myElements.add((E)element.copy());
+    }
+  }
+
+  public boolean contains(@NotNull E element) {
+    for (E t : myElements) {
+      String key = t.getKey();
+      if (key != null && key.equals(element.getKey())) {
         return true;
       }
     }
     return false;
+  }
+
+  public static final class MutatorHelper<T extends CompoundScheme<E>, E extends SchemeElement> {
+    private final THashMap<T, T> copiedToOriginal = new THashMap<T, T>(ContainerUtil.<T>identityStrategy());
+
+    @NotNull
+    public T copy(@NotNull T scheme) {
+      //noinspection unchecked
+      T copied = (T)scheme.copy();
+      copiedToOriginal.put(copied, scheme);
+      return copied;
+    }
+
+    @NotNull
+    public List<T> apply(@NotNull final List<T> copiedSchemes) {
+      copiedToOriginal.retainEntries(new TObjectObjectProcedure<T, T>() {
+        @Override
+        public boolean execute(T copied, T original) {
+          return ContainerUtil.containsIdentity(copiedSchemes, copied);
+        }
+      });
+
+      List<T> originals = new ArrayList<T>(copiedSchemes.size());
+      for (T copied : copiedSchemes) {
+        T original = copiedToOriginal.remove(copied);
+        if (original == null) {
+          //noinspection unchecked
+          original = (T)copied.copy();
+          copiedToOriginal.put(copied, original);
+        }
+        else {
+          original.resetFrom(copied);
+        }
+
+        originals.add(original);
+      }
+      return originals;
+    }
+
+    public void clear() {
+      copiedToOriginal.clear();
+    }
   }
 }
