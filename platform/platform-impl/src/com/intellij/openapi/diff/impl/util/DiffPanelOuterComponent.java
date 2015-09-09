@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,11 +76,6 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
       myToolbar.resetToolbar(myDefaultActions);
     }
     return myToolbar.getToolbar();
-  }
-
-  public void resetDiffComponent(JComponent component, ScrollingPanel scrollingPanel) {
-    myWrapper.removeAll();
-    insertDiffComponent(component, scrollingPanel);
   }
 
   public void insertDiffComponent(JComponent component, ScrollingPanel scrollingPanel) {
@@ -201,12 +196,6 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
 
   public void removeTopComponent(final JComponent jComponent) {
     myWrapper.remove(jComponent);
-  }
-
-  public void addStatusBar() {
-    if (myStatusBar != null) {
-      myStatusBar.setVisible(true);
-    }
   }
 
   private interface DeferScrollToFirstDiff {
