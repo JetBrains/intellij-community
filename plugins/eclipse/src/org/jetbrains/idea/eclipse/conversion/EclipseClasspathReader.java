@@ -153,13 +153,20 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
                                   boolean exported,
                                   String libName,
                                   String url,
-                                  String srcUrl, ExpandMacroToPathMap macroMap) {
+                                  String srcUrl, 
+                                  String nativeRoot, 
+                                  ExpandMacroToPathMap macroMap) {
     final Library library = rootModel.getModuleLibraryTable().getModifiableModel().createLibrary(libName);
     final Library.ModifiableModel modifiableModel = library.getModifiableModel();
     modifiableModel.addRoot(url, OrderRootType.CLASSES);
     if (srcUrl != null) {
       modifiableModel.addRoot(srcUrl, OrderRootType.SOURCES);
     }
+    
+    if (nativeRoot != null) {
+      modifiableModel.addRoot(nativeRoot, NativeLibraryOrderRootType.getInstance());
+    }
+    
     EJavadocUtil.appendJavadocRoots(element, rootModel, myCurrentRoots, modifiableModel);
     modifiableModel.commit();
 

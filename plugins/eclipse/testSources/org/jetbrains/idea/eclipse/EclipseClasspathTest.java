@@ -150,6 +150,10 @@ public class EclipseClasspathTest extends IdeaTestCase {
     doTest();
   }
 
+  public void testNativeLibs() throws Exception {
+    doTest();
+  }
+
   public void testAccessrulez() throws Exception {
     doTest();
   }

@@ -192,11 +192,37 @@ public class ExtractClassTest extends MultiFileTestCase{
     });
   }
 
-  private static void doTest(final PsiClass aClass, final ArrayList<PsiMethod> methods, final ArrayList<PsiField> fields, final String conflicts,
+  public void testInnerClass() throws Exception {
+    doTest((rootDir, rootAfter) -> {
+      PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
+
+      assertNotNull("Class Test not found", aClass);
+
+      final ArrayList<PsiField> fields = new ArrayList<>();
+      fields.add(aClass.findFieldByName("myT", false));
+
+      doTest(aClass, new ArrayList<>(), fields, null, true, true);
+    });
+  }
+
+  private static void doTest(final PsiClass aClass,
+                             final ArrayList<PsiMethod> methods,
+                             final ArrayList<PsiField> fields,
+                             final String conflicts,
                              boolean generateGettersSetters) {
+    doTest(aClass, methods, fields, conflicts, generateGettersSetters, false);
+  }
+
+  private static void doTest(final PsiClass aClass,
+                             final ArrayList<PsiMethod> methods,
+                             final ArrayList<PsiField> fields,
+                             final String conflicts,
+                             boolean generateGettersSetters,
+                             boolean inner) {
     try {
       ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<>(), StringUtil.getPackageName(aClass.getQualifiedName()), null,
                                                                   "Extracted", null, generateGettersSetters, Collections.<MemberInfo>emptyList());
+      processor.setExtractInnerClass(inner);
       processor.run();
       LocalFileSystem.getInstance().refresh(false);
       FileDocumentManager.getInstance().saveAllDocuments();
