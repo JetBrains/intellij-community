@@ -253,7 +253,7 @@ public class ExecUtil {
     return sudoCommandLine
       .withWorkDirectory(commandLine.getWorkDirectory())
       .withEnvironment(commandLine.getEnvironment())
-      .withPassParentEnvironment(commandLine.isPassParentEnvironment())
+      .withParentEnvironmentType(commandLine.getParentEnvironmentType())
       .withRedirectErrorStream(commandLine.isRedirectErrorStream());
   }
 
