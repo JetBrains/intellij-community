@@ -522,7 +522,8 @@
 
     <postStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdater"/>
     <postStartupActivity implementation="com.jetbrains.python.packaging.PyPIPackagesUpdater"/>
-    <postStartupActivity implementation="com.jetbrains.python.testing.PyTestRunnerUpdater"/>
+    <directoryProjectConfigurator implementation="com.jetbrains.python.testing.PyIntegratedToolsProjectConfigurator" id="integratedTools" order="after sdk"/>
+
 
     <macro implementation="com.jetbrains.python.sdk.InterpreterDirectoryMacro"/>
 
@@ -787,6 +788,10 @@
             use-shortcut-of="ForceStepInto">
       <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
+    </action>
+
+    <action class="com.jetbrains.python.codeInsight.PyProbeAction" id="PyProbeAction" text="Python Probe Action" internal="true">
+      <add-to-group group-id="Internal"/>
     </action>
 
   </actions>

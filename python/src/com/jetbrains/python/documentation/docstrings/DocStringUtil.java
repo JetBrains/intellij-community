@@ -164,11 +164,13 @@ public class DocStringUtil {
   }
 
   public static boolean isLikeSphinxDocString(@NotNull String text) {
-    return text.contains(":param ") || text.contains(":rtype") || text.contains(":type");
+    return text.contains(":param ") || 
+           text.contains(":return:") || text.contains(":returns:") || 
+           text.contains(":rtype") || text.contains(":type");
   }
 
   public static boolean isLikeEpydocDocString(@NotNull String text) {
-    return text.contains("@param ") || text.contains("@rtype") || text.contains("@type");
+    return text.contains("@param ") || text.contains("@return:") || text.contains("@rtype") || text.contains("@type");
   }
 
   public static boolean isLikeGoogleDocString(@NotNull String text) {

@@ -44,27 +44,17 @@ import java.util.List;
   storages = @Storage(file = StoragePathMacros.MODULE_FILE)
 )
 public class PyDocumentationSettings implements PersistentStateComponent<PyDocumentationSettings> {
+  public static final DocStringFormat DEFAULT_DOCSTRING_FORMAT = DocStringFormat.REST;
+
   public static PyDocumentationSettings getInstance(@NotNull Module module) {
     return ModuleServiceManager.getService(module, PyDocumentationSettings.class);
   }
 
-  @NotNull private DocStringFormat myDocStringFormat = DocStringFormat.REST;
+  @NotNull private DocStringFormat myDocStringFormat = DEFAULT_DOCSTRING_FORMAT;
   private boolean myAnalyzeDoctest = true;
-
-  public boolean isEpydocFormat(PsiFile file) {
-    return isFormat(file, DocStringFormat.EPYTEXT);
-  }
-
-  public boolean isReSTFormat(PsiFile file) {
-    return isFormat(file, DocStringFormat.REST);
-  }
 
   public boolean isNumpyFormat(PsiFile file) {
     return isFormat(file, DocStringFormat.NUMPY);
-  }
-
-  public boolean isGoogleFormat(PsiFile file) {
-    return isFormat(file, DocStringFormat.GOOGLE);
   }
 
   public boolean isPlain(PsiFile file) {
@@ -77,6 +67,12 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
 
   @NotNull
   public DocStringFormat getFormatForFile(@NotNull PsiFile file) {
+    final DocStringFormat fileFormat = getFormatFromDocformatAttribute(file);
+    return fileFormat != null && fileFormat != DocStringFormat.PLAIN ? fileFormat : myDocStringFormat;
+  }
+
+  @Nullable
+  public static DocStringFormat getFormatFromDocformatAttribute(@NotNull PsiFile file) {
     if (file instanceof PyFile) {
       final PyTargetExpression expr = ((PyFile)file).findTopLevelAttribute(PyNames.DOCFORMAT);
       if (expr != null) {
@@ -92,7 +88,7 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
         }
       }
     }
-    return myDocStringFormat;
+    return null;
   }
 
   @Transient
