@@ -94,7 +94,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
 
   private final EventDispatcher<WindowManagerListener> myEventDispatcher = EventDispatcher.create(WindowManagerListener.class);
 
-  private final CommandProcessor myCommandProcessor;
   private final WindowWatcher myWindowWatcher;
   /**
    * That is the default layout.
@@ -137,7 +136,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
       });
     }
 
-    myCommandProcessor = new CommandProcessor();
     myWindowWatcher = new WindowWatcher();
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     keyboardFocusManager.addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, myWindowWatcher);
@@ -679,15 +677,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   @Nullable
   public final Component getFocusedComponent(@Nullable final Project project) {
     return myWindowWatcher.getFocusedComponent(project);
-  }
-
-  /**
-   * Private part
-   */
-  @Override
-  @NotNull
-  public final CommandProcessor getCommandProcessor() {
-    return myCommandProcessor;
   }
 
   @Override

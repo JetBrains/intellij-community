@@ -143,12 +143,6 @@ public final class TestWindowManager extends WindowManagerEx {
     return null;
   }
 
-  @NotNull
-  @Override
-  public final CommandProcessor getCommandProcessor() {
-    throw new UnsupportedOperationException();
-  }
-
   @Override
   public final DesktopLayout getLayout() {
     throw new UnsupportedOperationException();

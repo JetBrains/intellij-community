@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -102,6 +103,10 @@ public final class CommandProcessor implements Runnable {
     }
 
     return null;
+  }
+
+  public static CommandProcessor getInstance() {
+    return ServiceManager.getService(CommandProcessor.class);
   }
 
   private static class CommandGroup {

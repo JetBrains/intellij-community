@@ -18,7 +18,6 @@ package com.intellij.openapi.wm.ex;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.CommandProcessor;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.AppIcon;
@@ -71,9 +70,6 @@ public abstract class WindowManagerEx extends WindowManager {
   public abstract Window getMostRecentFocusedWindow();
 
   public abstract IdeFrame findFrameFor(@Nullable Project project);
-
-  @NotNull
-  public abstract CommandProcessor getCommandProcessor();
 
   /**
    * @return default layout for tool windows.

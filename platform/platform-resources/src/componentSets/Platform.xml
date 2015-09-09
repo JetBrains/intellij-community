@@ -184,4 +184,9 @@
       <skipForDefaultProject/>
     </component>
   </project-components>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <appStarter implementation="com.intellij.idea.ServerAppStarter"/>
+  </extensions>
+
 </idea-plugin>

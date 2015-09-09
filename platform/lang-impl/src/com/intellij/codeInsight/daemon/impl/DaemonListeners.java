@@ -542,7 +542,9 @@ public class DaemonListeners implements Disposable {
         if (myProject.isDisposed()) return;
         StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
         myTogglePopupHintsPanel = new TogglePopupHintsPanel(myProject);
-        statusBar.addWidget(myTogglePopupHintsPanel, myProject);
+        if (statusBar != null) {
+          statusBar.addWidget(myTogglePopupHintsPanel, myProject);
+        }
         updateStatusBar();
 
         stopDaemonAndRestartAllFiles("Inspection profiles activated");

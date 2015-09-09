@@ -98,7 +98,7 @@ public class SearchByName(val project: Project,
       }
 
       indexSignal = reaction(false, "convert index to int", reactiveModel.subscribe(lifetime, path / "selectedIndex")) {
-        (it as? PrimitiveModel<Int>?)?.value
+        (it as? PrimitiveModel<Number>?)?.value as Int?
       }
 
       reaction(false, "go to checkbox", checkSignal!!) {
@@ -171,7 +171,7 @@ public class SearchByName(val project: Project,
 
   override fun getEnteredText(): String? = textSignal?.value ?: ""
 
-  override fun getSelectedIndex(): Int = indexSignal?.value ?: 0
+  override fun getSelectedIndex(): Int = indexSignal?.value as Int? ?: 0
 
   override fun showCardImpl(card: String?) {
     if (card == null) {
