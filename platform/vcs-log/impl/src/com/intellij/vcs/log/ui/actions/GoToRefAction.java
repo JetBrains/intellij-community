@@ -22,7 +22,9 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 
 import java.util.Collection;
 import java.util.concurrent.Future;
@@ -33,7 +35,8 @@ public class GoToRefAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
     final VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
-    if (project == null || log == null) {
+    VcsLogUiImpl logUi = (VcsLogUiImpl)e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    if (project == null || log == null || logUi == null) {
       return;
     }
 
@@ -49,13 +52,14 @@ public class GoToRefAction extends DumbAwareAction {
               return log.jumpToReference(text);
             }
           });
-    popup.showUnderneathOf(log.getToolbar());
+    popup.show(logUi.getTable());
   }
 
   @Override
   public void update(AnActionEvent e) {
     VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
-    e.getPresentation().setEnabledAndVisible(e.getProject() != null && log != null);
+    VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && log != null && logUi != null);
   }
 
 }

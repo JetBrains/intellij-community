@@ -124,7 +124,7 @@ public class FindPopupWithProgress {
     });
   }
 
-  public void showUnderneathOf(@NotNull Component anchor) {
-    myPopup.showUnderneathOf(anchor);
+  public void show(@NotNull JComponent anchor) {
+    myPopup.showInCenterOf(anchor);
   }
 }
