@@ -280,6 +280,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
           }
         });
         newSdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
+        PythonSdkUpdater.getInstance().markAlreadyUpdated(sdkHome.getPath());
         if (newSdk != null) {
           myProjectSdksModel.addSdk(newSdk);
           updateSdkList(false);
