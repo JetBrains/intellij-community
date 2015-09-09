@@ -172,7 +172,7 @@ public class PyiTypeProvider extends PyTypeProviderBase {
     if (owner instanceof PyClass) {
       final PyClass cls = (PyClass)owner;
       if (name != null) {
-        cls.visitMethods(overloadsProcessor, false);
+        cls.visitMethods(overloadsProcessor, false, context);
       }
     }
     else if (owner instanceof PyFile) {
