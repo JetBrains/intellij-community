@@ -20,12 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
-import git4idea.repo.GitRepository;
 import git4idea.ui.StashInfo;
 import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
@@ -41,11 +38,6 @@ public class GitStashUtils {
   private static final Logger LOG = Logger.getInstance(GitStashUtils.class);
 
   private GitStashUtils() {
-  }
-
-  public static boolean saveStash(@NotNull Git git, @NotNull GitRepository repository, final String message) {
-    GitCommandResult result = git.stashSave(repository, message);
-    return result.success() && !result.getErrorOutputAsJoinedString().contains("No local changes to save");
   }
 
   public static void loadStashStack(@NotNull Project project, @NotNull VirtualFile root, Consumer<StashInfo> consumer) {

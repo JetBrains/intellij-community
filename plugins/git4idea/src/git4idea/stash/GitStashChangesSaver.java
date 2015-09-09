@@ -42,9 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitStashChangesSaver extends GitChangesSaver {
 
   private static final Logger LOG = Logger.getInstance(GitStashChangesSaver.class);
@@ -70,8 +67,20 @@ public class GitStashChangesSaver extends GitChangesSaver {
       if (repository == null) {
         LOG.error("Repository is null for root " + root);
       }
-      else if (GitStashUtils.saveStash(myGit, repository, myStashMessage)) {
-        myStashedRoots.add(root);
+      else {
+        GitCommandResult result = myGit.stashSave(repository, myStashMessage);
+        if (result.success() && !result.getErrorOutputAsJoinedString().contains("No local changes to save")) {
+          myStashedRoots.add(root);
+        }
+        else {
+          String error = "stash " + repository.getRoot() + ": " + result.getErrorOutputAsJoinedString();
+          if (!result.success()) {
+            throw new VcsException(error);
+          }
+          else {
+            LOG.warn(error);
+          }
+        }
       }
       myProgressIndicator.setText(oldProgressTitle);
     }
