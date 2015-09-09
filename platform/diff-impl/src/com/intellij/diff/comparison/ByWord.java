@@ -141,66 +141,66 @@ public class ByWord {
                                                      @NotNull ProgressIndicator indicator) {
     List<Range> newRanges = new ArrayList<Range>();
 
-    for (Range range : iterable.iterateUnchanged()) {
-      Range lastRange = ContainerUtil.getLastItem(newRanges);
-      if (lastRange == null ||
-          (lastRange.end1 != range.start1 && lastRange.end2 != range.start2)) {
+    for (Range range2 : iterable.iterateUnchanged()) {
+      Range range1 = ContainerUtil.getLastItem(newRanges);
+      if (range1 == null ||
+          (range1.end1 != range2.start1 && range1.end2 != range2.start2)) {
         // if changes do not touch and we still can perform one of these optimisations,
         // it means that given DiffIterable is not LCS (because we can build a smaller one). This should not happen.
-        newRanges.add(range);
+        newRanges.add(range2);
         continue;
       }
 
-      int count = range.end1 - range.start1;
-      int lastCount = lastRange.end1 - lastRange.start1;
+      int count1 = range1.end1 - range1.start1;
+      int count2 = range2.end1 - range2.start1;
 
       // merge chunks left [A]B[B] -> [AB]B
-      int equalLeft = expandForward(words1, words2, lastRange.end1, lastRange.end2, lastRange.end1 + count, lastRange.end2 + count);
-      if (equalLeft == count) {
+      int equalForward = expandForward(words1, words2, range1.end1, range1.end2, range1.end1 + count2, range1.end2 + count2);
+      if (equalForward == count2) {
         newRanges.remove(newRanges.size() - 1);
-        newRanges.add(new Range(lastRange.start1, lastRange.end1 + count, lastRange.start2, lastRange.end2 + count));
+        newRanges.add(new Range(range1.start1, range1.end1 + count2, range1.start2, range1.end2 + count2));
         continue;
       }
 
       // merge chunks right [A]A[B] -> A[AB]
-      int equalRight = expandBackward(words1, words2, range.start1 - lastCount, range.start2 - lastCount, range.start1, range.start2);
-      if (equalRight == lastCount) {
+      int equalBackward = expandBackward(words1, words2, range2.start1 - count1, range2.start2 - count1, range2.start1, range2.start2);
+      if (equalBackward == count1) {
         newRanges.remove(newRanges.size() - 1);
-        newRanges.add(new Range(range.start1 - lastCount, range.end1, range.start2 - lastCount, range.end2));
+        newRanges.add(new Range(range2.start1 - count1, range2.end1, range2.start2 - count1, range2.end2));
         continue;
       }
 
 
-      Side touchSide = Side.fromLeft(lastRange.end1 == range.start1);
+      Side touchSide = Side.fromLeft(range1.end1 == range2.start1);
       List<InlineChunk> touchWords = touchSide.select(words1, words2);
       CharSequence touchText = touchSide.select(text1, text2);
-      int touchStart = touchSide.select(range.start1, range.start2);
+      int touchStart = touchSide.select(range2.start1, range2.start2);
 
       // check if chunks are already separated by whitespaces
       if (!isSeparatedWithWhitespace(touchText, touchWords.get(touchStart - 1), touchWords.get(touchStart))) {
         // shift chunks left [X]A Y[A ZA] -> [XA] YA [ZA]
         //                   [X][A ZA] -> [XA] [ZA]
-        int leftShift = findSequenceEdgeShift(touchText, touchWords, touchStart, equalLeft, true);
+        int leftShift = findSequenceEdgeShift(touchText, touchWords, touchStart, equalForward, true);
         if (leftShift > 0) {
           newRanges.remove(newRanges.size() - 1);
-          newRanges.add(new Range(lastRange.start1, lastRange.end1 + leftShift, lastRange.start2, lastRange.end2 + leftShift));
-          newRanges.add(new Range(range.start1 + leftShift, range.end1, range.start2 + leftShift, range.end2));
+          newRanges.add(new Range(range1.start1, range1.end1 + leftShift, range1.start2, range1.end2 + leftShift));
+          newRanges.add(new Range(range2.start1 + leftShift, range2.end1, range2.start2 + leftShift, range2.end2));
           continue;
         }
 
         // shift chunks right [AX A]Y A[Z] -> [AX] AY [AZ]
         //                    [AX A][Z] -> [AX] [AZ]
-        int rightShift = findSequenceEdgeShift(touchText, touchWords, touchStart - 1, equalRight, false);
+        int rightShift = findSequenceEdgeShift(touchText, touchWords, touchStart - 1, equalBackward, false);
         if (rightShift > 0) {
           newRanges.remove(newRanges.size() - 1);
-          newRanges.add(new Range(lastRange.start1, lastRange.end1 - rightShift, lastRange.start2, lastRange.end2 - rightShift));
-          newRanges.add(new Range(range.start1 - rightShift, range.end1, range.start2 - rightShift, range.end2));
+          newRanges.add(new Range(range1.start1, range1.end1 - rightShift, range1.start2, range1.end2 - rightShift));
+          newRanges.add(new Range(range2.start1 - rightShift, range2.end1, range2.start2 - rightShift, range2.end2));
           continue;
         }
       }
 
       // nothing to do
-      newRanges.add(range);
+      newRanges.add(range2);
     }
 
     return fair(createUnchanged(newRanges, words1.size(), words2.size()));
