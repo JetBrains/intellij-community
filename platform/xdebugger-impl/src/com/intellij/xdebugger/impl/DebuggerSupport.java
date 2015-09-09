@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.AbstractDebuggerSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
 import com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler;
@@ -149,8 +150,14 @@ public abstract class DebuggerSupport {
   public abstract MarkObjectActionHandler getMarkObjectHandler();
 
 
+  /**
+   * @deprecated {@link XDebuggerManager#getCurrentSession()} is used instead
+   */
   @Nullable
-  public abstract AbstractDebuggerSession getCurrentSession(@NotNull Project project);
+  @Deprecated
+  public AbstractDebuggerSession getCurrentSession(@NotNull Project project) {
+    return null;
+  }
 
   @NotNull
   public abstract EditBreakpointActionHandler getEditBreakpointAction();
