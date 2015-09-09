@@ -45,6 +45,7 @@ class ExporterToTextFileHierarchy implements ExporterToTextFile {
   public void removeSettingsChangedListener(ChangeListener listener) {
   }
 
+  @NotNull
   @Override
   public String getReportText() {
     StringBuilder buf = new StringBuilder();
@@ -73,6 +74,7 @@ class ExporterToTextFileHierarchy implements ExporterToTextFile {
     }
   }
   
+  @NotNull
   @Override
   public String getDefaultFilePath() {
     final HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(myHierarchyBrowserBase.myProject).getState();

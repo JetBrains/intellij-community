@@ -273,6 +273,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       public void removeSettingsChangedListener(ChangeListener listener) {
       }
 
+      @NotNull
       @Override
       public String getReportText() {
         final StringBuilder sb = new StringBuilder();
@@ -320,6 +321,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
         return sb.toString();
       }
 
+      @NotNull
       @Override
       public String getDefaultFilePath() {
         return myProject.getBasePath() + File.separator + "Favorites.txt";

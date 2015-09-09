@@ -697,6 +697,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     public void removeSettingsChangedListener(ChangeListener listener) {
     }
 
+    @NotNull
     @Override
     public String getReportText() {
       final Element rootElement = new Element("root");
@@ -727,6 +728,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       return JDOMUtil.writeDocument(new Document(rootElement), SystemProperties.getLineSeparator());
     }
 
+    @NotNull
     @Override
     public String getDefaultFilePath() {
       return "";
