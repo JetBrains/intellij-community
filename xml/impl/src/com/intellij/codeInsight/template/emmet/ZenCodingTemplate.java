@@ -229,7 +229,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     }
 
     List<GenerationNode> genNodes = fakeParentNode.getChildren();
-    LiveTemplateBuilder builder = new LiveTemplateBuilder(segmentsLimit);
+    LiveTemplateBuilder builder = new LiveTemplateBuilder(EmmetOptions.getInstance().isAddEditPointAtTheEndOfTemplate(), segmentsLimit);
     int end = -1;
     for (int i = 0, genNodesSize = genNodes.size(); i < genNodesSize; i++) {
       GenerationNode genNode = genNodes.get(i);
