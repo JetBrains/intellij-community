@@ -54,18 +54,12 @@ public class JavaSliceUsage extends SliceUsage {
   }
 
   @Override
-  public JavaSliceUsage createNewInstance(@NotNull PsiElement element,
-                                      @NotNull SliceUsage parent,
-                                      int indexNesting,
-                                      @NotNull String syntheticField) {
-    return new JavaSliceUsage(element, getParent(),mySubstitutor,indexNesting,syntheticField);
+  @NotNull
+  protected SliceUsage copy() {
+    PsiElement element = getUsageInfo().getElement();
+    return getParent() == null ? createRootUsage(element, params) :
+           new JavaSliceUsage(element, getParent(), mySubstitutor, indexNesting, syntheticField);
   }
-
-  @Override
-  public SliceUsage createNewRootInstance(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
-    return createRootUsage(element, params);
-  }
-
 
   @NotNull
   public PsiSubstitutor getSubstitutor() {

@@ -108,17 +108,5 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
   }
 
   @NotNull
-  SliceUsage copy() {
-    PsiElement element = getUsageInfo().getElement();
-    return getParent() == null ? createNewRootInstance(element, params) :
-           createNewInstance(element, getParent(),indexNesting,syntheticField);
-  }
-
-  public abstract SliceUsage createNewInstance(@NotNull PsiElement element,
-                                               @NotNull SliceUsage parent,
-                                               int indexNesting,
-                                               @NotNull String syntheticField);
-
-  public abstract SliceUsage createNewRootInstance(@NotNull PsiElement element, @NotNull SliceAnalysisParams params);
-
+  protected  abstract  SliceUsage copy();
 }

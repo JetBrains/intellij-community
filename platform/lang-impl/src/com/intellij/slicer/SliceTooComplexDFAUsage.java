@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,16 +51,9 @@ public class SliceTooComplexDFAUsage extends SliceUsage {
   }
 
   @Override
-  public SliceUsage createNewInstance(@NotNull PsiElement element,
-                                      @NotNull SliceUsage parent,
-                                      int indexNesting,
-                                      @NotNull String syntheticField) {
-    return new SliceTooComplexDFAUsage(element, parent);
-  }
-
-  @Override
-  public SliceUsage createNewRootInstance(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
-    throw new IllegalStateException();
+  @NotNull
+  protected SliceUsage copy() {
+    return new SliceTooComplexDFAUsage(getUsageInfo().getElement(), getParent());
   }
 
   @NotNull
