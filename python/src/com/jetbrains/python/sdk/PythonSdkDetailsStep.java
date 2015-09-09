@@ -138,7 +138,16 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        SdkConfigurationUtil.createSdk(myProject, myExistingSdks, myCallback, false, PythonSdkType.getInstance());
+        final NullableConsumer<Sdk> callback = new NullableConsumer<Sdk>() {
+          @Override
+          public void consume(@Nullable Sdk sdk) {
+            myCallback.consume(sdk);
+            if (sdk != null) {
+              SdkConfigurationUtil.addSdk(sdk);
+            }
+          }
+        };
+        SdkConfigurationUtil.createSdk(myProject, myExistingSdks, callback, false, PythonSdkType.getInstance());
       }
     }, ModalityState.any());
   }
