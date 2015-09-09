@@ -27,6 +27,7 @@ public class FieldCanBeLocalTest extends InspectionTestCase {
   }
 
   public void testConstructor () throws Exception { doTest(); }
+  public void testConstructorThisRef() throws Exception { doTest(); }
   public void testStaticFinal() throws Exception { doTest(); }
   public void testStaticAccess() throws Exception { doTest(); }
   public void testInnerClassConstructor() throws Exception { doTest(); }
