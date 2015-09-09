@@ -56,7 +56,7 @@ public class ObjectUtils {
 
   @NotNull
   public static <T> T notNull(@Nullable T value, @NotNull T defaultValue) {
-    return value != null ? value : defaultValue;
+    return value == null ? defaultValue : value;
   }
 
   @Nullable
