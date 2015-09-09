@@ -26,4 +26,7 @@
     <orderEntry type="module" module-name="remote-servers-api" />
     <orderEntry type="module" module-name="remote-servers-impl" />
   </component>
+  <component name="RuntimeResources">
+    <runtime-resource name="jediterm.in" url="file://$MODULE_DIR$/lib/jediterm.in" />
+  </component>
 </module>

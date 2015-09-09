@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -34,6 +35,8 @@ import com.pty4j.PtyProcess;
 import com.pty4j.util.PtyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,6 +68,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private static File findRCFile() {
+    if (Registry.is("platform.use.runtime.modules")) {
+      RuntimeModuleId resource = RuntimeModuleId.moduleResource("terminal", "jediterm.in");
+      return new File(PlatformLoader.getInstance().getRepository().getModuleRootPath(resource));
+    }
     try {
       final String folder = PtyUtil.getPtyLibFolderPath();
       if (folder != null) {
