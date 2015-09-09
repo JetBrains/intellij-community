@@ -302,7 +302,14 @@ abstract class ComponentStoreImpl : IComponentStore {
     if (storages.size() == 1 || component is StateStorageChooserEx) {
       return storages
     }
-    assert(!storages.isEmpty())
+
+    if (storages.isEmpty()) {
+      if (stateSpec.defaultStateAsResource) {
+        return storages
+      }
+
+      throw AssertionError("No storage specified")
+    }
 
     val defaultStorages = selectDefaultStorages(storages, operation)
     if (defaultStorages != null) {

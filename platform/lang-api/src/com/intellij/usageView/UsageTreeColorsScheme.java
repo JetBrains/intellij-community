@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,18 @@
  */
 package com.intellij.usageView;
 
-import com.intellij.openapi.components.NamedComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class UsageTreeColorsScheme implements NamedComponent, JDOMExternalizable {
+@State(name = "FindViewColorsScheme", defaultStateAsResource = true, storages = {})
+public class UsageTreeColorsScheme implements PersistentStateComponent<Element> {
   private EditorColorsScheme myColorsScheme;
 
   /**
@@ -39,26 +39,21 @@ public class UsageTreeColorsScheme implements NamedComponent, JDOMExternalizable
     return ServiceManager.getService(UsageTreeColorsScheme.class);
   }
 
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "FindViewColorsScheme";
-  }
-
   public EditorColorsScheme getScheme() {
     return myColorsScheme;
   }
 
+  @Nullable
   @Override
-  public void readExternal(Element element) {
-    if (myColorsScheme == null) {
-      myColorsScheme = (EditorColorsScheme)EditorColorsUtil.getColorSchemeForBackground(UIUtil.getTreeTextBackground()).clone();
-    }
-    myColorsScheme.readExternal(element);
+  public Element getState() {
+    return null;
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    throw new WriteExternalException();
+  public void loadState(Element state) {
+    if (myColorsScheme == null) {
+      myColorsScheme = (EditorColorsScheme)EditorColorsUtil.getColorSchemeForBackground(UIUtil.getTreeTextBackground()).clone();
+    }
+    myColorsScheme.readExternal(state);
   }
 }
