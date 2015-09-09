@@ -45,11 +45,6 @@
     <module scope="runtime">lib.maven2-server-impl.mercury-artifact-1.0-alpha-6.jar</module>
     <module scope="runtime">lib.maven2-server-impl.activation-1.1.jar</module>
     <module scope="runtime">lib.maven2-server-impl.commons-beanutils.jar</module>
-    <module scope="runtime">lib.maven-artifact-resolver-m3.aether-api-1.13.1.jar</module>
-    <module scope="runtime">lib.maven-artifact-resolver-m3.plexus-component-annotations-1.5.5.jar</module>
-    <module scope="runtime">lib.maven-artifact-resolver-m3.maven-core-3.0.5.jar</module>
-    <module scope="runtime">lib.maven-artifact-resolver-m3.maven-artifact-3.0.5.jar</module>
-    <module scope="runtime">lib.maven-artifact-resolver-m2.maven-2.2.1-uber.jar</module>
   </modules>
 
   <extensionPoints>
