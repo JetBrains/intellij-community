@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.imports;
 
+import com.google.common.collect.Ordering;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.psi.PsiElement;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -75,7 +77,6 @@ public class PyImportOptimizer implements ImportOptimizer {
     private final List<PyImportStatementBase> myProjectImports = new ArrayList<PyImportStatementBase>();
     private final List<PyImportStatementBase> myImportBlock;
     private final PyElementGenerator myGenerator;
-    private boolean myMissorted = false;
 
     private ImportSorter(PyFile file) {
       myFile = file;
@@ -87,6 +88,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       if (myImportBlock.isEmpty()) {
         return;
       }
+      boolean hasSplittedImports = false;
       LanguageLevel langLevel = LanguageLevel.forElement(myFile);
       for (PyImportStatementBase importStatement : myImportBlock) {
         if (importStatement instanceof PyFromImportStatement && ((PyFromImportStatement)importStatement).isFromFuture()) {
@@ -94,7 +96,7 @@ public class PyImportOptimizer implements ImportOptimizer {
         }
         if (importStatement instanceof PyImportStatement && importStatement.getImportElements().length > 1) {
           for (PyImportElement importElement : importStatement.getImportElements()) {
-            myMissorted = true;
+            hasSplittedImports = true;
             // getText() for ImportElement includes alias
             final PyImportStatement splitImport = myGenerator.createImportStatement(langLevel, importElement.getText(), null);
             prioritize(splitImport, importElement.resolve());
@@ -112,9 +114,16 @@ public class PyImportOptimizer implements ImportOptimizer {
           prioritize(importStatement, toImport);
         }
       }
-      if (myMissorted || needBlankLinesBetweenGroups()) {
+      if (hasSplittedImports || needBlankLinesBetweenGroups() || groupsNotSorted()) {
         applyResults();
       }
+    }
+
+    private boolean groupsNotSorted() {
+      final Ordering<PyImportStatementBase> importOrdering = Ordering.from(AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
+      return SORT_IMPORTS && (!importOrdering.isOrdered(myBuiltinImports) ||
+                              !importOrdering.isOrdered(myProjectImports) ||
+                              !importOrdering.isOrdered(myThirdPartyImports));
     }
 
     private boolean needBlankLinesBetweenGroups() {
@@ -134,17 +143,11 @@ public class PyImportOptimizer implements ImportOptimizer {
                                                       : AddImportHelper.getImportPriority(myFile, (PsiFileSystemItem)toImport);
       if (priority == AddImportHelper.ImportPriority.BUILTIN) {
         myBuiltinImports.add(importStatement);
-        if (!myThirdPartyImports.isEmpty() || !myProjectImports.isEmpty()) {
-          myMissorted = true;
-        }
       }
       else if (priority == AddImportHelper.ImportPriority.THIRD_PARTY) {
         myThirdPartyImports.add(importStatement);
-        if (!myProjectImports.isEmpty()) {
-          myMissorted = true;
-        }
       }
-      else {
+      else if (priority == AddImportHelper.ImportPriority.PROJECT) {
         myProjectImports.add(importStatement);
       }
     }
@@ -155,23 +158,48 @@ public class PyImportOptimizer implements ImportOptimizer {
         Collections.sort(myThirdPartyImports, AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
         Collections.sort(myProjectImports, AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
       }
+      markGroupStarts();
+      addImports();
 
-      markGroupBegin(myThirdPartyImports);
-      markGroupBegin(myProjectImports);
-
-      addImports(myBuiltinImports);
-      addImports(myThirdPartyImports);
-      addImports(myProjectImports);
       final PsiElement lastElement = myImportBlock.get(myImportBlock.size() - 1);
       final PyImportStatementBase firstNonFutureImport = findFirstNonFutureImport();
       if (firstNonFutureImport != null) {
         myFile.deleteChildRange(firstNonFutureImport, lastElement);
       }
-      for (PyImportStatementBase anImport : myBuiltinImports) {
-        anImport.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, null);
+    }
+
+    private void markGroupStarts() {
+      boolean firstNonEmptyGroup = true;
+      for (List<PyImportStatementBase> imports : getImportGroupsInOrder()) {
+        boolean firstImportInGroup = true;
+        for (PyImportStatementBase statement : imports) {
+          if (!firstNonEmptyGroup && firstImportInGroup) {
+            statement.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, true);
+          }
+          else {
+            statement.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, null);
+          }
+          firstImportInGroup = false;
+          firstNonEmptyGroup = false;
+        }
       }
     }
 
+    private void addImports() {
+      final PyImportStatementBase anchor = findFirstNonFutureImport();
+      for (List<PyImportStatementBase> imports : getImportGroupsInOrder()) {
+        for (PyImportStatementBase newImport : imports) {
+          myFile.addBefore(newImport, anchor);
+        }
+      }
+    }
+
+    @NotNull
+    private List<List<PyImportStatementBase>> getImportGroupsInOrder() {
+      return Arrays.asList(myBuiltinImports, myThirdPartyImports, myProjectImports);
+    }
+
+    @Nullable
     private PyImportStatementBase findFirstNonFutureImport() {
       for (PyImportStatementBase importStatement : myImportBlock) {
         if (!(importStatement instanceof PyFromImportStatement && ((PyFromImportStatement)importStatement).isFromFuture())) {
@@ -179,18 +207,6 @@ public class PyImportOptimizer implements ImportOptimizer {
         }
       }
       return null;
-    }
-
-    private static void markGroupBegin(@NotNull List<PyImportStatementBase> imports) {
-      if (imports.size() > 0) {
-        imports.get(0).putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, true);
-      }
-    }
-
-    private void addImports(final List<PyImportStatementBase> imports) {
-      for (PyImportStatementBase newImport : imports) {
-        myFile.addBefore(newImport, findFirstNonFutureImport());
-      }
     }
   }
 }
