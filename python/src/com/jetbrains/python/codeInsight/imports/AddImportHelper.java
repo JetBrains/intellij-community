@@ -194,14 +194,18 @@ public class AddImportHelper {
     while (feeler != null);
     final ImportPriority priorityAbove = importAbove != null ? getImportPriority(importAbove) : null;
     final ImportPriority priorityBelow = importBelow != null ? getImportPriority(importBelow) : null;
-    if (priorityAbove != null && priority.compareTo(priorityAbove) > 0) {
+    if (newImport != null && (priorityAbove == null || priorityAbove.compareTo(priority) < 0)) {
       newImport.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, true);
-      if (priorityBelow == priority) {
+    }
+    if (priorityBelow != null) {
+      // actually not necessary because existing import with higher priority (i.e. lower import group) 
+      // probably should have IMPORT_GROUP_BEGIN flag already, but we add it anyway just for safety
+      if (priorityBelow.compareTo(priority) > 0) {
+        importBelow.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, true);
+      }
+      else if (priorityBelow == priority) {
         importBelow.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, null);
       }
-    }
-    if (priorityBelow != null && priority.compareTo(priorityBelow) < 0) {
-      importBelow.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, true);
     }
     return seeker;
   }
@@ -238,7 +242,7 @@ public class AddImportHelper {
       resolved = firstImportElement.resolve();
     }
     if (resolved == null) {
-      return ImportPriority.BUILTIN;
+      return ImportPriority.PROJECT;
     }
 
     final PsiFileSystemItem resolvedFileOrDir;
