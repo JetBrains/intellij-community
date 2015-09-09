@@ -95,4 +95,10 @@ public abstract class InjectedLanguageManager {
 
   public abstract void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor);
   public abstract void enumerateEx(@NotNull PsiElement host, @NotNull PsiFile containingFile, boolean probeUp, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor);
+
+  /**
+   * @return the ranges in this document window that correspond to prefix/suffix injected text fragments and thus can't be edited and are not visible in the editor.
+   */
+  @NotNull
+  public abstract List<TextRange> getNonEditableFragments(@NotNull DocumentWindow window);
 }
