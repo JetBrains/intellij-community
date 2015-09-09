@@ -5725,14 +5725,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private static <T> T execute(final Computable<T> computable) {
-      final Ref<T> ref = Ref.create();
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          ref.set(computable.compute());
-        }
-      }, ModalityState.defaultModalityState());
-      return ref.get();
+      return UIUtil.invokeAndWaitIfNeeded(computable);
     }
   }
 
