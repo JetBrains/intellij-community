@@ -22,9 +22,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -61,10 +59,22 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   @Override
   protected void save(Collection<VirtualFile> rootsToSave) throws VcsException {
-    LOG.info("save " + rootsToSave);
-    final Map<VirtualFile, Collection<Change>> changes =
-      new LocalChangesUnderRoots(myChangeManager, myPlatformFacade.getVcsManager(myProject)).getChangesUnderRoots(rootsToSave);
-    stash(changes.keySet());
+    LOG.info("saving " + rootsToSave);
+
+    for (VirtualFile root : rootsToSave) {
+      final String message = GitHandlerUtil.formatOperationName("Stashing changes from", root);
+      LOG.info(message);
+      final String oldProgressTitle = myProgressIndicator.getText();
+      myProgressIndicator.setText(message);
+      GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+      if (repository == null) {
+        LOG.error("Repository is null for root " + root);
+      }
+      else if (GitStashUtils.saveStash(myGit, repository, myStashMessage)) {
+        myStashedRoots.add(root);
+      }
+      myProgressIndicator.setText(oldProgressTitle);
+    }
   }
 
   @Override
@@ -90,23 +100,6 @@ public class GitStashChangesSaver extends GitChangesSaver {
   @Override
   protected void showSavedChanges() {
     GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myStashedRoots.iterator().next());
-  }
-
-  private void stash(Collection<VirtualFile> roots) throws VcsException {
-    for (VirtualFile root : roots) {
-      final String message = GitHandlerUtil.formatOperationName("Stashing changes from", root);
-      LOG.info(message);
-      final String oldProgressTitle = myProgressIndicator.getText();
-      myProgressIndicator.setText(message);
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-      if (repository == null) {
-        LOG.error("Repository is null for root " + root);
-      }
-      else if (GitStashUtils.saveStash(myGit, repository, myStashMessage)) {
-          myStashedRoots.add(root);
-      }
-      myProgressIndicator.setText(oldProgressTitle);
-    }
   }
 
   /**
