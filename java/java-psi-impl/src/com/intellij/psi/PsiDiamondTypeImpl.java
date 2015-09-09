@@ -121,7 +121,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   public static DiamondInferenceResult resolveInferredTypes(PsiNewExpression newExpression,
                                                             PsiElement context) {
     final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
-    if (anonymousClass != null) {
+    if (anonymousClass != null && !PsiUtil.isLanguageLevel9OrHigher(newExpression)) {
       final PsiElement resolve = anonymousClass.getBaseClassReference().resolve();
       if (resolve instanceof PsiClass) {
         return PsiDiamondTypeImpl.DiamondInferenceResult.ANONYMOUS_INNER_RESULT;
