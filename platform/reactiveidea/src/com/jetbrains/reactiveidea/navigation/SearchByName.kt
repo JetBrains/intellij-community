@@ -98,7 +98,7 @@ public class SearchByName(val project: Project,
       }
 
       indexSignal = reaction(false, "convert index to int", reactiveModel.subscribe(lifetime, path / "selectedIndex")) {
-        (it as? PrimitiveModel<Number>?)?.value as Int?
+        (it as? PrimitiveModel<Number>?)?.value?.toInt()
       }
 
       reaction(false, "go to checkbox", checkSignal!!) {
