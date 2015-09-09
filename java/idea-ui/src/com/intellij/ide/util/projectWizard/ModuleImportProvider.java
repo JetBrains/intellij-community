@@ -18,6 +18,7 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,7 +32,7 @@ public class ModuleImportProvider extends ProjectImportProvider {
   }
 
   @Override
-  public boolean canImport(VirtualFile fileOrDirectory, Project project) {
+  public boolean canImport(@NotNull VirtualFile fileOrDirectory, Project project) {
     return project != null && !fileOrDirectory.isDirectory() && "iml".equals(fileOrDirectory.getExtension());
   }
 

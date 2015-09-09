@@ -61,7 +61,7 @@ public abstract class ProjectImportProvider {
     return getBuilder().getIcon();
   }
 
-  public boolean canImport(VirtualFile fileOrDirectory, @Nullable Project project) {
+  public boolean canImport(@NotNull VirtualFile fileOrDirectory, @Nullable Project project) {
     if (fileOrDirectory.isDirectory()) {
       return true;
     }
