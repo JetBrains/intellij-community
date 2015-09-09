@@ -51,7 +51,7 @@ public class CompletionServiceImpl extends CompletionService{
       public void projectClosing(Project project) {
         CompletionProgressIndicator indicator = getCurrentCompletion();
         if (indicator != null && indicator.getProject() == project) {
-          LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
+          indicator.closeAndFinish(true);
           setCompletionPhase(CompletionPhase.NoCompletion);
         }
         else if (indicator == null) {
