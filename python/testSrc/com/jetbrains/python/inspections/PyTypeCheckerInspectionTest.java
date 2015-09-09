@@ -271,4 +271,8 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testComparisonOperatorsForNumericTypes() {
     doTest();
   }
+
+  public void testClassNew() {
+    doTest();
+  }
 }

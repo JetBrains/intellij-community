@@ -1579,31 +1579,68 @@ public class PyUtil {
   }
 
   @NotNull
-  public static List<PyParameter> getParameters(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    PyType type = context.getType(callable);
+  public static List<List<PyParameter>> getOverloadedParametersSet(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+    final List<List<PyParameter>> parametersSet = getOverloadedParametersSet(context.getType(callable), context);
+    return parametersSet != null ? parametersSet : Collections.singletonList(Arrays.asList(callable.getParameterList().getParameters()));
+  }
+
+  @Nullable
+  private static List<PyParameter> getParametersOfCallableType(@NotNull PyCallableType type, @NotNull TypeEvalContext context) {
+    final List<PyCallableParameter> callableTypeParameters = type.getParameters(context);
+    if (callableTypeParameters != null) {
+      boolean allParametersDefined = true;
+      final List<PyParameter> parameters = new ArrayList<PyParameter>();
+      for (PyCallableParameter callableParameter : callableTypeParameters) {
+        final PyParameter parameter = callableParameter.getParameter();
+        if (parameter == null) {
+          allParametersDefined = false;
+          break;
+        }
+        parameters.add(parameter);
+      }
+      if (allParametersDefined) {
+        return parameters;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static List<List<PyParameter>> getOverloadedParametersSet(@Nullable PyType type, @NotNull TypeEvalContext context) {
     if (type instanceof PyUnionType) {
       type = ((PyUnionType)type).excludeNull(context);
     }
+
     if (type instanceof PyCallableType) {
-      final PyCallableType callableType = (PyCallableType)type;
-      final List<PyCallableParameter> callableTypeParameters = callableType.getParameters(context);
-      if (callableTypeParameters != null) {
-        boolean allParametersDefined = true;
-        final List<PyParameter> parameters = new ArrayList<PyParameter>();
-        for (PyCallableParameter callableParameter : callableTypeParameters) {
-          final PyParameter parameter = callableParameter.getParameter();
-          if (parameter == null) {
-            allParametersDefined = false;
-            break;
-          }
-          parameters.add(parameter);
-        }
-        if (allParametersDefined) {
-          return parameters;
-        }
+      final List<PyParameter> results = getParametersOfCallableType((PyCallableType)type, context);
+      if (results != null) {
+        return Collections.singletonList(results);
       }
     }
-    return Arrays.asList(callable.getParameterList().getParameters());
+    else if (type instanceof PyUnionType) {
+      final List<List<PyParameter>> results = new ArrayList<List<PyParameter>>();
+      final Collection<PyType> members = ((PyUnionType)type).getMembers();
+      for (PyType member : members) {
+        if (member instanceof PyCallableType) {
+          final List<PyParameter> parameters = getParametersOfCallableType((PyCallableType)member, context);
+          if (parameters != null) {
+            results.add(parameters);
+          }
+        }
+      }
+      if (!results.isEmpty()) {
+        return results;
+      }
+    }
+
+    return null;
+  }
+
+  @NotNull
+  public static List<PyParameter> getParameters(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+    final List<List<PyParameter>> parametersSet = getOverloadedParametersSet(callable, context);
+    assert !parametersSet.isEmpty();
+    return parametersSet.get(0);
   }
 
   public static boolean isSignatureCompatibleTo(@NotNull PyCallable callable, @NotNull PyCallable otherCallable,

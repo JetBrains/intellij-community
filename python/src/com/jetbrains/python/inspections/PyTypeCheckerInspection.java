@@ -21,8 +21,8 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -34,8 +34,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author vlan
@@ -87,44 +86,60 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     private void checkCallSite(@Nullable PyCallSiteExpression callSite) {
-      final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<PyGenericType, PyType>();
-      final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, myTypeEvalContext);
-      if (results != null) {
-        boolean genericsCollected = false;
-        for (Map.Entry<PyExpression, PyNamedParameter> entry : results.getArguments().entrySet()) {
-          final PyNamedParameter p = entry.getValue();
-          final PyExpression key = entry.getKey();
-          if (p.isPositionalContainer() || p.isKeywordContainer()) {
-            // TODO: Support *args, **kwargs
-            continue;
+      final List<PyTypeChecker.AnalyzeCallResults> resultsSet = PyTypeChecker.analyzeCallSite(callSite, myTypeEvalContext);
+      final List<Map<PyExpression, Pair<String, ProblemHighlightType>>> problemsSet = new ArrayList<Map<PyExpression, Pair<String, ProblemHighlightType>>>();
+      for (PyTypeChecker.AnalyzeCallResults results : resultsSet) {
+        problemsSet.add(checkMapping(results.getReceiver(), results.getArguments()));
+      }
+      if (!problemsSet.isEmpty()) {
+        Map<PyExpression, Pair<String, ProblemHighlightType>> minProblems = Collections.min(problemsSet, new Comparator<Map<PyExpression, Pair<String, ProblemHighlightType>>>() {
+          @Override
+          public int compare(Map<PyExpression, Pair<String, ProblemHighlightType>> o1,
+                             Map<PyExpression, Pair<String, ProblemHighlightType>> o2) {
+            return o1.size() - o2.size();
           }
-          if (p.hasDefaultValue()) {
-           final PyExpression value = p.getDefaultValue();
-            String keyName = key.getName();
-            if (key instanceof PyKeywordArgument) {
-              final PyExpression valueExpression = ((PyKeywordArgument)key).getValueExpression();
-              keyName = valueExpression != null ? valueExpression.getName() : "";
-            }
-            if (value != null && keyName != null && keyName.equals(value.getName()))
-              continue;
-          }
-          final PyType paramType = myTypeEvalContext.getType(p);
-          if (paramType == null) {
-            continue;
-          }
-          final PyType argType = myTypeEvalContext.getType(key);
-          if (!genericsCollected) {
-            substitutions.putAll(PyTypeChecker.unifyReceiver(results.getReceiver(), myTypeEvalContext));
-            genericsCollected = true;
-          }
-          checkTypes(paramType, argType, key, myTypeEvalContext, substitutions);
+        });
+        for (Map.Entry<PyExpression, Pair<String, ProblemHighlightType>> entry : minProblems.entrySet()) {
+          registerProblem(entry.getKey(), entry.getValue().getFirst(), entry.getValue().getSecond());
         }
       }
     }
 
+    @NotNull
+    private Map<PyExpression, Pair<String, ProblemHighlightType>> checkMapping(@Nullable PyExpression receiver,
+                                                                               @NotNull Map<PyExpression, PyNamedParameter> mapping) {
+      final Map<PyExpression, Pair<String, ProblemHighlightType>> problems = new HashMap<PyExpression, Pair<String, ProblemHighlightType>>();
+      final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<PyGenericType, PyType>();
+      boolean genericsCollected = false;
+      for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.entrySet()) {
+        final PyNamedParameter param = entry.getValue();
+        final PyExpression arg = entry.getKey();
+        if (param.isPositionalContainer() || param.isKeywordContainer()) {
+          continue;
+        }
+        final PyType paramType = myTypeEvalContext.getType(param);
+        if (paramType == null) {
+          continue;
+        }
+        final PyType argType = myTypeEvalContext.getType(arg);
+        if (!genericsCollected) {
+          substitutions.putAll(PyTypeChecker.unifyReceiver(receiver, myTypeEvalContext));
+          genericsCollected = true;
+        }
+        final Pair<String, ProblemHighlightType> problem = checkTypes(paramType, argType, myTypeEvalContext, substitutions);
+        if (problem != null) {
+          problems.put(arg, problem);
+
+        }
+      }
+      return problems;
+    }
+
     @Nullable
-    private String checkTypes(@Nullable PyType expected, @Nullable PyType actual, @Nullable PsiElement node,
-                              @NotNull TypeEvalContext context, @NotNull Map<PyGenericType, PyType> substitutions) {
+    private static Pair<String, ProblemHighlightType> checkTypes(@Nullable PyType expected,
+                                                                 @Nullable PyType actual,
+                                                                 @NotNull TypeEvalContext context,
+                                                                 @NotNull Map<PyGenericType, PyType> substitutions) {
       if (actual != null && expected != null) {
         if (!PyTypeChecker.match(expected, actual, context, substitutions)) {
           final String expectedName = PythonDocumentationProvider.getTypeName(expected, context);
@@ -162,8 +177,7 @@ public class PyTypeCheckerInspection extends PyInspection {
               }
             }
           }
-          registerProblem(node, msg, highlightType);
-          return msg;
+          return Pair.create(msg, highlightType);
         }
       }
       return null;
