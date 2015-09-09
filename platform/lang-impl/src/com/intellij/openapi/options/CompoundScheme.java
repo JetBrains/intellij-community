@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Constructor;
@@ -24,7 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class CompoundScheme<T extends SchemeElement> extends ExternalizableSchemeAdapter {
-  private final List<T> myElements = new ArrayList<T>();
+  protected final List<T> myElements = new SmartList<T>();
 
   public CompoundScheme(final String name) {
     myName = name;
@@ -36,12 +37,7 @@ public class CompoundScheme<T extends SchemeElement> extends ExternalizableSchem
     }
   }
 
-  public void insertElement(T element, final int i) {
-    if (!contains(element)) {
-      myElements.add(i, element);
-    }
-  }
-
+  @NotNull
   public List<T> getElements() {
     return Collections.unmodifiableList(new ArrayList<T>(myElements));
   }
