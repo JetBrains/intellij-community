@@ -557,7 +557,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPanel = new JPanel();
 
     UIUtil.putClientProperty(
-      myPanel, JBSwingUtilities.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
+      myPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
         @NotNull
         @Override
         public Iterator<JComponent> iterator() {
