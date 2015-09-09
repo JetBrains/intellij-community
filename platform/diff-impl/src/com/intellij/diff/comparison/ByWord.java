@@ -155,7 +155,7 @@ public class ByWord {
       int lastCount = lastRange.end1 - lastRange.start1;
 
       // merge chunks left [A]B[B] -> [AB]B
-      int equalLeft = equalRanges(words1, words2, lastRange.end1, lastRange.end2, count, true);
+      int equalLeft = expandForward(words1, words2, lastRange.end1, lastRange.end2, lastRange.end1 + count, lastRange.end2 + count);
       if (equalLeft == count) {
         newRanges.remove(newRanges.size() - 1);
         newRanges.add(new Range(lastRange.start1, lastRange.end1 + count, lastRange.start2, lastRange.end2 + count));
@@ -163,7 +163,7 @@ public class ByWord {
       }
 
       // merge chunks right [A]A[B] -> A[AB]
-      int equalRight = equalRanges(words1, words2, range.start1 - lastCount, range.start2 - lastCount, lastCount, false);
+      int equalRight = expandBackward(words1, words2, range.start1 - lastCount, range.start2 - lastCount, range.start1, range.start2);
       if (equalRight == lastCount) {
         newRanges.remove(newRanges.size() - 1);
         newRanges.add(new Range(range.start1 - lastCount, range.end1, range.start2 - lastCount, range.end2));
@@ -206,17 +206,6 @@ public class ByWord {
     return fair(createUnchanged(newRanges, words1.size(), words2.size()));
   }
 
-  private static <T> int equalRanges(@NotNull List<T> data1, @NotNull List<T> data2, int start1, int start2, int count,
-                                     boolean leftToRight) {
-    for (int i = 0; i < count; i++) {
-      int shift = leftToRight ? i : count - i - 1;
-      T val1 = data1.get(start1 + shift);
-      T val2 = data2.get(start2 + shift);
-      if (!val1.equals(val2)) return i;
-    }
-    return count;
-  }
-
   private static int findSequenceEdgeShift(@NotNull CharSequence text, @NotNull List<InlineChunk> words, int offset, int count,
                                            boolean leftToRight) {
     for (int i = 0; i < count; i++) {
@@ -246,6 +235,7 @@ public class ByWord {
     }
     return false;
   }
+
 
   @NotNull
   private static FairDiffIterable matchAdjustmentDelimiters(@NotNull CharSequence text1,
