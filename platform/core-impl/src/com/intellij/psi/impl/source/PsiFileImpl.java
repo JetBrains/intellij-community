@@ -164,6 +164,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public void markInvalidated() {
     myInvalidated = true;
+    DebugUtil.onInvalidated(this);
   }
 
   @Override
