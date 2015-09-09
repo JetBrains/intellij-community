@@ -46,6 +46,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -86,6 +87,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
@@ -189,6 +191,18 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     myTree = new FileStructureTree(myTreeStructure.getRootElement(), Registry.is("fast.tree.expand.in.structure.view"));
 
     myTree.setCellRenderer(new NodeRenderer());
+
+    myTree.setTransferHandler(new TransferHandler() {
+      @Override
+      public boolean importData(@NotNull TransferSupport support) {
+        String s = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+        if (s != null && !mySpeedSearch.isPopupActive()) {
+          mySpeedSearch.showPopup(s);
+          return true;
+        }
+        return false;
+      }
+    });
 
     mySpeedSearch = new MyTreeSpeedSearch();
     mySpeedSearch.setComparator(new SpeedSearchComparator(false, true) {
