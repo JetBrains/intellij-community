@@ -70,6 +70,8 @@ public abstract class GitPlatformTest extends PlatformTestCase {
     myTestRoot = new File(FileUtil.getTempDirectory(), "testRoot");
     myFilesToDelete.add(myTestRoot);
 
+    checkTestRootIsEmpty(myTestRoot);
+
     edt(new ThrowableRunnable() {
       @Override
       public void run() throws Exception {
@@ -97,6 +99,17 @@ public abstract class GitPlatformTest extends PlatformTestCase {
     GitTestUtil.assumeSupportedGitVersion(myVcs);
     addSilently();
     removeSilently();
+  }
+
+  private static void checkTestRootIsEmpty(@NotNull File testRoot) {
+    File[] files = testRoot.listFiles();
+    if (files != null && files.length > 0) {
+      LOG.warn("Test root was not cleaned up during some previous test run. " +
+               "testRoot: " + testRoot + ", files: " + Arrays.toString(files));
+      for (File file : files) {
+        LOG.assertTrue(FileUtil.delete(file));
+      }
+    }
   }
 
   @Override
