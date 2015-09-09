@@ -656,7 +656,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
       if (suspendContext != null
           && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD
           && isSteppingThrough(suspendContext.getThread())) {
-        context = suspendManager.pushSuspendContext(suspendContext.getSuspendPolicy(), 0);
+        context = ((SuspendManagerImpl)suspendManager).createDummyContext(suspendContext.getSuspendPolicy());
         context.setThread(suspendContext.getThread().getThreadReference());
       }
       final SuspendContextImpl currentContext = context;

@@ -114,6 +114,13 @@ public class SuspendManagerImpl implements SuspendManager {
     return suspendContext;
   }
 
+  public SuspendContextImpl createDummyContext(int suspendPolicy) {
+    return new SuspendContextImpl(myDebugProcess, suspendPolicy, 0, null) {
+      @Override
+      protected void resumeImpl() {}
+    };
+  }
+
   @Override
   public SuspendContextImpl pushSuspendContext(final EventSet set) {
     SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, set.suspendPolicy(), set.size(), set) {
