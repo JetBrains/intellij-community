@@ -49,6 +49,9 @@ public class LightAdvHighlightingJdk9Test extends LightDaemonAnalyzerTestCase {
   public void testTryWithResources() { doTest(false, false); }
 
   public void testDiamondsWithAnonymous() { doTest(false, false);}
+  public void testDiamondsWithAnonymousRejectInferredFreshVariables() { doTest(false, false);}
+  public void testDiamondsWithAnonymousRejectNotAccessibleType() { doTest(false, false);}
+  public void testDiamondsWithAnonymousRejectIntersectionType() { doTest(false, false);}
   
   public void testValueTypes() { setLanguageLevel(LanguageLevel.JDK_X); doTest(false, false); }
 }

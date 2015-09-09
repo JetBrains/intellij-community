@@ -1628,6 +1628,10 @@ public class InferenceSession {
     final PsiElement originalContext = p1.getUserData(ORIGINAL_CONTEXT);
     return originalContext != null && originalContext == p2.getUserData(ORIGINAL_CONTEXT);
   }
+  
+  public static boolean isFreshVariable(PsiTypeParameter typeParameter) {
+    return typeParameter.getUserData(ORIGINAL_CONTEXT) != null;
+  }
 
   public static PsiClass findParameterizationOfTheSameGenericClass(List<PsiType> upperBounds,
                                                                    Processor<Pair<PsiType, PsiType>> processor) {
