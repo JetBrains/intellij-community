@@ -96,8 +96,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private static final Logger log = Logger.getInstance(GitVcs.class.getName());
   private static final VcsKey ourKey = createKey(NAME);
 
-  private final ChangeProvider myChangeProvider;
-  private final GitCheckinEnvironment myCheckinEnvironment;
+  @Nullable private final ChangeProvider myChangeProvider;
+  @Nullable private final GitCheckinEnvironment myCheckinEnvironment;
   private final RollbackEnvironment myRollbackEnvironment;
   private final GitUpdateEnvironment myUpdateEnvironment;
   private final GitAnnotationProvider myAnnotationProvider;
@@ -114,7 +114,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
   private final TreeDiffProvider myTreeDiffProvider;
-  private final GitCommitAndPushExecutor myCommitAndPushExecutor;
+  @Nullable private final GitCommitAndPushExecutor myCommitAndPushExecutor;
   private final GitExecutableValidator myExecutableValidator;
   private GitBranchWidget myBranchWidget;
 
@@ -155,7 +155,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
-    myCommitAndPushExecutor = new GitCommitAndPushExecutor(myCheckinEnvironment);
+    myCommitAndPushExecutor = myCheckinEnvironment != null ? new GitCommitAndPushExecutor(myCheckinEnvironment) : null;
     myExecutableValidator = new GitExecutableValidator(myProject);
   }
 
@@ -184,7 +184,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public CheckinEnvironment createCheckinEnvironment() {
     return myCheckinEnvironment;
   }
@@ -523,7 +523,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public List<CommitExecutor> getCommitExecutors() {
-    return Collections.<CommitExecutor>singletonList(myCommitAndPushExecutor);
+    return myCommitAndPushExecutor != null
+           ? Collections.<CommitExecutor>singletonList(myCommitAndPushExecutor)
+           : Collections.<CommitExecutor>emptyList();
   }
 
   @NotNull
