@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocCommentOwner;
@@ -140,7 +139,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     try {
       ADDITIONAL_ANNOTATIONS.readExternal(element);
     }
-    catch (InvalidDataException ignored) {
+    catch (Throwable ignored) {
     }
   }
 

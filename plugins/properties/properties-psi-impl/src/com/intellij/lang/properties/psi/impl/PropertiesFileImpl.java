@@ -150,7 +150,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @NotNull
   public PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException {
     final IProperty position = findInsertionPosition(property);
-    return addPropertyAfter((Property)property, (Property)position);
+    return addPropertyAfter(property, position);
   }
 
   private IProperty findInsertionPosition(@NotNull IProperty property) {
@@ -177,11 +177,11 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
 
   @Override
   @NotNull
-  public PsiElement addPropertyAfter(@NotNull final Property property, @Nullable final Property anchor) throws IncorrectOperationException {
-    final TreeElement copy = ChangeUtil.copyToElement(property);
+  public PsiElement addPropertyAfter(@NotNull final IProperty property, @Nullable final IProperty anchor) throws IncorrectOperationException {
+    final TreeElement copy = ChangeUtil.copyToElement(property.getPsiElement());
     List<IProperty> properties = getProperties();
     ASTNode anchorBefore = anchor == null ? properties.isEmpty() ? null : properties.get(0).getPsiElement().getNode()
-                           : anchor.getNode().getTreeNext();
+                           : anchor.getPsiElement().getNode().getTreeNext();
     if (anchorBefore != null) {
       if (anchorBefore.getElementType() == TokenType.WHITE_SPACE) {
         anchorBefore = anchorBefore.getTreeNext();
@@ -205,8 +205,8 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
 
   @NotNull
   @Override
-  public IProperty addPropertyAfter(String key, String value, @Nullable Property anchor) {
-    return (IProperty)addPropertyAfter((Property) PropertiesElementFactory.createProperty(getProject(), key, value), anchor);
+  public IProperty addPropertyAfter(String key, String value, @Nullable IProperty anchor) {
+    return (IProperty)addPropertyAfter(PropertiesElementFactory.createProperty(getProject(), key, value), anchor);
   }
 
   private void insertLineBreakBefore(final ASTNode anchorBefore) {

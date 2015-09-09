@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.patterns;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -45,6 +46,16 @@ public class StandardPatterns {
 
   public static <T> ObjectPattern.Capture<T> instanceOf(Class<T> aClass) {
     return new ObjectPattern.Capture<T>(aClass);
+  }
+
+  public static <T> ElementPattern<T> instanceOf(@NotNull Class<T>... classes) {
+    ElementPattern[] patterns = ContainerUtil.map(classes, new Function<Class<T>, ElementPattern>() {
+      @Override
+      public ElementPattern fun(Class<T> aClass) {
+        return instanceOf(aClass);
+      }
+    }, new ElementPattern[0]);
+    return or(patterns);
   }
 
   public static <T> ElementPattern save(final Key<T> key) {

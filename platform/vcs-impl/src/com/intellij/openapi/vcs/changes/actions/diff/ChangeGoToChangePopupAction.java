@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
@@ -9,8 +10,13 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -18,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -112,6 +119,79 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
           myOnSelected.consume(index);
         }
       });
+    }
+  }
+
+  public abstract static class Fake<Chain extends DiffRequestChain> extends ChangeGoToChangePopupAction<Chain> {
+    @NotNull private final List<Change> myChanges;
+    private final int mySelection;
+
+    @SuppressWarnings("AbstractMethodCallInConstructor")
+    public Fake(@NotNull Chain chain, int selection, @NotNull Consumer onSelected) {
+      super(chain, onSelected);
+
+      mySelection = selection;
+
+      // we want to show ChangeBrowser-based popup, so have to create some fake changes
+      List<? extends DiffRequestProducer> requests = chain.getRequests();
+
+      myChanges = new ArrayList<Change>(requests.size());
+      for (int i = 0; i < requests.size(); i++) {
+        FilePath path = getFilePath(i);
+        FileStatus status = getFileStatus(i);
+        FakeContentRevision revision = new FakeContentRevision(path);
+        myChanges.add(new Change(revision, revision, status));
+      }
+    }
+
+    @NotNull
+    protected abstract FilePath getFilePath(int index);
+
+    @NotNull
+    protected abstract FileStatus getFileStatus(int index);
+
+    @Override
+    protected int findSelectedStep(@Nullable Change change) {
+      return myChanges.indexOf(change);
+    }
+
+    @NotNull
+    @Override
+    protected List<Change> getChanges() {
+      return myChanges;
+    }
+
+    @Nullable
+    @Override
+    protected Change getCurrentSelection() {
+      if (mySelection < 0 || mySelection >= myChanges.size()) return null;
+      return myChanges.get(mySelection);
+    }
+
+    private static class FakeContentRevision implements ContentRevision {
+      @NotNull private final FilePath myFilePath;
+
+      public FakeContentRevision(@NotNull FilePath filePath) {
+        myFilePath = filePath;
+      }
+
+      @Nullable
+      @Override
+      public String getContent() throws VcsException {
+        return null;
+      }
+
+      @NotNull
+      @Override
+      public FilePath getFile() {
+        return myFilePath;
+      }
+
+      @NotNull
+      @Override
+      public VcsRevisionNumber getRevisionNumber() {
+        return VcsRevisionNumber.NULL;
+      }
     }
   }
 }

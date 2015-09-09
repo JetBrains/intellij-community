@@ -308,10 +308,10 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
 
     final String checkBoxName = myModel.getCheckBoxName();
     myCheckBox = new JCheckBox(checkBoxName != null ? checkBoxName +
-                                                      (myCheckBoxShortcut != null ? " (" +
-                                                                                    KeymapUtil
-                                                                                      .getShortcutsText(myCheckBoxShortcut.getShortcuts()) +
-                                                                                    ")" : "") : "");
+                                                      (myCheckBoxShortcut != null && myCheckBoxShortcut.getShortcuts().length > 0
+                                                       ? " (" + KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts()) + ")"
+                                                       : "")
+                                                    : "");
     myCheckBox.setAlignmentX(SwingConstants.RIGHT);
 
     if (!SystemInfo.isMac) {
@@ -519,16 +519,16 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
         }
         switch (keyCode) {
           case KeyEvent.VK_DOWN:
-            ListScrollingUtil.moveDown(myList, e.getModifiersEx());
+            ScrollingUtil.moveDown(myList, e.getModifiersEx());
             break;
           case KeyEvent.VK_UP:
-            ListScrollingUtil.moveUp(myList, e.getModifiersEx());
+            ScrollingUtil.moveUp(myList, e.getModifiersEx());
             break;
           case KeyEvent.VK_PAGE_UP:
-            ListScrollingUtil.movePageUp(myList);
+            ScrollingUtil.movePageUp(myList);
             break;
           case KeyEvent.VK_PAGE_DOWN:
-            ListScrollingUtil.movePageDown(myList);
+            ScrollingUtil.movePageDown(myList);
             break;
           case KeyEvent.VK_TAB:
             close(true);
@@ -544,10 +544,10 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
 
         if (myList.getSelectedValue() == NON_PREFIX_SEPARATOR) {
           if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_PAGE_UP) {
-            ListScrollingUtil.moveUp(myList, e.getModifiersEx());
+            ScrollingUtil.moveUp(myList, e.getModifiersEx());
           }
           else {
-            ListScrollingUtil.moveDown(myList, e.getModifiersEx());
+            ScrollingUtil.moveDown(myList, e.getModifiersEx());
           }
         }
       }
@@ -778,7 +778,7 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
   protected void selectItem(int selectionPos) {
     if (!myListModel.isEmpty()) {
       int pos = selectionPos <= 0 ? detectBestStatisticalPosition() : selectionPos;
-      ListScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
+      ScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
     }
   }
 

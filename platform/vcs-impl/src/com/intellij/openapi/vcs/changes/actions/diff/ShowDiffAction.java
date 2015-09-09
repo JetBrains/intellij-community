@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -65,7 +66,11 @@ public class ShowDiffAction extends AnAction implements DumbAware {
   }
 
   protected static boolean canShowDiff(@Nullable Project project, @Nullable Change[] changes) {
-    if (changes == null || changes.length == 0) return false;
+    return changes != null && canShowDiff(project, Arrays.asList(changes));
+  }
+
+  protected static boolean canShowDiff(@Nullable Project project, @Nullable List<Change> changes) {
+    if (changes == null || changes.size() == 0) return false;
     for (Change change : changes) {
       if (ChangeDiffRequestProducer.canCreate(project, change)) return true;
     }

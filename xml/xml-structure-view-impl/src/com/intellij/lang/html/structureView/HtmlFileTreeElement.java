@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ class HtmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
 
     if (myInStructureViewPopup) {
       final String propertyName = TreeStructureUtil.getPropertyName(Html5SectionsNodeProvider.HTML5_OUTLINE_PROVIDER_PROPERTY);
-      if (PropertiesComponent.getInstance().getBoolean(propertyName, false)) {
+      if (PropertiesComponent.getInstance().getBoolean(propertyName)) {
         return true;
       }
     }

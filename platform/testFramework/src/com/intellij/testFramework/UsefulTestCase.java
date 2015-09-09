@@ -17,7 +17,6 @@ package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -56,7 +55,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
-import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -107,6 +105,7 @@ public abstract class UsefulTestCase extends TestCase {
   };
 
   protected static String ourPathToKeep = null;
+  private List<String> myPathsToKeep = new ArrayList<String>();
 
   private CodeStyleSettings myOldCodeStyleSettings;
   private String myTempDir;
@@ -156,11 +155,11 @@ public abstract class UsefulTestCase extends TestCase {
     finally {
       if (shouldContainTempFiles()) {
         FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-        if (ourPathToKeep != null && FileUtil.isAncestor(myTempDir, ourPathToKeep, false)) {
+        if (hasTmpFilesToKeep()) {
           File[] files = new File(myTempDir).listFiles();
           if (files != null) {
             for (File file : files) {
-              if (!FileUtil.pathsEqual(file.getPath(), ourPathToKeep)) {
+              if (!shouldKeepTmpFile(file)) {
                 FileUtil.delete(file);
               }
             }
@@ -174,6 +173,23 @@ public abstract class UsefulTestCase extends TestCase {
 
     UIUtil.removeLeakingAppleListeners();
     super.tearDown();
+  }
+
+  protected void addTmpFileToKeep(File file) {
+    myPathsToKeep.add(file.getPath());
+  }
+
+  private boolean hasTmpFilesToKeep() {
+    return ourPathToKeep != null && FileUtil.isAncestor(myTempDir, ourPathToKeep, false) || !myPathsToKeep.isEmpty();
+  }
+
+  private boolean shouldKeepTmpFile(File file) {
+    String path = file.getPath();
+    if (FileUtil.pathsEqual(path, ourPathToKeep)) return true;
+    for (String pathToKeep : myPathsToKeep) {
+      if (FileUtil.pathsEqual(path, pathToKeep)) return true;
+    }
+    return false;
   }
 
   private static final Set<String> DELETE_ON_EXIT_HOOK_DOT_FILES;
@@ -332,13 +348,29 @@ public abstract class UsefulTestCase extends TestCase {
     return PlatformTestUtil.canRunTest(getClass());
   }
 
-  public static void edt(Runnable r) {
-    UIUtil.invokeAndWaitIfNeeded(r);
+  public static void edt(@NotNull final ThrowableRunnable r) {
+    try {
+      UIUtil.invokeAndWaitIfNeeded(r);
+    }
+    catch (RuntimeException re) {
+      throw re;
+    }
+    catch (Throwable throwable) {
+      throw new RuntimeException(throwable);
+    }
+  }
+
+  public static void edt(@NotNull final Runnable r) {
+    edt(new ThrowableRunnable() {
+      @Override
+      public void run() throws Throwable {
+        r.run();
+      }
+    });
   }
 
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(runnable);
-    //runnable.run();
+    edt(runnable);
   }
 
   protected void defaultRunBare() throws Throwable {
@@ -394,51 +426,18 @@ public abstract class UsefulTestCase extends TestCase {
     System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalTeardownMs' value='%d']", totalTeardown));
   }
 
-  public static void replaceIdeEventQueueSafely() {
-    if (Toolkit.getDefaultToolkit().getSystemEventQueue() instanceof IdeEventQueue) {
-      return;
-    }
-    if (SwingUtilities.isEventDispatchThread()) {
-      throw new RuntimeException("must not call under EDT");
-    }
-    AWTAutoShutdown.getInstance().notifyThreadBusy(Thread.currentThread());
-    UIUtil.pump();
-    // in JDK 1.6 java.awt.EventQueue.push() causes slow painful death of current EDT
-    // so we have to wait through its agony to termination
-    try {
-      SwingUtilities.invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          IdeEventQueue.getInstance();
-        }
-      });
-      SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
-      SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   @Override
   public void runBare() throws Throwable {
     if (!shouldRunTest()) return;
 
     if (runInDispatchThread()) {
-      replaceIdeEventQueueSafely();
-      final Throwable[] exception = {null};
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      TestRunnerUtil.replaceIdeEventQueueSafely();
+      EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
         @Override
-        public void run() {
-          try {
-            defaultRunBare();
-          }
-          catch (Throwable tearingDown) {
-            if (exception[0] == null) exception[0] = tearingDown;
-          }
+        public void run() throws Throwable {
+          defaultRunBare();
         }
       });
-      if (exception[0] != null) throw exception[0];
     }
     else {
       defaultRunBare();

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +87,7 @@ public class EclipseClasspathWriter {
     return classpathElement;
   }
 
-  private void createClasspathEntry(@NotNull OrderEntry entry, @NotNull Element classpathRoot, @NotNull ModuleRootModel model) throws ConversionException {
+  private void createClasspathEntry(@NotNull OrderEntry entry, @NotNull Element classpathRoot, @NotNull final ModuleRootModel model) throws ConversionException {
     EclipseModuleManager eclipseModuleManager = EclipseModuleManagerImpl.getInstance(entry.getOwnerModule());
     if (entry instanceof ModuleSourceOrderEntry) {
       boolean shouldPlaceSeparately = eclipseModuleManager.isExpectedModuleSourcePlace(Arrays.binarySearch(model.getOrderEntries(), entry));
@@ -185,6 +186,16 @@ public class EclipseClasspathWriter {
             setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, addSrcRoots ? (eclipseSrcVariablePath != null ? eclipseSrcVariablePath : srcRelativePath) : null);
 
             EJavadocUtil.setupJavadocAttributes(orderEntry, libraryOrderEntry, model);
+
+            final String[] nativeRoots = libraryOrderEntry.getUrls(NativeLibraryOrderRootType.getInstance());
+            if (nativeRoots.length > 0) {
+              EJavadocUtil.setupAttributes(orderEntry, new Function<String, String>() {
+                @Override
+                public String fun(String nativeRoot) {
+                  return EPathUtil.collapse2EclipsePath(nativeRoot, model);
+                }
+              }, EclipseXml.DLL_LINK, nativeRoots);
+            }
             setExported(orderEntry, libraryOrderEntry);
           }
         }

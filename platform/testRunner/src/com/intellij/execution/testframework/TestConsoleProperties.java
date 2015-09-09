@@ -15,7 +15,9 @@
  */
 package com.intellij.execution.testframework;
 
+import com.intellij.execution.DefaultExecutionTarget;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -218,5 +220,10 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   @JdkConstants.TreeSelectionMode
   protected int getSelectionMode() {
     return TreeSelectionModel.SINGLE_TREE_SELECTION;
+  }
+  
+  @NotNull
+  public ExecutionTarget getExecutionTarget() {
+    return DefaultExecutionTarget.INSTANCE;
   }
 }

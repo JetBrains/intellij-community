@@ -24,7 +24,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.RemoteDesktopDetector;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,7 +46,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ScrollingModelImpl implements ScrollingModelEx {
@@ -119,9 +119,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   @Override
   public Rectangle getVisibleArea() {
     assertIsDispatchThread();
-    if (myEditor.getScrollPane() == null) {
-      return new Rectangle(0, 0, 0, 0);
-    }
     return myEditor.getScrollPane().getViewport().getViewRect();
   }
 
@@ -146,7 +143,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   @Override
   public void scrollTo(@NotNull LogicalPosition pos, @NotNull ScrollType scrollType) {
     assertIsDispatchThread();
-    if (myEditor.getScrollPane() == null) return;
 
     AnimatedScrollingRunnable canceledThread = cancelAnimatedScrolling(false);
     Rectangle viewRect = canceledThread != null ? canceledThread.getTargetVisibleArea() : getVisibleArea();
@@ -203,7 +199,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
       hOffset = hOffset > 0 ? hOffset : 0;
     }
     else if (targetLocation.x >= hOffset + viewRect.width) {
-      hOffset = targetLocation.x - viewRect.width + xInsets;
+      hOffset = targetLocation.x - Math.max(0, viewRect.width - xInsets);
     }
 
     // the following code tries to keeps 1 line above and 1 line below if available in viewRect
@@ -259,8 +255,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   @Nullable
   public JScrollBar getHorizontalScrollBar() {
     assertIsDispatchThread();
-    if (myEditor.getScrollPane() == null) return null;
-
     return myEditor.getScrollPane().getHorizontalScrollBar();
   }
 
@@ -289,7 +283,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
   private void _scrollVertically(int scrollOffset) {
     assertIsDispatchThread();
-    if (myEditor.getScrollPane() == null) return;
 
     myEditor.validateSize();
     JScrollBar scrollbar = myEditor.getScrollPane().getVerticalScrollBar();
@@ -304,7 +297,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
   private void _scrollHorizontally(int scrollOffset) {
     assertIsDispatchThread();
-    if (myEditor.getScrollPane() == null) return;
 
     myEditor.validateSize();
     JScrollBar scrollbar = myEditor.getScrollPane().getHorizontalScrollBar();
@@ -323,7 +315,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     VisibleEditorsTracker editorsTracker = VisibleEditorsTracker.getInstance();
     boolean useAnimation;
     //System.out.println("myCurrentCommandStart - myLastCommandFinish = " + (myCurrentCommandStart - myLastCommandFinish));
-    if (!myEditor.getSettings().isAnimatedScrolling() || myAnimationDisabled || UISettings.isRemoteDesktopConnected()) {
+    if (!myEditor.getSettings().isAnimatedScrolling() || myAnimationDisabled || RemoteDesktopDetector.isRemoteSession()) {
       useAnimation = false;
     }
     else if (CommandProcessor.getInstance().getCurrentCommand() == null) {

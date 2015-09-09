@@ -85,7 +85,7 @@ public class ActionStepBuilder {
     appendActionsFromGroup(actionGroup);
 
     if (myListModel.isEmpty()) {
-      myListModel.add(new PopupFactoryImpl.ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, false, null, false, null));
+      myListModel.add(new PopupFactoryImpl.ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, null, false, null, false, null));
     }
   }
 
@@ -194,7 +194,9 @@ public class ActionStepBuilder {
       }
       boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
       assert text != null : action + " has no presentation";
-      myListModel.add(new PopupFactoryImpl.ActionItem(action, text, presentation.isEnabled(), icon, prependSeparator, mySeparatorText));
+      myListModel.add(
+        new PopupFactoryImpl.ActionItem(action, text, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY), presentation.isEnabled(), icon,
+                                        prependSeparator, mySeparatorText));
       myPrependWithSeparator = false;
       mySeparatorText = null;
     }

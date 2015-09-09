@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -191,6 +192,9 @@ public class SearchDialog extends DialogWrapper {
               });
             }
           });
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch (RuntimeException e) {
           Logger.getInstance(SearchDialog.class).error(e);

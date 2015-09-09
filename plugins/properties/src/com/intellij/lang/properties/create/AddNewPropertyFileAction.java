@@ -47,10 +47,8 @@ public class AddNewPropertyFileAction extends AnAction {
         final ResourceBundle resourceBundle = (ResourceBundle)((ProjectViewNode)data[0]).getValue();
         LOG.assertTrue(resourceBundle != null);
         if (CreateResourceBundleDialogComponent.getResourceBundlePlacementDirectory(resourceBundle) != null) {
-          if (resourceBundle.getDefaultPropertiesFile() instanceof PropertiesFileImpl) {
-            e.getPresentation().setEnabledAndVisible(true);
-            return;
-          }
+          e.getPresentation().setEnabledAndVisible(true);
+          return;
         }
       }
     }

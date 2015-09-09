@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.rename;
 
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
@@ -78,8 +79,9 @@ public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
 
     PsiManager psiManager = value.getManager();
     LOG.assertTrue(psiManager != null);
-    XmlFile file = (XmlFile)PsiFileFactory.getInstance(psiManager.getProject()).createFileFromText("dummy.xml", "<a attr=\"" + newName + "\"/>");
-    final PsiElement element = value.replace(file.getDocument().getRootTag().getAttributes()[0].getValueElement());
+    XmlFile file = (XmlFile)PsiFileFactory.getInstance(psiManager.getProject()).createFileFromText("dummy.xml", XMLLanguage.INSTANCE, "<a attr=\"" + newName + "\"/>");
+    @SuppressWarnings("ConstantConditions")
+    PsiElement element = value.replace(file.getRootTag().getAttributes()[0].getValueElement());
     if (listener != null) {
       listener.elementRenamed(element);
     }

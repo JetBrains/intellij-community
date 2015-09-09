@@ -526,9 +526,7 @@ public final class PsiUtil extends PsiUtilCore {
 
       if (isRaw) {
         final PsiType erasedParamType = TypeConversionUtil.erasure(parmType);
-        final PsiType erasedArgType = TypeConversionUtil.erasure(argType);
-        if (erasedArgType != null &&  erasedParamType != null &&
-            function.isApplicable(erasedParamType, erasedArgType, allowUncheckedConversion, parms.length - 1)) {
+        if (erasedParamType != null && function.isApplicable(erasedParamType, argType, allowUncheckedConversion, parms.length - 1)) {
           return ApplicabilityLevel.FIXED_ARITY;
         }
       }
@@ -536,8 +534,8 @@ public final class PsiUtil extends PsiUtilCore {
 
     if (checkVarargs && method.isVarArgs() && languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
       if (args.length < parms.length) return ApplicabilityLevel.VARARGS;
-      PsiParameter lastParameter = parms[parms.length - 1];
-      if (!lastParameter.isVarArgs()) return ApplicabilityLevel.NOT_APPLICABLE;
+      PsiParameter lastParameter = parms.length == 0 ? null : parms[parms.length - 1];
+      if (lastParameter == null || !lastParameter.isVarArgs()) return ApplicabilityLevel.NOT_APPLICABLE;
       PsiType lastParmType = getParameterType(lastParameter, languageLevel, substitutorForMethod);
       if (!(lastParmType instanceof PsiArrayType)) return ApplicabilityLevel.NOT_APPLICABLE;
       lastParmType = ((PsiArrayType)lastParmType).getComponentType();
@@ -570,8 +568,7 @@ public final class PsiUtil extends PsiUtilCore {
       final PsiType substitutedParmType = getParameterType(parameter, languageLevel, substitutorForMethod);
       if (isRaw) {
         final PsiType substErasure = TypeConversionUtil.erasure(substitutedParmType);
-        final PsiType typeErasure = TypeConversionUtil.erasure(type);
-        if (substErasure != null && typeErasure != null && !function.isApplicable(substErasure, typeErasure, allowUncheckedConversion, i)) {
+        if (substErasure != null && !function.isApplicable(substErasure, type, allowUncheckedConversion, i)) {
           return false;
         }
       }
@@ -1247,11 +1244,11 @@ public final class PsiUtil extends PsiUtilCore {
     return false;
   }
 
-  public static PsiReturnStatement[] findReturnStatements(PsiMethod method) {
+  public static PsiReturnStatement[] findReturnStatements(@NotNull PsiMethod method) {
     return findReturnStatements(method.getBody());
   }
 
-  public static PsiReturnStatement[] findReturnStatements(PsiCodeBlock body) {
+  public static PsiReturnStatement[] findReturnStatements(@Nullable PsiCodeBlock body) {
     ArrayList<PsiReturnStatement> vector = new ArrayList<PsiReturnStatement>();
     if (body != null) {
       addReturnStatements(vector, body);

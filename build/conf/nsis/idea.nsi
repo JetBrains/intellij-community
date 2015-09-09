@@ -852,10 +852,15 @@ skip_properties:
   ; set the current time for installation files under $INSTDIR\bin
   ExecCmd::exec 'copy "$INSTDIR\bin\*.*s" +,,'
   call winVersion
-  ${If} $0 == "1"  
+  ${If} $0 == "1"
     ;ExecCmd::exec 'icacls "$INSTDIR" /grant %username%:F /T >"$INSTDIR"\installation_log.txt 2>"$INSTDIR"\installation_error.txt'
     AccessControl::GrantOnFile \
       "$INSTDIR" "(S-1-5-32-545)" "GenericRead + GenericExecute"
+    AccessControl::GrantOnFile \
+      "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions" "(S-1-5-32-545)" "GenericRead + GenericWrite"
+    ${StrRep} $0 ${PRODUCT_EXE_FILE} ".exe" "64.exe.vmoptions"
+    AccessControl::GrantOnFile \
+      "$INSTDIR\bin\$0" "(S-1-5-32-545)" "GenericRead + GenericWrite"
   ${EndIf}
 SectionEnd
 

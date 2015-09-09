@@ -24,16 +24,17 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInspection.ex.PerformFixesModalTask;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SequentialModalProgressTask;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -87,30 +88,22 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
         return d2.getTextRange().getStartOffset() - d1.getTextRange().getStartOffset();
       }
     });
-    boolean applicableFixFound = false;
-    for (final ProblemDescriptor descriptor : descriptions) {
-      final QuickFix[] fixes = descriptor.getFixes();
-      if (fixes != null && fixes.length > 0) {
-        for (final QuickFix<CommonProblemDescriptor> fix : fixes) {
-          if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
-            final PsiElement element = descriptor.getPsiElement();
-            if (element != null && element.isValid()) {
-              applicableFixFound = true;
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  fix.applyFix(project, descriptor);
-                }
-              });
-              PsiDocumentManager.getInstance(project).commitAllDocuments();
-            }
-            break;
-          }
-        }
+    
+    final String templatePresentationText = "Apply Fixes";
+    final SequentialModalProgressTask progressTask =
+      new SequentialModalProgressTask(project, templatePresentationText, true);
+    final PerformFixesTask fixesTask = new PerformFixesTask(project, descriptions.toArray(new CommonProblemDescriptor[descriptions.size()]), progressTask);
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
+      public void run() {
+        CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+        progressTask.setMinIterationTime(200);
+        progressTask.setTask(fixesTask);
+        ProgressManager.getInstance().run(progressTask);
       }
-    }
+    }, templatePresentationText, null);
 
-    if (!applicableFixFound) {
+    if (!fixesTask.isApplicableFixFound()) {
       HintManager.getInstance().showErrorHint(editor, "Unfortunately '" + myText + "' is currently not available for batch mode");
     }
   }
@@ -124,5 +117,36 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+  
+  private class PerformFixesTask extends PerformFixesModalTask {
+    private boolean myApplicableFixFound = false;
+
+    public PerformFixesTask(@NotNull Project project,
+                            @NotNull CommonProblemDescriptor[] descriptors,
+                            @NotNull SequentialModalProgressTask task) {
+      super(project, descriptors, task);
+    }
+
+    @Override
+    protected void applyFix(Project project, CommonProblemDescriptor descriptor) {
+      final QuickFix[] fixes = descriptor.getFixes();
+      if (fixes != null && fixes.length > 0) {
+        for (final QuickFix<CommonProblemDescriptor> fix : fixes) {
+          if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
+            final PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+            if (element != null && element.isValid()) {
+              fix.applyFix(project, descriptor);
+              myApplicableFixFound = true;
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    public boolean isApplicableFixFound() {
+      return myApplicableFixFound;
+    }
   }
 }

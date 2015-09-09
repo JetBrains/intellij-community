@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.frame.*;
 import com.sun.jdi.Field;
 import com.sun.jdi.ReferenceType;
@@ -50,8 +51,17 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
   @Nullable
   @Override
   public String getComment() {
-    final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
-    return classRenderer.renderTypeName(myStaticDescriptor.getType().name());
+    String res = NodeRendererSettings.getInstance().getClassRenderer().renderTypeName(myStaticDescriptor.getType().name());
+    if (!StringUtil.isEmpty(res)) {
+      return " members of " + res;
+    }
+    return res;
+  }
+
+  @NotNull
+  @Override
+  public String getSeparator() {
+    return "";
   }
 
   @Nullable

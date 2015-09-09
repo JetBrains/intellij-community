@@ -15,10 +15,13 @@
  */
 package com.intellij.execution.testframework.export;
 
+import com.intellij.execution.DefaultExecutionTarget;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.filters.Filter;
+import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.testframework.*;
@@ -71,6 +74,7 @@ public class TestResultsXmlFormatter {
   private final ContentHandler myResultHandler;
   private final AbstractTestProxy myTestRoot;
   private final boolean myHidePassedConfig;
+  private final ExecutionTarget myExecutionTarget;
 
   public static void execute(AbstractTestProxy root, RunConfiguration runtimeConfiguration, TestConsoleProperties properties, ContentHandler resultHandler)
     throws SAXException {
@@ -85,6 +89,7 @@ public class TestResultsXmlFormatter {
     myTestRoot = root;
     myResultHandler = resultHandler;
     myHidePassedConfig = TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG.value(properties);
+    myExecutionTarget = properties.getExecutionTarget();
   }
 
   private void execute() throws SAXException {
@@ -129,6 +134,9 @@ public class TestResultsXmlFormatter {
       myRuntimeConfiguration.writeExternal(config);
       config.setAttribute("configId", myRuntimeConfiguration.getType().getId());
       config.setAttribute("name", myRuntimeConfiguration.getName());
+      if (!DefaultExecutionTarget.INSTANCE.equals(myExecutionTarget)) {
+        config.setAttribute("target", myExecutionTarget.getId());
+      }
     }
     catch (WriteExternalException ignore) {}
     processJDomElement(config);
@@ -237,9 +245,11 @@ public class TestResultsXmlFormatter {
     final Ref<ConsoleViewContentType> lastType = new Ref<ConsoleViewContentType>();
     final Ref<SAXException> error = new Ref<SAXException>();
 
+    final int bufferSize = ConsoleBuffer.useCycleBuffer() ? ConsoleBuffer.getCycleBufferSize() : -1;
     final Printer printer = new Printer() {
       @Override
       public void print(String text, ConsoleViewContentType contentType) {
+        ProgressManager.checkCanceled();
         if (contentType != lastType.get()) {
           if (buffer.length() > 0) {
             try {
@@ -251,7 +261,9 @@ public class TestResultsXmlFormatter {
           }
           lastType.set(contentType);
         }
-        buffer.append(text);
+        if (bufferSize < 0 || buffer.length() < bufferSize) {
+          buffer.append(text);
+        }
       }
 
       @Override

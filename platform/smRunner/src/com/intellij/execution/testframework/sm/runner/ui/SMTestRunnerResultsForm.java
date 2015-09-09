@@ -15,6 +15,8 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.testframework.*;
@@ -41,6 +43,7 @@ import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -326,7 +329,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       return;
     }
     final TestsUIUtil.TestResultPresentation presentation = new TestsUIUtil.TestResultPresentation(testsRoot, myStartTime > 0, null)
-      .getPresentation(myFailedTestCount, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount, myTotalTestCount - myFinishedTestCount, myIgnoredTestCount);
+      .getPresentation(myFailedTestCount, 
+                       Math.max(0, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount), 
+                       myTotalTestCount - myFinishedTestCount, 
+                       myIgnoredTestCount);
     TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation);
     addToHistory(testsRoot, myProperties, this);
   }
@@ -335,7 +341,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                    TestConsoleProperties consoleProperties,
                                    Disposable parentDisposable) {
     final RunProfile configuration = consoleProperties.getConfiguration();
-    if (configuration instanceof RunConfiguration && !(consoleProperties instanceof ImportedTestConsoleProperties)) {
+    if (configuration instanceof RunConfiguration && 
+        !(consoleProperties instanceof ImportedTestConsoleProperties) &&
+        !ApplicationManager.getApplication().isUnitTestMode()) {
       final MySaveHistoryTask backgroundable = new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration);
       final BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(backgroundable);
       Disposer.register(parentDisposable, new Disposable() {
@@ -346,12 +354,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         }
       });
       Disposer.register(parentDisposable, processIndicator);
-
-      CompositePrintable.invokeInAlarm(new Runnable() {
-        public void run() {
-          ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, processIndicator);
-        }
-      });
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, processIndicator);
     }
   }
 
@@ -798,6 +801,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
+      writeState();
+      DaemonCodeAnalyzer.getInstance(getProject()).restart();
       try {
         SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
         TransformerHandler handler = transformerFactory.newTransformerHandler();
@@ -807,7 +812,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         final String configurationNameIncludedDate = PathUtil.suggestFileName(myConfiguration.getName()) + " - " +
                                                      new SimpleDateFormat(HISTORY_DATE_FORMAT).format(new Date());
 
-        myOutputFile = new File(AbstractImportTestsAction.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml");
+        myOutputFile = new File(TestStateStorage.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml");
+        FileUtilRt.createParentDirs(myOutputFile);
         handler.setResult(new StreamResult(new FileWriter(myOutputFile)));
         final SMTestProxy.SMRootTestProxy root = myRoot;
         final RunConfiguration configuration = myConfiguration;
@@ -823,6 +829,17 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       }
     }
 
+    private void writeState() {
+      TestStateStorage storage = TestStateStorage.getInstance(getProject());
+      List<SMTestProxy> tests = myRoot.getAllTests();
+      for (SMTestProxy proxy : tests) {
+        String url = proxy instanceof SMTestProxy.SMRootTestProxy ? ((SMTestProxy.SMRootTestProxy)proxy).getRootLocation() : proxy.getLocationUrl();
+        if (url != null) {
+          storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date()));
+        }
+      }
+
+    }
     @Override
     public void onSuccess() {
       if (myOutputFile != null && myOutputFile.exists()) {

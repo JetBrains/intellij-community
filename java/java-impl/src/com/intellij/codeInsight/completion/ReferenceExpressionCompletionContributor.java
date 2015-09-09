@@ -17,14 +17,12 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
@@ -33,7 +31,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -42,12 +39,12 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -74,9 +71,8 @@ public class ReferenceExpressionCompletionContributor {
       return this;
     }
   };
-
-  private ReferenceExpressionCompletionContributor() {
-  }
+  public static final ElementPattern<PsiElement> IN_SWITCH_LABEL =
+    psiElement().withSuperParent(2, psiElement(PsiSwitchLabelStatement.class).withSuperParent(2, PsiSwitchStatement.class));
 
   @NotNull 
   private static ElementFilter getReferenceFilter(PsiElement element, boolean allowRecursion) {
@@ -125,7 +121,7 @@ public class ReferenceExpressionCompletionContributor {
   public static Runnable fillCompletionVariants(final JavaSmartCompletionParameters parameters, final Consumer<LookupElement> result) {
     final PsiElement element = parameters.getPosition();
     if (JavaSmartCompletionContributor.INSIDE_TYPECAST_EXPRESSION.accepts(element)) return null;
-    if (JavaCompletionData.isAfterPrimitiveOrArrayType(element)) return null;
+    if (JavaKeywordCompletion.isAfterPrimitiveOrArrayType(element)) return null;
 
     final int offset = parameters.getParameters().getOffset();
     final PsiReference reference = element.getContainingFile().findReferenceAt(offset);
@@ -219,10 +215,11 @@ public class ReferenceExpressionCompletionContributor {
     return elements;
   }
 
-  public static Set<PsiField> findConstantsUsedInSwitch(PsiElement element) {
-    final Set<PsiField> used = new HashSet<PsiField>();
-    if (psiElement().withSuperParent(2, psiElement(PsiSwitchLabelStatement.class).withSuperParent(2, PsiSwitchStatement.class)).accepts(element)) {
-      PsiSwitchStatement sw = PsiTreeUtil.getParentOfType(element, PsiSwitchStatement.class);
+  @NotNull 
+  public static Set<PsiField> findConstantsUsedInSwitch(@Nullable PsiElement position) {
+    if (IN_SWITCH_LABEL.accepts(position)) {
+      Set<PsiField> used = ContainerUtil.newLinkedHashSet();
+      PsiSwitchStatement sw = PsiTreeUtil.getParentOfType(position, PsiSwitchStatement.class);
       assert sw != null;
       final PsiCodeBlock body = sw.getBody();
       assert body != null;
@@ -237,8 +234,9 @@ public class ReferenceExpressionCompletionContributor {
           }
         }
       }
+      return used;
     }
-    return used;
+    return Collections.emptySet();
   }
 
   @Nullable
@@ -252,10 +250,7 @@ public class ReferenceExpressionCompletionContributor {
         final PsiExpression[] dimensions = newExpression.getArrayDimensions();
         if (dimensions.length == 1 && "1".equals(dimensions[0].getText()) && newExpression.getArrayInitializer() == null) {
           final String text = variable.getName() + "[0]";
-          final PsiExpression conversion = createExpression(text, element);
-          ExpressionLookupItem result = new ExpressionLookupItem(conversion);
-          result.setIcon(variable.getIcon(Iconable.ICON_FLAG_VISIBILITY));
-          return result;
+          return new ExpressionLookupItem(createExpression(text, element), variable.getIcon(Iconable.ICON_FLAG_VISIBILITY), text, text);
         }
       }
     }
@@ -309,29 +304,17 @@ public class ReferenceExpressionCompletionContributor {
       throws IncorrectOperationException {
     if (itemType instanceof PsiArrayType && expectedType.isAssignableFrom(((PsiArrayType)itemType).getComponentType())) {
       final PsiExpression conversion = createExpression(getQualifierText(qualifier) + prefix + "[0]", element);
-      final LookupItem item = new ExpressionLookupItem(conversion);
-
-      @NonNls final String presentable = prefix + "[...]";
-      item.setLookupString(prefix);
-      item.setPresentableText(presentable);
-      item.addLookupStrings(prefix);
-      item.setIcon(object.getIcon(Iconable.ICON_FLAG_VISIBILITY));
-      item.setInsertHandler(new InsertHandler<LookupElement>() {
+      result.consume(new ExpressionLookupItem(conversion, object.getIcon(Iconable.ICON_FLAG_VISIBILITY), prefix + "[...]", prefix) {
         @Override
-        public void handleInsert(InsertionContext context, LookupElement item) {
+        public void handleInsert(InsertionContext context) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_ARRAY_MEMBER);
-          final Editor editor = context.getEditor();
-          final int startOffset = context.getStartOffset();
 
-          final Document document = editor.getDocument();
-          final int tailOffset = startOffset + item.getLookupString().length();
+          final int tailOffset = context.getTailOffset();
           final String callSpace = getSpace(CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_WITHIN_BRACKETS);
-          final String access = "[" + callSpace + callSpace + "]";
-          document.insertString(tailOffset, access);
-          editor.getCaretModel().moveToOffset(tailOffset + 1 + callSpace.length());
+          context.getDocument().insertString(tailOffset, "[" + callSpace + callSpace + "]");
+          context.getEditor().getCaretModel().moveToOffset(tailOffset + 1 + callSpace.length());
         }
       });
-      result.consume(item);
     }
   }
 
@@ -356,41 +339,23 @@ public class ReferenceExpressionCompletionContributor {
     
     final String qualifierText = getQualifierText(qualifier);
     final PsiExpression conversion = createExpression("java.util.Arrays." + methodName + "(" + qualifierText + prefix + ")", element);
-    final LookupItem item = new ExpressionLookupItem(conversion);
-
-    @NonNls final String presentable = "Arrays." + methodName + "(" + qualifierText + prefix + ")";
-    item.setLookupString(StringUtil.isEmpty(qualifierText) ? presentable : prefix);
-    item.setPresentableText(presentable);
-    item.addLookupStrings(prefix, presentable, methodName + "(" + prefix + ")");
-    item.setIcon(PlatformIcons.METHOD_ICON);
-    item.setInsertHandler(new InsertHandler<LookupElement>() {
+    final String presentable = "Arrays." + methodName + "(" + qualifierText + prefix + ")";
+    String[] lookupStrings = {StringUtil.isEmpty(qualifierText) ? presentable : prefix, prefix, presentable, methodName + "(" + prefix + ")"};
+    result.consume(new ExpressionLookupItem(conversion, PlatformIcons.METHOD_ICON, presentable, lookupStrings) {
       @Override
-      public void handleInsert(InsertionContext context, LookupElement item) {
+      public void handleInsert(InsertionContext context) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_ASLIST);
 
-        final Editor editor = context.getEditor();
-        int startOffset = context.getStartOffset();
-        final Document document = editor.getDocument();
-        final int tailOffset = startOffset + item.getLookupString().length();
-        startOffset -= qualifierText.length();
+        int startOffset = context.getStartOffset() - qualifierText.length();
         final Project project = element.getProject();
         final String callSpace = getSpace(CodeStyleSettingsManager.getSettings(project).SPACE_WITHIN_METHOD_CALL_PARENTHESES);
-        @NonNls final String newText = "java.util.Arrays." + methodName + "(" + callSpace + qualifierText + prefix + callSpace + ")";
-        document.replaceString(startOffset, tailOffset, newText);
+        final String newText = "java.util.Arrays." + methodName + "(" + callSpace + qualifierText + prefix + callSpace + ")";
+        context.getDocument().replaceString(startOffset, context.getTailOffset(), newText);
 
-        PsiDocumentManager.getInstance(project).commitDocument(document);
-        final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-        try {
-          JavaCodeStyleManager.getInstance(project)
-              .shortenClassReferences(file, startOffset, startOffset + CommonClassNames.JAVA_UTIL_ARRAYS.length());
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
+        context.commitDocument();
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(context.getFile(), startOffset, startOffset + CommonClassNames.JAVA_UTIL_ARRAYS.length());
       }
     });
-    result.consume(item);
   }
 
   @Nullable
@@ -583,33 +548,16 @@ public class ReferenceExpressionCompletionContributor {
       return;
     }
 
-    final LookupItem item = new ExpressionLookupItem(conversion);
-    item.setLookupString(prefix + ".toArray(" + getSpace(callSpace) + expressionString + getSpace(callSpace) + ")");
-    item.setPresentableText(prefix + ".toArray(" + presentableString + ")");
-    item.addLookupStrings(presentableString);
-    item.setIcon(PlatformIcons.METHOD_ICON);
-    item.setInsertHandler(new InsertHandler<LookupItem>(){
-      @Override
-      public void handleInsert(InsertionContext context, LookupItem item) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_TOAR);
+    String[] lookupStrings = {prefix + ".toArray(" + getSpace(callSpace) + expressionString + getSpace(callSpace) + ")", presentableString};
+    result.consume(new ExpressionLookupItem(conversion, PlatformIcons.METHOD_ICON, prefix + ".toArray(" + presentableString + ")", lookupStrings) {
+        @Override
+        public void handleInsert(InsertionContext context) {
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_TOAR);
 
-        final Editor editor = context.getEditor();
-        final int startOffset = context.getStartOffset();
-        final Document document = editor.getDocument();
-        final int tailOffset = startOffset + item.getLookupString().length();
-        final Project project = editor.getProject();
-        context.commitDocument();
-        final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-        try {
-          JavaCodeStyleManager.getInstance(project).shortenClassReferences(file, startOffset, tailOffset);
+          context.commitDocument();
+          JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(context.getFile(), context.getStartOffset(), context.getTailOffset());
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
-      }
-    });
-    result.consume(item);
+      });
   }
 
   private static boolean isEmptyArrayInitializer(@Nullable PsiElement element) {

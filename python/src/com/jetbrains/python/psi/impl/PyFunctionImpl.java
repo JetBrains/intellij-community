@@ -43,6 +43,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -210,22 +211,20 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
-    PyType type = null;
     for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-      type = typeProvider.getCallType(this, callSite, context);
+      final PyType type = typeProvider.getCallType(this, callSite, context);
       if (type != null) {
         type.assertValid(typeProvider.toString());
-        break;
+        return type;
       }
     }
-    if (type == null) {
-      type = context.getReturnType(this);
-    }
-    final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
-    if (results != null) {
-      return analyzeCallType(type, results.getReceiver(), results.getArguments(), context);
-    }
-    return type;
+    final PyExpression receiver = PyTypeChecker.getReceiver(callSite, this);
+    final List<PyExpression> arguments = PyTypeChecker.getArguments(callSite, this);
+    final List<PyParameter> parameters = PyUtil.getParameters(this, context);
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final List<PyParameter> explicitParameters = PyTypeChecker.filterExplicitParameters(parameters, this, callSite, resolveContext);
+    final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(arguments, explicitParameters);
+    return getCallType(receiver, mapping, context);
   }
 
   @Nullable
@@ -404,9 +403,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         return type;
       }
     }
-    final boolean hasCustomDecorators = PyUtil.hasCustomDecorators(this) && !PyUtil.isDecoratedAsAbstract(this) && getProperty() == null;
     final PyFunctionTypeImpl type = new PyFunctionTypeImpl(this);
-    if (hasCustomDecorators) {
+    if (PyKnownDecoratorUtil.hasUnknownDecorator(this, context) && getProperty() == null) {
       return PyUnionType.createWeakType(type);
     }
     return type;
@@ -601,7 +599,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     }
     // implicit staticmethod __new__
     PyClass cls = getContainingClass();
-    if (cls != null && PyNames.NEW.equals(getName()) && cls.isNewStyleClass()) {
+    if (cls != null && PyNames.NEW.equals(getName()) && cls.isNewStyleClass(null)) {
       return STATICMETHOD;
     }
     //

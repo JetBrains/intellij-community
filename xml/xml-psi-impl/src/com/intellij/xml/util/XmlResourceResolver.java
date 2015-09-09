@@ -245,8 +245,9 @@ public class XmlResourceResolver implements XMLEntityResolver {
     if (publicId != null) {
       try {
         String userDir = new File(System.getProperty("user.dir")).toURI().getPath();
-        if (new URI(publicId).getPath().startsWith(userDir)) {
-          publicId = publicId.substring(publicId.indexOf(userDir) + userDir.length());
+        String publicIdPath = new URI(publicId).getPath();
+        if (publicIdPath.startsWith(userDir)) {
+          publicId = publicIdPath.substring(publicIdPath.indexOf(userDir) + userDir.length());
         }
       }
       catch (Exception e) {

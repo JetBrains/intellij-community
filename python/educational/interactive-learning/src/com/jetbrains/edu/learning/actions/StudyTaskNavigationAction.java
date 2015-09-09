@@ -100,7 +100,17 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
         }
       }
     }
-    return shouldBeActive;
+    return shouldBeActive != null ? shouldBeActive : getFirstTaskFile(taskDir, project);
+  }
+
+  @Nullable
+  private static VirtualFile getFirstTaskFile(@NotNull final VirtualFile taskDir, @NotNull final Project project) {
+    for (VirtualFile virtualFile : taskDir.getChildren()) {
+      if (StudyUtils.getTaskFile(project, virtualFile) != null) {
+        return virtualFile;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -115,4 +125,9 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
   protected abstract String getNavigationFinishedMessage();
 
   protected abstract Task getTargetTask(@NotNull final Task sourceTask);
+
+  @Override
+  public void update(AnActionEvent e) {
+    StudyUtils.updateAction(e);
+  }
 }

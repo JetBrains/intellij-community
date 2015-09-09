@@ -71,6 +71,15 @@ public abstract class TestNGConfigurationProducer extends JavaRunConfigurationPr
     }
     return false;
   }
+
+  public static void setupConfigurationParamName(TestNGConfiguration configuration, Location contextLocation) {
+    if (contextLocation instanceof PsiMemberParameterizedLocation) {
+      final String paramSetName = ((PsiMemberParameterizedLocation)contextLocation).getParamSetName();
+      if (paramSetName != null) {
+        configuration.setProgramParameters(getInvocationNumber(paramSetName));
+      }
+    }
+  }
   
   public static String getInvocationNumber(String str) {
     return StringUtil.trimEnd(StringUtil.trimStart(str, "["), "]");

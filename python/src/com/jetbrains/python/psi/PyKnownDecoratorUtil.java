@@ -58,6 +58,8 @@ public class PyKnownDecoratorUtil {
     UNITTEST_EXPECTED_FAILURE("unittest.case.expectedFailure"),
     UNITTEST_MOCK_PATCH("unittest.mock.patch"),
 
+    TYPING_OVERLOAD("typing.overload"),
+
     REPRLIB_RECURSIVE_REPR("reprlib.recursive_repr");
 
     private final QualifiedName myQualifiedName;

@@ -200,7 +200,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     }
   }
 
-  public void addDirtyData(final Collection<FilePath> dirs, final Collection<FilePath> files) {
+  public void addDirtyData(@NotNull Collection<FilePath> dirs, @NotNull Collection<FilePath> files) {
     final HashSet<FilePath> newFiles = new HashSet<FilePath>(files);
     newFiles.removeAll(dirs); // if the same dir is added recursively and not recursively, prefer recursive mark
 

@@ -63,8 +63,9 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
           if (callExpression instanceof PyCallExpression) {
             final PyArgumentList argumentList = ((PyCallExpression)callExpression).getArgumentList();
             if (argumentList != null) {
-              final CallArgumentsMapping mapping = argumentList.analyzeCall(PyResolveContext.noImplicits());
-              for (Map.Entry<PyExpression, PyNamedParameter> parameterEntry : mapping.getPlainMappedParams().entrySet()) {
+              final PyResolveContext resolveContext = PyResolveContext.noImplicits();
+              final PyCallExpression.PyArgumentsMapping mapping = ((PyCallExpression)callExpression).mapArguments(resolveContext);
+              for (Map.Entry<PyExpression, PyNamedParameter> parameterEntry : mapping.getMappedParameters().entrySet()) {
                 if (parameterEntry.getValue().equals(element)) {
                   parameterEntry.getKey().delete();
                 }

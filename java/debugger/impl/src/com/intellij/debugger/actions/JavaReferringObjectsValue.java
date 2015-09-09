@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -28,6 +29,7 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
 import com.sun.jdi.Field;
+import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +74,15 @@ public class JavaReferringObjectsValue extends JavaValue {
           final XValueChildrenList children = new XValueChildrenList();
 
           Value value = getDescriptor().getValue();
-          List<ObjectReference> references = ((ObjectReference)value).referringObjects(MAX_REFERRING);
+
+          List<ObjectReference> references;
+          try {
+            references = ((ObjectReference)value).referringObjects(MAX_REFERRING);
+          } catch (ObjectCollectedException e) {
+            node.setErrorMessage(DebuggerBundle.message("evaluation.error.object.collected"));
+            return;
+          }
+
           int i = 1;
           for (final ObjectReference reference : references) {
             // try to find field name

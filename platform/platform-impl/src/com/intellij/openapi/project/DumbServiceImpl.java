@@ -51,7 +51,9 @@ import java.util.Map;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
-  private final DumbPermissionServiceImpl myPermissionService;
+  private static final DumbPermissionServiceImpl ourPermissionService =
+    (DumbPermissionServiceImpl)ServiceManager.getService(DumbPermissionService.class);
+  private static Throwable ourForcedTrace;
   private volatile boolean myDumb = false;
   private final DumbModeListener myPublisher;
   private long myModificationCount;
@@ -70,7 +72,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   public DumbServiceImpl(Project project) {
     myProject = project;
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
-    myPermissionService = (DumbPermissionServiceImpl)ServiceManager.getService(DumbPermissionService.class);
   }
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
@@ -155,7 +156,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void scheduleCacheUpdate(@NotNull final DumbModeTask task, boolean forceDumbMode) {
-    final Throwable trace = new Throwable();
+    final Throwable trace = new Throwable(); // please report exceptions here to peter
     if (LOG.isDebugEnabled()) LOG.debug("Scheduling task " + task, trace);
     final Application application = ApplicationManager.getApplication();
 
@@ -204,7 +205,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           if (permission == null) {
             LOG.error("Dumb mode not permitted in modal environment; see DumbService.allowStartingDumbModeInside documentation." +
                       "\n Current modality: " + modality +
-                      "\n all permissions: " + myPermissionService.getPermissions(), trace);
+                      "\n all permissions: " + ourPermissionService.getPermissions(), ourForcedTrace != null ? ourForcedTrace : trace);
           }
 
           // always change dumb status inside write action.
@@ -229,18 +230,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
             @Override
             public void run() {
               boolean modal = permission != DumbModePermission.MAY_START_BACKGROUND;
-              boolean shouldFinish = modal;
               try {
                 startBackgroundProcess(modal);
               }
               catch (Throwable e) {
-                shouldFinish = true;
+                updateFinished();
                 LOG.error("Failed to start background index update task", e);
-              }
-              finally {
-                if (shouldFinish) {
-                  updateFinished();
-                }
               }
             }
           }, modality, myProject.getDisposed());
@@ -251,7 +246,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Nullable
   private DumbModePermission getDumbModePermission(ModalityState modality) {
-    DumbModePermission permission = myPermissionService.getPermissions().get(modality);
+    DumbModePermission permission = getExplicitPermission(modality);
     if (permission != null) {
       return permission;
     }
@@ -261,6 +256,25 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
 
     return null;
+  }
+
+  @Nullable
+  public static DumbModePermission getExplicitPermission(@NotNull ModalityState modality) {
+    return ourPermissionService.getPermissions().get(modality);
+  }
+
+  @NotNull
+  public static AccessToken forceDumbModeStartTrace(@NotNull Throwable trace) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    final Throwable prev = ourForcedTrace;
+    ourForcedTrace = trace;
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourForcedTrace = prev;
+      }
+    };
   }
 
   private void updateFinished() {
@@ -491,14 +505,15 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private static void invokeAndWaitIfNeeded(Runnable runnable) {
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();
     }
     else {
       try {
-        SwingUtilities.invokeAndWait(runnable);
+        ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
       }
-      catch (InterruptedException ignore) {
+      catch (ProcessCanceledException ignore) {
+        // thrown instead of InterruptedException by semaphore in invokeAndWait
       }
       catch (Exception e) {
         LOG.error(e);

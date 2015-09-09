@@ -35,6 +35,9 @@ import java.util.Set;
 
 /**
  * @author peter
+ *
+ * @see LookupElementDecorator
+ * @see com.intellij.codeInsight.completion.PrioritizedLookupElement
  */
 public final class LookupElementBuilder extends LookupElement {
   @NotNull private final String myLookupString;
@@ -67,6 +70,10 @@ public final class LookupElementBuilder extends LookupElement {
     return new LookupElementBuilder(lookupString, lookupString);
   }
   
+  public static LookupElementBuilder create(@NotNull Object object) {
+    return new LookupElementBuilder(object.toString(), object);
+  }
+
   public static LookupElementBuilder createWithSmartPointer(@NotNull String lookupString, @NotNull PsiElement element) {
     PsiUtilCore.ensureValid(element);
     return new LookupElementBuilder(lookupString, 

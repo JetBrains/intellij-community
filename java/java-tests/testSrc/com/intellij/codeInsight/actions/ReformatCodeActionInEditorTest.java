@@ -102,6 +102,10 @@ public class ReformatCodeActionInEditorTest extends LightPlatformCodeInsightFixt
   public void testFormatOptimizeRearrangeVcsChanges() {
     doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT).setOptimizeImports(true).setRearrangeCode(true));
   }
+  
+  public void testReformatRearrange_NotBreaksCode_WhenCaretOnEmptyLine() {
+    doTest(new ReformatCodeRunOptions(WHOLE_FILE).setRearrangeCode(true));
+  }
 
   public void testFormatSelection_DoNotTouchTrailingWhiteSpaces() {
     //todo actually test is not working, and working test is not working

@@ -472,7 +472,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
       if (! file.isDirectory()) {
         FileType fileType = file.getFileType();
         if (fileType == FileTypes.UNKNOWN) {
-          fileType = FileTypeChooser.associateFileType(file.getPresentableName());
+          fileType = FileTypeChooser.associateFileType(file.getName());
           if (fileType == null) {
             showError(myProject, "Cannot apply patch. File " + file.getPresentableName() + " type not defined.", true);
             return false;

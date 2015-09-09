@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,15 @@
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog;
 import com.intellij.structuralsearch.plugin.ui.*;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -43,7 +39,7 @@ import java.util.List;
  * @author cdr
  */
 public class SSBasedInspectionOptions {
-  private JBList myTemplatesList;
+  private final JBList myTemplatesList;
   // for externalization
   private final List<Configuration> myConfigurations;
 
@@ -107,7 +103,7 @@ public class SSBasedInspectionOptions {
   }
 
   public JPanel getComponent() {
-    JPanel panel = new JPanel(new BorderLayout());
+    final JPanel panel = new JPanel(new BorderLayout());
     panel.add(new JLabel(SSRBundle.message("SSRInspection.selected.templates")));
     panel.add(
       ToolbarDecorator.createDecorator(myTemplatesList)
@@ -147,6 +143,12 @@ public class SSBasedInspectionOptions {
         public void run(AnActionButton button) {
           performEditAction();
         }
+      }).setEditActionUpdater(new AnActionButtonUpdater() {
+        @Override
+        public boolean isEnabled(AnActionEvent e) {
+          final Project project = e.getProject();
+          return project != null && !DumbService.isDumb(project);
+        }
       }).setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -163,7 +165,14 @@ public class SSBasedInspectionOptions {
           }
           configurationsChanged(createSearchContext());
         }
-      }).setMoveUpAction(new AnActionButtonRunnable() {
+      }).setRemoveActionUpdater(new AnActionButtonUpdater() {
+        @Override
+        public boolean isEnabled(AnActionEvent e) {
+          final Project project = e.getProject();
+          return project != null && !DumbService.isDumb(project);
+        }
+      })
+        .setMoveUpAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           performMoveUpDown(false);
@@ -180,7 +189,10 @@ public class SSBasedInspectionOptions {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
-        performEditAction();
+        final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(panel));
+        if (project != null && !DumbService.isDumb(project)) {
+          performEditAction();
+        }
         return true;
       }
     }.installOn(myTemplatesList);

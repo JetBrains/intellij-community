@@ -35,6 +35,11 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
   public void testInterfaceTypeParameter() throws Exception { doTest(0); }
 
   public void testJavadocParameter() throws Exception { doTest(0); }
+
+  public void testConflictingParameterName() throws Exception {
+    doTest(0);
+  }
+
   public void testVisibilityConflict() throws Exception {
     try {
       doTest(0, PsiModifier.PRIVATE);

@@ -126,10 +126,12 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     });
   }
 
+  private final List<Runnable> myBuildTreeRunnables = new ArrayList<Runnable>();
+  
   @Override
   public void onSuiteTreeNodeAdded(final String testName, final String locationHint) {
     myTreeBuildBeforeStart = true;
-    addToInvokeLater(new Runnable() {
+    myBuildTreeRunnables.add(new Runnable() {
       @Override
       public void run() {
         final SMTestProxy testProxy = new SMTestProxy(testName, false, locationHint);
@@ -148,7 +150,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   @Override
   public void onSuiteTreeStarted(final String suiteName, final String locationHint) {
     myTreeBuildBeforeStart = true;
-    addToInvokeLater(new Runnable() {
+    myBuildTreeRunnables.add(new Runnable() {
       @Override
       public void run() {
         final SMTestProxy parentSuite = getCurrentSuite();
@@ -170,10 +172,33 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   @Override
   public void onSuiteTreeEnded(final String suiteName) {
-    addToInvokeLater(new Runnable() {
+    myBuildTreeRunnables.add(new Runnable() {
       @Override
       public void run() {
         mySuitesStack.popSuite(suiteName);
+      }
+    });
+    
+    if (myBuildTreeRunnables.size() > 100) {
+      final ArrayList<Runnable> runnables = new ArrayList<Runnable>(myBuildTreeRunnables);
+      myBuildTreeRunnables.clear();
+      processTreeBuildEvents(runnables);
+    }
+  }
+
+  @Override
+  public void onBuildTreeEnded() {
+    processTreeBuildEvents(myBuildTreeRunnables);
+  }
+
+  private void processTreeBuildEvents(final List<Runnable> runnables) {
+    addToInvokeLater(new Runnable() {
+      @Override
+      public void run() {
+        for (Runnable runnable : runnables) {
+          runnable.run();
+        }
+        runnables.clear();
       }
     });
   }
@@ -383,7 +408,8 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
           }
 
           testProxy.setTestComparisonFailed(localizedMessage, stackTrace,
-                                            comparisionFailureActualText, comparisionFailureExpectedText, testFailedEvent.getFilePath());
+                                            comparisionFailureActualText, comparisionFailureExpectedText, 
+                                            testFailedEvent.getFilePath(), testFailedEvent.getActualFilePath());
         } else if (comparisionFailureActualText == null && comparisionFailureExpectedText == null) {
           testProxy.setTestFailed(localizedMessage, stackTrace, isTestError);
         } else {

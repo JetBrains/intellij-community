@@ -398,13 +398,8 @@ public class WeakestTypeFinder {
       }
     }
     if (!checked) {
-      final PsiType returnType = method.getReturnType();
-      if (returnType instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)returnType;
-        final PsiClass aClass = classType.resolve();
-        if (aClass instanceof PsiTypeParameter) {
-          return false;
-        }
+      if (TypeUtils.isTypeParameter(method.getReturnType())) {
+        return false;
       }
       final PsiClass containingClass = method.getContainingClass();
       checkClass(containingClass, weakestTypeClasses);

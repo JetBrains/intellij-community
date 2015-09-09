@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class DirectoryChooser extends DialogWrapper {
     super(project, true);
     myView = view;
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
-    myFilterExisting = propertiesComponent.isValueSet(FILTER_NON_EXISTING) && propertiesComponent.isTrueValue(FILTER_NON_EXISTING);
+    myFilterExisting = propertiesComponent.isTrueValue(FILTER_NON_EXISTING);
     myTabbedPaneWrapper = new TabbedPaneWrapper(getDisposable());
     myChooseByNamePanel = new ChooseByNamePanel(project, new GotoClassModel2(project){
       @NotNull
@@ -110,7 +110,7 @@ public class DirectoryChooser extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    PropertiesComponent.getInstance().setValue(FILTER_NON_EXISTING, String.valueOf(myFilterExisting));
+    PropertiesComponent.getInstance().setValue(FILTER_NON_EXISTING, myFilterExisting);
     if (myTabbedPaneWrapper.getSelectedIndex() == 1) {
       setSelection(myChooseByNamePanel.getChosenElement());
     }

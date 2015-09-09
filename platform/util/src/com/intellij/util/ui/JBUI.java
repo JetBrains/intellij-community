@@ -43,6 +43,15 @@ public class JBUI {
       return 1.0f;
     }
 
+    if (SystemInfo.isLinux) {
+      final int dpi = getSystemDPI();
+      if (dpi < 120) return 1f;
+      if (dpi < 144) return 1.25f;
+      if (dpi < 168) return 1.5f;
+      if (dpi < 192) return 1.75f;
+      return 2f;
+    }
+
     int size = -1;
     try {
       if (SystemInfo.isWindows) {
@@ -76,6 +85,10 @@ public class JBUI {
     else if (scale < 2f) scale = 1.75f;
     else scale = 2.0f;
 
+    if (SystemInfo.isLinux && scale == 1.25f) {
+      //Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
+      scale = 1f;
+    }
     SCALE_FACTOR = scale;
     IconLoader.setScale(scale);
   }

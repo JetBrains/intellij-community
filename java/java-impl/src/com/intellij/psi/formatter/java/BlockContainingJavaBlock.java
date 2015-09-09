@@ -17,9 +17,7 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiStatement;
-import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -255,8 +253,8 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
       if (prevBlock instanceof ASTBlock && nextBlock instanceof ASTBlock) {
         ASTNode prevNode = ((ASTBlock)prevBlock).getNode();
         ASTNode nextNode = ((ASTBlock)nextBlock).getNode();
-        if (prevNode != null && nextNode != null && prevNode.getElementType() == JavaTokenType.RPARENTH 
-            && nextNode.getElementType() != JavaTokenType.LBRACE) 
+        if (prevNode != null && nextNode != null && prevNode.getElementType() == JavaTokenType.RPARENTH
+            && nextNode.getElementType() != JavaTokenType.LBRACE)
         {
           useExternalIndent = true;
         }
@@ -267,7 +265,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
       return new ChildAttributes(getCodeBlockChildExternalIndent(newChildIndex), null);
     }
     else {
-      return new ChildAttributes(myIndentsBefore.get(newChildIndex), null);
+      return new ChildAttributes(myIndentsBefore.get(newChildIndex), getUsedAlignment(newChildIndex));
     }
   }
 

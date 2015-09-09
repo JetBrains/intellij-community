@@ -247,6 +247,13 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       processor.onSuiteTreeEnded(suiteName);
     }
   }
+  
+  private void fireOnBuildTreeEnded() {
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onBuildTreeEnded();
+    }
+  }
 
   private void fireOnTestOutput(@NotNull TestOutputEvent testOutputEvent) {
     // local variable is used to prevent concurrent modification
@@ -330,6 +337,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String SUITE_TREE_STARTED = "suiteTreeStarted";
     @NonNls private static final String SUITE_TREE_ENDED = "suiteTreeEnded";
     @NonNls private static final String SUITE_TREE_NODE = "suiteTreeNode";
+    @NonNls private static final String BUILD_TREE_ENDED_NODE = "treeEnded";
     @NonNls private static final String ROOT_PRESENTATION = "rootName";
 
     @NonNls private static final String ATTR_KEY_STATUS = "status";
@@ -338,6 +346,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String ATTR_KEY_TEXT = "text";
     @NonNls private static final String ATTR_KEY_ERROR_DETAILS = "errorDetails";
     @NonNls private static final String ATTR_KEY_EXPECTED_FILE_PATH = "expectedFile";
+    @NonNls private static final String ATTR_KEY_ACTUAL_FILE_PATH = "actualFile";
 
     @NonNls public static final String CUSTOM_STATUS = "customProgressStatus";
     @NonNls private static final String ATTR_KEY_TEST_TYPE = "type";
@@ -420,7 +429,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     public void visitTestFailed(@NotNull final TestFailed testFailed) {
       final Map<String, String> attributes = testFailed.getAttributes();
       final boolean testError = attributes.get(ATTR_KEY_TEST_ERROR) != null;
-      TestFailedEvent testFailedEvent = new TestFailedEvent(testFailed, testError, attributes.get(ATTR_KEY_EXPECTED_FILE_PATH));
+      TestFailedEvent testFailedEvent = new TestFailedEvent(testFailed, testError, 
+                                                            attributes.get(ATTR_KEY_EXPECTED_FILE_PATH),
+                                                            attributes.get(ATTR_KEY_ACTUAL_FILE_PATH));
       fireOnTestFailure(testFailedEvent);
     }
 
@@ -515,6 +526,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       }
       else if (SUITE_TREE_NODE.equals(name)) {
         fireOnSuiteTreeNodeAdded(msg.getAttributes().get("name"), msg.getAttributes().get(ATTR_KEY_LOCATION_URL));
+      }
+      else if (BUILD_TREE_ENDED_NODE.equals(name)) {
+        fireOnBuildTreeEnded();
       }
       else if (ROOT_PRESENTATION.equals(name)) {
         final Map<String, String> attributes = msg.getAttributes();

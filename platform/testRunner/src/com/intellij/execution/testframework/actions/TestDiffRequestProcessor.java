@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.diff.DiffContentFactory;
@@ -13,6 +28,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -48,27 +64,31 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
     try {
       String title = hyperlink.getDiffTitle();
 
-      String title1;
-      String title2 = ExecutionBundle.message("diff.content.actual.title");
-      DiffContent content1;
-      DiffContent content2 = DiffContentFactory.getInstance().create(hyperlink.getRight(), null);
+      Pair<String, DiffContent> content1 = createContentWithTitle("diff.content.expected.title", 
+                                                                  hyperlink.getLeft(), hyperlink.getFilePath());
+      Pair<String, DiffContent> content2 = createContentWithTitle("diff.content.actual.title", 
+                                                                  hyperlink.getRight(), hyperlink.getActualFilePath());
 
-      String filePath = hyperlink.getFilePath();
-      final VirtualFile vFile;
-      if (filePath != null && (vFile = LocalFileSystem.getInstance().findFileByPath(filePath)) != null) {
-        title1 = ExecutionBundle.message("diff.content.expected.title") + " (" + vFile.getPresentableUrl() + ")";
-        content1 = DiffContentFactory.getInstance().create(getProject(), vFile);
-      }
-      else {
-        title1 = ExecutionBundle.message("diff.content.expected.title");
-        content1 = DiffContentFactory.getInstance().create(hyperlink.getLeft(), null);
-      }
-
-      return new SimpleDiffRequest(title, content1, content2, title1, title2);
+      return new SimpleDiffRequest(title, content1.second, content2.second, content1.first, content2.first);
     }
     catch (Exception e) {
       return new ErrorDiffRequest(e);
     }
+  }
+  
+  private Pair<String, DiffContent> createContentWithTitle(String titleKey, String contentString, String contentFilePath) {
+    String title;
+    DiffContent content;
+    VirtualFile vFile;
+    if (contentFilePath != null && (vFile = LocalFileSystem.getInstance().findFileByPath(contentFilePath)) != null) {
+      title = ExecutionBundle.message(titleKey) + " (" + vFile.getPresentableUrl() + ")";
+      content = DiffContentFactory.getInstance().create(getProject(), vFile);
+    }
+    else {
+      title = ExecutionBundle.message(titleKey);
+      content = DiffContentFactory.getInstance().create(contentString);
+    }
+    return Pair.create(title, content);
   }
 
   //

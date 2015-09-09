@@ -57,8 +57,8 @@ public class GitConfigTest extends GitPlatformTest {
 
   //inspired by IDEA-135557
   public void test_branch_with_hash_symbol() throws IOException {
-    GitTestUtil.createRepository(myProject, myProjectPath, true);
-    git("remote add origin http://example.git"); // define a remote to be able to set up tracking
+    createRepository();
+    addRemote("http://example.git");
     git("update-ref refs/remotes/origin/a#branch HEAD");
     git("branch --track a#branch origin/a#branch");
 
@@ -78,18 +78,41 @@ public class GitConfigTest extends GitPlatformTest {
 
   // IDEA-143363 Check that remote.pushdefault (generic, without remote name) doesn't fail the config parsing procedure
   public void test_remote_unspecified_section() throws Exception {
-    GitTestUtil.createRepository(myProject, myProjectPath, true);
-    git("remote add origin git@github.com:foo/bar.git");
+    createRepository();
+    addRemote("git@github.com:foo/bar.git");
     git("config remote.pushdefault origin");
 
-    File gitDir = new File(myProjectPath, ".git");
-    GitConfig config = GitConfig.read(myPlatformFacade, new File(gitDir, "config"));
-    Collection<GitRemote> remotes = config.parseRemotes();
+    assertSingleRemoteInConfig();
+  }
+
+  public void test_invalid_section_with_remote_prefix_is_ignored() throws Exception {
+    createRepository();
+    addRemote("git@github.com:foo/bar.git");
+    git("config remote-cfg.newkey newval");
+
+    assertSingleRemoteInConfig();
+  }
+
+  private static void addRemote(@NotNull String url) {
+    git("remote add origin " + url);
+  }
+
+  private void createRepository() {
+    GitTestUtil.createRepository(myProject, myProjectPath, true);
+  }
+
+  private static void assertSingleRemote(@NotNull Collection<GitRemote> remotes) {
     assertEquals(1, remotes.size());
     GitRemote remote = ContainerUtil.getFirstItem(remotes);
     assertNotNull(remote);
     assertEquals("origin", remote.getName());
     assertEquals("git@github.com:foo/bar.git", remote.getFirstUrl());
+  }
+
+  private void assertSingleRemoteInConfig() {
+    File gitDir = new File(myProjectPath, ".git");
+    Collection<GitRemote> remotes = GitConfig.read(myPlatformFacade, new File(gitDir, "config")).parseRemotes();
+    assertSingleRemote(remotes);
   }
 
   private void doTestRemotes(String testName, File configFile, File resultFile) throws IOException {

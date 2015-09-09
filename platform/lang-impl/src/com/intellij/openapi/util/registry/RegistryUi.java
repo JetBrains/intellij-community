@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -289,8 +289,7 @@ public class RegistryUi implements Disposable {
     final List<String> recent = getRecent();
     recent.remove(key);
     recent.add(0, key);
-    final String newValue = StringUtil.join(recent, "=");
-    PropertiesComponent.getInstance().setValue(RECENT_PROPERTIES_KEY, newValue);
+    PropertiesComponent.getInstance().setValue(RECENT_PROPERTIES_KEY, StringUtil.join(recent, "="), "");
   }
 
   public boolean show() {

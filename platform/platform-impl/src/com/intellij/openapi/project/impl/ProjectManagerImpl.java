@@ -32,16 +32,9 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.ComponentsPackage;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.impl.stores.*;
-import com.intellij.openapi.components.impl.stores.StoreUtil.ReloadComponentStoreStatus;
+import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.*;
@@ -52,21 +45,13 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SingleAlarm;
-import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,13 +61,11 @@ import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectManagerImpl.class);
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
-  private static final Key<Set<StateStorage>> CHANGED_FILES_KEY = Key.create("CHANGED_FILES_KEY");
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private ProjectImpl myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
@@ -91,21 +74,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private final Object lock = new Object();
   private final List<ProjectManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private final SingleAlarm myChangedFilesAlarm;
-  private final Set<StateStorage> myChangedApplicationFiles = new LinkedHashSet<StateStorage>();
-  private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
-
   private final ProgressManager myProgressManager;
   private volatile boolean myDefaultProjectWasDisposed;
-
-  private final Runnable restartApplicationOrReloadProjectTask = new Runnable() {
-    @Override
-    public void run() {
-      if (isReloadUnblocked() && tryToReloadApplication()) {
-        askToReloadProjectIfConfigFilesChangedExternally();
-      }
-    }
-  };
 
   @NotNull
   private static List<ProjectManagerListener> getListeners(@NotNull Project project) {
@@ -114,38 +84,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return array;
   }
 
-  public ProjectManagerImpl(@NotNull VirtualFileManager virtualFileManager, ProgressManager progressManager) {
+  public ProjectManagerImpl(ProgressManager progressManager) {
     myProgressManager = progressManager;
-    Application app = ApplicationManager.getApplication();
-    MessageBus messageBus = app.getMessageBus();
-
-    messageBus.connect().subscribe(StateStorageManager.STORAGE_TOPIC, new StorageManagerListener() {
-      @Override
-      public void storageFileChanged(@NotNull VFileEvent event, @NotNull StateStorage storage, @NotNull ComponentManager componentManager) {
-        if (event instanceof VFilePropertyChangeEvent) {
-          // ignore because doesn't affect content
-          return;
-        }
-
-        if (event.getRequestor() instanceof StateStorage.SaveSession ||
-            event.getRequestor() instanceof StateStorage ||
-            event.getRequestor() instanceof ProjectManagerImpl) {
-          return;
-        }
-
-        Project project;
-        if (componentManager instanceof Project) {
-          project = (Project)componentManager;
-        }
-        else {
-          project = componentManager instanceof Module ? ((Module)componentManager).getProject() : null;
-        }
-
-        registerProjectToReload(project, storage);
-      }
-    });
-
-    final ProjectManagerListener busPublisher = messageBus.syncPublisher(TOPIC);
+    final ProjectManagerListener busPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC);
     addProjectManagerListener(
       new ProjectManagerListener() {
         @Override
@@ -183,25 +124,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         }
       }
     );
-
-    virtualFileManager.addVirtualFileManagerListener(new VirtualFileManagerAdapter() {
-      @Override
-      public void beforeRefreshStart(boolean asynchronous) {
-        blockReloadingProjectOnExternalChanges();
-      }
-
-      @Override
-      public void afterRefreshFinish(boolean asynchronous) {
-        unblockReloadingProjectOnExternalChanges();
-      }
-    });
-    myChangedFilesAlarm = new SingleAlarm(restartApplicationOrReloadProjectTask, 300);
   }
 
   @Override
   public void dispose() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    Disposer.dispose(myChangedFilesAlarm);
     if (myDefaultProject != null) {
       Disposer.dispose(myDefaultProject);
 
@@ -259,7 +186,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     ProjectImpl project = createProject(projectName, filePath, false, optimiseTestLoadSpeed);
     try {
-      initProject(project, useDefaultProjectSettings ? (ProjectImpl)getDefaultProject() : null);
+      initProject(project, useDefaultProjectSettings ? getDefaultProject() : null);
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
         myProjects.put(project, null);
       }
@@ -290,7 +217,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return message;
   }
 
-  private void initProject(@NotNull ProjectImpl project, @Nullable ProjectImpl template) throws IOException {
+  private void initProject(@NotNull ProjectImpl project, @Nullable Project template) {
     ProgressIndicator indicator = myProgressManager.getProgressIndicator();
     if (indicator != null && !project.isDefault()) {
       indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
@@ -344,7 +271,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   @Nullable
-  public Project loadProject(@NotNull String filePath) throws IOException, JDOMException, InvalidDataException {
+  public Project loadProject(@NotNull String filePath) throws IOException {
     try {
       ProjectImpl project = createProject(null, filePath, false, false);
       initProject(project, null);
@@ -461,6 +388,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           public void run() {
             if (!project.isDisposed()) {
               startupManager.runPostStartupActivities();
+
+              Application application = ApplicationManager.getApplication();
+              if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
+                StorageUtil.checkUnknownMacros(project, true);
+              }
             }
           }
         });
@@ -473,8 +405,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return false;
     }
 
-    StorageUtil.checkUnknownMacros(project, project);
-
     return true;
   }
 
@@ -485,6 +415,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         return false;
       }
       myOpenProjects = ArrayUtil.append(myOpenProjects, project);
+      ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? project : null;
     }
     return true;
   }
@@ -493,6 +424,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private Collection<Project> removeFromOpened(@NotNull Project project) {
     synchronized (lock) {
       myOpenProjects = ArrayUtil.remove(myOpenProjects, project);
+      ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? myOpenProjects[0] : null;
       return Arrays.asList(myOpenProjects);
     }
   }
@@ -563,10 +495,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       project = loadProjectWithProgress(filePath);
       if (project == null) return null;
     }
-    catch (IOException e) {
-      LOG.info(e);
-      throw e;
-    }
     catch (Throwable t) {
       LOG.info(t);
       throw new IOException(t);
@@ -590,20 +518,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
    * @return the project, or null if the user has cancelled opening the project.
    */
   @Nullable
-  private Project loadProjectWithProgress(@NotNull final String filePath) throws IOException {
+  private Project loadProjectWithProgress(@NotNull final String filePath) {
     final ProjectImpl project = createProject(null, toCanonicalName(filePath), false, false);
     try {
-      myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Project, IOException>() {
+      myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Object, RuntimeException>() {
         @Override
         @Nullable
-        public Project compute() throws IOException {
+        public Project compute() {
           initProject(project, null);
           return project;
         }
       }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
-    }
-    catch (StateStorageException e) {
-      throw new IOException(e);
     }
     catch (ProcessCanceledException ignore) {
       return null;
@@ -615,71 +540,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static void notifyProjectOpenFailed() {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed();
     WelcomeFrame.showIfNoProjectOpened();
-  }
-
-  private void askToReloadProjectIfConfigFilesChangedExternally() {
-    List<Project> projectsToReload = new SmartList<Project>();
-    for (Project project : getOpenProjects()) {
-      if (project.isDisposed()) {
-        continue;
-      }
-
-      Set<StateStorage> changes = CHANGED_FILES_KEY.get(project);
-      if (changes == null) {
-        continue;
-      }
-
-      CHANGED_FILES_KEY.set(project, null);
-      if (!changes.isEmpty() && StoreUtil.reloadStore(changes, ComponentsPackage.getStateStore(project)) == ReloadComponentStoreStatus.RESTART_AGREED) {
-        projectsToReload.add(project);
-      }
-    }
-
-    for (Project project : projectsToReload) {
-      doReloadProject(project);
-    }
-  }
-
-  private boolean tryToReloadApplication() {
-    if (ApplicationManager.getApplication().isDisposed()) {
-      return false;
-    }
-    if (myChangedApplicationFiles.isEmpty()) {
-      return true;
-    }
-
-    Set<StateStorage> changes = new LinkedHashSet<StateStorage>(myChangedApplicationFiles);
-    myChangedApplicationFiles.clear();
-
-    ReloadComponentStoreStatus status = StoreUtil.reloadStore(changes, ComponentsPackage.getStateStore(ApplicationManager.getApplication()));
-    if (status == ReloadComponentStoreStatus.RESTART_AGREED) {
-      ApplicationManagerEx.getApplicationEx().restart(true);
-      return false;
-    }
-    else {
-      return status == ReloadComponentStoreStatus.SUCCESS || status == ReloadComponentStoreStatus.RESTART_CANCELLED;
-    }
-  }
-
-  @Override
-  public void blockReloadingProjectOnExternalChanges() {
-    myReloadBlockCount.incrementAndGet();
-  }
-
-  @Override
-  public void unblockReloadingProjectOnExternalChanges() {
-    assert myReloadBlockCount.get() > 0;
-    if (myReloadBlockCount.decrementAndGet() == 0 && myChangedFilesAlarm.isEmpty()) {
-      ApplicationManager.getApplication().invokeLater(restartApplicationOrReloadProjectTask, ModalityState.NON_MODAL, ApplicationManager.getApplication().getDisposed());
-    }
-  }
-
-  private boolean isReloadUnblocked() {
-    int count = myReloadBlockCount.get();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("[RELOAD] myReloadBlockCount = " + count);
-    }
-    return count == 0;
   }
 
   @Override
@@ -700,55 +560,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  public void saveChangedProjectFile(@NotNull VirtualFile file, @NotNull Project project) {
-    StateStorageManager storageManager = ComponentsPackage.getStateStore(project).getStateStorageManager();
-    String fileSpec = storageManager.collapseMacros(file.getPath());
-    Couple<Collection<FileBasedStorage>> storages = storageManager.getCachedFileStateStorages(Collections.singletonList(fileSpec), Collections.<String>emptyList());
-    FileBasedStorage storage = ContainerUtil.getFirstItem(storages.first);
-    // if empty, so, storage is not yet loaded, so, we don't have to reload
-    if (storage != null) {
-      registerProjectToReload(project, storage);
-    }
-  }
-
-  private void registerProjectToReload(@Nullable Project project, @NotNull StateStorage storage) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("[RELOAD] Registering project to reload: " + storage, new Exception());
-    }
-
-    Set<StateStorage> changes;
-    if (project == null) {
-      changes = myChangedApplicationFiles;
-    }
-    else {
-      changes = CHANGED_FILES_KEY.get(project);
-      if (changes == null) {
-        changes = new LinkedHashSet<StateStorage>();
-        CHANGED_FILES_KEY.set(project, changes);
-      }
-    }
-
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (changes) {
-      changes.add(storage);
-    }
-
-    if (storage instanceof StateStorageBase) {
-      ((StateStorageBase)storage).disableSaving();
-    }
-
-    if (isReloadUnblocked()) {
-      myChangedFilesAlarm.cancelAndRequest();
-    }
-  }
-
-  @Override
   public void reloadProject(@NotNull Project project) {
-    CHANGED_FILES_KEY.set(project, null);
     doReloadProject(project);
   }
 
-  private static void doReloadProject(@NotNull Project project) {
+  public static void doReloadProject(@NotNull Project project) {
     final Ref<Project> projectRef = Ref.create(project);
     ProjectReloadState.getInstance(project).onBeforeAutomaticProjectReload();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -797,13 +613,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
       if (save) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            FileDocumentManager.getInstance().saveAllDocuments();
-            project.save();
-          }
-        });
+        FileDocumentManager.getInstance().saveAllDocuments();
+        project.save();
       }
 
       if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
@@ -999,5 +810,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       myProject = null;
       super.expire();
     }
+  }
+
+  @Override
+  public void saveChangedProjectFile(@NotNull VirtualFile file, @NotNull Project project) {
+  }
+
+  @Override
+  public void blockReloadingProjectOnExternalChanges() {
+  }
+
+  @Override
+  public void unblockReloadingProjectOnExternalChanges() {
   }
 }

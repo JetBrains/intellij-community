@@ -1,4 +1,4 @@
-<components>
+<idea-plugin>
   <application-components>
 
     <component>
@@ -123,9 +123,6 @@
       <loadForDefaultProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.SmartPointerEditorTracker</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>
@@ -248,4 +245,4 @@
       <implementation-class>com.intellij.facet.FacetManagerImpl</implementation-class>
     </component>
   </module-components>
-</components>
+</idea-plugin>

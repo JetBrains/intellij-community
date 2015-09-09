@@ -20,6 +20,7 @@
 package com.intellij.lang.properties.refactoring.rename;
 
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.*;
 import com.intellij.lang.properties.structureView.PropertiesPrefixGroup;
@@ -32,8 +33,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiTarget;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;

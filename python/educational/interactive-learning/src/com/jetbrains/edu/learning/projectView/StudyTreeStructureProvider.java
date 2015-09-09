@@ -54,12 +54,28 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
               if (parentName.equals(EduNames.SANDBOX_DIR)) {
                 nodes.add(node);
               }
+              if (parentName.startsWith(EduNames.TASK)) {
+                addNonInvisibleFiles(nodes, node, project, virtualFile);
+              }
             }
           }
         }
       }
     }
     return nodes;
+  }
+
+  private static void addNonInvisibleFiles(@NotNull final Collection<AbstractTreeNode> nodes,
+                                           @NotNull final AbstractTreeNode node,
+                                           @NotNull final Project project,
+                                           @NotNull final VirtualFile virtualFile) {
+    if (!StudyTaskManager.getInstance(project).isInvisibleFile(virtualFile.getPath())) {
+      String fileName = virtualFile.getName();
+      if (!fileName.contains(EduNames.WINDOW_POSTFIX) && !fileName.contains(EduNames.WINDOWS_POSTFIX)
+          && !StudyUtils.isTestsFile(project, fileName) && !EduNames.TASK_HTML.equals(fileName) && !fileName.contains(".answer")) {
+        nodes.add(node);
+      }
+    }
   }
 
   protected boolean isCourseBasedProject(@NotNull final AbstractTreeNode parent) {

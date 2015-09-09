@@ -1662,24 +1662,24 @@ public class FSRecords implements Forceable {
           }
           fixedSize = myFixedSize;
         }
+
+        if (useSnappyForCompression) {
+          BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
+          DataOutputStream outputStream = new DataOutputStream(out);
+          byte[] rawBytes = bytes.getBytes();
+          if (bytes.getOffset() != 0) {
+            rawBytes = new byte[bytes.getLength()];
+            System.arraycopy(bytes.getBytes(), bytes.getOffset(), rawBytes, 0, bytes.getLength());
+          }
+          CompressionUtil.writeCompressed(outputStream, rawBytes, bytes.getLength());
+          outputStream.close();
+          bytes = new ByteSequence(out.getInternalBuffer(), 0, out.size());
+        }
+        contentStorage.writeBytes(page, bytes, fixedSize);
       }
       finally {
         w.unlock();
       }
-
-      if (useSnappyForCompression) {
-        BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
-        DataOutputStream outputStream = new DataOutputStream(out);
-        byte[] rawBytes = bytes.getBytes();
-        if (bytes.getOffset() != 0) {
-          rawBytes = new byte[bytes.getLength()];
-          System.arraycopy(bytes.getBytes(), bytes.getOffset(), rawBytes, 0, bytes.getLength());
-        }
-        CompressionUtil.writeCompressed(outputStream, rawBytes, bytes.getLength());
-        outputStream.close();
-        bytes = new ByteSequence(out.getInternalBuffer(), 0, out.size());
-      }
-      contentStorage.writeBytes(page, bytes, fixedSize);
     }
   }
 

@@ -38,7 +38,6 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
     presentation.setIcon(getRawIcon(item, presentation.isReal()));
 
     presentation.setItemText(getName(item));
-    presentation.setStrikeout(isToStrikeout(item));
     presentation.setItemTextBold(item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null);
     presentation.setTailText(getText2(item), item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null);
     presentation.setTypeText(getText3(item), null);
@@ -97,10 +96,6 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
 
   private static String getText2(final LookupItem item) {
     return (String)item.getAttribute(LookupItem.TAIL_TEXT_ATTR);
-  }
-
-  private static boolean isToStrikeout(LookupItem item) {
-    return item.getAttribute(LookupItem.DEPRECATED_ATTR) != null;
   }
 
   private static String getName(final LookupItem item){

@@ -7,6 +7,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,12 +21,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -40,12 +43,12 @@ import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.run.StudySmartChecker;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
-import com.jetbrains.edu.learning.stepic.EduSettings;
+import com.jetbrains.edu.stepic.StudySettings;
 import com.jetbrains.edu.stepic.EduStepicConnector;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
@@ -82,26 +85,6 @@ public class StudyCheckAction extends DumbAwareAction {
     }
   }
 
-  private static void deleteWindowDescriptions(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
-    for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
-      String name = entry.getKey();
-      VirtualFile virtualFile = taskDir.findChild(name);
-      if (virtualFile == null) {
-        continue;
-      }
-      String windowsFileName = virtualFile.getNameWithoutExtension() + "_windows";
-      final VirtualFile windowsFile = taskDir.findChild(windowsFileName);
-      if (windowsFile != null) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            StudyUtils.deleteFile(windowsFile);
-          }
-        });
-      }
-    }
-  }
-
   private static void drawAllPlaceholders(@NotNull final Project project, @NotNull final Task task, @NotNull final VirtualFile taskDir) {
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
@@ -120,6 +103,10 @@ public class StudyCheckAction extends DumbAwareAction {
 
 
   public void check(@NotNull final Project project) {
+    if (DumbService.isDumb(project)) {
+      DumbService.getInstance(project).showDumbModeNotification("Check Action is not available while indexing is in progress");
+      return;
+    }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -130,7 +117,7 @@ public class StudyCheckAction extends DumbAwareAction {
             if (selectedEditor == null) return;
             final StudyState studyState = new StudyState(selectedEditor);
             if (!studyState.isValid()) {
-              LOG.error("StudyCheckAction was invokes outside study editor");
+              LOG.error("StudyCheckAction was invoked outside study editor");
               return;
             }
             final IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
@@ -206,20 +193,20 @@ public class StudyCheckAction extends DumbAwareAction {
 
     final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     final StudyStatus statusBeforeCheck = taskManager.getStatus(task);
-    return new com.intellij.openapi.progress.Task.Backgroundable(project, "Checking task", true) {
+    return new com.intellij.openapi.progress.Task.Backgroundable(project, "Checking Task", true) {
       @Override
       public void onSuccess() {
-        StudyUtils.updateStudyToolWindow(project);
+        StudyUtils.updateToolWindows(project);
         drawAllPlaceholders(project, task, taskDir);
         ProjectView.getInstance(project).refresh();
-        deleteWindowDescriptions(task, taskDir);
+        EduUtils.deleteWindowDescriptions(task, taskDir);
         checkInProgress = false;
       }
 
       @Override
       public void onCancel() {
         taskManager.setStatus(task, statusBeforeCheck);
-        deleteWindowDescriptions(task, taskDir);
+        EduUtils.deleteWindowDescriptions(task, taskDir);
         checkInProgress = false;
       }
 
@@ -237,16 +224,22 @@ public class StudyCheckAction extends DumbAwareAction {
           });
           return;
         }
-        final String failedMessage = testRunner.getTestsOutput(output);
-        final String login = EduSettings.getInstance().getLogin();
-        final String password = EduSettings.getInstance().getPassword();
-        if (StudyTestRunner.TEST_OK.equals(failedMessage)) {
+        final StudyTestRunner.TestsOutput testsOutput = testRunner.getTestsOutput(output);
+        String stderr = output.getStderr();
+        if (!stderr.isEmpty()) {
+          LOG.info("#educational " + stderr);
+        }
+        final StudySettings studySettings = StudySettings.getInstance();
+
+        final String login = studySettings.getLogin();
+        final String password = StringUtil.isEmptyOrSpaces(login) ? "" : studySettings.getPassword();
+        if (testsOutput.isSuccess()) {
           taskManager.setStatus(task, StudyStatus.Solved);
           EduStepicConnector.postAttempt(task, true, login, password);
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              showTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), project);
+              showTestResultPopUp(testsOutput.getMessage(), MessageType.INFO.getPopupBackground(), project);
             }
           });
         }
@@ -276,7 +269,7 @@ public class StudyCheckAction extends DumbAwareAction {
                   }
                 });
               }
-              showTestResultPopUp(failedMessage, MessageType.ERROR.getPopupBackground(), project);
+              showTestResultPopUp(testsOutput.getMessage(), MessageType.ERROR.getPopupBackground(), project);
               navigateToFailedPlaceholder(studyState, task, taskDir, project);
             }
           });
@@ -334,6 +327,7 @@ public class StudyCheckAction extends DumbAwareAction {
                                    @NotNull final TaskFile taskFile,
                                    @NotNull final Project project) {
     final TaskFile answerTaskFile = new TaskFile();
+    answerTaskFile.name = taskFileName;
     final VirtualFile virtualFile = taskDir.findChild(taskFileName);
     if (virtualFile == null) {
       return;
@@ -407,6 +401,10 @@ public class StudyCheckAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(!checkInProgress);
+    final Presentation presentation = e.getPresentation();
+    StudyUtils.updateAction(e);
+    if (presentation.isEnabled()) {
+      presentation.setEnabled(!checkInProgress);
+    }
   }
 }

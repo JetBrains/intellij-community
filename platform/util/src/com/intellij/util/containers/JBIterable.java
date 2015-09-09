@@ -58,10 +58,12 @@ import java.util.*;
  *       .toList();}</pre>
  * <p/>
  * <p>Anything which can be done using {@code JBIterable} could be done in a different fashion
- * (often with {@link Iterables}), however the use of {@code JBIterable} makes many sets of
+ * (often with {@code Iterables}), however the use of {@code JBIterable} makes many sets of
  * operations significantly more concise.
  *
  * @author Marcin Mikosik
+ *
+ * @noinspection unchecked
  */
 public abstract class JBIterable<E> implements Iterable<E> {
 
@@ -108,6 +110,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
     return new JBIterable<E>() {
       @Override
       public Iterator<E> iterator() {
+        final Function<? super E, ? extends E> fun = Stateful.copy(generator);
         return new JBIterator<E>() {
           E cur = first;
 
@@ -115,7 +118,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
           public E nextImpl() {
             E result = cur;
             if (result == null) return stop();
-            cur = generator.fun(cur);
+            cur = fun.fun(cur);
             return result;
           }
         };
@@ -150,8 +153,8 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * Returns a {@code JBIterable} containing {@code elements} in the specified order.
    */
   @NotNull
-  public static <E> JBIterable<E> of(E... elements) {
-    return from(ContainerUtil.newArrayList(elements));
+  public static <E> JBIterable<E> of(@Nullable E... elements) {
+    return elements == null ? JBIterable.<E>empty() : from(ContainerUtil.newArrayList(elements));
   }
 
   private static final JBIterable EMPTY = new JBIterable() {
@@ -228,14 +231,14 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * {@code Iterator} supports it.
    */
   public final JBIterable<E> append(@Nullable Iterable<? extends E> other) {
-    return other == null ? this : this == EMPTY ? from(other) : from(ContainerUtil.concat(myIterable, other));
+    return other == null ? this : this == EMPTY ? from(other) : of(myIterable, other).flatten(Functions.<Iterable<?>, Iterable<E>>identity());
   }
 
   public final <T> JBIterable<E> append(@Nullable Iterable<T> other, @NotNull Function<? super T, ? extends Iterable<? extends E>> fun) {
     return other == null ? this : this == EMPTY ? from(other).flatten(fun) : append(from(other).flatten(fun));
   }
 
-  public final JBIterable<E> repeat(final int count) {
+  public final JBIterable<E> repeat(int count) {
     Function<JBIterable<E>, JBIterable<E>> fun = Functions.identity();
     return generate(this, fun).take(count).flatten(fun);
   }
@@ -259,7 +262,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
     return intercept(new Function<Iterator<E>, Iterator<E>>() {
       @Override
       public Iterator<E> fun(Iterator<E> iterator) {
-        return JBIterator.from(iterator).filter(condition);
+        return JBIterator.from(iterator).filter(Stateful.copy(condition));
       }
     });
   }
@@ -269,7 +272,6 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * @param type the type of elements desired
    */
   public final <T> JBIterable<T> filter(@NotNull Class<T> type) {
-    //noinspection unchecked
     return (JBIterable<T>)filter(Conditions.instanceOf(type));
   }
 
@@ -288,7 +290,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
     return intercept(new Function<Iterator<E>, Iterator<E>>() {
       @Override
       public Iterator<E> fun(Iterator<E> iterator) {
-        return JBIterator.from(iterator).takeWhile(condition);
+        return JBIterator.from(iterator).takeWhile(Stateful.copy(condition));
       }
     });
   }
@@ -308,7 +310,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
     return intercept(new Function<Iterator<E>, Iterator<E>>() {
       @Override
       public Iterator<E> fun(Iterator<E> iterator) {
-        return JBIterator.from(iterator).skipWhile(condition);
+        return JBIterator.from(iterator).skipWhile(Stateful.copy(condition));
       }
     });
   }
@@ -326,7 +328,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
     return intercept(new Function<Iterator<E>, Iterator<T>>() {
       @Override
       public Iterator<T> fun(Iterator<E> iterator) {
-        return JBIterator.from(iterator).transform(function);
+        return JBIterator.from(iterator).transform(Stateful.copy(function));
       }
     });
   }
@@ -344,13 +346,14 @@ public abstract class JBIterable<E> implements Iterable<E> {
     return intercept(new Function<Iterator<E>, Iterator<T>>() {
       @Override
       public Iterator<T> fun(final Iterator<E> iterator) {
+        final Function<? super E, ? extends Iterable<? extends T>> fun = Stateful.copy(function);
         return new JBIterator<T>() {
           Iterator<? extends T> cur;
 
           @Override
           public T nextImpl() {
             while ((cur == null || !cur.hasNext()) && iterator.hasNext()) {
-              cur = function.fun(iterator.next()).iterator();
+              cur = fun.fun(iterator.next()).iterator();
             }
             if (cur == null || !cur.hasNext()) return stop();
             return cur.next();
@@ -369,13 +372,13 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * The most generic iterator transformation.
    */
   @NotNull
-  public final <T> JBIterable<T> intercept(@NotNull final Function<Iterator<E>, Iterator<T>> function) {
+  public final <T, X extends Iterator<E>> JBIterable<T> intercept(@NotNull final Function<X, ? extends Iterator<T>> function) {
     if (this == EMPTY) return empty();
     final JBIterable<E> thisIterable = this;
     return new JBIterable<T>() {
       @Override
       public Iterator<T> iterator() {
-        return function.fun(thisIterable.iterator());
+        return function.fun((X)thisIterable.iterator());
       }
     };
   }
@@ -455,5 +458,33 @@ public abstract class JBIterable<E> implements Iterable<E> {
       }
     }
     return collection;
+  }
+
+  public abstract static class Stateful<Self extends Stateful> implements Cloneable {
+
+    @NotNull
+    static <T> T copy(@NotNull T o) {
+      if (!(o instanceof Stateful)) {
+        return o;
+      }
+      return (T)((Stateful)o).clone();
+    }
+
+    public Self clone() {
+      try {
+        return (Self)super.clone();
+      }
+      catch (CloneNotSupportedException e) {
+        throw new AssertionError(e);
+      }
+    }
+  }
+
+  public abstract static class StatefulFilter<T> extends Stateful<StatefulFilter> implements Condition<T> {
+
+  }
+
+  public abstract static class StatefulTransform<S, T> extends Stateful<StatefulTransform> implements Function<S, T> {
+
   }
 }

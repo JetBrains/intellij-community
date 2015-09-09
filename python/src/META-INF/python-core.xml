@@ -560,8 +560,12 @@
 
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.PyTypingAnnotationInjector"/>
+    <lang.parserDefinition language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiParserDefinition"/>
+    <fileTypeFactory implementation="com.jetbrains.python.pyi.PyiFileTypeFactory"/>
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.pyi.PyiRelatedItemLineMarkerProvider"/>
 
     <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.PyInspectionsSuppressor"/>
+    <refactoring.invertBoolean implementation="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanDelegate"/>
   </extensions>
 
   <extensionPoints>
@@ -597,10 +601,13 @@
     <extensionPoint qualifiedName="Pythonid.pyReferenceResolveProvider" interface="com.jetbrains.python.psi.resolve.PyReferenceResolveProvider"/>
     <extensionPoint qualifiedName="Pythonid.breakpointHandler" interface="com.jetbrains.python.debugger.PyBreakpointHandlerFactory"/>
     <extensionPoint qualifiedName="Pythonid.consoleOptionsProvider" interface="com.jetbrains.python.console.PyConsoleOptionsProvider"/>
+    <extensionPoint qualifiedName="Pythonid.testLocator" interface="com.jetbrains.python.testing.PythonTestLocator"/>
     <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
+    <testLocator implementation="com.jetbrains.python.testing.PythonUnitTestTestIdUrlProvider"/>
+    <testLocator implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestUrlProvider"/>
     <pySuperMethodsSearch implementation="com.jetbrains.python.psi.search.PySuperMethodsSearchExecutor"/>
     <pyClassInheritorsSearch implementation="com.jetbrains.python.psi.search.PyClassInheritorsSearchExecutor"/>
     <pyOverridingMethodsSearch implementation="com.jetbrains.python.psi.search.PyOverridingMethodsSearchExecutor"/>
@@ -626,6 +633,10 @@
 
     <!-- typing -->
     <typeProvider implementation="com.jetbrains.python.codeInsight.PyTypingTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.pyi.PyiTypeProvider"/>
+    <pyModuleMembersProvider implementation="com.jetbrains.python.pyi.PyiModuleMembersProvider"/>
+    <pyClassMembersProvider implementation="com.jetbrains.python.pyi.PyiClassMembersProvider"/>
+    <visitorFilter language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiVisitorFilter"/>
 
     <typeProvider implementation="com.jetbrains.python.debugger.PyCallSignatureTypeProvider"/>
     <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PythonBuiltinReferenceResolveProvider"/>
@@ -760,10 +771,6 @@
     <action id="PythonGenerateDictionaries" class="com.jetbrains.python.spellchecker.PythonSpellcheckerGenerateDictionariesAction"
             text="Generate Python Spellchecker Dictionaries" internal="true">
       <add-to-group group-id="Internal"/>
-    </action>
-
-    <action id="PyInvertBooleanAction" class="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanAction" text="Invert Boolean">
-      <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
 
     <action id="PyDebugger.ViewArray" class="com.jetbrains.python.debugger.array.PyViewArrayAction" text="View as Array">

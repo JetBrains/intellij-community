@@ -26,7 +26,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -87,8 +86,7 @@ public abstract class JvmSmartStepIntoHandler {
           }
         });
         highlightTarget(popupStep, firstTarget);
-        final RelativePoint point = DebuggerUIUtil.calcPopupLocation(editor, position.getLine());
-        popup.show(point);
+        DebuggerUIUtil.showPopupForEditorLine(popup, editor, position.getLine());
       }
       return true;
     }

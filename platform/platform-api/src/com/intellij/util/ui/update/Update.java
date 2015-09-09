@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
 
-public abstract class Update extends ComparableObject.Impl implements Runnable, Comparable {
+public abstract class Update extends ComparableObject.Impl implements Runnable {
 
   public static final int LOW_PRIORITY = 999;
   public static final int HIGH_PRIORITY = 10;
@@ -73,20 +73,7 @@ public abstract class Update extends ComparableObject.Impl implements Runnable, 
     return super.toString() + " Objects: " + Arrays.asList(getEqualityObjects());
   }
 
-  public int compareTo(Object o) {
-    Update another = (Update) o;
-
-    int weightResult = getPriority() < another.getPriority() ? -1 : (getPriority() == another.getPriority() ? 0 : 1);
-
-    if (weightResult == 0) {
-      return  equals(o) ? 0 : 1;
-    } 
-    else {
-      return weightResult;
-    }
-  }
-
-  public int getPriority() {
+  public final int getPriority() {
     return myPriority;
   }
 

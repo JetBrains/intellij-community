@@ -15,12 +15,14 @@
  */
 package com.intellij.codeInsight.navigation;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
+import com.intellij.codeInsight.generation.actions.PresentableCodeInsightActionHandler;
 import com.intellij.codeInsight.navigation.actions.GotoSuperAction;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.MethodCellRenderer;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -33,7 +35,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaGotoSuperHandler implements CodeInsightActionHandler {
+public class JavaGotoSuperHandler implements PresentableCodeInsightActionHandler {
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(GotoSuperAction.FEATURE_ID);
@@ -92,5 +94,20 @@ public class JavaGotoSuperHandler implements CodeInsightActionHandler {
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public void update(@NotNull Editor editor, @NotNull PsiFile file, Presentation presentation) {
+    final PsiElement element = getElement(file, editor.getCaretModel().getOffset());
+    final PsiElement containingElement = PsiTreeUtil.getParentOfType(element, PsiFunctionalExpression.class, PsiMember.class);
+    if (containingElement instanceof PsiClass) {
+      presentation.setText(ActionsBundle.actionText("GotoSuperClass"));
+      presentation.setDescription(ActionsBundle.actionDescription("GotoSuperClass"));
+    }
+    else {
+      presentation.setText(ActionsBundle.actionText("GotoSuperMethod"));
+      presentation.setDescription(ActionsBundle.actionDescription("GotoSuperMethod"));
+    }
+    
   }
 }

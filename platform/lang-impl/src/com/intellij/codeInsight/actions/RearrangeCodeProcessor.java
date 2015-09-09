@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,8 +80,9 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
           Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
 
           if (document != null && Rearranger.EXTENSION.forLanguage(file.getLanguage()) != null) {
-            Runnable command = prepareRearrangeCommand(file, ranges);
             PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(document);
+            PsiDocumentManager.getInstance(myProject).commitDocument(document);
+            Runnable command = prepareRearrangeCommand(file, ranges);
             try {
               CommandProcessor.getInstance().executeCommand(myProject, command, COMMAND_NAME, null);
             }
@@ -121,7 +122,7 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
     }
 
     if (processChangedTextOnly) {
-      return FormatChangedTextUtil.getChangedTextRanges(myProject, file);
+      return FormatChangedTextUtil.getInstance().getChangedTextRanges(myProject, file);
     }
 
     return ContainerUtil.newSmartList(file.getTextRange());

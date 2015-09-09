@@ -2,15 +2,13 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$">
+    <content url="file://$MODULE_DIR$/src">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="core-api" />
     <orderEntry type="module" module-name="diff-api" exported="" />
-    <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="vcs-api-core" />

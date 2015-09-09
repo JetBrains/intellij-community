@@ -155,6 +155,11 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
     }
 
     @Override
+    public String getName() {
+      return myText;
+    }
+
+    @Override
     public ItemPresentation getPresentation() {
       return new ItemPresentation() {
 

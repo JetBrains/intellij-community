@@ -119,7 +119,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     boolean isAnno = (node.getTokenType() == JavaElementType.ANNOTATION_METHOD);
     byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnno, isVarArgs, isDeprecatedByComment, hasDeprecatedAnnotation, hasDocComment);
 
-    return new PsiMethodStubImpl(parentStub, StringRef.fromString(name), typeInfo, flags, StringRef.fromString(defValueText));
+    return new PsiMethodStubImpl(parentStub, name, typeInfo, flags, defValueText);
   }
 
   @Override
@@ -139,7 +139,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     final TypeInfo type = TypeInfo.readTYPE(dataStream);
     byte flags = dataStream.readByte();
     final StringRef defaultMethodValue = PsiMethodStubImpl.isAnnotationMethod(flags) ? dataStream.readName() : null;
-    return new PsiMethodStubImpl(parentStub, name, type, flags, defaultMethodValue);
+    return new PsiMethodStubImpl(parentStub, StringRef.toString(name), type, flags, StringRef.toString(defaultMethodValue));
   }
 
   @Override

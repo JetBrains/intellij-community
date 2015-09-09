@@ -20,13 +20,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.PlatformTestCase;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class IdeaTestApplication extends CommandLineApplication implements Disposable {
@@ -46,7 +42,7 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
     return myDataContext == null ? null : myDataContext.getData(dataId);
   }
 
-  public static synchronized IdeaTestApplication getInstance() {
+  public static IdeaTestApplication getInstance() {
     return getInstance(null);
   }
 
@@ -55,13 +51,7 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
       PlatformTestCase.doAutodetectPlatformPrefix();
       new IdeaTestApplication();
       PluginManagerCore.getPlugins();
-      final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          app.load(configPath);
-        }
-      }.execute();
+      ApplicationManagerEx.getApplicationEx().load(configPath);
     }
     return (IdeaTestApplication)ourInstance;
   }

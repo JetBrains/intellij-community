@@ -182,7 +182,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
             highlight.run();
             progress.checkCanceled();
             HighlightingSession highlightingSession = HighlightingSessionImpl.getHighlightingSession(file, progress);
-            PostHighlightingVisitor highlightingVisitor = new PostHighlightingVisitor(file, document, refCountHolder, highlightingSession);
+            PostHighlightingVisitor highlightingVisitor = new PostHighlightingVisitor(file, document, refCountHolder);
             highlightingVisitor.collectHighlights(file, holder, progress);
           }
         });
@@ -351,11 +351,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                   if (result != null) {
                     myHolder.add(result);
                   } else {
-                    final PsiClass samClass = resolveResult.getElement();
-                    if (!PsiUtil.isAccessible(myFile.getProject(), samClass, expression, null)) {
-                      myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
-                                     .descriptionAndTooltip(HighlightUtil.buildProblemWithAccessDescription(expression, resolveResult)).create());
-                    }
+                    checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
                   }
                 }
               }
@@ -1291,12 +1287,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
       if (!myHolder.hasErrorResults()) {
-        final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
-        final PsiClass psiClass = resolveResult.getElement();
-        if (psiClass != null && !PsiUtil.isAccessible(myFile.getProject(), psiClass, expression, null)) {
-          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
-                         .descriptionAndTooltip(HighlightUtil.buildProblemWithAccessDescription(expression, resolveResult)).create());
-        }
+        final PsiClassType.ClassResolveResult resolveResult = checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
 
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
         if (interfaceMethod != null) {
@@ -1379,6 +1370,27 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
     }
+  }
+
+  // 15.13 | 15.27
+  // It is a compile-time error if any class or interface mentioned by either U or the function type of U 
+  // is not accessible from the class or interface in which the method reference expression appears.
+  private PsiClassType.ClassResolveResult checkFunctionalInterfaceTypeAccessible(PsiFunctionalExpression expression,
+                                                                                 PsiType functionalInterfaceType) {
+    PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+    final PsiClass psiClass = resolveResult.getElement();
+    if (psiClass != null) {
+      if (!PsiUtil.isAccessible(myFile.getProject(), psiClass, expression, null)) {
+        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
+                       .descriptionAndTooltip(HighlightUtil.buildProblemWithAccessDescription(expression, resolveResult)).create());
+      }
+      else {
+        for (PsiType type : resolveResult.getSubstitutor().getSubstitutionMap().values()) {
+          checkFunctionalInterfaceTypeAccessible(expression, type);
+        }
+      }
+    } 
+    return resolveResult;
   }
 
   @Override

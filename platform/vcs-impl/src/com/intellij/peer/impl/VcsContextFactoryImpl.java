@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,28 +33,32 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public class VcsContextFactoryImpl implements VcsContextFactory {
-
+  @Override
   @NotNull
   public VcsContext createCachedContextOn(@NotNull AnActionEvent event) {
     return VcsContextWrapper.createCachedInstanceOn(event);
   }
 
+  @Override
   @NotNull
   public VcsContext createContextOn(@NotNull AnActionEvent event) {
     return new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace(), event.getPresentation().getText());
   }
 
+  @Override
   @NotNull
   public FilePath createFilePathOn(@NotNull VirtualFile virtualFile) {
     return createFilePath(virtualFile.getPath(), virtualFile.isDirectory());
   }
 
+  @Override
   @NotNull
   public FilePath createFilePathOn(@NotNull final File file) {
     VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
     return vf != null ? createFilePathOn(vf) : createFilePath(file.getPath(), file.isDirectory());
   }
 
+  @Override
   @NotNull
   public FilePath createFilePathOn(@NotNull final File file, @NotNull final NotNullFunction<File, Boolean> detector) {
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
@@ -64,21 +68,25 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
     return createFilePathOn(file, detector.fun(file).booleanValue());
   }
 
+  @Override
   @NotNull
   public FilePath createFilePathOn(@NotNull final File file, final boolean isDirectory) {
     return createFilePath(file.getPath(), isDirectory);
   }
 
+  @Override
   @NotNull
   public FilePath createFilePathOnNonLocal(@NotNull final String path, final boolean isDirectory) {
     return new RemoteFilePath(path, isDirectory);
   }
 
+  @Override
   @NotNull
   public FilePath createFilePathOnDeleted(@NotNull final File file, final boolean isDirectory) {
     return createFilePathOn(file, isDirectory);
   }
 
+  @Override
   @NotNull
   public FilePath createFilePathOn(@NotNull final VirtualFile parent, @NotNull final String name) {
     return createFilePath(parent, name, false);
@@ -90,6 +98,7 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
     return createFilePath(parent.getPath() + "/" + fileName, isDirectory);
   }
 
+  @Override
   @NotNull
   public LocalChangeList createLocalChangeList(@NotNull Project project, @NotNull final String name) {
     return LocalChangeListImpl.createEmptyChangeListImpl(project, name);

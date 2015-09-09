@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -27,30 +26,36 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-class GutterIntentionAction extends AbstractIntentionAction implements Comparable<IntentionAction> {
+class GutterIntentionAction extends AbstractIntentionAction implements Comparable<IntentionAction>, Iconable {
   private final AnAction myAction;
   private final int myOrder;
+  private final Icon myIcon;
   private String myText;
 
-  private GutterIntentionAction(AnAction action, int order) {
+  private GutterIntentionAction(AnAction action, int order, Icon icon) {
     myAction = action;
     myOrder = order;
+    myIcon = icon;
   }
 
   @Override
@@ -63,7 +68,6 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!ApplicationManager.getApplication().isDispatchThread()) return true;
     if (myText == null) {
       AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((EditorEx)editor).getDataContext());
       myAction.update(event);
@@ -89,20 +93,44 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
     return StringUtil.notNullize(myText);
   }
 
-  static void addActions(@Nullable Project project, RangeHighlighterEx info, List<HighlightInfo.IntentionActionDescriptor> descriptors) {
+  static void addActions(@NotNull Project project,
+                         @NotNull Editor editor,
+                         @NotNull PsiFile psiFile,
+                         @NotNull RangeHighlighterEx info,
+                         @NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors) {
     final GutterIconRenderer renderer = info.getGutterIconRenderer();
-    if (renderer == null || (project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(renderer))) {
+    if (renderer == null || DumbService.isDumb(project) && !DumbService.isDumbAware(renderer)) {
       return;
     }
-    addActions(renderer.getClickAction(), descriptors, renderer, 0);
-    addActions(renderer.getMiddleButtonClickAction(), descriptors, renderer, 0);
-    addActions(renderer.getRightButtonClickAction(), descriptors, renderer, 0);
-    addActions(renderer.getPopupMenuActions(), descriptors, renderer, 0);
+    List<HighlightInfo.IntentionActionDescriptor> list = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    addActions(project, editor, psiFile, renderer.getClickAction(), list, renderer, 0);
+    addActions(project, editor, psiFile, renderer.getMiddleButtonClickAction(), list, renderer, 0);
+    addActions(project, editor, psiFile, renderer.getRightButtonClickAction(), list, renderer, 0);
+    addActions(project, editor, psiFile, renderer.getPopupMenuActions(), list, renderer, 0);
+    if (list.isEmpty()) return;
+    if (list.size() == 1) {
+      descriptors.addAll(list);
+    }
+    else {
+      HighlightInfo.IntentionActionDescriptor first = list.get(0);
+      List<IntentionAction> options = ContainerUtil.map(list.subList(1, list.size()),
+                                                        new Function<HighlightInfo.IntentionActionDescriptor, IntentionAction>() {
+                                                          @Override
+                                                          public IntentionAction fun(HighlightInfo.IntentionActionDescriptor descriptor) {
+                                                            return descriptor.getAction();
+                                                          }
+                                                        });
+      descriptors.add(new HighlightInfo.IntentionActionDescriptor(first.getAction(), options, null, first.getIcon()));
+    }
   }
 
-  private static void addActions(AnAction action,
-                                 List<HighlightInfo.IntentionActionDescriptor> descriptors,
-                                 GutterIconRenderer renderer, int order) {
+  private static void addActions(@NotNull Project project,
+                                 @NotNull Editor editor,
+                                 @NotNull PsiFile psiFile,
+                                 @Nullable AnAction action,
+                                 @NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors,
+                                 @NotNull GutterIconRenderer renderer,
+                                 int order) {
     if (action == null) {
       return;
     }
@@ -110,19 +138,20 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
       AnAction[] children = ((ActionGroup)action).getChildren(null);
       for (int i = 0; i < children.length; i++) {
         AnAction child = children[i];
-        addActions(child, descriptors, renderer, i + order);
+        addActions(project, editor, psiFile, child, descriptors, renderer, i + order);
       }
     }
-    final IntentionAction actionAdapter = new GutterIntentionAction(action, order);
     Icon icon = action.getTemplatePresentation().getIcon();
     if (icon == null) icon = renderer.getIcon();
     if (icon.getIconWidth() < 16) icon = IconUtil.toSize(icon, 16, 16);
+    final IntentionAction gutterAction = new GutterIntentionAction(action, order, icon);
+    if (!gutterAction.isAvailable(project, editor, psiFile)) return;
     HighlightInfo.IntentionActionDescriptor descriptor =
-      new HighlightInfo.IntentionActionDescriptor(actionAdapter, Collections.<IntentionAction>emptyList(), null, icon) {
+      new HighlightInfo.IntentionActionDescriptor(gutterAction, Collections.<IntentionAction>emptyList(), null, icon) {
         @Nullable
         @Override
         public String getDisplayName() {
-          return actionAdapter.getText();
+          return gutterAction.getText();
         }
       };
     descriptors.add(descriptor);
@@ -130,10 +159,15 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
 
   @SuppressWarnings("unchecked")
   @Override
-  public int compareTo(IntentionAction o) {
+  public int compareTo(@NotNull IntentionAction o) {
     if (o instanceof GutterIntentionAction) {
       return myOrder - ((GutterIntentionAction)o).myOrder;
     }
     return 0;
+  }
+
+  @Override
+  public Icon getIcon(@IconFlags int flags) {
+    return myIcon;
   }
 }

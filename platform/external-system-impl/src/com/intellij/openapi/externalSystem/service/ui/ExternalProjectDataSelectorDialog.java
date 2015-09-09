@@ -128,6 +128,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   }
 
   private void init(@NotNull ExternalProjectInfo projectInfo) {
+    ProjectDataManager.getInstance().ensureTheDataIsReadyToUse(projectInfo.getExternalProjectStructure());
     myProjectInfo = projectInfo;
     myExternalSystemUiAware = ExternalSystemUiUtil.getUiAware(myProjectInfo.getProjectSystemId());
     myTree = createTree();

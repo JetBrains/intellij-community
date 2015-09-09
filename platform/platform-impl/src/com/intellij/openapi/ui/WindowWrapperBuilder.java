@@ -82,19 +82,17 @@ public class WindowWrapperBuilder {
     @NotNull private final JComponent myComponent;
     @NotNull private final Mode myMode;
 
-    @NotNull private final DialogWrapper myDialog;
+    @NotNull private final MyDialogWrapper myDialog;
 
     public DialogWindowWrapper(@NotNull final WindowWrapperBuilder builder) {
       myProject = builder.myProject;
       myComponent = builder.myComponent;
       myMode = builder.myMode;
 
-      if (builder.myParent != null) {
-        myDialog = new MyDialogWrapper(builder.myParent, builder.myComponent, builder.myDimensionServiceKey, builder.myPreferredFocusedComponent);
-      }
-      else {
-        myDialog = new MyDialogWrapper(builder.myProject, builder.myComponent, builder.myDimensionServiceKey, builder.myPreferredFocusedComponent);
-      }
+      myDialog = builder.myParent != null
+                 ? new MyDialogWrapper(builder.myParent, builder.myComponent)
+                 : new MyDialogWrapper(builder.myProject, builder.myComponent);
+      myDialog.setParameters(builder.myDimensionServiceKey, builder.myPreferredFocusedComponent);
 
       final Runnable onShowCallback = builder.myOnShowCallback;
       if (onShowCallback != null) {
@@ -115,7 +113,7 @@ public class WindowWrapperBuilder {
           myDialog.setModal(false);
           break;
         default:
-          throw new IllegalArgumentException(builder.myMode.toString());
+          assert false;
       }
       myDialog.init();
       Disposer.register(myDialog.getDisposable(), this);
@@ -170,26 +168,22 @@ public class WindowWrapperBuilder {
     }
 
     private static class MyDialogWrapper extends DialogWrapper {
-      @NotNull private final JComponent myComponent;
-      @Nullable private final String myDimensionServiceKey;
-      @Nullable private final JComponent myPreferredFocusedComponent;
+      @NotNull private JComponent myComponent;
+      @Nullable private String myDimensionServiceKey;
+      @Nullable private JComponent myPreferredFocusedComponent;
 
-      public MyDialogWrapper(@Nullable Project project,
-                             @NotNull JComponent component,
-                             @Nullable String dimensionServiceKey,
-                             @Nullable JComponent preferredFocusedComponent) {
+      public MyDialogWrapper(@Nullable Project project, @NotNull JComponent component) {
         super(project, true);
         myComponent = component;
-        myDimensionServiceKey = dimensionServiceKey;
-        myPreferredFocusedComponent = preferredFocusedComponent;
       }
 
-      public MyDialogWrapper(@NotNull Component parent,
-                             @NotNull JComponent component,
-                             @Nullable String dimensionServiceKey,
-                             @Nullable JComponent preferredFocusedComponent) {
+      public MyDialogWrapper(@NotNull Component parent, @NotNull JComponent component) {
         super(parent, true);
         myComponent = component;
+      }
+
+      public void setParameters(@Nullable String dimensionServiceKey,
+                                @Nullable JComponent preferredFocusedComponent) {
         myDimensionServiceKey = dimensionServiceKey;
         myPreferredFocusedComponent = preferredFocusedComponent;
       }
@@ -241,14 +235,14 @@ public class WindowWrapperBuilder {
     @NotNull private final FrameWrapper myFrame;
 
     public FrameWindowWrapper(@NotNull WindowWrapperBuilder builder) {
+      assert builder.myMode == Mode.FRAME;
+
       myProject = builder.myProject;
       myComponent = builder.myComponent;
       myMode = builder.myMode;
       myOnShowCallback = builder.myOnShowCallback;
 
       myFrame = new FrameWrapper(builder.myProject, builder.myDimensionServiceKey);
-
-      assert builder.myMode == Mode.FRAME;
 
       myFrame.setComponent(builder.myComponent);
       myFrame.setPreferredFocusedComponent(builder.myPreferredFocusedComponent);

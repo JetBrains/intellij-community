@@ -132,13 +132,10 @@ public abstract class MoveDirectoryWithClassesHelper {
       @Nullable
       public PsiReference getReference() {
         PsiElement element = getElement();
-        if (element == null) {
-          return null;
-        }
-        else {
-          final ProperTextRange rangeInElement = getRangeInElement();
-          return rangeInElement != null ? element.findReferenceAt(rangeInElement.getStartOffset()) : element.getReference();
-        }
+        if (element == null) return null;
+        final ProperTextRange rangeInElement = getRangeInElement();
+        PsiReference reference = rangeInElement != null ? element.findReferenceAt(rangeInElement.getStartOffset()) : element.getReference();
+        return reference != null && reference.getRangeInElement().equals(rangeInElement) ? reference : null;
       }
     }
   }

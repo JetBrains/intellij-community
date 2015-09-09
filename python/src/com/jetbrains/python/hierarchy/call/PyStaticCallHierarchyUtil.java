@@ -28,6 +28,7 @@ import com.jetbrains.python.findUsages.PyFunctionFindUsagesHandler;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,7 +129,8 @@ public class PyStaticCallHierarchyUtil {
   @Nullable
   private static FindUsagesHandler createFindUsageHandler(@NotNull final PsiElement element) {
     if (element instanceof PyFunction) {
-      final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true).findAll();
+      final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), null);
+      final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true, context).findAll();
       if (superMethods.size() > 0) {
         final PsiElement next = superMethods.iterator().next();
         if (next instanceof PyFunction && !isInObject((PyFunction)next)) {

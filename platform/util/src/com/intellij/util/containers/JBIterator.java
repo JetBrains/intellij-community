@@ -38,7 +38,7 @@ import java.util.NoSuchElementException;
  *
  * @see JBIterable#transform(Function)
  * @see JBIterable#filter(Condition)
- * @see TreeTraverser.TracingIt
+ * @see TreeTraversal.TracingIt
  *
  * @author gregsh
  *
@@ -68,7 +68,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   }
 
   private Object cur = INIT;
-  private final Op firstOp = new Op();
+  private final Op firstOp = new Op(null);
   private Op lastOp = firstOp;
 
   protected abstract E nextImpl();
@@ -125,31 +125,21 @@ public abstract class JBIterator<E> implements Iterator<E> {
   }
 
   @NotNull
-  public final <T> JBIterator<T> transform(@NotNull final Function<? super E, T> function) {
-    return addOp(new Op() {
+  public final <T> JBIterator<T> transform(@NotNull Function<? super E, T> function) {
+    return addOp(new Op<Function<? super E, T>>(function) {
       @Override
       public Object apply(Object o) {
-        return function.fun((E)o);
-      }
-
-      @Override
-      public String toString() {
-        return toShortString(function);
+        return impl.fun((E)o);
       }
     });
   }
 
   @NotNull
-  public final JBIterator<E> filter(@NotNull final Condition<? super E> condition) {
-    return addOp(new Op() {
+  public final JBIterator<E> filter(@NotNull Condition<? super E> condition) {
+    return addOp(new Op<Condition<? super E>>(condition) {
       @Override
       public Object apply(Object o) {
-        return condition.value((E)o) ? o : SKIP;
-      }
-
-      @Override
-      public String toString() {
-        return toShortString(condition);
+        return impl.value((E)o) ? o : SKIP;
       }
     });
   }
@@ -160,16 +150,16 @@ public abstract class JBIterator<E> implements Iterator<E> {
   }
 
   @NotNull
-  public final JBIterator<E> takeWhile(@NotNull final Condition<? super E> condition) {
-    return addOp(new Op() {
+  public final JBIterator<E> takeWhile(@NotNull Condition<? super E> condition) {
+    return addOp(new Op<Condition<? super E>>(condition) {
       @Override
       public Object apply(Object o) {
-        return condition.value((E)o) ? o : stop();
+        return impl.value((E)o) ? o : stop();
       }
 
       @Override
       public String toString() {
-        return "while:" + toShortString(condition);
+        return "takeWhile:" + super.toString();
       }
     });
   }
@@ -181,7 +171,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @NotNull
   public final JBIterator<E> skipWhile(@NotNull final Condition<? super E> condition) {
-    return addOp(new Op() {
+    return addOp(new Op<Condition<? super E>>(condition) {
 
       boolean active = true;
 
@@ -194,7 +184,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
       @Override
       public String toString() {
-        return "skip:" + toShortString(condition);
+        return "skipWhile:" + super.toString();
       }
     });
   }
@@ -218,16 +208,31 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @Override
   public String toString() {
-    JBIterable<Op> ops = JBIterable.generate(firstOp.nextOp, new Function<Op, Op>() {
+    JBIterable<Op> ops = operationsImpl();
+    return "{cur=" + cur + "; ops[" + ops.size() + "]=" + ops + "}";
+  }
+
+  @NotNull
+  public JBIterable<Object> operations() {
+    return operationsImpl().transform(new Function<Op, Object>() {
+      @Override
+      public Object fun(Op op) {
+        return op.impl;
+      }
+    });
+  }
+
+  @NotNull
+  private JBIterable<Op> operationsImpl() {
+    return JBIterable.generate(firstOp.nextOp, new Function<Op, Op>() {
       @Override
       public Op fun(Op op) {
         return op.nextOp;
       }
     });
-    return "{cur=" + cur + "; ops[" + ops.size() + "]=" + ops + "}";
   }
 
-  private static String toShortString(@NotNull Object o) {
+  static String toShortString(@NotNull Object o) {
     String fqn = o.getClass().getName();
     return StringUtil.replace(o.toString(), fqn, StringUtil.getShortName(fqn, '.'));
   }
@@ -239,11 +244,21 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
   };
 
-  private static class Op {
+  private static class Op<T> {
+    final T impl;
     Op nextOp;
+
+    public Op(T impl) {
+      this.impl = impl;
+    }
 
     Object apply(Object o) {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String toString() {
+      return impl == null ? "" : toShortString(impl);
     }
   }
 

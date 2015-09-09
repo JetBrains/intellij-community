@@ -21,11 +21,9 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -97,6 +95,7 @@ public class DebuggerUIUtil {
     ApplicationManager.getApplication().invokeLater(runnable);
   }
 
+  @Deprecated
   public static RelativePoint calcPopupLocation(@NotNull Editor editor, final int line) {
     Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
 
@@ -105,6 +104,28 @@ public class DebuggerUIUtil {
       p = new Point((visibleArea.x + visibleArea.width) / 2, (visibleArea.y + visibleArea.height) / 2);
     }
     return new RelativePoint(editor.getContentComponent(), p);
+  }
+
+  @Nullable
+  public static RelativePoint getPositionForPopup(@NotNull Editor editor, int line) {
+    Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
+    return editor.getScrollingModel().getVisibleArea().contains(p) ? new RelativePoint(editor.getContentComponent(), p) : null;
+  }
+
+  public static void showPopupForEditorLine(@NotNull JBPopup popup, @NotNull Editor editor, int line) {
+    RelativePoint point = getPositionForPopup(editor, line);
+    if (point != null) {
+      popup.show(point);
+    }
+    else {
+      Project project = editor.getProject();
+      if (project != null) {
+        popup.showCenteredInCurrentWindow(project);
+      }
+      else {
+        popup.showInFocusCenter();
+      }
+    }
   }
 
   public static void showValuePopup(@NotNull XFullValueEvaluator evaluator, @NotNull MouseEvent event, @NotNull Project project, @Nullable Editor editor) {

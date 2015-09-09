@@ -48,6 +48,7 @@ public class XBreakpointActionsPanel<B extends XBreakpointBase<?,?,?>> extends X
   private JPanel myContentPane;
   private JPanel myMainPanel;
   private JCheckBox myTemporaryCheckBox;
+  private JPanel myExpressionPanel;
   private XDebuggerExpressionComboBox myLogExpressionComboBox;
 
   public void init(Project project, XBreakpointManager breakpointManager, @NotNull B breakpoint, @Nullable XDebuggerEditorsProvider debuggerEditorsProvider) {
@@ -67,7 +68,7 @@ public class XBreakpointActionsPanel<B extends XBreakpointBase<?,?,?>> extends X
       DebuggerUIUtil.focusEditorOnCheck(myLogExpressionCheckBox, myLogExpressionComboBox.getEditorComponent());
     }
     else {
-      myLogExpressionCheckBox.setVisible(false);
+      myExpressionPanel.getParent().remove(myExpressionPanel);
     }
   }
 

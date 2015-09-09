@@ -457,7 +457,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
 
     if (hideLookup) {
-      LookupManager.getInstance(getProject()).hideActiveLookup();
+      myLookup.hideLookup(true);
     }
   }
 
@@ -525,7 +525,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         LOG.assertTrue(!getProject().isDisposed(), "project disposed");
 
         if (myEditor.isDisposed()) {
-          LookupManager.getInstance(getProject()).hideActiveLookup();
+          myLookup.hideLookup(false);
           CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
           return;
         }
@@ -540,7 +540,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         myLookup.setCalculating(false);
 
         if (myCount == 0) {
-          LookupManager.getInstance(getProject()).hideActiveLookup();
+          myLookup.hideLookup(false);
           if (!isAutopopupCompletion()) {
             final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
             LOG.assertTrue(current == null, current + "!=" + CompletionProgressIndicator.this);

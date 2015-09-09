@@ -46,7 +46,6 @@ public class NumPyDocString {
   private static final Pattern REDIRECT = Pattern.compile("^Refer to `(.*)` for full documentation.$");
   private static final Pattern NUMPY_UNION_PATTERN = Pattern.compile("^\\{(.*)\\}$");
   private static final Pattern NUMPY_ARRAY_PATTERN = Pattern.compile("(\\(\\.\\.\\..*\\))(.*)");
-  private static final Pattern QUOTED_STRING_PATTERN = Pattern.compile("^(?:\\\"(.*)\\\")|(?:\\'(.*)\\')$");
 
   private final String mySignature;
   private final List<NumPyDocStringParameter> myParameters = new ArrayList<NumPyDocStringParameter>();
@@ -277,13 +276,13 @@ public class NumPyDocString {
     }
   }
 
-  @NotNull
+  @Nullable
   public static String cleanupOptional(@NotNull String typeString) {
     int index = typeString.indexOf(", optional");
     if (index >= 0) {
       return typeString.substring(0, index);
     }
-    return typeString;
+    return null;
   }
 
   @NotNull
@@ -297,23 +296,6 @@ public class NumPyDocString {
       typeString = matcher.group(1);
     }
     return Arrays.asList(typeString.split(" *, *"));
-  }
-
-  @NotNull
-  public static Set<String> extractPermissibleArgumentsFromNumpyDocType(String typeString) {
-    List<String> elements = getNumpyUnionType(cleanupOptional(typeString));
-    Set<String> result = new LinkedHashSet<String>();
-    for (String element : elements) {
-      Matcher matcher = QUOTED_STRING_PATTERN.matcher(element);
-      if (matcher.matches()) {
-        if (matcher.group(1) != null) {
-          result.add(matcher.group(1));
-        } else if (matcher.group(2) != null) {
-          result.add(matcher.group(2));
-        }
-      }
-    }
-    return result;
   }
 
   public static class NotNumpyDocStringException extends Exception {

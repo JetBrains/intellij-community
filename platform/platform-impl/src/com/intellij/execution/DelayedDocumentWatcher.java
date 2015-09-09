@@ -16,6 +16,7 @@
 package com.intellij.execution;
 
 import com.intellij.AppTopics;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
@@ -27,6 +28,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -63,6 +65,7 @@ public class DelayedDocumentWatcher {
   private boolean myDocumentSavingInProgress = false;
   private MessageBusConnection myConnection;
   private int myModificationStamp = 0;
+  private Disposable myListenerDisposable;
 
   public DelayedDocumentWatcher(@NotNull Project project,
                                 int delayMillis,
@@ -84,7 +87,9 @@ public class DelayedDocumentWatcher {
 
   public void activate() {
     if (myConnection == null) {
-      EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myListener, myProject);
+      myListenerDisposable = Disposer.newDisposable();
+      Disposer.register(myProject, myListenerDisposable);
+      EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myListener, myListenerDisposable);
       myConnection = ApplicationManager.getApplication().getMessageBus().connect(myProject);
       myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
         @Override
@@ -103,7 +108,10 @@ public class DelayedDocumentWatcher {
 
   public void deactivate() {
     if (myConnection != null) {
-      EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myListener);
+      if (myListenerDisposable != null) {
+        Disposer.dispose(myListenerDisposable);
+        myListenerDisposable = null;
+      }
       myConnection.disconnect();
       myConnection = null;
     }

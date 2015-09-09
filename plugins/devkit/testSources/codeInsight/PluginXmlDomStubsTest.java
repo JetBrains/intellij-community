@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,24 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "          Attribute:implements:SomeImplements\n" +
                   "      Element:extensionPoint\n" +
                   "        Attribute:qualifiedName:qualifiedName\n" +
-                  "        Attribute:beanClass:BeanClass\n");
+                  "        Attribute:beanClass:BeanClass\n" +
+                  "    Element:extensions\n" +
+                  "      Attribute:defaultExtensionNs:defaultExtensionNs\n" +
+                  "      Attribute:xmlns:extensionXmlNs\n" +
+                  "    Element:actions\n" +
+                  "      Element:action\n" +
+                  "        Attribute:id:actionId\n" +
+                  "        Attribute:text:actionText\n" +
+                  "      Element:group\n" +
+                  "        Attribute:id:groupId\n" +
+                  "        Element:action\n" +
+                  "          Attribute:id:groupAction\n" +
+                  "          Attribute:text:groupActionText\n" +
+                  "        Element:group\n" +
+                  "          Attribute:id:nestedGroup\n" +
+                  "          Element:action\n" +
+                  "            Attribute:id:nestedGroupActionId\n" +
+                  "            Attribute:text:nestedGroupActionText\n");
   }
 
   public void testXInclude() throws Exception {

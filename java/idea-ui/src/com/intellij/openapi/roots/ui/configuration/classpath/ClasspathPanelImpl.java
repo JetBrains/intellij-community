@@ -820,6 +820,11 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           }
           return false;
         }
+
+        @Override
+        protected boolean canStartInBackground() {
+          return false;
+        }
       }.analyze();
     }
 

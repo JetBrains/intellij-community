@@ -6,26 +6,25 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" exported="" />
     <orderEntry type="module" module-name="lang-impl" exported="" />
     <orderEntry type="library" exported="" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="platform-impl" exported="" />
     <orderEntry type="library" exported="" name="Log4J" level="project" />
-    <orderEntry type="module" module-name="vcs-api" exported="" />
     <orderEntry type="module" module-name="lvcs-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="tests_bootstrap" />
     <orderEntry type="module" module-name="resources-en" scope="RUNTIME" />
     <orderEntry type="library" exported="" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="java-runtime" exported="" />
-    <orderEntry type="module" module-name="vcs-impl" scope="RUNTIME" />
     <orderEntry type="library" exported="" name="Groovy" level="project" />
     <orderEntry type="module" module-name="platform-resources" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="dom-impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="relaxng" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="images" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="RegExpSupport" exported="" scope="RUNTIME" />
-    <orderEntry type="library" scope="TEST" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
   </component>
 </module>

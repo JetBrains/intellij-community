@@ -1,6 +1,7 @@
 package com.jetbrains.edu.stepic;
 
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -21,8 +22,9 @@ public class CourseInfo {
   //course type in format "pycharm <language>"
   private String myType = "pycharm Python";
 
-  @SerializedName("instructors_deprecated")
-  List<Instructor> myInstructors = new ArrayList<Instructor>();
+  List<Integer> instructors = new ArrayList<Integer>();
+
+  List<Author> myAuthors = new ArrayList<Author>();
   int id;
 
   public static CourseInfo INVALID_COURSE = new CourseInfo();
@@ -32,8 +34,8 @@ public class CourseInfo {
   }
 
   @NotNull
-  public List<Instructor> getInstructors() {
-    return myInstructors;
+  public List<Author> getAuthors() {
+    return myAuthors;
   }
 
   public String getDescription() {
@@ -66,15 +68,22 @@ public class CourseInfo {
     return result;
   }
 
-  public static class Instructor {
-    String name;
+  public static class Author {
+    int id;
+    String first_name;
+    String last_name;
 
-    public Instructor(String name) {
-      this.name = name;
+    public Author(String firstName, String lastName) {
+      first_name = firstName;
+      last_name = lastName;
     }
 
     public String getName() {
-      return name;
+      return StringUtil.join(new String[]{first_name, last_name}, " ");
+    }
+
+    public int getId() {
+      return id;
     }
   }
 
@@ -82,8 +91,20 @@ public class CourseInfo {
     myName = name;
   }
 
-  public void setInstructors(List<Instructor> instructors) {
-    myInstructors = instructors;
+  public void setAuthors(List<Author> authors) {
+    myAuthors = authors;
+    for (Author author : authors) {
+      if (author.id > 0) {
+        instructors.add(author.id);
+      }
+    }
+  }
+
+  public void addAuthor(Author author) {
+    if (myAuthors == null) {
+      myAuthors = new ArrayList<Author>();
+    }
+    myAuthors.add(author);
   }
 
   public void setDescription(String description) {

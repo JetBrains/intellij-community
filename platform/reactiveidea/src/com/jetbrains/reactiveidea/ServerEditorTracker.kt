@@ -107,13 +107,13 @@ public class ServerEditorTracker(project: Project,
         override fun run() {
           // allow range markers in smart pointers to be collected
           if (virtualFile != null) {
-            smartPointerManager.unfastenBelts(virtualFile, 0)
+//            smartPointerManager.unfastenBelts(virtualFile, 0)
           }
         }
       })
       // materialize all range markers and do not let them to be collected to improve responsiveness
       if (virtualFile != null) {
-        smartPointerManager.fastenBelts(virtualFile, 0, null)
+        smartPointerManager.fastenBelts(virtualFile)
       }
     }
 

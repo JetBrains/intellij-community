@@ -374,6 +374,29 @@ bool AddClassPathOptions(std::vector<std::string>& vmOptionLines)
   return true;
 }
 
+//return VMOptions from one of the files in the following order:
+//$<IDE-NAME>_VM_OPTIONS
+//$CONFIG_DIRECTORY/<ide-name>[64][.exe].vmoptions
+//bin/<ide-name>[64][.exe].vmoptions
+bool FindValidVMOptions(std::vector<std::wstring> files, std::wstring& used, std::vector<std::string>& vmOptionLines)
+{
+  if (files.size() != 0)
+  {
+    for (int i = 0; i < files.size(); i++)
+    {
+      if (GetFileAttributes(files[i].c_str()) != INVALID_FILE_ATTRIBUTES)
+      {
+        if (LoadVMOptionsFile(files[i].c_str(), vmOptionLines))
+        {
+          used += (used.size() ? L"," : L"") + files[i];
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 void AddPredefinedVMOptions(std::vector<std::string>& vmOptionLines)
 {
   std::string vmOptions = LoadStdString(IDS_VM_OPTIONS);
@@ -403,8 +426,13 @@ bool LoadVMOptions()
   GetModuleFileName(NULL, buffer, _MAX_PATH);
   std::wstring module(buffer);
 
-  files.push_back(module + L".vmoptions");
-
+  if (LoadString(hInst, IDS_VM_OPTIONS_ENV_VAR, buffer, _MAX_PATH))
+  {
+    if (GetEnvironmentVariableW(buffer, copy, _MAX_PATH)) {
+      ExpandEnvironmentStrings(copy, buffer, _MAX_PATH);
+      files.push_back(std::wstring(buffer));
+    }
+  }
 
   if (LoadString(hInst, IDS_VM_OPTIONS_PATH, buffer, _MAX_PATH))
   {
@@ -413,31 +441,15 @@ bool LoadVMOptions()
     files.push_back(selector + module.substr(module.find_last_of('\\')) + L".vmoptions");
   }
 
-  if (LoadString(hInst, IDS_VM_OPTIONS_ENV_VAR, buffer, _MAX_PATH))
-  {
-    if (GetEnvironmentVariableW(buffer, copy, _MAX_PATH)) {
-    ExpandEnvironmentStrings(copy, buffer, _MAX_PATH);
-    files.push_back(std::wstring(buffer));
-    }
-  }
+  files.push_back(module + L".vmoptions");
+  std::wstring used;
+  std::vector<std::string> vmOptionLines;
 
-  if (files.size() == 0) {
+  if (!FindValidVMOptions(files, used, vmOptionLines))
+  {
     std::string error = LoadStdString(IDS_ERROR_LAUNCHING_APP);
     MessageBoxA(NULL, "Cannot find VM options file", error.c_str(), MB_OK);
     return false;
-  }
-
-  std::wstring used;
-  std::vector<std::string> vmOptionLines;
-  for (int i = 0; i < files.size(); i++)
-  {
-    if (GetFileAttributes(files[i].c_str()) != INVALID_FILE_ATTRIBUTES)
-    {
-      if (LoadVMOptionsFile(files[i].c_str(), vmOptionLines))
-      {
-        used += (used.size() ? L"," : L"") + files[i];
-      }
-    }
   }
 
   vmOptionLines.push_back(std::string("-Djb.vmOptions=") + EncodeWideACP(used));

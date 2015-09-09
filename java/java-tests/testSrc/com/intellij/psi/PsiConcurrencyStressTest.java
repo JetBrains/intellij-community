@@ -64,7 +64,6 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
     int iterations = Timings.adjustAccordingToMySpeed(20, true);
     System.out.println("iterations = " + iterations);
     final int readIterations = iterations * 3;
-    final int writeIterations = iterations;
 
     synchronized (this) {
       PsiClass myClass = myJavaFacade.findClass("StressClass", GlobalSearchScope.allScope(myProject));
@@ -77,33 +76,22 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
     final CountDownLatch reads = new CountDownLatch(numOfThreads);
     final Random random = new Random();
     for (int i = 0; i < numOfThreads; i++) {
-      new Thread(new Runnable() {
-        @Override
-        public void run() {
-          for (int i = 0; i < readIterations; i++) {
-            if (myPsiManager == null) return;
-            ProgressManager.getInstance().runProcess(new Runnable() {
-              @Override
-              public void run() {
-                ApplicationManager.getApplication().runReadAction(new Runnable() {
-                  @Override
-                  public void run() {
-                    assertFalse(writeActionInProgress);
-                    readStep(random);
-                  }
-                });
-              }
-            }, new DaemonProgressIndicator());
-          }
-
-          reads.countDown();
+      new Thread(() -> {
+        for (int i1 = 0; i1 < readIterations; i1++) {
+          if (myPsiManager == null) return;
+          ProgressManager.getInstance().runProcess(() -> ApplicationManager.getApplication().runReadAction(() -> {
+            assertFalse(writeActionInProgress);
+            readStep(random);
+          }), new DaemonProgressIndicator());
         }
+
+        reads.countDown();
       }, "stress thread" + i).start();
     }
 
     final Document document = documentManager.getDocument(myFile);
 
-    for (int i = 0; i < writeIterations; i++) {
+    for (int i = 0; i < iterations; i++) {
       Thread.sleep(100);
       new WriteCommandAction(myProject, myFile) {
         @Override
@@ -143,11 +131,8 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
         mark("-");
         final PsiMethod[] psiMethods = getPsiClass().getMethods();
         if (psiMethods.length > 0) {
-          WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-            @Override
-            public void run() {
-              psiMethods[random.nextInt(psiMethods.length)].delete();
-            }
+          WriteCommandAction.runWriteCommandAction(null, () -> {
+            psiMethods[random.nextInt(psiMethods.length)].delete();
           });
         }
         break;
@@ -179,12 +164,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
 
             final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile);
             final HighlightVisitor visitor = new DefaultHighlightVisitor(getProject());
-            visitor.analyze(myFile, true, infoHolder, new Runnable() {
-              @Override
-              public void run() {
-                visitor.visit(element);
-              }
-            });
+            visitor.analyze(myFile, true, infoHolder, () -> visitor.visit(element));
           }
         });
         break;

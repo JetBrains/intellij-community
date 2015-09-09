@@ -912,12 +912,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       });
       return;
     }
+    final String title = "Code Cleanup";
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(results.keySet())) return;
 
-        final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, "Code Cleanup", true);
+        final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, title, true);
         progressTask.setMinIterationTime(200);
         progressTask.setTask(new SequentialCleanupTask(project, results, progressTask));
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -926,17 +927,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             if (commandName != null) {
               CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
             }
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                ProgressManager.getInstance().run(progressTask);
-              }
-            });
+            ProgressManager.getInstance().run(progressTask);
             if (postRunnable != null) {
               ApplicationManager.getApplication().invokeLater(postRunnable);
             }
           }
-        }, commandName, null);
+        }, title, null);
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {

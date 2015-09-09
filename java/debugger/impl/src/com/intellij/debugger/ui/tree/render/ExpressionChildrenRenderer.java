@@ -25,6 +25,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeManager;
@@ -135,18 +136,17 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
   }
 
   public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
-    ValueDescriptor descriptor = (ValueDescriptor) node.getParent().getDescriptor();
-    Value expressionValue = descriptor.getUserData(EXPRESSION_VALUE);
-    if(expressionValue == null) {
+    Value expressionValue = node.getParent().getDescriptor().getUserData(EXPRESSION_VALUE);
+    if (expressionValue == null) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.unable.to.evaluate.expression"));
     }
 
-    NodeRenderer childrenRenderer = getChildrenRenderer(expressionValue, descriptor);
+    NodeRenderer childrenRenderer = getChildrenRenderer(expressionValue, (ValueDescriptor) node.getParent().getDescriptor());
 
-    return DebuggerUtils.getInstance().substituteThis(
+    return DebuggerTreeNodeExpression.substituteThis(
       childrenRenderer.getChildValueExpression(node, context),
       (PsiExpression)myChildrenExpression.getPsiExpression(node.getProject()).copy(),
-      expressionValue, context);
+      expressionValue);
   }
 
   private static NodeRenderer getChildrenRenderer(Value childrenValue, ValueDescriptor parentDescriptor) {

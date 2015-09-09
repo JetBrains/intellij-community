@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs;
 
+import com.intellij.dvcs.push.PushSupport;
 import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
@@ -24,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -421,5 +423,15 @@ public class DvcsUtil {
       commitsInRoot.add(commit);
     }
     return groupedCommits;
+  }
+
+  @Nullable
+  public static PushSupport getPushSupport(@NotNull final AbstractVcs vcs) {
+    return ContainerUtil.find(Extensions.getExtensions(PushSupport.PUSH_SUPPORT_EP, vcs.getProject()), new Condition<PushSupport>() {
+      @Override
+      public boolean value(final PushSupport support) {
+        return support.getVcs().equals(vcs);
+      }
+    });
   }
 }

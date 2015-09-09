@@ -1,4 +1,4 @@
-<component>
+<idea-plugin>
   <actions>
     <group id="JavaGenerateGroup1">
       <action id="GenerateTestMethod" class="com.intellij.testIntegration.GenerateTestMethodAction"/>
@@ -60,7 +60,6 @@
     <group id="RefactoringMenu2">
       <action id="MethodDuplicates" class="com.intellij.refactoring.actions.MethodDuplicatesAction"/>
       
-      <action id="InvertBoolean" class="com.intellij.refactoring.actions.InvertBooleanAction"/>
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="Inline"/>
     </group>
 
@@ -182,6 +181,9 @@
       <action id="Debugger.AdjustArrayRange" class="com.intellij.debugger.actions.AdjustArrayRangeAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
+      <action id="Debugger.ShowTypes" class="com.intellij.debugger.actions.ShowTypesAction" text="Show types">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+      </action>
       <!--<action id="Debugger.SetValue" class="com.intellij.debugger.actions.SetValueAction"/>-->
       <!--<action id="Debugger.ShowAsHex" class="com.intellij.debugger.actions.ShowAsHexAction" text="Show as Hex"/>-->
       <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction"/>
@@ -191,6 +193,8 @@
     </group>
 
     <group id="Debugger.Representation">
+      <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction" text="Create..."/>
+      <separator/>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
     </group>
 
@@ -361,4 +365,4 @@
       <add-to-group group-id="FileChooserToolbar" anchor="last"/>
     </action>
   </actions>
-</component>
+</idea-plugin>

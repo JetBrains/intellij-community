@@ -5,6 +5,9 @@ import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
@@ -16,12 +19,29 @@ import org.jetbrains.annotations.NotNull;
 
 public class CCPushLesson extends DumbAwareAction {
   public CCPushLesson() {
-    super("Push lesson to Stepic", "Push lesson to Stepic", null);
+    super("Update Lesson on Stepic", "Update Lesson on Stepic", null);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    CCProjectService.setCCActionAvailable(e);
+    e.getPresentation().setEnabledAndVisible(false);
+    final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
+    if (view == null || project == null) {
+      return;
+    }
+    final Course course = CCProjectService.getInstance(project).getCourse();
+    if (course == null) {
+      return;
+    }
+    PsiDirectory lessonDir = DirectoryChooserUtil.getOrChooseDirectory(view);
+    if (lessonDir == null || !lessonDir.getName().contains("lesson")) {
+      return;
+    }
+    final Lesson lesson = course.getLesson(lessonDir.getName());
+    if (lesson != null && lesson.id > 0) {
+      e.getPresentation().setEnabledAndVisible(true);
+    }
   }
 
   @Override
@@ -39,11 +59,16 @@ public class CCPushLesson extends DumbAwareAction {
     if (lessonDir == null || !lessonDir.getName().contains("lesson")) {
       return;
     }
-    Lesson lesson = course.getLesson(lessonDir.getName());
+    final Lesson lesson = course.getLesson(lessonDir.getName());
     if (lesson == null) {
       return;
     }
-    EduStepicConnector.postLesson(project, lesson);
+    ProgressManager.getInstance().run(new Task.Modal(project, "Uploading Lesson", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setText("Uploading lesson to http://stepic.org");
+        EduStepicConnector.updateLesson(project, lesson, indicator);
+      }});
   }
 
 }

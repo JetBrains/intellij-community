@@ -21,6 +21,5 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public interface PresentableLanguageCodeInsightActionHandler extends LanguageCodeInsightActionHandler {
-  void update(@NotNull Editor editor, @NotNull PsiFile file, Presentation presentation);
+public interface PresentableLanguageCodeInsightActionHandler extends PresentableCodeInsightActionHandler, LanguageCodeInsightActionHandler {
 }

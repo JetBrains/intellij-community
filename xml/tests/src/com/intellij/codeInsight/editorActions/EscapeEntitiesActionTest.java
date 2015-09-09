@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
@@ -23,6 +24,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
  */
 public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
   private static final String NDASH = new String(new byte[]{-30, -128, -109}, CharsetToolkit.UTF8_CHARSET);
+  private static final String COPY = new String(new byte[]{-62, -82}, CharsetToolkit.UTF8_CHARSET);
 
   public void testSimpleHtml() {
     doTest("<<<", "html", "&lt;&lt;&lt;");
@@ -32,8 +34,12 @@ public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
     doTest(">>>", "xml", "&gt;&gt;&gt;");
   }
 
-  public void testWide() {
+  public void testVeryWide() {
     doTest(NDASH, "html", "&ndash;");
+  }
+
+  public void testWide() {
+    doTest(COPY, "html", "&reg;");
   }
 
   public void testAttributeValue() {
@@ -48,6 +54,33 @@ public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
     doTest("<<<", "xml", "&lt;&lt;&lt;");
   }
 
+  public void testDoctypeSystemPublic() {
+    doTest("<!DOCTYPE html\n" +
+           "        PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n" +
+           "        \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">", "html",
+           "<!DOCTYPE html\n" +
+           "        PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n" +
+           "        \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">");
+  }
+
+  public void testXmlAmp() {
+    doTest("<component>\n" +
+           "  amp  &    U+0026 (38) XML 1.0 ampersand\n" +
+           "</component>", "xml",
+           "<component>\n" +
+           "  amp  &amp;    U+0026 (38) XML 1.0 ampersand\n" +
+           "</component>");
+  }
+
+  public void testXmlLt() {
+    doTest("<component>\n" +
+           "  lt   <    U+003C (60) XML 1.0 less-than sign\n" +
+           "</component>", "xml",
+           "<component>\n" +
+           "  lt   &lt;    U+003C (60) XML 1.0 less-than sign\n" +
+           "</component>");
+  }
+
   public void testMultiCaret() {
     doTest("<a><selection><</selection></a>\n" +
            "<a><selection><</selection></a>\n" +
@@ -57,12 +90,15 @@ public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
            "<a>&lt;</a>\n");
   }
 
-  private void doTest(String text, String extension, String expected) {
-    if (!text.contains("<selection>")) {
-      text = "<selection>" + text + "</selection>";
-    }
-    myFixture.configureByText(getTestName(true) + "." + extension, text);
-    myFixture.performEditorAction("EscapeEntities");
-    myFixture.checkResult(expected);
+  private void doTest(String text, final String extension, final String expected) {
+    final String finalText = !text.contains("<selection>") ? "<selection>" + text + "</selection>" : text;
+    PlatformTestUtil.withEncoding("UTF8", new Runnable() {
+      @Override
+      public void run() {
+        myFixture.configureByText(getTestName(true) + "." + extension, finalText);
+        myFixture.performEditorAction("EscapeEntities");
+        myFixture.checkResult(expected);
+      }
+    });
   }
 }

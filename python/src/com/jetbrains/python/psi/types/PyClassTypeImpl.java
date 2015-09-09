@@ -31,6 +31,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
@@ -160,7 +161,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     if (resolveContext.allowProperties()) {
-      final Ref<ResolveResultList> resultRef = findProperty(name, direction, true);
+      final Ref<ResolveResultList> resultRef = findProperty(name, direction, true, resolveContext.getTypeEvalContext());
       if (resultRef != null) {
         return resultRef.get();
       }
@@ -221,7 +222,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    if (isDefinition() && myClass.isNewStyleClass()) {
+    if (isDefinition() && myClass.isNewStyleClass(null)) {
       final PyClassLikeType typeType = getMetaClassType(context, inherited);
       if (typeType != null) {
         List<? extends RatedResolveResult> typeMembers = typeType.resolveMember(name, location, direction, resolveContext);
@@ -233,7 +234,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     if (inherited) {
       classMember =
-        resolveByMembersProviders(this, name, location);  //ask providers after real class introspection as providers have less priority
+        resolveByMembersProviders(this, name, location,
+                                  context);  //ask providers after real class introspection as providers have less priority
     }
 
     if (classMember != null) {
@@ -244,7 +246,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       for (PyClassLikeType type : myClass.getAncestorTypes(context)) {
         if (type instanceof PyClassType) {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
-          PsiElement superMember = resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name, location);
+          PsiElement superMember =
+            resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name, location, resolveContext.getTypeEvalContext());
 
           if (superMember != null) {
             return ResolveResultList.to(superMember);
@@ -256,9 +259,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return Collections.emptyList();
   }
 
-  private Ref<ResolveResultList> findProperty(String name, AccessDirection direction, boolean inherited) {
+  private Ref<ResolveResultList> findProperty(String name,
+                                              AccessDirection direction,
+                                              boolean inherited,
+                                              @Nullable TypeEvalContext context) {
     Ref<ResolveResultList> resultRef = null;
-    Property property = myClass.findProperty(name, inherited);
+    Property property = myClass.findProperty(name, inherited, context);
     if (property != null) {
       Maybe<PyCallable> accessor = property.getByDirection(direction);
       if (accessor.isDefined()) {
@@ -340,6 +346,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return null;
   }
 
+  @NotNull
+  @Override
+  public final List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
+    return myClass.getAncestorTypes(context);
+  }
+
   @Nullable
   private static PsiElement resolveClassMember(@NotNull PyClass cls,
                                                boolean isDefinition,
@@ -353,9 +365,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  private static PsiElement resolveByMembersProviders(PyClassType aClass, String name, @Nullable PsiElement location) {
+  private static PsiElement resolveByMembersProviders(PyClassType aClass,
+                                                      String name,
+                                                      @Nullable PsiElement location,
+                                                      TypeEvalContext context) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      final PsiElement resolveResult = provider.resolveMember(aClass, name, location);
+      final PsiElement resolveResult = provider.resolveMember(aClass, name, location, context);
       if (resolveResult != null) return resolveResult;
     }
 
@@ -366,7 +381,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private static PsiElement resolveByOverridingMembersProviders(PyClassType aClass, String name, @Nullable PsiElement location) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       if (provider instanceof PyOverridingClassMembersProvider) {
-        final PsiElement resolveResult = provider.resolveMember(aClass, name, location);
+        final PsiElement resolveResult = provider.resolveMember(aClass, name, location, null);
         if (resolveResult != null) return resolveResult;
       }
     }
@@ -378,7 +393,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private static PsiElement resolveByOverridingAncestorsMembersProviders(PyClassType type, String name, @Nullable PyExpression location) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       if (provider instanceof PyOverridingAncestorsClassMembersProvider) {
-        final PsiElement resolveResult = provider.resolveMember(type, name, location);
+        final PsiElement resolveResult = provider.resolveMember(type, name, location, null);
         if (resolveResult != null) return resolveResult;
       }
     }
@@ -439,7 +454,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    if (!myClass.isNewStyleClass()) {
+    if (!myClass.isNewStyleClass(null)) {
       final PyBuiltinCache cache = PyBuiltinCache.getInstance(myClass);
       final PyClassType classobjType = cache.getOldstyleClassobjType();
       if (classobjType != null) {
@@ -447,7 +462,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    if (isDefinition() && myClass.isNewStyleClass()) {
+    if (isDefinition() && myClass.isNewStyleClass(null)) {
       final PyClassLikeType typeType = getMetaClassType(typeEvalContext, true);
       if (typeType != null) {
         Collections.addAll(ret, typeType.getCompletionVariants(prefix, location, context));
@@ -455,6 +470,28 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     return ret.toArray();
+  }
+
+  @Override
+  public void visitMembers(@NotNull final Processor<PsiElement> processor,
+                           final boolean inherited,
+                           @NotNull final TypeEvalContext context) {
+
+    myClass.visitMethods(new MyProcessorWrapper<PyFunction>(processor), false, context);
+    myClass.visitClassAttributes(new MyProcessorWrapper<PyTargetExpression>(processor), false, context);
+
+    // TODO: accept instance attributes as well
+
+    if (!inherited) {
+      return;
+    }
+
+    for (final PyClassLikeType type : getAncestorTypes(context)) {
+      if (type != null) {
+        // "false" because getAncestorTypes returns ALL ancestors, not only direct parents
+        type.visitMembers(processor, false, context);
+      }
+    }
   }
 
   private void addOwnClassMembers(PsiElement expressionHook, Set<String> namesAlready, boolean suppressParentheses, List<Object> ret) {
@@ -472,7 +509,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
     myClass.processClassLevelDeclarations(processor);
 
-    List<String> slots = myClass.isNewStyleClass() ? myClass.getSlots() : null;
+    // We are here because of completion (see call stack), so we use code complete here
+    final TypeEvalContext context =
+      (expressionHook != null ? TypeEvalContext.codeCompletion(myClass.getProject(), myClass.getContainingFile()) : null);
+    List<String> slots = myClass.isNewStyleClass(null) ? myClass.getSlots(
+      context) : null;
     if (slots != null) {
       processor.setAllowedNames(slots);
     }
@@ -614,5 +655,19 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return null;
     }
     return new PyClassTypeImpl(pyClass, isDefinition);
+  }
+
+  private static final class MyProcessorWrapper<T extends PsiElement> implements Processor<T> {
+    private final Processor<PsiElement> myProcessor;
+
+    private MyProcessorWrapper(@NotNull final Processor<PsiElement> processor) {
+      myProcessor = processor;
+    }
+
+    @Override
+    public boolean process(final T t) {
+      myProcessor.process(t);
+      return true;
+    }
   }
 }

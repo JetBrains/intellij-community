@@ -18,6 +18,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -35,10 +36,12 @@ public class StubInputStream extends DataInputStream {
     myNameStorage = nameStorage;
   }
 
+  @NotNull 
   public String readUTFFast() throws IOException {
     return IOUtil.readUTFFast(myStringIOBuffer, this);
   }
 
+  @Nullable 
   public StringRef readName() throws IOException {
     return DataInputOutputUtil.readNAME(this, myNameStorage);
   }

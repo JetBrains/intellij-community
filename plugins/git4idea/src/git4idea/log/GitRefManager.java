@@ -4,15 +4,11 @@ import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.RefGroup;
-import com.intellij.vcs.log.VcsLogRefManager;
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.VcsRefType;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import git4idea.GitBranch;
@@ -31,17 +27,11 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public class GitRefManager implements VcsLogRefManager {
-
-  private static final Color HEAD_COLOR = new JBColor(new Color(0xf1ef9e), new Color(113, 111, 64));
-  private static final Color LOCAL_BRANCH_COLOR = new JBColor(new Color(0x75eec7), new Color(0x0D6D4F));
-  private static final Color REMOTE_BRANCH_COLOR = new JBColor(new Color(0xbcbcfc), new Color(0xbcbcfc).darker().darker());
-  private static final Color TAG_COLOR = JBColor.WHITE;
-
-  public static final VcsRefType HEAD = new SimpleRefType(true, HEAD_COLOR, "HEAD");
-  public static final VcsRefType LOCAL_BRANCH = new SimpleRefType(true, LOCAL_BRANCH_COLOR, "LOCAL_BRANCH");
-  public static final VcsRefType REMOTE_BRANCH = new SimpleRefType(true, REMOTE_BRANCH_COLOR, "REMOTE_BRANCH");
-  public static final VcsRefType TAG = new SimpleRefType(false, TAG_COLOR, "TAG");
-  public static final VcsRefType OTHER = new SimpleRefType(false, TAG_COLOR, "OTHER");
+  public static final VcsRefType HEAD = new SimpleRefType(true, VcsLogStandardColors.Refs.TIP, "HEAD");
+  public static final VcsRefType LOCAL_BRANCH = new SimpleRefType(true, VcsLogStandardColors.Refs.BRANCH, "LOCAL_BRANCH");
+  public static final VcsRefType REMOTE_BRANCH = new SimpleRefType(true, VcsLogStandardColors.Refs.BRANCH_REF, "REMOTE_BRANCH");
+  public static final VcsRefType TAG = new SimpleRefType(false, VcsLogStandardColors.Refs.TAG, "TAG");
+  public static final VcsRefType OTHER = new SimpleRefType(false, VcsLogStandardColors.Refs.TAG, "OTHER");
 
   private static final String MASTER = "master";
   private static final String ORIGIN_MASTER = "origin/master";
@@ -262,7 +252,7 @@ public class GitRefManager implements VcsLogRefManager {
     @NotNull
     @Override
     public Color getBgColor() {
-      return HEAD_COLOR;
+      return VcsLogStandardColors.Refs.TIP;
     }
   }
 
@@ -295,7 +285,7 @@ public class GitRefManager implements VcsLogRefManager {
     @NotNull
     @Override
     public Color getBgColor() {
-      return REMOTE_BRANCH_COLOR;
+      return VcsLogStandardColors.Refs.BRANCH_REF;
     }
 
   }

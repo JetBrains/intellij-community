@@ -841,6 +841,17 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Nullable
+  @Contract(pure=true)
+  public static <T> T find(@NotNull Iterator<? extends T> iterator, @NotNull final T equalTo) {
+    return find(iterator, new Condition<T>() {
+      @Override
+      public boolean value(final T object) {
+        return equalTo == object || equalTo.equals(object);
+      }
+    });
+  }
+
+  @Nullable
   public static <T, V extends T> V find(@NotNull Iterator<V> iterator, @NotNull Condition<T> condition) {
     while (iterator.hasNext()) {
       V value = iterator.next();
@@ -1877,6 +1888,18 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <K, V> void putIfNotNull(final K key, @Nullable V value, @NotNull final Map<K, V> result) {
     if (value != null) {
       result.put(key, value);
+    }
+  }
+
+  public static <K, V> void putIfNotNull(final K key, @Nullable Collection<? extends V> value, @NotNull final MultiMap<K, V> result) {
+    if (value != null) {
+      result.putValues(key, value);
+    }
+  }
+
+  public static <K, V> void putIfNotNull(final K key, @Nullable V value, @NotNull final MultiMap<K, V> result) {
+    if (value != null) {
+      result.putValue(key, value);
     }
   }
 

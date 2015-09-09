@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.python.refactoring.move;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -133,7 +148,7 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
       }
     });
     mySeveralElementsSelected = elements.size() > 1;
-    final boolean tableIsVisible = mySeveralElementsSelected || PropertiesComponent.getInstance().getBoolean(BULK_MOVE_TABLE_VISIBLE, false);
+    final boolean tableIsVisible = mySeveralElementsSelected || PropertiesComponent.getInstance().getBoolean(BULK_MOVE_TABLE_VISIBLE);
     final String description;
     if (!tableIsVisible && elements.size() == 1) {
       if (firstElement instanceof PyFunction) {
@@ -155,13 +170,13 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
       protected void on() {
         super.on();
         myDescription.setText(PyBundle.message("refactoring.move.module.members.dialog.description.selection"));
-        PropertiesComponent.getInstance().setValue(BULK_MOVE_TABLE_VISIBLE, "true");
+        PropertiesComponent.getInstance().setValue(BULK_MOVE_TABLE_VISIBLE, true);
       }
 
       @Override
       protected void off() {
         super.off();
-        PropertiesComponent.getInstance().setValue(BULK_MOVE_TABLE_VISIBLE, "false");
+        PropertiesComponent.getInstance().setValue(BULK_MOVE_TABLE_VISIBLE, false);
       }
     };
     decorator.setOn(tableIsVisible);
@@ -184,7 +199,7 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
   }
 
   private void enlargeDialogHeightIfNecessary() {
-    if (mySeveralElementsSelected && !PropertiesComponent.getInstance(getProject()).getBoolean(BULK_MOVE_TABLE_VISIBLE, false)) {
+    if (mySeveralElementsSelected && !PropertiesComponent.getInstance(getProject()).getBoolean(BULK_MOVE_TABLE_VISIBLE)) {
       final DialogWrapperPeer peer = getPeer();
       final Dimension realSize = peer.getSize();
       final double preferredHeight = peer.getPreferredSize().getHeight();

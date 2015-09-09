@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public interface ModifiableModuleModel {
    * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
    * @throws LoadCancelledException if loading the module was cancelled by some of the components.
    */
-  @NotNull Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists;
+  @NotNull Module loadModule(@NotNull String filePath) throws IOException, JDOMException, ModuleWithNameAlreadyExists;
 
   /**
    * Disposes of the specified module and removes it from the project. {@link #commit()}
@@ -138,6 +138,4 @@ public interface ModifiableModuleModel {
   boolean hasModuleGroups();
 
   void setModuleGroupPath(@NotNull Module module, @Nullable("null means remove") String[] groupPath);
-
-  void setModuleFilePath(@NotNull Module module, String oldPath, String newFilePath);
 }

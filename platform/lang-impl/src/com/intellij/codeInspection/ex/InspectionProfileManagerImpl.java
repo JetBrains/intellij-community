@@ -38,8 +38,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileLoadUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -71,7 +69,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class InspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, PersistentStateComponent<Element> {
 
   private final InspectionToolRegistrar myRegistrar;
-  private final SchemesManager<Profile, InspectionProfileImpl> mySchemesManager;
+  private final SchemesManager<Profile, InspectionProfileImpl> mySchemeManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
   private final SeverityRegistrar mySeverityRegistrar;
 
@@ -85,7 +83,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     myRegistrar = registrar;
     registerProvidedSeverities();
 
-    mySchemesManager = schemesManagerFactory.createSchemesManager(INSPECTION_DIR, new BaseSchemeProcessor<InspectionProfileImpl>() {
+    mySchemeManager = schemesManagerFactory.create(INSPECTION_DIR, new BaseSchemeProcessor<InspectionProfileImpl>() {
       @NotNull
       @Override
       public InspectionProfileImpl readScheme(@NotNull Element element) {
@@ -133,13 +131,13 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
       @Override
       public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
-        Profile current = mySchemesManager.getCurrentScheme();
+        Profile current = mySchemeManager.getCurrentScheme();
         if (current != null) {
           fireProfileChanged((Profile)oldScheme, current, null);
         }
         onProfilesChanged();
       }
-    }, RoamingType.PER_USER);
+    });
     mySeverityRegistrar = new SeverityRegistrar(messageBus);
   }
 
@@ -164,7 +162,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   @NotNull
   public Collection<Profile> getProfiles() {
     initProfiles();
-    return mySchemesManager.getAllSchemes();
+    return mySchemeManager.getAllSchemes();
   }
 
   private volatile boolean LOAD_PROFILES = !ApplicationManager.getApplication().isUnitTestMode();
@@ -177,15 +175,15 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   @Override
   public void initProfiles() {
     if (myProfilesAreInitialized.getAndSet(true)) {
-      if (mySchemesManager.getAllSchemes().isEmpty()) {
+      if (mySchemeManager.getAllSchemes().isEmpty()) {
         createDefaultProfile();
       }
       return;
     }
     if (!LOAD_PROFILES) return;
 
-    mySchemesManager.loadSchemes();
-    Collection<Profile> profiles = mySchemesManager.getAllSchemes();
+    mySchemeManager.loadSchemes();
+    Collection<Profile> profiles = mySchemeManager.getAllSchemes();
     if (profiles.isEmpty()) {
       createDefaultProfile();
     }
@@ -230,7 +228,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
   @Override
   public void updateProfile(@NotNull Profile profile) {
-    mySchemesManager.addScheme(profile);
+    mySchemeManager.addScheme(profile);
     updateProfileImpl(profile);
   }
 
@@ -256,23 +254,13 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   @Override
   public Element getState() {
     Element state = new Element("state");
-    try {
-      mySeverityRegistrar.writeExternal(state);
-    }
-    catch (WriteExternalException e) {
-      throw new RuntimeException(e);
-    }
+    mySeverityRegistrar.writeExternal(state);
     return state;
   }
 
   @Override
   public void loadState(Element state) {
-    try {
-      mySeverityRegistrar.readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      throw new RuntimeException(e);
-    }
+    mySeverityRegistrar.readExternal(state);
   }
 
   public InspectionProfileConvertor getConverter() {
@@ -286,17 +274,20 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
   @Override
   public void setRootProfile(String rootProfile) {
-    Profile current = mySchemesManager.getCurrentScheme();
-    if (current != null && !Comparing.strEqual(rootProfile, current.getName())) {
+    Profile current = mySchemeManager.getCurrentScheme();
+    if (current == null || !Comparing.strEqual(rootProfile, current.getName())) {
       Profile scheme = getProfile(rootProfile);
+      if (scheme == null && current == null) {
+        return;
+      }
       fireProfileChanged(current, scheme, null);
-      mySchemesManager.setCurrent(scheme, false);
+      mySchemeManager.setCurrent(scheme, false);
     }
   }
 
   @Override
   public Profile getProfile(@NotNull final String name, boolean returnRootProfileIfNamedIsAbsent) {
-    Profile found = mySchemesManager.findSchemeByName(name);
+    Profile found = mySchemeManager.findSchemeByName(name);
     if (found != null) return found;
     //profile was deleted
     if (returnRootProfileIfNamedIsAbsent) {
@@ -308,7 +299,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   @NotNull
   @Override
   public Profile getRootProfile() {
-    Profile current = mySchemesManager.getCurrentScheme();
+    Profile current = mySchemeManager.getCurrentScheme();
     if (current != null) return current;
     Collection<Profile> profiles = getProfiles();
     if (profiles.isEmpty()) return createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, null);
@@ -317,21 +308,21 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
   @Override
   public void deleteProfile(@NotNull final String profile) {
-    Profile found = mySchemesManager.findSchemeByName(profile);
+    Profile found = mySchemeManager.findSchemeByName(profile);
     if (found != null) {
-      mySchemesManager.removeScheme(found);
+      mySchemeManager.removeScheme(found);
     }
   }
 
   @Override
   public void addProfile(@NotNull final Profile profile) {
-    mySchemesManager.addScheme(profile);
+    mySchemeManager.addScheme(profile);
   }
 
   @Override
   @NotNull
   public String[] getAvailableProfileNames() {
-    return ArrayUtil.toStringArray(mySchemesManager.getAllSchemeNames());
+    return ArrayUtil.toStringArray(mySchemeManager.getAllSchemeNames());
   }
 
   @Override

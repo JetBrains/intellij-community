@@ -72,7 +72,7 @@ public class WrongPropertyKeyValueDelimiterInspection extends PropertySuppressab
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace Property Key/Value Delimiter According Code Style";
+      return "Replace property key/value delimiter according code style";
     }
   }
 }

@@ -444,14 +444,14 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   GutterMark findGutter(@NotNull @TestDataFile @NonNls String filePath);
 
   @NotNull
-  Collection<GutterMark> findGuttersAtCaret();
+  List<GutterMark> findGuttersAtCaret();
 
   @NotNull
   PsiManager getPsiManager();
 
   /**
    * @return null if the only item was auto-completed
-   * @see #completeBasicAllCarets()
+   * @see #completeBasicAllCarets(Character)
    */
   LookupElement[] completeBasic();
 
@@ -472,9 +472,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   Document getDocument(@NotNull PsiFile file);
 
   @NotNull
-  Collection<GutterMark> findAllGutters(@NotNull @TestDataFile String filePath);
+  List<GutterMark> findAllGutters(@NotNull @TestDataFile String filePath);
 
-  Collection<GutterMark> findAllGutters();
+  List<GutterMark> findAllGutters();
 
   void type(final char c);
 
@@ -568,11 +568,13 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Actually, it works just like {@link #completeBasic()} but supports
    * several  {@link #CARET_MARKER}
    *
+   * @param charToTypeAfterCompletion after completion this char will be typed if argument is not null.
+   *                                  It could be used to complete suggestion with "\t" for example.
    * @return list of all completion elements just like in {@link #completeBasic()}
    * @see #completeBasic()
    */
   @NotNull
-  List<LookupElement> completeBasicAllCarets();
+  List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeAfterCompletion);
 
   void saveText(VirtualFile file, String text);
 }

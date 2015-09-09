@@ -23,15 +23,36 @@ import com.intellij.openapi.project.impl.ProjectImpl
 import org.jdom.Element
 
 class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, private val project: ProjectImpl) : StateStorageManagerImpl("project", macroSubstitutor, project) {
-  override fun createStorageData(fileSpec: String, filePath: String) = ProjectStorageData(rootTagName)
+  companion object {
+    val VERSION_OPTION = "version"
+  }
+
+  override fun normalizeFileSpec(fileSpec: String): String {
+    var path = super.normalizeFileSpec(fileSpec)
+    if (path.startsWithMacro(StoragePathMacros.PROJECT_CONFIG_DIR)) {
+      return path.substring(StoragePathMacros.PROJECT_CONFIG_DIR.length() + 1)
+    }
+    return path
+  }
+
+  override fun expandNormalizedPath(path: String): String {
+    if (path[0] == '$') {
+      return super.expandNormalizedPath(path)
+    }
+    else {
+      return "${expandMacro(StoragePathMacros.PROJECT_CONFIG_DIR)}/$path"
+    }
+  }
+
+  override fun beforeElementSaved(element: Element) {
+    element.setAttribute(VERSION_OPTION, "4")
+  }
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
     val workspace = project.isWorkspaceComponent(component.javaClass)
-    var fileSpec = if (workspace) StoragePathMacros.WORKSPACE_FILE else StoragePathMacros.PROJECT_FILE
-    val storage = getOrCreateStorage(fileSpec, if (workspace) RoamingType.DISABLED else RoamingType.PER_USER)
-    if (operation == StateStorageOperation.READ && workspace && !storage.hasState(component, componentName, javaClass<Element>(), false)) {
-      fileSpec = StoragePathMacros.PROJECT_FILE
+    if (workspace && (operation != StateStorageOperation.READ || getOrCreateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED).hasState(componentName, false))) {
+      return StoragePathMacros.WORKSPACE_FILE
     }
-    return fileSpec
+    return StoragePathMacros.PROJECT_FILE
   }
 }

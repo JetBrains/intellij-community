@@ -68,7 +68,7 @@ public class PyOldStyleClassesInspection extends PyInspection {
       if (!expressions.isEmpty()) {
         quickFixes.add(new PyChangeBaseClassQuickFix());
       }
-      if (!node.isNewStyleClass()) {
+      if (!node.isNewStyleClass(null)) {
         for (PyTargetExpression attr : node.getClassAttributes()) {
           if ("__slots__".equals(attr.getName())) {
             registerProblem(attr, "Old-style class contains __slots__ definition", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
@@ -87,7 +87,7 @@ public class PyOldStyleClassesInspection extends PyInspection {
     @Override
     public void visitPyCallExpression(final PyCallExpression node) {
       PyClass klass = PsiTreeUtil.getParentOfType(node, PyClass.class);
-      if (klass != null && !klass.isNewStyleClass()) {
+      if (klass != null && !klass.isNewStyleClass(null)) {
         final List<PyClassLikeType> types = klass.getSuperClassTypes(myTypeEvalContext);
         for (PyClassLikeType type : types) {
           if (type == null) return;

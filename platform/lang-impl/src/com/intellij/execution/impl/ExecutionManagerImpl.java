@@ -394,6 +394,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
               started = true;
               processHandler.addProcessListener(new ProcessExecutionListener(project, profile, processHandler));
             }
+            environment.setContentToReuse(descriptor);
           }
         }
         catch (ProcessCanceledException e) {
@@ -574,7 +575,10 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
 
       myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminated(myProfile, myProcessHandler);
 
-      SaveAndSyncHandler.getInstance().scheduleRefresh();
+      SaveAndSyncHandler saveAndSyncHandler = SaveAndSyncHandler.getInstance();
+      if (saveAndSyncHandler != null) {
+        saveAndSyncHandler.scheduleRefresh();
+      }
     }
 
     @Override

@@ -22,6 +22,7 @@ import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -77,7 +78,7 @@ public class InspectDialog extends DialogWrapper implements DebuggerContextListe
     return myInspectView;
   }
 
-  public void changeEvent(DebuggerContextImpl newContext, DebuggerSession.Event event) {
+  public void changeEvent(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
     if(event == DebuggerSession.Event.DETACHED) {
       close(CANCEL_EXIT_CODE);
     }

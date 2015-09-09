@@ -25,6 +25,8 @@ import com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -75,7 +77,7 @@ public class ExtMergeFiles extends BaseExternalTool {
   }
 
   @Override
-  public void show(@NotNull DiffRequest request) {
+  public void show(@NotNull final DiffRequest request) {
     saveContents(request);
 
     int result = DialogWrapper.CANCEL_EXIT_CODE;
@@ -99,7 +101,12 @@ public class ExtMergeFiles extends BaseExternalTool {
                                                    "Merge In External Tool", "Mark as Resolved", "Revert", null)) {
         result = DialogWrapper.OK_EXIT_CODE;
       }
-      ((MergeRequestImpl)request).getResultContent().getFile().refresh(false, false);
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+        @Override
+        public void run() {
+          ((MergeRequestImpl)request).getResultContent().getFile().refresh(false, false);
+        }
+      });
       // We can actually check exit code of external tool, but some of them could work with tabs -> do not close at all
     }
     catch (Exception e) {

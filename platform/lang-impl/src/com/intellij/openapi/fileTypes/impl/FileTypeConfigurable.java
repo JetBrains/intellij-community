@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -118,23 +117,18 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     }
     myOriginalToEditedMap.clear();
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
-              myManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
-            }
-            myManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
-            for (FileNameMatcher matcher : myReassigned.keySet()) {
-              myManager.getRemovedMappings().put(matcher, Pair.create(myReassigned.get(matcher), true));
-            }
+        if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
+          myManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
+        }
+        myManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
+        for (FileNameMatcher matcher : myReassigned.keySet()) {
+          myManager.getRemovedMappings().put(matcher, Pair.create(myReassigned.get(matcher), true));
+        }
 
-            TemplateDataLanguagePatterns.getInstance().setAssocTable(myTempTemplateDataLanguages);
-          }
-        });
+        TemplateDataLanguagePatterns.getInstance().setAssocTable(myTempTemplateDataLanguages);
       }
     });
   }
@@ -309,7 +303,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       updateExtensionList();
       final int index = myPatterns.getListModel().indexOf(matcher.getPresentableString());
       if (index >= 0) {
-        ListScrollingUtil.selectItem(myPatterns.myPatternsList, index);
+        ScrollingUtil.selectItem(myPatterns.myPatternsList, index);
       }
       myPatterns.myPatternsList.requestFocus();
     }
@@ -512,7 +506,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
           listModel.addElement(type);
         }
       }
-      ListScrollingUtil.ensureSelectionExists(myFileTypesList);
+      ScrollingUtil.ensureSelectionExists(myFileTypesList);
     }
 
     public int getSelectedIndex() {
@@ -579,12 +573,12 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     }
 
     public void ensureSelectionExists() {
-      ListScrollingUtil.ensureSelectionExists(myPatternsList);
+      ScrollingUtil.ensureSelectionExists(myPatternsList);
     }
 
     public void addPatternAndSelect(String pattern) {
       addPattern(pattern);
-      ListScrollingUtil.selectItem(myPatternsList, getListModel().getSize() - 1);
+      ScrollingUtil.selectItem(myPatternsList, getListModel().getSize() - 1);
     }
 
     public void select(final String pattern) {
@@ -593,7 +587,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
         if (at instanceof String) {
           final FileNameMatcher matcher = FileTypeManager.parseFromString((String)at);
           if (FileNameMatcherEx.acceptsCharSequence(matcher, pattern)) {
-            ListScrollingUtil.selectItem(myPatternsList, i);
+            ScrollingUtil.selectItem(myPatternsList, i);
             return;
           }
         }

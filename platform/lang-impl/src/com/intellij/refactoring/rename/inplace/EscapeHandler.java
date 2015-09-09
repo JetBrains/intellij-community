@@ -44,7 +44,7 @@ public class EscapeHandler extends EditorActionHandler {
         final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
         if (lookup != null) {
           selectionModel.removeSelection();
-          lookup.hide();
+          lookup.hideLookup(true);
           return;
         }
       }

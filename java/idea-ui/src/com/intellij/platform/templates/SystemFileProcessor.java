@@ -88,7 +88,7 @@ public class SystemFileProcessor extends ProjectTemplateFileProcessor {
                 Object state = ((PersistentStateComponent)component).getState();
                 Element element1 = XmlSerializer.serialize(state);
                 element.addContent(element1.cloneContent());
-                element.setAttribute("name", StoreUtil.getComponentName((PersistentStateComponent)component));
+                element.setAttribute("name", StoreUtil.getStateSpec((PersistentStateComponent)component).name());
               }
             }
           });

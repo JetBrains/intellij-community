@@ -17,50 +17,57 @@ package com.intellij.execution.compound;
 
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.impl.RunConfigurationBeforeRunProvider;
+import com.intellij.execution.impl.RunConfigurationSelector;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.ide.DataManager;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.CheckBoxList;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListSeparator;
+import com.intellij.openapi.ui.popup.MultiSelectionListPopupStep;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.util.Condition;
+import com.intellij.ui.*;
+import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<CompoundRunConfiguration> {
-  @NotNull private final Project myProject;
-  private final CheckBoxList<RunConfiguration> myList;
-  private List<RunConfiguration> myChecked = new ArrayList<RunConfiguration>();
+  private final JBList myList;
   private final RunManagerImpl myRunManager;
+  private final SortedListModel<RunConfiguration> myModel;
+  private CompoundRunConfiguration mySnapshot;
 
 
   public CompoundRunConfigurationSettingsEditor(@NotNull Project project) {
-    myProject = project;
-    myRunManager = RunManagerImpl.getInstanceImpl(myProject);
-    myList = new CheckBoxList<RunConfiguration>() {
+    myRunManager = RunManagerImpl.getInstanceImpl(project);
+    myModel = new SortedListModel<RunConfiguration>(CompoundRunConfiguration.COMPARATOR);
+    myList = new JBList(myModel);
+    myList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void adjustRendering(JCheckBox checkBox, int index, boolean selected, boolean hasFocus) {
-        RunConfiguration configuration = getItemAt(index);
-        assert configuration != null;
-        checkBox.setText(configuration.getType().getDisplayName() + " '"+configuration.getName()+"'");
+      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        RunConfiguration configuration = myModel.get(index);
+        setIcon(configuration.getType().getIcon());
+        append(configuration.getType().getDisplayName() + " '" + configuration.getName() + "'");
       }
-    };
-    myList.setVisibleRowCount(100);
+    });
+    myList.setVisibleRowCount(15);
   }
 
-  private void updateModel(@NotNull CompoundRunConfiguration s) {
-    List<RunConfiguration> list = myRunManager.getAllConfigurationsList();
-    Collections.sort(list, CompoundRunConfiguration.COMPARATOR);
-    myList.clear();
-    for (RunConfiguration configuration : list) {
-      if (canBeAdded(configuration, s)) {
-        myList.addItem(configuration, configuration.getName(), myChecked.contains(configuration));
-      }
-    }
-  }
 
   private boolean canBeAdded(@NotNull RunConfiguration candidate, @NotNull final CompoundRunConfiguration root) {
     if (candidate.getType() == root.getType() && candidate.getName().equals(root.getName())) return false;
@@ -86,23 +93,20 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
 
   @Override
   protected void resetEditorFrom(CompoundRunConfiguration compoundRunConfiguration) {
-    myChecked.clear();
-    myChecked.addAll(compoundRunConfiguration.getSetToRun());
-    updateModel(compoundRunConfiguration);
+    myModel.clear();
+    myModel.addAll(compoundRunConfiguration.getSetToRun());
+    mySnapshot = compoundRunConfiguration;
   }
 
   @Override
   protected void applyEditorTo(CompoundRunConfiguration s) throws ConfigurationException {
     Set<RunConfiguration> checked = new HashSet<RunConfiguration>();
-    for (int i = 0; i < myList.getItemsCount(); i++) {
-      RunConfiguration configuration = myList.getItemAt(i);
-      if (configuration == null) continue;
-      if (myList.isItemSelected(configuration)) {
+    for (int i = 0; i < myModel.getSize(); i++) {
+      RunConfiguration configuration = myModel.get(i);
         String message =
           LangBundle.message("compound.run.configuration.cycle", configuration.getType().getDisplayName(), configuration.getName());
         if (!canBeAdded(configuration, s)) throw new ConfigurationException(message);
         checked.add(configuration);
-      }
     }
     Set<RunConfiguration> toRun = s.getSetToRun();
     toRun.clear();
@@ -112,6 +116,73 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
   @NotNull
   @Override
   protected JComponent createEditor() {
-    return myList;
+    final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList);
+    return decorator.disableUpDownActions().setAddAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+
+        final List<RunConfiguration> all = new ArrayList<RunConfiguration>();
+        for (ConfigurationType type : myRunManager.getConfigurationFactories()) {
+          if (!(type instanceof UnknownConfigurationType)) {
+            for (RunnerAndConfigurationSettings settings : myRunManager.getConfigurationSettingsList(type)) {
+              all.add(settings.getConfiguration());
+            }
+          }
+        }
+
+        final List<RunConfiguration> configurations = ContainerUtil.filter(all, new Condition<RunConfiguration>() {
+          @Override
+          public boolean value(RunConfiguration configuration) {
+            return !mySnapshot.getSetToRun().contains(configuration) && canBeAdded(configuration, mySnapshot);
+          }
+        });
+        JBPopupFactory.getInstance().createListPopup(new MultiSelectionListPopupStep<RunConfiguration>(null, configurations){
+          @Nullable
+          @Override
+          public ListSeparator getSeparatorAbove(RunConfiguration value) {
+            int i = configurations.indexOf(value);
+            if (i <1) return null;
+            RunConfiguration previous = configurations.get(i - 1);
+            return value.getType() != previous.getType() ? new ListSeparator() : null;
+          }
+
+          @Override
+          public Icon getIconFor(RunConfiguration value) {
+            return value.getType().getIcon();
+          }
+
+          @Override
+          public boolean isSpeedSearchEnabled() {
+            return true;
+          }
+
+          @NotNull
+          @Override
+          public String getTextFor(RunConfiguration value) {
+            return value.getName();
+          }
+
+          @Override
+          public PopupStep<?> onChosen(List<RunConfiguration> selectedValues, boolean finalChoice) {
+            myList.clearSelection();
+            myModel.addAll(selectedValues);
+            return FINAL_CHOICE;
+          }
+
+        }).showUnderneathOf(decorator.getActionsPanel());
+      }
+    }).setEditAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        int index = myList.getSelectedIndex();
+        if (index == -1) return;
+        RunConfiguration configuration = myModel.get(index);
+        RunConfigurationSelector selector =
+          RunConfigurationSelector.KEY.getData(DataManager.getInstance().getDataContext(button.getContextComponent()));
+        if (selector != null) {
+          selector.select(configuration);
+        }
+      }
+    }).setToolbarPosition(ActionToolbarPosition.TOP).createPanel();
   }
 }

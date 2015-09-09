@@ -31,6 +31,7 @@ import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public class PyStackFrame extends XStackFrame {
@@ -96,9 +97,13 @@ public class PyStackFrame extends XStackFrame {
       return attributes;
     }
     else {
-      return (attributes.getStyle() & SimpleTextAttributes.STYLE_ITALIC) != 0
-             ? SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
+      return getGrayAttributes(attributes);
     }
+  }
+
+  protected static SimpleTextAttributes getGrayAttributes(SimpleTextAttributes attributes) {
+    return (attributes.getStyle() & SimpleTextAttributes.STYLE_ITALIC) != 0
+           ? SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
   }
 
   @Override
@@ -108,9 +113,9 @@ public class PyStackFrame extends XStackFrame {
       @Override
       public void run() {
         try {
-          final XValueChildrenList values = myDebugProcess.loadFrame();
+          XValueChildrenList values = myDebugProcess.loadFrame();
           if (!node.isObsolete()) {
-            node.addChildren(values != null ? values : XValueChildrenList.EMPTY, true);
+            addChildren(node, values);
           }
         }
         catch (PyDebuggerException e) {
@@ -121,6 +126,10 @@ public class PyStackFrame extends XStackFrame {
         }
       }
     });
+  }
+
+  protected void addChildren(@NotNull final XCompositeNode node, @Nullable final XValueChildrenList children) {
+    node.addChildren(children != null ? children : XValueChildrenList.EMPTY, true);
   }
 
   public String getThreadId() {

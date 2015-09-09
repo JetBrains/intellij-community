@@ -3,13 +3,14 @@ package com.jetbrains.edu.learning.navigation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.courseFormat.StudyStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -52,7 +53,10 @@ public class StudyNavigator {
     if (nextLessonIndex >= lessons.size()) {
       return null;
     }
-    return lessons.get(nextLessonIndex);
+    final Lesson nextLesson = lessons.get(nextLessonIndex);
+    if (EduNames.PYCHARM_ADDITIONAL.equals(nextLesson.getName()))
+      return null;
+    return nextLesson;
   }
 
   public static  Lesson previousLesson(@NotNull final Lesson lesson) {
@@ -81,7 +85,6 @@ public class StudyNavigator {
     if (!answerPlaceholder.isValid(editor.getDocument())) {
       return;
     }
-    taskFile.setSelectedAnswerPlaceholder(answerPlaceholder);
     LogicalPosition placeholderStart = new LogicalPosition(answerPlaceholder.getLine(), answerPlaceholder.getStart());
     editor.getCaretModel().moveToLogicalPosition(placeholderStart);
   }

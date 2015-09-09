@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ import org.jetbrains.annotations.Nullable;
 // it is illegal URI (fragment before query), but we must support such URI
 // Semicolon as parameters separator is supported (WEB-6671)
 public interface Url {
+  /**
+   * System-independent path
+   */
   @NotNull
   String getPath();
 

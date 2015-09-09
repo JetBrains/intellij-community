@@ -106,8 +106,9 @@ target('default': "Build artifacts") {
   if (!dryRun) {
     forceDelete(paths.sandbox)
     ant.mkdir(dir: paths.sandbox)
-    //Use IdeTipsAndTricks.xml of EDU version.
+    //Use EDU versions of IdeTipsAndTricks.xml and icon-robots.txt.
     ant.delete(file: "${pythonCommunityHome}/src/META-INF/IdeTipsAndTricks.xml")
+    ant.delete(file: "${pythonCommunityHome}/resources/icon-robots.txt")
   }
 
   ant.tstamp() {
@@ -210,7 +211,7 @@ public layoutEducational(String classesPath, Set usedJars) {
   }
 
 
-  String macAppRoot = isEap() ? "PyCharm Educational ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm Educational.app/Contents"
+  String macAppRoot = isEap() ? "PyCharm Edu ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm Edu.app/Contents"
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
   ant.copy(file: "${paths.artifacts}/pycharm${buildName}.sit", tofile: "${paths.artifacts}/pycharm${buildName}-jdk-bundled.sit")
   //ant.delete(file: "${paths.artifacts}/pycharm${buildName}.sit")
@@ -226,6 +227,9 @@ private layoutPlugins(layouts) {
     }
     layouts.layoutPlugin("course-creator")
     layouts.layoutPlugin("course-creator-python")
+    layouts.layoutPlugin("ipnb") {
+      fileset(dir: "$pythonCommunityHome/ipnb/lib")
+    }
   }
 
   layouts.layoutCommunityPlugins(ch)

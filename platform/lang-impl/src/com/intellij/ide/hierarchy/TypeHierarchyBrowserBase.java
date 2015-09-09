@@ -52,8 +52,13 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected abstract boolean isInterface(PsiElement psiElement);
 
+  protected void createTreeAndSetupCommonActions(@NotNull Map<String, JTree> trees, String typeHierarchyActionGroupName) {
+    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(typeHierarchyActionGroupName);
+    createTreeAndSetupCommonActions(trees, group);
+  }
+
   protected void createTreeAndSetupCommonActions(@NotNull Map<String, JTree> trees, ActionGroup group) {
-    final BaseOnThisTypeAction baseOnThisTypeAction = new BaseOnThisTypeAction();
+    final BaseOnThisTypeAction baseOnThisTypeAction = createBaseOnThisAction();
     final JTree tree1 = createTree(true);
     PopupHandler.installPopupHandler(tree1, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
     baseOnThisTypeAction
@@ -71,6 +76,11 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     baseOnThisTypeAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree3);
     trees.put(SUBTYPES_HIERARCHY_TYPE, tree3);
+  }
+
+  @NotNull
+  protected BaseOnThisTypeAction createBaseOnThisAction() {
+    return new BaseOnThisTypeAction();
   }
 
   protected abstract boolean canBeDeleted(PsiElement psiElement);

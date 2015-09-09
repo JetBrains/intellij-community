@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -77,6 +78,14 @@ class StateQueue {
     return myQueue.isEmpty();
   }
 
+  boolean processAll(@NotNull Processor<? super DfaInstructionState> processor) {
+    for (DfaInstructionState state : myQueue) {
+      if (!processor.process(state)) return false;
+    }
+    return true;
+  }
+
+  @NotNull
   List<DfaInstructionState> getNextInstructionStates(Set<Instruction> joinInstructions) {
     DfaInstructionState state = myQueue.poll();
     final Instruction instruction = state.getInstruction();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 26-Jun-2007
- */
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -25,14 +20,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.*;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * @authot anna
+ * @since 26-Jun-2007
+ */
 public abstract class ExternalAnnotationsManager {
-  @NonNls public static final String ANNOTATIONS_XML = "annotations.xml";
+  public static final String ANNOTATIONS_XML = "annotations.xml";
 
   public static final Topic<ExternalAnnotationsListener> TOPIC = Topic.create("external annotations", ExternalAnnotationsListener.class);
 
@@ -67,12 +65,12 @@ public abstract class ExternalAnnotationsManager {
   public abstract boolean deannotate(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
   // Method used in Kotlin plugin when it is necessary to leave external annotation, but modify its arguments
-  public abstract boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN,
+  public abstract boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner,
+                                                 @NotNull String annotationFQN,
                                                  @Nullable PsiNameValuePair[] value);
 
   public abstract AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element);
 
   @Nullable
   public abstract List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner);
-
 }

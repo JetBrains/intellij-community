@@ -35,6 +35,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -282,14 +283,23 @@ public class CopyReferenceAction extends DumbAwareAction {
 
   private static String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     final LogicalRoot logicalRoot = LogicalRootsManager.getLogicalRootsManager(project).findLogicalRoot(virtualFile);
-    if (logicalRoot != null && logicalRoot.getVirtualFile() != null) {
-      return ObjectUtils.assertNotNull(VfsUtilCore.getRelativePath(virtualFile, logicalRoot.getVirtualFile(), '/'));
+    VirtualFile logicalRootFile = logicalRoot != null ? logicalRoot.getVirtualFile() : null; 
+    if (logicalRootFile != null && !virtualFile.equals(logicalRootFile)) {
+      return ObjectUtils.assertNotNull(VfsUtilCore.getRelativePath(virtualFile, logicalRootFile, '/'));
     }
 
-    final VirtualFile contentRoot = ProjectRootManager.getInstance(project).getFileIndex().getContentRootForFile(virtualFile);
-    if (contentRoot != null) {
-      return ObjectUtils.assertNotNull(VfsUtilCore.getRelativePath(virtualFile, contentRoot, '/'));
+    VirtualFile outerMostRoot = null;
+    VirtualFile each = virtualFile;
+    ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    while (each != null && (each = index.getContentRootForFile(each, false)) != null) {
+      outerMostRoot = each;
+      each = each.getParent();
     }
+
+    if (outerMostRoot != null && !outerMostRoot.equals(virtualFile)) {
+      return ObjectUtils.assertNotNull(VfsUtilCore.getRelativePath(virtualFile, outerMostRoot, '/'));
+    }
+
     return virtualFile.getPath();
   }
 }

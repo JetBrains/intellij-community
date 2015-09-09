@@ -85,9 +85,4 @@ public class SvnProcessHandler extends OSProcessHandler {
       return SvnProcessHandler.this.executeOnPooledThread(runnable);
     }
   }
-
-  @Override
-  protected boolean useNonBlockingRead() {
-    return false;
-  }
 }

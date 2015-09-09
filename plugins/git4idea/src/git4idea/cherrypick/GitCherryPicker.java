@@ -78,7 +78,6 @@ public class GitCherryPicker extends VcsCherryPicker {
   private static final String CHERRY_PICK_HEAD_FILE = "CHERRY_PICK_HEAD";
 
   private static final Logger LOG = Logger.getInstance(GitCherryPicker.class);
-  private static final String NAME = "Cherry-Pick";
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
@@ -521,7 +520,7 @@ public class GitCherryPicker extends VcsCherryPicker {
   @NotNull
   @Override
   public String getActionTitle() {
-    return isAutoCommit() ? NAME : NAME + "...";
+    return "Cherry-Pick";
   }
 
   private boolean isAutoCommit() {

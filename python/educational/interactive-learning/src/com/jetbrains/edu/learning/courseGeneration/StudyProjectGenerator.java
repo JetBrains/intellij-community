@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -21,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
@@ -30,24 +33,23 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.stepic.CourseInfo;
 import com.jetbrains.edu.stepic.EduStepicConnector;
+import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class StudyProjectGenerator {
   private static final Logger LOG = Logger.getInstance(StudyProjectGenerator.class.getName());
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
-  private final File myCoursesDir = new File(PathManager.getConfigPath(), "courses");
+  private static final File ourCoursesDir = new File(PathManager.getConfigPath(), "courses");
   private static final String CACHE_NAME = "courseNames.txt";
   private List<CourseInfo> myCourses = new ArrayList<CourseInfo>();
   private CourseInfo mySelectedCourseInfo;
-  private static final String COURSE_META_FILE = "course.json";
   private static final String COURSE_NAME_ATTRIBUTE = "name";
   private static final String COURSE_DESCRIPTION = "description";
   public static final String AUTHOR_ATTRIBUTE = "authors";
@@ -68,17 +70,21 @@ public class StudyProjectGenerator {
       new Runnable() {
         @Override
         public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
             @Override
             public void run() {
-              course.initCourse(false);
-              final File courseDirectory = new File(myCoursesDir, course.getName());
-              StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
-              course.setCourseDirectory(new File(myCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
-              VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
-              StudyProjectComponent.getInstance(project).registerStudyToolwindow(course);
-              openFirstTask(course, project);
-
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
+                public void run() {
+                  course.initCourse(false);
+                  final File courseDirectory = new File(ourCoursesDir, course.getName());
+                  StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
+                  course.setCourseDirectory(new File(ourCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
+                  VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+                  StudyProjectComponent.getInstance(project).registerStudyToolwindow(course);
+                  openFirstTask(course, project);
+                }
+              });
             }
           });
         }
@@ -88,7 +94,7 @@ public class StudyProjectGenerator {
   private Course getCourse() {
     Reader reader = null;
     try {
-      final File courseFile = new File(new File(myCoursesDir, mySelectedCourseInfo.getName()), COURSE_META_FILE);
+      final File courseFile = new File(new File(ourCoursesDir, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
       if (courseFile.exists()) {
         reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
         Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
@@ -147,15 +153,43 @@ public class StudyProjectGenerator {
   }
 
   public void flushCourse(@NotNull final Course course) {
-    final File courseDirectory = new File(myCoursesDir, course.getName());
+    final File courseDirectory = new File(ourCoursesDir, course.getName());
     FileUtil.createDirectory(courseDirectory);
     flushCourseJson(course, courseDirectory);
 
     int lessonIndex = 1;
     for (Lesson lesson : course.getLessons()) {
-      final File lessonDirectory = new File(courseDirectory, EduNames.LESSON + String.valueOf(lessonIndex));
-      flushLesson(lessonDirectory, lesson);
-      lessonIndex += 1;
+      if (lesson.getName().equals(EduNames.PYCHARM_ADDITIONAL)) {
+        flushAdditionalFiles(courseDirectory, lesson);
+      }
+      else {
+        final File lessonDirectory = new File(courseDirectory, EduNames.LESSON + String.valueOf(lessonIndex));
+        flushLesson(lessonDirectory, lesson);
+        lessonIndex += 1;
+      }
+    }
+  }
+
+  private static void flushAdditionalFiles(File courseDirectory, Lesson lesson) {
+    final List<Task> taskList = lesson.getTaskList();
+    if (taskList.size() != 1) return;
+    final Task task = taskList.get(0);
+    for (Map.Entry<String, String> entry : task.getTestsText().entrySet()) {
+      final String name = entry.getKey();
+      final String text = entry.getValue();
+      final File file = new File(courseDirectory, name);
+      FileUtil.createIfDoesntExist(file);
+      try {
+        if (EduUtils.isImage(name)) {
+          FileUtil.writeToFile(file, Base64.decodeBase64(text));
+        }
+        else {
+          FileUtil.writeToFile(file, text);
+        }
+      }
+      catch (IOException e) {
+        LOG.error("ERROR copying file " + name);
+      }
     }
   }
 
@@ -178,7 +212,13 @@ public class StudyProjectGenerator {
       FileUtil.createIfDoesntExist(file);
 
       try {
-        FileUtil.writeToFile(file, taskFile.text);
+        if (EduUtils.isImage(taskFile.name)) {
+          FileUtil.writeToFile(file, Base64.decodeBase64(taskFile.text));
+        }
+        else {
+          FileUtil.writeToFile(file, taskFile.text);
+        }
+
       }
       catch (IOException e) {
         LOG.error("ERROR copying file " + name);
@@ -208,7 +248,7 @@ public class StudyProjectGenerator {
   private static void flushCourseJson(@NotNull final Course course, @NotNull final File courseDirectory) {
     final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     final String json = gson.toJson(course);
-    final File courseJson = new File(courseDirectory, "course.json");
+    final File courseJson = new File(courseDirectory, EduNames.COURSE_META_FILE);
     final FileOutputStream fileOutputStream;
     try {
       fileOutputStream = new FileOutputStream(courseJson);
@@ -241,15 +281,15 @@ public class StudyProjectGenerator {
    * Writes courses to cache file {@link StudyProjectGenerator#CACHE_NAME}
    */
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public void flushCache() {
-    File cacheFile = new File(myCoursesDir, CACHE_NAME);
+  public static void flushCache(List<CourseInfo> courses) {
+    File cacheFile = new File(ourCoursesDir, CACHE_NAME);
     PrintWriter writer = null;
     try {
       if (!createCacheFile(cacheFile)) return;
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
 
       writer = new PrintWriter(cacheFile);
-      for (CourseInfo courseInfo : myCourses) {
+      for (CourseInfo courseInfo : courses) {
         final String json = gson.toJson(courseInfo);
         writer.println(json);
       }
@@ -265,9 +305,9 @@ public class StudyProjectGenerator {
     }
   }
 
-  private boolean createCacheFile(File cacheFile) throws IOException {
-    if (!myCoursesDir.exists()) {
-      final boolean created = myCoursesDir.mkdirs();
+  private static boolean createCacheFile(File cacheFile) throws IOException {
+    if (!ourCoursesDir.exists()) {
+      final boolean created = ourCoursesDir.mkdirs();
       if (!created) {
         LOG.error("Cannot flush courses cache. Can't create courses directory");
         return false;
@@ -284,15 +324,15 @@ public class StudyProjectGenerator {
   }
 
   public List<CourseInfo> getCourses(boolean force) {
-    if (myCoursesDir.exists()) {
-      File cacheFile = new File(myCoursesDir, CACHE_NAME);
-      if (cacheFile.exists()) {
-        myCourses = getCoursesFromCache(cacheFile);
-      }
+    if (ourCoursesDir.exists()) {
+      myCourses = getCoursesFromCache();
     }
     if (force || myCourses.isEmpty()) {
       myCourses = EduStepicConnector.getCourses();
-      flushCache();
+      flushCache(myCourses);
+    }
+    if (myCourses.isEmpty()) {
+      myCourses = getBundledIntro();
     }
     return myCourses;
   }
@@ -311,8 +351,22 @@ public class StudyProjectGenerator {
     }
   }
 
-  private static List<CourseInfo> getCoursesFromCache(@NotNull final File cacheFile) {
+  public static List<CourseInfo> getBundledIntro() {
+    final File introCourse = new File(ourCoursesDir, "Introduction to Python");
+    if (introCourse.exists()) {
+      final CourseInfo courseInfo = getCourseInfo(introCourse);
+
+      return Collections.singletonList(courseInfo);
+    }
+    return Collections.emptyList();
+  }
+
+  public static List<CourseInfo> getCoursesFromCache() {
     List<CourseInfo> courses = new ArrayList<CourseInfo>();
+    final File cacheFile = new File(ourCoursesDir, CACHE_NAME);
+    if (!cacheFile.exists()) {
+      return courses;
+    }
     try {
       final FileInputStream inputStream = new FileInputStream(cacheFile);
       try {
@@ -326,6 +380,9 @@ public class StudyProjectGenerator {
           }
         }
         catch (IOException e) {
+          LOG.error(e.getMessage());
+        }
+        catch (JsonSyntaxException e) {
           LOG.error(e.getMessage());
         }
         finally {
@@ -351,12 +408,12 @@ public class StudyProjectGenerator {
     try {
       String fileName = file.getName();
       String unzippedName = fileName.substring(0, fileName.indexOf("."));
-      File courseDir = new File(myCoursesDir, unzippedName);
+      File courseDir = new File(ourCoursesDir, unzippedName);
       ZipUtil.unzip(null, courseDir, file, null, null, true);
       CourseInfo courseName = addCourse(myCourses, courseDir);
-      flushCache();
+      flushCache(myCourses);
       if (courseName != null && !courseName.getName().equals(unzippedName)) {
-        courseDir.renameTo(new File(myCoursesDir, courseName.getName()));
+        courseDir.renameTo(new File(ourCoursesDir, courseName.getName()));
         courseDir.delete();
       }
       return courseName;
@@ -382,7 +439,7 @@ public class StudyProjectGenerator {
       File[] courseFiles = courseDir.listFiles(new FilenameFilter() {
         @Override
         public boolean accept(File dir, String name) {
-          return name.equals(COURSE_META_FILE);
+          return name.equals(EduNames.COURSE_META_FILE);
         }
       });
       if (courseFiles.length != 1) {
@@ -405,10 +462,23 @@ public class StudyProjectGenerator {
    */
   @Nullable
   private static CourseInfo getCourseInfo(File courseFile) {
+    if (courseFile.isDirectory()) {
+      File[] courseFiles = courseFile.listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          return name.equals(EduNames.COURSE_META_FILE);
+        }
+      });
+      if (courseFiles.length != 1) {
+        LOG.info("More than one or without course files");
+        return null;
+      }
+      courseFile = courseFiles[0];
+    }
     CourseInfo courseInfo = null;
     BufferedReader reader = null;
     try {
-      if (courseFile.getName().equals(COURSE_META_FILE)) {
+      if (courseFile.getName().equals(EduNames.COURSE_META_FILE)) {
         reader = new BufferedReader(new InputStreamReader(new FileInputStream(courseFile), "UTF-8"));
         JsonReader r = new JsonReader(reader);
         JsonParser parser = new JsonParser();
@@ -419,12 +489,12 @@ public class StudyProjectGenerator {
         courseInfo = new CourseInfo();
         courseInfo.setName(courseName);
         courseInfo.setDescription(courseDescription);
-        final ArrayList<CourseInfo.Instructor> instructors = new ArrayList<CourseInfo.Instructor>();
+        final ArrayList<CourseInfo.Author> authors = new ArrayList<CourseInfo.Author>();
         for (JsonElement author : courseAuthors) {
-          final String authorAsString = author.getAsString();
-          instructors.add(new CourseInfo.Instructor(authorAsString));
+          final JsonObject authorAsJsonObject = author.getAsJsonObject();
+          authors.add(new CourseInfo.Author(authorAsJsonObject.get("first_name").getAsString(), authorAsJsonObject.get("last_name").getAsString()));
         }
-        courseInfo.setInstructors(instructors);
+        courseInfo.setAuthors(authors);
       }
     }
     catch (Exception e) {

@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,26 +28,19 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.XmlNamespaceHelper;
-import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * @author Dmitry Avdeev
 */
 public class URLReference implements PsiReference, EmptyResolveMessageProvider {
-  @NonNls private static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
+  @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
 
   private final PsiElement myElement;
   private final TextRange myRange;
@@ -206,40 +198,10 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
   @Override
   @NotNull
   public Object[] getVariants() {
-    final XmlFile file = (XmlFile)myElement.getContainingFile();
-    PsiElement parent = myElement.getParent();
-    if (parent instanceof XmlAttribute && "xmlns".equals(((XmlAttribute)parent).getName())) {
-      XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(file);
-      Set<String> strings = helper.guessUnboundNamespaces(parent.getParent(), file);
-      if (!strings.isEmpty()) {
-        return strings.toArray();
-      }
-    }
-    Set<String> list = new HashSet<String>();
-    for (XmlSchemaProvider provider : Extensions.getExtensions(XmlSchemaProvider.EP_NAME)) {
-      if (provider.isAvailable(file)) {
-        list.addAll(provider.getAvailableNamespaces(file, null));
-      }
-    }
-    if (!list.isEmpty()) {
-      return ArrayUtil.toObjectArray(list);
-    }
-    Object[] resourceUrls = ExternalResourceManagerEx.getInstanceEx().getUrlsByNamespace(myElement.getProject()).keySet().toArray();
-    final XmlDocument document = file.getDocument();
-    assert document != null;
-    XmlTag rootTag = document.getRootTag();
-    final ArrayList<String> additionalNs = new ArrayList<String>();
-    if (rootTag != null) processWsdlSchemas(rootTag, new Processor<XmlTag>() {
-      @Override
-      public boolean process(final XmlTag xmlTag) {
-        final String s = xmlTag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME);
-        if (s != null) { additionalNs.add(s); }
-        return true;
-      }
-    });
-    resourceUrls = ArrayUtil.mergeArrays(resourceUrls, ArrayUtil.toStringArray(additionalNs));
-    return resourceUrls;
+    return EMPTY_ARRAY;
   }
+
+  public boolean isSchemaLocation() { return false; }
 
   @Override
   public boolean isSoft() {

@@ -20,7 +20,7 @@ public class Course {
   @Expose private String description;
   @Expose private String name;
   private String myCourseDirectory = "";
-  @Expose private List<CourseInfo.Instructor> authors = new ArrayList<CourseInfo.Instructor>();
+  @Expose private List<CourseInfo.Author> authors = new ArrayList<CourseInfo.Author>();
   private boolean myUpToDate;
 
   @Expose @SerializedName("language")
@@ -58,27 +58,34 @@ public class Course {
     if (!EduUtils.indexIsValid(lessonIndex, lessons)) {
       return null;
     }
-    return lessons.get(lessonIndex);
+    for (Lesson lesson : lessons) {
+      if (lesson.getIndex() - 1 == lessonIndex) {
+        return lesson;
+      }
+    }
+    return null;
   }
 
   @NotNull
-  public List<CourseInfo.Instructor> getAuthors() {
+  public List<CourseInfo.Author> getAuthors() {
     return authors;
   }
 
-  public static String getAuthorsString(@NotNull List<CourseInfo.Instructor> authors) {
-    return StringUtil.join(authors, new Function<CourseInfo.Instructor, String>() {
+  public static String getAuthorsString(@NotNull List<CourseInfo.Author> authors) {
+    return StringUtil.join(authors, new Function<CourseInfo.Author, String>() {
       @Override
-      public String fun(CourseInfo.Instructor instructor) {
-        return instructor.getName();
+      public String fun(CourseInfo.Author author) {
+        return author.getName();
       }
     }, ", ");
   }
 
   public void setAuthors(String[] authors) {
-    this.authors = new ArrayList<CourseInfo.Instructor>();
+    this.authors = new ArrayList<CourseInfo.Author>();
     for (String name : authors) {
-      this.authors.add(new CourseInfo.Instructor(name));
+      final List<String> pair = StringUtil.split(name, " ");
+      if (!pair.isEmpty())
+        this.authors.add(new CourseInfo.Author(pair.get(0), pair.size() > 1 ? pair.get(1) : ""));
     }
   }
 
@@ -126,8 +133,8 @@ public class Course {
     myLanguage = language;
   }
 
-  public void setAuthors(List<CourseInfo.Instructor> instructors) {
-    this.authors = instructors;
+  public void setAuthors(List<CourseInfo.Author> authors) {
+    this.authors = authors;
   }
 
   public String getCourseType() {

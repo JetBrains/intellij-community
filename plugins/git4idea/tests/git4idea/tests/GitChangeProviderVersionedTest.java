@@ -52,7 +52,7 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
 
   @Test
   public void testDeleteFile() throws Exception {
-    delete(atxt);
+    deleteFile(atxt);
     assertChanges(atxt, DELETED);
   }
 
@@ -85,7 +85,7 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
     // This is not consistent though.
     final VirtualFile dir= myProjectRoot.findChild("dir");
     final VirtualFile file = create(dir, "new.txt");
-    move(file, myRootDir);
+    moveFile(file, myRootDir);
     assertChanges(file, ADDED);
   }
 
@@ -93,7 +93,7 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
   public void testSimultaneousOperationsOnMultipleFiles() throws Exception {
     edit(atxt, "new afile content");
     edit(dir_ctxt, "new cfile content");
-    delete(subdir_dtxt);
+    deleteFile(subdir_dtxt);
     VirtualFile newfile = create(myRootDir, "newfile.txt");
     add();
 

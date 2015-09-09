@@ -24,9 +24,11 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.imgscalr.Scalr;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -326,12 +328,13 @@ public final class IconLoader {
     };
   }
 
-  private static final class CachedImageIcon implements Icon {
+  private static final class CachedImageIcon implements ScalableIcon {
     private Object myRealIcon;
     @NotNull
     private final URL myUrl;
     private boolean dark;
     private float scale;
+    private HashMap<Float, Icon> scaledIcons;
 
     public CachedImageIcon(@NotNull URL url) {
       myUrl = url;
@@ -391,6 +394,33 @@ public final class IconLoader {
     @Override
     public String toString() {
       return myUrl.toString();
+    }
+
+    @Override
+    public Icon scale(float scaleFactor) {
+      if (scaleFactor == 1f) {
+        return this;
+      }
+      if (scaledIcons == null) {
+        scaledIcons = new HashMap<Float, Icon>(1);
+      }
+
+      Icon result = scaledIcons.get(scaleFactor);
+      if (result != null) {
+        return result;
+      }
+
+      final Image image = ImageLoader.loadFromUrl(myUrl, UIUtil.isUnderDarcula(), scaleFactor >= 1.5f);
+      if (image != null) {
+        int width = (int)(getIconWidth() * scaleFactor);
+        int height = (int)(getIconHeight() * scaleFactor);
+        final BufferedImage resizedImage = Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
+        result = getIcon(resizedImage);
+        scaledIcons.put(scaleFactor, result);
+        return result;
+      }
+
+      return this;
     }
   }
 

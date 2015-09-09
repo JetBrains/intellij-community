@@ -123,6 +123,10 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     myInitializerWrapper = expressionToSearch == null ? null : new JavaExpressionWrapper(expressionToSearch);
   }
 
+  public void setParameterInitializer(PsiExpression parameterInitializer) {
+    myParameterInitializer = parameterInitializer;
+  }
+
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new IntroduceParameterViewDescriptor(myMethodToSearchFor);

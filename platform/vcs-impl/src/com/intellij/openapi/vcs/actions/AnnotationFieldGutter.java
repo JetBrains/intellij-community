@@ -41,19 +41,25 @@ import java.util.Map;
  */
 public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   protected final FileAnnotation myAnnotation;
-  private final Editor myEditor;
   protected final LineAnnotationAspect myAspect;
   private final TextAnnotationPresentation myPresentation;
   private final boolean myIsGutterAction;
   private Couple<Map<VcsRevisionNumber, Color>> myColorScheme;
 
+  @Deprecated
   AnnotationFieldGutter(FileAnnotation annotation,
                         Editor editor,
                         LineAnnotationAspect aspect,
                         final TextAnnotationPresentation presentation,
                         Couple<Map<VcsRevisionNumber, Color>> colorScheme) {
+    this(annotation, aspect, presentation, colorScheme);
+  }
+
+  AnnotationFieldGutter(FileAnnotation annotation,
+                        LineAnnotationAspect aspect,
+                        final TextAnnotationPresentation presentation,
+                        Couple<Map<VcsRevisionNumber, Color>> colorScheme) {
     myAnnotation = annotation;
-    myEditor = editor;
     myAspect = aspect;
     myPresentation = presentation;
     myIsGutterAction = myAspect instanceof EditorGutterAction;
@@ -137,10 +143,6 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   public void gutterClosed() {
     myAnnotation.unregister();
     myAnnotation.dispose();
-    final Collection<ActiveAnnotationGutter> gutters = myEditor.getUserData(AnnotateToggleAction.KEY_IN_EDITOR);
-    if (gutters != null) {
-      gutters.remove(this);
-    }
   }
 
   @Nullable

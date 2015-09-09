@@ -15,12 +15,11 @@
  */
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
-import com.intellij.execution.RunnerRegistry;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
@@ -30,8 +29,8 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
@@ -57,7 +56,6 @@ import java.util.Comparator;
  */
 public abstract class AbstractImportTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#" + AbstractImportTestsAction.class.getName());
-  private static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");
   public static final String TEST_HISTORY_SIZE = "test_history_size";
   private SMTRunnerConsoleProperties myProperties;
 
@@ -70,10 +68,6 @@ public abstract class AbstractImportTestsAction extends AnAction {
     myProperties = properties;
   }
 
-  public static File getTestHistoryRoot(Project project) {
-    return new File(TEST_HISTORY_PATH, project.getLocationHash());
-  }
-  
   public static int getHistorySize() {
     int historySize;
     try {
@@ -110,6 +104,10 @@ public abstract class AbstractImportTestsAction extends AnAction {
         final Executor executor = properties != null ? properties.getExecutor() 
                                                      : ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
         ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.create(project, executor, profile);
+        ExecutionTarget target = profile.getTarget();
+        if (target != null) {
+          builder = builder.target(target);
+        }
         final RunConfiguration initialConfiguration = profile.getInitialConfiguration();
         final ProgramRunner runner =
           initialConfiguration != null ? RunnerRegistry.getInstance().getRunner(executor.getId(), initialConfiguration) : null;
@@ -127,7 +125,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
   public static void adjustHistory(Project project) {
     int historySize = getHistorySize();
 
-    final File[] files = getTestHistoryRoot(project).listFiles();
+    final File[] files = TestStateStorage.getTestHistoryRoot(project).listFiles();
     if (files != null && files.length >= historySize + 1) {
       Arrays.sort(files, new Comparator<File>() {
         @Override
@@ -148,6 +146,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
     private RunConfiguration myConfiguration;
     private boolean myImported;
     private SMTRunnerConsoleProperties myProperties;
+    private String myTargetId;
 
     public ImportRunProfile(VirtualFile file, Project project) {
       myFile = file;
@@ -172,10 +171,30 @@ public abstract class AbstractImportTestsAction extends AnAction {
               }
             }
           }
+          myTargetId = config.getAttributeValue("target");
         }
       }
       catch (Exception ignore) {
       }
+    }
+
+    public ExecutionTarget getTarget() {
+      if (myTargetId != null) {
+        if (DefaultExecutionTarget.INSTANCE.getId().equals(myTargetId)) {
+          return DefaultExecutionTarget.INSTANCE;
+        }
+        final RunnerAndConfigurationSettingsImpl settings = 
+          new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), myConfiguration, false);
+        for (ExecutionTargetProvider provider : Extensions.getExtensions(ExecutionTargetProvider.EXTENSION_NAME)) {
+          for (ExecutionTarget target : provider.getTargets(myProject, settings)) {
+            if (myTargetId.equals(target.getId())) {
+              return target;
+            }
+          }
+        }
+        return null;
+      }
+      return DefaultExecutionTarget.INSTANCE;
     }
 
     @Nullable
@@ -190,6 +209,10 @@ public abstract class AbstractImportTestsAction extends AnAction {
           return myConfiguration.getState(executor, environment);
         }
         catch (Throwable e) {
+          if (myTargetId != null && getTarget() == null) {
+            throw new ExecutionException("The target " + myTargetId + " does not exist");
+          }
+
           LOG.info(e);
           throw new ExecutionException("Unable to run the configuration: settings are corrupted");
         }

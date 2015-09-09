@@ -666,6 +666,15 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
   }
 }
 
+def setPluginVersionAndSince(String moduleName, String version) {
+  def file = new File(projectBuilder.moduleOutput(findModule(moduleName)) + "/META-INF/plugin.xml")
+  if (file.isFile()) {
+    def text = file.text
+    if (!text.contains("<version>")) {
+      file.text = text.replace("</id>", "</id>\n  <version>${version}</version>\n  <idea-version since-build=\"${version}\" until-build=\"${version}\"/>\n")
+    }
+  }
+}
 
 def layoutPlugin(String moduleName) {
   layoutPlugin(moduleName, moduleName, {})
@@ -696,6 +705,8 @@ def layoutPlugin(String pluginName, String moduleName, String jarName, Closure c
   if (excludedPlugins.contains(moduleName) || excludedPlugins.contains(pluginName)) {
     return
   }
+
+  setPluginVersionAndSince(moduleName, requireProperty("buildNumber", requireProperty("build.number", snapshot)))
 
   dir(pluginName) {
     dir("lib") {
@@ -820,6 +831,10 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         module("lint-checks")
         module("ninepatch")
         module("perflib")
+        module("rpclib")
+        module("chartlib")
+        module("builder-model")
+        module("builder-test-api")
       }
       jar("androidAnnotations.jar") {
         fileset(dir: "$androidHome/android/annotations")

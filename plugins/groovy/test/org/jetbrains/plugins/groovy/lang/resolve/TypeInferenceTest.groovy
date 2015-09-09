@@ -578,7 +578,7 @@ def foo(def var) {
 
   void testUnresolvedSpread() {
     doTest('''\
-def xxx = abc*.name
+def xxx = abc*.foo
 print xx<caret>x''', 'java.util.List')
   }
 

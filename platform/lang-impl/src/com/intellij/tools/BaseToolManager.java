@@ -17,7 +17,6 @@ package com.intellij.tools;
 
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.components.ExportableComponent;
-import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
@@ -40,7 +39,7 @@ public abstract class BaseToolManager<T extends Tool> implements ExportableCompo
   public BaseToolManager(@NotNull ActionManagerEx actionManagerEx, SchemesManagerFactory factory) {
     myActionManager = actionManagerEx;
 
-    mySchemesManager = factory.createSchemesManager(getSchemesPath(), createProcessor(), RoamingType.PER_USER);
+    mySchemesManager = factory.create(getSchemesPath(), createProcessor());
     mySchemesManager.loadSchemes();
     registerActions();
   }

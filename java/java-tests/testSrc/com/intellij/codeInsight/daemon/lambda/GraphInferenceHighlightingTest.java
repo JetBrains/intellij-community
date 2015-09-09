@@ -287,6 +287,18 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testIDEA143390() throws Exception {
+    doTest();
+  }
+
+  public void testIntersectionWithArray() throws Exception {
+    doTest();
+  }
+
+  public void testIncorporationWithCaptureCalcGlbToGetOneTypeParameterBound() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

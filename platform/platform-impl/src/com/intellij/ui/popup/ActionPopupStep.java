@@ -15,10 +15,12 @@
  */
 package com.intellij.ui.popup;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Getter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,9 +30,9 @@ import java.util.List;
 
 public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionItem>, MnemonicNavigationFilter<PopupFactoryImpl.ActionItem>,
                                  SpeedSearchFilter<PopupFactoryImpl.ActionItem> {
-  private final List<PopupFactoryImpl.ActionItem> myItems;
+  public final List<PopupFactoryImpl.ActionItem> myItems;
   private final String myTitle;
-  private final DataContext myContext;
+  private final Getter<DataContext> myContext;
   private final boolean myEnableMnemonics;
   private final int myDefaultOptionIndex;
   private final boolean myAutoSelectionEnabled;
@@ -40,7 +42,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
 
   public ActionPopupStep(@NotNull final List<PopupFactoryImpl.ActionItem> items,
                          final String title,
-                         DataContext context,
+                         Getter<DataContext> context,
                          boolean enableMnemonics,
                          @Nullable Condition<AnAction> preselectActionCondition,
                          final boolean autoSelection,
@@ -99,6 +101,12 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     return aValue.getIcon();
   }
 
+  @Nullable
+  @Override
+  public String getTooltipTextFor(PopupFactoryImpl.ActionItem value) {
+    return value.getDescription();
+  }
+
   @Override
   @NotNull
   public String getTextFor(final PopupFactoryImpl.ActionItem value) {
@@ -130,24 +138,31 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     if (!actionChoice.isEnabled()) return FINAL_CHOICE;
     final AnAction action = actionChoice.getAction();
 
-    if (action instanceof ActionGroup && (!finalChoice || !((ActionGroup)action).canBePerformed(myContext))) {
+    if (action instanceof ActionGroup && (!finalChoice || !((ActionGroup)action).canBePerformed(myContext.get()))) {
         return PopupFactoryImpl
-          .createActionsStep((ActionGroup)action, myContext, myEnableMnemonics, true, myShowDisabledActions, null, null, false,
+          .createActionsStep((ActionGroup)action, myContext.get(), myEnableMnemonics, true, myShowDisabledActions, null, null, false,
                              myPreselectActionCondition, false);
     }
     else {
       myFinalRunnable = new Runnable() {
         @Override
         public void run() {
-          final AnActionEvent event = new AnActionEvent(null, myContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
-                                                        ActionManager.getInstance(), eventModifiers);
-          event.setInjectedContext(action.isInInjectedContext());
-          if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-            action.actionPerformed(event);
-          }
+          performAction(action, eventModifiers);
         }
       };
       return FINAL_CHOICE;
+    }
+  }
+
+  public void performAction(@NotNull AnAction action, int modifiers) {
+    final DataManager mgr = DataManager.getInstance();
+    final DataContext dataContext = myContext != null ? myContext.get() : mgr.getDataContext();
+    final AnActionEvent event =
+      new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(), ActionManager.getInstance(),
+                        modifiers);
+    event.setInjectedContext(action.isInInjectedContext());
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      action.actionPerformed(event);
     }
   }
 

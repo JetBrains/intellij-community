@@ -118,7 +118,12 @@ public class FunctionalInterfaceSuggester {
           }
 
           final PsiType returnType = method.getReturnType();
-          if (returnType != null && !TypeConversionUtil.isAssignable(returnType, substitutor.substitute(interfaceMethod.getReturnType()))) {
+          PsiType interfaceMethodReturnType = interfaceMethod.getReturnType();
+          if (returnType != null && !TypeConversionUtil.isAssignable(returnType, substitutor.substitute(interfaceMethodReturnType))) {
+            return null;
+          }
+          
+          if (returnType == PsiType.VOID && interfaceMethodReturnType != PsiType.VOID) {
             return null;
           }
 

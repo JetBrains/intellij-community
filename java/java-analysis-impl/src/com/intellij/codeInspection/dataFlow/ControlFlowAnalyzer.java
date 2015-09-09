@@ -116,6 +116,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return myCurrentFlow;
   }
 
+
   private static PsiClassType createClassType(PsiManager manager, GlobalSearchScope scope, String fqn) {
     PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(fqn, scope);
     if (aClass != null) return JavaPsiFacade.getElementFactory(manager.getProject()).createType(aClass);

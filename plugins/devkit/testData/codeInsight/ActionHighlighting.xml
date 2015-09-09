@@ -1,0 +1,45 @@
+<idea-plugin>
+  <actions>
+    <group id="myGroup">
+      <group id="myRecursiveGroup"/>
+      <action id="myRecursiveAction" class="foo.bar.BarAction"/>
+    </group>
+    <action id="myAction" class="foo.bar.BarAction"/>
+
+    <group id=<error descr="Value must not be empty">""</error>/>
+    <group id="withClass" class="foo.bar.BarGroup"/>
+    <group id="invalidClass" class="<error descr="'java.lang.String' is not assignable to 'com.intellij.openapi.actionSystem.ActionGroup'">java.lang.String</error>"/>
+
+    <action id=<error descr="Value must not be empty">""</error> class="foo.bar.BarAction"/>
+    <action id="invalidClass" class="<error descr="'java.lang.String' is not assignable to 'com.intellij.openapi.actionSystem.AnAction'">java.lang.String</error>" />
+
+    <action id="withUseShortcutOf" class="foo.bar.BarAction" use-shortcut-of="myAction"/>
+    <action id="withUseShortcutOfGroupInvalid" class="foo.bar.BarAction" use-shortcut-of="<error descr="Cannot resolve action 'myGroup'">myGroup</error>"/>
+    <action id="withUseShortcutOfInvalid" class="foo.bar.BarAction" use-shortcut-of="<error descr="Cannot resolve action 'INVALID_VALUE'">INVALID_VALUE</error>"/>
+
+    <action id="testAddToGroup" class="foo.bar.BarAction">
+      <add-to-group group-id="myGroup"/>
+      <add-to-group group-id="<error descr="Cannot resolve group 'myAction'">myAction</error>"/>
+      <add-to-group group-id="<error descr="Cannot resolve group 'INVALID_VALUE'">INVALID_VALUE</error>"/>
+
+      <add-to-group group-id="myGroup" relative-to-action="myAction" anchor="after"/>
+      <add-to-group group-id="myGroup" relative-to-action="<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>" anchor="after"/>
+
+      <<error descr="'anchor' must be specified with 'relative-to-action'">add-to-group</error> group-id="myGroup" relative-to-action="myAction"/>
+      <add-to-group group-id="myGroup" relative-to-action="myAction" anchor="<error descr="Must use 'after'|'before' with 'relative-to-action'">first</error>"/>
+    </action>
+
+    <reference id="myGroup"/>
+    <reference id="myAction"/>
+    <reference id="myRecursiveGroup"/>
+    <reference id="myRecursiveAction"/>
+    <reference id="<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>"/>
+
+    <reference ref="myGroup"/>
+    <reference ref="myAction"/>
+    <reference ref="myRecursiveGroup"/>
+    <reference ref="myRecursiveAction"/>
+    <reference ref="<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>"/>
+
+  </actions>
+</idea-plugin>

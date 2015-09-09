@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ui.components;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -27,7 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.UIResource;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -158,6 +164,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   private void init() {
     setSelectionBackground(UIUtil.getListSelectionBackground());
     setSelectionForeground(UIUtil.getListSelectionForeground());
+    installDefaultCopyAction();
 
     myEmptyText = new StatusText(this) {
       @Override
@@ -168,6 +175,51 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
 
     myExpandableItemsHandler = createExpandableItemsHandler();
     setCellRenderer(new DefaultListCellRenderer());
+  }
+
+  private void installDefaultCopyAction() {
+    final Action copy = getActionMap().get("copy");
+    if (copy == null || copy instanceof UIResource) {
+      Action newCopy = new AbstractAction() {
+        @Override
+        public boolean isEnabled() {
+          return getSelectedIndex() != -1;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          ArrayList<String> selected = new ArrayList<String>();
+          JBList list = JBList.this;
+          ListCellRenderer renderer = list.getCellRenderer();
+          if (renderer != null) {
+            for (int index : getSelectedIndices()) {
+              Object value = list.getModel().getElementAt(index);
+              //noinspection unchecked
+              Component c = renderer.getListCellRendererComponent(list, value, index, true, true);
+              SimpleColoredComponent coloredComponent = null;
+              if (c instanceof JComponent) {
+                coloredComponent = UIUtil.findComponentOfType((JComponent)c, SimpleColoredComponent.class);
+              }
+              if (coloredComponent != null) {
+                selected.add(coloredComponent.toString());
+              }
+              else if (c instanceof JTextComponent) {
+                selected.add(((JTextComponent)c).getText());
+              }
+              else if (value != null) {
+                selected.add(value.toString());
+              }
+            }
+          }
+
+          if (selected.size() > 0) {
+            String text = StringUtil.join(selected, " ");
+            CopyPasteManager.getInstance().setContents(new StringSelection(text));
+          }
+        }
+      };
+      getActionMap().put("copy", newCopy);
+    }
   }
 
   public boolean isEmpty() {

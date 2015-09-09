@@ -17,7 +17,6 @@ package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.FunctionParameter;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,19 +61,6 @@ public interface PyArgumentList extends PyElement {
    */
   @Nullable
   PyCallExpression getCallExpression();
-
-  /**
-   * Tries to map the argument list to callee's idea of parameters.
-   *
-   * @param resolveContext the reference resolution context
-   * @param implicitOffset known from the context implicit offset
-   * @return a result object with mappings and diagnostic flags.
-   */
-  @NotNull
-  CallArgumentsMapping analyzeCall(PyResolveContext resolveContext, int implicitOffset);
-
-  @NotNull
-  CallArgumentsMapping analyzeCall(PyResolveContext resolveContext);
 
 
   @Nullable

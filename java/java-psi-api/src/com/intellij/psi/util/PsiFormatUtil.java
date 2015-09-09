@@ -25,12 +25,12 @@ import org.jetbrains.annotations.Nullable;
 public class PsiFormatUtil extends PsiFormatUtilBase {
   @MagicConstant(flags = {
     SHOW_MODIFIERS, SHOW_TYPE, TYPE_AFTER, SHOW_CONTAINING_CLASS, SHOW_FQ_NAME, SHOW_NAME, SHOW_MODIFIERS,
-    SHOW_INITIALIZER, SHOW_RAW_TYPE, SHOW_RAW_NON_TOP_TYPE, SHOW_FQ_CLASS_NAMES})
+    SHOW_INITIALIZER, SHOW_RAW_TYPE, SHOW_RAW_NON_TOP_TYPE, SHOW_FQ_CLASS_NAMES, USE_INTERNAL_CANONICAL_TEXT})
   public @interface FormatVariableOptions { }
 
   @MagicConstant(flags = {
     SHOW_MODIFIERS, MODIFIERS_AFTER, SHOW_TYPE, TYPE_AFTER, SHOW_CONTAINING_CLASS, SHOW_FQ_NAME, SHOW_NAME,
-    SHOW_PARAMETERS, SHOW_THROWS, SHOW_RAW_TYPE, SHOW_RAW_NON_TOP_TYPE, SHOW_FQ_CLASS_NAMES})
+    SHOW_PARAMETERS, SHOW_THROWS, SHOW_RAW_TYPE, SHOW_RAW_NON_TOP_TYPE, SHOW_FQ_CLASS_NAMES, USE_INTERNAL_CANONICAL_TEXT})
   public @interface FormatMethodOptions { }
 
   @MagicConstant(flags = {
@@ -388,7 +388,9 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
       }
     }
     if (type == null) return "null";
-    return (options & SHOW_FQ_CLASS_NAMES) == 0 ? type.getPresentableText() : type.getInternalCanonicalText();
+    return (options & SHOW_FQ_CLASS_NAMES) == 0 ? type.getPresentableText() :
+           (options & USE_INTERNAL_CANONICAL_TEXT) == 0 ? type.getCanonicalText(false) :
+           type.getInternalCanonicalText();
   }
 
   public static String formatReference(PsiJavaCodeReferenceElement ref, int options) {
@@ -443,40 +445,6 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
       else {
         builder.append(psiMethod.getParameterList().getParameterIndex((PsiParameter)owner));
       }
-    }
-    else {
-      return null;
-    }
-    return builder.toString();
-  }
-
-  @Nullable
-  public static String getRawExternalName(PsiModifierListOwner owner) {
-    final StringBuilder builder = new StringBuilder();
-    final PsiClass psiClass = PsiTreeUtil.getParentOfType(owner, PsiClass.class, false);
-    if (psiClass == null) return null;
-    ClassUtil.formatClassName(psiClass, builder);
-    if (owner instanceof PsiMethod) {
-      builder.append(" ");
-      formatMethod((PsiMethod)owner, PsiSubstitutor.EMPTY,
-                   SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_RAW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
-                   SHOW_TYPE | SHOW_RAW_TYPE | SHOW_FQ_CLASS_NAMES,
-                   Integer.MAX_VALUE, builder);
-    }
-    else if (owner instanceof PsiParameter) {
-      final PsiElement declarationScope = ((PsiParameter)owner).getDeclarationScope();
-      if (!(declarationScope instanceof PsiMethod)) {
-        return null;
-      }
-      final PsiMethod psiMethod = (PsiMethod)declarationScope;
-
-      builder.append(" ");
-      formatMethod(psiMethod, PsiSubstitutor.EMPTY,
-                   SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_RAW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
-                   SHOW_TYPE | SHOW_RAW_TYPE | SHOW_FQ_CLASS_NAMES,
-                   Integer.MAX_VALUE, builder);
-      builder.append(" ");
-      builder.append(psiMethod.getParameterList().getParameterIndex((PsiParameter)owner));
     }
     else {
       return null;

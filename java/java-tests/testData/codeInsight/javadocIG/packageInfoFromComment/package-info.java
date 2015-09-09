@@ -1,0 +1,4 @@
+/**
+ * some text
+ */
+package packageInfoFromComment;

@@ -17,6 +17,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -51,28 +52,34 @@ public abstract class DocumentCommitProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
 
   public abstract void commitSynchronously(@NotNull Document document, @NotNull Project project);
-  public abstract void commitAsynchronously(@NotNull final Project project, @NotNull final Document document, @NonNls @NotNull Object reason);
+  public abstract void commitAsynchronously(@NotNull final Project project,
+                                            @NotNull final Document document,
+                                            @NonNls @NotNull Object reason,
+                                            @NotNull ModalityState currentModalityState);
 
   protected static class CommitTask {
-    @NotNull public final Document document;
-    @NotNull public final Project project;
+    @NotNull final Document document;
+    @NotNull final Project project;
 
     // when queued it's not started
     // when dequeued it's started
     // when failed it's canceled
-    @NotNull public final ProgressIndicator indicator; // progress to commit this doc under.
-    @NotNull public final Object reason;
+    @NotNull final ProgressIndicator indicator; // progress to commit this doc under.
+    @NotNull final Object reason;
+    @NotNull final ModalityState myCreationModalityState;
     private final CharSequence myLastCommittedText;
     public boolean removed; // task marked as removed, should be ignored.
 
     public CommitTask(@NotNull Document document,
                       @NotNull Project project,
                       @NotNull ProgressIndicator indicator,
-                      @NotNull Object reason) {
+                      @NotNull Object reason,
+                      @NotNull ModalityState currentModalityState) {
       this.document = document;
       this.project = project;
       this.indicator = indicator;
       this.reason = reason;
+      myCreationModalityState = currentModalityState;
       myLastCommittedText = PsiDocumentManager.getInstance(project).getLastCommittedText(document);
     }
 

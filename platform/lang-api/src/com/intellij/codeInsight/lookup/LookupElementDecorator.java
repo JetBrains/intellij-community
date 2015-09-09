@@ -24,6 +24,8 @@ import java.util.Set;
 
 /**
  * @author peter
+ *
+ * @see com.intellij.codeInsight.completion.PrioritizedLookupElement
  */
 public abstract class LookupElementDecorator<T extends LookupElement> extends LookupElement {
   private final T myDelegate;
@@ -39,7 +41,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
 
   @Override
   public boolean isValid() {
-    return super.isValid() && myDelegate.isValid();
+    return myDelegate.isValid() && super.isValid();
   }
 
   @Override

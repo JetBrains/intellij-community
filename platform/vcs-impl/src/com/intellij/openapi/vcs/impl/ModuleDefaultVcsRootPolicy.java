@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -28,24 +29,26 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.DirtBuilder;
-import com.intellij.openapi.vcs.changes.FilePathUnderVcs;
-import com.intellij.openapi.vcs.changes.VcsGuess;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
  * @author yole
  */
 public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
+  private static final Logger LOG = Logger.getInstance(ModuleDefaultVcsRootPolicy.class);
   private final Project myProject;
   private final VirtualFile myBaseDir;
   private final ModuleManager myModuleManager;
@@ -131,39 +134,41 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     return null;
   }
 
+  @NotNull
   @Override
-  public void markDefaultRootsDirty(final DirtBuilder builder, final VcsGuess vcsGuess) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+  public Collection<VirtualFile> getDirtyRoots() {
+    Collection<VirtualFile> dirtyRoots = ContainerUtil.newHashSet();
+
+    if (ProjectUtil.isDirectoryBased(myProject) && myBaseDir != null) {
+      VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
+      if (ideaDir != null) {
+        dirtyRoots.add(ideaDir);
+      }
+      else {
+        LOG.warn(".idea was not found for base dir [" + myBaseDir.getPath() + "]");
+      }
+    }
+
+    ContainerUtil.addAll(dirtyRoots, getContentRoots());
+
+    String defaultMapping = ((ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(myProject)).haveDefaultMapping();
+    boolean haveDefaultMapping = !StringUtil.isEmpty(defaultMapping);
+    if (haveDefaultMapping && myBaseDir != null) {
+      dirtyRoots.add(myBaseDir);
+    }
+    return dirtyRoots;
+  }
+
+  @NotNull
+  private Collection<VirtualFile> getContentRoots() {
+    return ApplicationManager.getApplication().runReadAction(new Computable<List<VirtualFile>>() {
       @Override
-      public void run() {
-        final Module[] modules = myModuleManager.getModules();
-        if (ProjectUtil.isDirectoryBased(myProject)) {
-          FilePath fp = VcsUtil.getFilePath(myBaseDir, Project.DIRECTORY_STORE_FOLDER, true);
-          final AbstractVcs vcs = vcsGuess.getVcsForDirty(fp);
-          if (vcs != null) {
-            builder.addDirtyDirRecursively(new FilePathUnderVcs(fp, vcs));
-          }
+      public List<VirtualFile> compute() {
+        List<VirtualFile> contentRoots = ContainerUtil.newArrayList();
+        for (Module module : myModuleManager.getModules()) {
+          ContainerUtil.addAll(contentRoots, ModuleRootManager.getInstance(module).getContentRoots());
         }
-
-        for(Module module: modules) {
-          final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
-          for(VirtualFile file: files) {
-            final AbstractVcs vcs = vcsGuess.getVcsForDirty(file);
-            if (vcs != null) {
-              builder.addDirtyDirRecursively(new VcsRoot(vcs, file));
-            }
-          }
-        }
-
-        final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-        final String defaultMapping = ((ProjectLevelVcsManagerEx)plVcsManager).haveDefaultMapping();
-        final boolean haveDefaultMapping = (defaultMapping != null) && (!defaultMapping.isEmpty());
-        if (haveDefaultMapping && (myBaseDir != null)) {
-          final AbstractVcs vcs = vcsGuess.getVcsForDirty(myBaseDir);
-          if (vcs != null) {
-            builder.addDirtyFile(new VcsRoot(vcs, myBaseDir));
-          }
-        }
+        return contentRoots;
       }
     });
   }

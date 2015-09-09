@@ -341,32 +341,28 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
 
   @Override
   public void dispose() {
-    ActionManager actionManager = ActionManager.getInstance();
-    actionManager.getAction(XDebuggerActions.SET_VALUE).unregisterCustomShortcutSet(this);
-    actionManager.getAction(XDebuggerActions.COPY_VALUE).unregisterCustomShortcutSet(this);
-    actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).unregisterCustomShortcutSet(this);
-    actionManager.getAction(XDebuggerActions.JUMP_TO_TYPE_SOURCE).unregisterCustomShortcutSet(this);
-    actionManager.getAction(XDebuggerActions.MARK_OBJECT).unregisterCustomShortcutSet(this);
-
     // clear all possible inner fields that may still have links to debugger objects
+    setModel(null);
     myTreeModel.setRoot(null);
     setCellRenderer(null);
     UIUtil.dispose(this);
     setLeadSelectionPath(null);
     setAnchorSelectionPath(null);
     removeComponentListener(myMoveListener);
+    myListeners.clear();
   }
 
   private void registerShortcuts() {
     ActionManager actionManager = ActionManager.getInstance();
     actionManager.getAction(XDebuggerActions.SET_VALUE)
-      .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), this);
-    actionManager.getAction(XDebuggerActions.COPY_VALUE).registerCustomShortcutSet(CommonShortcuts.getCopy(), this);
-    actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
+      .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), this, this);
+    actionManager.getAction(XDebuggerActions.COPY_VALUE).registerCustomShortcutSet(CommonShortcuts.getCopy(), this, this);
+    actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).registerCustomShortcutSet(CommonShortcuts.getEditSource(), this, this);
     Shortcut[] editTypeShortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(XDebuggerActions.EDIT_TYPE_SOURCE);
-    actionManager.getAction(XDebuggerActions.JUMP_TO_TYPE_SOURCE).registerCustomShortcutSet(new CustomShortcutSet(editTypeShortcuts), this);
-    actionManager.getAction(XDebuggerActions.MARK_OBJECT)
-      .registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("ToggleBookmark")), this);
+    actionManager.getAction(XDebuggerActions.JUMP_TO_TYPE_SOURCE).registerCustomShortcutSet(
+      new CustomShortcutSet(editTypeShortcuts), this, this);
+    actionManager.getAction(XDebuggerActions.MARK_OBJECT).registerCustomShortcutSet(
+      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("ToggleBookmark")), this, this);
   }
 
   private static void markNodesObsolete(final XValueContainerNode<?> node) {

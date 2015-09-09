@@ -1,4 +1,6 @@
 <idea-plugin>
+  <module value="com.intellij.modules.remoteServers"/>
+
   <extensionPoints>
     <extensionPoint name="remoteServer.type" interface="com.intellij.remoteServer.ServerType"/>
     <extensionPoint name="remoteServer.deploymentSource.type" interface="com.intellij.remoteServer.configuration.deployment.DeploymentSourceType"/>
@@ -30,6 +32,9 @@
     <remoteServer.deploymentSource.type implementation="com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceType"/>
     <applicationService serviceInterface="com.intellij.remoteServer.impl.runtime.log.CloudTerminalProvider"
                         serviceImplementation="com.intellij.remoteServer.impl.runtime.log.ConsoleTerminalProvider"/>
+    <toolWindow id="Application Servers" anchor="bottom" icon="RemoteServersIcons.ServersToolWindow"
+                factoryClass="com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowFactory"
+                conditionClass="com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowFactory"/>
   </extensions>
   <application-components>
     <component>
@@ -38,7 +43,7 @@
   </application-components>
   <project-components>
     <component>
-      <implementation-class>com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowOpener</implementation-class>
+      <implementation-class>com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowManager</implementation-class>
     </component>
   </project-components>
 

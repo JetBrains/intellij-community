@@ -42,7 +42,7 @@ public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase
 
   protected void doAction() {
     final PsiVariable targetVariable = (PsiVariable)myList.getSelectedValue();
-    LOG.assertTrue(targetVariable instanceof PsiParameter);
+    LOG.assertTrue(targetVariable instanceof PsiParameter, targetVariable);
     final ConvertToInstanceMethodProcessor processor = new ConvertToInstanceMethodProcessor(myMethod.getProject(),
                                                                                             myMethod, (PsiParameter)targetVariable,
                                                                                             myVisibilityPanel.getVisibility());

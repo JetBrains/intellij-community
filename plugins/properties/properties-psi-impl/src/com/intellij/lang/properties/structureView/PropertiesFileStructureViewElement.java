@@ -23,7 +23,9 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -50,9 +52,16 @@ public class PropertiesFileStructureViewElement extends PsiTreeElementBase<Prope
     return elements;
   }
 
+  @Nullable
   @Override
-  public PsiElement[] getPsiElements() {
-    return new PsiElement[] {getValue()};
+  public IProperty[] getProperties() {
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public PsiFile[] getFiles() {
+    return new PsiFile[] {getValue()};
   }
 
   public String getPresentableText() {

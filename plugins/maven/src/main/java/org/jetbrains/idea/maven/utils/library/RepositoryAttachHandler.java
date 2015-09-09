@@ -39,7 +39,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,6 +50,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenVersionComparable;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.model.*;
@@ -352,16 +352,19 @@ public class RepositoryAttachHandler {
   public static List<String> retrieveVersions(@NotNull final Project project,
                                               @NotNull final String groupId,
                                               @NotNull final String artifactId,
-                                              @NotNull final String remoteRepository) {
+                                              @NotNull final List<MavenRepositoryInfo> repositories) {
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(project).getEmbeddersManager();
     MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_GET_VERSIONS);
     embedder.customizeForGetVersions();
     try {
-      List<String> versions = embedder.retrieveVersions(groupId, artifactId, remoteRepository);
+      List<MavenRemoteRepository> remoteRepositories = convertRepositories(repositories);
+      List<String> versions = embedder.retrieveVersions(groupId, artifactId, remoteRepositories);
       Collections.sort(versions, new Comparator<String>() {
         @Override
         public int compare(String o1, String o2) {
-          return StringUtil.compareVersionNumbers(o2, o1);
+          MavenVersionComparable v1 = new MavenVersionComparable(o1);
+          MavenVersionComparable v2 = new MavenVersionComparable(o2);
+          return v2.compareTo(v1);
         }
       });
       return versions;
@@ -378,7 +381,7 @@ public class RepositoryAttachHandler {
                                     List<MavenId> mavenIds,
                                     List<MavenExtraArtifactType> extraTypes,
                                     Collection<MavenRepositoryInfo> repositories,
-                                    final Processor<List<MavenArtifact>> resultProcessor,
+                                    @Nullable final Processor<List<MavenArtifact>> resultProcessor,
                                     ProgressIndicator indicator) {
     boolean cancelled = false;
     final Collection<MavenArtifact> result = new LinkedHashSet<MavenArtifact>();
@@ -431,7 +434,9 @@ public class RepositoryAttachHandler {
             DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
               @Override
               public void run() {
-                resultProcessor.process(new ArrayList<MavenArtifact>(result));
+                if (resultProcessor != null) {
+                  resultProcessor.process(new ArrayList<MavenArtifact>(result));
+                }
               }
             });
           }

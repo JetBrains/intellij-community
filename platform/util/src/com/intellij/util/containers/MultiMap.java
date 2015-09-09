@@ -243,6 +243,7 @@ public class MultiMap<K, V> implements Serializable {
     myMap.clear();
   }
 
+  @Nullable
   public Collection<V> remove(K key) {
     return myMap.remove(key);
   }
@@ -385,6 +386,11 @@ public class MultiMap<K, V> implements Serializable {
   @Override
   public String toString() {
     return myMap.toString();
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <K, V> MultiMap<K, V> empty() {
+    return EMPTY;
   }
 
   private static class EmptyMap extends MultiMap {

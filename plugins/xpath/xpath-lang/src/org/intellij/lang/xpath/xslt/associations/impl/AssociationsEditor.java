@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -15,7 +30,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
@@ -23,12 +37,10 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.IconUtil;
-import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.ui.UIUtil;
 import icons.XpathIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,13 +58,10 @@ import java.util.Collections;
 import java.util.List;
 
 class AssociationsEditor {
-  @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
-
   private JPanel myComponent;
   private JBList myList;
   private Tree myTree;
-  private Splitter mySplitter;
-  private final StorageAccessors myProperties = StorageAccessors.createGlobal("AssociationsEditor");
+  private JBSplitter mySplitter;
 
   private final AssociationsModel myListModel;
   private final TransactionalManager myManager;
@@ -109,7 +118,7 @@ class AssociationsEditor {
 
   private void initUI() {
     myComponent = new JPanel(new BorderLayout());
-    mySplitter = new Splitter(false, 0.3f);
+    mySplitter = new JBSplitter("AssociationsEditor.dividerProportion", 0.3f);
     myComponent.add(mySplitter, BorderLayout.CENTER);
 
     JPanel leftPanel = new JPanel(new BorderLayout());
@@ -130,9 +139,6 @@ class AssociationsEditor {
       .disableUpDownActions().disableAddAction().disableRemoveAction().createPanel();
     UIUtil.addBorder(rightPanel, IdeBorderFactory.createTitledBorder("Associated Files", false, new Insets(0, 0, 0, 0)));
     mySplitter.setSecondComponent(rightPanel);
-
-    final float dividerProportion = myProperties.getFloat(DIVIDER_PROPORTION, 0.3f);
-    mySplitter.setProportion(dividerProportion);
   }
 
   private void expandTree(DefaultTreeModel newModel) {
@@ -191,7 +197,6 @@ class AssociationsEditor {
   }
 
   public void dispose() {
-    myProperties.setFloat(DIVIDER_PROPORTION, mySplitter.getProportion());
     Disposer.dispose(myBuilder);
     myManager.dispose();
   }

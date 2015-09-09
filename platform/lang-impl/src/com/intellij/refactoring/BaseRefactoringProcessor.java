@@ -599,7 +599,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
   protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts, @Nullable final UsageInfo[] usages) {
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new ConflictsInTestsException(conflicts.values());
+      if (!ConflictsInTestsException.isTestIgnore()) throw new ConflictsInTestsException(conflicts.values());
+      return true;
     }
 
     if (myPrepareSuccessfulSwingThreadCallback != null && !conflicts.isEmpty()) {

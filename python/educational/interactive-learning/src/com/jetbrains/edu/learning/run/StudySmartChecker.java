@@ -17,7 +17,7 @@ import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.courseFormat.StudyStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -70,7 +70,7 @@ public class StudySmartChecker {
         Process smartTestProcess = testRunner.createCheckProcess(project, windowCopy.getPath());
         final CapturingProcessHandler handler = new CapturingProcessHandler(smartTestProcess);
         final ProcessOutput output = handler.runProcess();
-        boolean res = testRunner.getTestsOutput(output).equals(StudyTestRunner.TEST_OK);
+        boolean res = testRunner.getTestsOutput(output).isSuccess();
         StudyTaskManager.getInstance(project).setStatus(userAnswerPlaceholder, res ? StudyStatus.Solved : StudyStatus.Failed);
         StudyUtils.deleteFile(windowCopy);
         if (fileWindows != null) {

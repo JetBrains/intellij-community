@@ -55,3 +55,51 @@ class Test {
     this.object = object;
   }
 }
+class AAAAAAA {
+
+  private boolean ready;
+  private final Object LOCK = new Object();
+
+  void h(int i) {
+    synchronized (LOCK) {
+      ready = true;
+    }
+    new Runnable () {
+      @Override
+      public void run() {
+        synchronized (LOCK) {
+          ready = false;
+        }
+      }
+    };
+  }
+}
+
+class LambdaInsideConstructorOrInitializer {
+  private String <warning descr="Field 'myFoo' is accessed in both synchronized and unsynchronized contexts">myFoo</warning>;
+  private String <warning descr="Field 'myBar' is accessed in both synchronized and unsynchronized contexts">myBar</warning>;
+  {
+    myBar = "";
+    Runnable r = new Runnable() {
+      @Override
+      public void run() {
+        System.out.println(myBar);
+      }
+    };
+  }
+
+  public LambdaInsideConstructorOrInitializer() {
+    myFoo = "";
+    Runnable r = new Runnable() {
+      @Override
+      public void run() {
+        System.out.println(myFoo);
+      }
+    };
+  }
+  
+  synchronized void sout() {
+    System.out.println(myFoo);
+    System.out.println(myBar);
+  }
+}

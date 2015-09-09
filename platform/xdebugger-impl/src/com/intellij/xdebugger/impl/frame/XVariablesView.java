@@ -103,6 +103,7 @@ public class XVariablesView extends XVariablesViewBase {
       node = createInfoMessage(tree, debugProcess.getCurrentStateMessage(), debugProcess.getCurrentStateHyperlinkListener());
     }
     tree.setRoot(node, true);
+    super.clear();
   }
 
   public static class InlineVariablesInfo {

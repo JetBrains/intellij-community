@@ -687,13 +687,16 @@ public abstract class DialogWrapper {
       for (final JBOptionButton.OptionInfo eachInfo : infos) {
         if (eachInfo.getMnemonic() >= 0) {
           final char mnemonic = (char)eachInfo.getMnemonic();
-          new AnAction() {
-            @Override
-            public void actionPerformed(AnActionEvent e) {
-              final JBOptionButton buttonToActivate = eachInfo.getButton();
-              buttonToActivate.showPopup(eachInfo.getAction(), true);
-            }
-          }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), getPeer().getRootPane());
+          JRootPane rootPane = getPeer().getRootPane();
+          if (rootPane != null) {
+            new AnAction() {
+              @Override
+              public void actionPerformed(AnActionEvent e) {
+                final JBOptionButton buttonToActivate = eachInfo.getButton();
+                buttonToActivate.showPopup(eachInfo.getAction(), true);
+              }
+            }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), rootPane, myDisposable);
+          }
         }
       }
     }
@@ -1182,7 +1185,7 @@ public abstract class DialogWrapper {
     ensureEventDispatchThread();
     myErrorText = new ErrorText();
     myErrorText.setVisible(false);
-    myErrorText.myLabel.addComponentListener(new ComponentAdapter() {
+    final ComponentAdapter resizeListener = new ComponentAdapter() {
       private int myHeight;
 
       @Override
@@ -1202,6 +1205,13 @@ public abstract class DialogWrapper {
           myErrorText.revalidate();
           myResizeInProgress = false;
         }
+      }
+    };
+    myErrorText.myLabel.addComponentListener(resizeListener);
+    Disposer.register(myDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myErrorText.myLabel.removeComponentListener(resizeListener);
       }
     });
 
@@ -1224,7 +1234,7 @@ public abstract class DialogWrapper {
         expandNextOptionButton();
       }
     };
-    toggleShowOptions.registerCustomShortcutSet(sc, root);
+    toggleShowOptions.registerCustomShortcutSet(sc, root, myDisposable);
 
     JComponent titlePane = createTitlePane();
     if (titlePane != null) {
@@ -1267,7 +1277,7 @@ public abstract class DialogWrapper {
       startTrackingValidation();
     }
     if (SystemInfo.isWindows) {
-      installEnterHook(root);
+      installEnterHook(root, myDisposable);
     }
     myErrorTextAlarm.setActivationComponent(root);
   }
@@ -1277,7 +1287,7 @@ public abstract class DialogWrapper {
     return new BorderLayout();
   }
 
-  private static void installEnterHook(JComponent root) {
+  private static void installEnterHook(JComponent root, Disposable disposable) {
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -1292,7 +1302,7 @@ public abstract class DialogWrapper {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         e.getPresentation().setEnabled(owner instanceof JButton && owner.isEnabled());
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), root);
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), root, disposable);
   }
 
   private void expandNextOptionButton() {
@@ -1566,14 +1576,24 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Show the dialog
+   * Show the dialog.
    *
-   * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
+   * @throws IllegalStateException if the method is invoked not on the event dispatch thread
+   * @see #showAndGet()
+   * @see #showAndGetOk()
    */
   public void show() {
     invokeShow();
   }
 
+  /**
+   * Show the modal dialog and check if it was closed with OK.
+   *
+   * @return true if the {@link #getExitCode() exit code} is {@link #OK_EXIT_CODE}.
+   * @throws IllegalStateException if the dialog is non-modal, or if the method is invoked not on the EDT.
+   * @see #show()
+   * @see #showAndGetOk()
+   */
   public boolean showAndGet() {
     if (!isModal()) {
       throw new IllegalStateException("The showAndGet() method is for modal dialogs only");
@@ -2039,12 +2059,12 @@ public abstract class DialogWrapper {
 
     @Override
     public boolean isToBeShown() {
-      return PropertiesComponent.getInstance().getBoolean(myProperty, false);
+      return PropertiesComponent.getInstance().getBoolean(myProperty);
     }
 
     @Override
     public void setToBeShown(boolean value, int exitCode) {
-      PropertiesComponent.getInstance().setValue(myProperty, Boolean.toString(value));
+      PropertiesComponent.getInstance().setValue(myProperty, value);
     }
 
     @Override

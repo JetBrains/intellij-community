@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,12 @@ import org.jetbrains.annotations.NotNull;
 public class CapturingProcessAdapter extends ProcessAdapter {
   private final ProcessOutput myOutput;
 
-  public CapturingProcessAdapter(ProcessOutput output) {
-    myOutput = output;
-  }
-
   public CapturingProcessAdapter() {
     this(new ProcessOutput());
+  }
+
+  public CapturingProcessAdapter(@NotNull ProcessOutput output) {
+    myOutput = output;
   }
 
   @Override
@@ -41,13 +41,13 @@ public class CapturingProcessAdapter extends ProcessAdapter {
     if (outputType == ProcessOutputTypes.STDOUT) {
       myOutput.appendStdout(text);
     }
-    if (outputType == ProcessOutputTypes.STDERR) {
+    else if (outputType == ProcessOutputTypes.STDERR) {
       myOutput.appendStderr(text);
     }
   }
 
   @Override
-  public void processTerminated(@NotNull final ProcessEvent event) {
+  public void processTerminated(@NotNull ProcessEvent event) {
     myOutput.setExitCode(event.getExitCode());
   }
 

@@ -110,8 +110,8 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     DiffContent left = getLeftDiffContent(m);
     DiffContent right = getRightDiffContent(m);
 
-    assertEquals(leftContent, left);
-    assertEquals(rightContent, right);
+    assertContent(leftContent, left);
+    assertContent(rightContent, right);
   }
 
   private DiffContent getLeftDiffContent(FileHistoryDialogModel m) {

@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -29,7 +30,7 @@ abstract public class StudyWindowNavigationAction extends DumbAwareAction {
         if (openedFile != null) {
           final TaskFile selectedTaskFile = StudyUtils.getTaskFile(project, openedFile);
           if (selectedTaskFile != null) {
-            final AnswerPlaceholder selectedAnswerPlaceholder = selectedTaskFile.getSelectedAnswerPlaceholder();
+            final AnswerPlaceholder selectedAnswerPlaceholder = getSelectedAnswerPlaceholder(selectedEditor, selectedTaskFile);
             if (selectedAnswerPlaceholder == null) {
               return;
             }
@@ -39,11 +40,16 @@ abstract public class StudyWindowNavigationAction extends DumbAwareAction {
             }
             StudyNavigator.navigateToAnswerPlaceholder(selectedEditor, nextAnswerPlaceholder, selectedTaskFile);
             selectedEditor.getSelectionModel().removeSelection();
-            selectedTaskFile.setSelectedAnswerPlaceholder(nextAnswerPlaceholder);
             }
           }
         }
       }
+
+  @Nullable
+  private static AnswerPlaceholder getSelectedAnswerPlaceholder(@NotNull final Editor editor, @NotNull final TaskFile file) {
+    LogicalPosition position = editor.getCaretModel().getLogicalPosition();
+    return file.getAnswerPlaceholder(editor.getDocument(), position);
+  }
 
   @Nullable
   protected abstract AnswerPlaceholder getNextAnswerPlaceholder(@NotNull final AnswerPlaceholder window);

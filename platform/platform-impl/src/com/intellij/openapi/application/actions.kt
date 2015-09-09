@@ -15,25 +15,38 @@
  */
 package com.intellij.openapi.application
 
+import com.intellij.openapi.components.impl.stores.BatchUpdateListener
+import com.intellij.util.messages.MessageBus
 import javax.swing.SwingUtilities
 
-public inline fun runWriteAction(runnable: () -> Unit) {
+public inline fun <T> runWriteAction(runnable: () -> T): T {
   val token = WriteAction.start()
   try {
-    runnable()
+    return runnable()
   }
   finally {
     token.finish()
   }
 }
 
-public inline fun runReadAction(runnable: () -> Unit) {
+public inline fun <T> runReadAction(runnable: () -> T): T {
   val token = ReadAction.start()
   try {
-    runnable()
+    return runnable()
   }
   finally {
     token.finish()
+  }
+}
+
+public inline fun <T> runBatchUpdate(messageBus: MessageBus, runnable: () -> T): T {
+  val publisher = messageBus.syncPublisher(BatchUpdateListener.TOPIC)
+  publisher.onBatchUpdateStarted()
+  try {
+    return runnable()
+  }
+  finally {
+    publisher.onBatchUpdateFinished()
   }
 }
 

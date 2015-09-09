@@ -906,8 +906,11 @@ public class HighlightInfo implements Segment {
 
   @NotNull
   public String getText() {
+    if (isFileLevelAnnotation()) return "";
     RangeHighlighterEx highlighter = this.highlighter;
-    if (highlighter == null) throw new RuntimeException("info not applied yet");
+    if (highlighter == null) {
+      throw new RuntimeException("info not applied yet");
+    }
     if (!highlighter.isValid()) return "";
     return highlighter.getDocument().getText(TextRange.create(highlighter));
   }

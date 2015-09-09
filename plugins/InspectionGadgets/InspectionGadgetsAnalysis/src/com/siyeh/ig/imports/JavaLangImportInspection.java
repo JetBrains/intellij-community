@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,11 @@ public class JavaLangImportInspection extends BaseInspection implements CleanupL
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return !FileTypeUtils.isInServerPageFile(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new JavaLangImportVisitor();
   }
@@ -59,9 +64,6 @@ public class JavaLangImportInspection extends BaseInspection implements CleanupL
     public void visitClass(@NotNull PsiClass aClass) {
       // no call to super, so it doesn't drill down
       if (!(aClass.getParent() instanceof PsiJavaFile)) {
-        return;
-      }
-      if (FileTypeUtils.isInServerPageFile(aClass.getContainingFile())) {
         return;
       }
       final PsiJavaFile file = (PsiJavaFile)aClass.getContainingFile();

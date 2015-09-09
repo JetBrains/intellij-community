@@ -85,7 +85,7 @@ public class FieldEvaluator implements Evaluator {
   }
 
   @Nullable
-  private Field findField(Type t, final EvaluationContextImpl context) throws EvaluateException {
+  private Field findField(@Nullable Type t, final EvaluationContextImpl context) throws EvaluateException {
     if(t instanceof ClassType) {
       ClassType cls = (ClassType) t;
       if(myTargetClassFilter.acceptClass(cls)) {

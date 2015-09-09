@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.MethodSignature;
@@ -64,11 +66,12 @@ public class FindSuperElementsHelper {
   }
 
   public static PsiMethod getSiblingInheritedViaSubClass(@NotNull PsiMethod method) {
-    return getSiblingInheritedViaSubClass(method, createSubClassCache());
+    return Pair.getFirst(getSiblingInheritedViaSubClass(method, createSubClassCache()));
   }
 
-  public static PsiMethod getSiblingInheritedViaSubClass(@NotNull final PsiMethod method,
-                                                         @NotNull Map<PsiClass, PsiClass> subClassCache) {
+  // returns super method, sub class
+  public static Pair<PsiMethod, PsiClass> getSiblingInheritedViaSubClass(@NotNull final PsiMethod method,
+                                                                         @NotNull Map<PsiClass, PsiClass> subClassCache) {
     if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return null;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return null;
     final PsiClass containingClass = method.getContainingClass();
@@ -76,18 +79,22 @@ public class FindSuperElementsHelper {
     if (!hasSubClass) {
       return null;
     }
-    final Collection<PsiClass> checkedInterfaces = new THashSet<PsiClass>();
-    final PsiMethod[] result = new PsiMethod[1];
-    ClassInheritorsSearch.search(containingClass, true).forEach(new Processor<PsiClass>() {
+    final Collection<PsiAnchor> checkedInterfaces = new THashSet<PsiAnchor>();
+    final Ref<Pair<PsiMethod, PsiClass>> result = Ref.create();
+    ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), true, true, false).forEach(new Processor<PsiClass>() {
       @Override
       public boolean process(PsiClass inheritor) {
         for (PsiClassType interfaceType : inheritor.getImplementsListTypes()) {
           PsiClassType.ClassResolveResult resolved = interfaceType.resolveGenerics();
           PsiClass anInterface = resolved.getElement();
-          if (anInterface == null || !checkedInterfaces.add(anInterface)) continue;
+          if (anInterface == null || !checkedInterfaces.add(PsiAnchor.create(anInterface))) continue;
           for (PsiMethod superMethod : anInterface.findMethodsByName(method.getName(), true)) {
             PsiClass superInterface = superMethod.getContainingClass();
             if (superInterface == null) {
+              continue;
+            }
+            if (containingClass.isInheritor(superInterface, true)) {
+              // if containingClass implements the superInterface then it's not a sibling inheritance but a pretty boring the usual one
               continue;
             }
 
@@ -100,16 +107,17 @@ public class FindSuperElementsHelper {
             final MethodSignature derivedSignature = method.getSignature(PsiSubstitutor.EMPTY);
             boolean isOverridden = MethodSignatureUtil.isSubsignature(superSignature, derivedSignature);
 
-            if (isOverridden) {
-              result[0] = superMethod;
-              return false;
+            if (!isOverridden) {
+              continue;
             }
+            result.set(Pair.create(superMethod, inheritor));
+            return false;
           }
         }
         return true;
       }
     });
-    return result[0];
+    return result.get();
   }
 
   @NotNull

@@ -184,7 +184,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   private TemplateKey myLastSelectedTemplate;
 
   public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
-    mySchemesManager = schemesManagerFactory.createSchemesManager(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup>() {
+    mySchemesManager = schemesManagerFactory.create(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup>() {
       @Nullable
       @Override
       public TemplateGroup readScheme(@NotNull Element element) throws InvalidDataException {
@@ -239,7 +239,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
           removeTemplate(template);
         }
       }
-    }, RoamingType.PER_USER);
+    });
 
     for (TemplateGroup group : mySchemesManager.loadSchemes()) {
       for (TemplateImpl template : group.getElements()) {

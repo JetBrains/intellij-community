@@ -18,7 +18,6 @@ package org.jetbrains.idea.eclipse.config;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
@@ -66,7 +65,7 @@ final class ClasspathSaveSession implements StateStorage.ExternalizationSession,
   }
 
   @Override
-  public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, Storage storageSpec) {
+  public void setState(Object component, @NotNull String componentName, @NotNull Object state) {
     try {
       CachedXmlDocumentSet fileSet = EclipseClasspathStorageProvider.getFileCache(module);
 

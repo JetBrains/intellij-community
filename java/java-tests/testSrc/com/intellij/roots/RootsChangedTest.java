@@ -126,25 +126,22 @@ public class RootsChangedTest extends ModuleTestCase {
 
   public void testEditLibraryForModuleLoadFromXml() throws IOException {
     final File tempDirectory = createTempDirectory();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        File moduleFile =
-          PathManagerEx.findFileUnderProjectHome("java/java-tests/testData/moduleRootManager/rootsChanged/emptyModule/a.iml", RootsChangedTest.this.getClass());
-        Module a = loadModule(moduleFile, true);
-        assertEventsCount(1);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      File moduleFile =
+        PathManagerEx.findFileUnderProjectHome("java/java-tests/testData/moduleRootManager/rootsChanged/emptyModule/a.iml", RootsChangedTest.this.getClass());
+      Module a = loadModule(moduleFile, true);
+      assertEventsCount(1);
 
-        final Sdk jdk = IdeaTestUtil.getMockJdk17();
-        ProjectJdkTable.getInstance().addJdk(jdk);
-        assertEventsCount(0);
+      final Sdk jdk = IdeaTestUtil.getMockJdk17();
+      ProjectJdkTable.getInstance().addJdk(jdk);
+      assertEventsCount(0);
 
-        ModuleRootModificationUtil.setModuleSdk(a, jdk);
-        assertEventsCount(1);
+      ModuleRootModificationUtil.setModuleSdk(a, jdk);
+      assertEventsCount(1);
 
-        final SdkModificator sdkModificator = jdk.getSdkModificator();
-        sdkModificator.addRoot(getVirtualFile(tempDirectory), OrderRootType.CLASSES);
-        sdkModificator.commitChanges();
-      }
+      final SdkModificator sdkModificator = jdk.getSdkModificator();
+      sdkModificator.addRoot(getVirtualFile(tempDirectory), OrderRootType.CLASSES);
+      sdkModificator.commitChanges();
     });
 
     assertEventsCount(1);
@@ -152,77 +149,71 @@ public class RootsChangedTest extends ModuleTestCase {
 
   public void testModuleJdkEditing() throws Exception {
     final File tempDirectory = createTempDirectory();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final Module moduleA = createModule("a.iml");
-        final Module moduleB = createModule("b.iml");
-        assertEventsCount(2);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final Module moduleA = createModule("a.iml");
+      final Module moduleB = createModule("b.iml");
+      assertEventsCount(2);
 
-        final Sdk jdk = IdeaTestUtil.getMockJdk17();
-        ProjectJdkTable.getInstance().addJdk(jdk);
-        assertEventsCount(0);
+      final Sdk jdk = IdeaTestUtil.getMockJdk17();
+      ProjectJdkTable.getInstance().addJdk(jdk);
+      assertEventsCount(0);
 
-        final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
-        final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
-        rootModelA.setSdk(jdk);
-        rootModelB.setSdk(jdk);
-        ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
-        ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
-        assertEventsCount(1);
+      final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
+      final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
+      rootModelA.setSdk(jdk);
+      rootModelB.setSdk(jdk);
+      ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
+      ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
+      assertEventsCount(1);
 
-        final SdkModificator sdkModificator = jdk.getSdkModificator();
-        sdkModificator.addRoot(getVirtualFile(tempDirectory), OrderRootType.CLASSES);
-        sdkModificator.commitChanges();
-        assertEventsCount(1);
+      final SdkModificator sdkModificator = jdk.getSdkModificator();
+      sdkModificator.addRoot(getVirtualFile(tempDirectory), OrderRootType.CLASSES);
+      sdkModificator.commitChanges();
+      assertEventsCount(1);
 
-        ProjectJdkTable.getInstance().removeJdk(jdk);
-        assertEventsCount(1);
-      }
+      ProjectJdkTable.getInstance().removeJdk(jdk);
+      assertEventsCount(1);
     });
   }
 
   public void testInheritedJdkEditing() throws Exception {
     final File tempDirectory = createTempDirectory();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final Module moduleA = createModule("a.iml");
-        final Module moduleB = createModule("b.iml");
-        assertEventsCount(2);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final Module moduleA = createModule("a.iml");
+      final Module moduleB = createModule("b.iml");
+      assertEventsCount(2);
 
-        final Sdk jdk = IdeaTestUtil.getMockJdk17("AAA");
-        ProjectJdkTable.getInstance().addJdk(jdk);
-        assertEventsCount(0);
+      final Sdk jdk = IdeaTestUtil.getMockJdk17("AAA");
+      ProjectJdkTable.getInstance().addJdk(jdk);
+      assertEventsCount(0);
 
-        final Sdk jdkBBB = IdeaTestUtil.getMockJdk17("BBB");
-        ProjectJdkTable.getInstance().addJdk(jdk);
-        assertEventsCount(0);
+      final Sdk jdkBBB = IdeaTestUtil.getMockJdk17("BBB");
+      ProjectJdkTable.getInstance().addJdk(jdk);
+      assertEventsCount(0);
 
-        ProjectRootManager.getInstance(myProject).setProjectSdk(jdkBBB);
-        assertEventsCount(0);
+      ProjectRootManager.getInstance(myProject).setProjectSdk(jdkBBB);
+      assertEventsCount(0);
 
-        final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
-        final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
-        rootModelA.inheritSdk();
-        rootModelB.inheritSdk();
-        ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
-        if (rootModels.length > 0) {
-          ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
-        }
-        assertEventsCount(1);
-
-        ProjectRootManager.getInstance(myProject).setProjectSdk(jdk);
-        assertEventsCount(1);
-
-        final SdkModificator sdkModificator = jdk.getSdkModificator();
-        sdkModificator.addRoot(getVirtualFile(tempDirectory), OrderRootType.CLASSES);
-        sdkModificator.commitChanges();
-        assertEventsCount(1);
-
-        ProjectJdkTable.getInstance().removeJdk(jdk);
-        assertEventsCount(1);
+      final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
+      final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
+      rootModelA.inheritSdk();
+      rootModelB.inheritSdk();
+      ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
+      if (rootModels.length > 0) {
+        ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       }
+      assertEventsCount(1);
+
+      ProjectRootManager.getInstance(myProject).setProjectSdk(jdk);
+      assertEventsCount(1);
+
+      final SdkModificator sdkModificator = jdk.getSdkModificator();
+      sdkModificator.addRoot(getVirtualFile(tempDirectory), OrderRootType.CLASSES);
+      sdkModificator.commitChanges();
+      assertEventsCount(1);
+
+      ProjectJdkTable.getInstance().removeJdk(jdk);
+      assertEventsCount(1);
     });
   }
 
@@ -231,102 +222,96 @@ public class RootsChangedTest extends ModuleTestCase {
     final Module moduleB = createModule("b.iml");
     assertEventsCount(2);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final Library libraryA = libraryTable.createLibrary("A");
-        final Library.ModifiableModel libraryModifiableModel = libraryA.getModifiableModel();
-        libraryModifiableModel.addRoot("file:///a", OrderRootType.CLASSES);
-        libraryModifiableModel.commit();
-        assertEventsCount(0);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final Library libraryA = libraryTable.createLibrary("A");
+      final Library.ModifiableModel libraryModifiableModel = libraryA.getModifiableModel();
+      libraryModifiableModel.addRoot("file:///a", OrderRootType.CLASSES);
+      libraryModifiableModel.commit();
+      assertEventsCount(0);
 
-        final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
-        final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
-        rootModelA.addLibraryEntry(libraryA);
-        rootModelB.addLibraryEntry(libraryA);
-        rootModelA.addInvalidLibrary("Q", libraryTable.getTableLevel());
-        rootModelB.addInvalidLibrary("Q", libraryTable.getTableLevel());
-        ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
-        if (rootModels.length > 0) {
-          ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
-        }
-        assertEventsCount(1);
+      final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
+      final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
+      rootModelA.addLibraryEntry(libraryA);
+      rootModelB.addLibraryEntry(libraryA);
+      rootModelA.addInvalidLibrary("Q", libraryTable.getTableLevel());
+      rootModelB.addInvalidLibrary("Q", libraryTable.getTableLevel());
+      ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
+      if (rootModels.length > 0) {
+        ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
+      }
+      assertEventsCount(1);
 
-        final Library.ModifiableModel libraryModifiableModel2 = libraryA.getModifiableModel();
-        final File tmpDir;
-        try {
-          tmpDir = FileUtil.createTempDirectory(getTestName(true), "");
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+      final Library.ModifiableModel libraryModifiableModel2 = libraryA.getModifiableModel();
+      final File tmpDir;
+      try {
+        tmpDir = FileUtil.createTempDirectory(getTestName(true), "");
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
 
-        try {
-          final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tmpDir);
-          assertNotNull(file);
+      try {
+        final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tmpDir);
+        assertNotNull(file);
 
-          libraryModifiableModel2.addRoot(file.getUrl(), OrderRootType.CLASSES);
-          libraryModifiableModel2.commit();
-          assertEventsCount(1);
-        }
-        finally {
-          FileUtil.delete(tmpDir);
-        }
-
-        libraryTable.removeLibrary(libraryA);
-        assertEventsCount(1);
-
-        final Library libraryQ = libraryTable.createLibrary("Q");
-        assertEventsCount(1);
-
-        libraryTable.removeLibrary(libraryQ);
+        libraryModifiableModel2.addRoot(file.getUrl(), OrderRootType.CLASSES);
+        libraryModifiableModel2.commit();
         assertEventsCount(1);
       }
+      finally {
+        FileUtil.delete(tmpDir);
+      }
+
+      libraryTable.removeLibrary(libraryA);
+      assertEventsCount(1);
+
+      final Library libraryQ = libraryTable.createLibrary("Q");
+      assertEventsCount(1);
+
+      libraryTable.removeLibrary(libraryQ);
+      assertEventsCount(1);
     });
   }
 
   private void verifyLibraryTableEditingInUncommittedModel(final LibraryTable libraryTable) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final Module moduleA = createModule("a.iml");
-        final Module moduleB = createModule("b.iml");
-        assertEventsCount(2);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final Module moduleA = createModule("a.iml");
+      final Module moduleB = createModule("b.iml");
+      assertEventsCount(2);
 
-        final Library libraryA = libraryTable.createLibrary("A");
-        final Library.ModifiableModel libraryModifiableModel = libraryA.getModifiableModel();
-        libraryModifiableModel.addRoot("file:///a", OrderRootType.CLASSES);
-        libraryModifiableModel.commit();
-        assertEventsCount(0);
+      final Library libraryA = libraryTable.createLibrary("A");
+      final Library.ModifiableModel libraryModifiableModel = libraryA.getModifiableModel();
+      libraryModifiableModel.addRoot("file:///a", OrderRootType.CLASSES);
+      libraryModifiableModel.commit();
+      assertEventsCount(0);
 
-        final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
-        final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
-        rootModelA.addLibraryEntry(libraryA);
-        rootModelB.addLibraryEntry(libraryA);
-        final Library.ModifiableModel libraryModifiableModel2 = libraryA.getModifiableModel();
-        libraryModifiableModel2.addRoot("file:///b", OrderRootType.CLASSES);
-        libraryModifiableModel2.commit();
-        assertEventsCount(0);
+      final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
+      final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
+      rootModelA.addLibraryEntry(libraryA);
+      rootModelB.addLibraryEntry(libraryA);
+      final Library.ModifiableModel libraryModifiableModel2 = libraryA.getModifiableModel();
+      libraryModifiableModel2.addRoot("file:///b", OrderRootType.CLASSES);
+      libraryModifiableModel2.commit();
+      assertEventsCount(0);
 
-        libraryTable.removeLibrary(libraryA);
-        assertEventsCount(0);
+      libraryTable.removeLibrary(libraryA);
+      assertEventsCount(0);
 
-        rootModelA.addInvalidLibrary("Q", libraryTable.getTableLevel());
-        rootModelB.addInvalidLibrary("Q", libraryTable.getTableLevel());
-        assertEventsCount(0);
+      rootModelA.addInvalidLibrary("Q", libraryTable.getTableLevel());
+      rootModelB.addInvalidLibrary("Q", libraryTable.getTableLevel());
+      assertEventsCount(0);
 
-        final Library libraryQ = libraryTable.createLibrary("Q");
-        assertEventsCount(0);
+      final Library libraryQ = libraryTable.createLibrary("Q");
+      assertEventsCount(0);
 
-        ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
-        if (rootModels.length > 0) {
-          ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
-        }
-        assertEventsCount(1);
-
-        libraryTable.removeLibrary(libraryQ);
-        assertEventsCount(1);
+      ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
+      if (rootModels.length > 0) {
+        ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       }
+      assertEventsCount(1);
+
+      libraryTable.removeLibrary(libraryQ);
+      assertEventsCount(1);
     });
   }
 

@@ -15,9 +15,10 @@
  */
 package com.theoryinpractice.testng.intention;
 
-import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryDescriptor;
+import com.beust.jcommander.JCommander;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.Test;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -37,17 +38,17 @@ public class TestNGExternalLibraryResolver extends ExternalLibraryResolver {
     "Test", "BeforeClass", "BeforeGroups", "BeforeMethod", "BeforeSuite", "BeforeTest", "AfterClass", "AfterGroups", "AfterMethod",
     "AfterSuite", "AfterTest", "Configuration"
   );
-  private static final ExternalLibraryDescriptor TESTNG_DESCRIPTOR = new ExternalLibraryDescriptor("org.testng", "testng", null) {
+  public static final ExternalLibraryDescriptor TESTNG_DESCRIPTOR = new ExternalLibraryDescriptor("org.testng", "testng") {
     @NotNull
     @Override
-    public List<String> locateLibraryClassesRoots(@NotNull Module contextModule) {
-      return Collections.singletonList(PathUtil.getJarPathForClass(Test.class));
+    public List<String> getLibraryClassesRoots() {
+      return Arrays.asList(PathUtil.getJarPathForClass(Test.class), PathUtil.getJarPathForClass(JCommander.class));
     }
   };
 
   @Nullable
   @Override
-  public ExternalClassResolveResult resolveClass(@NotNull String shortClassName, @NotNull ThreeState isAnnotation) {
+  public ExternalClassResolveResult resolveClass(@NotNull String shortClassName, @NotNull ThreeState isAnnotation, @NotNull Module contextModule) {
     if (TEST_NG_ANNOTATIONS.contains(shortClassName)) {
       return new ExternalClassResolveResult("org.testng.annotations." + shortClassName, TESTNG_DESCRIPTOR);
     }

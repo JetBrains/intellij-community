@@ -32,6 +32,7 @@ import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludesConfiguration
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
@@ -51,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp();
+    Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyCompilerTest").info(testStartMessage)
     addGroovyLibrary(myModule);
   }
 
@@ -225,6 +227,8 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     super.runBare()
   }
 
+  String getTestStartMessage() { "Starting " + getClass().name + " " + getName() }
+
   @Override
   void runTest() {
     try {
@@ -236,14 +240,10 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     }
   }
 
-  private static void printLogs() {
-    def ideaLog = new File(TestLoggerFactory.testLogDir, "idea.log")
-    if (ideaLog.exists()) {
-      println "\n\nIdea Log:"
-      def limit = 20000
-      def logText = ideaLog.text
-      println(logText.size() < limit ? logText : logText.substring(logText.size() - limit))
-    }
+  private void printLogs() {
+    println "Idea log"
+    TestLoggerFactory.dumpLogToStdout(getTestStartMessage())
+
     def makeLog = new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log")
     if (makeLog.exists()) {
       println "\n\nServer Log:"
@@ -871,6 +871,7 @@ class AppTest {
     ProcessHandler process = runProcess("Bar", myModule, DefaultRunExecutor.class, new ProcessAdapter() {
       @Override
       public void onTextAvailable(ProcessEvent event, Key outputType) {
+        println "stdout: " + event.text
         if (ProcessOutputTypes.SYSTEM != outputType) {
           if (!exceptionFound.get()) {
             exceptionFound.set(event.getText().contains("java.lang.IllegalArgumentException: Argument for @NotNull parameter 'param' of Bar.xxx must not be null"));
@@ -884,11 +885,20 @@ class AppTest {
   }
 
   public void "test extend groovy classes with additional dependencies"() {
+    def anotherModule = addModule("another", true)
+    addGroovyLibrary(anotherModule)
+
     PsiTestUtil.addLibrary(myModule, "junit", GroovyFacetUtil.libDirectory, "junit.jar");
-    PsiTestUtil.addLibrary(myModule, "cli", FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/../../build/lib"), "commons-cli-1.2.jar");
+
+    def cliPath = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/../../build/lib")
+    PsiTestUtil.addLibrary(myModule, "cli", cliPath, "commons-cli-1.2.jar");
+    PsiTestUtil.addLibrary(anotherModule, "cli", cliPath, "commons-cli-1.2.jar");
 
     myFixture.addFileToProject("a.groovy", "class Foo extends GroovyTestCase {}")
     myFixture.addFileToProject("b.groovy", "class Bar extends CliBuilder {}")
+
+    myFixture.addFileToProject("another/b.groovy", "class AnotherBar extends CliBuilder {}")
+
     assertEmpty(make())
   }
 

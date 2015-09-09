@@ -21,16 +21,16 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
-class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
+public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private final PsiClass innerClass;
   private boolean referencesStaticallyAccessible = true;
 
-  InnerClassReferenceVisitor(@NotNull PsiClass innerClass) {
+  public InnerClassReferenceVisitor(@NotNull PsiClass innerClass) {
     this.innerClass = innerClass;
   }
 
-  boolean canInnerClassBeStatic() {
+  public boolean canInnerClassBeStatic() {
     final PsiClass superClass = innerClass.getSuperClass();
     if (superClass != null && !isClassStaticallyAccessible(superClass)) {
       return false;

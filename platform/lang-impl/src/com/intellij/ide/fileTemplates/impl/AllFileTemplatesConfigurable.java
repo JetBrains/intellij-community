@@ -646,7 +646,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   public void disposeUIResources() {
     if (myCurrentTab != null) {
       final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
-      propertiesComponent.setValue(CURRENT_TAB, myCurrentTab.getTitle());
+      propertiesComponent.setValue(CURRENT_TAB, myCurrentTab.getTitle(), TEMPLATES_TITLE);
       final FileTemplate template = myCurrentTab.getSelectedTemplate();
       if (template != null) {
         propertiesComponent.setValue(SELECTED_TEMPLATE, template.getName());

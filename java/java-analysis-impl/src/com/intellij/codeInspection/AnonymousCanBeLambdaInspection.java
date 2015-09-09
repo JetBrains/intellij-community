@@ -206,16 +206,23 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     return false;
   }
 
-  public static PsiLambdaExpression replacePsiElementWithLambda(@NotNull PsiElement element, final boolean ignoreEqualsMethod) {
+  public static PsiExpression replaceAnonymousWithLambda(@NotNull PsiElement anonymousClass, PsiType expectedType) {
+    PsiNewExpression newArrayExpression = (PsiNewExpression)JavaPsiFacade.getElementFactory(anonymousClass.getProject())
+      .createExpressionFromText("new " + expectedType.getCanonicalText() + "[]{" + anonymousClass.getText() + "}", anonymousClass);
+    PsiArrayInitializerExpression initializer = newArrayExpression.getArrayInitializer();
+    LOG.assertTrue(initializer != null);
+    return replacePsiElementWithLambda(initializer.getInitializers()[0], true);
+  }
+
+  public static PsiExpression replacePsiElementWithLambda(@NotNull PsiElement element, final boolean ignoreEqualsMethod) {
     if (element instanceof PsiNewExpression) {
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return null;
       final PsiAnonymousClass anonymousClass = ((PsiNewExpression)element).getAnonymousClass();
 
-      LOG.assertTrue(anonymousClass != null);
+      if (anonymousClass == null) return null;
 
       ChangeContextUtil.encodeContextInfo(anonymousClass, true);
       final PsiElement lambdaContext = anonymousClass.getParent().getParent();
-      boolean validContext = LambdaUtil.isValidLambdaContext(lambdaContext);
       final String canonicalText = anonymousClass.getBaseClassType().getCanonicalText();
 
       final PsiMethod method;
@@ -230,10 +237,10 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       } else {
         method = anonymousClass.getMethods()[0];
       }
-      LOG.assertTrue(method != null);
+      if (method == null) return null;
 
       final PsiCodeBlock body = method.getBody();
-      LOG.assertTrue(body != null);
+      if (body == null) return null;
 
       final ForbiddenRefsChecker checker = new ForbiddenRefsChecker(method, anonymousClass);
       body.accept(checker);
@@ -254,8 +261,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       ReplaceWithLambdaFix
         .giveUniqueNames(project, anonymousClass, elementFactory, body, conflictingLocals.toArray(new PsiVariable[conflictingLocals.size()]));
 
-      final String lambdaWithTypesDeclared = ReplaceWithLambdaFix.composeLambdaText(method, true);
-      final String withoutTypesDeclared = ReplaceWithLambdaFix.composeLambdaText(method, false);
+      final String withoutTypesDeclared = ReplaceWithLambdaFix.composeLambdaText(method);
 
       PsiLambdaExpression lambdaExpression =
         (PsiLambdaExpression)elementFactory.createExpressionFromText(withoutTypesDeclared, anonymousClass);
@@ -275,47 +281,24 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         lambdaExpression.getBody().replace(singleExpr);
       }
       ChangeContextUtil.decodeContextInfo(lambdaExpression, null, null);
-      if (!validContext) {
-        final PsiParenthesizedExpression typeCast =
-          (PsiParenthesizedExpression)elementFactory.createExpressionFromText("((" + canonicalText + ")" + withoutTypesDeclared + ")", lambdaExpression);
-        final PsiExpression typeCastExpr = typeCast.getExpression();
-        LOG.assertTrue(typeCastExpr != null);
-        final PsiExpression typeCastOperand = ((PsiTypeCastExpression)typeCastExpr).getOperand();
-        LOG.assertTrue(typeCastOperand != null);
-        final PsiElement fromText = ((PsiLambdaExpression)typeCastOperand).getBody();
-        LOG.assertTrue(fromText != null);
-        lambdaBody = lambdaExpression.getBody();
-        LOG.assertTrue(lambdaBody != null);
-        fromText.replace(lambdaBody);
-        lambdaExpression.replace(typeCast);
-        return lambdaExpression;
-      }
 
-      PsiType interfaceType = lambdaExpression.getFunctionalInterfaceType();
-      if (ReplaceWithLambdaFix.isInferred(lambdaExpression, interfaceType)) {
-        final PsiLambdaExpression withTypes =
-          (PsiLambdaExpression)elementFactory.createExpressionFromText(lambdaWithTypesDeclared, lambdaExpression);
-        final PsiElement withTypesBody = withTypes.getBody();
-        LOG.assertTrue(withTypesBody != null);
-        lambdaBody = lambdaExpression.getBody();
-        LOG.assertTrue(lambdaBody != null);
-        withTypesBody.replace(lambdaBody);
-        lambdaExpression = (PsiLambdaExpression)lambdaExpression.replace(withTypes);
-
-        interfaceType = lambdaExpression.getFunctionalInterfaceType();
-        if (ReplaceWithLambdaFix.isInferred(lambdaExpression, interfaceType)) {
-          final PsiTypeCastExpression typeCast = (PsiTypeCastExpression)elementFactory.createExpressionFromText("(" + canonicalText + ")" + withoutTypesDeclared, lambdaExpression);
-          final PsiExpression typeCastOperand = typeCast.getOperand();
-          LOG.assertTrue(typeCastOperand instanceof PsiLambdaExpression);
-          final PsiElement fromText = ((PsiLambdaExpression)typeCastOperand).getBody();
-          LOG.assertTrue(fromText != null);
-          lambdaBody = lambdaExpression.getBody();
-          LOG.assertTrue(lambdaBody != null);
-          fromText.replace(lambdaBody);
-          lambdaExpression.replace(typeCast);
-        }
+      PsiTypeCastExpression typeCast = (PsiTypeCastExpression)elementFactory
+        .createExpressionFromText("(" + canonicalText + ")" + withoutTypesDeclared, lambdaExpression);
+      final PsiExpression typeCastOperand = typeCast.getOperand();
+      LOG.assertTrue(typeCastOperand instanceof PsiLambdaExpression);
+      final PsiElement fromText = ((PsiLambdaExpression)typeCastOperand).getBody();
+      LOG.assertTrue(fromText != null);
+      lambdaBody = lambdaExpression.getBody();
+      LOG.assertTrue(lambdaBody != null);
+      fromText.replace(lambdaBody);
+      ((PsiLambdaExpression)typeCastOperand).getParameterList().replace(lambdaExpression.getParameterList());
+      typeCast = (PsiTypeCastExpression)lambdaExpression.replace(typeCast);
+      if (RedundantCastUtil.isCastRedundant(typeCast)) {
+        final PsiExpression operand = typeCast.getOperand();
+        LOG.assertTrue(operand != null);
+        return (PsiExpression)typeCast.replace(operand);
       }
-      return lambdaExpression;
+      return (PsiExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(typeCast);
     }
     return null;
   }
@@ -385,45 +368,32 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       }
     }
 
-    private static boolean isInferred(PsiLambdaExpression lambdaExpression, PsiType interfaceType) {
-      return interfaceType == null || !LambdaUtil.isLambdaFullyInferred(lambdaExpression, interfaceType) || !LambdaUtil.isFunctionalType(interfaceType);
-    }
-
-    private static String composeLambdaText(PsiMethod method, final boolean appendType) {
+    private static String composeLambdaText(PsiMethod method) {
       final StringBuilder buf = new StringBuilder();
       final PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (parameters.length != 1 || appendType) {
+      if (parameters.length != 1) {
         buf.append("(");
       }
       buf.append(StringUtil.join(parameters,
                                  new Function<PsiParameter, String>() {
                                    @Override
                                    public String fun(PsiParameter parameter) {
-                                     return composeParameter(parameter, appendType);
+                                     return composeParameter(parameter);
                                    }
                                  }, ","));
-      if (parameters.length != 1 || appendType) {
+      if (parameters.length != 1) {
         buf.append(")");
       }
       buf.append("-> {}");
       return buf.toString();
     }
 
-    private static String composeParameter(PsiParameter parameter,
-                                           boolean appendType) {
-      final String parameterType;
-      if (appendType) {
-        final PsiTypeElement typeElement = parameter.getTypeElement();
-        parameterType = typeElement != null ? (typeElement.getText() + " ") : "";
-      }
-      else {
-        parameterType = "";
-      }
+    private static String composeParameter(PsiParameter parameter) {
       String parameterName = parameter.getName();
       if (parameterName == null) {
         parameterName = "";
       }
-      return parameterType + parameterName;
+      return parameterName;
     }
   }
 

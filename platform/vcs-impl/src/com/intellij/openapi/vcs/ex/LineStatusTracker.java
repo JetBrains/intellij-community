@@ -746,6 +746,14 @@ public class LineStatusTracker {
 
   private void doRollbackRange(@NotNull Range range) {
     DiffUtil.applyModification(myDocument, range.getLine1(), range.getLine2(), myVcsDocument, range.getVcsLine1(), range.getVcsLine2());
+
+    markLinesUnchanged(range.getLine1(), range.getLine1() + range.getVcsLine2() - range.getVcsLine1());
+  }
+
+  private void markLinesUnchanged(int startLine, int endLine) {
+    if (myDocument.getTextLength() == 0) return; // empty document has no lines
+    if (startLine == endLine) return;
+    ((DocumentImpl)myDocument).clearLineModificationFlags(startLine, endLine);
   }
 
   public void rollbackChanges(@NotNull Range range) {

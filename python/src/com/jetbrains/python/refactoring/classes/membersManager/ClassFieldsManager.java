@@ -104,7 +104,7 @@ class ClassFieldsManager extends FieldsManager {
       final PyExpression assignedValue = input.findAssignedValue();
       if (assignedValue instanceof PyCallExpression) {
         final PyExpression callee = ((PyCallExpression)assignedValue).getCallee();
-        if ((callee != null) && PyNames.PROPERTY.equals(callee.getName()) && (myClass.findProperty(name, false) != null)) {
+        if ((callee != null) && PyNames.PROPERTY.equals(callee.getName()) && (myClass.findProperty(name, false, null) != null)) {
           return false;
         }
       }

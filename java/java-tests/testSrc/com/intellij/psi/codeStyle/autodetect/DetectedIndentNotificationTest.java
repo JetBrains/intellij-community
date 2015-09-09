@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,28 +68,35 @@ public class DetectedIndentNotificationTest extends LightPlatformCodeInsightFixt
   }
 
   public void test_DoNotNotify_IfIndentDetected_AndNotificationDisabled() throws Exception {
-    mySettings.SHOW_DETECTED_INDENT_NOTIFICATION = false;
-    myFixture.configureByText("Test.java",
-                              "class Test {\n" +
-                              "  public void main() {\n" +
-                              "    int a;<caret>\n" +
-                              "    int b;\n" +
-                              "  }\n" +
-                              "}");
+    boolean isShowNotificationBefore = FileIndentOptionsProvider.isShowNotification();
+    try {
+      FileIndentOptionsProvider.setShowNotification(false);
 
-    PsiFile file = myFixture.getFile();
-    VirtualFile vFile = file.getVirtualFile();
+      myFixture.configureByText("Test.java",
+                                "class Test {\n" +
+                                "  public void main() {\n" +
+                                "    int a;<caret>\n" +
+                                "    int b;\n" +
+                                "  }\n" +
+                                "}");
 
-    assert !isNotificationShown(vFile);
-    myFixture.type('\n');
-    myFixture.checkResult("class Test {\n" +
-                          "  public void main() {\n" +
-                          "    int a;\n" +
-                          "    <caret>\n" +
-                          "    int b;\n" +
-                          "  }\n" +
-                          "}");
-    assert !isNotificationShown(vFile);
+      PsiFile file = myFixture.getFile();
+      VirtualFile vFile = file.getVirtualFile();
+
+      assert !isNotificationShown(vFile);
+      myFixture.type('\n');
+      myFixture.checkResult("class Test {\n" +
+                            "  public void main() {\n" +
+                            "    int a;\n" +
+                            "    <caret>\n" +
+                            "    int b;\n" +
+                            "  }\n" +
+                            "}");
+      assert !isNotificationShown(vFile);
+    }
+    finally {
+      FileIndentOptionsProvider.setShowNotification(isShowNotificationBefore);
+    }
   }
 
   public void testNoNotification_WhenNothingDetected() throws Exception {

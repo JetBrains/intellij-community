@@ -17,7 +17,6 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,27 +25,33 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-interface SmartPointerElementInfo {
+abstract class SmartPointerElementInfo {
   @Nullable
-  Document getDocumentToSynchronize();
+  public Document getDocumentToSynchronize() {
+    return null;
+  }
 
-  void fastenBelt(int offset, @Nullable RangeMarker[] cachedRangeMarkers);
-
-  void unfastenBelt(int offset);
-
-  @Nullable
-  PsiElement restoreElement();
-
-  PsiFile restoreFile();
-
-  int elementHashCode(); // must be immutable
-  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other);
-
-  VirtualFile getVirtualFile();
+  public void fastenBelt() {
+  }
 
   @Nullable
-  Segment getRange();
-  @NotNull Project getProject();
+  public abstract PsiElement restoreElement();
 
-  void cleanup();
+  public abstract PsiFile restoreFile();
+
+  public abstract int elementHashCode(); // must be immutable
+  public abstract boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other);
+
+  public abstract VirtualFile getVirtualFile();
+
+  @Nullable
+  public abstract Segment getRange();
+  @NotNull
+  public abstract Project getProject();
+
+  public void cleanup() {
+  }
+
+  @Nullable
+  public abstract Segment getPsiRange();
 }

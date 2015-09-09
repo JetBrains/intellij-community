@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 
 /**
@@ -57,8 +59,12 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
       if (declarationScope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)declarationScope;
         final PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null && !containingClass.isInterface()) {
-          return containingClass.findMethodBySignature(generateMethodPrototype(method, parameter), false) == null;
+        if (containingClass != null && (!containingClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(method))) {
+          if (containingClass.findMethodBySignature(generateMethodPrototype(method, parameter), false) != null) {
+            return false;
+          }
+          setText("Generate overloaded " + (method.isConstructor() ? "constructor" : "method") + " with default parameter value");
+          return true;
         }
       }
     }
@@ -81,9 +87,23 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
       prototype.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false);
       prototype.addBefore(emptyBody, null);
     }
-    for (int i = params.length - 1; i >= 0; i--) {
-      PsiParameter param = params[i];
-      final int parameterIndex = method.getParameterList().getParameterIndex(param);
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass != null && aClass.isInterface()) {
+      prototype.getModifierList().setModifierProperty(PsiModifier.DEFAULT, true);
+    }
+
+    final PsiParameterList parameterList = method.getParameterList();
+    Arrays.sort(params, new Comparator<PsiParameter>() {
+      @Override
+      public int compare(PsiParameter p1, PsiParameter p2) {
+        final int parameterIndex1 = parameterList.getParameterIndex(p1);
+        final int parameterIndex2 = parameterList.getParameterIndex(p2);
+        return parameterIndex1 > parameterIndex2 ? -1 : 1;
+      }
+    });
+
+    for (PsiParameter param : params) {
+      final int parameterIndex = parameterList.getParameterIndex(param);
       prototype.getParameterList().getParameters()[parameterIndex].delete();
     }
     return prototype;
@@ -98,7 +118,8 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
     final PsiMethod existingMethod = method.getContainingClass().findMethodBySignature(methodPrototype, false);
     if (existingMethod != null) {
       editor.getCaretModel().moveToOffset(existingMethod.getTextOffset());
-      HintManager.getInstance().showErrorHint(editor, "Method with the chosen signature already exist");
+      HintManager.getInstance().showErrorHint(editor, (existingMethod.isConstructor() ? "Constructor" : "Method") +
+                                                      " with the chosen signature already exists");
       return;
     }
 
@@ -172,13 +193,7 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
 
   @NotNull
   @Override
-  public String getText() {
-    return "Generate delegated method with default parameter value";
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
-    return getText();
+    return "Generate overloaded method with default parameter value";
   }
 }

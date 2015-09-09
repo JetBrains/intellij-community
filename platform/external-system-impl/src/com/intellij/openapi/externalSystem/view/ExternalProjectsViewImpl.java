@@ -191,13 +191,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
         wasVisible = true;
       }
     };
-    manager.addToolWindowManagerListener(listener);
-
-    Disposer.register(myProject, new Disposable() {
-      public void dispose() {
-        manager.removeToolWindowManagerListener(listener);
-      }
-    });
+    manager.addToolWindowManagerListener(listener, myProject);
 
     getShortcutsManager().addListener(new ExternalSystemShortcutsManager.Listener() {
       @Override
@@ -428,7 +422,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     final List<ExternalSystemNode<?>> result = new SmartList<ExternalSystemNode<?>>();
     final MultiMap<Key<?>, DataNode<?>> groups = ExternalSystemApiUtil.group(dataNode.getChildren());
     for (ExternalSystemViewContributor contributor : ExternalSystemViewContributor.EP_NAME.getExtensions()) {
-      List<Key<?>> keys = contributor.getKeys();
+      Set<Key<?>> keys = ContainerUtil.newTreeSet(contributor.getKeys());
 
       final MultiMap<Key<?>, DataNode<?>> dataNodes = MultiMap.create();
       for (Key<?> key : keys) {

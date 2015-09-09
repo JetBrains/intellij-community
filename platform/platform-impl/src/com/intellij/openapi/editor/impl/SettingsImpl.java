@@ -28,6 +28,7 @@ import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
@@ -35,7 +36,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -312,6 +315,34 @@ public class SettingsImpl implements EditorSettings {
 
   public void reinitSettings() {
     myCachedTabSize = null;
+    reinitDocumentIndentOptions();
+  }
+
+  private void reinitDocumentIndentOptions() {
+    if (myEditor == null) return;
+    final Project project = myEditor.getProject();
+    final DocumentEx document = myEditor.getDocument();
+
+    if (project == null || project.isDisposed()) return;
+
+    final PsiDocumentManager psiManager = PsiDocumentManager.getInstance(project);
+    final PsiFile file = psiManager.getPsiFile(document);
+    if (file == null) return;
+
+    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
+    CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptionsByFile(file);
+
+    if (CodeStyleSettings.isRecalculateForCommittedDocument(options)) {
+      PsiDocumentManager.getInstance(project).performForCommittedDocument(document, new Runnable() {
+        @Override
+        public void run() {
+          CodeStyleSettingsManager.updateDocumentIndentOptions(project, document);
+        }
+      });
+    }
+    else {
+      CodeStyleSettingsManager.updateDocumentIndentOptions(project, document);
+    }
   }
 
   @Override
@@ -328,8 +359,8 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Nullable
-  private PsiFile getPsiFile(@NotNull Project project) {
-    if (myEditor != null) {
+  private PsiFile getPsiFile(@Nullable Project project) {
+    if (project != null && myEditor != null) {
       return PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
     }
     return null;

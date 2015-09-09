@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,15 +104,17 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     assert !myDisposed;
-    if (myCompilerOutput != null) {
-      final Element pathElement = new Element(OUTPUT_TAG);
-      pathElement.setAttribute(ATTRIBUTE_URL, myCompilerOutput);
-      element.addContent(pathElement);
-    }
-    if (myCompilerOutputForTests != null) {
-      final Element pathElement = new Element(TEST_OUTPUT_TAG);
-      pathElement.setAttribute(ATTRIBUTE_URL, myCompilerOutputForTests);
-      element.addContent(pathElement);
+    if (!myInheritedCompilerOutput) {
+      if (myCompilerOutput != null) {
+        final Element pathElement = new Element(OUTPUT_TAG);
+        pathElement.setAttribute(ATTRIBUTE_URL, myCompilerOutput);
+        element.addContent(pathElement);
+      }
+      if (myCompilerOutputForTests != null) {
+        final Element pathElement = new Element(TEST_OUTPUT_TAG);
+        pathElement.setAttribute(ATTRIBUTE_URL, myCompilerOutputForTests);
+        element.addContent(pathElement);
+      }
     }
     element.setAttribute(INHERIT_COMPILER_OUTPUT, String.valueOf(myInheritedCompilerOutput));
     if (myExcludeOutput) {

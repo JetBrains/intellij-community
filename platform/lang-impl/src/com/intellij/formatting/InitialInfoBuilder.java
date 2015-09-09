@@ -21,6 +21,7 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -28,6 +29,8 @@ import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.ReadOnlyBlockInformationProvider;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.LinkedMultiMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -69,8 +72,11 @@ class InitialInfoBuilder {
 
   private static final boolean INLINE_TABS_ENABLED = "true".equalsIgnoreCase(System.getProperty("inline.tabs.enabled"));
 
+  private final List<TextRange> myExtendedAffectedRanges;
   private Set<Alignment> myAlignmentsInsideRangeToModify = ContainerUtil.newHashSet();
   private boolean myCollectAlignmentsInsideFormattingRange = false;
+
+  private MultiMap<ExpandableIndent, AbstractBlockWrapper> myBlocksToForceChildrenIndent = new LinkedMultiMap<ExpandableIndent, AbstractBlockWrapper>();
 
   private InitialInfoBuilder(final Block rootBlock,
                              final FormattingDocumentModel model,
@@ -82,6 +88,7 @@ class InitialInfoBuilder {
   {
     myModel = model;
     myAffectedRanges = affectedRanges;
+    myExtendedAffectedRanges = getExtendedAffectedRanges(affectedRanges);
     myProgressCallback = progressCallback;
     myCurrentWhiteSpace = new WhiteSpace(getStartOffset(rootBlock), true);
     myOptions = options;
@@ -203,24 +210,54 @@ class InitialInfoBuilder {
       if (rootBlock instanceof ReadOnlyBlockInformationProvider) {
         myReadOnlyBlockInformationProvider = (ReadOnlyBlockInformationProvider)rootBlock;
       }
-      if (!myCollectAlignmentsInsideFormattingRange && !isInsideFormattingRanges(rootBlock, rootBlockIsRightBlock)) {
+      if (isInsideFormattingRanges(rootBlock, rootBlockIsRightBlock)
+          || myCollectAlignmentsInsideFormattingRange && isInsideExtendedAffectedRange(rootBlock))
+      {
+        final List<Block> subBlocks = rootBlock.getSubBlocks();
+        if (subBlocks.isEmpty() || myReadOnlyBlockInformationProvider != null && myReadOnlyBlockInformationProvider.isReadOnly(rootBlock)) {
+          final AbstractBlockWrapper wrapper = processSimpleBlock(rootBlock, parent, false, index, parentBlock);
+          if (!subBlocks.isEmpty()) {
+            wrapper.setIndent((IndentImpl)subBlocks.get(0).getIndent());
+          }
+          return wrapper;
+        }
+        return buildCompositeBlock(rootBlock, parent, index, currentWrapParent, rootBlockIsRightBlock);
+      }
+      else {
+        //block building is skipped
         return processSimpleBlock(rootBlock, parent, true, index, parentBlock);
       }
-
-      final List<Block> subBlocks = rootBlock.getSubBlocks();
-      if (subBlocks.isEmpty() || myReadOnlyBlockInformationProvider != null
-                                 && myReadOnlyBlockInformationProvider.isReadOnly(rootBlock)) {
-        final AbstractBlockWrapper wrapper = processSimpleBlock(rootBlock, parent, false, index, parentBlock);
-        if (!subBlocks.isEmpty()) {
-          wrapper.setIndent((IndentImpl)subBlocks.get(0).getIndent());
-        }
-        return wrapper;
-      }
-      return buildCompositeBlock(rootBlock, parent, index, currentWrapParent, rootBlockIsRightBlock);
     }
     finally {
       myReadOnlyBlockInformationProvider = previousProvider;
     }
+  }
+
+  private boolean isInsideExtendedAffectedRange(Block rootBlock) {
+    if (myExtendedAffectedRanges == null) return false;
+
+    TextRange blockRange = rootBlock.getTextRange();
+    for (TextRange affectedRange : myExtendedAffectedRanges) {
+      if (affectedRange.intersects(blockRange)) return true;
+    }
+
+    return false;
+  }
+
+  @Nullable
+  private static List<TextRange> getExtendedAffectedRanges(FormatTextRanges formatTextRanges) {
+    if (formatTextRanges == null) return null;
+
+    List<FormatTextRanges.FormatTextRange> ranges = formatTextRanges.getRanges();
+    List<TextRange> extended = ContainerUtil.newArrayList();
+
+    final int extendOffset = 500;
+    for (FormatTextRanges.FormatTextRange textRange : ranges) {
+      TextRange range = textRange.getTextRange();
+      extended.add(new UnfairTextRange(range.getStartOffset() - extendOffset, range.getEndOffset() + extendOffset));
+    }
+
+    return extended;
   }
 
   private CompositeBlockWrapper buildCompositeBlock(final Block rootBlock,
@@ -252,6 +289,10 @@ class InitialInfoBuilder {
     return wrappedRootBlock;
   }
 
+  public MultiMap<ExpandableIndent, AbstractBlockWrapper> getExpandableIndentsBlocks() {
+    return myBlocksToForceChildrenIndent;
+  }
+  
   private void doIteration(@NotNull State state) {
     List<Block> subBlocks = state.parentBlock.getSubBlocks();
     final int subBlocksCount = subBlocks.size();
@@ -270,6 +311,7 @@ class InitialInfoBuilder {
     final AbstractBlockWrapper wrapper = buildFrom(
       block, childBlockIndex, state.wrappedBlock, state.parentBlockWrap, state.parentBlock, childBlockIsRightBlock
     );
+    registerExpandableIndents(block, wrapper);
 
     if (wrapper.getIndent() == null) {
       wrapper.setIndent((IndentImpl)block.getIndent());
@@ -288,7 +330,14 @@ class InitialInfoBuilder {
       }
     }
   }
-  
+
+  private void registerExpandableIndents(@NotNull Block block, @NotNull AbstractBlockWrapper wrapper) {
+    if (block.getIndent() instanceof ExpandableIndent) {
+      ExpandableIndent indent = (ExpandableIndent)block.getIndent();
+      myBlocksToForceChildrenIndent.putValue(indent, wrapper);
+    }
+  }
+
   private void setDefaultIndents(final List<AbstractBlockWrapper> list) {
     if (!list.isEmpty()) {
       for (AbstractBlockWrapper wrapper : list) {

@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.Consumer;
@@ -34,6 +35,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   private MyTextField myRepoAuthor;
   private MyTextField myRepoName;
   private MyTextField myToken;
+  private JBCheckBox myShowNotAssignedIssues;
   private JButton myTokenButton;
   private JBLabel myHostLabel;
   private JBLabel myRepositoryLabel;
@@ -51,6 +53,8 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myRepoAuthor.setText(repository.getRepoAuthor());
     myRepoName.setText(repository.getRepoName());
     myToken.setText(repository.getToken());
+    myToken.setText(repository.getToken());
+    myShowNotAssignedIssues.setSelected(!repository.isAssignedIssuesOnly());
 
     DocumentListener buttonUpdater = new DocumentAdapter() {
       @Override
@@ -100,12 +104,20 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myTokenPanel.add(myToken, BorderLayout.CENTER);
     myTokenPanel.add(myTokenButton, BorderLayout.EAST);
 
+    myShowNotAssignedIssues = new JBCheckBox("Include issues not assigned to me");
+
     installListener(myRepoAuthor);
     installListener(myRepoName);
     installListener(myToken);
+    installListener(myShowNotAssignedIssues);
 
-    return FormBuilder.createFormBuilder().setAlignLabelOnRight(true).addLabeledComponent(myHostLabel, myHostPanel)
-      .addLabeledComponent(myRepositoryLabel, myRepoPanel).addLabeledComponent(myTokenLabel, myTokenPanel).getPanel();
+    return FormBuilder.createFormBuilder()
+      .setAlignLabelOnRight(true)
+      .addLabeledComponent(myHostLabel, myHostPanel)
+      .addLabeledComponent(myRepositoryLabel, myRepoPanel)
+      .addLabeledComponent(myTokenLabel, myTokenPanel)
+      .addComponentToRightColumn(myShowNotAssignedIssues)
+      .getPanel();
   }
 
   @Override
@@ -113,6 +125,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myRepository.setRepoName(getRepoName());
     myRepository.setRepoAuthor(getRepoAuthor());
     myRepository.setToken(getToken());
+    myRepository.setAssignedIssuesOnly(isAssignedIssuesOnly());
     super.apply();
   }
 
@@ -180,6 +193,10 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   @NotNull
   private String getToken() {
     return myToken.getText().trim();
+  }
+
+  private boolean isAssignedIssuesOnly() {
+    return !myShowNotAssignedIssues.isSelected();
   }
 
   public static class MyTextField extends JBTextField {

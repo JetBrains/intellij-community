@@ -41,28 +41,22 @@ import java.util.concurrent.Future;
 public class EnvironmentUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.EnvironmentUtil");
 
-  private static final int SHELL_ENV_READING_TIMEOUT = 10000;
+  private static final int SHELL_ENV_READING_TIMEOUT = 20000;
 
   private static final Future<Map<String, String>> ourEnvGetter;
   static {
     if (SystemInfo.isMac && "unlocked".equals(System.getProperty("__idea.mac.env.lock")) && Registry.is("idea.fix.mac.env")) {
-      ExecutorService executor = Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("get shell env"));
+      ExecutorService executor = Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("Shell Env Loader"));
       ourEnvGetter = executor.submit(new Callable<Map<String, String>>() {
         @Override
         public Map<String, String> call() throws Exception {
-          try {
-            return getShellEnv();
-          }
-          catch (Throwable t) {
-            LOG.warn("can't get shell environment", t);
-            return System.getenv();
-          }
+          return getShellEnv();
         }
       });
       executor.shutdown();
     }
     else {
-      ourEnvGetter = new FixedFuture<Map<String, String>>(System.getenv());
+      ourEnvGetter = new FixedFuture<Map<String, String>>(getSystemEnv());
     }
   }
 
@@ -73,24 +67,21 @@ public class EnvironmentUtil {
       try {
         return ourEnvGetter.get();
       }
-      catch (Exception e) {
-        LOG.warn(e);
-        return System.getenv();
+      catch (Throwable t) {
+        LOG.warn("can't get shell environment", t);
+        return getSystemEnv();
       }
     }
   };
 
-  private static final NotNullLazyValue<Map<String, String>> ourEnvironmentOsSpecific = new AtomicNotNullLazyValue<Map<String, String>>() {
-    @NotNull
-    @Override
-    protected Map<String, String> compute() {
-      Map<String, String> env = ourEnvironment.getValue();
-      if (SystemInfo.isWindows) {
-        env = Collections.unmodifiableMap(new THashMap<String, String>(env, CaseInsensitiveStringHashingStrategy.INSTANCE));
-      }
-      return env;
+  private static Map<String, String> getSystemEnv() {
+    if (SystemInfo.isWindows) {
+      return Collections.unmodifiableMap(new THashMap<String, String>(System.getenv(), CaseInsensitiveStringHashingStrategy.INSTANCE));
     }
-  };
+    else {
+      return System.getenv();
+    }
+  }
 
   private EnvironmentUtil() { }
 
@@ -99,8 +90,16 @@ public class EnvironmentUtil {
   }
 
   /**
-   * Returns the process environment.
-   * On Mac OS X a shell (Terminal.app) environment is returned (unless disabled by a system property).
+   * A wrapper layer around {@link System#getenv()}.
+   * <p>
+   * On Windows, the returned map is case-insensitive (i.e. {@code map.get("Path") == map.get("PATH")} holds).
+   * <p>
+   * On Mac OS X things are complicated.<br/>
+   * An app launched by a GUI launcher (Finder, Dock, Spotlight etc.) receives a pretty empty and useless environment,
+   * since standard Unix ways of setting variables via e.g. ~/.profile do not work. What's more important, there are no
+   * sane alternatives. This causes a lot of user complains about tools working in a terminal not working when launched
+   * from the IDE. To ease their pain, the IDE loads a shell environment (see {@link #getShellEnv()} for gory details)
+   * and returns it as the result.
    *
    * @return unmodifiable map of the process environment.
    */
@@ -110,16 +109,12 @@ public class EnvironmentUtil {
   }
 
   /**
-   * Returns value for the passed environment variable name.
-   * The passed environment variable name is handled in a case-sensitive or case-insensitive manner depending on OS.<p>
-   * For example, on Windows <code>getValue("Path")</code> will return the same result as <code>getValue("PATH")</code>.
-   *
-   * @param name environment variable name
-   * @return value of the environment variable or null if no such variable found
+   * Same as {@code getEnvironmentMap().get(name)}.
+   * Returns value for the passed environment variable name, or null if no such variable found.
    */
   @Nullable
   public static String getValue(@NotNull String name) {
-    return ourEnvironmentOsSpecific.getValue().get(name);
+    return getEnvironmentMap().get(name);
   }
 
   public static String[] getEnvironment() {
@@ -150,16 +145,13 @@ public class EnvironmentUtil {
       throw new Exception("bin:" + PathManager.getBinPath());
     }
 
-    File envFile = FileUtil.createTempFile("intellij-shell-env", null, false);
+    File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
     try {
       String[] command = {shell, "-l", "-i", "-c", ("'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'")};
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
       Process process = Runtime.getRuntime().exec(command);
-      ProcessKiller processKiller = new ProcessKiller(process);
-      processKiller.killAfter(SHELL_ENV_READING_TIMEOUT);
-      int rv = process.waitFor();
-      processKiller.stopWaiting();
+      int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
 
       String lines = FileUtil.loadFile(envFile);
       if (rv != 0 || lines.isEmpty()) {
@@ -196,51 +188,38 @@ public class EnvironmentUtil {
     return Collections.unmodifiableMap(newEnv);
   }
 
-
-  private static class ProcessKiller {
-    private final Process myProcess;
-    private final Object myWaiter = new Object();
-
-    public ProcessKiller(Process process) {
-      myProcess = process;
+  private static int waitAndTerminateAfter(@NotNull Process process, int timeoutMillis) {
+    Integer exitCode = waitFor(process, timeoutMillis);
+    if (exitCode != null) {
+      return exitCode;
     }
-
-    public void killAfter(long timeout) {
-      final long stop = System.currentTimeMillis() + timeout;
-      new Thread("kill after") {
-        @Override
-        public void run() {
-          synchronized (myWaiter) {
-            while (System.currentTimeMillis() < stop) {
-              try {
-                myProcess.exitValue();
-                break;
-              }
-              catch (IllegalThreadStateException ignore) { }
-
-              try {
-                myWaiter.wait(100);
-              }
-              catch (InterruptedException ignore) { }
-            }
-          }
-
-          try {
-            myProcess.exitValue();
-          }
-          catch (IllegalThreadStateException e) {
-            UnixProcessManager.sendSigKillToProcessTree(myProcess);
-            LOG.warn("timed out");
-          }
-        }
-      }.start();
+    LOG.warn("shell env loader is timed out");
+    UnixProcessManager.sendSigIntToProcessTree(process);
+    exitCode = waitFor(process, 1000);
+    if (exitCode != null) {
+      return exitCode;
     }
+    LOG.warn("failed to terminate shell env loader process gracefully, terminating forcibly");
+    UnixProcessManager.sendSigKillToProcessTree(process);
+    exitCode = waitFor(process, 1000);
+    if (exitCode != null) {
+      return exitCode;
+    }
+    LOG.warn("failed to kill shell env loader");
+    return -1;
+  }
 
-    public void stopWaiting() {
-      synchronized (myWaiter) {
-        myWaiter.notifyAll();
+  @Nullable
+  private static Integer waitFor(@NotNull Process process, int timeoutMillis) {
+    long stop = System.currentTimeMillis() + timeoutMillis;
+    while (System.currentTimeMillis() < stop) {
+      TimeoutUtil.sleep(100);
+      try {
+        return process.exitValue();
       }
+      catch (IllegalThreadStateException ignore) { }
     }
+    return null;
   }
 
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs) {

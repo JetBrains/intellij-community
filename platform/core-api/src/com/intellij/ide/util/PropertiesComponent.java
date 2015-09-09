@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,10 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 
 /**
+ * Roaming is disabled for PropertiesComponent, so, use it only and only for temporary non-roamable properties.
+ *
+ * See http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html "Using PropertiesComponent for Simple non-roamable Persistence"
+ *
  * @author max
  * @author Konstantin Bulenkov
  */
@@ -36,12 +41,37 @@ public abstract class PropertiesComponent {
   @Nullable
   public abstract String getValue(@NonNls String name);
 
-  public abstract void setValue(@NonNls String name, String value);
+  /**
+   * Consider to use {@link #setValue(String, String, String)} to avoid write defaults.
+   */
+  public abstract void setValue(@NotNull String name, @Nullable String value);
 
   /**
    * Set value or unset if equals to default value
    */
-  public abstract void setValue(@NotNull String name, @NotNull String value, @NotNull String defaultValue);
+  public abstract void setValue(@NotNull String name, @Nullable String value, @Nullable String defaultValue);
+
+  /**
+   * Set value or unset if equals to default value
+   */
+  public abstract void setValue(@NotNull String name, float value, float defaultValue);
+
+  /**
+   * Set value or unset if equals to default value
+   */
+  public abstract void setValue(@NotNull String name, int value, int defaultValue);
+
+  /**
+   * Set value or unset if equals to false
+   */
+  public final void setValue(@NotNull String name, boolean value) {
+    setValue(name, value, false);
+  }
+
+  /**
+   * Set value or unset if equals to default
+   */
+  public abstract void setValue(@NotNull String name, boolean value, boolean defaultValue);
 
   @Nullable
   public abstract String[] getValues(@NonNls String name);
@@ -60,8 +90,12 @@ public abstract class PropertiesComponent {
     return Boolean.valueOf(getValue(name)).booleanValue();
   }
 
-  public final boolean getBoolean(@NonNls String name, boolean defaultValue) {
+  public final boolean getBoolean(@NotNull String name, boolean defaultValue) {
     return isValueSet(name) ? isTrueValue(name) : defaultValue;
+  }
+
+  public final boolean getBoolean(@NotNull String name) {
+    return getBoolean(name, false);
   }
 
   @NotNull
@@ -72,22 +106,34 @@ public abstract class PropertiesComponent {
     return ObjectUtils.notNull(getValue(name), defaultValue);
   }
 
-  public final int getOrInitInt(@NonNls String name, int defaultValue) {
-    try {
-      return Integer.parseInt(getValue(name));
-    } catch (NumberFormatException e) {
-      return defaultValue;
-    }
+  @SuppressWarnings("unused")
+  @Deprecated
+  /**
+   * @deprecated Use {@link #getInt(String, int)}
+   * Init was never performed and in any case is not recommended.
+   */
+  public final int getOrInitInt(@NotNull String name, int defaultValue) {
+    return getInt(name, defaultValue);
+  }
+
+  public int getInt(@NotNull String name, int defaultValue) {
+    return StringUtilRt.parseInt(getValue(name), defaultValue);
   }
 
   public final long getOrInitLong(@NonNls String name, long defaultValue) {
     try {
-      return Long.parseLong(getValue(name));
-    } catch (NumberFormatException e) {
+      String value = getValue(name);
+      return value == null ? defaultValue : Long.parseLong(value);
+    }
+    catch (NumberFormatException e) {
       return defaultValue;
     }
   }
 
+  @Deprecated
+  /**
+   * @deprecated Use {@link #getValue(String, String)}
+   */
   public String getOrInit(@NonNls String name, String defaultValue) {
     if (!isValueSet(name)) {
       setValue(name, defaultValue);

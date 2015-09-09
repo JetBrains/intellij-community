@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,12 @@ import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiElement;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Iterator;
 import java.util.List;
 
 public class CompoundNodeRenderer extends NodeRendererImpl{
@@ -62,7 +61,7 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
     getChildrenRenderer().buildChildren(value, builder, evaluationContext);
   }
 
-  public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
+  public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     return getChildrenRenderer().getChildValueExpression(node, context);
   }
 
@@ -97,11 +96,10 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    final List children = element.getChildren(NodeRendererSettings.RENDERER_TAG);
+    List<Element> children = element.getChildren(NodeRendererSettings.RENDERER_TAG);
     if (children != null) {
-      for (Iterator it = children.iterator(); it.hasNext();) {
-        final Element elem = (Element)it.next();
-        final String role = elem.getAttributeValue("role");
+      for (Element elem : children) {
+        String role = elem.getAttributeValue("role");
         if (role == null) {
           continue;
         }

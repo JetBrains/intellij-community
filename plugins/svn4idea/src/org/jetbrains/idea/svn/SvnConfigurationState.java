@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.idea.svn.api.Depth;
 
@@ -75,7 +76,7 @@ public class SvnConfigurationState {
   public boolean UPDATE_LOCK_ON_DEMAND;
   public boolean IGNORE_SPACES_IN_MERGE;
   public boolean CHECK_NESTED_FOR_QUICK_MERGE;
-  public boolean IGNORE_SPACES_IN_ANNOTATE = true;
+  public boolean IGNORE_SPACES_IN_ANNOTATE = !PlatformUtils.isPyCharm();
   public boolean SHOW_MERGE_SOURCES_IN_ANNOTATE = true;
   public boolean FORCE_UPDATE;
   public boolean IGNORE_EXTERNALS;

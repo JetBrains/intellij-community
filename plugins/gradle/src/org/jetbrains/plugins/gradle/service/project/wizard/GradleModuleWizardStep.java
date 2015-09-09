@@ -158,8 +158,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   }
 
   private static void saveValue(String key, String value) {
-    PropertiesComponent props = PropertiesComponent.getInstance();
-    props.setValue(key, value);
+    PropertiesComponent.getInstance().setValue(key, value);
   }
 
   public JComponent getComponent() {

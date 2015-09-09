@@ -171,13 +171,13 @@ public class IterationState {
     myDefaultBackground = editor.getColorsScheme().getDefaultBackground();
     myDefaultForeground = editor.getColorsScheme().getDefaultForeground();
 
-    myCaretRowStart = caretModel.getVisualLineStart();
+    myCaretRowStart = useCaretAndSelection ? caretModel.getVisualLineStart() : -1;
     int visualLineEnd = caretModel.getVisualLineEnd();
     if (visualLineEnd == myDocument.getTextLength() && myDocument.getLineCount() > 0 && 
         visualLineEnd > myDocument.getLineStartOffset(myDocument.getLineCount() - 1)) {
       visualLineEnd++;
     }
-    myCaretRowEnd = visualLineEnd;
+    myCaretRowEnd = useCaretAndSelection ? visualLineEnd : -1;
     myCaretRowStartsWithSoftWrap = editor.getSoftWrapModel().getSoftWrap(myCaretRowStart) != null;
     myCaretRowEndsWithSoftWrap = editor.getSoftWrapModel().getSoftWrap(myCaretRowEnd) != null;
 
@@ -380,10 +380,13 @@ public class IterationState {
     myDoc.advance();
     myView.advance();
 
+    boolean fileEnd = myStartOffset == myDocument.getTextLength();
     for (int i = myCurrentHighlighters.size() - 1; i >= 0; i--) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
       if (myReverseIteration ?
           highlighter.getAffectedAreaStartOffset() >= myStartOffset :
+          fileEnd && highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE ? 
+          highlighter.getAffectedAreaEndOffset() < myStartOffset : 
           highlighter.getAffectedAreaEndOffset() <= myStartOffset) {
         myCurrentHighlighters.remove(i);
       }
@@ -504,14 +507,9 @@ public class IterationState {
         }
       }
 
-      if (syntax != null && highlighter.getLayer() < HighlighterLayer.SYNTAX) {
-        if (fold != null) {
-          cachedAttributes.add(fold);
-          fold = null;
-        }
-
-        cachedAttributes.add(syntax);
-        syntax = null;
+      if (fold != null && highlighter.getLayer() < HighlighterLayer.GUARDED_BLOCKS) {
+        cachedAttributes.add(fold);
+        fold = null;
       }
 
       if (guard != null && highlighter.getLayer() < HighlighterLayer.GUARDED_BLOCKS) {
@@ -522,6 +520,11 @@ public class IterationState {
       if (caret != null && highlighter.getLayer() < HighlighterLayer.CARET_ROW) {
         cachedAttributes.add(caret);
         caret = null;
+      }
+
+      if (syntax != null && highlighter.getLayer() < HighlighterLayer.SYNTAX) {
+        cachedAttributes.add(syntax);
+        syntax = null;
       }
 
       TextAttributes textAttributes = highlighter.getTextAttributes();
@@ -547,11 +550,11 @@ public class IterationState {
       TextAttributes attrs = cachedAttributes.get(i);
 
       if (fore == null) {
-        fore = ifDiffers(attrs.getForegroundColor(), myDefaultForeground);
+        fore = attrs.getForegroundColor();
       }
 
       if (back == null) {
-        back = ifDiffers(attrs.getBackgroundColor(), myDefaultBackground);
+        back = attrs.getBackgroundColor();
       }
 
       if (fontType == Font.PLAIN) {
@@ -577,11 +580,6 @@ public class IterationState {
   private boolean isInCaretRow(boolean includeLineStart, boolean includeLineEnd) {
     return myStartOffset > myCaretRowStart && myStartOffset < myCaretRowEnd ||
            includeLineStart && myStartOffset == myCaretRowStart || includeLineEnd && myStartOffset == myCaretRowEnd;
-  }
-
-  @Nullable
-  private static Color ifDiffers(final Color c1, final Color c2) {
-    return Comparing.equal(c1, c2) ? null : c1;
   }
 
   public boolean atEnd() {

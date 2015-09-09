@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.util.Map;
 
 /**
  * @author spleaner
- * @@see http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html
+ * @see http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html
  */
 public class Foundation {
   private static final FoundationLibrary myFoundationLibrary;
@@ -211,6 +211,10 @@ public class Foundation {
 
   public static void cfRetain(ID id) {
     myFoundationLibrary.CFRetain(id);
+  }
+  
+  public static ID cgWindowListCreateImage(Foundation.NSRect screenBounds, int windowOption, ID windowID, int imageOption) {
+    return myFoundationLibrary.CGWindowListCreateImage(screenBounds, windowOption, windowID, imageOption);
   }
 
   public static void cfRelease(ID... ids) {

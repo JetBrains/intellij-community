@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -321,7 +321,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
 
     if (!forceTopSelection) {
-      ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
+      ScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
       return;
     }
 
@@ -336,7 +336,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return;
     }
 
-    ListScrollingUtil.ensureRangeIsVisible(myList, top, top + myList.getLastVisibleIndex() - firstVisibleIndex);
+    ScrollingUtil.ensureRangeIsVisible(myList, top, top + myList.getLastVisibleIndex() - firstVisibleIndex);
   }
 
   boolean truncatePrefix(boolean preserveSelection) {
@@ -400,7 +400,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private boolean isSelectionVisible() {
-    return ListScrollingUtil.isIndexFullyVisible(myList, myList.getSelectedIndex());
+    return ScrollingUtil.isIndexFullyVisible(myList, myList.getSelectedIndex());
   }
 
   private boolean checkReused() {
@@ -423,7 +423,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private void addEmptyItem(CollectionListModel<LookupElement> model) {
-    LookupItem<String> item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"), false);
+    LookupElement item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"), false);
     myMatchers.put(item, new CamelHumpMatcher(""));
     model.add(item);
 
@@ -607,7 +607,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       myChangeGuard = false;
     }
     if (!result || myDisposed) {
-      hide();
+      hideLookup(false);
       return false;
     }
     if (myUi != null) {
@@ -642,8 +642,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     if (ApplicationManager.getApplication().isUnitTestMode()) return true;
 
+
     if (!ApplicationManager.getApplication().isServer() && !myEditor.getContentComponent().isShowing()) {
-      hide();
+      hideLookup(false);
       return false;
     }
 
@@ -653,7 +654,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myUi.show();
 
     if (!ApplicationManager.getApplication().isServer() && (!isVisible() || !myList.isShowing())) {
-      hide();
+      hideLookup(false);
       return false;
     }
 
@@ -673,7 +674,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       @Override
       public void documentChanged(DocumentEvent e) {
         if (!myChangeGuard && !myFinishing) {
-          hide();
+          hideLookup(false);
         }
       }
     }, this);
@@ -682,7 +683,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       @Override
       public void caretPositionChanged(CaretEvent e) {
         if (!myChangeGuard && !myFinishing) {
-          hide();
+          hideLookup(false);
         }
       }
     };
@@ -690,7 +691,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       @Override
       public void selectionChanged(final SelectionEvent e) {
         if (!myChangeGuard && !myFinishing) {
-          hide();
+          hideLookup(false);
         }
       }
     };
@@ -698,7 +699,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       @Override
       public void mouseClicked(EditorMouseEvent e){
         e.consume();
-        hide();
+        hideLookup(false);
       }
     };
 

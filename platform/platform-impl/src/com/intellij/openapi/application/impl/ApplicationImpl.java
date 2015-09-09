@@ -31,7 +31,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentsPackage;
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -455,7 +454,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void load(@Nullable final String configPath) throws IOException {
+  public void load(@Nullable final String configPath) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
       long t = System.currentTimeMillis();
@@ -486,9 +485,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       });
       t = System.currentTimeMillis() - t;
       LOG.info(getComponentConfigCount() + " application components initialized in " + t + " ms");
-    }
-    catch (StateStorageException e) {
-      throw new IOException(e);
     }
     finally {
       token.finish();

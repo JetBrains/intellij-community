@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -156,16 +155,17 @@ class PseudoLambdaReplaceTemplate {
       return null;
     }
 
-    final PsiMethod method = expression.resolveMethod();
-    if (method == null) {
+    final JavaResolveResult result = expression.getMethodExpression().advancedResolve(false);
+    final PsiElement element = result.getElement();
+    if (!(element instanceof PsiMethod)) {
       return null;
     }
-    final PsiParameter[] expectedParameters = method.getParameterList().getParameters();
+    final PsiParameter[] expectedParameters = ((PsiMethod)element).getParameterList().getParameters();
 
     if (argumentTypes.length != expectedParameters.length) {
       return null;
     }
-    final JavaResolveResult result = expression.getMethodExpression().advancedResolve(false);
+    
     final PsiSubstitutor methodSubstitutor = result.getSubstitutor();
     return validate(argumentTypes, methodReturnType, methodSubstitutor, expression);
   }
@@ -202,6 +202,9 @@ class PseudoLambdaReplaceTemplate {
 
     for (int i = 0; i < arguments.length; i++) {
       PsiType type = arguments[i];
+      if (type == null) {
+        return null;
+      }
       if (isFunction(type, methodReturnType, methodSubstitutor, context)) {
         if (lambdaPosition == -1) {
           lambdaPosition = i;
@@ -357,8 +360,7 @@ class PseudoLambdaReplaceTemplate {
   }
 
   @NotNull
-  public PsiExpression convertToStream(final PsiMethodCallExpression expression, PsiMethod method, boolean force) {
-    LOG.assertTrue(expression != null);
+  public PsiExpression convertToStream(@NotNull final PsiMethodCallExpression expression, @Nullable PsiMethod method, boolean force) {
     if (method == null) {
       method = expression.resolveMethod();
       if (method == null) {
@@ -489,7 +491,12 @@ class PseudoLambdaReplaceTemplate {
       LOG.assertTrue(method != null);
       return JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::" + method.getName(), null);
     }
-    return AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(expression, true);
+
+    final PsiType psiType = expression.getType();
+    if (psiType != null) {
+      return AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(expression, psiType);
+    }
+    return null;
   }
 
   @NotNull
@@ -547,15 +554,9 @@ class PseudoLambdaReplaceTemplate {
 
   private static boolean isIterableOrArray(final PsiType type) {
     if (type instanceof PsiClassType) {
-      final PsiClass resolvedClass = ((PsiClassType)type).resolve();
-      if (resolvedClass != null) {
-        return InheritanceUtil.isInheritor(resolvedClass, CommonClassNames.JAVA_LANG_ITERABLE);
-      }
+      return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE);
     }
-    else if (type instanceof PsiArrayType) {
-      return true;
-    }
-    return false;
+    return type instanceof PsiArrayType;
   }
 
   @Override

@@ -15,17 +15,17 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.project.DumbAwareAction;
 
 import java.awt.event.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowSplashAction extends AnAction {
+public class ShowSplashAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final ApplicationInfoEx app = ApplicationInfoImpl.getShadowInstance();

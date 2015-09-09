@@ -51,7 +51,7 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
         if (PyNames.NEW.equals(name)) {
           boolean new_style_class = false;
           try {
-            if (cls != null) new_style_class = cls.isNewStyleClass();
+            if (cls != null) new_style_class = cls.isNewStyleClass(null);
           }
           catch (IndexNotReadyException ignored) {
           }

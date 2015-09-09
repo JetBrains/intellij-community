@@ -15,27 +15,28 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 
 /**
  * @author max
@@ -45,70 +46,41 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   private final Project myProject;
   private final ChangeListManager myChangeListManager;
-  private final ProjectLevelVcsManager myVcsManager;
+  private final ProjectLevelVcsManagerImpl myVcsManager;
+  private final VcsGuess myGuess;
 
   private final DirtBuilder myDirtBuilder;
-  private final VcsGuess myGuess;
-  private final SynchronizedLife myLife;
+  @Nullable private DirtBuilder myDirtInProgress;
 
-  private final MyProgressHolder myProgressHolder;
+  private boolean myReady;
+  private final Object LOCK = new Object();
 
   public VcsDirtyScopeManagerImpl(Project project, ChangeListManager changeListManager, ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myChangeListManager = changeListManager;
-    myVcsManager = vcsManager;
+    myVcsManager = (ProjectLevelVcsManagerImpl)vcsManager;
 
-    myLife = new SynchronizedLife();
     myGuess = new VcsGuess(myProject);
     myDirtBuilder = new DirtBuilder(myGuess);
 
-    myProgressHolder = new MyProgressHolder();
     ((ChangeListManagerImpl) myChangeListManager).setDirtyScopeManager(this);
   }
 
   @Override
   public void projectOpened() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      myLife.born();
-      final AbstractVcs[] vcss = myVcsManager.getAllActiveVcss();
-      if (vcss.length > 0) {
-        markEverythingDirty();
-      }
-    }
-    else {
-      StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          myLife.born();
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              markEverythingDirty();
-            }
-          });
-        }
-      });
-    }
-  }
-
-  public void suspendMe() {
-    myLife.suspendMe();
-  }
-
-  public void reanimate() {
-    final Ref<Boolean> wasNotEmptyRef = new Ref<Boolean>();
-    myLife.releaseMe(new Runnable() {
+    myVcsManager.addInitializationRequest(VcsInitObject.DIRTY_SCOPE_MANAGER, new Runnable() {
       @Override
       public void run() {
-        wasNotEmptyRef.set(! myDirtBuilder.isEmpty());
+        synchronized (LOCK) {
+          if (!myProject.isDisposed()) {
+            myReady = true;
+          }
+        }
+        markEverythingDirty();
       }
     });
-    if (Boolean.TRUE.equals(wasNotEmptyRef.get())) {
-      myChangeListManager.scheduleUpdate();
-    }
   }
 
-  @Override
   public void markEverythingDirty() {
     if ((! myProject.isOpen()) || myProject.isDisposed() || myVcsManager.getAllActiveVcss().length == 0) return;
 
@@ -116,21 +88,17 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       LOG.debug("everything dirty: " + ReflectionUtil.findCallerClass(2));
     }
 
-    final LifeDrop lifeDrop = myLife.doIfAlive(new Runnable() {
-      @Override
-      public void run() {
+    synchronized (LOCK) {
+      if (myReady) {
         myDirtBuilder.everythingDirty();
       }
-    });
-
-    if (lifeDrop.isDone() && !lifeDrop.isSuspened()) {
-      myChangeListManager.scheduleUpdate();
     }
+
+    myChangeListManager.scheduleUpdate();
   }
 
   @Override
   public void projectClosed() {
-    killSelf();
   }
 
   @Override
@@ -142,173 +110,92 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   @Override
   public void initComponent() {}
 
-  private void killSelf() {
-    myLife.kill(new Runnable() {
-      @Override
-      public void run() {
-        myDirtBuilder.reset();
-      }
-    });
-  }
-
-  @Override
   public void disposeComponent() {
-    killSelf();
+    synchronized (LOCK) {
+      myReady = false;
+      myDirtBuilder.reset();
+      myDirtInProgress = null;
+    }
   }
 
-  private void convertPaths(@Nullable final Collection<FilePath> from, final Collection<FilePathUnderVcs> to) {
-    if (from != null) {
-      for (final FilePath fp : from) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            final AbstractVcs vcs = myGuess.getVcsForDirty(fp);
-            if (vcs != null) {
-              to.add(new FilePathUnderVcs(fp, vcs));
-            }
-          }
-        });
+  @NotNull
+  private MultiMap<AbstractVcs, FilePath> groupByVcs(@Nullable final Collection<FilePath> from) {
+    if (from == null) return MultiMap.empty();
+    MultiMap<AbstractVcs, FilePath> map = MultiMap.createSet();
+    for (FilePath path : from) {
+      AbstractVcs vcs = myGuess.getVcsForDirty(path);
+      if (vcs != null) {
+        map.putValue(vcs, path);
       }
     }
+    return map;
   }
 
   @Override
   public void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
     try {
-      final ArrayList<FilePathUnderVcs> filesConverted = filesDirty == null ? null : new ArrayList<FilePathUnderVcs>(filesDirty.size());
-      final ArrayList<FilePathUnderVcs> dirsConverted = dirsRecursivelyDirty == null ? null : new ArrayList<FilePathUnderVcs>(dirsRecursivelyDirty.size());
-
-      convertPaths(filesDirty, filesConverted);
-      convertPaths(dirsRecursivelyDirty, dirsConverted);
-      final boolean haveStuff = filesConverted != null && ! filesConverted.isEmpty()
-                                || dirsConverted != null && ! dirsConverted.isEmpty();
-      if (! haveStuff) return;
+      final MultiMap<AbstractVcs, FilePath> filesConverted = groupByVcs(filesDirty);
+      final MultiMap<AbstractVcs, FilePath> dirsConverted = groupByVcs(dirsRecursivelyDirty);
+      if (filesConverted.isEmpty() && dirsConverted.isEmpty()) return;
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug("paths dirty: " + filesConverted + "; " + dirsConverted + "; " + ReflectionUtil.findCallerClass(2));
+        LOG.debug("paths dirty: " + filesConverted + "; " + dirsConverted + "; " + ReflectionUtil.findCallerClass(3));
       }
 
-      takeDirt(new Consumer<DirtBuilder>() {
-        @Override
-        public void consume(final DirtBuilder dirt) {
-          if (filesConverted != null) {
-            for (FilePathUnderVcs root : filesConverted) {
-              dirt.addDirtyFile(root);
-            }
-          }
-          if (dirsConverted != null) {
-            for (FilePathUnderVcs root : dirsConverted) {
-              dirt.addDirtyDirRecursively(root);
-            }
-          }
+      boolean hasSomethingDirty;
+      synchronized (LOCK) {
+        if (!myReady) return;
+        markDirty(myDirtBuilder, filesConverted, false);
+        markDirty(myDirtBuilder, dirsConverted, true);
+        hasSomethingDirty = !myDirtBuilder.isEmpty();
+      }
+
+      if (hasSomethingDirty) {
+        myChangeListManager.scheduleUpdate();
+      }
+    }
+    catch (ProcessCanceledException ignore) {
+    }
+  }
+
+  private static void markDirty(@NotNull DirtBuilder dirtBuilder,
+                                @NotNull MultiMap<AbstractVcs, FilePath> filesOrDirs,
+                                boolean recursively) {
+    for (AbstractVcs vcs : filesOrDirs.keySet()) {
+      for (FilePath path : filesOrDirs.get(vcs)) {
+        if (recursively) {
+          dirtBuilder.addDirtyDirRecursively(vcs, path);
         }
-      });
-    } catch (ProcessCanceledException ignore) {
-    }
-  }
-
-  private void takeDirt(final Consumer<DirtBuilder> filler) {
-    final Ref<Boolean> wasNotEmptyRef = new Ref<Boolean>();
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        filler.consume(myDirtBuilder);
-        wasNotEmptyRef.set(!myDirtBuilder.isEmpty());
-      }
-    };
-    final LifeDrop lifeDrop = myLife.doIfAlive(runnable);
-
-    if (lifeDrop.isDone() && !lifeDrop.isSuspened() && Boolean.TRUE.equals(wasNotEmptyRef.get())) {
-      myChangeListManager.scheduleUpdate();
-    }
-  }
-
-  private void convert(@Nullable final Collection<VirtualFile> from, final Collection<VcsRoot> to) {
-    if (from != null) {
-      for (final VirtualFile vf : from) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            final AbstractVcs vcs = myGuess.getVcsForDirty(vf);
-            if (vcs != null) {
-              to.add(new VcsRoot(vcs, vf));
-            }
-          }
-        });
+        else {
+          dirtBuilder.addDirtyFile(vcs, path);
+        }
       }
     }
   }
 
-  @Override
   public void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
-    try {
-      final ArrayList<VcsRoot> filesConverted = filesDirty == null ? null : new ArrayList<VcsRoot>(filesDirty.size());
-      final ArrayList<VcsRoot> dirsConverted = dirsRecursivelyDirty == null ? null : new ArrayList<VcsRoot>(dirsRecursivelyDirty.size());
+    filePathsDirty(toFilePaths(filesDirty), toFilePaths(dirsRecursivelyDirty));
+  }
 
-      convert(filesDirty, filesConverted);
-      convert(dirsRecursivelyDirty, dirsConverted);
-      final boolean haveStuff = filesConverted != null && ! filesConverted.isEmpty() || dirsConverted != null && ! dirsConverted.isEmpty();
-      if (! haveStuff) return;
-
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("files dirty: " + filesConverted + "; " + dirsConverted + "; " + ReflectionUtil.findCallerClass(2));
+  @NotNull
+  private static Collection<FilePath> toFilePaths(@Nullable Collection<VirtualFile> files) {
+    if (files == null) return Collections.emptyList();
+    return ContainerUtil.map(files, new Function<VirtualFile, FilePath>() {
+      @Override
+      public FilePath fun(VirtualFile virtualFile) {
+        return VcsUtil.getFilePath(virtualFile);
       }
-
-      takeDirt(new Consumer<DirtBuilder>() {
-        @Override
-        public void consume(final DirtBuilder dirt) {
-          if (filesConverted != null) {
-            for (VcsRoot root : filesConverted) {
-              dirt.addDirtyFile(root);
-            }
-          }
-          if (dirsConverted != null) {
-            for (VcsRoot root : dirsConverted) {
-              dirt.addDirtyDirRecursively(root);
-            }
-          }
-        }
-      });
-    } catch (ProcessCanceledException ignore) {
-    }
+    });
   }
 
   @Override
   public void fileDirty(@NotNull final VirtualFile file) {
-    try {
-      final AbstractVcs vcs = myGuess.getVcsForDirty(file);
-      if (vcs == null) return;
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("file dirty: " + file + "; " + ReflectionUtil.findCallerClass(2));
-      }
-      final VcsRoot root = new VcsRoot(vcs, file);
-      takeDirt(new Consumer<DirtBuilder>() {
-        @Override
-        public void consume(DirtBuilder dirtBuilder) {
-          dirtBuilder.addDirtyFile(root);
-        }
-      });
-    } catch (ProcessCanceledException ignore) {
-    }
+    fileDirty(VcsUtil.getFilePath(file));
   }
 
   @Override
   public void fileDirty(@NotNull final FilePath file) {
-    try {
-      final AbstractVcs vcs = myGuess.getVcsForDirty(file);
-      if (vcs == null) return;
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("file dirty: " + file + "; " + ReflectionUtil.findCallerClass(1));
-      }
-      final FilePathUnderVcs root = new FilePathUnderVcs(file, vcs);
-      takeDirt(new Consumer<DirtBuilder>() {
-        @Override
-        public void consume(DirtBuilder dirtBuilder) {
-          dirtBuilder.addDirtyFile(root);
-        }
-      });
-    } catch (ProcessCanceledException ignore) {
-    }
+    filePathsDirty(Collections.singleton(file), null);
   }
 
   @Override
@@ -318,247 +205,89 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   @Override
   public void dirDirtyRecursively(final VirtualFile dir) {
-    try {
-      final AbstractVcs vcs = myGuess.getVcsForDirty(dir);
-      if (vcs == null) return;
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("dir dirty recursively: " + dir + "; " + ReflectionUtil.findCallerClass(2));
-      }
-      final VcsRoot root = new VcsRoot(vcs, dir);
-      takeDirt(new Consumer<DirtBuilder>() {
-        @Override
-        public void consume(DirtBuilder dirtBuilder) {
-          dirtBuilder.addDirtyDirRecursively(root);
-        }
-      });
-    } catch (ProcessCanceledException ignore) {
-    }
+    dirDirtyRecursively(VcsUtil.getFilePath(dir));
   }
 
   @Override
   public void dirDirtyRecursively(final FilePath path) {
-    try {
-      final AbstractVcs vcs = myGuess.getVcsForDirty(path);
-      if (vcs == null) return;
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("dir dirty recursively: " + path + "; " + ReflectionUtil.findCallerClass(2));
-      }
-      final FilePathUnderVcs root = new FilePathUnderVcs(path, vcs);
-      takeDirt(new Consumer<DirtBuilder>() {
-        @Override
-        public void consume(DirtBuilder dirtBuilder) {
-          dirtBuilder.addDirtyDirRecursively(root);
-        }
-      });
-    } catch (ProcessCanceledException ignore) {
-    }
-  }
-
-  private class MyProgressHolder {
-    private VcsInvalidated myInProgressState;
-    private DirtBuilderReader myInProgressDirtBuilder;
-
-    public MyProgressHolder() {
-      myInProgressDirtBuilder = new DirtBuilder(myGuess);
-      myInProgressState = null;
-    }
-
-    public void takeNext(final DirtBuilderReader dirtBuilder) {
-      myInProgressDirtBuilder = dirtBuilder;
-      myInProgressState = null;
-    }
-
-    private MyProgressHolder(final DirtBuilderReader dirtBuilder, final VcsInvalidated vcsInvalidated) {
-      myInProgressDirtBuilder = dirtBuilder;
-      myInProgressState = vcsInvalidated;
-    }
-
-    public VcsInvalidated calculateInvalidated() {
-      if (myInProgressDirtBuilder != null) {
-        final Scopes scopes = new Scopes(myProject, myGuess);
-        scopes.takeDirt(myInProgressDirtBuilder);
-        return scopes.retrieveAndClear();
-      }
-      return myInProgressState;
-    }
-
-    public void takeInvalidated(final VcsInvalidated invalidated) {
-      myInProgressState = invalidated;
-      myInProgressDirtBuilder = null;
-    }
-
-    public void processed() {
-      myInProgressState = null;
-      myInProgressDirtBuilder = null;
-    }
-
-    public MyProgressHolder copy() {
-      return new MyProgressHolder(myInProgressDirtBuilder, myInProgressState);
-    }
+    filePathsDirty(null, Collections.singleton(path));
   }
 
   @Override
   @Nullable
   public VcsInvalidated retrieveScopes() {
-    final LifeDrop lifeDrop = myLife.doIfAlive(new Runnable() {
-      @Override
-      public void run() {
-        myProgressHolder.takeNext(new DirtBuilder(myDirtBuilder));
-        myDirtBuilder.reset();
-      }
-    });
-
-    if (lifeDrop.isDone()) {
-      final VcsInvalidated invalidated = myProgressHolder.calculateInvalidated();
-
-      myLife.doIfAlive(new Runnable() {
-        @Override
-        public void run() {
-          myProgressHolder.takeInvalidated(invalidated);
-        }
-      });
-      return invalidated;
+    DirtBuilder dirtBuilder;
+    synchronized (LOCK) {
+      if (!myReady) return null;
+      dirtBuilder = new DirtBuilder(myDirtBuilder);
+      myDirtInProgress = dirtBuilder;
+      myDirtBuilder.reset();
     }
-    return null;
+    return calculateInvalidated(dirtBuilder);
+  }
+
+  @NotNull
+  private VcsInvalidated calculateInvalidated(@NotNull DirtBuilder dirt) {
+    MultiMap<AbstractVcs, FilePath> files = dirt.getFilesForVcs();
+    MultiMap<AbstractVcs, FilePath> dirs = dirt.getDirsForVcs();
+    if (dirt.isEverythingDirty()) {
+      dirs.putAllValues(getEverythingDirtyRoots());
+    }
+    Set<AbstractVcs> keys = ContainerUtil.union(files.keySet(), dirs.keySet());
+
+    Map<AbstractVcs, VcsDirtyScopeImpl> scopes = ContainerUtil.newHashMap();
+    for (AbstractVcs key : keys) {
+      VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(key, myProject);
+      scopes.put(key, scope);
+      scope.addDirtyData(dirs.get(key), files.get(key));
+    }
+
+    return new VcsInvalidated(new ArrayList<VcsDirtyScope>(scopes.values()), dirt.isEverythingDirty());
+  }
+
+  @NotNull
+  private MultiMap<AbstractVcs, FilePath> getEverythingDirtyRoots() {
+    MultiMap<AbstractVcs, FilePath> dirtyRoots = MultiMap.createSet();
+    dirtyRoots.putAllValues(groupByVcs(toFilePaths(DefaultVcsRootPolicy.getInstance(myProject).getDirtyRoots())));
+
+    List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
+    for (VcsDirectoryMapping mapping : mappings) {
+      if (!mapping.isDefaultMapping() && mapping.getVcs() != null) {
+        AbstractVcs vcs = myVcsManager.findVcsByName(mapping.getVcs());
+        if (vcs != null) {
+          dirtyRoots.putValue(vcs, VcsUtil.getFilePath(mapping.getDirectory(), true));
+        }
+      }
+    }
+    return dirtyRoots;
   }
 
   @Override
   public void changesProcessed() {
-    myLife.doIfAlive(new Runnable() {
-      @Override
-      public void run() {
-        myProgressHolder.processed();
-      }
-    });
+    synchronized (LOCK) {
+      myDirtInProgress = null;
+    }
   }
 
   @NotNull
   @Override
   public Collection<FilePath> whatFilesDirty(@NotNull final Collection<FilePath> files) {
-    final Collection<FilePath> result = new ArrayList<FilePath>();
-    final Ref<MyProgressHolder> inProgressHolderRef = new Ref<MyProgressHolder>();
-    final Ref<MyProgressHolder> currentHolderRef = new Ref<MyProgressHolder>();
+    DirtBuilder dirtBuilder;
+    DirtBuilder dirtBuilderInProgress;
+    synchronized (LOCK) {
+      if (!myReady) return Collections.emptyList();
+      dirtBuilder = new DirtBuilder(myDirtBuilder);
+      dirtBuilderInProgress = myDirtInProgress != null ? new DirtBuilder(myDirtInProgress) : new DirtBuilder(myGuess);
+    }
 
-    myLife.doIfAlive(new Runnable() {
-      @Override
-      public void run() {
-        inProgressHolderRef.set(myProgressHolder.copy());
-        currentHolderRef.set(new MyProgressHolder(new DirtBuilder(myDirtBuilder), null));
-      }
-    });
-    final VcsInvalidated inProgressInvalidated = inProgressHolderRef.get() == null ? null : inProgressHolderRef.get().calculateInvalidated();
-    final VcsInvalidated currentInvalidated = currentHolderRef.get() == null ? null : currentHolderRef.get().calculateInvalidated();
+    VcsInvalidated invalidated = calculateInvalidated(dirtBuilder);
+    VcsInvalidated inProgress = calculateInvalidated(dirtBuilderInProgress);
+    Collection<FilePath> result = ContainerUtil.newArrayList();
     for (FilePath fp : files) {
-      if (inProgressInvalidated != null && inProgressInvalidated.isFileDirty(fp)
-          || currentInvalidated != null && currentInvalidated.isFileDirty(fp)) {
+      if (invalidated.isFileDirty(fp) || inProgress.isFileDirty(fp)) {
         result.add(fp);
       }
     }
     return result;
-  }
-
-  private String toStringScopes(final VcsInvalidated vcsInvalidated) {
-    final StringBuilder sb = new StringBuilder();
-    sb.append("is everything dirty: ").append(vcsInvalidated.isEverythingDirty()).append(";\n");
-    for (VcsDirtyScope scope : vcsInvalidated.getScopes()) {
-      sb.append("|\nFiles: ");
-      for (FilePath path : scope.getDirtyFiles()) {
-        sb.append(path).append('\n');
-      }
-      sb.append("\nDirs: ");
-      for (FilePath filePath : scope.getRecursivelyDirtyDirectories()) {
-        sb.append(filePath).append('\n');
-      }
-    }
-    sb.append("-------------");
-    return sb.toString();
-  }
-
-  private static class LifeDrop {
-    private final boolean myDone;
-    private final boolean mySuspened;
-
-    private LifeDrop(boolean done, boolean suspened) {
-      myDone = done;
-      mySuspened = suspened;
-    }
-
-    public boolean isDone() {
-      return myDone;
-    }
-
-    public boolean isSuspened() {
-      return mySuspened;
-    }
-  }
-
-  private static class SynchronizedLife {
-    private LifeStages myStage;
-    private final Object myLock;
-    private boolean mySuspended;
-
-    private SynchronizedLife() {
-      myStage = LifeStages.NOT_BORN;
-      myLock = new Object();
-    }
-
-    public void born() {
-      synchronized (myLock) {
-        myStage = LifeStages.ALIVE;
-      }
-    }
-
-    public void kill(Runnable runnable) {
-      synchronized (myLock) {
-        myStage = LifeStages.DEAD;
-        runnable.run();
-      }
-    }
-
-    public void suspendMe() {
-      synchronized (myLock) {
-        if (LifeStages.ALIVE.equals(myStage)) {
-          mySuspended = true;
-        }
-      }
-    }
-
-    public void releaseMe(final Runnable runnable) {
-      synchronized (myLock) {
-        if (LifeStages.ALIVE.equals(myStage)) {
-          mySuspended = false;
-          runnable.run();
-        }
-      }
-    }
-
-    public LifeDrop doIfAliveAndNotSuspended(final Runnable runnable) {
-      synchronized (myLock) {
-        synchronized (myLock) {
-          if (LifeStages.ALIVE.equals(myStage) && ! mySuspended) {
-            runnable.run();
-            return new LifeDrop(true, mySuspended);
-          }
-          return new LifeDrop(false, mySuspended);
-        }
-      }
-    }
-
-    // allow work under inner lock: inner class, not wide scope
-    public LifeDrop doIfAlive(final Runnable runnable) {
-      synchronized (myLock) {
-        if (LifeStages.ALIVE.equals(myStage)) {
-          runnable.run();
-          return new LifeDrop(true, mySuspended);
-        }
-        return new LifeDrop(false, mySuspended);
-      }
-    }
-
-    private static enum LifeStages {
-      NOT_BORN,
-      ALIVE,
-      DEAD
-    }
   }
 }

@@ -51,7 +51,7 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
 
   public BackwardDependenciesBuilder(final Project project, final AnalysisScope scope, final @Nullable AnalysisScope scopeOfInterest) {
     super(project, scope, scopeOfInterest);
-    myForwardScope = ApplicationManager.getApplication().runReadAction(new Computable<AnalysisScope>() {
+    myForwardScope = scopeOfInterest != null ? scopeOfInterest : ApplicationManager.getApplication().runReadAction(new Computable<AnalysisScope>() {
       @Override
       public AnalysisScope compute() {
         return getScope().getNarrowedComplementaryScope(getProject());

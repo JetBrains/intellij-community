@@ -141,9 +141,8 @@ public class CreateTestDialog extends DialogWrapper {
       myFixLibraryPanel.setVisible(true);
       String text = CodeInsightBundle.message("intention.create.test.dialog.library.not.found", descriptor.getName());
       myFixLibraryLabel.setText(text);
-
-      myFixLibraryButton.setVisible(descriptor instanceof JavaTestFramework ? !((JavaTestFramework)descriptor).getLibraryPaths().isEmpty()
-                                                                            : descriptor.getLibraryPath() != null);
+      myFixLibraryButton.setVisible(descriptor instanceof JavaTestFramework && ((JavaTestFramework)descriptor).getFrameworkLibraryDescriptor() != null
+                                    || descriptor.getLibraryPath() != null);
     }
 
     String superClass = descriptor.getDefaultSuperClass();
@@ -187,13 +186,11 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   private void restoreShowInheritedMembersStatus() {
-    String v = getProperties().getValue(SHOW_INHERITED_MEMBERS_PROPERTY);
-    myShowInheritedMethodsBox.setSelected(v != null && v.equals("true"));
+    myShowInheritedMethodsBox.setSelected(getProperties().getBoolean(SHOW_INHERITED_MEMBERS_PROPERTY));
   }
 
   private void saveShowInheritedMembersStatus() {
-    boolean v = myShowInheritedMethodsBox.isSelected();
-    getProperties().setValue(SHOW_INHERITED_MEMBERS_PROPERTY, Boolean.toString(v));
+    getProperties().setValue(SHOW_INHERITED_MEMBERS_PROPERTY, myShowInheritedMethodsBox.isSelected());
   }
 
   private PropertiesComponent getProperties() {
@@ -356,6 +353,10 @@ public class CreateTestDialog extends DialogWrapper {
       model.addElement(descriptor);
       if (hasTestRoots && descriptor.isLibraryAttached(myTargetModule)) {
         attachedLibraries.add(descriptor);
+
+        if (defaultLibrary == null) {
+          defaultDescriptor = descriptor;
+        }
       }
 
       if (Comparing.equal(defaultLibrary, descriptor.getName())) {
@@ -367,7 +368,14 @@ public class CreateTestDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         final Object selectedItem = myLibrariesCombo.getSelectedItem();
         if (selectedItem != null) {
-          onLibrarySelected((TestFramework)selectedItem);
+          final DumbService dumbService = DumbService.getInstance(myProject);
+          dumbService.setAlternativeResolveEnabled(true);
+          try {
+            onLibrarySelected((TestFramework)selectedItem);
+          }
+          finally {
+            dumbService.setAlternativeResolveEnabled(false);
+          }
         }
       }
     });

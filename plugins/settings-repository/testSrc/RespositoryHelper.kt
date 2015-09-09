@@ -16,79 +16,52 @@
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.mock.MockVirtualFileSystem
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ArrayUtil
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.isFile
+import gnu.trove.THashSet
+import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Constants
-import org.hamcrest.CoreMatchers.equalTo
-import org.junit.Assert.assertThat
-import java.io.File
-import java.util.Arrays
-import java.util.Comparator
+import java.nio.file.Files
+import java.nio.file.Path
 
 data class FileInfo(val name: String, val data: ByteArray)
 
-fun fs(vararg paths: String): MockVirtualFileSystem {
-  val fs = MockVirtualFileSystem()
-  for (path in paths) {
-    fs.findFileByPath(path)
-  }
-  return fs
-}
+fun fs() = MockVirtualFileSystem()
 
-private fun compareFiles(local: File, remote: File, expected: VirtualFile? = null, vararg localExcludes: String) {
-  var localFiles = local.list()!!
-  var remoteFiles = remote.list()!!
+private fun getChildrenStream(path: Path, excludes: Array<out String>? = null) = Files.list(path)
+  .filter { !it.endsWith(Constants.DOT_GIT) && (excludes == null || !excludes.contains(it.getFileName().toString())) }
+  .sorted()
 
-  localFiles = ArrayUtil.remove(localFiles, Constants.DOT_GIT)
-  remoteFiles = ArrayUtil.remove(remoteFiles, Constants.DOT_GIT)
-
-  Arrays.sort(localFiles)
-  Arrays.sort(remoteFiles)
-
-  if (localExcludes.size() != 0) {
-    for (localExclude in localExcludes) {
-      localFiles = ArrayUtil.remove(localFiles, localExclude)
-    }
+private fun compareFiles(path1: Path, path2: Path, path3: VirtualFile? = null, vararg localExcludes: String) {
+  assertThat(path1).isDirectory()
+  assertThat(path2).isDirectory()
+  if (path3 != null) {
+    assertThat(path3.isDirectory()).isTrue()
   }
 
-  assertThat(localFiles, equalTo(remoteFiles))
-
-  val expectedFiles: Array<VirtualFile>?
-  if (expected == null) {
-    expectedFiles = null
+  val notFound = THashSet<Path>()
+  for (path in getChildrenStream(path1, localExcludes)) {
+    notFound.add(path)
   }
-  else {
-    //noinspection UnsafeVfsRecursion
-    expectedFiles = expected.getChildren()
-    Arrays.sort(expectedFiles!!, object : Comparator<VirtualFile> {
-      override fun compare(o1: VirtualFile, o2: VirtualFile): Int {
-        return o1.getName().compareTo(o2.getName())
+
+  for (child2 in getChildrenStream(path2)) {
+    val fileName = child2.getFileName()
+    val child1 = path1.resolve(fileName)
+    val child3 = path3?.findChild(fileName.toString())
+    if (child1.isFile()) {
+      assertThat(child2).hasSameContentAs(child1)
+      if (child3 != null) {
+        assertThat(child3.isDirectory()).isFalse()
+        assertThat(child1).hasContent(if (child3 is LightVirtualFile) child3.getContent().toString() else VfsUtilCore.loadText(child3))
       }
-    })
-
-    for (i in 0..expectedFiles.size() - 1) {
-      assertThat(localFiles[i], equalTo(expectedFiles[i].getName()))
-    }
-  }
-
-  for (i in 0..localFiles.size() - 1) {
-    val localFile = File(local, localFiles[i])
-    val remoteFile = File(remote, remoteFiles[i])
-    val expectedFile: VirtualFile?
-    if (expectedFiles == null) {
-      expectedFile = null
     }
     else {
-      expectedFile = expectedFiles[i]
-      assertThat(expectedFile.isDirectory(), equalTo(localFile.isDirectory()))
+      compareFiles(child1, child2, child3, *localExcludes)
     }
-
-    if (localFile.isFile()) {
-      assertThat(FileUtil.loadFile(localFile), equalTo(FileUtil.loadFile(remoteFile)))
-    }
-    else {
-      compareFiles(localFile, remoteFile, expectedFile, *localExcludes)
-    }
+    notFound.remove(child1)
   }
+
+  assertThat(notFound).isEmpty()
 }

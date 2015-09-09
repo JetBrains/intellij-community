@@ -20,7 +20,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.psi.PsiArrayType;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,7 +48,7 @@ public class ComponentTypeOfMacro extends Macro {
     for (LookupElement element : lookupItems) {
       PsiTypeLookupItem lookupItem = element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY);
       if (lookupItem != null) {
-        PsiType psiType = lookupItem.getPsiType();
+        PsiType psiType = lookupItem.getType();
         if (psiType instanceof PsiArrayType) {
           result.add(PsiTypeLookupItem.createLookupItem(((PsiArrayType)psiType).getComponentType(), null));
         }
@@ -83,7 +82,7 @@ public class ComponentTypeOfMacro extends Macro {
       for (LookupElement element : elements) {
         PsiTypeLookupItem typeLookupItem = element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY);
         if (typeLookupItem != null) {
-          PsiType psiType = typeLookupItem.getPsiType();
+          PsiType psiType = typeLookupItem.getType();
           if (psiType instanceof PsiArrayType) {
             return new PsiTypeResult(((PsiArrayType)psiType).getComponentType(), context.getProject());
           }

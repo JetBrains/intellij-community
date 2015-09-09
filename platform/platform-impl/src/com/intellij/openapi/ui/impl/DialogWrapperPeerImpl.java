@@ -505,16 +505,29 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       JTree tree = UIUtil.getParentOfType(JTree.class, focusOwner);
       JTable table = UIUtil.getParentOfType(JTable.class, focusOwner);
       
-      if (tree != null) {
-        if (!tree.isEditing()) {
+      if (tree != null || table != null) {
+        if (hasNoEditingTreesOrTablesUpward(focusOwner)) {
           e.getPresentation().setEnabled(true);
         }
       }
-      else if (table != null) {
-        if (!table.isEditing()) {
-          e.getPresentation().setEnabled(true);
-        }
+    }
+
+    private boolean hasNoEditingTreesOrTablesUpward(Component comp) {
+      while (comp != null) {
+        if (isEditingTreeOrTable(comp)) return false;
+        comp = comp.getParent();
       }
+      return true;
+    }
+
+    private boolean isEditingTreeOrTable(Component comp) {
+      if (comp instanceof JTree) {
+        return ((JTree)comp).isEditing();
+      }
+      else if (comp instanceof JTable) {
+        return ((JTable)comp).isEditing();
+      }
+      return false;
     }
 
     @Override
@@ -973,11 +986,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
             }
             myActivated = true;
             JComponent toFocus = wrapper == null ? null : wrapper.getPreferredFocusedComponent();
-            if (toFocus == null) {
+            if (getRootPane() != null && toFocus == null) {
               toFocus = getRootPane().getDefaultButton();
             }
 
-            IJSwingUtilities.moveMousePointerOn(getRootPane().getDefaultButton());
+            if (getRootPane() != null) {
+              IJSwingUtilities.moveMousePointerOn(getRootPane().getDefaultButton());
+            }
             setupSelectionOnPreferredComponent(toFocus);
 
             if (toFocus != null) {

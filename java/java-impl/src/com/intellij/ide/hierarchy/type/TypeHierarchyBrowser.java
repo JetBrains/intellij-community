@@ -17,7 +17,8 @@ package com.intellij.ide.hierarchy.type;
 
 import com.intellij.ide.hierarchy.*;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -26,7 +27,6 @@ import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
-import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,25 +48,7 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   protected void createTrees(@NotNull Map<String, JTree> trees) {
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_TYPE_HIERARCHY_POPUP);
-    final BaseOnThisTypeAction baseOnThisTypeAction = new BaseOnThisTypeAction();
-    final JTree tree1 = createTree(true);
-    PopupHandler.installPopupHandler(tree1, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
-    baseOnThisTypeAction
-      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree1);
-    trees.put(TYPE_HIERARCHY_TYPE, tree1);
-
-    final JTree tree2 = createTree(true);
-    PopupHandler.installPopupHandler(tree2, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
-    baseOnThisTypeAction
-      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree2);
-    trees.put(SUPERTYPES_HIERARCHY_TYPE, tree2);
-
-    final JTree tree3 = createTree(true);
-    PopupHandler.installPopupHandler(tree3, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
-    baseOnThisTypeAction
-      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree3);
-    trees.put(SUBTYPES_HIERARCHY_TYPE, tree3);
+    createTreeAndSetupCommonActions(trees, IdeActions.GROUP_TYPE_HIERARCHY_POPUP);
   }
 
   protected void prependActions(DefaultActionGroup actionGroup) {
@@ -132,5 +114,11 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
     protected boolean isEnabled(@NotNull final HierarchyBrowserBaseEx browser, @NotNull final PsiElement psiElement) {
       return super.isEnabled(browser, psiElement) && !CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)psiElement).getQualifiedName());
     }
+  }
+
+  @NotNull
+  @Override
+  protected TypeHierarchyBrowserBase.BaseOnThisTypeAction createBaseOnThisAction() {
+    return new BaseOnThisTypeAction();
   }
 }

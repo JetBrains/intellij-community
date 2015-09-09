@@ -38,9 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class TestNGConfigurationType implements ConfigurationType
-{
-  private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
+public class TestNGConfigurationType implements ConfigurationType {
 
     private final ConfigurationFactory myFactory;
 
@@ -50,7 +48,6 @@ public class TestNGConfigurationType implements ConfigurationType
         {
             @Override
             public RunConfiguration createTemplateConfiguration(Project project) {
-                LOGGER.info("Create TestNG Template Configuration");
                 return new TestNGConfiguration("", project, this);
             }
 

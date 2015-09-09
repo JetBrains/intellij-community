@@ -157,6 +157,17 @@ public class RedundantCastUtil {
       super.visitAssignmentExpression(expression);
     }
 
+    @Override
+    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+      PsiType type = expression.getType();
+      if (type instanceof PsiArrayType) {
+        for (PsiExpression initializer : expression.getInitializers()) {
+          processPossibleTypeCast(initializer, ((PsiArrayType)type).getComponentType());
+        }
+      }
+      super.visitArrayInitializerExpression(expression);
+    }
+
     @Override public void visitVariable(PsiVariable variable) {
       processPossibleTypeCast(variable.getInitializer(), variable.getType());
       super.visitVariable(variable);
@@ -741,10 +752,13 @@ public class RedundantCastUtil {
       if (opType instanceof PsiClassType && ((PsiClassType)opType).hasParameters()) return true;
     }
 
-    if (operand instanceof PsiLambdaExpression || operand instanceof PsiMethodReferenceExpression) {
-      if (castType instanceof PsiClassType && InheritanceUtil.isInheritor(PsiUtil.resolveClassInType(castType), CommonClassNames.JAVA_IO_SERIALIZABLE)) return true;
+    final PsiExpression stripParenthesisOperand = PsiUtil.skipParenthesizedExprDown(operand);
+    if (stripParenthesisOperand instanceof PsiFunctionalExpression) {
+      if (isCastToSerializable(castType)) return true;
       if (castType instanceof PsiIntersectionType) {
-        return true;
+        for (PsiType type : ((PsiIntersectionType)castType).getConjuncts()) {
+          if (isCastToSerializable(type)) return true;
+        }
       }
     }
 
@@ -771,6 +785,10 @@ public class RedundantCastUtil {
       }
     }
     return false;
+  }
+
+  private static boolean isCastToSerializable(PsiType castType) {
+    return castType instanceof PsiClassType && InheritanceUtil.isInheritor(PsiUtil.resolveClassInType(castType), CommonClassNames.JAVA_IO_SERIALIZABLE);
   }
 
   private static boolean wrapperCastChangeSemantics(PsiExpression operand, PsiExpression otherOperand, PsiExpression toCast) {

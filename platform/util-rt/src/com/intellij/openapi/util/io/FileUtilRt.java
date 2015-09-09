@@ -32,7 +32,9 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Stripped-down version of {@code com.intellij.openapi.util.io.FileUtil}.
@@ -298,12 +300,33 @@ public class FileUtilRt {
                                          boolean deleteOnExit) throws IOException {
     File file = doCreateTempFile(dir, prefix, suffix, true);
     if (deleteOnExit) {
-      file.deleteOnExit();
+      //file.deleteOnExit();
+      // default deleteOnExit does not remove dirs if they are not empty
+      FilesToDeleteHolder.ourFilesToDelete.add(file.getPath());
     }
     if (!file.isDirectory()) {
       throw new IOException("Cannot create directory: " + file);
     }
     return file;
+  }
+
+  private static class FilesToDeleteHolder {
+    public static final Queue<String> ourFilesToDelete = createFilesToDelete();
+
+    private static Queue<String> createFilesToDelete() {
+      final ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<String>();
+      Runtime.getRuntime().addShutdownHook(new Thread("FileUtil deleteOnExit") {
+        @Override
+        public void run() {
+          String name = queue.poll();
+          while (name != null) {
+            delete(new File(name));
+            name = queue.poll();
+          }
+        }
+      });
+      return queue;
+    }
   }
 
   @NotNull
@@ -337,6 +360,7 @@ public class FileUtilRt {
                                     boolean create, boolean deleteOnExit) throws IOException {
     File file = doCreateTempFile(dir, prefix, suffix, false);
     if (deleteOnExit) {
+      //noinspection SSBasedInspection
       file.deleteOnExit();
     }
     if (!create) {
@@ -365,7 +389,8 @@ public class FileUtilRt {
     int exceptionsCount = 0;
     while (true) {
       try {
-        final File temp = createTemp(prefix, suffix, dir, isDirectory);
+        // If there was an IOException, there's no reason to do sequential search - fallback to random
+        final File temp = createTemp(prefix, suffix, dir, isDirectory, exceptionsCount > 0);
         return normalizeFile(temp);
       }
       catch (IOException e) { // Win32 createFileExclusively access denied
@@ -377,7 +402,23 @@ public class FileUtilRt {
   }
 
   @NotNull
-  private static File createTemp(@NotNull String prefix, @NotNull String suffix, @NotNull File directory, boolean isDirectory) throws IOException {
+  private static File createTemp(@NotNull String prefix,
+                                 @NotNull String suffix,
+                                 @NotNull File directory,
+                                 boolean isDirectory,
+                                 boolean randomName) throws IOException {
+    // Fallback to the original File.createTempFile
+    if (randomName) {
+      @SuppressWarnings("SSBasedInspection")
+      File res = File.createTempFile(prefix, suffix, directory);
+      if (isDirectory) {
+        if (!res.delete() || !res.mkdir()) {
+          throw new IOException("Cannot create directory: " + res);
+        }
+      }
+      return res;
+    }
+
     // normalize and use only the file name from the prefix
     prefix = new File(prefix).getName();
 
@@ -677,7 +718,7 @@ public class FileUtilRt {
       logger().info(e);
       return false;
     }
-    return true;
+    return !file.exists();
   }
   
   private static boolean deleteRecursively(@NotNull File file) {
@@ -756,6 +797,7 @@ public class FileUtilRt {
     return path.isDirectory() || path.mkdirs();
   }
 
+  @SuppressWarnings("Duplicates")
   public static void copy(@NotNull File fromFile, @NotNull File toFile) throws IOException {
     if (!ensureCanCreateFile(toFile)) {
       return;

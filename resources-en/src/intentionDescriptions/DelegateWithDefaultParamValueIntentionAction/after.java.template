@@ -2,7 +2,8 @@ class Test {
   void foo(int a) {
     foo(a, <spot>|</spot>);
   }
-  void foo(int a, int b){
+
+  void foo(int a, int b) {
     //do smth
   }
 }

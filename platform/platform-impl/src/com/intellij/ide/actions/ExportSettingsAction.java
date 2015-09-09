@@ -191,7 +191,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
 
           int storageIndex;
           Storage[] storages = stateAnnotation.storages();
-          if (storages.length == 1 || (storages.length > 1 && stateAnnotation.storageChooser() == StateStorageChooser.class)) {
+          if (storages.length == 1) {
             storageIndex = 0;
           }
           else {

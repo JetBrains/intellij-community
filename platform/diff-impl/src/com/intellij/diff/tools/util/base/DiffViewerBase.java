@@ -21,9 +21,7 @@ import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffTaskQueue;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -33,14 +31,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   protected static final Logger LOG = Logger.getInstance(DiffViewerBase.class);
+
+  @NotNull private final List<DiffViewerListener> myListeners = new SmartList<DiffViewerListener>();
 
   @Nullable protected final Project myProject;
   @NotNull protected final DiffContext myContext;
@@ -66,6 +69,8 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     components.popupActions = createPopupActions();
     components.statusPanel = getStatusPanel();
 
+    fireEvent(EventType.INIT);
+
     rediff(true);
     return components;
   }
@@ -83,6 +88,8 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
         abortRediff();
         updateContextHints();
+
+        fireEvent(EventType.DISPOSE);
 
         onDispose();
       }
@@ -117,6 +124,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   public final void abortRediff() {
     myTaskExecutor.abort();
     myTaskAlarm.cancelAllRequests();
+    fireEvent(EventType.REDIFF_ABORTED);
   }
 
   @CalledInAwt
@@ -125,10 +133,11 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   }
 
   @CalledInAwt
-  public final void rediff(boolean trySync) {
+  public void rediff(boolean trySync) {
     if (isDisposed()) return;
     abortRediff();
 
+    fireEvent(EventType.BEFORE_REDIFF);
     onBeforeRediff();
 
     // most of performRediff implementations take ReadLock inside. If EDT is holding write lock - this will never happen,
@@ -140,8 +149,16 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     myTaskExecutor.executeAndTryWait(
       new Function<ProgressIndicator, Runnable>() {
         @Override
-        public Runnable fun(ProgressIndicator indicator) {
-          return performRediff(indicator);
+        public Runnable fun(final ProgressIndicator indicator) {
+          final Runnable callback = performRediff(indicator);
+          return new Runnable() {
+            @Override
+            public void run() {
+              callback.run();
+              onAfterRediff();
+              fireEvent(EventType.AFTER_REDIFF);
+            }
+          };
         }
       },
       new Runnable() {
@@ -186,14 +203,16 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     return myContext.isWindowFocused();
   }
 
-  @Nullable
   protected List<AnAction> createToolbarActions() {
-    return null;
+    List<AnAction> group = new ArrayList<AnAction>();
+    ContainerUtil.addAll(group, ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_TOOLBAR)).getChildren(null));
+    return group;
   }
 
-  @Nullable
   protected List<AnAction> createPopupActions() {
-    return null;
+    List<AnAction> group = new ArrayList<AnAction>();
+    ContainerUtil.addAll(group, ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_POPUP)).getChildren(null));
+    return group;
   }
 
   @Nullable
@@ -213,6 +232,10 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   protected void onBeforeRediff() {
   }
 
+  @CalledInAwt
+  protected void onAfterRediff() {
+  }
+
   @CalledInBackground
   @NotNull
   protected abstract Runnable performRediff(@NotNull ProgressIndicator indicator);
@@ -227,6 +250,48 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     return null;
   }
 
+  //
+  // Listeners
+  //
+
+  @CalledInAwt
+  public void addListener(@NotNull DiffViewerListener listener) {
+    myListeners.add(listener);
+  }
+
+  @CalledInAwt
+  public void removeListener(@NotNull DiffViewerListener listener) {
+    myListeners.remove(listener);
+  }
+
+  @NotNull
+  @CalledInAwt
+  protected List<DiffViewerListener> getListeners() {
+    return myListeners;
+  }
+
+  @CalledInAwt
+  private void fireEvent(@NotNull EventType type) {
+    for (DiffViewerListener listener : myListeners) {
+      switch (type) {
+        case INIT:
+          listener.onInit();
+          break;
+        case DISPOSE:
+          listener.onDispose();
+          break;
+        case BEFORE_REDIFF:
+          listener.onBeforeRediff();
+          break;
+        case AFTER_REDIFF:
+          listener.onAfterRediff();
+          break;
+        case REDIFF_ABORTED:
+          listener.onRediffAborted();
+          break;
+      }
+    }
+  }
 
   //
   // Helpers
@@ -247,5 +312,9 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     else {
       return null;
     }
+  }
+
+  private enum EventType {
+    INIT, DISPOSE, BEFORE_REDIFF, AFTER_REDIFF, REDIFF_ABORTED,
   }
 }

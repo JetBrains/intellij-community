@@ -28,7 +28,6 @@ import com.intellij.psi.filters.FilterPositionUtil;
  * To change this template use Options | File Templates.
  */
 public class LeftNeighbour extends PositionElementFilter{
-  public LeftNeighbour(){}
 
   public LeftNeighbour(ElementFilter filter){
     setFilter(filter);

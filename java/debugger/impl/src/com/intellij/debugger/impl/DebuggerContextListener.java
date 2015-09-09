@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 package com.intellij.debugger.impl;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 
 public interface DebuggerContextListener extends EventListener {
-  void changeEvent(DebuggerContextImpl newContext, DebuggerSession.Event event);
+  void changeEvent(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event);
 }

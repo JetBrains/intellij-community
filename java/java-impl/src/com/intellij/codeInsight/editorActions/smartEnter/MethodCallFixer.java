@@ -44,7 +44,7 @@ public class MethodCallFixer implements Fixer {
 
     if (args != null && !hasRParenth(args)) {
       int caret = editor.getCaretModel().getOffset();
-      PsiCallExpression innermostCall = PsiTreeUtil.findElementOfClassAtOffset(psiElement.getContainingFile(), caret, PsiCallExpression.class, false);
+      PsiCallExpression innermostCall = PsiTreeUtil.findElementOfClassAtOffset(psiElement.getContainingFile(), caret - 1, PsiCallExpression.class, false);
       if (innermostCall == null) return;
 
       args = innermostCall.getArgumentList();

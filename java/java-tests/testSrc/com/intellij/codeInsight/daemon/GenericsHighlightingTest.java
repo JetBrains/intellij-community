@@ -512,6 +512,18 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
   }
 
+  public void testWildcardsWithRawBound() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
+  }
+
+  public void testIDEA98866() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
+  }
+
+  public void testIDEA81318() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
+  }
+
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
     assertNotNull(collectionsClass);

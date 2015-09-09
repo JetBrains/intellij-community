@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
@@ -53,6 +50,7 @@ import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,6 +134,25 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
         }
       };
       Toolkit.getDefaultToolkit().addPropertyChangeListener("win.xpstyle.themeActive", myWindowsBorderUpdater);
+      if (!SystemInfo.isJavaVersionAtLeast("1.8")) {
+        final Ref<Dimension> myDimensionRef = new Ref<Dimension>(new Dimension());
+        final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+        final Runnable runnable = new Runnable() {
+          @Override
+          public void run() {
+            if (isDisplayable() && !getSize().equals(myDimensionRef.get())) {
+              Rectangle bounds = getBounds();
+              bounds.width--;
+              setBounds(bounds);
+              bounds.width++;
+              setBounds(bounds);
+              myDimensionRef.set(getSize());
+            }
+            alarm.addRequest(this, 50);
+          }
+        };
+        alarm.addRequest(runnable, 50);
+      }
     }
 
     IdeMenuBar.installAppMenuIfNeeded(this);
@@ -464,7 +481,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
       return;
     }
     MouseGestureManager.getInstance().remove(this);
-    WelcomeFrame.notifyFrameClosed(this);
 
     // clear both our and swing hard refs
     if (myRootPane != null) {
@@ -499,7 +515,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     if (!WindowManager.getInstance().isFullScreenSupportedInCurrentOS()) return;
 
     if (myProject != null) {
-      PropertiesComponent.getInstance(myProject).setValue(FULL_SCREEN, String.valueOf(state));
+      PropertiesComponent.getInstance(myProject).setValue(FULL_SCREEN, state);
       doLayout();
     }
   }
@@ -507,7 +523,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
   public static boolean shouldRestoreFullScreen(@Nullable Project project) {
     return WindowManager.getInstance().isFullScreenSupportedInCurrentOS() &&
            project != null &&
-           (SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE || PropertiesComponent.getInstance(project).getBoolean(FULL_SCREEN, false));
+           (SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE || PropertiesComponent.getInstance(project).getBoolean(FULL_SCREEN));
   }
 
   @Override

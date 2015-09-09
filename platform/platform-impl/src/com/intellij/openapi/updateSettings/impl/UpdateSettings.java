@@ -18,6 +18,7 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,7 +42,6 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
     @CollectionBean public final List<String> pluginHosts = new SmartList<String>();
     @CollectionBean public final List<String> knownUpdateChannels = new SmartList<String>();
     @CollectionBean public final List<String> ignoredBuildNumbers = new SmartList<String>();
-    @CollectionBean public final List<String> outdatedPlugins = new SmartList<String>();
 
     public boolean CHECK_NEEDED = true;
     public long LAST_TIME_CHECKED = 0;
@@ -100,13 +100,8 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
     myState.UPDATE_CHANNEL_TYPE = value;
   }
 
-  @NotNull
-  public List<String> getOutdatedPlugins() {
-    return myState.outdatedPlugins;
-  }
-
   private void updateDefaultChannel() {
-    if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
+    if (UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds() && ApplicationInfoImpl.getShadowInstance().isEAP()) {
       myState.UPDATE_CHANNEL_TYPE = ChannelStatus.EAP_CODE;
     }
   }

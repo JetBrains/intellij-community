@@ -15,9 +15,9 @@
  */
 package com.intellij.vcs.log.graph.impl.print;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
-import com.intellij.vcs.log.graph.SimplePrintElement;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 
 public abstract class AbstractPrintElementGenerator implements PrintElementGenerator {
 
@@ -45,30 +46,59 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
   public Collection<PrintElementWithGraphElement> getPrintElements(int rowIndex) {
     Collection<PrintElementWithGraphElement> result = new ArrayList<PrintElementWithGraphElement>();
 
+    Map<GraphEdge, SimpleRowElement> arrows = ContainerUtil.newHashMap();
+
+    for (SimpleRowElement rowElement : getSimpleRowElements(rowIndex)) {
+      if (!rowElement.myType.equals(RowElementType.NODE)) {
+        arrows.put((GraphEdge)rowElement.myElement, rowElement);
+      }
+    }
+
     if (rowIndex < myLinearGraph.nodesCount() - 1) {
       for (ShortEdge shortEdge : getDownShortEdges(rowIndex)) {
-        result.add(createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.DOWN));
+        RowElementType rowElementType = RowElementType.NODE;
+        if ((arrows.get(shortEdge.myEdge) != null) && RowElementType.DOWN_ARROW.equals(arrows.get(shortEdge.myEdge).myType)) {
+          rowElementType = RowElementType.DOWN_ARROW;
+          arrows.remove(shortEdge.myEdge);
+        }
+        result.add(createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.DOWN, !rowElementType.equals(RowElementType.NODE)));
       }
     }
 
     if (rowIndex > 0) {
       for (ShortEdge shortEdge : getDownShortEdges(rowIndex - 1)) {
-        result.add(createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.UP));
+        RowElementType rowElementType = RowElementType.NODE;
+        if ((arrows.get(shortEdge.myEdge) != null) && RowElementType.UP_ARROW.equals(arrows.get(shortEdge.myEdge).myType)) {
+          rowElementType = RowElementType.UP_ARROW;
+          arrows.remove(shortEdge.myEdge);
+        }
+        result.add(createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.UP, !rowElementType.equals(RowElementType.NODE)));
       }
     }
 
+    for (SimpleRowElement arrow : arrows.values()) {
+      result.add(new EdgePrintElementImpl(rowIndex, arrow.myPosition, arrow.myPosition,
+                                          arrow.myType == RowElementType.UP_ARROW ? EdgePrintElement.Type.UP : EdgePrintElement.Type.DOWN,
+                                          (GraphEdge)arrow.myElement, true, myPrintElementManager));
+    }
+
     for (SimpleRowElement rowElement : getSimpleRowElements(rowIndex)) {
-      result.add(createSimplePrintElement(rowIndex, rowElement));
+      if (rowElement.myType.equals(RowElementType.NODE)) {
+        result.add(createSimplePrintElement(rowIndex, rowElement));
+      }
     }
 
     return result;
   }
 
   private SimplePrintElementImpl createSimplePrintElement(int rowIndex, SimpleRowElement rowElement) {
-    return new SimplePrintElementImpl(rowIndex, rowElement.myPosition, rowElement.myType, rowElement.myElement, myPrintElementManager);
+    return new SimplePrintElementImpl(rowIndex, rowElement.myPosition, rowElement.myElement, myPrintElementManager);
   }
 
-  private EdgePrintElementImpl createEdgePrintElement(int rowIndex, @NotNull ShortEdge shortEdge, @NotNull EdgePrintElement.Type type) {
+  private EdgePrintElementImpl createEdgePrintElement(int rowIndex,
+                                                      @NotNull ShortEdge shortEdge,
+                                                      @NotNull EdgePrintElement.Type type,
+                                                      @NotNull boolean hasArrow) {
     int positionInCurrentRow, positionInOtherRow;
     if (type == EdgePrintElement.Type.DOWN) {
       positionInCurrentRow = shortEdge.myUpPosition;
@@ -78,7 +108,8 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
       positionInCurrentRow = shortEdge.myDownPosition;
       positionInOtherRow = shortEdge.myUpPosition;
     }
-    return new EdgePrintElementImpl(rowIndex, positionInCurrentRow, positionInOtherRow, type, shortEdge.myEdge, myPrintElementManager);
+    return new EdgePrintElementImpl(rowIndex, positionInCurrentRow, positionInOtherRow, type, shortEdge.myEdge, hasArrow,
+                                    myPrintElementManager);
   }
 
   @NotNull
@@ -116,13 +147,19 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
 
   protected static class SimpleRowElement {
     @NotNull public final GraphElement myElement;
-    @NotNull public final SimplePrintElement.Type myType;
+    @NotNull public final RowElementType myType;
     public final int myPosition;
 
-    public SimpleRowElement(@NotNull GraphElement element, @NotNull SimplePrintElement.Type type, int position) {
+    public SimpleRowElement(@NotNull GraphElement element, @NotNull RowElementType type, int position) {
       myElement = element;
       myPosition = position;
       myType = type;
     }
+  }
+
+  enum RowElementType {
+    NODE,
+    UP_ARROW,
+    DOWN_ARROW
   }
 }

@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -95,7 +96,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
         }
         result.addElement(element);
       }
-    }, new InheritorsHolder(parameters.getPosition(), result), result.getPrefixMatcher());
+    }, new InheritorsHolder(result), result.getPrefixMatcher());
   }
 
   private static void suggestChainedCalls(CompletionParameters parameters, CompletionResultSet result) {
@@ -116,9 +117,9 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
     String fullPrefix = position.getContainingFile().getText().substring(parent.getTextRange().getStartOffset(), parameters.getOffset());
     final CompletionResultSet qualifiedCollector = result.withPrefixMatcher(fullPrefix);
-    InheritorsHolder inheritors = new InheritorsHolder(position, result);
+    InheritorsHolder inheritors = new InheritorsHolder(result);
     for (final LookupElement base : suggestQualifierItems(parameters, (GrReferenceElement)qualifier, inheritors)) {
-      final PsiType type = JavaCompletionUtil.getLookupElementType(base);
+      final PsiType type = getPsiType(base.getObject());
       if (type != null && !PsiType.VOID.equals(type)) {
         GrReferenceElement ref = createMockReference(position, type, base);
         PsiElement refName = ref.getReferenceNameElement();
@@ -137,6 +138,24 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
         });
       }
     }
+  }
+
+  @Nullable
+  private static PsiType getPsiType(final Object o) {
+    if (o instanceof ResolveResult) {
+      return getPsiType(((ResolveResult)o).getElement());
+    }
+    if (o instanceof PsiVariable) {
+      return ((PsiVariable)o).getType();
+    }
+    else if (o instanceof PsiMethod) {
+      return ((PsiMethod)o).getReturnType();
+    }
+    else if (o instanceof PsiClass) {
+      final PsiClass psiClass = (PsiClass)o;
+      return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
+    }
+    return null;
   }
 
   private static GrReferenceElement createMockReference(final PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem) {

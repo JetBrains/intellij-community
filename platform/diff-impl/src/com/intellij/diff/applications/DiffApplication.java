@@ -21,18 +21,19 @@ import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.List;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class DiffApplication extends ApplicationStarterBase {
   @Override
   protected boolean checkArguments(@NotNull String[] args) {
-    return args.length == 3 && "diff".equals(args[0]);
+    return (args.length == 3 || args.length == 4) && "diff".equals(args[0]);
   }
 
   @Override
@@ -47,21 +48,18 @@ public class DiffApplication extends ApplicationStarterBase {
   }
 
   public void processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception {
-    // TODO: try to guess 'right' project ?
+    Project project = getProject();
 
-    final String path1 = args[1];
-    final String path2 = args[2];
+    List<String> filePaths = Arrays.asList(args).subList(1, args.length);
+    List<VirtualFile> files = findFiles(filePaths, currentDirectory);
 
-    final VirtualFile file1 = findFile(path1, currentDirectory);
-    final VirtualFile file2 = findFile(path2, currentDirectory);
-
-    if (file1 == null) throw new Exception("Can't find file " + path1);
-    if (file2 == null) throw new Exception("Can't find file " + path2);
-
-    VfsUtil.markDirtyAndRefresh(false, false, false, file1, file2);
-    DiffRequest request = DiffRequestFactory.getInstance().createFromFiles(null, file1, file2);
-
-    Project project = DefaultProjectFactory.getInstance().getDefaultProject();
+    DiffRequest request;
+    if (files.size() == 3) {
+      request = DiffRequestFactory.getInstance().createFromFiles(project, files.get(0), files.get(2), files.get(1));
+    }
+    else {
+      request = DiffRequestFactory.getInstance().createFromFiles(project, files.get(0), files.get(1));
+    }
     DiffManagerEx.getInstance().showDiffBuiltin(project, request, DiffDialogHints.MODAL);
   }
 }

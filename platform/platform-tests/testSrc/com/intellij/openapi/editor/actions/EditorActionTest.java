@@ -208,4 +208,18 @@ public class EditorActionTest extends AbstractEditorTest {
     left();
     checkResultByText("<selection><caret>ab</selection>c");
   }
+  
+  public void testDuplicateLinesWhenSelectionEndsAtLineStart() throws IOException {
+    initText("a\n<selection>b\n</selection>c");
+    executeAction(IdeActions.ACTION_EDITOR_DUPLICATE_LINES);
+    checkResultByText("a\nb\n<selection>b\n</selection>c");
+  }
+  
+  public void testSmartHomeAfterFoldedRegion() throws IOException {
+    initText(" text with [multiline\nfold region]<caret>");
+    foldOccurrences("(?s)\\[.*\\]", "...");
+    myEditor.getSettings().setSmartHome(true);
+    home();
+    checkResultByText(" <caret>text with [multiline\nfold region]");
+  }
 }

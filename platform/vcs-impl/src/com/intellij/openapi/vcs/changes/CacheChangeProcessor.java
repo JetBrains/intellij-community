@@ -74,11 +74,22 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   // Update
   //
 
+  @Override
+  protected void reloadRequest() {
+    updateRequest(true, false, null);
+  }
+
   @CalledInAwt
   public void updateRequest(final boolean force, @Nullable final ScrollToPolicy scrollToChangePolicy) {
+    updateRequest(force, true, scrollToChangePolicy);
+  }
+
+  @CalledInAwt
+  public void updateRequest(final boolean force, boolean useCache, @Nullable final ScrollToPolicy scrollToChangePolicy) {
+    if (isDisposed()) return;
     final Change change = myCurrentChange;
 
-    DiffRequest cachedRequest = loadRequestFast(change);
+    DiffRequest cachedRequest = loadRequestFast(change, useCache);
     if (cachedRequest != null) {
       applyRequest(cachedRequest, force, scrollToChangePolicy);
       return;
@@ -112,15 +123,17 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
 
   @Nullable
   @CalledInAwt
-  @Contract("null -> !null")
-  protected DiffRequest loadRequestFast(@Nullable Change change) {
+  @Contract("null, _ -> !null")
+  protected DiffRequest loadRequestFast(@Nullable Change change, boolean useCache) {
     if (change == null) return NoDiffRequest.INSTANCE;
 
-    Pair<Change, DiffRequest> pair = myRequestCache.get(change);
-    if (pair != null) {
-      Change oldChange = pair.first;
-      if (ChangeDiffRequestProducer.isEquals(oldChange, change)) {
-        return pair.second;
+    if (useCache) {
+      Pair<Change, DiffRequest> pair = myRequestCache.get(change);
+      if (pair != null) {
+        Change oldChange = pair.first;
+        if (ChangeDiffRequestProducer.isEquals(oldChange, change)) {
+          return pair.second;
+        }
       }
     }
 
@@ -148,6 +161,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
       return new ErrorDiffRequest(presentable, e);
     }
     catch (Exception e) {
+      LOG.warn(e);
       return new ErrorDiffRequest(presentable, e);
     }
   }

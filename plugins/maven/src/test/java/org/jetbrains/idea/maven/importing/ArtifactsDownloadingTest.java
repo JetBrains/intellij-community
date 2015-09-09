@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
 import java.util.Arrays;
@@ -253,26 +254,32 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
   }
 
   public void testDownloadingPlugins() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+    try {
+      importProject("<groupId>test</groupId>" +
+                    "<artifactId>project</artifactId>" +
+                    "<version>1</version>" +
 
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-surefire-plugin</artifactId>" +
-                  "      <version>2.4.2</version>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+                    "<build>" +
+                    "  <plugins>" +
+                    "    <plugin>" +
+                    "      <groupId>org.apache.maven.plugins</groupId>" +
+                    "      <artifactId>maven-surefire-plugin</artifactId>" +
+                    "      <version>2.4.2</version>" +
+                    "    </plugin>" +
+                    "  </plugins>" +
+                    "</build>");
 
-    File f = new File(getRepositoryPath(), "/org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar");
-    assertFalse(f.exists());
+      File f = new File(getRepositoryPath(), "/org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar");
+      assertFalse(f.exists());
 
-    resolvePlugins();
+      resolvePlugins();
 
-    assertTrue(f.exists());
+      assertTrue(f.exists());
+    }
+    finally {
+      // do not lock files by maven process
+      MavenServerManager.getInstance().shutdown(true);
+    }
   }
 
   public void testDownloadBuildExtensionsOnResolve() throws Exception {

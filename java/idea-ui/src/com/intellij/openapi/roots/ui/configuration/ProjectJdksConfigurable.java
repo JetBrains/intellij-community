@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,9 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -37,9 +34,9 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
+import com.intellij.ui.JBSplitter;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
@@ -53,11 +50,8 @@ import java.awt.*;
 import java.util.*;
 
 public class ProjectJdksConfigurable extends MasterDetailsComponent {
-
   private final ProjectSdksModel myProjectJdksModel;
   private final Project myProject;
-  @NonNls
-  private static final String SPLITTER_PROPORTION = "project.jdk.splitter";
 
   public ProjectJdksConfigurable(Project project) {
     this(project, ProjectStructureConfigurable.getInstance(project).getProjectJdksModel());
@@ -107,55 +101,41 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
       addNode(new MyNode(configurable), myRoot);
     }
     selectJdk(myProjectJdksModel.getProjectSdk()); //restore selection
-    final String value = PropertiesComponent.getInstance().getValue(SPLITTER_PROPORTION);
-    if (value != null) {
-      try {
-        final Splitter splitter = extractSplitter();
-        if (splitter != null) {
-          (splitter).setProportion(Float.parseFloat(value));
-        }
-      }
-      catch (NumberFormatException e) {
-        //do not set proportion
-      }
+
+    JBSplitter splitter = extractSplitter();
+    if (splitter != null) {
+      splitter.setAndLoadSplitterProportionKey("project.jdk.splitter");
     }
   }
 
   @Nullable
-  private Splitter extractSplitter() {
+  private JBSplitter extractSplitter() {
     final Component[] components = myWholePanel.getComponents();
-    if (components.length == 1 && components[0] instanceof Splitter) {
-      return (Splitter)components[0];
-    }
-    return null;
+    return components.length == 1 && components[0] instanceof JBSplitter ? (JBSplitter)components[0] : null;
   }
 
   @Override
   public void apply() throws ConfigurationException {
     final Ref<ConfigurationException> exceptionRef = Ref.create();
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      public void run() {
-        try {
-          ProjectJdksConfigurable.super.apply();
-          boolean modifiedJdks = false;
-          for (int i = 0; i < myRoot.getChildCount(); i++) {
-            final NamedConfigurable configurable = ((MyNode)myRoot.getChildAt(i)).getConfigurable();
-            if (configurable.isModified()) {
-              configurable.apply();
-              modifiedJdks = true;
-            }
-          }
-
-          if (myProjectJdksModel.isModified() || modifiedJdks) {
-            myProjectJdksModel.apply(ProjectJdksConfigurable.this);
-          }
-          myProjectJdksModel.setProjectSdk(getSelectedJdk());
-        }
-        catch (ConfigurationException e) {
-          exceptionRef.set(e);
+    try {
+      ProjectJdksConfigurable.super.apply();
+      boolean modifiedJdks = false;
+      for (int i = 0; i < myRoot.getChildCount(); i++) {
+        final NamedConfigurable configurable = ((MyNode)myRoot.getChildAt(i)).getConfigurable();
+        if (configurable.isModified()) {
+          configurable.apply();
+          modifiedJdks = true;
         }
       }
-    });
+
+      if (myProjectJdksModel.isModified() || modifiedJdks) {
+        myProjectJdksModel.apply(ProjectJdksConfigurable.this);
+      }
+      myProjectJdksModel.setProjectSdk(getSelectedJdk());
+    }
+    catch (ConfigurationException e) {
+      exceptionRef.set(e);
+    }
     if (!exceptionRef.isNull()) {
       throw exceptionRef.get();
     }
@@ -170,10 +150,6 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
 
   @Override
   public void disposeUIResources() {
-    final Splitter splitter = extractSplitter();
-    if (splitter != null) {
-      PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION, String.valueOf(splitter.getProportion()));
-    }
     myProjectJdksModel.disposeUIResources();
     super.disposeUIResources();
   }

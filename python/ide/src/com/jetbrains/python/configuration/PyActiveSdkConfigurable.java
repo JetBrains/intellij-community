@@ -34,6 +34,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,7 +45,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
@@ -256,8 +256,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   public boolean isModified() {
     final Sdk selectedItem = (Sdk)mySdkCombo.getSelectedItem();
     Sdk sdk = getSdk();
-    sdk = sdk == null ? null : myProjectSdksModel.findSdk(sdk.getName());
-    return selectedItem instanceof PyDetectedSdk || sdk != selectedItem || mySdkSettingsWereModified;
+    final Sdk selectedSdk = selectedItem == null ? null : myProjectSdksModel.findSdk(selectedItem);
+    return selectedItem instanceof PyDetectedSdk || !Comparing.equal(sdk, selectedSdk) || mySdkSettingsWereModified;
   }
 
   @Nullable
@@ -273,7 +273,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   public void apply() throws ConfigurationException {
     try {
       final Sdk item = (Sdk)mySdkCombo.getSelectedItem();
-      Sdk newSdk = item;
+      Sdk newSdk = item == null ? null : myProjectSdksModel.findSdk(item);
       if (item instanceof PyDetectedSdk) {
         VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
           @Override
@@ -281,16 +281,15 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
             return LocalFileSystem.getInstance().refreshAndFindFileByPath(item.getName());
           }
         });
-        newSdk = SdkConfigurationUtil.setupSdk(myProjectSdksModel.getSdks(), sdkHome, PythonSdkType.getInstance(), true, null, null);
+        newSdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
         if (newSdk != null) {
           myProjectSdksModel.addSdk(newSdk);
           updateSdkList(false);
+          myProjectSdksModel.apply();
         }
         PySdkService.getInstance().solidifySdk(item);
       }
-      myProjectSdksModel.apply();
-      newSdk = newSdk == null ? null : myProjectSdksModel.findSdk(newSdk.getName());
-      mySdkCombo.getModel().setSelectedItem(newSdk);
+      mySdkCombo.getModel().setSelectedItem(newSdk == null ? null : myProjectSdksModel.findSdk(newSdk.getName()));
 
       final Sdk prevSdk = getSdk();
       setSdk(newSdk);
@@ -316,11 +315,10 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   private void setSdk(final Sdk item) {
-    final ProjectRootManager rootManager = ProjectRootManager.getInstance(myProject);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        rootManager.setProjectSdk(item);
+        ProjectRootManager.getInstance(myProject).setProjectSdk(item);
       }
     });
     if (myModule != null) {

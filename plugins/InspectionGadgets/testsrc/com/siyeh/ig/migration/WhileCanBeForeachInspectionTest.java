@@ -1,11 +1,18 @@
 package com.siyeh.ig.migration;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class WhileCanBeForeachInspectionTest extends IGInspectionTestCase {
+public class WhileCanBeForeachInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/migration/while_can_be_foreach",
-           new WhileCanBeForeachInspection());
+  public void testWhileCanBeForeach() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new WhileCanBeForeachInspection();
   }
 }

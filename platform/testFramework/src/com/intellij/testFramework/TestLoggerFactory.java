@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.io.StringReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,6 +39,8 @@ public class TestLoggerFactory implements Logger.Factory {
   private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";
   private static final String LOG_DIR_MACRO = "$LOG_DIR$";
   private static final String LOG_DIR = "testlog";
+  private static final long LOG_SIZE_LIMIT = 100 * 1024 * 1024;
+  private static final long LOG_SEEK_WINDOW = 100 * 1024;
 
   private boolean myInitialized = false;
 
@@ -84,6 +87,11 @@ public class TestLoggerFactory implements Logger.Factory {
         throw e;
       }
 
+      File ideaLog = new File(getTestLogDir(), "idea.log");
+      if (ideaLog.exists() && ideaLog.length() >= LOG_SIZE_LIMIT) {
+        FileUtil.writeToFile(ideaLog, "");
+      }
+
       myInitialized = true;
     }
     catch (Exception e) {
@@ -99,7 +107,25 @@ public class TestLoggerFactory implements Logger.Factory {
     File ideaLog = new File(getTestLogDir(), "idea.log");
     if (ideaLog.exists()) {
       try {
-        String logText = FileUtil.loadFile(ideaLog);
+        long length = ideaLog.length();
+        String logText;
+
+        if (length > LOG_SEEK_WINDOW) {
+          RandomAccessFile file = new RandomAccessFile(ideaLog, "r");
+          try {
+            file.seek(length - LOG_SEEK_WINDOW);
+            byte[] bytes = new byte[(int)LOG_SEEK_WINDOW];
+            int read = file.read(bytes);
+            logText = new String(bytes, 0, read);
+          }
+          finally {
+            file.close();
+          }
+        }
+        else {
+          logText = FileUtil.loadFile(ideaLog);
+        }
+
         Pattern logStart = Pattern.compile("[0-9\\-, :\\[\\]]+(DEBUG|INFO|ERROR) - ");
         System.out.println("\n\nIdea Log:");
         for (String line : StringUtil.splitByLines(logText.substring(Math.max(0, logText.lastIndexOf(testStartMarker))))) {

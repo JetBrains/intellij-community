@@ -15,14 +15,13 @@
  */
 package com.jetbrains.reactiveidea
 
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.StaticGetter
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.ActionStepBuilder
@@ -127,7 +126,7 @@ public class ModelPopupFactory : JBPopupFactory() {
         builder.buildGroup(actionGroup)
         val items = builder.getItems()
 
-        return ActionPopupStep(items, title, dataContext, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items), preselectActionCondition, false, showDisabledActions)
+        return ActionPopupStep(items, title, StaticGetter<DataContext?>(dataContext), showNumbers || honorActionMnemonics && itemsHaveMnemonics(items), preselectActionCondition, false, showDisabledActions)
       }
     }
 

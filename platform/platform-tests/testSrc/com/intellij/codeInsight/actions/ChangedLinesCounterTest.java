@@ -47,7 +47,7 @@ public class ChangedLinesCounterTest extends LightPlatformCodeInsightFixtureTest
     file = myFixture.getFile();
     Document document = myFixture.getDocument(file);
 
-    int linesChanged = FormatChangedTextUtil.calculateChangedLinesNumber(document, revisionContent);
+    int linesChanged = FormatChangedTextUtil.getInstance().calculateChangedLinesNumber(document, revisionContent);
     Assert.assertTrue(linesChanged > 0);
     Assert.assertEquals(expectedLinesChanged, linesChanged);
   }

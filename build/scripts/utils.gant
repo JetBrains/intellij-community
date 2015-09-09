@@ -18,6 +18,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
+import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -337,6 +338,7 @@ binding.setVariable("commonJvmArgsForTests", {
 
   return [
     "-ea",
+    "-Dfile.encoding=UTF-8",
     "-Dio.netty.leakDetectionLevel=PARANOID",
     "-server",
     "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
@@ -727,7 +729,7 @@ binding.setVariable("zipSources", { String home, String targetDir ->
   ant.delete(file: sources)
   ant.zip(destfile: sources) {
     fileset(dir: home) {
-      ["java", "groovy", "ipr", "iml", "form", "xml", "properties"].each {
+      ["java", "groovy", "ipr", "iml", "form", "xml", "properties", "kt"].each {
         include(name: "**/*.$it")
       }
       exclude(name: "**/testData/**")
@@ -737,7 +739,7 @@ binding.setVariable("zipSources", { String home, String targetDir ->
   notifyArtifactBuilt(sources)
 })
 
-binding.setVariable("zipSourcesOfModules", { String home, String targetFilePath, Collection<String> modules ->
+binding.setVariable("zipSourcesOfModules", { String targetFilePath, Collection<String> modules ->
   projectBuilder.stage("zip sources of ${modules.size()} modules to $targetFilePath")
 
   ant.mkdir(dir: new File(targetFilePath).getParent())
@@ -745,8 +747,11 @@ binding.setVariable("zipSourcesOfModules", { String home, String targetFilePath,
   ant.zip(destfile: targetFilePath) {
     modules.each {
       JpsModule module = findModule(it)
-      module.getSourceRoots(JavaSourceRootType.SOURCE).flatten().collect {it.file}.each { File srcRoot ->
-        zipfileset(prefix: module.name, dir: srcRoot.absolutePath)
+      module.getSourceRoots(JavaSourceRootType.SOURCE).each { root ->
+        ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false)
+      }
+      module.getSourceRoots(JavaResourceRootType.RESOURCE).each { root ->
+        ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.relativeOutputPath, erroronmissingdir: false)
       }
     }
   }

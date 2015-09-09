@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,6 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.WatchedRootsProvider;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -57,7 +55,6 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
     final Element outputPathChild = element.getChild(OUTPUT_TAG);
     if (outputPathChild != null) {
       String outputPath = outputPathChild.getAttributeValue(URL);
-      assert myCompilerOutput == null;
       myCompilerOutput = VirtualFilePointerManager.getInstance().create(outputPath, myProject, null);
     }
   }
@@ -137,12 +134,12 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
     }
 
     @Override
-    public void readExternal(final Element element) throws InvalidDataException {
+    public void readExternal(@NotNull Element element) {
       getImpl(myProject).readExternal(element);
     }
 
     @Override
-    public void writeExternal(final Element element) throws WriteExternalException {
+    public void writeExternal(@NotNull Element element) {
       getImpl(myProject).writeExternal(element);
     }
   }

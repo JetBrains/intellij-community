@@ -55,6 +55,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
   private final Project myProject;
   private Map<String, IpnbConnection> myKernels = new HashMap<String, IpnbConnection>();
   private Map<String, IpnbCodePanel> myUpdateMap = new HashMap<String, IpnbCodePanel>();
+
   public IpnbConnectionManager(final Project project) {
     myProject = project;
   }
@@ -191,7 +192,8 @@ public final class IpnbConnectionManager implements ProjectComponent {
           }
           catch (URISyntaxException e) {
             if (showNotification) {
-              showWarning(codePanel.getFileEditor(), "Please, check IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
+              showWarning(codePanel.getFileEditor(),
+                          "Please, check IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
                           new IpnbSettingsAdapter());
               LOG.warn("IPython Notebook connection refused: " + e.getMessage());
             }
@@ -263,7 +265,6 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     catch (ExecutionException ignored) {
     }
-    final Map<String, String> env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
 
     final Pair<String, String> hostPort = getHostPortFromUrl(url);
     if (hostPort == null) {
@@ -271,8 +272,19 @@ public final class IpnbConnectionManager implements ProjectComponent {
                   new IpnbSettingsAdapter());
       return false;
     }
-    final String ipython = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
-    final ArrayList<String> parameters = Lists.newArrayList(sdk.getHomePath(), ipython, "notebook", "--no-browser");
+    final String homePath = sdk.getHomePath();
+    if (homePath == null) {
+      showWarning(fileEditor, "Python Sdk is invalid, please check Python Interpreter in Settings->Python Interpreter", null);
+      return false;
+    }
+    String ipython = findIPythonRunner(homePath);
+    Map<String, String> env = null;
+    if (ipython == null) {
+      ipython = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
+      env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
+    }
+
+    final ArrayList<String> parameters = Lists.newArrayList(homePath, ipython, "notebook", "--no-browser");
     if (hostPort.getFirst() != null) {
       parameters.add("--ip");
       parameters.add(hostPort.getFirst());
@@ -281,8 +293,10 @@ public final class IpnbConnectionManager implements ProjectComponent {
       parameters.add("--port");
       parameters.add(hostPort.getSecond());
     }
-    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(myProject.getBasePath()).
-      withEnvironment(env);
+    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(myProject.getBasePath());
+    if (env != null) {
+      commandLine.withEnvironment(env);
+    }
 
     try {
       final KillableColoredProcessHandler processHandler = new KillableColoredProcessHandler(commandLine) {
@@ -332,6 +346,18 @@ public final class IpnbConnectionManager implements ProjectComponent {
   }
 
   @Nullable
+  private static String findIPythonRunner(String homePath) {
+    for (String name : Lists.newArrayList("ipython", "ipython-script.py")) {
+      String runnerPath = PythonSdkType.getExecutablePath(homePath, name);
+      if (runnerPath != null) {
+        return runnerPath;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
   public static Pair<String, String> getHostPortFromUrl(@NotNull String url) {
     try {
       final URI uri = new URI(url);
@@ -343,7 +369,8 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
   }
 
-  public void projectOpened() {}
+  public void projectOpened() {
+  }
 
 
   public void projectClosed() {

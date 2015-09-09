@@ -127,6 +127,24 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
+        public void visitField(PsiField field) {
+          TextRange range = field.getTextRange();
+          if (lineRange.intersects(range)) {
+            //textRange.set(textRange.get().union(range));
+            super.visitField(field);
+          }
+        }
+
+        @Override
+        public void visitMethod(PsiMethod method) {
+          TextRange range = method.getTextRange();
+          if (lineRange.intersects(range)) {
+            //textRange.set(textRange.get().union(range));
+            super.visitMethod(method);
+          }
+        }
+
+        @Override
         public void visitStatement(PsiStatement statement) {
           TextRange range = statement.getTextRange();
           if (lineRange.intersects(range)) {

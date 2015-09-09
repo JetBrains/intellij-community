@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ import com.intellij.remote.RemoteSshProcess;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.PathMappingSettings;
+import com.intellij.util.PathMapper;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
@@ -87,6 +87,7 @@ import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PySourcePosition;
+import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSdkCredentials;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
@@ -156,17 +157,16 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     myStatementsToExecute = statementsToExecute;
   }
 
-  public static PathMappingSettings getMappings(Project project, Sdk sdk) {
-    PathMappingSettings mappingSettings = null;
+  @Nullable
+  public static PathMapper getPathMapper(Project project, Sdk sdk) {
     if (PySdkUtil.isRemote(sdk)) {
       PythonRemoteInterpreterManager instance = PythonRemoteInterpreterManager.getInstance();
       if (instance != null) {
         //noinspection ConstantConditions
-        mappingSettings =
-          instance.setupMappings(project, (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData(), null);
+        return instance.setupMappings(project, (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData(), null);
       }
     }
-    return mappingSettings;
+    return null;
   }
 
   @NotNull
@@ -446,10 +446,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       myCommandLine = myCommandLineArgumentsProvider.getCommandLineString();
       Map<String, String> envs = myCommandLineArgumentsProvider.getAdditionalEnvs();
       if (envs != null) {
-        EncodingEnvironmentUtil.fixDefaultEncodingIfMac(envs, getProject());
+        EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, EncodingProjectManager.getInstance(getProject()).getDefaultCharset());
       }
-      final Process server = ProcessRunner
-        .createProcess(getWorkingDir(), envs, myCommandLineArgumentsProvider.getArguments());
+      Process server = ProcessRunner.createProcess(getWorkingDir(), envs, myCommandLineArgumentsProvider.getArguments());
       try {
         myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], server, myPorts[1]);
       }
@@ -483,10 +482,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
     try {
       myRemoteCredentials = data.getRemoteSdkCredentials(true);
-      PathMappingSettings mappings = manager.setupMappings(getProject(), data, null);
+      PyRemotePathMapper pathMapper = manager.setupMappings(getProject(), data, null);
 
       RemoteSshProcess remoteProcess =
-        manager.createRemoteProcess(getProject(), myRemoteCredentials, mappings, commandLine, true);
+        manager.createRemoteProcess(getProject(), myRemoteCredentials, pathMapper, commandLine, true);
 
 
       Couple<Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);

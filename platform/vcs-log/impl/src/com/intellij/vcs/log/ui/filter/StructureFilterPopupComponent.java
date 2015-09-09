@@ -16,8 +16,10 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SizedIcon;
@@ -39,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.List;
 
@@ -221,7 +224,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     }
   }
 
-  private class SelectVisibleRootAction extends ToggleAction {
+  private class SelectVisibleRootAction extends ToggleAction implements DumbAware, KeepingPopupOpenAction {
     @NotNull private final CheckboxColorIcon myIcon;
     @NotNull private final VirtualFile myRoot;
 
@@ -243,7 +246,12 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
         setVisibleOnly(myRoot);
       }
       else {
-        setVisible(myRoot, state);
+        if ((e.getModifiers() & InputEvent.CTRL_MASK) != 0) {
+            setVisibleOnly(myRoot);
+        }
+        else {
+          setVisible(myRoot, state);
+        }
       }
     }
 
@@ -251,9 +259,13 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
 
-      Presentation presentation = e.getPresentation();
-      myIcon.prepare(isSelected(e) && isEnabled());
-      presentation.setIcon(myIcon);
+      updateIcon();
+      e.getPresentation().setIcon(myIcon);
+      e.getPresentation().putClientProperty(TOOL_TIP_TEXT_KEY, "Ctrl+Click to see only \"" + e.getPresentation().getText() + "\"");
+    }
+
+    private void updateIcon() {
+      myIcon.prepare(isVisible(myRoot) && isEnabled());
     }
 
     private boolean isEnabled() {

@@ -15,7 +15,8 @@
  */
 package com.intellij.xml.breadcrumbs;
 
-import com.intellij.application.options.editor.WebEditorOptions;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
@@ -54,21 +55,17 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
   public void initComponent() {
     MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyFileEditorManagerListener());
-    connection.subscribe(WebEditorOptions.WEB_EDITOR_OPTIONS, new MyWebEditorOptionsListener());
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
 
     MyVirtualFileListener listener = new MyVirtualFileListener();
     VirtualFileManager.getInstance().addVirtualFileListener(listener, myProject);
-  }
-
-  private static boolean isEnabled(@NotNull WebEditorOptions options) {
-    return options.isBreadcrumbsEnabled() || options.isBreadcrumbsEnabledInXml();
+    UISettings.getInstance().addUISettingsListener(new MyUISettingsListener(), myProject);
   }
 
   private static class MyFileEditorManagerListener extends FileEditorManagerAdapter {
     @Override
     public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file) {
-      reinitBreadcrumbsComponent(source, file, WebEditorOptions.getInstance());
+      reinitBreadcrumbsComponent(source, file);
     }
   }
 
@@ -79,37 +76,35 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
         FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
         VirtualFile file = event.getFile();
         if (fileEditorManager.isFileOpen(file)) {
-          reinitBreadcrumbsComponent(fileEditorManager, file, WebEditorOptions.getInstance());
+          reinitBreadcrumbsComponent(fileEditorManager, file);
         }
       }
-    }
-  }
-
-  private class MyWebEditorOptionsListener implements WebEditorOptions.WebEditorOptionsListener {
-    @Override
-    public void breadcrumbsOptionsChanged(@NotNull WebEditorOptions options) {
-      reinitBreadcrumbsInAllEditors(options);
     }
   }
 
   private class MyFileTypeListener extends FileTypeListener.Adapter {
     @Override
     public void fileTypesChanged(@NotNull FileTypeEvent event) {
-      reinitBreadcrumbsInAllEditors(WebEditorOptions.getInstance());
+      reinitBreadcrumbsInAllEditors();
     }
   }
 
-  private void reinitBreadcrumbsInAllEditors(@NotNull WebEditorOptions options) {
+  private class MyUISettingsListener implements UISettingsListener {
+    @Override
+    public void uiSettingsChanged(UISettings source) {
+      reinitBreadcrumbsInAllEditors();
+    }
+  }
+
+  private void reinitBreadcrumbsInAllEditors() {
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
     for (VirtualFile virtualFile : fileEditorManager.getOpenFiles()) {
-      reinitBreadcrumbsComponent(fileEditorManager, virtualFile, options);
+      reinitBreadcrumbsComponent(fileEditorManager, virtualFile);
     }
   }
 
-  private static void reinitBreadcrumbsComponent(@NotNull final FileEditorManager fileEditorManager,
-                                                 @NotNull VirtualFile file,
-                                                 @NotNull WebEditorOptions webEditorOptions) {
-    if (isEnabled(webEditorOptions) && isSuitable(fileEditorManager.getProject(), file, webEditorOptions)) {
+  private static void reinitBreadcrumbsComponent(@NotNull final FileEditorManager fileEditorManager, @NotNull VirtualFile file) {
+    if (isSuitable(fileEditorManager.getProject(), file)) {
       FileEditor[] fileEditors = fileEditorManager.getAllEditors(file);
       for (final FileEditor fileEditor : fileEditors) {
         if (fileEditor instanceof TextEditor) {
@@ -117,7 +112,7 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
           if (BreadcrumbsXmlWrapper.getBreadcrumbsComponent(editor) != null) {
             continue;
           }
-          final BreadcrumbsXmlWrapper wrapper = new BreadcrumbsXmlWrapper(editor, webEditorOptions);
+          final BreadcrumbsXmlWrapper wrapper = new BreadcrumbsXmlWrapper(editor);
           final JComponent c = wrapper.getComponent();
           fileEditorManager.addTopComponent(fileEditor, c);
 
@@ -148,13 +143,13 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
     }
   }
 
-  private static boolean isSuitable(@NotNull Project project, @NotNull VirtualFile file, @NotNull WebEditorOptions webEditorOptions) {
+  private static boolean isSuitable(@NotNull Project project, @NotNull VirtualFile file) {
     if (file instanceof HttpVirtualFile) {
       return false;
     }
 
     final FileViewProvider provider = PsiManager.getInstance(project).findViewProvider(file);
-    return provider != null && BreadcrumbsXmlWrapper.findInfoProvider(provider, webEditorOptions) != null;
+    return provider != null && BreadcrumbsXmlWrapper.findInfoProvider(provider) != null;
   }
 
   private static void disposeWrapper(@NotNull FileEditorManager fileEditorManager,
