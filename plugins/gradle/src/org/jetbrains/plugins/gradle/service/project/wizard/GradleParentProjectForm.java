@@ -84,6 +84,11 @@ public class GradleParentProjectForm {
     return myPanel;
   }
 
+  @Nullable
+  public ProjectData getParentProject() {
+    return myParent;
+  }
+
   public void updateComponents() {
     myParentPathField.setText(myParent == null ? EMPTY_PARENT : myParent.getLinkedExternalProjectPath());
     collapseIfPossible(myParentPathField, GradleConstants.SYSTEM_ID, getProject());
