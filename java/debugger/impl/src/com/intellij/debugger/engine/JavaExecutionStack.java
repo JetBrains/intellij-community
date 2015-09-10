@@ -98,6 +98,7 @@ public class JavaExecutionStack extends XExecutionStack {
 
   @Override
   public void computeStackFrames(final int firstFrameIndex, final XStackFrameContainer container) {
+    if (container.isObsolete()) return;
     myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(myDebugProcess.getDebuggerContext().getSuspendContext()) {
       @Override
       public Priority getPriority() {
@@ -106,6 +107,7 @@ public class JavaExecutionStack extends XExecutionStack {
 
       @Override
       public void contextAction() throws Exception {
+        if (container.isObsolete()) return;
         if (!myThreadProxy.isCollected() && myDebugProcess.getSuspendManager().isSuspended(myThreadProxy)) {
           int status = myThreadProxy.status();
           if (!(status == ThreadReference.THREAD_STATUS_UNKNOWN) &&
@@ -157,6 +159,7 @@ public class JavaExecutionStack extends XExecutionStack {
 
     @Override
     public void contextAction() throws Exception {
+      if (myContainer.isObsolete()) return;
       if (myStackFramesIterator.hasNext()) {
         JavaStackFrame frame;
         boolean first = myAdded == 0;
