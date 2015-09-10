@@ -23,6 +23,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -380,9 +382,17 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private void removeSdk() {
     final Sdk currentSdk = getSelectedSdk();
     if (currentSdk != null) {
+      final Sdk sdk = myProjectSdksModel.findSdk(currentSdk);
       final PySdkService sdkService = PySdkService.getInstance();
       sdkService.removeSdk(currentSdk);
-      myProjectSdksModel.removeSdk(currentSdk);
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
+        @Override
+        public void run() {
+          SdkConfigurationUtil.removeSdk(sdk);
+        }
+      });
+
+      myProjectSdksModel.removeSdk(sdk);
       if (myModificators.containsKey(currentSdk)) {
         SdkModificator modificator = myModificators.get(currentSdk);
         myModifiedModificators.remove(modificator);
@@ -434,23 +444,12 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
     @Override
     public boolean isEnabled() {
-      return getSelectedSdk() != null;
+      return getSelectedSdk() != null && !(getSelectedSdk() instanceof PyDetectedSdk);
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
       Sdk sdk = getSelectedSdk();
-      if (sdk instanceof PyDetectedSdk) {
-        final String sdkName = sdk.getName();
-        VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-          @Override
-          public VirtualFile compute() {
-            return LocalFileSystem.getInstance().refreshAndFindFileByPath(sdkName);
-          }
-        });
-        sdk =
-          SdkConfigurationUtil.setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, PythonSdkType.getInstance(), true, null, null);
-      }
       final PythonPathEditor pathEditor = createPathEditor(sdk);
       final SdkModificator sdkModificator = myModificators.get(sdk);
 
