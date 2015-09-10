@@ -24,6 +24,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
@@ -148,7 +149,9 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
               DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
                 @Override
                 public void run() {
-                  SdkConfigurationUtil.addSdk(sdk);
+                  if (ProjectJdkTable.getInstance().findJdk(sdk.getName()) == null) {
+                    SdkConfigurationUtil.addSdk(sdk);
+                  }
                   PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
                 }
               });
