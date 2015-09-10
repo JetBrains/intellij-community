@@ -23,10 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.VcsCacheableAnnotationProvider;
-import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
-import com.intellij.openapi.vcs.changes.ChangeProvider;
-import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
@@ -257,10 +254,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return true;
   }
 
-  public boolean needsLastUnchangedContent() {
-    return false;
-  }
-
   /**
    * This method is called when user invokes "Enable VCS Integration" and selects a particular VCS.
    * By default it sets up a single mapping {@code <Project> -> selected VCS}.
@@ -271,6 +264,17 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     if (vcsManager != null) {
       vcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", getName())));
     }
+  }
+
+  /**
+   * Invoked when a changelist is deleted explicitly by user or implicitly (e.g. after default changelist switch when the previous one was empty).
+   * @return null if the VCS doesn't object to the deletion. A Boolean object indicating the permission to remove if a dialog was shown asking the user whether
+   * the changelist really is to be removed.
+   */
+  @CalledInAwt
+  @Nullable 
+  public Boolean mayRemoveChangeList(@NotNull LocalChangeList list) {
+    return null;
   }
 
   public boolean isTrackingUnchangedContent() {
