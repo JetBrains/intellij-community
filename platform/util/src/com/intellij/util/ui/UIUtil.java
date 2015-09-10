@@ -27,8 +27,8 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FilteredTraverser;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.WeakHashMap;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -2609,8 +2609,8 @@ public class UIUtil {
   }
 
   @NotNull
-  public static FilteredTraverser<Component> uiTraverser() {
-    return new FilteredTraverser<Component>(COMPONENT_CHILDREN);
+  public static JBTreeTraverser<Component> uiTraverser() {
+    return new JBTreeTraverser<Component>(COMPONENT_CHILDREN);
   }
 
   public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
