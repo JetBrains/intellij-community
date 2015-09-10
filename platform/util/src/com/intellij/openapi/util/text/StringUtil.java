@@ -254,16 +254,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static int indexOfIgnoreCase(@NotNull String where, char what, int fromIndex) {
     int sourceCount = where.length();
-
-    if (fromIndex >= sourceCount) {
-      return -1;
-    }
-
-    if (fromIndex < 0) {
-      fromIndex = 0;
-    }
-
-    for (int i = fromIndex; i < sourceCount; i++) {
+    for (int i = max(fromIndex, 0); i < sourceCount; i++) {
       if (charsEqualIgnoreCase(where.charAt(i), what)) {
         return i;
       }
@@ -1891,10 +1882,8 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence s, char c, int start, int end) {
-    final int n = s.length();
-    if (start < 0) start = 0;
-    if (end > n) end = n;
-    for (int i = start; i < end; i++) {
+    end = min(end, s.length());
+    for (int i = max(start, 0); i < end; i++) {
       if (s.charAt(i) == c) return i;
     }
     return -1;
@@ -1922,10 +1911,8 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence s, char c, int start, int end, boolean caseSensitive) {
-    final int n = s.length();
-    if (start < 0) start = 0;
-    if (end > n) end = n;
-    for (int i = start; i < end; i++) {
+    end = min(end, s.length());
+    for (int i = max(start, 0); i < end; i++) {
       if (charsMatch(s.charAt(i), c, !caseSensitive)) return i;
     }
     return -1;
@@ -1933,10 +1920,8 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull char[] s, char c, int start, int end, boolean caseSensitive) {
-    final int n = s.length;
-    if (start < 0) start = 0;
-    if (end > n) end = n;
-    for (int i = start; i < end; i++) {
+    end = min(end, s.length);
+    for (int i = max(start, 0); i < end; i++) {
       if (charsMatch(s[i], c, !caseSensitive)) return i;
     }
     return -1;
@@ -1965,9 +1950,9 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static int indexOfAny(@NotNull final CharSequence s, @NotNull final String chars, final int start, final int end) {
-    final int n = s.length();
-    for (int i = max(start,0); i < min(end,n); i++) {
+  public static int indexOfAny(@NotNull final CharSequence s, @NotNull final String chars, final int start, int end) {
+    end = min(end, s.length());
+    for (int i = max(start, 0); i < end; i++) {
       if (containsChar(chars, s.charAt(i))) return i;
     }
     return -1;

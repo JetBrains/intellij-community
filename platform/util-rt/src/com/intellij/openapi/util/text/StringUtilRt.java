@@ -294,10 +294,8 @@ public class StringUtilRt {
    */
   @Contract(pure = true)
   public static int lastIndexOf(@NotNull CharSequence s, char c, int start, int end) {
-    final int n = s.length();
-    if (start < 0) start = 0;
-    if (end > n) end = n;
-    for (int i = end - 1; i >= start; i--) {
+    start = Math.max(start, 0);
+    for (int i = Math.min(end, s.length()) - 1; i >= start; i--) {
       if (s.charAt(i) == c) return i;
     }
     return -1;
