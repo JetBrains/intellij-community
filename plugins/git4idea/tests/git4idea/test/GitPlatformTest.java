@@ -67,7 +67,7 @@ public abstract class GitPlatformTest extends PlatformTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    myTestRoot = new File(FileUtil.getTempDirectory());
+    myTestRoot = new File(FileUtil.getTempDirectory(), "testRoot");
     myFilesToDelete.add(myTestRoot);
 
     edt(new ThrowableRunnable() {
