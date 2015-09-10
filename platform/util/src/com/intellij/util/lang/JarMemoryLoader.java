@@ -18,7 +18,6 @@ package com.intellij.util.lang;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
@@ -41,17 +40,6 @@ public class JarMemoryLoader {
 
   public Resource getResource(String entryName) {
     return myResources.remove(entryName);
-  }
-
-  @Nullable
-  public static JarMemoryLoader load(File file, URL baseUrl) throws IOException {
-    ZipFile zipFile = new ZipFile(file);
-    try {
-      return load(zipFile, baseUrl);
-    }
-    finally {
-      zipFile.close();
-    }
   }
 
   @Nullable
