@@ -391,20 +391,17 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
 
       jar("artifact-resolver-m2.jar") {
         module("maven-artifact-resolver-m2")
+        module("maven-artifact-resolver-common")
       }
 
       jar("artifact-resolver-m3.jar") {
         module("maven-artifact-resolver-m3")
-        module("maven-artifact-resolver-m2") {
-          include(name: 'org/jetbrains/idea/maven/artifactResolver/common/*')
-        }
+        module("maven-artifact-resolver-common")
       }
 
       jar("artifact-resolver-m31.jar") {
         module("maven-artifact-resolver-m31")
-        module("maven-artifact-resolver-m2") {
-          include(name: 'org/jetbrains/idea/maven/artifactResolver/common/*')
-        }
+        module("maven-artifact-resolver-common")
       }
 
       dir("maven3-server-lib") {
