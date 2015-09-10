@@ -33,6 +33,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
@@ -295,7 +296,7 @@ public class ClassRenderer extends NodeRendererImpl{
         return null;
       }
     }
-    while (!("java.lang.Enum".equals(classType.name())));
+    while (!(CommonClassNames.JAVA_LANG_ENUM.equals(classType.name())));
     //noinspection HardCodedStringLiteral
     final Field field = classType.fieldByName("name");
     if (field == null) {
