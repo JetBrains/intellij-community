@@ -636,7 +636,6 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
         }
 
         fileset(dir: "${home}/plugins/coverage-common/lib") {
-          exclude(name: "finder.jar")
           exclude(name: "**/coverage-src.zip")
         }
 
