@@ -444,23 +444,12 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
     @Override
     public boolean isEnabled() {
-      return getSelectedSdk() != null;
+      return getSelectedSdk() != null && !(getSelectedSdk() instanceof PyDetectedSdk);
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
       Sdk sdk = getSelectedSdk();
-      if (sdk instanceof PyDetectedSdk) {
-        final String sdkName = sdk.getName();
-        VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-          @Override
-          public VirtualFile compute() {
-            return LocalFileSystem.getInstance().refreshAndFindFileByPath(sdkName);
-          }
-        });
-        sdk =
-          SdkConfigurationUtil.setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, PythonSdkType.getInstance(), true, null, null);
-      }
       final PythonPathEditor pathEditor = createPathEditor(sdk);
       final SdkModificator sdkModificator = myModificators.get(sdk);
 
