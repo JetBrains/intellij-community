@@ -3,8 +3,8 @@ from __future__ import with_statement
 import datetime
 import sys
 
-from bar import *
 import foo
+from bar import *
 
 sys.path
 datetime.datetime

@@ -50,9 +50,17 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 public class AddImportHelper {
   private static final Logger LOG = Logger.getInstance("#" + AddImportHelper.class.getName());
 
-  public static final Comparator<PyImportStatementBase> IMPORT_BY_NAME_COMPARATOR = new Comparator<PyImportStatementBase>() {
+  public static final Comparator<PyImportStatementBase> IMPORT_TYPE_THEN_NAME_COMPARATOR = new Comparator<PyImportStatementBase>() {
     @Override
     public int compare(@NotNull PyImportStatementBase import1, @NotNull PyImportStatementBase import2) {
+      // normal imports go first, then "from" imports
+      if (import1 instanceof PyImportStatement && import2 instanceof PyFromImportStatement) {
+        return -1;
+      }
+      if (import1 instanceof PyFromImportStatement && import2 instanceof PyImportStatement) {
+        return 1;
+      }
+      
       final QualifiedName firstName1 = getImportFirstQualifiedName(import1);
       final QualifiedName firstName2 = getImportFirstQualifiedName(import2);
       // Broken imports go last
@@ -221,7 +229,7 @@ public class AddImportHelper {
     if (newImport == null) {
       return false;
     }
-    return IMPORT_BY_NAME_COMPARATOR.compare(newImport, existingImport) < 0;
+    return IMPORT_TYPE_THEN_NAME_COMPARATOR.compare(newImport, existingImport) < 0;
   }
 
   @NotNull

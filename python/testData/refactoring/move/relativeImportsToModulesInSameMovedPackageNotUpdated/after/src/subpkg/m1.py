@@ -1,6 +1,6 @@
 import m3
-from pkg import m5
 import subsubpkg as foo
+from pkg import m5
 from .subsubpkg import m4
 from . import m2
 from . import subsubpkg as bar

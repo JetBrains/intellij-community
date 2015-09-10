@@ -107,7 +107,7 @@ public class PyImportOptimizer implements ImportOptimizer {
     }
 
     private boolean groupsNotSorted() {
-      final Ordering<PyImportStatementBase> importOrdering = Ordering.from(AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
+      final Ordering<PyImportStatementBase> importOrdering = Ordering.from(AddImportHelper.IMPORT_TYPE_THEN_NAME_COMPARATOR);
       return SORT_IMPORTS && ContainerUtil.exists(myGroups.values(), new Condition<List<PyImportStatementBase>>() {
         @Override
         public boolean value(List<PyImportStatementBase> imports) {
@@ -130,7 +130,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       if (SORT_IMPORTS) {
         for (ImportPriority priority : myGroups.keySet()) {
           final List<PyImportStatementBase> imports = myGroups.get(priority);
-          Collections.sort(imports, AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
+          Collections.sort(imports, AddImportHelper.IMPORT_TYPE_THEN_NAME_COMPARATOR);
           myGroups.put(priority, imports);
         }
       }
