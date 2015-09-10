@@ -105,7 +105,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myDetailsCallback = new NullableConsumer<Sdk>() {
       @Override
       public void consume(@Nullable Sdk sdk) {
-        final Sdk moduleSdk = getSdk();
         if (sdk instanceof PyDetectedSdk) {
           final Sdk addedSdk = SdkConfigurationUtil.createAndAddSDK(sdk.getHomePath(), PythonSdkType.getInstance());
           if (addedSdk != null) {
@@ -115,7 +114,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
             mySdkCombo.getModel().setSelectedItem(myProjectSdksModel.findSdk(addedSdk.getName()));
           }
         }
-        else if (moduleSdk != null && myProjectSdksModel.findSdk(moduleSdk) != sdk && sdk != null) {
+        else if (sdk != null) {
           PythonSdkAdditionalData additionalData = (PythonSdkAdditionalData)sdk.getSdkAdditionalData();
           if (additionalData != null) {
             final String path = additionalData.getAssociatedProjectPath();
