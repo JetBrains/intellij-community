@@ -77,7 +77,7 @@ public class FileWatcher {
     myWatchers = PluggableFileWatcher.EP_NAME.getExtensions();
     // Load in an empty map
     synchronized (myLock) {
-      myCanonicalFileMapper = new CanonicalFileMapper();
+      myCanonicalFileMapper = CanonicalFileMapper.create();
     }
     for (PluggableFileWatcher watcher : myWatchers) {
       watcher.initialize(managingFS, notificationSink);
@@ -144,7 +144,7 @@ public class FileWatcher {
   public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
     synchronized (myLock) {
       // Clear out our old canonical path -> symbolic link map
-      myCanonicalFileMapper = new CanonicalFileMapper();
+      myCanonicalFileMapper = CanonicalFileMapper.create();
 
       List<String> recursiveCanonical = myCanonicalFileMapper.addMappings(recursive, CanonicalFileMapper.MappingType.RECURSIVE);
       List<String> flatCanonical = myCanonicalFileMapper.addMappings(flat, CanonicalFileMapper.MappingType.FLAT);

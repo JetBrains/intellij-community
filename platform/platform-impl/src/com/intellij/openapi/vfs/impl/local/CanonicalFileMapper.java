@@ -16,11 +16,9 @@
 package com.intellij.openapi.vfs.impl.local;
 
 import com.google.common.collect.Lists;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,43 +26,24 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
-public final class CanonicalFileMapper {
-  private static final Logger LOG = Logger.getInstance(CanonicalFileMapper.class);
-
+public abstract class CanonicalFileMapper {
   public enum MappingType {FLAT, RECURSIVE}
 
-  private static final class OriginalWatchPath {
-    @NotNull public final String path;
-    @NotNull public final MappingType mappingType;
-
-    public OriginalWatchPath(@NotNull String path, @NotNull MappingType mappingType) {
-      this.path = path;
-      this.mappingType = mappingType;
-    }
+  public static CanonicalFileMapper create() {
+    return new CanonicalFileTrie();
   }
-
-  private final MultiMap<String, OriginalWatchPath> canonicalPathToOriginalPath = MultiMap.createSet();
 
   /**
    * @return the canonical path for {@param file}
    */
   @Nullable
-  public String addMapping(@NotNull File file, @NotNull MappingType mappingType) {
-    String canonicalFilePath = symLinkToRealPath(file);
-    if (canonicalFilePath == null) {
-      LOG.warn("Could not find canonical path for " + file.getPath());
-      return null;
-    }
-    Collection<OriginalWatchPath> possibleOriginalPaths = canonicalPathToOriginalPath.getModifiable(canonicalFilePath);
-    possibleOriginalPaths.add(new OriginalWatchPath(file.getPath(), mappingType));
-    return canonicalFilePath;
-  }
+  public abstract String addMapping(@NotNull File file, @NotNull MappingType mappingType);
 
   /**
    * @return the canonical path for each item in {@param paths}
    */
   @NotNull
-  public List<String> addMappings(@NotNull Collection<String> paths, @NotNull MappingType mappingType) {
+  public final List<String> addMappings(@NotNull Collection<String> paths, @NotNull MappingType mappingType) {
     List<String> canonicalPaths = Lists.newArrayList();
     for (String path : paths) {
       String canonicalPath = addMapping(new File(path), mappingType);
@@ -72,33 +51,14 @@ public final class CanonicalFileMapper {
         canonicalPaths.add(canonicalPath);
       }
     }
-
     return canonicalPaths;
   }
 
   @NotNull
-  public List<String> getMapping(@NotNull String canonicalPath) {
-    List<String> pathComponents = FileUtil.splitPath(canonicalPath);
-    List<String> originalPathsToFile = Lists.newArrayList();
-
-    // The first position will always be the root
-    File runningPath = new File(pathComponents.get(0) + File.separator);
-    for (int i = 1; i < pathComponents.size(); ++i) {
-      runningPath = new File(runningPath, pathComponents.get(i));
-      Collection<OriginalWatchPath> possibleOriginalPaths = canonicalPathToOriginalPath.get(runningPath.getPath());
-      for (OriginalWatchPath possibleOriginalPath : possibleOriginalPaths) {
-        // For a flat root, i + 1 would be the last item in the list
-        if (possibleOriginalPath.mappingType == MappingType.RECURSIVE ||
-            (i + 1) == (pathComponents.size() - 1)) {
-          originalPathsToFile.add(combine(possibleOriginalPath.path, pathComponents, i + 1));
-        }
-      }
-    }
-    return originalPathsToFile;
-  }
+  public abstract List<String> getMapping(@NotNull String canonicalPath);
 
   @NotNull
-  public List<String> getMapping(@NotNull Collection<String> paths) {
+  public final List<String> getMapping(@NotNull Collection<String> paths) {
     List<String> nonCanonicalPaths = Lists.newArrayList();
     for (String path : paths) {
       nonCanonicalPaths.addAll(getMapping(path));
