@@ -2186,6 +2186,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myDocument instanceof DocumentImpl &&
            myHighlighter instanceof LexerEditorHighlighter &&
            !mySelectionModel.hasSelection() &&
+           arePositionsWithinDocument(myCaretModel.getAllCarets()) &&
            areVisualLinesUnique(myCaretModel.getAllCarets()) &&
            !isInplaceRenamerActive() &&
            !KEY_CHARS_TO_SKIP.contains(c);
@@ -2198,6 +2199,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (!lines.add(caret.getVisualLineStart())) {
           return false;
         }
+      }
+    }
+    return true;
+  }
+
+  // Checks whether all the carets are within document or some of them are in a so called "virtual space".
+  private boolean arePositionsWithinDocument(List<Caret> carets) {
+    for (Caret caret : carets) {
+      if (caret.getLogicalPosition().compareTo(offsetToLogicalPosition(caret.getOffset())) != 0) {
+        return false;
       }
     }
     return true;
