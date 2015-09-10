@@ -21,6 +21,8 @@ import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
@@ -140,10 +142,16 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
       public void run() {
         final NullableConsumer<Sdk> callback = new NullableConsumer<Sdk>() {
           @Override
-          public void consume(@Nullable Sdk sdk) {
+          public void consume(@Nullable final Sdk sdk) {
             myCallback.consume(sdk);
             if (sdk != null) {
-              SdkConfigurationUtil.addSdk(sdk);
+              DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
+                @Override
+                public void run() {
+                  SdkConfigurationUtil.addSdk(sdk);
+                  PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
+                }
+              });
             }
           }
         };
