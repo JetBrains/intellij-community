@@ -99,8 +99,8 @@ public class ReorderJarsTest {
       assertNotNull(loader);
       Resource resource = loader.getResource("org/jetbrains/annotations/Nullable.class");
       assertNotNull(resource);
-      assertEquals(548, resource.getContentLength());
       byte[] bytes = resource.getBytes();
+      assertEquals(548, bytes.length);
       assertTrue(Arrays.equals(data, bytes));
     }
     finally {
