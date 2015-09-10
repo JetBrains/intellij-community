@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,27 +22,26 @@ import com.intellij.util.containers.TransferToEDTQueue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Passes elements for processing in the dedicated thread.
  * Processes elements in batches, no longer than {maxUnitOfWorkThresholdMs}ms per batch, and reschedules processing later for longer batches.
- * Usage: {@link #offer(Object)} } : schedules element for processing in a pooled thread
+ * Usage: {@link #offer(Object)}} : schedules element for processing in a pooled thread
  */
 public class TransferToPooledThreadQueue<T> extends TransferToEDTQueue<T> {
-  private final ScheduledThreadPoolExecutor myExecutor;
+  private final ThreadPoolExecutor myExecutor;
 
   public TransferToPooledThreadQueue(@NonNls @NotNull String name,
                                      @NotNull Condition<?> shutUpCondition,
                                      int maxUnitOfWorkThresholdMs,
                                      @NotNull Processor<T> processor) {
     super(name, processor, shutUpCondition, maxUnitOfWorkThresholdMs);
-    myExecutor = ConcurrencyUtil.newSingleScheduledThreadExecutor(name);
+    myExecutor = ConcurrencyUtil.newSingleThreadExecutor(name);
   }
 
   @Override
   protected void schedule(@NotNull Runnable updateRunnable) {
     myExecutor.execute(updateRunnable);
   }
-
 }
