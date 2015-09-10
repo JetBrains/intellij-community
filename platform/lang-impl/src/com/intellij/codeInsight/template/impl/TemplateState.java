@@ -944,6 +944,15 @@ public class TemplateState implements Disposable {
     gotoEnd(true);
   }
 
+  /**
+   * @deprecated
+   */
+  public void cancelTemplate() {
+    if (myTemplate == null) return;
+    LookupManager.getInstance(myProject).hideActiveLookup();
+    cleanupTemplateState(true);
+  }
+
   private void finishTemplateEditing() {
     if (myTemplate == null) return;
     LookupManager.getInstance(myProject).hideActiveLookup();
