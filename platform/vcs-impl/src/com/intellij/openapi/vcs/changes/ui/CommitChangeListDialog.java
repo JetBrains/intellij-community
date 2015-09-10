@@ -54,6 +54,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.OnOffListener;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1019,6 +1020,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     JPanel infoPanel = new JPanel(new BorderLayout());
     JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(myAdditionalOptionsPanel, true);
     optionsPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    optionsPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+    optionsPane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
     infoPanel.add(optionsPane, BorderLayout.CENTER);
     rootPane.add(infoPanel, BorderLayout.EAST);
     infoPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
