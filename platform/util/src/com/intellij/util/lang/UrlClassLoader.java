@@ -24,7 +24,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakStringInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.misc.Resource;
 
 import java.io.File;
 import java.io.IOException;
