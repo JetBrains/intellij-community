@@ -176,7 +176,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     CreateVirtualEnvDialog.VirtualEnvCallback callback = new CreateVirtualEnvDialog.VirtualEnvCallback() {
       @Override
       public void virtualEnvCreated(Sdk sdk, boolean associateWithProject) {
-        PythonSdkType.setupSdkPaths(sdk, myProject, null);
+        PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
         if (associateWithProject) {
           SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
           if (additionalData == null) {
