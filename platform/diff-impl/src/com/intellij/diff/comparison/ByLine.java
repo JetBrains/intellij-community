@@ -48,6 +48,7 @@ public class ByLine {
     List<Line> lines2 = getLines(text2, policy);
 
     FairDiffIterable changes = compareSmart(lines1, lines2, indicator);
+    changes = optimizeLineChunks(lines1, lines2, changes, indicator);
     return convertIntoFragments(lines1, lines2, changes);
   }
 
@@ -65,6 +66,7 @@ public class ByLine {
     List<Line> iwLines2 = convertToIgnoreWhitespace(lines2);
 
     FairDiffIterable iwChanges = compareSmart(iwLines1, iwLines2, indicator);
+    iwChanges = optimizeLineChunks(lines1, lines2, iwChanges, indicator);
     FairDiffIterable changes = correctChangesSecondStep(lines1, lines2, iwChanges);
     return convertIntoFragments(lines1, lines2, changes);
   }
@@ -83,6 +85,7 @@ public class ByLine {
     List<Line> iwLines2 = convertToIgnoreWhitespace(lines2);
 
     FairDiffIterable iwChanges = compareSmart(iwLines1, iwLines2, indicator);
+    iwChanges = optimizeLineChunks(lines1, lines2, iwChanges, indicator);
     return correctChangesSecondStep(lines1, lines2, iwChanges);
   }
 
@@ -260,6 +263,14 @@ public class ByLine {
     }.run();
 
     return best;
+  }
+
+  @NotNull
+  private static FairDiffIterable optimizeLineChunks(@NotNull List<Line> lines1,
+                                                     @NotNull List<Line> lines2,
+                                                     @NotNull FairDiffIterable iterable,
+                                                     @NotNull ProgressIndicator indicator) {
+    return new ChunkOptimizer.LineChunkOptimizer(lines1, lines2, iterable, indicator).build();
   }
 
   @NotNull

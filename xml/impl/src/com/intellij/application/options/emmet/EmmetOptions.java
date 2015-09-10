@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
   private boolean myPreviewEnabled = false;
   private Set<String> myFiltersEnabledByDefault = ContainerUtil.newHashSet();
   private boolean myHrefAutoDetectEnabled = true;
+  private boolean myAddEditPointAtTheEndOfTemplate = false;
 
   @NotNull
   public Set<String> getFiltersEnabledByDefault() {
@@ -79,6 +80,14 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
 
   public boolean isHrefAutoDetectEnabled() {
     return myHrefAutoDetectEnabled;
+  }
+
+  public boolean isAddEditPointAtTheEndOfTemplate() {
+    return myAddEditPointAtTheEndOfTemplate;
+  }
+
+  public void setAddEditPointAtTheEndOfTemplate(boolean addEditPointAtTheEndOfTemplate) {
+    myAddEditPointAtTheEndOfTemplate = addEditPointAtTheEndOfTemplate;
   }
 
   @Nullable

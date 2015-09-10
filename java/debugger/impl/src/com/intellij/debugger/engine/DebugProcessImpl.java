@@ -79,6 +79,7 @@ import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1243,7 +1244,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return invokeCommand.start((EvaluationContextImpl)evaluationContext, false);
   }
 
-  public void clearCashes(int suspendPolicy) {
+  public void clearCashes(@MagicConstant(flagsFromClass = EventRequest.class) int suspendPolicy) {
     if (!isAttached()) return;
     switch (suspendPolicy) {
       case EventRequest.SUSPEND_ALL:

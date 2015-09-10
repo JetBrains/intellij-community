@@ -34,7 +34,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="maven-artifact-resolver-m2" />
+    <orderEntry type="module" module-name="maven-artifact-resolver-common" exported="" />
   </component>
 </module>
-

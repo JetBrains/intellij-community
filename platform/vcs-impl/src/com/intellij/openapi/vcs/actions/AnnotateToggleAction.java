@@ -280,9 +280,10 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
       final MergeSourceAvailableMarkerGutter mergeSourceGutter =
         new MergeSourceAvailableMarkerGutter(fileAnnotation, null, presentation, bgColorMap);
 
-      presentation.addAction(new SwitchAnnotationSourceAction(switcher, editorGutter));
-      presentation.addSourceSwitchListener(currentRevisionGutter);
-      presentation.addSourceSwitchListener(mergeSourceGutter);
+      SwitchAnnotationSourceAction switchAction = new SwitchAnnotationSourceAction(switcher, editorGutter);
+      presentation.addAction(switchAction);
+      switchAction.addSourceSwitchListener(currentRevisionGutter);
+      switchAction.addSourceSwitchListener(mergeSourceGutter);
 
       currentRevisionGutter.consume(switcher.getDefaultSource());
       mergeSourceGutter.consume(switcher.getDefaultSource());

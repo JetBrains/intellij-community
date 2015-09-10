@@ -25,7 +25,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,7 +107,7 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
 
   @NotNull
   private static Iterable<ActionToolbar> iterateToolbars(JComponent root) {
-    return JBSwingUtilities.uiTraverser().withRoot(root).preOrderDfsTraversal().filter(ActionToolbar.class);
+    return UIUtil.uiTraverser().withRoot(root).preOrderDfsTraversal().filter(ActionToolbar.class);
   }
 
   private static class OptionsGroup extends ActionGroup implements DumbAware {

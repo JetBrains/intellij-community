@@ -18,19 +18,19 @@ package com.intellij.util.containers;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
-public class FilteredTraverser<T> extends FilteredTraverserBase<T, FilteredTraverser<T>> {
+public class JBTreeTraverser<T> extends FilteredTraverserBase<T, JBTreeTraverser<T>> {
 
-  public FilteredTraverser(Function<T, ? extends Iterable<? extends T>> treeStructure) {
+  public JBTreeTraverser(Function<T, ? extends Iterable<? extends T>> treeStructure) {
     super(null, treeStructure);
   }
 
-  protected FilteredTraverser(Meta<T> meta, Function<T, ? extends Iterable<? extends T>> treeStructure) {
+  protected JBTreeTraverser(Meta<T> meta, Function<T, ? extends Iterable<? extends T>> treeStructure) {
     super(meta, treeStructure);
   }
 
   @NotNull
   @Override
-  protected FilteredTraverser<T> newInstance(Meta<T> meta) {
-    return new FilteredTraverser<T>(meta, tree);
+  protected JBTreeTraverser<T> newInstance(Meta<T> meta) {
+    return new JBTreeTraverser<T>(meta, tree);
   }
 }

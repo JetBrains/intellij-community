@@ -189,7 +189,7 @@ public class GenerationNode extends UserDataHolderBase {
       indentStr = StringUtil.repeatSymbol(' ', tabSize);
     }
 
-    LiveTemplateBuilder builder = new LiveTemplateBuilder(segmentsLimit);
+    LiveTemplateBuilder builder = new LiveTemplateBuilder(EmmetOptions.getInstance().isAddEditPointAtTheEndOfTemplate(), segmentsLimit);
     int end = -1;
     boolean hasChildren = myChildren.size() > 0;
 
@@ -348,7 +348,7 @@ public class GenerationNode extends UserDataHolderBase {
                                              Map<String, String> predefinedVarValues,
                                              String surroundedText,
                                              int segmentsLimit) {
-    LiveTemplateBuilder builder = new LiveTemplateBuilder(segmentsLimit);
+    LiveTemplateBuilder builder = new LiveTemplateBuilder(EmmetOptions.getInstance().isAddEditPointAtTheEndOfTemplate(), segmentsLimit);
     if (predefinedVarValues == null && surroundedText == null) {
       return template;
     }

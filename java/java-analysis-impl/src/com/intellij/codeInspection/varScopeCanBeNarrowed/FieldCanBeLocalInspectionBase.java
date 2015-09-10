@@ -120,6 +120,21 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitMethod(PsiMethod method) {
+        if (method.isConstructor()) {
+          final PsiCodeBlock body = method.getBody();
+          if (body != null) {
+            final PsiStatement[] statements = body.getStatements();
+            if (statements.length > 0 && statements[0] instanceof PsiExpressionStatement) {
+              final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+              if (expression instanceof PsiMethodCallExpression) {
+                final PsiMethod resolveMethod = ((PsiMethodCallExpression)expression).resolveMethod();
+                if (resolveMethod != null && resolveMethod.isConstructor()) {
+                  visitMethodCallExpression((PsiMethodCallExpression)expression);
+                }
+              }
+            }
+          }
+        }
         //do not go inside method
       }
 

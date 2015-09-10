@@ -562,6 +562,13 @@ public class DebugUtil {
     }
   }
 
+  public static void onInvalidated(@NotNull PsiFile o) {
+    Object trace = PsiInvalidElementAccessException.getInvalidationTrace(o);
+    if (trace != null) return;
+
+    PsiInvalidElementAccessException.setInvalidationTrace(o, currentInvalidationTrace());
+  }
+
   public static void onInvalidated(@NotNull FileViewProvider provider) {
     Object trace = calcInvalidationTrace(null);
     if (trace != null) {
@@ -578,6 +585,11 @@ public class DebugUtil {
       return null;
     }
 
+    return currentInvalidationTrace();
+  }
+
+  @NotNull
+  private static Object currentInvalidationTrace() {
     Object trace = ourPsiModificationTrace.get();
     if (trace == null) {
       trace = new Throwable();

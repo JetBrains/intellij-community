@@ -45,7 +45,7 @@ import java.util.*;
  * Main idea of the class is to accept parameters "as-is", just as they should look to an external process, and quote/escape them
  * as required by the underlying platform.
  * <p>
- * Consider setting working directory (if relevant), and take a look at {@link #isStrictParentEnvironment()}.
+ * Consider setting working directory (if relevant), and take a look at {@link GeneralCommandLine.ParentEnvironmentType}.
  *
  * @see com.intellij.execution.util.ExecUtil
  * @see com.intellij.execution.process.OSProcessHandler
@@ -53,11 +53,24 @@ import java.util.*;
 public class GeneralCommandLine implements UserDataHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.GeneralCommandLine");
 
+  /**
+   * Determines the scope of a parent environment passed to a child process.
+   * {@code NONE} means a child process will receive an empty environment;
+   * {@code SYSTEM} will provide it with the same environment as an IDE;
+   * {@code SHELL} has a {@link EnvironmentUtil#getEnvironmentMap() special meaning} on OS X and equals to SYSTEM on other platforms.
+   * <p>
+   * {@code SHELL} is the default value.
+   */
+  public enum ParentEnvironmentType {NONE, SYSTEM, SHELL}
+
+  // todo revise usages, then set to ParentEnvironmentType.SHELL and inline
+  private static ParentEnvironmentType defaultParentEnvironmentType =
+    PlatformUtils.isAppCode() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.SHELL;
+
   private String myExePath = null;
   private File myWorkDirectory = null;
   private final Map<String, String> myEnvParams = new MyTHashMap();
-  private boolean myPassParentEnvironment = true;
-  private boolean myStrictParentEnvironment = PlatformUtils.isAppCode(); //todo revise usages, then set to "false"
+  private ParentEnvironmentType myParentEnvironmentType = defaultParentEnvironmentType;
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myRedirectErrorStream = false;
@@ -132,42 +145,48 @@ public class GeneralCommandLine implements UserDataHolder {
     return this;
   }
 
+  /** @deprecated use {@link #getParentEnvironmentType()} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public boolean isPassParentEnvironment() {
-    return myPassParentEnvironment;
+    return myParentEnvironmentType != ParentEnvironmentType.NONE;
   }
 
-  @NotNull
+  /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public GeneralCommandLine withPassParentEnvironment(boolean passParentEnvironment) {
-    myPassParentEnvironment = passParentEnvironment;
-    return this;
+    return withParentEnvironmentType(passParentEnvironment ? defaultParentEnvironmentType : ParentEnvironmentType.NONE);
   }
 
+  /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public void setPassParentEnvironment(boolean passParentEnvironment) {
-    withPassParentEnvironment(passParentEnvironment);
-  }
-
-  /**
-   * Determines the scope of a parent environment passed to a child process when {@code isPassParentEnvironment()} is {@code true}.
-   * By default, a shell environment is passed under OS X. Set the option to {@code true} to use stricter GUI environment instead.
-   * <p>
-   * See {@link EnvironmentUtil#getEnvironmentMap()} for distinction between shell/GUI environment on OS X.
-   */
-  public boolean isStrictParentEnvironment() {
-    return myStrictParentEnvironment;
+    withParentEnvironmentType(passParentEnvironment ? defaultParentEnvironmentType : ParentEnvironmentType.NONE);
   }
 
   @NotNull
-  public GeneralCommandLine withStrictParentEnvironment(boolean strictParentEnvironment) {
-    myStrictParentEnvironment = strictParentEnvironment;
+  public ParentEnvironmentType getParentEnvironmentType() {
+    return myParentEnvironmentType;
+  }
+
+  @NotNull
+  public GeneralCommandLine withParentEnvironmentType(@NotNull ParentEnvironmentType type) {
+    myParentEnvironmentType = type;
     return this;
   }
 
   /**
-   * Returns an environment that will be passed to a child process if {@link #isPassParentEnvironment()} is {@code true}.
+   * Returns an environment that will be passed to a child process.
    */
   @NotNull
   public Map<String, String> getParentEnvironment() {
-    return myStrictParentEnvironment ? System.getenv() : EnvironmentUtil.getEnvironmentMap();
+    switch (myParentEnvironmentType) {
+      case SYSTEM:
+        return System.getenv();
+      case SHELL:
+        return EnvironmentUtil.getEnvironmentMap();
+      default:
+        return Collections.emptyMap();
+    }
   }
 
   public void addParameters(String... parameters) {
@@ -322,7 +341,7 @@ public class GeneralCommandLine implements UserDataHolder {
   protected void setupEnvironment(@NotNull Map<String, String> environment) {
     environment.clear();
 
-    if (myPassParentEnvironment) {
+    if (myParentEnvironmentType != ParentEnvironmentType.NONE) {
       environment.putAll(getParentEnvironment());
     }
 

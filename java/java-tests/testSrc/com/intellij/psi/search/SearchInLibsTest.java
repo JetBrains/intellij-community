@@ -29,7 +29,10 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class SearchInLibsTest extends PsiTestCase {
   @Override
@@ -47,12 +50,15 @@ public class SearchInLibsTest extends PsiTestCase {
     VirtualFile libRoot = rootFile.findChild("lib");
     final VirtualFile libClassesRoot = libRoot.findChild("classes");
     final VirtualFile libSrcRoot = libRoot.findChild("src");
+    final VirtualFile libSrc2Root = libRoot.findChild("src2");
     assertNotNull(libRoot);
 
     PsiTestUtil.removeAllRoots(myModule, null);
     PsiTestUtil.addSourceRoot(myModule, projectRoot);
     PsiTestUtil.addSourceRoot(myModule, innerSourceRoot);
-    ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.singletonList(libClassesRoot.getUrl()), Collections.singletonList(libSrcRoot.getUrl()));
+    List<String> sourceRoots = Arrays.asList(libSrcRoot.getUrl(), libSrc2Root.getUrl());
+    List<String> classesRoots = Collections.singletonList(libClassesRoot.getUrl());
+    ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", classesRoots, sourceRoots);
   }
 
   public void testFindUsagesInProject() throws Exception {
@@ -85,13 +91,36 @@ public class SearchInLibsTest extends PsiTestCase {
     model.setStringToFind("LibraryClass1");
     model.setProjectScope(false);
 
-    List<UsageInfo> usages = new ArrayList<UsageInfo>();
+    List<UsageInfo> usages = new ArrayList<>();
     FindInProjectUtil.findUsages(model, getProject(),
-                                 new CommonProcessors.CollectProcessor<UsageInfo>(
+                                 new CommonProcessors.CollectProcessor<>(
                                    usages), FindInProjectUtil
                                    .setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model)));
 
     assertEquals(2, usages.size());
+  }
+
+  public void testFindInPathInLibrarySourceDirShouldSearchJustInThisDirectoryOnly() throws Exception {
+    FindModel model = new FindModel();
+    final PsiClass aClass = myJavaFacade.findClass("x.X");
+    assertNotNull(aClass);
+    String classDirPath = aClass.getContainingFile().getContainingDirectory().getVirtualFile().getPath();
+    String sourceDirPath = ((PsiFile)aClass.getContainingFile().getNavigationElement()).getContainingDirectory().getVirtualFile().getPath();
+    assertFalse(classDirPath.equals(sourceDirPath));
+    model.setDirectoryName(sourceDirPath);
+    model.setCaseSensitive(true);
+    model.setCustomScope(false);
+    model.setStringToFind("xxx");
+    model.setProjectScope(false);
+
+    List<UsageInfo> usages = new ArrayList<>();
+    FindInProjectUtil.findUsages(model, getProject(),
+                                 new CommonProcessors.CollectProcessor<>(
+                                   usages), FindInProjectUtil
+                                   .setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model)));
+
+    UsageInfo info = assertOneElement(usages);
+    assertEquals("X.java", info.getFile().getName());
   }
 
   public void testInnerSourceRoot() throws Exception {
@@ -104,7 +133,7 @@ public class SearchInLibsTest extends PsiTestCase {
 
     PsiReference[] refs = ReferencesSearch.search(aClass, scope, false).toArray(new PsiReference[0]);
 
-    ArrayList<PsiFile> files = new ArrayList<PsiFile>();
+    ArrayList<PsiFile> files = new ArrayList<>();
     for (PsiReference ref : refs) {
       PsiFile file = ref.getElement().getContainingFile();
       if (!files.contains(file)) {
@@ -114,12 +143,7 @@ public class SearchInLibsTest extends PsiTestCase {
 
     assertEquals("files count", expectedFileNames.length, files.size());
 
-    Collections.sort(files, new Comparator<PsiFile>() {
-      @Override
-      public int compare(PsiFile o1, PsiFile o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
+    Collections.sort(files, (o1, o2) -> o1.getName().compareTo(o2.getName()));
     Arrays.sort(expectedFileNames);
 
     for (int i = 0; i < expectedFileNames.length; i++) {

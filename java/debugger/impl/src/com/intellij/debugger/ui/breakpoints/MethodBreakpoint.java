@@ -334,8 +334,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         int methodNameOffset = identifier != null? identifier.getTextOffset() : methodOffset;
         final MethodDescriptor descriptor =
           new MethodDescriptor();
-        //noinspection HardCodedStringLiteral
-        descriptor.methodName = method.isConstructor() ? "<init>" : method.getName();
+        descriptor.methodName = JVMNameUtil.getJVMMethodName(method);
         try {
           descriptor.methodSignature = JVMNameUtil.getJVMSignature(method);
           descriptor.isStatic = method.hasModifierProperty(PsiModifier.STATIC);

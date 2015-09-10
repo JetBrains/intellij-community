@@ -70,7 +70,7 @@ public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
   }
 
   private fun checkDiffChanges(actual: List<Change>, expected: List<Change>) {
-    assertOrderedEquals(actual, expected)
+    assertOrderedEquals(expected, actual)
   }
 
   private fun checkDiffMatching(changes: List<Change>, matchings: Trio<BitSet>) {

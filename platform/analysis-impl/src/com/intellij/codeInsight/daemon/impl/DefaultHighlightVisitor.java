@@ -37,6 +37,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,6 +110,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     }
   }
 
+  @SuppressWarnings("CloneDoesntCallSuperClone")
   @Override
   @NotNull
   public HighlightVisitor clone() {
@@ -120,11 +122,12 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     return 2;
   }
 
-  private static final ThreadLocalAnnotatorMap<Annotator,Language> cachedAnnotators = new ThreadLocalAnnotatorMap<Annotator, Language>() {
+  private static final ThreadLocalAnnotatorMap<String, Annotator> cachedAnnotators = new ThreadLocalAnnotatorMap<String, Annotator>() {
     @NotNull
     @Override
-    public Collection<Annotator> initialValue(@NotNull Language key) {
-      return LanguageAnnotators.INSTANCE.allForLanguage(key);
+    public Collection<Annotator> initialValue(@NotNull String languageId) {
+      Language language = Language.findLanguageByID(languageId);
+      return language == null ? ContainerUtil.<Annotator>emptyList() : LanguageAnnotators.INSTANCE.allForLanguage(language);
     }
   };
 
@@ -143,7 +146,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   private void runAnnotators(PsiElement element) {
-    List<Annotator> annotators = cachedAnnotators.get(element.getLanguage());
+    List<Annotator> annotators = cachedAnnotators.get(element.getLanguage().getID());
     if (annotators.isEmpty()) return;
     final boolean dumb = myDumbService.isDumb();
 

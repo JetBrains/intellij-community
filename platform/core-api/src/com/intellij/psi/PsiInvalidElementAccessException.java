@@ -187,8 +187,12 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     return Integer.toHexString(System.identityHashCode(provider));
   }
 
-  public static void setInvalidationTrace(UserDataHolder element, Object trace) {
+  public static void setInvalidationTrace(@NotNull UserDataHolder element, Object trace) {
     element.putUserData(INVALIDATION_TRACE, trace);
+  }
+
+  public static Object getInvalidationTrace(@NotNull UserDataHolder element) {
+    return element.getUserData(INVALIDATION_TRACE);
   }
 
   public static boolean isTrackingInvalidation() {

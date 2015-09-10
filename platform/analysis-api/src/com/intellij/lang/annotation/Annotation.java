@@ -261,7 +261,7 @@ public final class Annotation implements Segment {
     if (myHighlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL || myHighlightType == ProblemHighlightType.ERROR) {
       return CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES;
     }
-    return HighlighterColors.TEXT;
+    return HighlighterColors.NO_HIGHLIGHTING;
   }
 
   public TextAttributes getEnforcedTextAttributes() {

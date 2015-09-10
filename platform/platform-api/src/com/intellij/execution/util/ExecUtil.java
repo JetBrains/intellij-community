@@ -219,6 +219,11 @@ public class ExecUtil {
     }
     else if (hasPkExec.getValue()) {
       command.add(0, "pkexec");
+      command.add(1, "env");
+      int i = 2;
+      for (Map.Entry<String, String> entry : commandLine.getEnvironment().entrySet()) {
+        command.add(i++, entry.getKey() + "=" + escapeUnixShellArgument(entry.getValue()));
+      }
       sudoCommandLine = new GeneralCommandLine(command);
     }
     else if (SystemInfo.isUnix && hasTerminalApp()) {
@@ -247,7 +252,7 @@ public class ExecUtil {
     return sudoCommandLine
       .withWorkDirectory(commandLine.getWorkDirectory())
       .withEnvironment(commandLine.getEnvironment())
-      .withPassParentEnvironment(commandLine.isPassParentEnvironment())
+      .withParentEnvironmentType(commandLine.getParentEnvironmentType())
       .withRedirectErrorStream(commandLine.isRedirectErrorStream());
   }
 

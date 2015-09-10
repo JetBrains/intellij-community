@@ -94,12 +94,12 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
       MyZipOutputStream zipOut = new MyZipOutputStream(new BufferedOutputStream(new FileOutputStream(saveFile)));
       try {
         Set<String> writtenItemRelativePaths = new THashSet<String>();
-        String configRoot = PathManager.getConfigPath();
+        String configRoot = FileUtilRt.toSystemIndependentName(PathManager.getConfigPath());
         for (File file : exportFiles) {
           if (file.exists()) {
-            String rPath = FileUtilRt.getRelativePath(configRoot, file.getAbsolutePath(), File.separatorChar);
-            assert rPath != null;
-            ZipUtil.addFileOrDirRecursively(zipOut, null, file, FileUtilRt.toSystemIndependentName(rPath), null, writtenItemRelativePaths);
+            String relativePath = FileUtilRt.getRelativePath(configRoot, FileUtilRt.toSystemIndependentName(file.getAbsolutePath()), '/');
+            assert relativePath != null;
+            ZipUtil.addFileOrDirRecursively(zipOut, null, file, relativePath, null, writtenItemRelativePaths);
           }
         }
 
@@ -110,7 +110,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
         zipOut.closeEntry();
       }
       finally {
-        zipOut.close();
+        zipOut.doClose();
       }
       ShowFilePathAction.showDialog(getEventProject(e), IdeBundle.message("message.settings.exported.successfully"),
                                     IdeBundle.message("title.export.successful"), saveFile, null);
@@ -133,12 +133,10 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
 
     ZipEntry e = new ZipEntry(PluginManager.INSTALLED_TXT);
     zipOut.putNextEntry(e);
-    zipOut.ignoreClose = true;
     try {
       PluginManagerCore.writePluginsList(plugins, new OutputStreamWriter(zipOut, CharsetToolkit.UTF8_CHARSET));
     }
     finally {
-      zipOut.ignoreClose = false;
       zipOut.closeEntry();
     }
   }
@@ -153,8 +151,12 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     @Override
     public void close() throws IOException {
       if (!ignoreClose) {
-        super.close();
+        doClose();
       }
+    }
+
+    public void doClose() throws IOException {
+      super.close();
     }
   }
 

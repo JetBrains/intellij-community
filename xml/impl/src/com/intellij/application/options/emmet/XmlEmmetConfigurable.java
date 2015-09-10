@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
   private JBCheckBox myEnablePreviewJBCheckBox;
   private JPanel myFiltersListPanel;
   private JBCheckBox myEnableHrefAutodetectJBCheckBox;
+  private JBCheckBox myAddEditPointAtTheEndOfTemplateJBCheckBox;
 
   private Map<String, JBCheckBox> myFilterCheckboxes = ContainerUtil.newHashMap();
 
@@ -97,6 +98,7 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
     return emmetOptions.isEmmetEnabled() != myEnableEmmetJBCheckBox.isSelected() ||
            emmetOptions.isPreviewEnabled() != myEnablePreviewJBCheckBox.isSelected() ||
            emmetOptions.isHrefAutoDetectEnabled() != myEnableHrefAutodetectJBCheckBox.isSelected() ||
+           emmetOptions.isAddEditPointAtTheEndOfTemplate() != myAddEditPointAtTheEndOfTemplateJBCheckBox.isSelected() ||
            !emmetOptions.getFiltersEnabledByDefault().equals(enabledFilters());
   }
 
@@ -106,6 +108,7 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
     emmetOptions.setEmmetEnabled(myEnableEmmetJBCheckBox.isSelected());
     emmetOptions.setPreviewEnabled(myEnablePreviewJBCheckBox.isSelected());
     emmetOptions.setHrefAutoDetectEnabled(myEnableHrefAutodetectJBCheckBox.isSelected());
+    emmetOptions.setAddEditPointAtTheEndOfTemplate(myAddEditPointAtTheEndOfTemplateJBCheckBox.isSelected());
     emmetOptions.setFiltersEnabledByDefault(enabledFilters());
   }
 
@@ -118,6 +121,7 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
     myEnablePreviewJBCheckBox.setSelected(emmetOptions.isPreviewEnabled());
     myEnableHrefAutodetectJBCheckBox.setEnabled(emmetOptions.isEmmetEnabled());
     myEnableHrefAutodetectJBCheckBox.setSelected(emmetOptions.isHrefAutoDetectEnabled());
+    myAddEditPointAtTheEndOfTemplateJBCheckBox.setSelected(emmetOptions.isAddEditPointAtTheEndOfTemplate());
 
     Set<String> enabledByDefault = emmetOptions.getFiltersEnabledByDefault();
     for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {

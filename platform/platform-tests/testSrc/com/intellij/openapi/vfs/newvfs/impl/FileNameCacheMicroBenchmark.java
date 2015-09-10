@@ -69,7 +69,7 @@ public class FileNameCacheMicroBenchmark {
     warmUp(ids);
 
     measureAverageTime(ids, 1);
-    measureAverageTime(ids, 3);
+    measureAverageTime(ids, 4);
   }
 
   private static boolean warmedUp;

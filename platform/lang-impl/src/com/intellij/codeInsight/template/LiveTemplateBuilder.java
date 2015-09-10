@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,17 +40,19 @@ public class LiveTemplateBuilder {
   private final List<VarOccurence> myVariableOccurrences = new ArrayList<VarOccurence>();
   private final List<Marker> myMarkers = new ArrayList<Marker>();
   private final int mySegmentLimit;
+  private final boolean myAddEndVariableAtTheEndOfTemplate;
   private String myLastEndVarName;
   private boolean myIsToReformat = false;
 
 
   @SuppressWarnings("UnusedDeclaration")
   public LiveTemplateBuilder() {
-    this(Registry.intValue("emmet.segments.limit"));
+    this(false, Registry.intValue("emmet.segments.limit"));
   }
   
-  public LiveTemplateBuilder(int segmentLimit) {
+  public LiveTemplateBuilder(boolean addEndVariableAtTheEndOfTemplate, int segmentLimit) {
     mySegmentLimit = segmentLimit;
+    myAddEndVariableAtTheEndOfTemplate = addEndVariableAtTheEndOfTemplate;
   }
 
   public void setIsToReformat(boolean isToReformat) {
@@ -98,22 +100,29 @@ public class LiveTemplateBuilder {
       }
       if (myLastEndVarName != null) {
         int endOffset = -1;
-        Iterator<VarOccurence> it = myVariableOccurrences.iterator();
-        while (it.hasNext()) {
-          VarOccurence occurence = it.next();             
-          if (occurence.myName.equals(myLastEndVarName)) {
-            endOffset = occurence.myOffset;
-            break;
+        if (myAddEndVariableAtTheEndOfTemplate) {
+          endOffset = myText.length();
+        }
+        else {
+          Iterator<VarOccurence> it = myVariableOccurrences.iterator();
+          while (it.hasNext()) {
+            VarOccurence occurence = it.next();
+            if (occurence.myName.equals(myLastEndVarName)) {
+              endOffset = occurence.myOffset;
+              break;
+            }
+          }
+          if (endOffset >= 0) {
+            for (Iterator<Variable> it1 = variables.iterator(); it1.hasNext(); ) {
+              Variable variable = it1.next();
+              if (myLastEndVarName.equals(variable.getName()) && variable.isAlwaysStopAt()) {
+                it.remove();
+                it1.remove();
+              }
+            }
           }
         }
         if (endOffset >= 0) {
-          for (Iterator<Variable> it1 = variables.iterator(); it1.hasNext(); ) {
-            Variable variable = it1.next();
-            if (myLastEndVarName.equals(variable.getName()) && variable.isAlwaysStopAt()) {
-              it.remove();
-              it1.remove();
-            }
-          }
           myVariableOccurrences.add(new VarOccurence(TemplateImpl.END, endOffset));
         }
       }

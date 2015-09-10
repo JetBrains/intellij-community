@@ -18,6 +18,8 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
@@ -32,7 +34,7 @@ import java.util.List;
 /**
 * @author cdr
 */
-class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTextCaching>, PossiblyDumbAware {
+class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTextCaching>, PossiblyDumbAware, ShortcutProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching");
   private final List<IntentionAction> myOptionIntentions = new ArrayList<IntentionAction>();
   private final List<IntentionAction> myOptionErrorFixes = new ArrayList<IntentionAction>();
@@ -124,5 +126,11 @@ class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTe
   @Override
   public boolean isDumbAware() {
     return DumbService.isDumbAware(myAction);
+  }
+
+  @Nullable
+  @Override
+  public ShortcutSet getShortcut() {
+    return myAction instanceof ShortcutProvider ? ((ShortcutProvider)myAction).getShortcut() : null;
   }
 }

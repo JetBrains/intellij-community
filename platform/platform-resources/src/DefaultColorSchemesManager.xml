@@ -1165,48 +1165,9 @@
           <option name="EFFECT_TYPE" value="2" />
         </value>
       </option>
-      <option name="BNF_EXTERNAL">
-        <value>
-          <option name="FONT_TYPE" value="2" />
-        </value>
-      </option>
-      <option name="BNF_ILLEGAL">
-        <value>
-          <option name="FOREGROUND" value="ff0000" />
-        </value>
-      </option>
-      <option name="BNF_KEYWORD">
-        <value>
-          <option name="FOREGROUND" value="cc7832" />
-        </value>
-      </option>
-      <option name="BNF_NUMBER">
-        <value>
-          <option name="FOREGROUND" value="6897bb" />
-        </value>
-      </option>
-      <option name="BNF_RULE">
-        <value>
-          <option name="FOREGROUND" value="da4939" />
-        </value>
-      </option>
-      <option name="BNF_STRING">
-        <value>
-          <option name="FOREGROUND" value="629755" />
-        </value>
-      </option>
-      <option name="BNF_TOKEN">
-        <value />
-      </option>
       <option name="BREAKPOINT_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="3a2323" deuteranopia="42372b" protanopia="42372b"/>
-        </value>
-      </option>
-      <option name="BROWSEWORDATCARET">
-        <value>
-          <option name="EFFECT_COLOR" value="526da5" />
-          <option name="ERROR_STRIPE_COLOR" value="273955" />
         </value>
       </option>
       <option name="Bad character">
@@ -1701,17 +1662,6 @@
           <option name="ERROR_STRIPE_COLOR" value="B06100" deuteranopia="754810" protanopia="754810"/>
         </value>
       </option>
-      <option name="GRADLE_CHANGE_CONFLICT">
-        <value>
-          <option name="FOREGROUND" value="db4233" />
-          <option name="EFFECT_TYPE" value="-1" />
-        </value>
-      </option>
-      <option name="GRADLE_NO_CHANGE">
-        <value>
-          <option name="EFFECT_TYPE" value="-1" />
-        </value>
-      </option>
       <option name="HAML_CLASS">
         <value>
           <option name="FOREGROUND" value="e8bf6a" />
@@ -1807,12 +1757,6 @@
           <option name="EFFECT_TYPE" value="1" />
         </value>
       </option>
-      <option name="INCLUDE_JAVA_CALL">
-        <value>
-          <option name="FOREGROUND" value="f7b891" />
-          <option name="FONT_TYPE" value="1" />
-        </value>
-      </option>
       <option name="INFO_ATTRIBUTES">
         <value>
           <option name="EFFECT_COLOR" value="aeae80" deuteranopia="737355" protanopia="737355"/>
@@ -1825,31 +1769,10 @@
           <option name="BACKGROUND" value="364135" deuteranopia="1f2433" protanopia="1f2433"/>
         </value>
       </option>
-      <option name="INSPECTION_MULTIPLE_RESOLVE_WARNING_ID">
-        <value />
-      </option>
       <option name="INSTANCE_FIELD_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="9876aa" deuteranopia="828eba" protanopia="828eba"/>
           <option name="EFFECT_TYPE" value="1" />
-        </value>
-      </option>
-      <option name="INTELLIJ_LOCAL_CHANGE">
-        <value>
-          <option name="FOREGROUND" value="d0d0ff" />
-          <option name="EFFECT_TYPE" value="-1" />
-        </value>
-      </option>
-      <option name="Implicit conversion first part">
-        <value>
-          <option name="FOREGROUND" value="1a5746" />
-          <option name="EFFECT_TYPE" value="-1" />
-        </value>
-      </option>
-      <option name="Implicit conversion second part">
-        <value>
-          <option name="FOREGROUND" value="1e7866" />
-          <option name="EFFECT_TYPE" value="-1" />
         </value>
       </option>
       <option name="Instance field">
@@ -1908,85 +1831,6 @@
       <option name="JAVA_VALID_STRING_ESCAPE">
         <value>
           <option name="FOREGROUND" value="cc7832" />
-        </value>
-      </option>
-      <option name="JFLEX.JAVA_CODE">
-        <value>
-          <option name="EFFECT_TYPE" value="-1" />
-        </value>
-      </option>
-      <option name="JFLEX.OPTION_KEYWORD">
-        <value>
-          <option name="FOREGROUND" value="c69d9d" />
-          <option name="FONT_TYPE" value="1" />
-          <option name="EFFECT_TYPE" value="-1" />
-        </value>
-      </option>
-      <option name="JFLEX.OPTION_PARAMETER">
-        <value>
-          <option name="EFFECT_TYPE" value="-1" />
-        </value>
-      </option>
-      <option name="JFLEX.OPTION_SIGN">
-        <value>
-          <option name="EFFECT_TYPE" value="4" />
-        </value>
-      </option>
-      <option name="JFLEX.SECTION_SIGN">
-        <value>
-          <option name="FONT_TYPE" value="1" />
-          <option name="EFFECT_TYPE" value="3" />
-        </value>
-      </option>
-      <option name="JFLEX_ANGLE_BRACKETS">
-        <value>
-          <option name="FOREGROUND" value="658665" />
-        </value>
-      </option>
-      <option name="JFLEX_COMMA">
-        <value />
-      </option>
-      <option name="JFLEX_MACROS">
-        <value>
-          <option name="FOREGROUND" value="c63c41" />
-          <option name="FONT_TYPE" value="1" />
-          <option name="EFFECT_TYPE" value="-1" />
-        </value>
-      </option>
-      <option name="JFLEX_MACROS_REF">
-        <value>
-          <option name="FOREGROUND" value="9876aa" />
-          <option name="EFFECT_TYPE" value="-1" />
-        </value>
-      </option>
-      <option name="JFLEX_OPTION_BACKGROUND">
-        <value>
-          <option name="EFFECT_TYPE" value="-1" />
-        </value>
-      </option>
-      <option name="JFLEX_REGEXP_BACKGROUND">
-        <value>
-          <option name="EFFECT_TYPE" value="-1" />
-        </value>
-      </option>
-      <option name="JFLEX_REGEXP_CLASS_SYMBOL">
-        <value>
-          <option name="FOREGROUND" value="999975" />
-          <option name="FONT_TYPE" value="1" />
-          <option name="EFFECT_TYPE" value="-1" />
-        </value>
-      </option>
-      <option name="JFLEX_REGEXP_SYMBOL">
-        <value>
-          <option name="FOREGROUND" value="999975" />
-          <option name="EFFECT_TYPE" value="-1" />
-        </value>
-      </option>
-      <option name="JFLEX_STATE_REF">
-        <value>
-          <option name="FOREGROUND" value="658665" />
-          <option name="FONT_TYPE" value="1" />
-          <option name="EFFECT_TYPE" value="-1" />
         </value>
       </option>
       <option name="JS.ATTRIBUTE">
@@ -2181,11 +2025,6 @@
       <option name="REGEXP.REDUNDANT_ESCAPE">
         <value>
           <option name="FOREGROUND" value="9396c0" />
-          <option name="FONT_TYPE" value="1" />
-        </value>
-      </option>
-      <option name="REQUIRE_GEM_CALL">
-        <value>
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>

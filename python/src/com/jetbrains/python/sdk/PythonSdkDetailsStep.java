@@ -21,7 +21,10 @@ import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
@@ -138,7 +141,24 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        SdkConfigurationUtil.createSdk(myProject, myExistingSdks, myCallback, false, PythonSdkType.getInstance());
+        final NullableConsumer<Sdk> callback = new NullableConsumer<Sdk>() {
+          @Override
+          public void consume(@Nullable final Sdk sdk) {
+            myCallback.consume(sdk);
+            if (sdk != null) {
+              DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
+                @Override
+                public void run() {
+                  if (ProjectJdkTable.getInstance().findJdk(sdk.getName()) == null) {
+                    SdkConfigurationUtil.addSdk(sdk);
+                  }
+                  PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
+                }
+              });
+            }
+          }
+        };
+        SdkConfigurationUtil.createSdk(myProject, myExistingSdks, callback, false, PythonSdkType.getInstance());
       }
     }, ModalityState.any());
   }
@@ -159,7 +179,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     CreateVirtualEnvDialog.VirtualEnvCallback callback = new CreateVirtualEnvDialog.VirtualEnvCallback() {
       @Override
       public void virtualEnvCreated(Sdk sdk, boolean associateWithProject) {
-        PythonSdkType.setupSdkPaths(sdk, myProject, null);
+        PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
         if (associateWithProject) {
           SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
           if (additionalData == null) {

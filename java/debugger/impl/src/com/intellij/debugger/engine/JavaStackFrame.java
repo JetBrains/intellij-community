@@ -123,6 +123,7 @@ public class JavaStackFrame extends XStackFrame {
 
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
+    if (node.isObsolete()) return;
     XStackFrame xFrame = getDescriptor().getXStackFrame();
     if (xFrame != null) {
       xFrame.computeChildren(node);
@@ -136,6 +137,7 @@ public class JavaStackFrame extends XStackFrame {
 
       @Override
       public void threadAction() {
+        if (node.isObsolete()) return;
         XValueChildrenList children = new XValueChildrenList();
         buildVariablesThreadAction(getFrameDebuggerContext(), children, node);
         node.addChildren(children, true);
