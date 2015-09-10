@@ -40,6 +40,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class TextMergeChange extends ThreesideDiffChangeBase {
+  private static final String CTRL_CLICK_TO_RESOLVE = "Ctrl+click to resolve conflict";
+
   @NotNull private final TextMergeTool.TextMergeViewer myMergeViewer;
   @NotNull private final TextMergeTool.TextMergeViewer.MyThreesideViewer myViewer;
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
@@ -300,7 +302,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
     Icon icon = isOnesideAppliedConflict() ? AllIcons.Diff.ArrowLeftDown : AllIcons.Diff.Arrow;
-    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), icon, new Runnable() {
+    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), icon, isConflict(), new Runnable() {
       @Override
       public void run() {
         myViewer.executeMergeCommand("Apply change", Collections.singletonList(TextMergeChange.this), new Runnable() {
@@ -316,7 +318,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   @Nullable
   private GutterIconRenderer createIgnoreRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
-    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, new Runnable() {
+    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, isConflict(), new Runnable() {
       @Override
       public void run() {
         myViewer.executeMergeCommand(null, Collections.singletonList(TextMergeChange.this), new Runnable() {
@@ -330,9 +332,11 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   @Nullable
-  private GutterIconRenderer createIconRenderer(@NotNull final String tooltipText,
+  private GutterIconRenderer createIconRenderer(@NotNull final String text,
                                                 @NotNull final Icon icon,
+                                                boolean ctrlClickVisible,
                                                 @NotNull final Runnable perform) {
+    final String tooltipText = DiffUtil.createTooltipText(text, ctrlClickVisible ? CTRL_CLICK_TO_RESOLVE : null);
     return new GutterIconRenderer() {
       @NotNull
       @Override

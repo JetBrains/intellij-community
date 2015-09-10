@@ -945,7 +945,7 @@ public class TemplateState implements Disposable {
   }
 
   /**
-   * @deprecated
+   * @deprecated use this#gotoEnd(true)
    */
   public void cancelTemplate() {
     if (myTemplate == null) return;

@@ -40,6 +40,10 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
     myExtensions = extensions;
   }
 
+  public AdditionalIndexableFileSet(Project project) {
+    myProject = project;
+  }
+
   public AdditionalIndexableFileSet(IndexedRootsProvider... extensions) {
     myProject = null;
     myExtensions = extensions;
