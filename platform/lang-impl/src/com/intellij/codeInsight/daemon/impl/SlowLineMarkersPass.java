@@ -81,10 +81,10 @@ public class SlowLineMarkersPass extends TextEditorHighlightingPass implements L
 
   @Override
   public void doApplyInformationToEditor() {
-    LineMarkersUtil.setLineMarkersToEditor(myProject, myDocument, myBounds, myMarkers, getId());
+    LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myBounds, myMarkers, getId());
 
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
+    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(getDocument(), getId());
   }
 }
 

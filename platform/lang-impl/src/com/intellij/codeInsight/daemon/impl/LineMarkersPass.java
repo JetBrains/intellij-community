@@ -80,10 +80,17 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
     myBounds = bounds;
   }
 
+  @NotNull
+  @Override
+  public Document getDocument() {
+    //noinspection ConstantConditions
+    return super.getDocument();
+  }
+
   @Override
   public void doApplyInformationToEditor() {
     try {
-      LineMarkersUtil.setLineMarkersToEditor(myProject, myDocument, myBounds, myMarkers, Pass.UPDATE_ALL);
+      LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myBounds, myMarkers, Pass.UPDATE_ALL);
     }
     catch (IndexNotReadyException ignored) {
     }
@@ -211,14 +218,14 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
       List<PsiElement> injElements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());
       final List<LineMarkerProvider> providers = getMarkerProviders(injectedPsi.getLanguage(), project);
       processor.addLineMarkers(injElements, providers, injectedMarkers, progress);
-      for (final LineMarkerInfo<PsiElement> injectedMarker : injectedMarkers) {
+      for (final LineMarkerInfo injectedMarker : injectedMarkers) {
         GutterIconRenderer gutterRenderer = injectedMarker.createGutterRenderer();
         TextRange injectedRange = new TextRange(injectedMarker.startOffset, injectedMarker.endOffset);
         List<TextRange> editables = manager.intersectWithAllEditableFragments(injectedPsi, injectedRange);
         for (TextRange editable : editables) {
           TextRange hostRange = manager.injectedToHost(injectedPsi, editable);
           Icon icon = gutterRenderer == null ? null : gutterRenderer.getIcon();
-          LineMarkerInfo converted =
+          LineMarkerInfo<PsiElement> converted =
               new LineMarkerInfo<PsiElement>(injectedMarker.getElement(), hostRange, icon, injectedMarker.updatePass,
                                  new Function<PsiElement, String>() {
                                    @Override
