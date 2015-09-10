@@ -146,14 +146,14 @@ public class TemplateState implements Disposable {
       @Override
       public void caretAdded(CaretEvent e) {
         if (isMultiCaretMode()) {
-          finishTemplateEditing();
+          finishTemplateEditing(false);
         }
       }
 
       @Override
       public void caretRemoved(CaretEvent e) {
         if (isMultiCaretMode()) {
-          finishTemplateEditing();
+          finishTemplateEditing(false);
         }
       }
     };
@@ -401,7 +401,7 @@ public class TemplateState implements Disposable {
         }
 
         if (nextVariableNumber == -1) {
-          finishTemplateEditing();
+          finishTemplateEditing(false);
         }
         else {
           setCurrentVariableNumber(nextVariableNumber);
@@ -410,7 +410,7 @@ public class TemplateState implements Disposable {
           focusCurrentExpression();
           currentVariableChanged(-1);
           if (isMultiCaretMode()) {
-            finishTemplateEditing();
+            finishTemplateEditing(false);
           }
         }
       }
@@ -668,7 +668,7 @@ public class TemplateState implements Disposable {
       final TextResult value = getVariableValue(variableName);
       if (value != null && !value.getText().isEmpty()) {
         if (!myProcessor.process(variableName, value.getText())) {
-          finishTemplateEditing(); // nextTab(); ?
+          finishTemplateEditing(false); // nextTab(); ?
           return;
         }
       }
@@ -856,7 +856,7 @@ public class TemplateState implements Disposable {
           reformat(null);
         }
       });
-      finishTemplateEditing();
+      finishTemplateEditing(false);
       return;
     }
     focusCurrentHighlighter(false);
@@ -931,30 +931,36 @@ public class TemplateState implements Disposable {
 
   public void gotoEnd(boolean brokenOff) {
     if (myTemplate == null) return;
-    LookupManager.getInstance(myProject).hideActiveLookup();
     calcResults(false);
     if (!brokenOff) {
       doReformat(null);
     }
-    setFinalEditorState(brokenOff);
-    cleanupTemplateState(brokenOff);
+    finishTemplateEditing(brokenOff);
   }
 
   public void gotoEnd() {
     gotoEnd(true);
   }
 
-  private void finishTemplateEditing() {
+  public void cancelTemplate() {
     if (myTemplate == null) return;
+
     LookupManager.getInstance(myProject).hideActiveLookup();
-    setFinalEditorState(false);
-    cleanupTemplateState(false);
+
+    cleanupTemplateState(true);
   }
 
-  private void setFinalEditorState(boolean brokenOff) {
-    myEditor.getSelectionModel().removeSelection();
-    if (brokenOff && !((TemplateManagerImpl)TemplateManager.getInstance(myProject)).shouldSkipInTests()) return;
-    
+  private void finishTemplateEditing(boolean brokenOff) {
+    if (myTemplate == null) return;
+
+
+    LookupManager.getInstance(myProject).hideActiveLookup();
+
+    setFinalEditorState();
+    cleanupTemplateState(brokenOff);
+  }
+
+  private void setFinalEditorState() {
     int selectionSegment = myTemplate.getVariableSegmentNumber(TemplateImpl.SELECTION);
     int endSegmentNumber = selectionSegment >= 0 && getSelectionBeforeTemplate() == null ? selectionSegment : myTemplate.getEndSegmentNumber();
     int offset = -1;
@@ -975,7 +981,8 @@ public class TemplateState implements Disposable {
       myEditor.getCaretModel().moveToOffset(offset);
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
-    
+
+    myEditor.getSelectionModel().removeSelection();
     int selStart = myTemplate.getSelectionStartSegmentNumber();
     int selEnd = myTemplate.getSelectionEndSegmentNumber();
     if (selStart >= 0 && selEnd >= 0) {
