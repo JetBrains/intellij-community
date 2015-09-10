@@ -52,28 +52,12 @@ public class ServerAppStarter : ApplicationStarterBase("server", 0) {
     IdeaApplication.LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms")
     PluginManagerCore.dumpPluginClassStatistics()
 
-    //    if (JetBrainsProtocolHandler.getCommand() != null || !willOpenProject.get()) {
-    //      WelcomeFrame.showNow()
-    //      lifecyclePublisher.welcomeScreenDisplayed()
-    //    } else {
-    //      windowManager.showFrame()
-    //    }
-
-    //    app.invokeLater(object : Runnable {
-    //      override fun run() {
-    //        if (mySplash != null) {
-    //          mySplash.dispose()
-    //          mySplash = null // Allow GC collect the splash window
-    //        }
-    //      }
-    //    }, ModalityState.NON_MODAL)
-
     app.invokeLater(object : Runnable {
       override fun run() {
-        //        var projectFromCommandLine: Project? = null
-        //        if (myPerformProjectLoad) {
-        //          projectFromCommandLine = (app as IdeaApplication).loadProjectFromExternalCommandLine()
-        //        }
+//      var projectFromCommandLine: Project? = null
+//      if (myPerformProjectLoad) {
+//        projectFromCommandLine = (app as IdeaApplication).loadProjectFromExternalCommandLine()
+//      }
 
         val bus = ApplicationManager.getApplication().getMessageBus()
         bus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(null)
@@ -84,25 +68,15 @@ public class ServerAppStarter : ApplicationStarterBase("server", 0) {
             PluginManager.reportPluginError()
           }
         })
-
-        //safe for headless and unit test modes
-//        UsageTrigger.trigger(app.getName() + "app.started")
       }
     }, ModalityState.NON_MODAL)
 
-
       val eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue()
       while (true) {
-//        val event = eventQueue.peekEvent() ?: break
-        val event1 = eventQueue.getNextEvent()
-        if (event1 is InvocationEvent) {
-          IdeEventQueue.getInstance().dispatchEvent(event1)
+        val event = eventQueue.getNextEvent()
+        if (event is InvocationEvent) {
+          IdeEventQueue.getInstance().dispatchEvent(event)
         }
       }
-
-
-//    JFrame().show()
   }
-
-
 }
