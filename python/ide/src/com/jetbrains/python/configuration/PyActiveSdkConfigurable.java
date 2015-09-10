@@ -131,30 +131,33 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myDetailsButton.addActionListener(new ActionListener() {
                                         @Override
                                         public void actionPerformed(ActionEvent e) {
-                                          PythonSdkDetailsStep.show(myProject, myProjectSdksModel.getSdks(),
-                                                                    myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
-                                                                    new PythonSdkDetailsDialog(myModule, myDetailsCallback), myMainPanel,
-                                                  myDetailsButton.getLocationOnScreen(),
-                                                  new NullableConsumer<Sdk>() {
-                                                    @Override
-                                                    public void consume(Sdk sdk) {
-                                                      if (sdk == null) return;
-                                                      final PySdkService sdkService = PySdkService.getInstance();
-                                                      sdkService.restoreSdk(sdk);
-                                                      if (myProjectSdksModel.findSdk(sdk) == null) {
-                                                        myProjectSdksModel.addSdk(sdk);
-                                                      }
-                                                      updateSdkList(false);
-                                                      mySdkCombo.getModel().setSelectedItem(myProjectSdksModel.findSdk(sdk.getName()));
-                                                      myPackagesPanel.updatePackages(new PyPackageManagementService(myProject, sdk));
-                                                      myPackagesPanel.updateNotifications(sdk);
-                                                    }
-                                                  }
-                                            );
+                                          showDetails();
                                         }
                                       }
     );
 
+  }
+
+  private void showDetails() {
+    final PythonSdkDetailsDialog moreDialog = myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
+                                                                 new PythonSdkDetailsDialog(myModule, myDetailsCallback);
+    final NullableConsumer<Sdk> sdkAddedCallback = new NullableConsumer<Sdk>() {
+      @Override
+      public void consume(Sdk sdk) {
+        if (sdk == null) return;
+        final PySdkService sdkService = PySdkService.getInstance();
+        sdkService.restoreSdk(sdk);
+        if (myProjectSdksModel.findSdk(sdk) == null) {
+          myProjectSdksModel.addSdk(sdk);
+        }
+        updateSdkList(false);
+        mySdkCombo.getModel().setSelectedItem(myProjectSdksModel.findSdk(sdk.getName()));
+        myPackagesPanel.updatePackages(new PyPackageManagementService(myProject, sdk));
+        myPackagesPanel.updateNotifications(sdk);
+      }
+    };
+    PythonSdkDetailsStep.show(myProject, myProjectSdksModel.getSdks(), moreDialog, myMainPanel,
+                              myDetailsButton.getLocationOnScreen(), sdkAddedCallback);
   }
 
   private void layoutPanel() {
