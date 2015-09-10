@@ -195,12 +195,18 @@ public class FileManagerImpl implements FileManager {
   }
 
   private void clearViewProviders() {
-    for (final FileViewProvider provider : myVFileToViewProviderMap.values()) {
-      if (provider instanceof SingleRootFileViewProvider) {
-        ((SingleRootFileViewProvider)provider).markInvalidated();
+    DebugUtil.startPsiModification("clearViewProviders");
+    try {
+      for (final FileViewProvider provider : myVFileToViewProviderMap.values()) {
+        if (provider instanceof SingleRootFileViewProvider) {
+          ((SingleRootFileViewProvider)provider).markInvalidated();
+        }
       }
+      myVFileToViewProviderMap.clear();
     }
-    myVFileToViewProviderMap.clear();
+    finally {
+      DebugUtil.finishPsiModification();
+    }
   }
 
   @Override
@@ -466,21 +472,27 @@ public class FileManagerImpl implements FileManager {
   }
 
   void removeFilesAndDirsRecursively(@NotNull VirtualFile vFile) {
-    VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        if (file.isDirectory()) {
-          myVFileToPsiDirMap.remove(file);
-        }
-        else {
-          FileViewProvider viewProvider = myVFileToViewProviderMap.remove(file);
-          if (viewProvider instanceof SingleRootFileViewProvider) {
-            ((SingleRootFileViewProvider)viewProvider).markInvalidated();
+    DebugUtil.startPsiModification("removeFilesAndDirsRecursively");
+    try {
+      VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          if (file.isDirectory()) {
+            myVFileToPsiDirMap.remove(file);
           }
+          else {
+            FileViewProvider viewProvider = myVFileToViewProviderMap.remove(file);
+            if (viewProvider instanceof SingleRootFileViewProvider) {
+              ((SingleRootFileViewProvider)viewProvider).markInvalidated();
+            }
+          }
+          return true;
         }
-        return true;
-      }
-    });
+      });
+    }
+    finally {
+      DebugUtil.finishPsiModification();
+    }
   }
 
   @Nullable
@@ -579,11 +591,17 @@ public class FileManagerImpl implements FileManager {
   }
 
   private void markInvalidations(Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap) {
-    for (Map.Entry<VirtualFile, FileViewProvider> entry : originalFileToPsiFileMap.entrySet()) {
-      FileViewProvider viewProvider = entry.getValue();
-      if (viewProvider instanceof SingleRootFileViewProvider && myVFileToViewProviderMap.get(entry.getKey()) != viewProvider) {
-        ((SingleRootFileViewProvider)viewProvider).markInvalidated();
+    DebugUtil.startPsiModification("markInvalidations");
+    try {
+      for (Map.Entry<VirtualFile, FileViewProvider> entry : originalFileToPsiFileMap.entrySet()) {
+        FileViewProvider viewProvider = entry.getValue();
+        if (viewProvider instanceof SingleRootFileViewProvider && myVFileToViewProviderMap.get(entry.getKey()) != viewProvider) {
+          ((SingleRootFileViewProvider)viewProvider).markInvalidated();
+        }
       }
+    }
+    finally {
+      DebugUtil.finishPsiModification();
     }
   }
 
