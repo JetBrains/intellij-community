@@ -52,21 +52,23 @@ public class LoadingDetails extends VcsChangesLazilyParsedDetails {
     }
 
     @NotNull
-    @Override
-    public String asString() {
+    private Hash getValue() {
       if (myHash == null) {
         myHash = myComputableHash.compute();
       }
-      return myHash.asString();
+      return myHash;
+    }
+
+    @NotNull
+    @Override
+    public String asString() {
+      return getValue().asString();
     }
 
     @NotNull
     @Override
     public String toShortString() {
-      if (myHash == null) {
-        myHash = myComputableHash.compute();
-      }
-      return myHash.toShortString();
+      return getValue().toShortString();
     }
   }
 }
