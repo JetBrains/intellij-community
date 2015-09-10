@@ -28,6 +28,11 @@ import java.util.Map;
                                     "/platform/platform-tests/testData/newGeneralFormatter", dataName + ".xml");
     return readBlock(JDOMUtil.load(dataFile));
   }
+  
+  public TestBlock readTestBlock(String path, String file) throws IOException, JDOMException {
+    final File dataFile = new File(path, file);
+    return readBlock(JDOMUtil.load(dataFile));
+  }
 
   private TestBlock readBlock(final Element rootElement) {
     final int startOffset = Integer.parseInt(rootElement.getAttributeValue("start"));

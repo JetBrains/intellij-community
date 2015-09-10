@@ -15,9 +15,7 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
-import com.intellij.formatting.Block;
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.*;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
@@ -37,21 +35,22 @@ public abstract class AbstractNewLineBlocksIteratorTest extends LightPlatformCod
     return getTestName(true);
   }
 
-  protected void checkNewLineBlocksStartOffsets(int[] newLineStartOffsets) {
-    Iterator<Block> iterator = createNewLineBlocksIterator();
-
+  protected void checkStartOffsets(int[] newLineStartOffset) {
+    checkStartOffsets(newLineStartOffset, newLineBlockIterator());
+  }
+  
+  protected void checkStartOffsets(int[] newLineStartOffsets, Iterator<Block> iterator) {
     int i = 0;
     while (iterator.hasNext()) {
-      Assert.assertTrue("Detected unspecified new line block start offset ", i < newLineStartOffsets.length);
       Block next = iterator.next();
+      Assert.assertTrue("Extra new line block found: " + next.getTextRange(), i < newLineStartOffsets.length);
       Assert.assertEquals("Block start offset do not match ", newLineStartOffsets[i++], next.getTextRange().getStartOffset());
     }
-
     Assert.assertEquals("Not detected new line block start offset ", i, newLineStartOffsets.length);
   }
 
   @NotNull
-  protected static Iterator<Block> createNewLineBlocksIterator() {
+  protected static Iterator<Block> newLineBlockIterator() {
     FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(myFile);
     Assert.assertNotNull(builder);
 
