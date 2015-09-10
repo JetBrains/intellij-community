@@ -432,7 +432,7 @@ class FindInProjectTask {
   @NotNull
   private Set<VirtualFile> getFilesForFastWordSearch() {
     String stringToFind = myFindModel.getStringToFind();
-    if (stringToFind.isEmpty() || DumbService.getInstance(myProject).isDumb() || myFindModel.isReplaceState()) {
+    if (stringToFind.isEmpty() || DumbService.getInstance(myProject).isDumb() || myFindModel.isRegularExpressions()) {
       return Collections.emptySet();
     }
 
