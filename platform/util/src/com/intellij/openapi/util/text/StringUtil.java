@@ -39,6 +39,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
 //TeamCity inherits StringUtil: do not add private constructors!!!
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
 public class StringUtil extends StringUtilRt {
@@ -450,7 +453,7 @@ public class StringUtil extends StringUtilRt {
     for (int i = 1; i < s1.length(); i++) {
       for (int j = 1; j < s2.length(); j++) {
 
-        a[i][j] = Math.min(Math.min(a[i - 1][j - 1] + (s1.charAt(i) == s2.charAt(j) ? 0 : 1), a[i - 1][j] + 1), a[i][j - 1] + 1);
+        a[i][j] = min(min(a[i - 1][j - 1] + (s1.charAt(i) == s2.charAt(j) ? 0 : 1), a[i - 1][j] + 1), a[i][j - 1] + 1);
       }
     }
 
@@ -1822,7 +1825,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static int commonPrefixLength(@NotNull CharSequence s1, @NotNull CharSequence s2) {
     int i;
-    int minLength = Math.min(s1.length(), s2.length());
+    int minLength = min(s1.length(), s2.length());
     for (i = 0; i < minLength; i++) {
       if (s1.charAt(i) != s2.charAt(i)) {
         break;
@@ -1888,6 +1891,9 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence s, char c, int start, int end) {
+    final int n = s.length();
+    if (start < 0) start = 0;
+    if (end > n) end = n;
     for (int i = start; i < end; i++) {
       if (s.charAt(i) == c) return i;
     }
@@ -1916,6 +1922,9 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence s, char c, int start, int end, boolean caseSensitive) {
+    final int n = s.length();
+    if (start < 0) start = 0;
+    if (end > n) end = n;
     for (int i = start; i < end; i++) {
       if (charsMatch(s.charAt(i), c, !caseSensitive)) return i;
     }
@@ -1924,6 +1933,9 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull char[] s, char c, int start, int end, boolean caseSensitive) {
+    final int n = s.length;
+    if (start < 0) start = 0;
+    if (end > n) end = n;
     for (int i = start; i < end; i++) {
       if (charsMatch(s[i], c, !caseSensitive)) return i;
     }
@@ -1954,7 +1966,8 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOfAny(@NotNull final CharSequence s, @NotNull final String chars, final int start, final int end) {
-    for (int i = start; i < end; i++) {
+    final int n = s.length();
+    for (int i = max(start,0); i < min(end,n); i++) {
       if (containsChar(chars, s.charAt(i))) return i;
     }
     return -1;
@@ -3171,7 +3184,7 @@ public class StringUtil extends StringUtilRt {
     String toPaste = "...";
     int index;
     while (true) {
-      index = Math.max(0, (words.size() - 1) / 2);
+      index = max(0, (words.size() - 1) / 2);
       String aWord = words.get(index);
       words.remove(index);
       int toCut = length - removedLength - maxWidth + 3;
@@ -3185,7 +3198,7 @@ public class StringUtil extends StringUtilRt {
         break;
       }
     }
-    for (int i = 0; i < Math.max(1, words.size()); i++) {
+    for (int i = 0; i < max(1, words.size()); i++) {
       String word = words.isEmpty() ? "" : words.get(i);
       if (i == index || words.size() == 1) builder.append(toPaste);
       builder.append(word);
