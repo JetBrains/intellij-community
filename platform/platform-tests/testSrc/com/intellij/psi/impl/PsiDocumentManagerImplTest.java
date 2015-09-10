@@ -25,7 +25,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -36,6 +38,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -51,6 +54,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiDocumentManagerImplTest extends PlatformTestCase {
@@ -558,5 +563,21 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     assertTrue(getPsiDocumentManager().isCommitted(document));
     LaterInvocator.leaveModal(dialog);
+  }
+  
+  public void testReparseDoesNotModifyDocument() throws Exception {
+    VirtualFile file = createTempFile("txt", null, "foo", Charset.forName("UTF-8"));
+    file.putUserData(TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY, EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+    final Document document = FileDocumentManager.getInstance().getDocument(file);
+    assertNotNull(document);
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(3, " ");
+      }
+    });
+    
+    PsiDocumentManager.getInstance(myProject).reparseFiles(Collections.singleton(file), false);
+    assertEquals("foo ", VfsUtilCore.loadText(file));
   }
 }
