@@ -649,7 +649,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
 
     myAdComponent.showRandomText();
-    myUi = LookupUiFactory.forEditor(myEditor).createLookupUi(this, myAdComponent, myList, myProject);
+    myUi = LookupUiFactory.getInstance().createLookupUi(this, myAdComponent, myList, myProject);
     myUi.setCalculating(myCalculating);
     myUi.show();
 

@@ -2,8 +2,7 @@
   <application-components>
     <component>
       <interface-class>com.intellij.openapi.wm.WindowManager</interface-class>
-      <!--<implementation-class>com.intellij.openapi.wm.impl.WindowManagerImpl</implementation-class>-->
-      <implementation-class>com.jetbrains.reactiveidea.ServerWindowManager</implementation-class>
+      <implementation-class>com.intellij.openapi.wm.impl.WindowManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.openapi.wm.impl.TestWindowManager</headless-implementation-class>
     </component>
   </application-components>
@@ -11,15 +10,13 @@
   <project-components>
     <component>
       <interface-class>com.intellij.openapi.wm.ToolWindowManager</interface-class>
-      <!--<implementation-class>com.intellij.openapi.wm.impl.ToolWindowManagerImpl</implementation-class>-->
-      <implementation-class>com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl</implementation-class>
+      <implementation-class>com.intellij.openapi.wm.impl.ToolWindowManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl</headless-implementation-class>
       <option name="workspace" value="true"/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.wm.IdeFocusManager</interface-class>
-      <!--<implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerImpl</implementation-class>-->
-      <implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerHeadless</implementation-class>
+      <implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerHeadless</headless-implementation-class>
     </component>
     <component>
@@ -32,9 +29,9 @@
     </component>
   </project-components>
 
-  <extensions>
-    <applicationService serviceInterface="com.intellij.openapi.wm.impl.CommandProcessor"
-                        serviceImplementation="com.intellij.openapi.wm.impl.CommandProcessor"/>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.openapi.wm.impl.CommandProcessor"
+                    serviceImplementation="com.intellij.openapi.wm.impl.CommandProcessor"/>
 
   </extensions>
 </idea-plugin>

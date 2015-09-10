@@ -628,7 +628,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     for (FinalizableCommand each : commandList) {
       each.beforeExecute(this);
     }
-    CommandProcessor.getInstance().execute(commandList, myProject.getDisposed());
+    CommandProcessor.getInstance(myProject).execute(commandList, myProject.getDisposed());
   }
 
   @Override
@@ -1420,7 +1420,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   @Override
   public void invokeLater(@NotNull final Runnable runnable) {
     List<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
-    commandList.add(new InvokeLaterCmd(runnable, CommandProcessor.getInstance()));
+    commandList.add(new InvokeLaterCmd(runnable, CommandProcessor.getInstance(myProject)));
     execute(commandList);
   }
 
@@ -1718,7 +1718,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (wasActive) {
       activateToolWindowImpl(id, commandList, true, true);
     }
-    commandList.add(myToolWindowsPane.createUpdateButtonPositionCmd(id, CommandProcessor.getInstance()));
+    commandList.add(myToolWindowsPane.createUpdateButtonPositionCmd(id, CommandProcessor.getInstance(myProject)));
   }
 
   ToolWindowType getToolWindowInternalType(final String id) {
@@ -1818,7 +1818,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void appendApplyWindowInfoCmd(final WindowInfoImpl info, final List<FinalizableCommand> commandsList) {
     final StripeButton button = getStripeButton(info.getId());
     final InternalDecorator decorator = getInternalDecorator(info.getId());
-    commandsList.add(new ApplyWindowInfoCmd(info, button, decorator, CommandProcessor.getInstance()));
+    commandsList.add(new ApplyWindowInfoCmd(info, button, decorator, CommandProcessor.getInstance(myProject)));
   }
 
   /**
@@ -1828,7 +1828,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                      final WindowInfoImpl info,
                                      final boolean dirtyMode,
                                      final List<FinalizableCommand> commandsList) {
-    final CommandProcessor commandProcessor = CommandProcessor.getInstance();
+    final CommandProcessor commandProcessor = CommandProcessor.getInstance(myProject);
     final FinalizableCommand command = myToolWindowsPane.createAddDecoratorCmd(decorator, info, dirtyMode, commandProcessor);
     commandsList.add(command);
   }
@@ -1837,7 +1837,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    * @see ToolWindowsPane#createRemoveDecoratorCmd
    */
   private void appendRemoveDecoratorCmd(final String id, final boolean dirtyMode, final List<FinalizableCommand> commandsList) {
-    final FinalizableCommand command = myToolWindowsPane.createRemoveDecoratorCmd(id, dirtyMode, CommandProcessor.getInstance());
+    final FinalizableCommand command = myToolWindowsPane.createRemoveDecoratorCmd(id, dirtyMode, CommandProcessor.getInstance(myProject));
     commandsList.add(command);
   }
 
@@ -1856,7 +1856,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    */
   private void appendAddButtonCmd(final StripeButton button, final WindowInfoImpl info, final List<FinalizableCommand> commandsList) {
     final Comparator<StripeButton> comparator = myLayout.comparator(info.getAnchor());
-    final CommandProcessor commandProcessor = CommandProcessor.getInstance();
+    final CommandProcessor commandProcessor = CommandProcessor.getInstance(myProject);
     final FinalizableCommand command = myToolWindowsPane.createAddButtonCmd(button, info, comparator, commandProcessor);
     commandsList.add(command);
   }
@@ -1865,14 +1865,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    * @see ToolWindowsPane#createAddButtonCmd
    */
   private void appendRemoveButtonCmd(final String id, final List<FinalizableCommand> commandsList) {
-    final FinalizableCommand command = myToolWindowsPane.createRemoveButtonCmd(id, CommandProcessor.getInstance());
+    final FinalizableCommand command = myToolWindowsPane.createRemoveButtonCmd(id, CommandProcessor.getInstance(myProject));
     commandsList.add(command);
   }
 
   private ActionCallback appendRequestFocusInEditorComponentCmd(List<FinalizableCommand> commandList, boolean forced) {
     if (myProject.isDisposed()) return ActionCallback.DONE;
     EditorsSplitters splitters = getSplittersToFocus();
-    CommandProcessor commandProcessor = CommandProcessor.getInstance();
+    CommandProcessor commandProcessor = CommandProcessor.getInstance(myProject);
     RequestFocusInEditorComponentCmd command = new RequestFocusInEditorComponentCmd(splitters, getFocusManager(), commandProcessor, forced);
     commandList.add(command);
     return command.getDoneCallback();
@@ -1882,14 +1882,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final ToolWindowImpl toolWindow = (ToolWindowImpl)getToolWindow(id);
     final FocusWatcher focusWatcher = myId2FocusWatcher.get(id);
     commandList
-      .add(new RequestFocusInToolWindowCmd(getFocusManager(), toolWindow, focusWatcher, CommandProcessor.getInstance(), forced));
+      .add(new RequestFocusInToolWindowCmd(getFocusManager(), toolWindow, focusWatcher, CommandProcessor.getInstance(myProject), forced));
   }
 
   /**
    * @see ToolWindowsPane#createSetEditorComponentCmd
    */
   public void appendSetEditorComponentCmd(@Nullable final JComponent component, final List<FinalizableCommand> commandsList) {
-    final CommandProcessor commandProcessor = CommandProcessor.getInstance();
+    final CommandProcessor commandProcessor = CommandProcessor.getInstance(myProject);
     final FinalizableCommand command = myToolWindowsPane.createSetEditorComponentCmd(component, commandProcessor);
     commandsList.add(command);
   }
@@ -1897,7 +1897,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void appendUpdateToolWindowsPaneCmd(final List<FinalizableCommand> commandsList) {
     final JRootPane rootPane = myFrame.getRootPane();
     if (rootPane != null) {
-      final FinalizableCommand command = new UpdateRootPaneCmd(rootPane, CommandProcessor.getInstance());
+      final FinalizableCommand command = new UpdateRootPaneCmd(rootPane, CommandProcessor.getInstance(myProject));
       commandsList.add(command);
     }
   }
@@ -2088,7 +2088,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
      * Creates floating decorator for specified floating decorator.
      */
     private AddFloatingDecoratorCmd(final InternalDecorator decorator, final WindowInfoImpl info) {
-      super(CommandProcessor.getInstance());
+      super(CommandProcessor.getInstance(myProject));
       myFloatingDecorator = new FloatingDecorator(myFrame, info.copy(), decorator);
       myId2FloatingDecorator.put(info.getId(), myFloatingDecorator);
       final Rectangle bounds = info.getFloatingBounds();
@@ -2127,7 +2127,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     private final FloatingDecorator myFloatingDecorator;
 
     private RemoveFloatingDecoratorCmd(final WindowInfoImpl info) {
-      super(CommandProcessor.getInstance());
+      super(CommandProcessor.getInstance(myProject));
       myFloatingDecorator = getFloatingDecorator(info.getId());
       myId2FloatingDecorator.remove(info.getId());
       info.setFloatingBounds(myFloatingDecorator.getBounds());
@@ -2160,7 +2160,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
      * Creates floating decorator for specified floating decorator.
      */
     private AddWindowedDecoratorCmd(final InternalDecorator decorator, final WindowInfoImpl info) {
-      super(CommandProcessor.getInstance());
+      super(CommandProcessor.getInstance(myProject));
       myWindowedDecorator = new WindowedDecorator(myProject, info.copy(), decorator);
       Window window = myWindowedDecorator.getFrame();
       final Rectangle bounds = info.getFloatingBounds();
@@ -2220,7 +2220,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     private final WindowedDecorator myWindowedDecorator;
 
     private RemoveWindowedDecoratorCmd(final WindowInfoImpl info) {
-      super(CommandProcessor.getInstance());
+      super(CommandProcessor.getInstance(myProject));
       myWindowedDecorator = getWindowedDecorator(info.getId());
       myId2WindowedDecorator.remove(info.getId());
 
@@ -2251,7 +2251,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final class EditorComponentFocusWatcher extends FocusWatcher {
     @Override
     protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
-      if (CommandProcessor.getInstance().getCommandCount() > 0 || component == null) {
+      if (CommandProcessor.getInstance(myProject).getCommandCount() > 0 || component == null) {
         return;
       }
       final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -2289,12 +2289,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     @Override
     protected boolean isFocusedComponentChangeValid(final Component comp, final AWTEvent cause) {
-      return CommandProcessor.getInstance().getCommandCount() == 0 && comp != null;
+      return CommandProcessor.getInstance(myProject).getCommandCount() == 0 && comp != null;
     }
 
     @Override
     protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
-      if (CommandProcessor.getInstance().getCommandCount() > 0 || component == null) {
+      if (CommandProcessor.getInstance(myProject).getCommandCount() > 0 || component == null) {
         return;
       }
       final WindowInfoImpl info = getInfo(myId);

@@ -13,26 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.idea
+package com.jetbrains.reactiveidea
 
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.idea.IdeaApplication
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.ApplicationStarterBase
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import java.awt.Toolkit
 import java.awt.event.InvocationEvent
-import java.lang
 import javax.swing.SwingUtilities
 
 public class ServerAppStarter : ApplicationStarterBase("server", 0) {
+  companion object {
+    val LOG = Logger.getInstance(ServerAppStarter.javaClass)
+  }
+
   override fun getUsageMessage(): String? = "server"
 
   override fun processCommand(args: Array<out String>?, currentDirectory: String?) {
@@ -45,11 +50,11 @@ public class ServerAppStarter : ApplicationStarterBase("server", 0) {
     val windowManager = WindowManager.getInstance() as WindowManagerEx
     IdeEventQueue.getInstance().setWindowManager(windowManager)
 
-    val willOpenProject = Ref(lang.Boolean.FALSE)
+    val willOpenProject = Ref(java.lang.Boolean.FALSE)
     val lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC)
     lifecyclePublisher.appFrameCreated(args, willOpenProject)
 
-    IdeaApplication.LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms")
+    LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms")
     PluginManagerCore.dumpPluginClassStatistics()
 
     app.invokeLater(object : Runnable {

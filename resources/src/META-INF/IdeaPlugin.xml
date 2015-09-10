@@ -51,12 +51,6 @@
     <component>
       <implementation-class>com.intellij.util.xml.impl.JavaDomApplicationComponent</implementation-class>
     </component>
-
-    <component>
-      <interface-class>com.jetbrains.reactiveidea.ReactiveModelsManager</interface-class>
-      <implementation-class>com.jetbrains.reactiveidea.ReactiveModelsManager</implementation-class>
-    </component>
-
   </application-components>
 
   <project-components>
@@ -68,7 +62,7 @@
       <interface-class>com.intellij.psi.RefResolveService</interface-class>
       <implementation-class>com.intellij.psi.refResolve.RefResolveServiceImpl</implementation-class>
     </component>
-    
+
     <component>
       <implementation-class>com.intellij.execution.testDiscovery.TestDiscoveryIndex</implementation-class>
     </component>
@@ -312,7 +306,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <codeInsight.lookupUiFactory implementation = "com.jetbrains.reactiveidea.ModelLookupUiFactory"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.lookup.impl.LookupUiFactory"
+                        serviceImplementation="com.intellij.codeInsight.lookup.impl.LookupUiFactoryImpl"/>
+
     <lang.syntaxHighlighterFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <syntaxHighlighter id="java.class" key="CLASS" factoryClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
 
@@ -364,7 +360,7 @@
 
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.MethodImplementationsSearch"/>
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
-    
+
     <functionalExpressionSearch implementation="com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.search.JavaFunctionalExpressionIndex"/>
 
@@ -1144,7 +1140,7 @@
     <stacktrace.fold substring="at java.security.ProtectionDomain$1.doIntersectionPrivilege("/>
     <stacktrace.fold substring="at com.jgoodies.binding.beans.ExtendedPropertyChangeSupport.firePropertyChange0("/>
     <stacktrace.fold substring="at javax.swing.plaf.basic.BasicComboPopup$Handler.mouseReleased("/>
-    
+
     <stacktrace.fold substring="at java.util.stream.ReferencePipeline$"/>
     <stacktrace.fold substring="at java.util.Spliterators$"/>
     <stacktrace.fold substring="at java.util.stream.AbstractPipeline.evaluate("/>
@@ -1710,5 +1706,9 @@
       <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickImplementations"/>
     </action>
   </actions>
+
+  <xi:include href="/META-INF/ReactiveIdeaPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+    <condition>com.jetbrains.reactiveidea.server</condition>
+  </xi:include>
 
 </idea-plugin>

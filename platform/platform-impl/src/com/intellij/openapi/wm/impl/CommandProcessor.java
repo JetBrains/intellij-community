@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
@@ -31,6 +32,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class CommandProcessor implements Runnable {
+
+  public CommandProcessor(Project project) {
+  }
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.CommandProcessor");
   private final Object myLock = new Object();
 
@@ -105,8 +110,8 @@ public final class CommandProcessor implements Runnable {
     return null;
   }
 
-  public static CommandProcessor getInstance() {
-    return ServiceManager.getService(CommandProcessor.class);
+  public static CommandProcessor getInstance(Project project) {
+    return ServiceManager.getService(project, CommandProcessor.class);
   }
 
   private static class CommandGroup {

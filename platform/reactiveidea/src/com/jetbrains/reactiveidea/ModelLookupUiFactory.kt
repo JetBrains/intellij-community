@@ -25,9 +25,6 @@ import com.intellij.ui.components.JBList
 import com.jetbrains.reactivemodel.util.Lifetime
 
 public class ModelLookupUiFactory : LookupUiFactory() {
-  override fun isAvailable(editor: Editor): Boolean {
-    return EditorHost.getHost(editor) != null;
-  }
 
   override fun createLookupUi(lookup: LookupImpl, advertiser: Advertiser, list: JBList, project: Project): LookupUi {
     val editorHost = EditorHost.getHost(lookup.getEditor())

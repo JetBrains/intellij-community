@@ -183,7 +183,7 @@ class IdeStarter extends ApplicationStarterEx {
       public void run() {
         Project projectFromCommandLine = null;
         if (myPerformProjectLoad) {
-          projectFromCommandLine = ((IdeaApplication)app).loadProjectFromExternalCommandLine();
+          projectFromCommandLine = IdeaApplication.getInstance().loadProjectFromExternalCommandLine();
         }
 
         final MessageBus bus = ApplicationManager.getApplication().getMessageBus();

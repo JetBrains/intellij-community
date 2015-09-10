@@ -15,25 +15,16 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.openapi.editor.Editor;
-
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class LookupUiFactory {
-  private static DefaultLookupUiFactory DEFAULT = new DefaultLookupUiFactory();
-  private static ExtensionPointName<LookupUiFactory> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.lookupUiFactory");
 
-  public static LookupUiFactory forEditor(@NotNull Editor editor) {
-    final LookupUiFactory[] extensions = EP_NAME.getExtensions();
-    for (LookupUiFactory extension : extensions) {
-      if (extension.isAvailable(editor)) return extension;
-    }
-    return DEFAULT;
-  }
-
-  public abstract boolean isAvailable(@NotNull Editor editor);
   public abstract @NotNull LookupUi createLookupUi(@NotNull LookupImpl lookup, @NotNull Advertiser advertiser, @NotNull JBList list, @NotNull Project project);
+
+  public static LookupUiFactory getInstance() {
+    return ServiceManager.getService(LookupUiFactory.class);
+  }
 }

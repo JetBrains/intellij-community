@@ -85,8 +85,7 @@
 
     <component>
       <interface-class>com.intellij.openapi.fileEditor.FileEditorManager</interface-class>
-      <!--<implementation-class>com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl</implementation-class>-->
-      <implementation-class>com.jetbrains.reactiveidea.ServerFileEditorManager</implementation-class>
+      <implementation-class>com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl</headless-implementation-class>
       <option name="workspace" value="true"/>
     </component>
@@ -119,7 +118,7 @@
     </component>
     <component>
       <interface-class>com.intellij.codeInsight.daemon.impl.EditorTracker</interface-class>
-      <implementation-class>com.jetbrains.reactiveidea.ServerEditorTracker</implementation-class>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.EditorTrackerimpl</implementation-class>
       <loadForDefaultProject/>
     </component>
     <component>

@@ -259,13 +259,13 @@
                     serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleFacadeImpl"/>
 
     <projectService serviceInterface="com.intellij.usages.UsageViewManager"
-                    serviceImplementation="com.intellij.usages.impl.ServerUsageViewManager"/>
+                    serviceImplementation="com.intellij.usages.impl.UsageViewManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.analysis.AnalysisUIOptions"
                     serviceImplementation="com.intellij.analysis.AnalysisUIOptions"/>
 
     <projectService serviceInterface="com.intellij.ide.actions.ChooseByNameFactory"
-                    serviceImplementation="com.jetbrains.reactiveidea.navigation.ModelChooseByNameFactory"/>
+                    serviceImplementation="com.intellij.ide.util.gotoByName.ChooseByNameFactoryImpl"/>
 
     <projectService serviceInterface="com.intellij.refactoring.listeners.RefactoringListenerManager"
                     serviceImplementation="com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl"/>

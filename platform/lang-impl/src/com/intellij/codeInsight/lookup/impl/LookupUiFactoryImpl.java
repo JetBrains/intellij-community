@@ -15,17 +15,11 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 
-public class DefaultLookupUiFactory extends LookupUiFactory {
-  @Override
-  public boolean isAvailable(@NotNull Editor editor) {
-    return true;
-  }
-
+public class LookupUiFactoryImpl extends LookupUiFactory {
   @NotNull
   @Override
   public LookupUi createLookupUi(@NotNull LookupImpl lookup, @NotNull Advertiser advertiser, @NotNull JBList list, @NotNull Project project) {
