@@ -279,8 +279,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
 
   @NotNull
   private static Point getHintPosition(Editor editor) {
-    if (ApplicationManager.getApplication().isUnitTestMode() ||
-      ApplicationManager.getApplication().isServer()) return new Point();
+    if (!ApplicationManager.getApplication().hasUI()) return new Point();
     final int offset = editor.getCaretModel().getOffset();
     final VisualPosition pos = editor.offsetToVisualPosition(offset);
     int line = pos.line;

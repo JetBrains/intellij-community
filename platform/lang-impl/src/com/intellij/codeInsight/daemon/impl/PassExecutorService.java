@@ -516,8 +516,7 @@ class PassExecutorService implements Disposable {
         }
         try {
           if (fileEditor.getComponent().isDisplayable()
-              || ApplicationManager.getApplication().isUnitTestMode()
-              || ApplicationManager.getApplication().isServer()) {
+              || !ApplicationManager.getApplication().hasUI()) {
             log(updateProgress, pass, " Applied");
             pass.applyInformationToEditor();
           }

@@ -103,6 +103,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final boolean myTestModeFlag;
   private final boolean myHeadlessMode;
   private final boolean myCommandLineMode;
+  private final boolean myIsServer;
+
 
   private final boolean myIsInternal;
   private final String myName;
@@ -173,10 +175,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public ApplicationImpl(boolean isInternal,
                          boolean isUnitTestMode,
                          boolean isHeadless,
-                         boolean isCommandLine,
-                         @NotNull String appName,
+                         boolean isCommandLine, boolean isServer, @NotNull String appName,
                          @Nullable Splash splash) {
     super(null);
+    myIsServer = isServer;
 
     ApplicationManager.setApplication(this, myLastDisposable); // reset back to null only when all components already disposed
 
@@ -353,7 +355,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isServer() {
-    return true;
+    return myIsServer;
+  }
+
+  @Override
+  public boolean hasUI() {
+    return !isHeadlessEnvironment() && !isUnitTestMode() && !isServer();
   }
 
   @Override

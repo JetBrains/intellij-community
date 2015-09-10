@@ -66,8 +66,7 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager {
                                                                                false, getAnchor(), myProject, true);
     myToolWindow.setIcon(UIDesignerIcons.ToolWindowUIDesigner);
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
-        !ApplicationManager.getApplication().isServer()) {
+    if (ApplicationManager.getApplication().hasUI()) {
       myToolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
     }
 

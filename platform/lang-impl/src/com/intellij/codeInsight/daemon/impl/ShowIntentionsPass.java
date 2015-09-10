@@ -184,8 +184,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    if (!ApplicationManager.getApplication().isServer() &&
-        !ApplicationManager.getApplication().isUnitTestMode() &&
+    if (ApplicationManager.getApplication().hasUI() &&
         !myEditor.getContentComponent().hasFocus()) return;
 
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
@@ -199,8 +198,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   public void doApplyInformationToEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (!ApplicationManager.getApplication().isServer() &&
-        !ApplicationManager.getApplication().isUnitTestMode() &&
+    if (ApplicationManager.getApplication().hasUI() &&
         !myEditor.getContentComponent().hasFocus()) return;
 
     // do not show intentions if caret is outside visible area

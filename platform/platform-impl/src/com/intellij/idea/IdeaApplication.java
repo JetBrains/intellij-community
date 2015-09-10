@@ -42,6 +42,7 @@ import java.util.List;
 public class IdeaApplication {
   @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
   @NonNls public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
+  @NonNls public static final String IDEA_IS_SERVER = "com.jetbrains.reactiveidea.server";
 
   private static final String[] SAFE_JAVA_ENV_PARAMETERS = {"idea.required.plugins.id"};
 
@@ -69,13 +70,14 @@ public class IdeaApplication {
     myArgs = processProgramArguments(args);
     boolean isInternal = Boolean.getBoolean(IDEA_IS_INTERNAL_PROPERTY);
     boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
+    boolean isServer = Boolean.getBoolean(IDEA_IS_SERVER);
 
     boolean headless = Main.isHeadless();
     patchSystem(headless);
 
     if (Main.isCommandLine()) {
       if (CommandLineApplication.ourInstance == null) {
-        new CommandLineApplication(isInternal, isUnitTest, headless);
+        new CommandLineApplication(isInternal, isUnitTest, headless, isServer);
       }
       if (isUnitTest) {
         myLoaded = true;
@@ -89,8 +91,7 @@ public class IdeaApplication {
           splash = ((IdeStarter)myStarter).showSplash(myArgs);
         }
       }
-
-      ApplicationManagerEx.createApplication(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION, splash);
+      ApplicationManagerEx.createApplication(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION, splash, isServer);
     }
 
     if (myStarter == null) {

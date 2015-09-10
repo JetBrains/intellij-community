@@ -342,6 +342,8 @@ public interface Application extends ComponentManager {
 
   boolean isServer();
 
+  boolean hasUI();
+
   /**
    * Checks if IDEA is running as a command line applet or in unit test mode.
    * UI can be shown (e.g. diff frame)

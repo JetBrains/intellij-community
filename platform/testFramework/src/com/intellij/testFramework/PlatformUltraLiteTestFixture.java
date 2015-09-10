@@ -35,7 +35,7 @@ public class PlatformUltraLiteTestFixture {
   public void setUp() {
     final Application application = ApplicationManager.getApplication();
     if (application == null) {
-      ApplicationImpl testapp = new ApplicationImpl(false, true, true, true, "testapp", null);
+      ApplicationImpl testapp = new ApplicationImpl(false, true, true, true, false, "testapp", null);
       ApplicationManager.setApplication(testapp, myAppDisposable);
     }
   }

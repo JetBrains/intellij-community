@@ -34,15 +34,19 @@ public class CommandLineApplication {
     System.setProperty("idea.filewatcher.disabled", "true");
   }
 
-  protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, boolean isHeadless) {
-    this(isInternal, isUnitTestMode, isHeadless, ApplicationManagerEx.IDEA_APPLICATION);
+  protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isServer) {
+    this(isInternal, isUnitTestMode, isHeadless, ApplicationManagerEx.IDEA_APPLICATION, isServer);
   }
 
-  protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, @NotNull @NonNls String appName) {
+  protected CommandLineApplication(boolean isInternal,
+                                   boolean isUnitTestMode,
+                                   boolean isHeadless,
+                                   @NotNull @NonNls String appName,
+                                   boolean isServer) {
     LOG.assertTrue(ourInstance == null, "Only one instance allowed.");
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourInstance = this;
-    ApplicationManagerEx.createApplication(isInternal, isUnitTestMode, isHeadless, true, appName, null);
+    ApplicationManagerEx.createApplication(isInternal, isUnitTestMode, isHeadless, true, appName, null, isServer);
   }
 
   public Object getData(String dataId) {

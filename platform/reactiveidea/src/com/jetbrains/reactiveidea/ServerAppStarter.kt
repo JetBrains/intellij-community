@@ -41,6 +41,8 @@ public class ServerAppStarter : ApplicationStarterBase("server", 0) {
   override fun getUsageMessage(): String? = "server"
 
   override fun processCommand(args: Array<out String>?, currentDirectory: String?) {
+    assert(ApplicationManager.getApplication().isServer(), "Please set ${IdeaApplication.IDEA_IS_SERVER} system property to true")
+
     RecentProjectsManager.getInstance()
 
     // Event queue should not be changed during initialization of application components.

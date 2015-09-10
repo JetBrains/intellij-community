@@ -92,6 +92,11 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
+  public boolean hasUI() {
+    return false;
+  }
+
+  @Override
   public boolean isServer() {
     return false;
   }

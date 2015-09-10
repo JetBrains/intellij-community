@@ -46,8 +46,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
 
   public GotoFileModel(@NotNull Project project) {
     super(project, Extensions.getExtensions(ChooseByNameContributor.FILE_EP_NAME));
-    myMaxSize = (ApplicationManager.getApplication().isUnitTestMode() ||
-                ApplicationManager.getApplication().isServer())
+    myMaxSize = !ApplicationManager.getApplication().hasUI()
                 ? Integer.MAX_VALUE : WindowManagerEx.getInstanceEx().getFrame(project).getSize().width;
   }
 
