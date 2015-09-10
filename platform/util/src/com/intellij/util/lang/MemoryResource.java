@@ -50,11 +50,6 @@ class MemoryResource extends Resource {
   }
 
   @Override
-  public int getContentLength() throws IOException {
-    return myContent.length;
-  }
-
-  @Override
   public byte[] getBytes() throws IOException {
     return myContent;
   }

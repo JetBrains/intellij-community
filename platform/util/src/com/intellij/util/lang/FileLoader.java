@@ -273,11 +273,6 @@ class FileLoader extends Loader {
     }
 
     @Override
-    public int getContentLength() throws IOException {
-      return -1;
-    }
-
-    @Override
     public byte[] getBytes() throws IOException {
       return FileUtil.loadFileBytes(myFile);
     }

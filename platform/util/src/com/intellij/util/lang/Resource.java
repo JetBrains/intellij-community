@@ -25,8 +25,6 @@ abstract class Resource {
 
   public abstract InputStream getInputStream() throws IOException;
 
-  public abstract int getContentLength() throws IOException;
-
   public abstract byte[] getBytes() throws IOException;
 
   public Manifest getManifest() {

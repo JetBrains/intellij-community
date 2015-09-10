@@ -340,12 +340,9 @@ public class ClassPath {
     @Override
     Resource process(Loader loader, String s, ClassPath classPath) {
       if (!classPath.myCache.loaderHasName(s, ClasspathCache.transformName(s), loader)) return null;
-      final Resource resource = loader.getResource(s, myFlag);
-      if (resource != null) {
-        printOrder(loader, s, resource);
-        return resource;
-      }
-      return null;
+      Resource resource = loader.getResource(s, myFlag);
+      if (resource != null) printOrder(loader, s, resource);
+      return resource;
     }
   }
 
@@ -369,7 +366,9 @@ public class ClassPath {
 
     String home = FileUtil.toSystemIndependentName(PathManager.getHomePath());
     try {
-      ourOrderSize += resource.getContentLength();
+      if (resource instanceof MemoryResource) {
+        ourOrderSize += resource.getBytes().length;
+      }
     }
     catch (IOException e) {
       e.printStackTrace(System.out);
