@@ -294,6 +294,13 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
       default(del(0, 0, 3))
       testAll()
     }
+
+    lines {
+      ("U======_X======_Y======_z======_X======_Y======_X======_U======_X======_z======" -
+       "U======_Y======_X======_U======_X======")
+      default(del(1, 1, 4), del(9, 5, 1))
+      testAll()
+    }
   }
 
   public fun testTwoStepCanTrimRegression() {

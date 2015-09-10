@@ -23,7 +23,6 @@ import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -42,6 +41,8 @@ abstract class ChunkOptimizer<T> {
 
   @NotNull protected final ProgressIndicator myIndicator;
 
+  @NotNull private final List<Range> myRanges;
+
   public ChunkOptimizer(@NotNull List<T> data1,
                         @NotNull List<T> data2,
                         @NotNull FairDiffIterable iterable,
@@ -50,57 +51,65 @@ abstract class ChunkOptimizer<T> {
     myData2 = data2;
     myIterable = iterable;
     myIndicator = indicator;
+
+    myRanges = new ArrayList<Range>();
   }
 
   @NotNull
   public FairDiffIterable build() {
-    List<Range> newRanges = new ArrayList<Range>();
-
-    for (Range range2 : myIterable.iterateUnchanged()) {
-      Range range1 = ContainerUtil.getLastItem(newRanges);
-      if (range1 == null ||
-          (range1.end1 != range2.start1 && range1.end2 != range2.start2)) {
-        // if changes do not touch and we still can perform one of these optimisations,
-        // it means that given DiffIterable is not LCS (because we can build a smaller one). This should not happen.
-        newRanges.add(range2);
-        continue;
-      }
-
-      int count1 = range1.end1 - range1.start1;
-      int count2 = range2.end1 - range2.start1;
-
-      int equalForward = expandForward(myData1, myData2, range1.end1, range1.end2, range1.end1 + count2, range1.end2 + count2);
-      int equalBackward = expandBackward(myData1, myData2, range2.start1 - count1, range2.start2 - count1, range2.start1, range2.start2);
-
-      // merge chunks left [A]B[B] -> [AB]B
-      if (equalForward == count2) {
-        newRanges.remove(newRanges.size() - 1);
-        newRanges.add(new Range(range1.start1, range1.end1 + count2, range1.start2, range1.end2 + count2));
-        continue;
-      }
-
-      // merge chunks right [A]A[B] -> A[AB]
-      if (equalBackward == count1) {
-        newRanges.remove(newRanges.size() - 1);
-        newRanges.add(new Range(range2.start1 - count1, range2.end1, range2.start2 - count1, range2.end2));
-        continue;
-      }
-
-
-      Side touchSide = Side.fromLeft(range1.end1 == range2.start1);
-
-      int shift = getShift(touchSide, equalForward, equalBackward, range1, range2);
-      if (shift == 0) {
-        newRanges.add(range2);
-      }
-      else {
-        newRanges.remove(newRanges.size() - 1);
-        newRanges.add(new Range(range1.start1, range1.end1 + shift, range1.start2, range1.end2 + shift));
-        newRanges.add(new Range(range2.start1 + shift, range2.end1, range2.start2 + shift, range2.end2));
-      }
+    for (Range range : myIterable.iterateUnchanged()) {
+      myRanges.add(range);
+      processLastRanges();
     }
 
-    return fair(createUnchanged(newRanges, myData1.size(), myData2.size()));
+    return fair(createUnchanged(myRanges, myData1.size(), myData2.size()));
+  }
+
+  private void processLastRanges() {
+    if (myRanges.size() < 2) return; // nothing to do
+
+    Range range1 = myRanges.get(myRanges.size() - 2);
+    Range range2 = myRanges.get(myRanges.size() - 1);
+    if (range1.end1 != range2.start1 && range1.end2 != range2.start2) {
+      // if changes do not touch and we still can perform one of these optimisations,
+      // it means that given DiffIterable is not LCS (because we can build a smaller one). This should not happen.
+      return;
+    }
+
+    int count1 = range1.end1 - range1.start1;
+    int count2 = range2.end1 - range2.start1;
+
+    int equalForward = expandForward(myData1, myData2, range1.end1, range1.end2, range1.end1 + count2, range1.end2 + count2);
+    int equalBackward = expandBackward(myData1, myData2, range2.start1 - count1, range2.start2 - count1, range2.start1, range2.start2);
+
+    // merge chunks left [A]B[B] -> [AB]B
+    if (equalForward == count2) {
+      myRanges.remove(myRanges.size() - 1);
+      myRanges.remove(myRanges.size() - 1);
+      myRanges.add(new Range(range1.start1, range1.end1 + count2, range1.start2, range1.end2 + count2));
+      processLastRanges();
+      return;
+    }
+
+    // merge chunks right [A]A[B] -> A[AB]
+    if (equalBackward == count1) {
+      myRanges.remove(myRanges.size() - 1);
+      myRanges.remove(myRanges.size() - 1);
+      myRanges.add(new Range(range2.start1 - count1, range2.end1, range2.start2 - count1, range2.end2));
+      processLastRanges();
+      return;
+    }
+
+
+    Side touchSide = Side.fromLeft(range1.end1 == range2.start1);
+
+    int shift = getShift(touchSide, equalForward, equalBackward, range1, range2);
+    if (shift != 0) {
+      myRanges.remove(myRanges.size() - 1);
+      myRanges.remove(myRanges.size() - 1);
+      myRanges.add(new Range(range1.start1, range1.end1 + shift, range1.start2, range1.end2 + shift));
+      myRanges.add(new Range(range2.start1 + shift, range2.end1, range2.start2 + shift, range2.end2));
+    }
   }
 
   // 0 - do nothing
