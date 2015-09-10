@@ -244,9 +244,10 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     Crumb rightmostCrumb = null;
 
     // fill up crumb list first going from end to start
-    final NavigationCrumb forward = new NavigationCrumb(this, fm, true, DEFAULT_PAINTER);
-    final NavigationCrumb backward = new NavigationCrumb(this, fm, false, DEFAULT_PAINTER);
+    final NavigationCrumb fwd = new NavigationCrumb(this, fm, true, DEFAULT_PAINTER);
     for (int i = elements.size() - 1; i >= 0; i--) {
+      final NavigationCrumb forward = new NavigationCrumb(this, fm, true, DEFAULT_PAINTER);
+      final NavigationCrumb backward = new NavigationCrumb(this, fm, false, DEFAULT_PAINTER);
       final BreadcrumbsItem element = elements.get(i);
       final String s = element.getDisplayText();
       final Dimension d = DEFAULT_PAINTER.getSize(s, fm, width - forward.getWidth() - backward.getWidth());
@@ -260,7 +261,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
 
         // put backward crumb
         result.addFirst(backward);
-        screenWidth += backward.getWidth();
+        screenWidth += backward.getWidth() - myOffset;
 
         // put dummy crumb to fill up empty space (add it to the end!!!)
         int dummyWidth = width - screenWidth;
@@ -293,7 +294,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
 
     if (rightmostCrumb != null && screenWidth < width) {
       // add first dummy crumb
-      result.add(result.indexOf(rightmostCrumb) + 2, new DummyCrumb(width - screenWidth - forward.getWidth() - 8));
+      result.add(result.indexOf(rightmostCrumb) + 2, new DummyCrumb(width - screenWidth - fwd.getWidth() - 8));
     }
 
     //assert screenWidth < width;
