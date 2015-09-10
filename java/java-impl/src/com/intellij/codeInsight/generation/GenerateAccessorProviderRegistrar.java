@@ -42,11 +42,11 @@ public class GenerateAccessorProviderRegistrar {
 
   /** @see #EP_NAME */
   @Deprecated
-  public static void registerProvider(NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>> function) {
+  public synchronized static void registerProvider(NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>> function) {
     ourProviders.add(function);
   }
 
-  protected static List<EncapsulatableClassMember> getEncapsulatableClassMembers(final PsiClass psiClass) {
+  protected synchronized static List<EncapsulatableClassMember> getEncapsulatableClassMembers(final PsiClass psiClass) {
     return ContainerUtil.concat(ourProviders, new Function<NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>, Collection<? extends EncapsulatableClassMember>>() {
       @Override
       public Collection<? extends EncapsulatableClassMember> fun(NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>> s) {
