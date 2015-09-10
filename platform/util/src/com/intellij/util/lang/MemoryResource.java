@@ -24,19 +24,19 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.jar.Manifest;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 class MemoryResource extends Resource {
   private final URL myUrl;
   private final byte[] myContent;
-  private final Manifest myManifest;
+  private final Map<Resource.Attribute, String> myAttributes;
 
-  public MemoryResource(URL url, byte[] content, Manifest manifest) {
+  private MemoryResource(URL url, byte[] content, Map<Resource.Attribute, String> attributes) {
     myUrl = url;
     myContent = content;
-    myManifest = manifest;
+    myAttributes = attributes;
   }
 
   @Override
@@ -55,15 +55,15 @@ class MemoryResource extends Resource {
   }
 
   @Override
-  public Manifest getManifest() {
-    return myManifest;
+  public String getValue(Attribute key) {
+    return myAttributes != null ? myAttributes.get(key) : null;
   }
 
   @NotNull
   public static MemoryResource load(URL baseUrl,
                                     @NotNull ZipFile zipFile,
                                     @NotNull ZipEntry entry,
-                                    @Nullable Manifest manifest) throws IOException {
+                                    @Nullable Map<Attribute, String> attributes) throws IOException {
     String name = entry.getName();
     URL url = new URL(baseUrl, name);
 
@@ -78,6 +78,6 @@ class MemoryResource extends Resource {
       }
     }
 
-    return new MemoryResource(url, content, manifest);
+    return new MemoryResource(url, content, attributes);
   }
 }

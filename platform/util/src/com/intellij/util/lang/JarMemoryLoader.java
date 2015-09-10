@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -44,7 +43,7 @@ public class JarMemoryLoader {
   }
 
   @Nullable
-  public static JarMemoryLoader load(ZipFile zipFile, URL baseUrl, @Nullable Manifest manifest) throws IOException {
+  public static JarMemoryLoader load(ZipFile zipFile, URL baseUrl, Map<Resource.Attribute, String> attributes) throws IOException {
     Enumeration<? extends ZipEntry> entries = zipFile.entries();
     if (!entries.hasMoreElements()) return null;
 
@@ -57,7 +56,7 @@ public class JarMemoryLoader {
     JarMemoryLoader loader = new JarMemoryLoader();
     for (int i = 0; i < size && entries.hasMoreElements(); i++) {
       ZipEntry entry = entries.nextElement();
-      MemoryResource resource = MemoryResource.load(baseUrl, zipFile, entry, manifest);
+      MemoryResource resource = MemoryResource.load(baseUrl, zipFile, entry, attributes);
       loader.myResources.put(entry.getName(), resource);
     }
     return loader;

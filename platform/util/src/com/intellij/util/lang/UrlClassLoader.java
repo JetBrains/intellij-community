@@ -36,8 +36,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 
 /**
  * A class loader that allows for various customizations, e.g. not locking jars or using a special cache to speed up class loading.
@@ -236,21 +234,14 @@ public class UrlClassLoader extends ClassLoader {
       Package pkg = getPackage(pkgName);
       if (pkg == null) {
         try {
-          Manifest manifest = res.getManifest();
-          if (manifest != null) {
-            Attributes attributes = manifest.getMainAttributes();
-            definePackage(pkgName,
-                          attributes.getValue(Attributes.Name.SPECIFICATION_TITLE),
-                          attributes.getValue(Attributes.Name.SPECIFICATION_VERSION),
-                          attributes.getValue(Attributes.Name.SPECIFICATION_VENDOR),
-                          attributes.getValue(Attributes.Name.IMPLEMENTATION_TITLE),
-                          attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION),
-                          attributes.getValue(Attributes.Name.IMPLEMENTATION_VENDOR),
-                          null);
-          }
-          else {
-            definePackage(pkgName, null, null, null, null, null, null, null);
-          }
+          definePackage(pkgName,
+                        res.getValue(Resource.Attribute.SPEC_TITLE),
+                        res.getValue(Resource.Attribute.SPEC_VERSION),
+                        res.getValue(Resource.Attribute.SPEC_VENDOR),
+                        res.getValue(Resource.Attribute.IMPL_TITLE),
+                        res.getValue(Resource.Attribute.IMPL_VERSION),
+                        res.getValue(Resource.Attribute.IMPL_VENDOR),
+                        null);
         }
         catch (IllegalArgumentException e) {
           // do nothing, package already defined by some other thread

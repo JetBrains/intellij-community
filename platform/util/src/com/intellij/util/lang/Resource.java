@@ -18,16 +18,19 @@ package com.intellij.util.lang;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.jar.Manifest;
 
 abstract class Resource {
+  public enum Attribute {
+    SPEC_TITLE, SPEC_VERSION, SPEC_VENDOR, IMPL_TITLE, IMPL_VERSION, IMPL_VENDOR
+  }
+
   public abstract URL getURL();
 
   public abstract InputStream getInputStream() throws IOException;
 
   public abstract byte[] getBytes() throws IOException;
 
-  public Manifest getManifest() {
+  public String getValue(Attribute key) {
     return null;
   }
 
