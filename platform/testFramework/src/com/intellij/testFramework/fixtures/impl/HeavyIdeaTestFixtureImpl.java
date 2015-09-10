@@ -45,13 +45,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.testFramework.EditorListenerTracker;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.ThreadTracker;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.util.PathUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,9 +69,6 @@ import java.util.Set;
  * @author mike
  */
 class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixture {
-
-  @NonNls private static final String PROJECT_FILE_SUFFIX = ProjectFileType.DOT_DEFAULT_EXTENSION;
-
   private Project myProject;
   private final Set<File> myFilesToDelete = new HashSet<File>();
   private IdeaTestApplication myApplication;
@@ -140,38 +135,33 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   }
 
 
-  private void setUpProject() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+  private void setUpProject() {
+    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
-      public void run() {
-        try {
-          File tempDirectory = FileUtil.createTempDirectory(myName, "");
-          PlatformTestCase.synchronizeTempDirVfs(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory));
-          myFilesToDelete.add(tempDirectory);
+      public void run() throws Throwable {
+        File tempDirectory = FileUtil.createTempDirectory(myName, "");
+        PlatformTestCase.synchronizeTempDirVfs(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory));
+        myFilesToDelete.add(tempDirectory);
 
-          File projectFile = new File(tempDirectory, myName + PROJECT_FILE_SUFFIX);
+        File projectFile = new File(tempDirectory, myName + ProjectFileType.DOT_DEFAULT_EXTENSION);
 
-          LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
-          ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-          new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
-          myProject = PlatformTestCase.createProject(projectFile, buffer.toString());
-          ProjectManagerEx.getInstanceEx().openTestProject(myProject);
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
+        myProject = PlatformTestCase.createProject(projectFile, buffer.toString());
+        ProjectManagerEx.getInstanceEx().openTestProject(myProject);
 
-          for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
-            moduleFixtureBuilder.getFixture().setUp();
-          }
-
-          LightPlatformTestCase.clearUncommittedDocuments(myProject);
-          ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
+        for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
+          moduleFixtureBuilder.getFixture().setUp();
         }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+
+        LightPlatformTestCase.clearUncommittedDocuments(myProject);
+        ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
       }
     });
   }
 
-  private void initApplication() throws Exception {
+  private void initApplication() {
     myApplication = IdeaTestApplication.getInstance();
     myApplication.setDataProvider(new MyDataProvider());
   }
