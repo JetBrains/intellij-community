@@ -76,9 +76,11 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
 
   @Override
   public void addChildren(@NotNull final XValueChildrenList children, final boolean last) {
+    if (myObsolete) return;
     invokeNodeUpdate(new Runnable() {
       @Override
       public void run() {
+        if (myObsolete) return;
         List<XValueContainerNode<?>> newChildren;
         if (children.size() > 0) {
           newChildren = new ArrayList<XValueContainerNode<?>>(children.size());
