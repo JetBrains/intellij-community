@@ -23,6 +23,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -380,9 +382,17 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private void removeSdk() {
     final Sdk currentSdk = getSelectedSdk();
     if (currentSdk != null) {
+      final Sdk sdk = myProjectSdksModel.findSdk(currentSdk);
       final PySdkService sdkService = PySdkService.getInstance();
       sdkService.removeSdk(currentSdk);
-      myProjectSdksModel.removeSdk(currentSdk);
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
+        @Override
+        public void run() {
+          SdkConfigurationUtil.removeSdk(sdk);
+        }
+      });
+
+      myProjectSdksModel.removeSdk(sdk);
       if (myModificators.containsKey(currentSdk)) {
         SdkModificator modificator = myModificators.get(currentSdk);
         myModifiedModificators.remove(modificator);
