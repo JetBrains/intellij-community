@@ -69,11 +69,11 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
   @Nullable private final Editor myEditor;
   @NotNull private final TextRange myBounds;
 
-  public LineMarkersPass(@NotNull Project project,
-                         @NotNull PsiFile file,
-                         @Nullable Editor editor,
-                         @NotNull Document document,
-                         @NotNull TextRange bounds) {
+  LineMarkersPass(@NotNull Project project,
+                  @NotNull PsiFile file,
+                  @Nullable Editor editor,
+                  @NotNull Document document,
+                  @NotNull TextRange bounds) {
     super(project, document, false);
     myFile = file;
     myEditor = editor;
@@ -241,13 +241,14 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
   }
 
   @NotNull
-  public Collection<LineMarkerInfo> queryLineMarkers() {
-    if (myFile.getNode() == null) {
+  public static Collection<LineMarkerInfo> queryLineMarkers(@NotNull PsiFile file, @NotNull Document document) {
+    if (file.getNode() == null) {
       // binary file? see IDEADEV-2809
       return Collections.emptyList();
     }
-    doCollectInformation(new EmptyProgressIndicator());
-    return myMarkers;
+    LineMarkersPass pass = new LineMarkersPass(file.getProject(), file, null, document, file.getTextRange());
+    pass.doCollectInformation(new EmptyProgressIndicator());
+    return pass.myMarkers;
   }
 
   @NotNull

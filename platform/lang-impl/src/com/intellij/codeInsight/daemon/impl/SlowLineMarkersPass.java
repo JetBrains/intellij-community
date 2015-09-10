@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class SlowLineMarkersPass extends TextEditorHighlightingPass implements LineMarkersProcessor, DumbAware {
+class SlowLineMarkersPass extends TextEditorHighlightingPass implements LineMarkersProcessor, DumbAware {
   private final PsiFile myFile;
   @NotNull private final Editor myEditor;
   @NotNull private final TextRange myBounds;
