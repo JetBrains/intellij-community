@@ -297,9 +297,8 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
         libraries.put(library.getName(), library);
       }
 
-      final List libraryElements = element.getChildren(LibraryImpl.ELEMENT);
-      for (Object libraryElement1 : libraryElements) {
-        Element libraryElement = (Element)libraryElement1;
+      final List<Element> libraryElements = element.getChildren(LibraryImpl.ELEMENT);
+      for (Element libraryElement : libraryElements) {
         final LibraryImpl library = new LibraryImpl(LibraryTableBase.this, libraryElement, null);
         if (library.getName() != null) {
           Library oldLibrary = libraries.get(library.getName());
