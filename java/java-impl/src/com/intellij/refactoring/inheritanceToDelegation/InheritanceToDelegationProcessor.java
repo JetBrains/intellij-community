@@ -24,6 +24,7 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -854,7 +855,10 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       presentation
     );
 
-    WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("instances.upcasted.to.java.lang.object.found"));
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    if (statusBar != null) {
+      statusBar.setInfo(RefactoringBundle.message("instances.upcasted.to.java.lang.object.found"));
+    }
   }
 
   /**

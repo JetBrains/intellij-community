@@ -19,7 +19,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -83,13 +82,17 @@ public class IncomingChangesIndicator {
     if (needIndicator()) {
       if (myIndicatorComponent == null) {
         myIndicatorComponent = new IndicatorComponent();
-        statusBar.addWidget(myIndicatorComponent, myProject);
+        if (statusBar != null) {
+          statusBar.addWidget(myIndicatorComponent, myProject);
+        }
         refreshIndicator();
       }
     }
     else {
       if (myIndicatorComponent != null) {
-        statusBar.removeWidget(myIndicatorComponent.ID());
+        if (statusBar != null) {
+          statusBar.removeWidget(myIndicatorComponent.ID());
+        }
         myIndicatorComponent = null;
       }
     }

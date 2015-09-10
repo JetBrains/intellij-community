@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -91,6 +92,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
     ArrayList<PsiReference> array = new ArrayList<PsiReference>();
     EditorColorsManager manager = EditorColorsManager.getInstance();
     final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
     for (PsiReference ref : refs) {
       PsiElement refElement = ref.getElement();
       if (PsiUtil.isAccessedForWriting((PsiExpression)refElement)) {
@@ -101,7 +103,9 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
         highlightManager.addOccurrenceHighlights(editor, refsForWriting, attributes, true, null);
         String message =  RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.REPLACE_TEMP_WITH_QUERY);
-        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        if (statusBar != null) {
+          statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        }
         return;
       }
     }
@@ -170,7 +174,9 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
     }
 
 
-    WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+    if (statusBar != null) {
+      statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+    }
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {

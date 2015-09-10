@@ -150,11 +150,17 @@ public class PasteProcessor extends EventProcessor {
   private void endPaste() {
     myEditor.getMainProcessor().stopCurrentProcessor();
     myEditor.getActiveDecorationLayer().removeFeedback();
-    WindowManager.getInstance().getStatusBar(myEditor.getProject()).setInfo("");
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myEditor.getProject());
+    if (statusBar != null) {
+      statusBar.setInfo("");
+    }
   }
 
   protected boolean cancelOperation() {
-    WindowManager.getInstance().getStatusBar(myEditor.getProject()).setInfo("");
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myEditor.getProject());
+    if (statusBar != null) {
+      statusBar.setInfo("");
+    }
     return true;
   }
 

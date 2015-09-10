@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -145,12 +146,15 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     }
 
     final Ref<Boolean> inlineAll = new Ref<Boolean>(true);
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
     if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       int occurrencesCount = refsToInlineList.size();
       if (refExpr != null && occurrencesCount > 1  || EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog()) {
         final InlineLocalDialog inlineLocalDialog = new InlineLocalDialog(project, local, refExpr, occurrencesCount);
         if (!inlineLocalDialog.showAndGet()) {
-          WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+          if (statusBar != null) {
+            statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+          }
           return;
         }
 
@@ -183,7 +187,9 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       highlightManager.addOccurrenceHighlights(editor, defs, attributes, true, null);
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
-      WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+      if (statusBar != null) {
+        statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+      }
       return;
     }
 
@@ -219,7 +225,9 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         String message =
           RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing.and.used.with.inlined", localName));
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
-        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        if (statusBar != null) {
+          statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        }
         return;
       }
     }
@@ -229,7 +237,9 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{writeAccess}, writeAttributes, true, null);
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
-      WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+      if (statusBar != null) {
+        statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+      }
       return;
     }
 
@@ -269,7 +279,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
                 return pointer.getElement();
               }
             }), attributes, true, null);
-            WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+            statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
           }
 
           for (final SmartPsiElementPointer<PsiExpression> expr : exprs) {

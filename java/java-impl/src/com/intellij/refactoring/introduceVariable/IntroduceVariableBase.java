@@ -42,6 +42,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -1076,7 +1077,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     highlightManager.addOccurrenceHighlights(editor, replacedOccurences, attributes, true, null);
-    WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+    if (statusBar != null) {
+      statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+    }
   }
 
   protected abstract void showErrorMessage(Project project, Editor editor, String message);

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -59,8 +60,11 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
     if(occurenceInfo.getOccurenceNumber()==-1||occurenceInfo.getOccurencesCount()==-1){
       return;
     }
-    WindowManager.getInstance().getStatusBar(project).setInfo(
-      IdeBundle.message("message.occurrence.N.of.M", occurenceInfo.getOccurenceNumber(), occurenceInfo.getOccurencesCount()));
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+    if (statusBar != null) {
+      statusBar.setInfo(
+        IdeBundle.message("message.occurrence.N.of.M", occurenceInfo.getOccurenceNumber(), occurenceInfo.getOccurencesCount()));
+    }
   }
 
   public void update(AnActionEvent event) {

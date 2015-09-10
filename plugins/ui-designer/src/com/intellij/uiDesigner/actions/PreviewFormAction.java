@@ -19,14 +19,16 @@ import com.intellij.CommonBundle;
 import com.intellij.compiler.PsiClassWriter;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
-import com.intellij.execution.*;
+import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesReferenceManager;
@@ -48,6 +50,7 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -365,7 +368,10 @@ public final class PreviewFormAction extends AnAction{
             final Project project = myModule.getProject();
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
-                WindowManager.getInstance().getStatusBar(project).setInfo(myStatusbarMessage);
+                final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+                if (statusBar != null) {
+                  statusBar.setInfo(myStatusbarMessage);
+                }
               }
             });
           }

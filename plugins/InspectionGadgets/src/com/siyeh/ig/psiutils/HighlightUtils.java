@@ -101,8 +101,10 @@ public class HighlightUtils {
           WindowManager.getInstance();
         final StatusBar statusBar =
           windowManager.getStatusBar(project);
-        statusBar.setInfo(InspectionGadgetsBundle.message(
-          "press.escape.to.remove.highlighting.message"));
+        if (statusBar != null) {
+          statusBar.setInfo(InspectionGadgetsBundle.message(
+            "press.escape.to.remove.highlighting.message"));
+        }
         final FindManager findmanager =
           FindManager.getInstance(project);
         FindModel findmodel = findmanager.getFindNextModel();

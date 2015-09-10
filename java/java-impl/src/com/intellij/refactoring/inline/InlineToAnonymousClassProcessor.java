@@ -18,6 +18,7 @@ package com.intellij.refactoring.inline;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -108,7 +109,11 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     if (super.isPreviewUsages(usages)) return true;
     for(UsageInfo usage: usages) {
       if (isForcePreview(usage)) {
-        WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
+        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+        if (statusBar != null) {
+          statusBar
+            .setInfo(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
+        }
         return true;
       }
     }

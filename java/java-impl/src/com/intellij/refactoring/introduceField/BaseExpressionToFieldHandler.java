@@ -46,6 +46,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -826,8 +827,11 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
               PsiElement[] exprsToHighlight = PsiUtilCore.toPsiElementArray(array);
               HighlightManager highlightManager = HighlightManager.getInstance(myProject);
               highlightManager.addOccurrenceHighlights(myEditor, exprsToHighlight, highlightAttributes(), true, null);
-              WindowManager
-                .getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+              final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+              if (statusBar != null) {
+                statusBar
+                  .setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+              }
             }
           }
         }

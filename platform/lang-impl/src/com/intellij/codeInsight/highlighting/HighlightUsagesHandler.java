@@ -42,6 +42,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
@@ -448,7 +449,10 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
                                           "status.bar.highlighted.usages.not.found.message" :
                                           "status.bar.highlighted.usages.not.found.no.target.message", elementName);
     }
-    WindowManager.getInstance().getStatusBar(project).setInfo(message);
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+    if (statusBar != null) {
+      statusBar.setInfo(message);
+    }
   }
 
   private static String getElementName(final PsiElement element) {

@@ -16,6 +16,7 @@
 package com.intellij.refactoring.typeCook;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeCastExpression;
@@ -105,7 +106,10 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
 
     myResult.apply (victims);
 
-    WindowManager.getInstance().getStatusBar(myProject).setInfo(myResult.getReport());
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    if (statusBar != null) {
+      statusBar.setInfo(myResult.getReport());
+    }
   }
 
   @Override

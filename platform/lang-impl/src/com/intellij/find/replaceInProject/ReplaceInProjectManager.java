@@ -235,8 +235,10 @@ public class ReplaceInProjectManager {
     final List<Usage> _usages = replaceContext.getUsageView().getSortedUsages();
 
     if (hasReadOnlyUsages(_usages)) {
-      WindowManager.getInstance().getStatusBar(myProject)
-        .setInfo(FindBundle.message("find.replace.occurrences.found.in.read.only.files.status"));
+      final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+      if (statusBar != null) {
+        statusBar.setInfo(FindBundle.message("find.replace.occurrences.found.in.read.only.files.status"));
+      }
       return;
     }
 

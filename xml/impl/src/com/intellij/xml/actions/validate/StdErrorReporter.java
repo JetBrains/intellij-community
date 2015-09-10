@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -73,8 +74,10 @@ public class StdErrorReporter extends ErrorReporter {
                       @Override
                       public void run() {
                         removeCompileContents(null);
-                        WindowManager.getInstance().getStatusBar(myProject).setInfo(
-                          XmlBundle.message("xml.validate.no.errors.detected.status.message"));
+                        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+                        if (statusBar != null) {
+                          statusBar.setInfo(XmlBundle.message("xml.validate.no.errors.detected.status.message"));
+                        }
                       }
                     }
                   );

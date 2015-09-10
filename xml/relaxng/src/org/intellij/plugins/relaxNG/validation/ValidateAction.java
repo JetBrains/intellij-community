@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -156,7 +157,10 @@ public class ValidateAction extends AnAction {
                             @Override
                             public void run() {
                               helper.close();
-                              WindowManager.getInstance().getStatusBar(project).setInfo("No errors detected");
+                              final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+                              if (statusBar != null) {
+                                statusBar.setInfo("No errors detected");
+                              }
                             }
                           }
                       );

@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -241,7 +242,10 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
       highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, true, null);
       final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
       editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
-      WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+      final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+      if (statusBar != null) {
+        statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+      }
     }
   }
 

@@ -67,6 +67,7 @@ public final class TestWindowManager extends WindowManagerEx {
     return null;
   }
 
+  @Nullable
   @Override
   public final StatusBar getStatusBar(final Project project) {
     if (project == null) {

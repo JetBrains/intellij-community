@@ -18,6 +18,7 @@ package com.intellij.refactoring.introduceField;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -139,7 +140,10 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     dialog.setReplaceAllOccurrences(replaceAll);
     if (!dialog.showAndGet()) {
       if (occurrencesNumber > 1) {
-        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+        if (statusBar != null) {
+          statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        }
       }
       return null;
     }

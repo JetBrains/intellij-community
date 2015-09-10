@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -673,8 +674,10 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
     else {
       if (context.getOccurrences().length > 1) {
-        WindowManager.getInstance().getStatusBar(context.getProject())
-          .setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(context.getProject());
+        if (statusBar != null) {
+          statusBar.setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        }
       }
     }
     return null;

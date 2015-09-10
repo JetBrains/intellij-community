@@ -30,6 +30,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -140,6 +141,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
 
     final TextAttributes attributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       highlightManager.addOccurrenceHighlights(editor, refsToInline, attributes, true, null);
       final int occurrencesCount = refsToInline.length;
@@ -148,7 +150,9 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       final RefactoringMessageDialog dialog =
         new RefactoringMessageDialog(REFACTORING_NAME, question, HELP_ID, "OptionPane.questionIcon", true, project);
       if (!dialog.showAndGet()) {
-        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        if (statusBar != null) {
+          statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        }
         return;
       }
     }
@@ -180,7 +184,9 @@ public class PyInlineLocalHandler extends InlineActionHandler {
         final String message = RefactoringBundle.getCannotRefactorMessage(
           RefactoringBundle.message("variable.is.accessed.for.writing.and.used.with.inlined", localName));
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
-        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        if (statusBar != null) {
+          statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        }
         return;
       }
     }
@@ -233,8 +239,9 @@ public class PyInlineLocalHandler extends InlineActionHandler {
 
               if (!ApplicationManager.getApplication().isUnitTestMode()) {
                 highlightManager.addOccurrenceHighlights(editor, exprs, attributes, true, null);
-                WindowManager.getInstance().getStatusBar(project)
-                  .setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+                if (statusBar != null) {
+                  statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+                }
               }
             }
             finally {

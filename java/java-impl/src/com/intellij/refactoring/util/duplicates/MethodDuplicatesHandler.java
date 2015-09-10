@@ -38,6 +38,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -236,7 +237,10 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
             final List<Match> matches = duplicates.get(member);
             if (matches == null) continue;
             final int duplicatesNo = matches.size();
-            WindowManager.getInstance().getStatusBar(project).setInfo(getStatusMessage(duplicatesNo));
+            final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+            if (statusBar != null) {
+              statusBar.setInfo(getStatusMessage(duplicatesNo));
+            }
             CommandProcessor.getInstance().executeCommand(project, new Runnable() {
               @Override
               public void run() {
@@ -251,8 +255,10 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
                 });
               }
             }, REFACTORING_NAME, REFACTORING_NAME);
-  
-            WindowManager.getInstance().getStatusBar(project).setInfo("");
+
+            if (statusBar != null) {
+              statusBar.setInfo("");
+            }
           }
         }
         finally {

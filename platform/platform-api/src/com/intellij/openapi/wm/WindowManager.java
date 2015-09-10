@@ -76,6 +76,7 @@ public abstract class WindowManager {
   /**
    * Get the status bar for the project's main frame
    */
+  @Nullable
   public abstract StatusBar getStatusBar(Project project);
 
   /**

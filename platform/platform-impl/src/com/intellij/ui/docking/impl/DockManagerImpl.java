@@ -33,10 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -450,7 +447,10 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       setProject(project);
 
       if (!(container instanceof DockContainer.Dialog)) {
-        setStatusBar(WindowManager.getInstance().getStatusBar(project).createChild());
+        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+        if (statusBar != null) {
+          setStatusBar(statusBar.createChild());
+        }
       }
 
       myUiContainer = new NonOpaquePanel(new BorderLayout());

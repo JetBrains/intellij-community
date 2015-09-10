@@ -405,6 +405,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     return myWindowWatcher.suggestParentWindow(project);
   }
 
+  @Nullable
   @Override
   public final StatusBar getStatusBar(final Project project) {
     if (!myProject2Frame.containsKey(project)) {

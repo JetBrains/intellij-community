@@ -401,9 +401,11 @@ public class XPathEvalAction extends XPathAction {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                final StatusBar statusBar = WindowManager.getInstance().getStatusBar(editor.getProject());
+              final StatusBar statusBar = WindowManager.getInstance().getStatusBar(editor.getProject());
+              if (statusBar != null) {
                 final String s = StringUtil.pluralize("match", list.size());
                 statusBar.setInfo(list.size() + " XPath " + s + " found (press Escape to remove the highlighting)");
+              }
             }
         });
     }

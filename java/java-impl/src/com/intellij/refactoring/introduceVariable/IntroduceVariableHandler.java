@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -76,7 +77,10 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
       validator);
     if (!dialog.showAndGet()) {
       if (occurrences.length > 1) {
-        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+        if (statusBar != null) {
+          statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        }
       }
     }
     else {
