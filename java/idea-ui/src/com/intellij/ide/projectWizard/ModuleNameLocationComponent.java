@@ -59,6 +59,8 @@ public class ModuleNameLocationComponent {
   private boolean myImlLocationChangedByUser = false;
   private boolean myImlLocationDocListenerEnabled = true;
 
+  private boolean myUpdatePathsWhenNameIsChanged;
+
   public ModuleNameLocationComponent(@NotNull WizardContext wizardContext) {
     myWizardContext = wizardContext;
   }
@@ -97,6 +99,10 @@ public class ModuleNameLocationComponent {
     });
     myModuleName.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
+        if (!myUpdatePathsWhenNameIsChanged) {
+          return;
+        }
+
         if (myModuleNameDocListenerEnabled) {
           myModuleNameChangedByUser = true;
         }
@@ -159,6 +165,7 @@ public class ModuleNameLocationComponent {
         }
       }
     });
+    myUpdatePathsWhenNameIsChanged = true;
     if (myWizardContext.isCreatingNewProject()) {
       setModuleName(namePathComponent.getNameValue());
       setModuleContentRoot(namePathComponent.getPath());
@@ -178,6 +185,7 @@ public class ModuleNameLocationComponent {
           moduleName =
             ProjectWizardUtil.findNonExistingFileName(myWizardContext.getProjectFileDirectory(), myWizardContext.getProjectName(), "");
           contentRoot = myWizardContext.getProjectFileDirectory();
+          myUpdatePathsWhenNameIsChanged = !myWizardContext.isProjectFileDirectorySetExplicitly();
         }
         setModuleName(moduleName);
         setModuleContentRoot(contentRoot);
@@ -234,7 +242,7 @@ public class ModuleNameLocationComponent {
     return true;
   }
 
-  protected String getModuleContentRoot() {
+  private String getModuleContentRoot() {
     return myModuleContentRoot.getText();
   }
 
