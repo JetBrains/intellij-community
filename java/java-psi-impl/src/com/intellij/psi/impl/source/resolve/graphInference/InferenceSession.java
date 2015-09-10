@@ -647,14 +647,14 @@ public class InferenceSession {
       if (gParent instanceof PsiAnonymousClass) {
         gParent = gParent.getParent();
       }
-      if (gParent instanceof PsiCallExpression) {
-        final PsiExpressionList argumentList = ((PsiCallExpression)gParent).getArgumentList();
+      if (gParent instanceof PsiCall) {
+        final PsiExpressionList argumentList = ((PsiCall)gParent).getArgumentList();
         if (argumentList != null) {
           final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
           if (properties != null && properties.isApplicabilityCheck()) {
             return getTypeByMethod(context, argumentList, properties.getMethod(), properties.isVarargs(), properties.getSubstitutor());
           }
-          final JavaResolveResult result = properties != null ? properties.getInfo() : ((PsiCallExpression)gParent).resolveMethodGenerics();
+          final JavaResolveResult result = properties != null ? properties.getInfo() : ((PsiCall)gParent).resolveMethodGenerics();
           final boolean varargs = properties != null && properties.isVarargs() || result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isVarargs();
           PsiSubstitutor substitutor = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(context, false,
                                                                                             new Computable<PsiSubstitutor>() {
