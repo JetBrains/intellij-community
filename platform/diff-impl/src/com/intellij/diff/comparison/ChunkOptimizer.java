@@ -15,12 +15,14 @@
  */
 package com.intellij.diff.comparison;
 
+import com.intellij.diff.comparison.ByLine.Line;
 import com.intellij.diff.comparison.ByWord.InlineChunk;
 import com.intellij.diff.comparison.ByWord.NewlineChunk;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -187,6 +189,56 @@ abstract class ChunkOptimizer<T> {
         if (isWhiteSpace(text.charAt(i))) return true;
       }
       return false;
+    }
+  }
+
+  /*
+   * 1. Minimise amount of chunks
+   *      good: "AX[AB]" - "[AB]"
+   *      bad: "[A]XA[B]" - "[A][B]"
+   *
+   * 2. Prefer insertions/deletions, that are bounded by empty(or 'unimportant') line
+   *      good: "ABooYZ [ABuuYZ ]ABzzYZ" - "ABooYZ []ABzzYZ"
+   *      bad: "ABooYZ AB[uuYZ AB]zzYZ" - "ABooYZ AB[]zzYZ"
+   */
+  public static class LineChunkOptimizer extends ChunkOptimizer<Line> {
+    private final int myThreshold;
+
+    public LineChunkOptimizer(@NotNull List<Line> lines1,
+                              @NotNull List<Line> lines2,
+                              @NotNull FairDiffIterable changes,
+                              @NotNull ProgressIndicator indicator) {
+      super(lines1, lines2, changes, indicator);
+      myThreshold = Registry.intValue("diff.unimportant.line.char.count");
+    }
+
+    @Override
+    protected int getShift(@NotNull Side touchSide, int equalForward, int equalBackward, @NotNull Range range1, @NotNull Range range2) {
+      List<Line> touchLines = touchSide.select(myData1, myData2);
+      int touchStart = touchSide.select(range2.start1, range2.start2);
+
+      int shiftForward = findUnimportantLineShift(touchLines, touchStart, equalForward, true, 0);
+      int shiftBackward = findUnimportantLineShift(touchLines, touchStart - 1, equalBackward, false, 0);
+
+      if (shiftForward == -1 && shiftBackward == -1 && myThreshold != 0) {
+        shiftForward = findUnimportantLineShift(touchLines, touchStart, equalForward, true, myThreshold);
+        shiftBackward = findUnimportantLineShift(touchLines, touchStart - 1, equalBackward, false, myThreshold);
+      }
+
+      if (shiftForward == 0 || shiftBackward == 0) return 0;
+      if (shiftForward == -1 && shiftBackward == -1) return 0;
+
+      return shiftForward != -1 ? shiftForward : -shiftBackward;
+    }
+
+    private static int findUnimportantLineShift(@NotNull List<Line> lines, int offset, int count, boolean leftToRight, int threshold) {
+      for (int i = 0; i < count; i++) {
+        int index = leftToRight ? offset + i : offset - i;
+        if (lines.get(index).getNonSpaceChars() <= threshold) {
+          return i;
+        }
+      }
+      return -1;
     }
   }
 }
