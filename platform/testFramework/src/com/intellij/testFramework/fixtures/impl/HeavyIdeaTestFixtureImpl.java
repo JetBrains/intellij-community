@@ -143,12 +143,10 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
         PlatformTestCase.synchronizeTempDirVfs(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory));
         myFilesToDelete.add(tempDirectory);
 
-        File projectFile = new File(tempDirectory, myName + ProjectFileType.DOT_DEFAULT_EXTENSION);
-
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
+        String projectPath = FileUtil.toSystemIndependentName(tempDirectory.getPath()) + "/" + myName + ProjectFileType.DOT_DEFAULT_EXTENSION;
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
-        myProject = PlatformTestCase.createProject(projectFile, buffer.toString());
+        new Throwable(projectPath).printStackTrace(new PrintStream(buffer));
+        myProject = PlatformTestCase.createProject(projectPath, buffer.toString());
         ProjectManagerEx.getInstanceEx().openTestProject(myProject);
 
         for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {

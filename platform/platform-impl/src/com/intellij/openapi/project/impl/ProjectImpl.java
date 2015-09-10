@@ -42,7 +42,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
@@ -74,6 +73,11 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   private String myOldName;
   private final boolean myLight;
 
+  /**
+   * @param projectManager
+   * @param filePath System-independent path
+   * @param projectName
+   */
   protected ProjectImpl(@NotNull ProjectManager projectManager,
                         @NotNull String filePath,
                         @Nullable String projectName) {
@@ -87,7 +91,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     getPicoContainer().registerComponentInstance(Project.class, this);
 
     if (!isDefault()) {
-      getStateStore().setPath(FileUtilRt.toSystemIndependentName(filePath));
+      getStateStore().setPath(filePath);
     }
 
     myProjectManager = projectManager;

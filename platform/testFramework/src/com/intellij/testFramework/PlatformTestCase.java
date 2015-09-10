@@ -66,6 +66,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.IndexedRootsProvider;
@@ -252,17 +253,24 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
-  public static Project createProject(@NotNull File projectFile, @NotNull String creationPlace) {
+  public static Project createProject(File projectFile, String creationPlace) {
+    return createProject(projectFile.getPath(), creationPlace);
+  }
+
+  @NotNull
+  public static Project createProject(@NotNull String path, String creationPlace) {
     VirtualFile projectBase = LocalFileSystem.getInstance().findFileByIoFile(projectFile.getName().endsWith(
-      ProjectFileType.DOT_DEFAULT_EXTENSION) ? projectFile.getParentFile() : projectFile);
+          ProjectFileType.DOT_DEFAULT_EXTENSION) ? projectFile.getParentFile() : projectFile);
     if (projectBase != null) {
       // must be leftovers from the previous test run
       for (VirtualFile file : ((NewVirtualFile)projectBase).iterInDbChildren()) {
         delete(file);
       }
     }
+
     try {
-      Project project = ProjectManagerEx.getInstanceEx().newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
+      Project project =
+        ProjectManagerEx.getInstanceEx().newProject(FileUtilRt.getNameWithoutExtension(PathUtilRt.getFileName(path)), path, false, false);
       assert project != null;
 
       project.putUserData(CREATION_PLACE, creationPlace);

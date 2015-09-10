@@ -43,6 +43,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
@@ -234,11 +235,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
   }
 
-  private ProjectImpl createProject(@Nullable String projectName,
-                                    @NotNull String filePath,
-                                    boolean isDefault) {
-    return isDefault ? new DefaultProject(this, "")
-                     : new ProjectImpl(this, new File(filePath).getAbsolutePath(), projectName);
+  private ProjectImpl createProject(@Nullable String projectName, @NotNull String filePath, boolean isDefault) {
+    if (isDefault) {
+      return new DefaultProject(this, "");
+    }
+    else {
+      return new ProjectImpl(this, FileUtilRt.toSystemIndependentName(filePath), projectName);
+    }
   }
 
   private static void scheduleDispose(@NotNull final ProjectImpl project) {
@@ -265,7 +268,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Nullable
   public Project loadProject(@NotNull String filePath) throws IOException {
     try {
-      ProjectImpl project = createProject(null, filePath, false);
+      ProjectImpl project = createProject(null, new File(filePath).getAbsolutePath(), false);
       initProject(project, null);
       return project;
     }

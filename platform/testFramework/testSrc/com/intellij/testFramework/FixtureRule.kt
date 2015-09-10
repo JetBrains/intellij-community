@@ -30,7 +30,6 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
@@ -48,6 +47,7 @@ import java.lang.annotation.ElementType
 import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
 import java.lang.annotation.Target
+import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -66,18 +66,19 @@ public class ProjectRule() : ExternalResource() {
     private fun createLightProject(): ProjectEx {
       (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
 
-      val projectFile = generateTemporaryPath("light_temp_shared_project${ProjectFileType.DOT_DEFAULT_EXTENSION}").toFile()
+      val projectFile = generateTemporaryPath("light_temp_shared_project${ProjectFileType.DOT_DEFAULT_EXTENSION}")
+      val projectPath = projectFile.systemIndependentPath
 
       val buffer = ByteArrayOutputStream()
-      java.lang.Throwable(projectFile.path).printStackTrace(PrintStream(buffer))
+      java.lang.Throwable(projectPath).printStackTrace(PrintStream(buffer))
 
-      val project = PlatformTestCase.createProject(projectFile, "Light project: $buffer") as ProjectEx
+      val project = PlatformTestCase.createProject(projectPath, "Light project: $buffer") as ProjectEx
       Disposer.register(ApplicationManager.getApplication(), Disposable {
         try {
           disposeProject()
         }
         finally {
-          FileUtil.delete(projectFile)
+          Files.deleteIfExists(projectFile)
         }
       })
 
