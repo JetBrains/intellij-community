@@ -272,6 +272,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   public void apply() throws ConfigurationException {
     try {
       final Sdk item = (Sdk)mySdkCombo.getSelectedItem();
+      myProjectSdksModel.apply();
       Sdk newSdk = item == null ? null : myProjectSdksModel.findSdk(item);
       if (item instanceof PyDetectedSdk) {
         VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
