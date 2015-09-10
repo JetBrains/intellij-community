@@ -372,7 +372,9 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
 
   private void scheduleStructureRequest(final Runnable r) {
     if (isUnitTestMode()) {
-      r.run();
+      if (myStructure != null) {
+        r.run();
+      }
       return;
     }
 
