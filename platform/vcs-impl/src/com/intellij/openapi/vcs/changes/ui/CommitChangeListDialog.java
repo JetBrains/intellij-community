@@ -48,6 +48,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
@@ -1016,7 +1017,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myBrowser.getBottomPanel().add(legendPanel, BorderLayout.SOUTH);
 
     JPanel infoPanel = new JPanel(new BorderLayout());
-    infoPanel.add(myAdditionalOptionsPanel, BorderLayout.CENTER);
+    JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(myAdditionalOptionsPanel, true);
+    optionsPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    infoPanel.add(optionsPane, BorderLayout.CENTER);
     rootPane.add(infoPanel, BorderLayout.EAST);
     infoPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
 
