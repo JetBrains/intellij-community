@@ -290,6 +290,20 @@ public class DiffUtil {
     return "Settings | Tools | Diff";
   }
 
+  @NotNull
+  public static String createTooltipText(@NotNull String text, @Nullable String appendix) {
+    @NonNls StringBuilder result = new StringBuilder();
+    result.append("<html><body>");
+    result.append(text);
+    if (appendix != null) {
+      result.append("<br><div style='margin-top: 5px'><font size='2'>");
+      result.append(appendix);
+      result.append("</font></div>");
+    }
+    result.append("</body></html>");
+    return result.toString();
+  }
+
   // Titles
 
   @NotNull
