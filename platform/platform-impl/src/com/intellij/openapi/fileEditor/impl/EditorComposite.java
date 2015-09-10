@@ -42,7 +42,9 @@ import com.intellij.ui.SideBorder;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,6 +94,7 @@ public abstract class EditorComposite implements Disposable {
   private final FileEditorManagerEx myFileEditorManager;
   private final Map<FileEditor, JComponent> myTopComponents = new HashMap<FileEditor, JComponent>();
   private final Map<FileEditor, JComponent> myBottomComponents = new HashMap<FileEditor, JComponent>();
+  private final Map<FileEditor, String> myDisplayNames = ContainerUtil.newHashMap();
 
   /**
    * @param file <code>file</code> for which composite is being constructed
@@ -174,7 +177,7 @@ public abstract class EditorComposite implements Disposable {
     boolean firstEditor = true;
     for (FileEditor editor : editors) {
       JComponent component = firstEditor && myComponent != null ? (JComponent)myComponent.getComponent(0) : createEditorComponent(editor);
-      wrapper.addTab(editor.getName(), component);
+      wrapper.addTab(getDisplayName(editor), component);
       firstEditor = false;
     }
     wrapper.addChangeListener(new MyChangeListener());
@@ -329,6 +332,21 @@ public abstract class EditorComposite implements Disposable {
     container.revalidate();
   }
 
+  public void setDisplayName(@NotNull FileEditor editor, @NotNull String name) {
+    int index = ContainerUtil.indexOfIdentity(ContainerUtil.immutableList(myEditors), editor);
+    assert index != -1;
+
+    myDisplayNames.put(editor, name);
+    if (myTabbedPaneWrapper != null) {
+      myTabbedPaneWrapper.setTitleAt(index, name);
+    }
+  }
+
+  @NotNull
+  protected String getDisplayName(@NotNull FileEditor editor) {
+    return ObjectUtils.notNull(myDisplayNames.get(editor), editor.getName());
+  }
+
   /**
    * @return currently selected myEditor.
    */
@@ -467,7 +485,7 @@ public abstract class EditorComposite implements Disposable {
     }
     else {
       JComponent component = createEditorComponent(editor);
-      myTabbedPaneWrapper.addTab(editor.getName(), component);
+      myTabbedPaneWrapper.addTab(getDisplayName(editor), component);
     }
     myFocusWatcher.deinstall(myFocusWatcher.getTopComponent());
     myFocusWatcher.install(myComponent);
