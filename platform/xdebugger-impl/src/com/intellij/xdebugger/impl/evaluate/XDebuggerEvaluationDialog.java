@@ -128,12 +128,14 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)), getRootPane(),
                                 myDisposable);
 
-    myTreePanel.getTree().expandNodesOnLoad(new Condition<TreeNode>() {
+    Condition<TreeNode> rootFilter = new Condition<TreeNode>() {
       @Override
       public boolean value(TreeNode node) {
         return node.getParent() instanceof EvaluatingExpressionRootNode;
       }
-    });
+    };
+    myTreePanel.getTree().expandNodesOnLoad(rootFilter);
+    myTreePanel.getTree().selectNodeOnLoad(rootFilter);
 
     EvaluationMode mode = XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().getEvaluationDialogMode();
     myIsCodeFragmentEvaluationSupported = evaluator.isCodeFragmentEvaluationSupported();
