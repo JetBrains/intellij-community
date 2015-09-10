@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.io.zip;
+package com.intellij.util.lang;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.lang.JarMemoryLoader;
+import com.intellij.util.io.zip.JBZipEntry;
+import com.intellij.util.io.zip.JBZipFile;
+import com.intellij.util.io.zip.ReorderJarsMain;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import sun.misc.Resource;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +40,7 @@ public class ReorderJarsTest {
 
   @Before
   public void setUp() throws Exception {
-    myTempDirectory = FileUtil.createTempDirectory("__", "__");
+    myTempDirectory = FileUtil.createTempDirectory("ReorderJarsTest.", ".tmp");
   }
 
   @After
