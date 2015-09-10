@@ -19,20 +19,24 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 class MemoryResource extends Resource {
   private final URL myUrl;
   private final byte[] myContent;
+  private final Manifest myManifest;
 
-  public MemoryResource(URL url, byte[] content) {
+  public MemoryResource(URL url, byte[] content, Manifest manifest) {
     myUrl = url;
     myContent = content;
+    myManifest = manifest;
   }
 
   @Override
@@ -55,8 +59,16 @@ class MemoryResource extends Resource {
     return myContent;
   }
 
+  @Override
+  public Manifest getManifest() {
+    return myManifest;
+  }
+
   @NotNull
-  public static MemoryResource load(URL baseUrl, @NotNull ZipFile zipFile, @NotNull ZipEntry entry) throws IOException {
+  public static MemoryResource load(URL baseUrl,
+                                    @NotNull ZipFile zipFile,
+                                    @NotNull ZipEntry entry,
+                                    @Nullable Manifest manifest) throws IOException {
     String name = entry.getName();
     URL url = new URL(baseUrl, name);
 
@@ -71,6 +83,6 @@ class MemoryResource extends Resource {
       }
     }
 
-    return new MemoryResource(url, content);
+    return new MemoryResource(url, content, manifest);
   }
 }

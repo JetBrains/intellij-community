@@ -95,7 +95,7 @@ public class ReorderJarsTest {
 
     ZipFile zipFile3 = new ZipFile(file);
     try {
-      JarMemoryLoader loader = JarMemoryLoader.load(zipFile3, file.toURI().toURL());
+      JarMemoryLoader loader = JarMemoryLoader.load(zipFile3, file.toURI().toURL(), null);
       assertNotNull(loader);
       Resource resource = loader.getResource("org/jetbrains/annotations/Nullable.class");
       assertNotNull(resource);

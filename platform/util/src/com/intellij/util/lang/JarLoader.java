@@ -22,19 +22,29 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 class JarLoader extends Loader {
+  private static final Attributes.Name[] PACKAGE_FIELDS = {
+    Attributes.Name.SPECIFICATION_TITLE, Attributes.Name.SPECIFICATION_VERSION, Attributes.Name.SPECIFICATION_VENDOR,
+    Attributes.Name.IMPLEMENTATION_TITLE, Attributes.Name.IMPLEMENTATION_VERSION, Attributes.Name.IMPLEMENTATION_VENDOR
+  };
+
   private final File myCanonicalFile;
   private final boolean myCanLockJar; // true implies that the zipfile will not be modified in the lifetime of the JarLoader
   private SoftReference<JarMemoryLoader> myMemoryLoader;
   private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myCanLockJar==true
+  private final Manifest myManifest;
 
   JarLoader(URL url, @SuppressWarnings("unused") boolean canLockJar, int index, boolean preloadJarContents) throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);
@@ -44,8 +54,9 @@ class JarLoader extends Loader {
 
     ZipFile zipFile = getZipFile(); // IOException from opening is propagated to caller if zip file isn't valid,
     try {
+      myManifest = getManifestIfNotEmpty(zipFile);
       if (preloadJarContents) {
-        JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL());
+        JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL(), myManifest);
         if (loader != null) {
           myMemoryLoader = new SoftReference<JarMemoryLoader>(loader);
         }
@@ -54,6 +65,28 @@ class JarLoader extends Loader {
     finally {
       releaseZipFile(zipFile);
     }
+  }
+
+  @Nullable
+  private static Manifest getManifestIfNotEmpty(ZipFile zipFile) throws IOException {
+    ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
+    if (entry != null) {
+      InputStream stream = zipFile.getInputStream(entry);
+      try {
+        Manifest manifest = new Manifest(stream);
+        Attributes attributes = manifest.getMainAttributes();
+        for (Attributes.Name field : PACKAGE_FIELDS) {
+          if (attributes.getValue(field) != null) {
+            return manifest;
+          }
+        }
+      }
+      finally {
+        stream.close();
+      }
+    }
+
+    return null;
   }
 
   @NotNull
@@ -94,7 +127,7 @@ class JarLoader extends Loader {
       try {
         ZipEntry entry = zipFile.getEntry(name);
         if (entry != null) {
-          return MemoryResource.load(getBaseURL(), zipFile, entry);
+          return MemoryResource.load(getBaseURL(), zipFile, entry, myManifest);
         }
       }
       finally {

@@ -18,6 +18,7 @@ package com.intellij.util.lang;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.jar.Manifest;
 
 abstract class Resource {
   public abstract URL getURL();
@@ -27,6 +28,10 @@ abstract class Resource {
   public abstract int getContentLength() throws IOException;
 
   public abstract byte[] getBytes() throws IOException;
+
+  public Manifest getManifest() {
+    return null;
+  }
 
   @Override
   public String toString() {
