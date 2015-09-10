@@ -20,10 +20,12 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.awt.Font;
 
 public class CompressibleSingleRowLayout extends SingleRowLayout {
   public CompressibleSingleRowLayout(JBTabsImpl tabs) {
@@ -55,7 +57,8 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
     for (int i = 0; i < layout.size(); i++) {
       final TabLabel label = myTabs.myInfo2Label.get(layout.get(i));
       if (maxGridSize == 0) {
-        maxGridSize = GraphicsUtil.stringWidth("m", label.getLabelComponent().getFont()) * myTabs.tabMSize();
+        Font font = label.getLabelComponent().getFont();
+        maxGridSize = GraphicsUtil.stringWidth("m", font == null ? JBUI.Fonts.label() : font) * myTabs.tabMSize();
       }
       int lengthIncrement = label.getPreferredSize().width;
       lengths[i] = lengthIncrement;
