@@ -21,6 +21,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,6 +109,7 @@ public final class CanonicalFileTrie extends CanonicalFileMapper {
   }
 
   private final TrieNode root = new TrieNode();
+  private final Set<OriginalWatchPath> canonicalWatchRoots = Sets.newHashSet();
 
   /**
    * @param file
@@ -120,7 +122,7 @@ public final class CanonicalFileTrie extends CanonicalFileMapper {
     String canonicalPath = symLinkToRealPath(file);
     String filePath = file.getPath();
     if (FileUtil.comparePaths(canonicalPath, filePath) == 0) {
-      // Don't add paths that are already canonical
+      canonicalWatchRoots.add(new OriginalWatchPath(filePath, mappingType));
       return canonicalPath;
     }
 
@@ -160,6 +162,17 @@ public final class CanonicalFileTrie extends CanonicalFileMapper {
     if (mappedPaths.size() == 0) {
       return ImmutableList.of(canonicalPath);
     }
+
+    // See if this path is reachable by a canonical path as well as the symlink path we found
+    for (OriginalWatchPath originalWatchPath : canonicalWatchRoots) {
+      ThreeState ancestorThreeState = FileUtil.isAncestorThreeState(originalWatchPath.path, canonicalPath, false);
+      if (ancestorThreeState == ThreeState.YES ||
+          (ancestorThreeState == ThreeState.UNSURE && originalWatchPath.mappingType == MappingType.RECURSIVE)) {
+        mappedPaths.add(canonicalPath);
+        break;
+      }
+    }
+
     return mappedPaths;
   }
 }
