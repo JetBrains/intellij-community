@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
         customHandlers.add(handlerFactory.createHandler(module));
       }
     }
-    this.myCustomHandlers = customHandlers == null ? Collections.<OrderEnumerationHandler>emptyList() : customHandlers;
+    myCustomHandlers = customHandlers == null ? Collections.<OrderEnumerationHandler>emptyList() : customHandlers;
   }
 
   @Override
@@ -301,7 +301,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
           final Module module = ((ModuleSourceOrderEntry)orderEntry).getRootModel().getModule();
           return processor.process(module);
         }
-        else if (orderEntry instanceof ModuleOrderEntry && (!myRecursively || !shouldProcessRecursively())) {
+        if (orderEntry instanceof ModuleOrderEntry && (!myRecursively || !shouldProcessRecursively())) {
           final Module module = ((ModuleOrderEntry)orderEntry).getModule();
           if (module != null) {
             return processor.process(module);
@@ -414,11 +414,11 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
    */
   public abstract void processRootModules(@NotNull Processor<Module> processor);
 
-  private class OrderEntryProcessor<R> implements Processor<OrderEntry> {
+  private static class OrderEntryProcessor<R> implements Processor<OrderEntry> {
     private R myValue;
     private final RootPolicy<R> myPolicy;
 
-    public OrderEntryProcessor(RootPolicy<R> policy, R initialValue) {
+    private OrderEntryProcessor(RootPolicy<R> policy, R initialValue) {
       myPolicy = policy;
       myValue = initialValue;
     }

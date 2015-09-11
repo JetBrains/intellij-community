@@ -66,7 +66,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
   private static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
-  protected static final Condition<PsiFile> SHOULD_HIGHIGHT_FILTER = new Condition<PsiFile>() {
+  static final Condition<PsiFile> SHOULD_HIGHIGHT_FILTER = new Condition<PsiFile>() {
     @Override
     public boolean value(PsiFile file) {
       return HighlightingLevelManager.getInstance(file.getProject()).shouldHighlight(file);
