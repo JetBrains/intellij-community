@@ -55,6 +55,14 @@ public class GeneralCodeFormatterTest extends LightPlatformTestCase {
                                               "    eee\n" +
                                               "    fff");
   }
+  
+  public void testNestedIndents() throws IOException, JDOMException {
+    String before = "xxx\n" +
+                    "yyy";
+    String after = "xxx\n" +
+                   "                        yyy";
+    doTest("nestedIndents", before, after);
+  }
 
   public void testLastLineIndent() throws Exception{
     final String initialText = "a\n";
