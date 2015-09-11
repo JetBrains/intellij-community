@@ -64,12 +64,18 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
     }
     final Module configModule = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
     if (configModule == null) {
-      return true; // todo: show error?
+      context.addMessage(CompilerMessageCategory.ERROR, "A module must be specified for the run configuration", scratchUrl, -1, -1);
+      return true;
     }
     final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(configModule);
     final Sdk targetSdk = moduleRootManager.getSdk();
-    if (targetSdk == null || !(targetSdk.getSdkType() instanceof JavaSdkType)) {
-      return true; // todo: show error?
+    if (targetSdk == null) {
+      context.addMessage(CompilerMessageCategory.ERROR, "Cannot find associated SDK for run configuration module \"" + configModule.getName() + "\".\nPlease check project settings.", scratchUrl, -1, -1);
+      return true;
+    }
+    if (!(targetSdk.getSdkType() instanceof JavaSdkType)) {
+      context.addMessage(CompilerMessageCategory.ERROR, "Expected Java SDK for run configuration module \"" + configModule.getName() + "\".\nPlease check project settings.", scratchUrl, -1, -1);
+      return true;
     }
 
     final File outputDir = JavaScratchRunConfigurationExtension.getScratchOutputDirectory(project);
