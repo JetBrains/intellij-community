@@ -5,6 +5,6 @@ class a {
         f(b);
     }
 }
-<caret>class b extends a {
+class b extends a <caret>{
 }
 
