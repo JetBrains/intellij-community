@@ -55,7 +55,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
 
     LOG.debug("Pull")
 
-    val state = manager.repository.fixAndGetState()
+    val state = repository.fixAndGetState()
     if (!state.canCheckout()) {
       LOG.error("Cannot pull, repository in state ${state.getDescription()}")
       return null
@@ -69,7 +69,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
     }
 
     if (mergeStatus == MergeStatus.CONFLICTING) {
-      return resolveConflicts(mergeResult, manager.repository)
+      return resolveConflicts(mergeResult, repository)
     }
     else if (!mergeStatus.isSuccessful()) {
       throw IllegalStateException(mergeResult.toString())
@@ -82,7 +82,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
   fun fetch(prevRefUpdateResult: RefUpdate.Result? = null): Ref? {
     indicator?.checkCanceled()
 
-    val fetchResult = manager.repository.fetch(remoteConfig, manager.credentialsProvider, indicator.asProgressMonitor()) ?: return null
+    val fetchResult = repository.fetch(remoteConfig, manager.credentialsProvider, indicator.asProgressMonitor()) ?: return null
 
     if (LOG.isDebugEnabled()) {
       printMessages(fetchResult)

@@ -52,6 +52,9 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
       if (r == null) {
         r = FileRepositoryBuilder().setWorkTree(dir).build()
         _repository = r
+        if (ApplicationManager.getApplication()?.isUnitTestMode() != true) {
+          ShutDownTracker.getInstance().registerShutdownTask(Runnable { _repository?.close() })
+        }
       }
       return r!!
     }
@@ -64,16 +67,6 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   }
 
   private var ignoreRules: IgnoreNode? = null
-
-  init {
-    if (ApplicationManager.getApplication()?.isUnitTestMode() != true) {
-      ShutDownTracker.getInstance().registerShutdownTask(object : Runnable {
-        override fun run() {
-          _repository?.close()
-        }
-      })
-    }
-  }
 
   override fun createRepositoryIfNeed(): Boolean {
     ignoreRules = null
@@ -107,7 +100,15 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     repository.setUpstream(url, branch ?: Constants.MASTER)
   }
 
-  override fun isRepositoryExists() = repository.getObjectDatabase().exists()
+  override fun isRepositoryExists(): Boolean {
+    val repo = _repository
+    if (repo == null) {
+      return dir.exists() && FileRepositoryBuilder().setWorkTree(dir).setup().getObjectDirectory().exists()
+    }
+    else {
+      return repo.getObjectDatabase().exists()
+    }
+  }
 
   override fun hasUpstream() = getUpstream() != null
 
@@ -143,7 +144,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
 
   private fun commitIfCan(indicator: ProgressIndicator?, state: RepositoryState): Boolean {
     if (state.canCommit()) {
-      return commit(this, indicator)
+      return commit(repository, indicator)
     }
     else {
       LOG.warn("Cannot commit, repository in state ${state.getDescription()}")
@@ -231,9 +232,8 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   override fun canCommit() = repository.getRepositoryState().canCommit()
 
   fun renameDirectory(pairs: Map<String, String?>): Boolean {
-    val addCommand = AddCommand(repository)
+    var addCommand: AddCommand? = null
     val toDelete = SmartList<DeleteDirectory>()
-    var added = false
     for ((oldPath, newPath) in pairs) {
       val old = File(dir, oldPath)
       if (!old.exists()) {
@@ -252,8 +252,10 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
             }
             else {
               file.renameTo(File(new, file.getName()))
+              if (addCommand == null) {
+                addCommand = AddCommand(repository)
+              }
               addCommand.addFilepattern(if (newPath == null) file.getName() else "$newPath/${file.getName()}")
-              added = true
             }
           }
           catch (e: Throwable) {
@@ -271,13 +273,13 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
       }
     }
 
-    repository.edit(toDelete)
-    if (added) {
-      addCommand.call()
+    if (toDelete.isEmpty() && addCommand == null) {
+      return false
     }
 
-    if (toDelete.isEmpty() && !added) {
-      return false
+    repository.edit(toDelete)
+    if (addCommand != null) {
+      addCommand.call()
     }
 
     repository.commit(with(IdeaCommitMessageFormatter()) { StringBuilder().appendCommitOwnerInfo(true) }.append("Get rid of \$ROOT_CONFIG$ and \$APP_CONFIG").toString())
