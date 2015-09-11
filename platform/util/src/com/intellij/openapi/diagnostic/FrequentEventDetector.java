@@ -32,10 +32,11 @@ public class FrequentEventDetector {
 
   private long myStartedCounting = System.currentTimeMillis();
   private final AtomicInteger myEventsPosted = new AtomicInteger();
-  private final Map<String, String> myRecentTraces = new LinkedHashMap<String, String>() {
+  private final AtomicInteger myLastTraceId = new AtomicInteger();
+  private final Map<String, Integer> myRecentTraces = new LinkedHashMap<String, Integer>() {
     @Override
-    protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
-      return size() > 5;
+    protected boolean removeEldestEntry(Map.Entry<String, Integer> eldest) {
+      return size() > 50;
     }
   };
   private final int myEventCountThreshold;
@@ -68,11 +69,18 @@ public class FrequentEventDetector {
       if (shouldLog) {
         String trace = ExceptionUtil.getThrowableText(new Throwable());
         boolean logTrace;
+        int traceId;
         synchronized (myEventsPosted) {
-          logTrace = myRecentTraces.put(trace, trace) == null;
+          Integer existingTraceId = myRecentTraces.get(trace);
+          logTrace = existingTraceId == null;
+          if (logTrace) {
+            myRecentTraces.put(trace, traceId = myLastTraceId.incrementAndGet());
+          } else {
+            traceId = existingTraceId;
+          }
         }
 
-        String message = "Too many events posted" + (logTrace ? "\n" + trace : "");
+        String message = "Too many events posted, #" + traceId  + (logTrace ? "\n" + trace : "");
         if (myLevel == Level.INFO) {
           LOG.info(message);
         }
