@@ -25,6 +25,8 @@ import com.intellij.diagnostic.Dumpable;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
@@ -55,6 +57,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
@@ -346,6 +349,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Rectangle myOldArea = new Rectangle(0, 0, 0, 0);
   private Rectangle myOldTailArea = new Rectangle(0, 0, 0, 0);
   private boolean myImmediateEditingInProgress;
+
+  // TODO Should be removed when IDEA adopts typing without starting write actions.
+  private static final boolean VIM_PLUGIN_LOADED = isPluginLoaded("IdeaVIM");
 
   static {
     ourCaretBlinkingCommand.start();
@@ -2179,13 +2185,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static boolean isZeroLatencyTypingEnabled() {
-    return Registry.is("editor.zero.latency.typing");
+    // Zero-latency typing is suppressed when Idea VIM plugin is loaded, because of VIM-1007.
+    // That issue will be resolved automatically when IDEA adopts typing without starting write actions.
+    return !VIM_PLUGIN_LOADED && Registry.is("editor.zero.latency.typing");
+  }
+
+  private static boolean isPluginLoaded(@NotNull String id) {
+    PluginId pluginId = PluginId.findId(id);
+    if (pluginId == null) return false;
+    IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+    if (plugin == null) return false;
+    return plugin.isEnabled();
   }
 
   private boolean canPaintImmediately(char c) {
     return myDocument instanceof DocumentImpl &&
            myHighlighter instanceof LexerEditorHighlighter &&
            !mySelectionModel.hasSelection() &&
+           arePositionsWithinDocument(myCaretModel.getAllCarets()) &&
            areVisualLinesUnique(myCaretModel.getAllCarets()) &&
            !isInplaceRenamerActive() &&
            !KEY_CHARS_TO_SKIP.contains(c);
@@ -2198,6 +2215,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (!lines.add(caret.getVisualLineStart())) {
           return false;
         }
+      }
+    }
+    return true;
+  }
+
+  // Checks whether all the carets are within document or some of them are in a so called "virtual space".
+  private boolean arePositionsWithinDocument(List<Caret> carets) {
+    for (Caret caret : carets) {
+      if (caret.getLogicalPosition().compareTo(offsetToLogicalPosition(caret.getOffset())) != 0) {
+        return false;
       }
     }
     return true;

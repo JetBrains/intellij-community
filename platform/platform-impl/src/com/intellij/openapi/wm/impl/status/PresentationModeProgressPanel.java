@@ -104,7 +104,7 @@ public class PresentationModeProgressPanel {
                                                  AllIcons.Process.StopHovered);
     myCancelButton = new InplaceButton(iconButton, new ActionListener() {
       public void actionPerformed(@NotNull final ActionEvent e) {
-        myProgress.cancel();
+        myProgress.cancelRequest();
       }
     }).setFillBg(false);
   }

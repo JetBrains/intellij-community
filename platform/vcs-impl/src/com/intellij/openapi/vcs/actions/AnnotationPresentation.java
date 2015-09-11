@@ -34,7 +34,6 @@ class AnnotationPresentation implements TextAnnotationPresentation {
   @NotNull private final UpToDateLineNumberProvider myUpToDateLineNumberProvider;
   @Nullable private final AnnotationSourceSwitcher mySwitcher;
   private final ArrayList<AnAction> myActions = new ArrayList<AnAction>();
-  private SwitchAnnotationSourceAction mySwitchAction;
 
   AnnotationPresentation(@NotNull FileAnnotation fileAnnotation,
                          @NotNull UpToDateLineNumberProvider upToDateLineNumberProvider,
@@ -71,10 +70,6 @@ class AnnotationPresentation implements TextAnnotationPresentation {
   @NotNull
   public List<AnAction> getActions() {
     return myActions;
-  }
-
-  public void addSourceSwitchListener(final Consumer<AnnotationSource> listener) {
-    mySwitchAction.addSourceSwitchListener(listener);
   }
 
   public void addAction(AnAction action) {

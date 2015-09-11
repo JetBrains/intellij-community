@@ -109,16 +109,18 @@ public class RepositoryLibraryPropertiesEditor {
 
   private static int getSelection(String selectedVersion, List<String> versions) {
     VersionKind versionKind = getVersionKind(selectedVersion);
+    int releaseIndex = JBIterable.from(versions).takeWhile(new Condition<String>() {
+      @Override
+      public boolean value(String version) {
+        return version.endsWith(RepositoryUtils.SnapshotVersionSuffix);
+      }
+    }).size();
+
     switch (versionKind) {
       case Unselected:
         return -1;
       case Release:
-        return JBIterable.from(versions).takeWhile(new Condition<String>() {
-          @Override
-          public boolean value(String version) {
-            return version.endsWith(RepositoryUtils.SnapshotVersionSuffix);
-          }
-        }).size();
+        return releaseIndex == versions.size() ? -1 : releaseIndex;
       case Latest:
         return 0;
       case Select:

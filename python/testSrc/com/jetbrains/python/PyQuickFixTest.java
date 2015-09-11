@@ -387,8 +387,8 @@ public class PyQuickFixTest extends PyTestCase {
   public void testAddCallSuperRepeatedOptionalTupleParamsPassedToSuperConstructor() {
     doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
   }
-  
-  // PY-16258
+
+  // PY-16289
   public void testAddCallSuperCommentAfterColonPreserved() {
     doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
   }

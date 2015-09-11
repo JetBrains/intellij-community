@@ -24,4 +24,6 @@ public interface PsiFileEx extends PsiFile{
 
   boolean isContentsLoaded();
   void onContentReload();
+
+  void markInvalidated();
 }

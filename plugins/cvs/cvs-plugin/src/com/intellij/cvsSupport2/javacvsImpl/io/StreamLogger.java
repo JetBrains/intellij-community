@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,8 @@ public class StreamLogger implements IStreamLogger {
   private int myCloseCount = 0;
 
   private static final OutputStream DUMMY_OUTPUT_STREAM = new OutputStream() {
-    public void write(int b) {
-
-    }
+    @Override
+    public void write(int b) {}
   };
 
   private OutputStream myLogOutput;
@@ -46,23 +45,33 @@ public class StreamLogger implements IStreamLogger {
     try {
       return new BufferedOutputStream(new FileOutputStream(cvsOutputFile, true));
     }
-    catch (FileNotFoundException e) {
+    catch (FileNotFoundException ignored) {
       return DUMMY_OUTPUT_STREAM;
     }
   }
 
+  @Override
   public OutputStream createLoggingOutputStream(final OutputStream outputStream) {
     return new OutputStream() {
+      @Override
       public void write(int b) throws IOException {
         outputStream.write(b);
         getOutputLogStream().write(b);
+      }
+
+      @Override
+      public void write(byte[] b, int off, int len) throws IOException {
+        outputStream.write(b, off, len);
+        getOutputLogStream().write(b, off, len);
+      }
+
+      @Override
+      public void flush() throws IOException {
+        outputStream.flush();
         getOutputLogStream().flush();
       }
 
-      public void flush() throws IOException {
-        outputStream.flush();
-      }
-
+      @Override
       public void close() throws IOException {
         myCloseCount++;
         if (myCloseCount == 2) {
@@ -73,10 +82,12 @@ public class StreamLogger implements IStreamLogger {
   }
 
   // todo!!!! in memory logging
+  @Override
   public InputStream createLoggingInputStream(final InputStream inputStream) {
     return new InputStream() {
+      @Override
       public int read() throws IOException {
-        int result = inputStream.read();
+        final int result = inputStream.read();
         final OutputStream logStream = getInputLogStream();
         logStream.write(result);
         if (result == '\n') {
@@ -85,6 +96,7 @@ public class StreamLogger implements IStreamLogger {
         return result;
       }
 
+      @Override
       public void close() throws IOException {
         myCloseCount++;
         if (myCloseCount == 2 && myLogOutput != null) {
@@ -95,6 +107,7 @@ public class StreamLogger implements IStreamLogger {
       }
 
       // todo !!!! do not read byte by byte
+      @Override
       public int read(byte[] b, int off, int len) throws IOException {
         if (len == 0) return 0;
         final int read = read();
@@ -105,6 +118,7 @@ public class StreamLogger implements IStreamLogger {
     };
   }
 
+  @Override
   public OutputStream getInputLogStream() {
     if (myLogOutput == null) {
       initLogOutput();
@@ -114,7 +128,7 @@ public class StreamLogger implements IStreamLogger {
 
   private void initLogOutput() {
     if (CvsApplicationLevelConfiguration.getInstance().DO_OUTPUT) {
-      File cvsOutputFile = new File(PathManager.getLogPath(), OUTPUT_FILE_NAME);
+      final File cvsOutputFile = new File(PathManager.getLogPath(), OUTPUT_FILE_NAME);
       if (cvsOutputFile.isFile() && cvsOutputFile.length() > MAX_OUTPUT_SIZE) {
         FileUtil.delete(cvsOutputFile);
       }
@@ -124,6 +138,7 @@ public class StreamLogger implements IStreamLogger {
     }
   }
 
+  @Override
   public OutputStream getOutputLogStream() {
     if (myLogOutput == null) {
       initLogOutput();

@@ -15,9 +15,7 @@
  */
 package com.intellij.xdebugger.impl.evaluate;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -27,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -41,6 +40,7 @@ import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.nodes.EvaluatingExpressionRootNode;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +55,8 @@ import java.awt.event.KeyEvent;
  * @author nik
  */
 public class XDebuggerEvaluationDialog extends DialogWrapper {
+  public static final DataKey<XDebuggerEvaluationDialog> KEY = DataKey.create("DEBUGGER_EVALUATION_DIALOG");
+
   private final JPanel myMainPanel;
   private final JPanel myResultPanel;
   private final XDebuggerTreePanel myTreePanel;
@@ -106,7 +108,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     myResultPanel = JBUI.Panels.simplePanel()
       .addToTop(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.result")))
       .addToCenter(myTreePanel.getMainPanel());
-    myMainPanel = JBUI.Panels.simplePanel();
+    myMainPanel = new EvaluationMainPanel();
 
     mySwitchModeAction = new SwitchModeAction();
 
@@ -126,12 +128,14 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)), getRootPane(),
                                 myDisposable);
 
-    myTreePanel.getTree().expandNodesOnLoad(new Condition<TreeNode>() {
+    Condition<TreeNode> rootFilter = new Condition<TreeNode>() {
       @Override
       public boolean value(TreeNode node) {
         return node.getParent() instanceof EvaluatingExpressionRootNode;
       }
-    });
+    };
+    myTreePanel.getTree().expandNodesOnLoad(rootFilter);
+    myTreePanel.getTree().selectNodeOnLoad(rootFilter);
 
     EvaluationMode mode = XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().getEvaluationDialogMode();
     myIsCodeFragmentEvaluationSupported = evaluator.isCodeFragmentEvaluationSupported();
@@ -327,6 +331,17 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       // remember only on user selection
       XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().setEvaluationDialogMode(newMode);
       switchToMode(newMode, text);
+    }
+  }
+
+  private class EvaluationMainPanel extends BorderLayoutPanel implements DataProvider {
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      if (KEY.is(dataId)) {
+        return XDebuggerEvaluationDialog.this;
+      }
+      return null;
     }
   }
 }

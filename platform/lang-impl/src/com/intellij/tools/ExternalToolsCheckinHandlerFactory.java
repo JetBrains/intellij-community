@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -163,7 +162,7 @@ public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
     result.add(NONE_TOOL);//for empty selection
     for (ToolsGroup group : manager.getGroups()) {
       result.add(group);
-      Collections.addAll(result, manager.getTools(group.getName()));
+      result.addAll(manager.getTools(group.getName()));
     }
 
     return result;

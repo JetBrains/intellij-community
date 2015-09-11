@@ -63,7 +63,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DocumentCommitThread;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.indexing.IndexableSetContributor;
@@ -351,13 +351,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
       ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
 
-      ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().cleanupForNextTest();
+      ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
     }
 
     ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
     if (projectManager.isDefaultProjectInitialized()) {
       Project defaultProject = projectManager.getDefaultProject();
-      ((PsiManagerEx)PsiManager.getInstance(defaultProject)).getFileManager().cleanupForNextTest();
+      ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
     }
 
     LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();

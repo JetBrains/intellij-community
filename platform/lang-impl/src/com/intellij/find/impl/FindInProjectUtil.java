@@ -470,6 +470,8 @@ public class FindInProjectUtil {
                                                         @NotNull VirtualFile file,
                                                         @NotNull Collection<VirtualFile> outSourceRoots) {
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    // if we already are in the sources, search just in this directory only
+    if (index.isInLibrarySource(file)) return;
     VirtualFile classRoot = index.getClassRootForFile(file);
     if (classRoot == null) return;
     String relativePath = VfsUtilCore.getRelativePath(file, classRoot);

@@ -249,6 +249,11 @@ public class CodeInsightUtil {
     }
   }
 
+  public static Editor positionCursorAtLBrace(final Project project, PsiFile targetFile, @NotNull PsiClass psiClass) {
+    final PsiElement lBrace = psiClass.getLBrace();
+    return positionCursor(project, targetFile, lBrace != null ? lBrace : psiClass);
+  }
+  
   public static Editor positionCursor(final Project project, PsiFile targetFile, @NotNull PsiElement element) {
     TextRange range = element.getTextRange();
     int textOffset = range.getStartOffset();

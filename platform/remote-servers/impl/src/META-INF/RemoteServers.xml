@@ -8,6 +8,8 @@
 
     <extensionPoint name="remoteServer.util.CloudDeploymentRuntimeProvider"
                     interface="com.intellij.remoteServer.util.CloudDeploymentRuntimeProvider"/>
+    <extensionPoint name="remoteServer.runConfigurationExtension"
+                    interface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtension"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -19,6 +21,8 @@
                         serviceImplementation="com.intellij.remoteServer.agent.impl.RemoteAgentManagerImpl"/>
     <applicationService serviceInterface="com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryManager"
                         serviceImplementation="com.intellij.remoteServer.impl.runtime.clientLibrary.ClientLibraryManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtensionsManager"
+                        serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtensionsManager"/>
     <applicationConfigurable groupId="build"
                              displayName="Clouds"
                              id="RemoteServers"

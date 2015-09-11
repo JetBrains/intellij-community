@@ -180,18 +180,18 @@ public class ThreadState {
       if (!Comparing.equal(state.myExtraState, myOriginalState.myExtraState)) return false;
       if (!Comparing.haveEqualElements(state.myThreadsWaitingForMyLock, myOriginalState.myThreadsWaitingForMyLock)) return false;
       if (!Comparing.haveEqualElements(state.myDeadlockedThreads, myOriginalState.myDeadlockedThreads)) return false;
-      if (!Comparing.equal(getMergeableStackTrace(state.myStackTrace), getMergeableStackTrace(myOriginalState.myStackTrace))) return false;
+      if (!Comparing.equal(getMergeableStackTrace(state.myStackTrace, true), getMergeableStackTrace(myOriginalState.myStackTrace, true))) return false;
       myCounter++;
       return true;
     }
 
-    private static String getMergeableStackTrace(String stackTrace) {
+    private static String getMergeableStackTrace(String stackTrace, boolean skipFirstLine) {
       if (stackTrace == null) return null;
       StringBuilder builder = new StringBuilder();
       String[] lines = stackTrace.split("\n");
       for (int i = 0; i < lines.length; i++) {
         String line = lines[i];
-        if (i == 0) continue;//first line has unique details
+        if (i == 0 && skipFirstLine) continue;//first line has unique details
         line = line.replaceAll("<0x.+>\\s", "<merged>");
         builder.append(line).append("\n");
       }
@@ -210,7 +210,7 @@ public class ThreadState {
 
     @Override
     public String getStackTrace() {
-      return myCounter == 1 ? myOriginalState.getStackTrace() : getMergeableStackTrace(myOriginalState.getStackTrace());
+      return myCounter == 1 ? myOriginalState.getStackTrace() : getMergeableStackTrace(myOriginalState.getStackTrace(), false);
     }
 
     @Override

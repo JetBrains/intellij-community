@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,4 +87,10 @@ public interface PlatformFacade {
 
   @Nullable
   OrderEntry findIdeModuleOrderEntry(LibraryDependencyData data, Project project);
+
+  void updateModule(@NotNull Module module, @NotNull Consumer<ModifiableRootModel> task);
+
+  void updateLibraryTable(@NotNull Project project, @NotNull Consumer<LibraryTable.ModifiableModel> task);
+
+  void updateLibrary(@NotNull Library library, @NotNull Consumer<Library.ModifiableModel> task);
 }

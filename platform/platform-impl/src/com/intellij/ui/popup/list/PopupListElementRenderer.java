@@ -91,10 +91,7 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
     if (!isSelected && step instanceof BaseListPopupStep) {
       Color bg = ((BaseListPopupStep)step).getBackgroundFor(value);
       Color fg = ((BaseListPopupStep)step).getForegroundFor(value);
-      if (fg != null) {
-        myTextLabel.setForeground(fg);
-        myShortcutLabel.setForeground(fg);
-      }
+      if (fg != null) myTextLabel.setForeground(fg);
       if (bg != null) UIUtil.setBackgroundRecursively(myComponent, bg);
     }
 
@@ -123,19 +120,22 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
       //myNextStepLabel.setIcon(PopupIcons.EMPTY_ICON);
     }
 
-    myShortcutLabel.setText("");
-    if (value instanceof ShortcutProvider) {
-      ShortcutSet set = ((ShortcutProvider)value).getShortcut();
-      if (set != null) {
-        Shortcut shortcut = ArrayUtil.getFirstElement(set.getShortcuts());
-        if (shortcut != null) {
-          myShortcutLabel.setText("     " + KeymapUtil.getShortcutText(shortcut));
+    setSelected(myNextStepLabel, isSelected);
+
+
+    if (myShortcutLabel != null) {
+      myShortcutLabel.setText("");
+      if (value instanceof ShortcutProvider) {
+        ShortcutSet set = ((ShortcutProvider)value).getShortcut();
+        if (set != null) {
+          Shortcut shortcut = ArrayUtil.getFirstElement(set.getShortcuts());
+          if (shortcut != null) {
+            myShortcutLabel.setText("     " + KeymapUtil.getShortcutText(shortcut));
+          }
         }
       }
+      setSelected(myShortcutLabel, isSelected);
+      myShortcutLabel.setForeground(isSelected ? UIManager.getColor("MenuItem.acceleratorSelectionForeground") : UIManager.getColor("MenuItem.acceleratorForeground"));
     }
-
-    setSelected(myNextStepLabel, isSelected);
-    setSelected(myShortcutLabel, isSelected);
-//    myShortcutLabel.setForeground(isSelected ? UIManager.getColor("MenuItem.acceleratorSelectionForeground") : UIManager.getColor("MenuItem.acceleratorForeground"));
   }
 }

@@ -548,10 +548,19 @@ public class ExternalSystemApiUtil {
     return result.get();
   }
 
-  public static <T> T executeOnEdtUnderWriteAction(@NotNull final Computable<T> task) {
+  public static <T> T doWriteAction(@NotNull final Computable<T> task) {
     return executeOnEdt(new Computable<T>() {
       public T compute() {
         return ApplicationManager.getApplication().runWriteAction(task);
+      }
+    });
+  }
+
+  public static void doWriteAction(@NotNull final Runnable task) {
+    executeOnEdt(true, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(task);
       }
     });
   }

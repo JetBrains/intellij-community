@@ -25,15 +25,12 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
-import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.ModuleNode;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -71,18 +68,8 @@ public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
       return;
     }
 
-    ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(project) {
-      @Override
-      public void execute() {
-        ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
-          @Override
-          public void run() {
-            final DataNode<ProjectData> projectDataNode = externalProjectInfo.getExternalProjectStructure();
-            ServiceManager.getService(ProjectDataManager.class).importData(projectDataNode, project, true);
-          }
-        });
-      }
-    });
+    final DataNode<ProjectData> projectDataNode = externalProjectInfo.getExternalProjectStructure();
+    ServiceManager.getService(ProjectDataManager.class).importData(projectDataNode, project, true);
   }
 
   @Override

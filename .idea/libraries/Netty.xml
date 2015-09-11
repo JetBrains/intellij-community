@@ -1,5 +1,8 @@
 <component name="libraryTable">
   <library name="Netty">
+    <ANNOTATIONS>
+      <root url="file://$PROJECT_DIR$/lib/annotations/netty"/>
+    </ANNOTATIONS>
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/netty-all-4.1.0.Beta6.jar!/" />
     </CLASSES>

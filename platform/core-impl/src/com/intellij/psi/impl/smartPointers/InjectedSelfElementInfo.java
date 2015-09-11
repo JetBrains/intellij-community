@@ -122,15 +122,18 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
   private PsiFile getInjectedFileIn(@NotNull final PsiElement hostContext,
                                     @NotNull final PsiFile hostFile,
                                     @NotNull final TextRange rangeInHostFile) {
-    final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(getProject());
+    final PsiDocumentManagerBase docManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject());
     final PsiFile[] result = {null};
     final PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       @Override
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-        TextRange hostRange = manager.injectedToHost(injectedPsi, new TextRange(0, injectedPsi.getTextLength()));
-        Document document = PsiDocumentManager.getInstance(getProject()).getDocument(injectedPsi);
-        if (hostRange.contains(rangeInHostFile) && document instanceof DocumentWindow) {
-         result[0] = injectedPsi;
+        Document document = docManager.getDocument(injectedPsi);
+        if (document instanceof DocumentWindow) {
+          DocumentWindow window = (DocumentWindow)docManager.getLastCommittedDocument(document);
+          TextRange hostRange = window.injectedToHost(new TextRange(0, injectedPsi.getTextLength()));
+          if (hostRange.contains(rangeInHostFile)) {
+           result[0] = injectedPsi;
+          }
         }
       }
     };
@@ -175,7 +178,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     PsiElement hostContext = myHostContext.getElement();
     if (hostContext == null) return null;
 
-    Segment segment = myInjectedFileRangeInHostFile.getRange();
+    Segment segment = myInjectedFileRangeInHostFile.getPsiRange();
     if (segment == null) return null;
     final TextRange rangeInHostFile = TextRange.create(segment);
     return getInjectedFileIn(hostContext, hostFile, rangeInHostFile);

@@ -16,6 +16,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -40,7 +41,7 @@ public class ClassLoadingUtils {
     try {
       // TODO [egor]: cache?
       ClassType loaderClass = (ClassType)process.findClass(context, "java.net.URLClassLoader", context.getClassLoader());
-      Method ctorMethod = loaderClass.concreteMethodByName("<init>", "([Ljava/net/URL;Ljava/lang/ClassLoader;)V");
+      Method ctorMethod = loaderClass.concreteMethodByName(JVMNameUtil.CONSTRUCTOR_NAME, "([Ljava/net/URL;Ljava/lang/ClassLoader;)V");
       ClassLoaderReference reference = (ClassLoaderReference)process.newInstance(context, loaderClass, ctorMethod, Arrays
         .asList(createURLArray(context), context.getClassLoader()));
       DebuggerUtilsEx.keep(reference, context);
@@ -123,7 +124,9 @@ public class ClassLoadingUtils {
     VirtualMachineProxyImpl proxy = (VirtualMachineProxyImpl)process.getVirtualMachineProxy();
     StringReference url = proxy.mirrorOf("file:a");
     DebuggerUtilsEx.keep(url, context);
-    ObjectReference reference = process.newInstance(context, classType, classType.concreteMethodByName("<init>", "(Ljava/lang/String;)V"),
+    ObjectReference reference = process.newInstance(context,
+                                                    classType,
+                                                    classType.concreteMethodByName(JVMNameUtil.CONSTRUCTOR_NAME, "(Ljava/lang/String;)V"),
                                                     Collections.singletonList(url));
     DebuggerUtilsEx.keep(reference, context);
     arrayRef.setValues(Collections.singletonList(reference));

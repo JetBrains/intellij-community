@@ -96,18 +96,20 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
     for(ChooseByNameContributor c: getContributors()) {
       if (c instanceof GotoClassContributor) {
         String result = ((GotoClassContributor) c).getQualifiedName((NavigationItem) element);
-        if (result != null) return result;
+        if (result != null) {
+          return result;
+        }
       }
     }
 
+    String elementName = getElementName(element);
+    if (elementName == null) return null;
+    
     if (element instanceof PsiElement) {
-      final PsiElement psiElement = (PsiElement)element;
-
-      final String containerText = SymbolPresentationUtil.getSymbolContainerText(psiElement);
-      return containerText + "." + getElementName(element);
+      return SymbolPresentationUtil.getSymbolContainerText((PsiElement)element) + "." + elementName;
     }
 
-    return getElementName(element);
+    return elementName;
   }
 
   @Override

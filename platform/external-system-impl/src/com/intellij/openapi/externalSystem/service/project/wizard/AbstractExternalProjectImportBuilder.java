@@ -21,7 +21,6 @@ import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromEx
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -31,7 +30,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -166,18 +164,8 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         dialog.dispose();
       }
 
-      ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(project) {
-        @Override
-        public void execute() {
-          ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
-            @Override
-            public void run() {
-              myProjectDataManager.importData(externalProjectNode, project, platformFacade, true);
-              myExternalProjectNode = null;
-            }
-          });
-        }
-      });
+      myProjectDataManager.importData(externalProjectNode, project, platformFacade, true);
+      myExternalProjectNode = null;
 
       // resolve dependencies
       final Runnable resolveDependenciesTask = new Runnable() {

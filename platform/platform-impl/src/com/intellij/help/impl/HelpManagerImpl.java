@@ -106,7 +106,7 @@ public class HelpManagerImpl extends HelpManager {
     if (myHelpSet == null) {
       Messages.showInfoMessage("Looks like you have enabled 'ide.help.fxbrowser' registry key but we cannot load JavaHelp bundle. " +
                                "Please put ideahelp.jar in the help directory.",
-                               "Cannot find JavaHelp bundle");
+                               "Cannot Find JavaHelp Bundle");
       return;
     }
     try {

@@ -1,17 +1,22 @@
 package com.intellij.openapi.externalSystem.service.project;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 
 /**
  * @author Denis Zhdanov
@@ -29,7 +36,7 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @NotNull
   @Override
   public LibraryTable getProjectLibraryTable(@NotNull Project project) {
-    return ProjectLibraryTable.getInstance(project);
+    return LibraryTablesRegistrar.getInstance().getLibraryTable(project);
   }
 
   @NotNull
@@ -44,8 +51,8 @@ public class PlatformFacadeImpl implements PlatformFacade {
     return ContainerUtil.filter(getModules(project), new Condition<Module>() {
       @Override
       public boolean value(Module module) {
-        return ExternalSystemApiUtil.isExternalSystemAwareModule(projectData.getOwner(), module) &&
-               StringUtil.equals(projectData.getLinkedExternalProjectPath(), ExternalSystemApiUtil.getExternalRootProjectPath(module));
+        return isExternalSystemAwareModule(projectData.getOwner(), module) &&
+               StringUtil.equals(projectData.getLinkedExternalProjectPath(), getExternalRootProjectPath(module));
       }
     });
   }
@@ -63,9 +70,14 @@ public class PlatformFacadeImpl implements PlatformFacade {
   }
 
   @Override
-  public Module newModule(Project project, @NotNull @NonNls String filePath, String moduleTypeId) {
+  public Module newModule(Project project, @NotNull @NonNls final String filePath, final String moduleTypeId) {
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
-    Module module = moduleManager.newModule(filePath, moduleTypeId);
+    Module module = doWriteAction(new Computable<Module>() {
+      @Override
+      public Module compute() {
+        return moduleManager.newModule(filePath, moduleTypeId);
+      }
+    });
     // set module type id explicitly otherwise it can not be set if there is an existing module (with the same filePath) and w/o 'type' attribute
     module.setOption(Module.ELEMENT_TYPE, moduleTypeId);
     return module;
@@ -74,14 +86,19 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @Override
   public ModifiableRootModel getModuleModifiableModel(Module module) {
     final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-    return moduleRootManager.getModifiableModel();
+    return ApplicationManager.getApplication().runReadAction(new Computable<ModifiableRootModel>() {
+      @Override
+      public ModifiableRootModel compute() {
+        return moduleRootManager.getModifiableModel();
+      }
+    });
   }
 
   @Nullable
   @Override
   public Module findIdeModule(@NotNull ModuleData module, @NotNull Project ideProject) {
     final Module ideModule = findIdeModule(module.getInternalName(), ideProject);
-    return ExternalSystemApiUtil.isExternalSystemAwareModule(module.getOwner(), ideModule) ? ideModule : null;
+    return isExternalSystemAwareModule(module.getOwner(), ideModule) ? ideModule : null;
   }
 
   @Nullable
@@ -100,7 +117,7 @@ public class PlatformFacadeImpl implements PlatformFacade {
   public Library findIdeLibrary(@NotNull final LibraryData libraryData, @NotNull Project ideProject) {
     final LibraryTable libraryTable = getProjectLibraryTable(ideProject);
     for (Library ideLibrary : libraryTable.getLibraries()) {
-      if (ExternalSystemApiUtil.isRelated(ideLibrary, libraryData)) return ideLibrary;
+      if (isRelated(ideLibrary, libraryData)) return ideLibrary;
     }
     return null;
   }
@@ -155,5 +172,79 @@ public class PlatformFacadeImpl implements PlatformFacade {
       }
     }
     return null;
+  }
+
+  @Override
+  public void updateModule(@NotNull final Module module, @NotNull Consumer<ModifiableRootModel> task) {
+    final ModifiableModelsProvider modifiableModelsProvider = ModifiableModelsProvider.SERVICE.getInstance();
+    final ModifiableRootModel modifiableRootModel =
+      ApplicationManager.getApplication().runReadAction(new Computable<ModifiableRootModel>() {
+        @Override
+        public ModifiableRootModel compute() {
+          return modifiableModelsProvider.getModuleModifiableModel(module);
+        }
+      });
+    try {
+      task.consume(modifiableRootModel);
+      if (modifiableRootModel.isChanged()) {
+        doWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            modifiableModelsProvider.commitModuleModifiableModel(modifiableRootModel);
+          }
+        });
+      }
+      else {
+        modifiableRootModel.dispose();
+      }
+    }
+    catch (Throwable t) {
+      modifiableModelsProvider.disposeModuleModifiableModel(modifiableRootModel);
+      ExceptionUtil.rethrowAllAsUnchecked(t);
+    }
+  }
+
+  @Override
+  public void updateLibraryTable(@NotNull final Project project, @NotNull Consumer<LibraryTable.ModifiableModel> task) {
+    final ModifiableModelsProvider modifiableModelsProvider = ModifiableModelsProvider.SERVICE.getInstance();
+    final LibraryTable.ModifiableModel modifiableModel =
+      ApplicationManager.getApplication().runReadAction(new Computable<LibraryTable.ModifiableModel>() {
+        @Override
+        public LibraryTable.ModifiableModel compute() {
+          return modifiableModelsProvider.getLibraryTableModifiableModel(project);
+        }
+      });
+    task.consume(modifiableModel);
+    if (modifiableModel.isChanged()) {
+      doWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          modifiableModel.commit();
+        }
+      });
+    }
+  }
+
+  @Override
+  public void updateLibrary(@NotNull final Library library, @NotNull Consumer<Library.ModifiableModel> task) {
+    final Library.ModifiableModel modifiableModel = library.getModifiableModel();
+    try {
+      task.consume(modifiableModel);
+      if (modifiableModel.isChanged()) {
+      doWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          modifiableModel.commit();
+        }
+      });
+      }
+      else {
+        Disposer.dispose(modifiableModel);
+      }
+    }
+    catch (Throwable t) {
+      Disposer.dispose(modifiableModel);
+      ExceptionUtil.rethrowAllAsUnchecked(t);
+    }
   }
 }

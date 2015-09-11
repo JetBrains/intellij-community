@@ -49,6 +49,8 @@ import java.util.List;
 public class JVMNameUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.JVMNameUtil");
 
+  public static final String CONSTRUCTOR_NAME = "<init>";
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static String getPrimitiveSignature(String typeName) {
     if(PsiType.BOOLEAN.getCanonicalText().equals(typeName)) {
@@ -313,6 +315,11 @@ public class JVMNameUtil {
 
   public static JVMName getJVMSignature(@NotNull PsiMethod method) {
     return getJVMSignature(method, method.isConstructor(), method.getContainingClass());
+  }
+
+  @NotNull
+  public static String getJVMMethodName(@NotNull PsiMethod method) {
+    return method.isConstructor() ? CONSTRUCTOR_NAME : method.getName();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

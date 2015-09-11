@@ -95,14 +95,15 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                                                    @NotNull List<HighlightInfo.IntentionActionDescriptor> outList,
                                                    int group,
                                                    int offset) {
-    if (info.quickFixActionMarkers == null || info.getFixTextRange().isEmpty()) return;
+    if (info.quickFixActionMarkers == null) return;
     if (group != -1 && group != info.getGroup()) return;
+    boolean fixRangeIsNotEmpty = !info.getFixTextRange().isEmpty();
     Editor injectedEditor = null;
     PsiFile injectedFile = null;
     for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> pair : info.quickFixActionMarkers) {
       HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
       RangeMarker range = pair.second;
-      if (!range.isValid() || isEmpty(range)) continue;
+      if (!range.isValid() || fixRangeIsNotEmpty && isEmpty(range)) continue;
 
       if (DumbService.isDumb(file.getProject()) && !DumbService.isDumbAware(actionInGroup.getAction())) {
         continue;

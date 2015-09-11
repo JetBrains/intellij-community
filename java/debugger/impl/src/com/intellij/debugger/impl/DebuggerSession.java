@@ -656,8 +656,11 @@ public class DebuggerSession implements AbstractDebuggerSession {
       if (suspendContext != null
           && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD
           && isSteppingThrough(suspendContext.getThread())) {
-        context = ((SuspendManagerImpl)suspendManager).createDummyContext(suspendContext.getSuspendPolicy());
-        context.setThread(suspendContext.getThread().getThreadReference());
+        ThreadReferenceProxyImpl thread = suspendContext.getThread();
+        if (context == null || !Comparing.equal(context.getThread(), thread)) {
+          context = ((SuspendManagerImpl)suspendManager).createDummyContext(suspendContext.getSuspendPolicy());
+          context.setThread(thread.getThreadReference());
+        }
       }
       final SuspendContextImpl currentContext = context;
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
@@ -776,6 +779,11 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   public static boolean enableBreakpointsDuringEvaluation() {
     return Registry.is("debugger.enable.breakpoints.during.evaluation");
+  }
+
+  public void sessionResumed() {
+    XDebugSession session = getXDebugSession();
+    if (session != null) session.sessionResumed();
   }
 
   @Nullable

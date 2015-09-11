@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Nullable;
-import sun.misc.Resource;
 
 import java.io.*;
 import java.net.URI;
@@ -341,12 +340,9 @@ public class ClassPath {
     @Override
     Resource process(Loader loader, String s, ClassPath classPath) {
       if (!classPath.myCache.loaderHasName(s, ClasspathCache.transformName(s), loader)) return null;
-      final Resource resource = loader.getResource(s, myFlag);
-      if (resource != null) {
-        printOrder(loader, s, resource);
-        return resource;
-      }
-      return null;
+      Resource resource = loader.getResource(s, myFlag);
+      if (resource != null) printOrder(loader, s, resource);
+      return resource;
     }
   }
 
@@ -370,7 +366,9 @@ public class ClassPath {
 
     String home = FileUtil.toSystemIndependentName(PathManager.getHomePath());
     try {
-      ourOrderSize += resource.getContentLength();
+      if (resource instanceof MemoryResource) {
+        ourOrderSize += resource.getBytes().length;
+      }
     }
     catch (IOException e) {
       e.printStackTrace(System.out);

@@ -100,6 +100,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private volatile ClsPackageStatementImpl myPackageStatement = null;
   private volatile LanguageLevel myLanguageLevel = null;
   private boolean myIsPhysical = true;
+  private boolean myInvalidated;
 
   public ClsFileImpl(@NotNull FileViewProvider viewProvider) {
     this(viewProvider, false);
@@ -148,7 +149,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Override
   public boolean isValid() {
-    return myIsForDecompiling || getVirtualFile().isValid();
+    return !myInvalidated && (myIsForDecompiling || getVirtualFile().isValid());
   }
 
   protected boolean isForDecompiling() {
@@ -514,6 +515,11 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
 
     myLanguageLevel = null;
+  }
+
+  @Override
+  public void markInvalidated() {
+    myInvalidated = true;
   }
 
   @Override

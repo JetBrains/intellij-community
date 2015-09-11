@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,37 +19,28 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
-import sun.misc.Resource;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 class MemoryResource extends Resource {
-  private String myName;
-  private URL myUrl;
+  private final URL myUrl;
   private final byte[] myContent;
+  private final Map<Resource.Attribute, String> myAttributes;
 
-  public MemoryResource(String name, URL url, byte[] content) {
-    myName = name;
+  private MemoryResource(URL url, byte[] content, Map<Resource.Attribute, String> attributes) {
     myUrl = url;
     myContent = content;
-  }
-
-  @Override
-  public String getName() {
-    return myName;
+    myAttributes = attributes;
   }
 
   @Override
   public URL getURL() {
-    return myUrl;
-  }
-
-  @Override
-  public URL getCodeSourceURL() {
     return myUrl;
   }
 
@@ -59,12 +50,20 @@ class MemoryResource extends Resource {
   }
 
   @Override
-  public int getContentLength() throws IOException {
-    return myContent.length;
+  public byte[] getBytes() throws IOException {
+    return myContent;
+  }
+
+  @Override
+  public String getValue(Attribute key) {
+    return myAttributes != null ? myAttributes.get(key) : null;
   }
 
   @NotNull
-  public static MemoryResource load(URL baseUrl, @NotNull ZipFile zipFile, @NotNull ZipEntry entry) throws IOException {
+  public static MemoryResource load(URL baseUrl,
+                                    @NotNull ZipFile zipFile,
+                                    @NotNull ZipEntry entry,
+                                    @Nullable Map<Attribute, String> attributes) throws IOException {
     String name = entry.getName();
     URL url = new URL(baseUrl, name);
 
@@ -79,6 +78,6 @@ class MemoryResource extends Resource {
       }
     }
 
-    return new MemoryResource(name, url, content);
+    return new MemoryResource(url, content, attributes);
   }
 }
