@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module builtins
 # from (built-in)
-# by generator 1.135
+# by generator 1.137
 """
 Built-in functions, exceptions, and other objects.
 
@@ -16,88 +16,73 @@ Noteworthy: None is the `nil' object; Ellipsis represents `...' in slices.
 # definition of __debug__ omitted
 
 # functions
-from object import object
 
-def abs(number): # real signature unknown; restored from __doc__
-    """
-    abs(number) -> number
-    
-    Return the absolute value of the argument.
-    """
-    return 0
+def abs(*args, **kwargs): # real signature unknown
+    """ Return the absolute value of the argument. """
+    pass
 
-def all(iterable): # real signature unknown; restored from __doc__
+def all(*args, **kwargs): # real signature unknown
     """
-    all(iterable) -> bool
-    
     Return True if bool(x) is True for all values x in the iterable.
+    
     If the iterable is empty, return True.
     """
-    return False
+    pass
 
-def any(iterable): # real signature unknown; restored from __doc__
+def any(*args, **kwargs): # real signature unknown
     """
-    any(iterable) -> bool
-    
     Return True if bool(x) is True for any x in the iterable.
+    
     If the iterable is empty, return False.
     """
-    return False
+    pass
 
-def ascii(p_object): # real signature unknown; restored from __doc__
+def ascii(*args, **kwargs): # real signature unknown
     """
-    ascii(object) -> string
+    Return an ASCII-only representation of an object.
     
     As repr(), return a string containing a printable representation of an
     object, but escape the non-ASCII characters in the string returned by
-    repr() using \x, \u or \U escapes.  This generates a string similar
+    repr() using \\x, \\u or \\U escapes. This generates a string similar
     to that returned by repr() in Python 2.
     """
-    return ""
+    pass
 
-def bin(number): # real signature unknown; restored from __doc__
+def bin(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
     """
-    bin(number) -> string
-    
     Return the binary representation of an integer.
     
        >>> bin(2796202)
        '0b1010101010101010101010'
     """
-    return ""
+    pass
 
-def callable(p_object): # real signature unknown; restored from __doc__
+def callable(i_e_, some_kind_of_function): # real signature unknown; restored from __doc__
     """
-    callable(object) -> bool
-    
     Return whether the object is callable (i.e., some kind of function).
+    
     Note that classes are callable, as are instances of classes with a
     __call__() method.
     """
-    return False
+    pass
 
-def chr(i): # real signature unknown; restored from __doc__
-    """
-    chr(i) -> Unicode character
-    
-    Return a Unicode string of one character with ordinal i; 0 <= i <= 0x10ffff.
-    """
-    return ""
+def chr(*args, **kwargs): # real signature unknown
+    """ Return a Unicode string of one character with ordinal i; 0 <= i <= 0x10ffff. """
+    pass
 
-def compile(source, filename, mode, flags=None, dont_inherit=None): # real signature unknown; restored from __doc__
+def compile(*args, **kwargs): # real signature unknown
     """
-    compile(source, filename, mode[, flags[, dont_inherit]]) -> code object
+    Compile source into a code object that can be executed by exec() or eval().
     
-    Compile the source (a Python module, statement or expression)
-    into a code object that can be executed by exec() or eval().
+    The source code may represent a Python module, statement or expression.
     The filename will be used for run-time error messages.
     The mode must be 'exec' to compile a module, 'single' to compile a
     single (interactive) statement, or 'eval' to compile an expression.
     The flags argument, if present, controls which future statements influence
     the compilation of the code.
-    The dont_inherit argument, if non-zero, stops the compilation inheriting
+    The dont_inherit argument, if true, stops the compilation inheriting
     the effects of any future statements in effect in the code calling
-    compile; if absent or zero these statements do influence the compilation,
+    compile; if absent or false these statements do influence the compilation,
     in addition to any features explicitly specified.
     """
     pass
@@ -116,12 +101,11 @@ def credits(*args, **kwargs): # real signature unknown
     """
     pass
 
-def delattr(p_object, name): # real signature unknown; restored from __doc__
+def delattr(x, y): # real signature unknown; restored from __doc__
     """
-    delattr(object, name)
+    Deletes the named attribute from the given object.
     
-    Delete a named attribute on an object; delattr(x, 'y') is equivalent to
-    ``del x.y''.
+    delattr(x, 'y') is equivalent to ``del x.y''
     """
     pass
 
@@ -143,18 +127,13 @@ def dir(p_object=None): # real signature unknown; restored from __doc__
     return []
 
 def divmod(x, y): # known case of builtins.divmod
-    """
-    divmod(x, y) -> (div, mod)
-    
-    Return the tuple ((x-x%y)/y, x%y).  Invariant: div*y + mod == x.
-    """
+    """ Return the tuple ((x-x%y)/y, x%y).  Invariant: div*y + mod == x. """
     return (0, 0)
 
-def eval(source, globals=None, locals=None): # real signature unknown; restored from __doc__
+def eval(*args, **kwargs): # real signature unknown
     """
-    eval(source[, globals[, locals]]) -> value
+    Evaluate the given source in the context of globals and locals.
     
-    Evaluate the source in the context of globals and locals.
     The source may be a string representing a Python expression
     or a code object as returned by compile().
     The globals must be a dictionary and locals can be any mapping,
@@ -163,28 +142,28 @@ def eval(source, globals=None, locals=None): # real signature unknown; restored 
     """
     pass
 
-def exec(p_object, globals=None, locals=None): # real signature unknown; restored from __doc__
+def exec(*args, **kwargs): # real signature unknown
     """
-    exec(object[, globals[, locals]])
+    Execute the given source in the context of globals and locals.
     
-    Read and execute code from an object, which can be a string or a code
-    object.
-    The globals and locals are dictionaries, defaulting to the current
-    globals and locals.  If only globals is given, locals defaults to it.
+    The source may be a string representing one or more Python statements
+    or a code object as returned by compile().
+    The globals must be a dictionary and locals can be any mapping,
+    defaulting to the current globals and locals.
+    If only globals is given, locals defaults to it.
     """
     pass
 
 def exit(*args, **kwargs): # real signature unknown
     pass
 
-def format(value, format_spec=None): # real signature unknown; restored from __doc__
+def format(*args, **kwargs): # real signature unknown
     """
-    format(value[, format_spec]) -> string
+    Return value.__format__(format_spec)
     
-    Returns value.__format__(format_spec)
-    format_spec defaults to ""
+    format_spec defaults to the empty string
     """
-    return ""
+    pass
 
 def getattr(object, name, default=None): # known special case of getattr
     """
@@ -196,31 +175,31 @@ def getattr(object, name, default=None): # known special case of getattr
     """
     pass
 
-def globals(): # real signature unknown; restored from __doc__
+def globals(*args, **kwargs): # real signature unknown
     """
-    globals() -> dictionary
-    
     Return the dictionary containing the current scope's global variables.
-    """
-    return {}
-
-def hasattr(p_object, name): # real signature unknown; restored from __doc__
-    """
-    hasattr(object, name) -> bool
     
+    NOTE: Updates to this dictionary *will* affect name lookups in the current
+    global scope and vice-versa.
+    """
+    pass
+
+def hasattr(*args, **kwargs): # real signature unknown
+    """
     Return whether the object has an attribute with the given name.
-    (This is done by calling getattr(object, name) and catching AttributeError.)
-    """
-    return False
-
-def hash(p_object): # real signature unknown; restored from __doc__
-    """
-    hash(object) -> integer
     
-    Return a hash value for the object.  Two objects with the same value have
-    the same hash value.  The reverse is not necessarily true, but likely.
+    This is done by calling getattr(obj, name) and catching AttributeError.
     """
-    return 0
+    pass
+
+def hash(*args, **kwargs): # real signature unknown
+    """
+    Return the hash value for the given object.
+    
+    Two objects that compare equal must also have the same hash value, but the
+    reverse is not necessarily true.
+    """
+    pass
 
 def help(): # real signature unknown; restored from __doc__
     """
@@ -234,57 +213,55 @@ def help(): # real signature unknown; restored from __doc__
     """
     pass
 
-def hex(number): # real signature unknown; restored from __doc__
+def hex(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
     """
-    hex(number) -> string
-    
     Return the hexadecimal representation of an integer.
     
-       >>> hex(3735928559)
-       '0xdeadbeef'
+       >>> hex(12648430)
+       '0xc0ffee'
     """
-    return ""
+    pass
 
-def id(p_object): # real signature unknown; restored from __doc__
+def id(*args, **kwargs): # real signature unknown
     """
-    id(object) -> integer
+    Return the identity of an object.
     
-    Return the identity of an object.  This is guaranteed to be unique among
-    simultaneously existing objects.  (Hint: it's the object's memory address.)
+    This is guaranteed to be unique among simultaneously existing objects.
+    (CPython uses the object's memory address.)
     """
-    return 0
+    pass
 
-def input(prompt=None): # real signature unknown; restored from __doc__
+def input(*args, **kwargs): # real signature unknown
     """
-    input([prompt]) -> string
-    
     Read a string from standard input.  The trailing newline is stripped.
-    If the user hits EOF (Unix: Ctl-D, Windows: Ctl-Z+Return), raise EOFError.
-    On Unix, GNU readline is used if enabled.  The prompt string, if given,
-    is printed without a trailing newline before reading.
-    """
-    return ""
-
-def isinstance(p_object, class_or_type_or_tuple): # real signature unknown; restored from __doc__
-    """
-    isinstance(object, class-or-type-or-tuple) -> bool
     
+    The prompt string, if given, is printed to standard output without a
+    trailing newline before reading input.
+    
+    If the user hits EOF (*nix: Ctrl-D, Windows: Ctrl-Z+Return), raise EOFError.
+    On *nix systems, readline is used if available.
+    """
+    pass
+
+def isinstance(x, A_tuple): # real signature unknown; restored from __doc__
+    """
     Return whether an object is an instance of a class or of a subclass thereof.
-    With a type as second argument, return whether that is the object's type.
-    The form using a tuple, isinstance(x, (A, B, ...)), is a shortcut for
-    isinstance(x, A) or isinstance(x, B) or ... (etc.).
-    """
-    return False
-
-def issubclass(C, B): # real signature unknown; restored from __doc__
-    """
-    issubclass(C, B) -> bool
     
-    Return whether class C is a subclass (i.e., a derived class) of class B.
-    When using a tuple as the second argument issubclass(X, (A, B, ...)),
-    is a shortcut for issubclass(X, A) or issubclass(X, B) or ... (etc.).
+    A tuple, as in ``isinstance(x, (A, B, ...))``, may be given as the target to
+    check against. This is equivalent to ``isinstance(x, A) or isinstance(x, B)
+    or ...`` etc.
     """
-    return False
+    pass
+
+def issubclass(x, A_tuple): # real signature unknown; restored from __doc__
+    """
+    Return whether 'cls' is a derived from another class or is the same class.
+    
+    A tuple, as in ``issubclass(x, (A, B, ...))``, may be given as the target to
+    check against. This is equivalent to ``issubclass(x, A) or issubclass(x, B)
+    or ...`` etc.
+    """
+    pass
 
 def iter(source, sentinel=None): # known special case of iter
     """
@@ -297,12 +274,8 @@ def iter(source, sentinel=None): # known special case of iter
     """
     pass
 
-def len(p_object): # real signature unknown; restored from __doc__
-    """
-    len(object)
-    
-    Return the number of items of a sequence or mapping.
-    """
+def len(*args, **kwargs): # real signature unknown
+    """ Return the number of items in a container. """
     pass
 
 def license(*args, **kwargs): # real signature unknown
@@ -312,30 +285,36 @@ def license(*args, **kwargs): # real signature unknown
     """
     pass
 
-def locals(): # real signature unknown; restored from __doc__
+def locals(*args, **kwargs): # real signature unknown
     """
-    locals() -> dictionary
+    Return a dictionary containing the current scope's local variables.
     
-    Update and return a dictionary containing the current scope's local variables.
+    NOTE: Whether or not updates to this dictionary will affect name lookups in
+    the local scope and vice-versa is *implementation dependent* and not
+    covered by any backwards compatibility guarantees.
     """
-    return {}
+    pass
 
 def max(*args, key=None): # known special case of max
     """
-    max(iterable[, key=func]) -> value
-    max(a, b, c, ...[, key=func]) -> value
+    max(iterable, *[, default=obj, key=func]) -> value
+    max(arg1, arg2, *args, *[, key=func]) -> value
     
-    With a single iterable argument, return its largest item.
+    With a single iterable argument, return its biggest item. The
+    default keyword-only argument specifies an object to return if
+    the provided iterable is empty.
     With two or more arguments, return the largest argument.
     """
     pass
 
 def min(*args, key=None): # known special case of min
     """
-    min(iterable[, key=func]) -> value
-    min(a, b, c, ...[, key=func]) -> value
+    min(iterable, *[, default=obj, key=func]) -> value
+    min(arg1, arg2, *args, *[, key=func]) -> value
     
-    With a single iterable argument, return its smallest item.
+    With a single iterable argument, return its smallest item. The
+    default keyword-only argument specifies an object to return if
+    the provided iterable is empty.
     With two or more arguments, return the smallest argument.
     """
     pass
@@ -349,22 +328,17 @@ def next(iterator, default=None): # real signature unknown; restored from __doc_
     """
     pass
 
-def oct(number): # real signature unknown; restored from __doc__
+def oct(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
     """
-    oct(number) -> string
-    
     Return the octal representation of an integer.
     
        >>> oct(342391)
        '0o1234567'
     """
-    return ""
+    pass
 
 def open(file, mode='r', buffering=None, encoding=None, errors=None, newline=None, closefd=True): # known special case of open
     """
-    open(file, mode='r', buffering=-1, encoding=None,
-         errors=None, newline=None, closefd=True, opener=None) -> file object
-    
     Open file and return a stream.  Raise IOError upon failure.
     
     file is either a text or byte string giving the name (and the path
@@ -486,22 +460,18 @@ def open(file, mode='r', buffering=None, encoding=None, errors=None, newline=Non
     """
     pass
 
-def ord(c): # real signature unknown; restored from __doc__
-    """
-    ord(c) -> integer
-    
-    Return the integer ordinal of a one-character string.
-    """
-    return 0
+def ord(*args, **kwargs): # real signature unknown
+    """ Return the Unicode code point for a one-character string. """
+    pass
 
-def pow(x, y, z=None): # real signature unknown; restored from __doc__
+def pow(*args, **kwargs): # real signature unknown
     """
-    pow(x, y[, z]) -> number
+    Equivalent to x**y (with two arguments) or x**y % z (with three arguments)
     
-    With two arguments, equivalent to x**y.  With three arguments,
-    equivalent to (x**y) % z, but may be more efficient (e.g. for ints).
+    Some types, such as ints, are able to use a more efficient algorithm when
+    invoked using the three argument form.
     """
-    return 0
+    pass
 
 def print(*args, sep=' ', end='\n', file=None): # known special case of print
     """
@@ -519,14 +489,13 @@ def print(*args, sep=' ', end='\n', file=None): # known special case of print
 def quit(*args, **kwargs): # real signature unknown
     pass
 
-def repr(p_object): # real signature unknown; restored from __doc__
+def repr(obj): # real signature unknown; restored from __doc__
     """
-    repr(object) -> string
-    
     Return the canonical string representation of the object.
-    For most object types, eval(repr(object)) == object.
+    
+    For many object types, including most builtins, eval(repr(obj)) == obj.
     """
-    return ""
+    pass
 
 def round(number, ndigits=None): # real signature unknown; restored from __doc__
     """
@@ -538,26 +507,30 @@ def round(number, ndigits=None): # real signature unknown; restored from __doc__
     """
     return 0
 
-def setattr(p_object, name, value): # real signature unknown; restored from __doc__
+def setattr(x, y, v): # real signature unknown; restored from __doc__
     """
-    setattr(object, name, value)
+    Sets the named attribute on the given object to the specified value.
     
-    Set a named attribute on an object; setattr(x, 'y', v) is equivalent to
-    ``x.y = v''.
+    setattr(x, 'y', v) is equivalent to ``x.y = v''
     """
     pass
 
-def sorted(iterable, key=None, reverse=False): # real signature unknown; restored from __doc__
-    """ sorted(iterable, key=None, reverse=False) --> new sorted list """
+def sorted(*args, **kwargs): # real signature unknown
+    """
+    Return a new list containing all items from the iterable in ascending order.
+    
+    A custom key function can be supplied to customise the sort order, and the
+    reverse flag can be set to request the result in descending order.
+    """
     pass
 
-def sum(iterable, start=None): # real signature unknown; restored from __doc__
+def sum(*args, **kwargs): # real signature unknown
     """
-    sum(iterable[, start]) -> value
+    Return the sum of a 'start' value (default: 0) plus an iterable of numbers
     
-    Return the sum of an iterable of numbers (NOT strings) plus the value
-    of parameter 'start' (which defaults to 0).  When the iterable is
-    empty, return start.
+    When the iterable is empty, return the start value.
+    This function is intended specifically for use with numeric values and may
+    reject non-numeric types.
     """
     pass
 
@@ -657,6 +630,33 @@ class __method(object):
 
         self.__func__ = None
         self.__self__ = None
+
+
+class __coroutine(object):
+    '''A mock class representing coroutine type.'''
+
+    def __init__(self):
+        self.__name__ = ''
+        self.__qualname__ = ''
+        self.cr_await = None
+        self.cr_frame = None
+        self.cr_running = False
+        self.cr_code = None
+
+    def __await__(self):
+        return []
+
+    def __iter__(self):
+        return []
+
+    def close(self):
+        pass
+
+    def send(self, value):
+        pass
+
+    def throw(self, type, value=None, traceback=None):
+        pass
 
 
 class __namedtuple(tuple):
@@ -791,8 +791,6 @@ class object:
     __module__ = ''
 
 
-from .object import object
-
 class BaseException(object):
     """ Common base class for all exceptions """
     def with_traceback(self, tb): # real signature unknown; restored from __doc__
@@ -852,8 +850,6 @@ class BaseException(object):
     __dict__ = None # (!) real value is ''
 
 
-from .BaseException import BaseException
-
 class Exception(BaseException):
     """ Common base class for all non-exit exceptions. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -864,8 +860,6 @@ class Exception(BaseException):
         """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Exception import Exception
 
 class ArithmeticError(Exception):
     """ Base class for arithmetic errors. """
@@ -878,8 +872,6 @@ class ArithmeticError(Exception):
         pass
 
 
-from .Exception import Exception
-
 class AssertionError(Exception):
     """ Assertion failed. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -890,8 +882,6 @@ class AssertionError(Exception):
         """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Exception import Exception
 
 class AttributeError(Exception):
     """ Attribute not found. """
@@ -904,9 +894,7 @@ class AttributeError(Exception):
         pass
 
 
-from .Exception import Exception
-
-class WindowsError(Exception):
+class OSError(Exception):
     """ Base class for I/O related errors. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
@@ -937,29 +925,19 @@ class WindowsError(Exception):
     strerror = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
     """exception strerror"""
 
-    winerror = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
-    """Win32 exception code"""
 
 
-
-OSError = WindowsError
-
-
-IOError = WindowsError
+IOError = OSError
 
 
-EnvironmentError = WindowsError
+EnvironmentError = OSError
 
-
-from .OSError import OSError
 
 class BlockingIOError(OSError):
     """ I/O operation would block. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-
-from .object import object
 
 class int(object):
     """
@@ -1001,9 +979,7 @@ class int(object):
         
         Return the integer represented by the given array of bytes.
         
-        The bytes argument must either support the buffer protocol or be an
-        iterable object producing bytes.  Bytes and bytearray are examples of
-        built-in objects that support the buffer protocol.
+        The bytes argument must be a bytes-like object (e.g. bytes or bytearray).
         
         The byteorder argument determines the byte order used to represent the
         integer.  If byteorder is 'big', the most significant byte is at the
@@ -1282,8 +1258,6 @@ class int(object):
 
 
 
-from .int import int
-
 class bool(int):
     """
     bool(x) -> bool
@@ -1333,23 +1307,17 @@ class bool(int):
         pass
 
 
-from .OSError import OSError
-
 class ConnectionError(OSError):
     """ Connection error. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
 
-from .ConnectionError import ConnectionError
-
 class BrokenPipeError(ConnectionError):
     """ Broken pipe. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-
-from .Exception import Exception
 
 class BufferError(Exception):
     """ Buffer error. """
@@ -1361,8 +1329,6 @@ class BufferError(Exception):
         """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .object import object
 
 class bytearray(object):
     """
@@ -1379,11 +1345,12 @@ class bytearray(object):
       - any object implementing the buffer API.
       - an integer
     """
-    def append(self, p_int): # real signature unknown; restored from __doc__
+    def append(self, *args, **kwargs): # real signature unknown
         """
-        B.append(int) -> None
+        Append a single item to the end of the bytearray.
         
-        Append a single item to the end of B.
+          item
+            The item to be appended.
         """
         pass
 
@@ -1405,21 +1372,13 @@ class bytearray(object):
         """
         pass
 
-    def clear(self): # real signature unknown; restored from __doc__
-        """
-        B.clear() -> None
-        
-        Remove all items from B.
-        """
+    def clear(self, *args, **kwargs): # real signature unknown
+        """ Remove all items from the bytearray. """
         pass
 
-    def copy(self): # real signature unknown; restored from __doc__
-        """
-        B.copy() -> bytearray
-        
-        Return a copy of B.
-        """
-        return bytearray
+    def copy(self, *args, **kwargs): # real signature unknown
+        """ Return a copy of B. """
+        pass
 
     def count(self, sub, start=None, end=None): # real signature unknown; restored from __doc__
         """
@@ -1431,18 +1390,20 @@ class bytearray(object):
         """
         return 0
 
-    def decode(self, encoding='utf-8', errors='strict'): # real signature unknown; restored from __doc__
+    def decode(self, *args, **kwargs): # real signature unknown
         """
-        B.decode(encoding='utf-8', errors='strict') -> str
+        Decode the bytearray using the codec registered for encoding.
         
-        Decode B using the codec registered for encoding. Default encoding
-        is 'utf-8'. errors may be given to set a different error
-        handling scheme.  Default is 'strict' meaning that encoding errors raise
-        a UnicodeDecodeError.  Other possible values are 'ignore' and 'replace'
-        as well as any other name registered with codecs.register_error that is
-        able to handle UnicodeDecodeErrors.
+          encoding
+            The encoding with which to decode the bytearray.
+          errors
+            The error handling scheme to use for the handling of decoding errors.
+            The default is 'strict' meaning that decoding errors raise a
+            UnicodeDecodeError. Other possible values are 'ignore' and 'replace'
+            as well as any other name registered with codecs.register_error that
+            can handle UnicodeDecodeErrors.
         """
-        return ""
+        pass
 
     def endswith(self, suffix, start=None, end=None): # real signature unknown; restored from __doc__
         """
@@ -1464,12 +1425,12 @@ class bytearray(object):
         """
         pass
 
-    def extend(self, iterable_of_ints): # real signature unknown; restored from __doc__
+    def extend(self, *args, **kwargs): # real signature unknown
         """
-        B.extend(iterable_of_ints) -> None
+        Append all the items from the iterator or sequence to the end of the bytearray.
         
-        Append all the elements from the iterator or sequence to the
-        end of B.
+          iterable_of_ints
+            The iterable of items to append.
         """
         pass
 
@@ -1486,15 +1447,23 @@ class bytearray(object):
         return 0
 
     @classmethod # known case
-    def fromhex(cls, string): # real signature unknown; restored from __doc__
+    def fromhex(cls, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
         """
-        bytearray.fromhex(string) -> bytearray (static method)
-        
         Create a bytearray object from a string of hexadecimal numbers.
+        
         Spaces between two numbers are accepted.
-        Example: bytearray.fromhex('B9 01EF') -> bytearray(b'\xb9\x01\xef').
+        Example: bytearray.fromhex('B9 01EF') -> bytearray(b'\\xb9\\x01\\xef')
         """
-        return bytearray
+        pass
+
+    def hex(self): # real signature unknown; restored from __doc__
+        """
+        B.hex() -> string
+        
+        Create a string of hexadecimal numbers from a bytearray object.
+        Example: bytearray([0xb9, 0x01, 0xef]).hex() -> 'b901ef'.
+        """
+        return ""
 
     def index(self, sub, start=None, end=None): # real signature unknown; restored from __doc__
         """
@@ -1504,11 +1473,14 @@ class bytearray(object):
         """
         return 0
 
-    def insert(self, index, p_int): # real signature unknown; restored from __doc__
+    def insert(self, *args, **kwargs): # real signature unknown
         """
-        B.insert(index, int) -> None
-        
         Insert a single item into the bytearray before the given index.
+        
+          index
+            The index where the value is to be inserted.
+          item
+            The item to be inserted.
         """
         pass
 
@@ -1577,14 +1549,15 @@ class bytearray(object):
         """
         return False
 
-    def join(self, iterable_of_bytes): # real signature unknown; restored from __doc__
+    def join(self, *args, **kwargs): # real signature unknown
         """
-        B.join(iterable_of_bytes) -> bytearray
+        Concatenate any number of bytes/bytearray objects.
         
-        Concatenate any number of bytes/bytearray objects, with B
-        in between each pair, and return the result as a new bytearray.
+        The bytearray whose method is called is inserted in between each pair.
+        
+        The result is returned as a new bytearray object.
         """
-        return bytearray
+        pass
 
     def ljust(self, width, fillchar=None): # real signature unknown; restored from __doc__
         """
@@ -1603,71 +1576,75 @@ class bytearray(object):
         """
         pass
 
-    def lstrip(self, bytes=None): # real signature unknown; restored from __doc__
+    def lstrip(self, *args, **kwargs): # real signature unknown
         """
-        B.lstrip([bytes]) -> bytearray
+        Strip leading bytes contained in the argument.
         
-        Strip leading bytes contained in the argument
-        and return the result as a new bytearray.
-        If the argument is omitted, strip leading ASCII whitespace.
+        If the argument is omitted or None, strip leading ASCII whitespace.
         """
-        return bytearray
+        pass
 
     @staticmethod # known case
-    def maketrans(frm, to): # real signature unknown; restored from __doc__
+    def maketrans(*args, **kwargs): # real signature unknown
         """
-        B.maketrans(frm, to) -> translation table
+        Return a translation table useable for the bytes or bytearray translate method.
         
-        Return a translation table (a bytes object of length 256) suitable
-        for use in the bytes or bytearray translate method where each byte
-        in frm is mapped to the byte at the same position in to.
+        The returned table will be one where each byte in frm is mapped to the byte at
+        the same position in to.
+        
         The bytes objects frm and to must be of the same length.
         """
         pass
 
-    def partition(self, sep): # real signature unknown; restored from __doc__
+    def partition(self, *args, **kwargs): # real signature unknown
         """
-        B.partition(sep) -> (head, sep, tail)
+        Partition the bytearray into three parts using the given separator.
         
-        Search for the separator sep in B, and return the part before it,
-        the separator itself, and the part after it.  If the separator is not
-        found, returns B and two empty bytearray objects.
+        This will search for the separator sep in the bytearray. If the separator is
+        found, returns a 3-tuple containing the part before the separator, the
+        separator itself, and the part after it.
+        
+        If the separator is not found, returns a 3-tuple containing the original
+        bytearray object and two empty bytearray objects.
         """
         pass
 
-    def pop(self, index=None): # real signature unknown; restored from __doc__
+    def pop(self, *args, **kwargs): # real signature unknown
         """
-        B.pop([index]) -> int
+        Remove and return a single item from B.
         
-        Remove and return a single item from B. If no index
-        argument is given, will pop the last value.
-        """
-        return 0
-
-    def remove(self, p_int): # real signature unknown; restored from __doc__
-        """
-        B.remove(int) -> None
+          index
+            The index from where to remove the item.
+            -1 (the default value) means remove the last item.
         
-        Remove the first occurrence of a value in B.
+        If no index argument is given, will pop the last item.
         """
         pass
 
-    def replace(self, old, new, count=None): # real signature unknown; restored from __doc__
+    def remove(self, *args, **kwargs): # real signature unknown
         """
-        B.replace(old, new[, count]) -> bytearray
+        Remove the first occurrence of a value in the bytearray.
         
-        Return a copy of B with all occurrences of subsection
-        old replaced by new.  If the optional argument count is
-        given, only the first count occurrences are replaced.
+          value
+            The value to remove.
         """
-        return bytearray
+        pass
 
-    def reverse(self): # real signature unknown; restored from __doc__
+    def replace(self, *args, **kwargs): # real signature unknown
         """
-        B.reverse() -> None
+        Return a copy with all occurrences of substring old replaced by new.
         
-        Reverse the order of the values in B in place.
+          count
+            Maximum number of occurrences to replace.
+            -1 (the default value) means replace all occurrences.
+        
+        If the optional argument count is given, only the first count occurrences are
+        replaced.
         """
+        pass
+
+    def reverse(self, *args, **kwargs): # real signature unknown
+        """ Reverse the order of the values in B in place. """
         pass
 
     def rfind(self, sub, start=None, end=None): # real signature unknown; restored from __doc__
@@ -1699,59 +1676,65 @@ class bytearray(object):
         """
         pass
 
-    def rpartition(self, sep): # real signature unknown; restored from __doc__
+    def rpartition(self, *args, **kwargs): # real signature unknown
         """
-        B.rpartition(sep) -> (head, sep, tail)
+        Partition the bytes into three parts using the given separator.
         
-        Search for the separator sep in B, starting at the end of B,
-        and return the part before it, the separator itself, and the
-        part after it.  If the separator is not found, returns two empty
-        bytearray objects and B.
+        This will search for the separator sep in the bytearray, starting and the end.
+        If the separator is found, returns a 3-tuple containing the part before the
+        separator, the separator itself, and the part after it.
+        
+        If the separator is not found, returns a 3-tuple containing two empty bytearray
+        objects and the original bytearray object.
         """
         pass
 
-    def rsplit(self, sep=None, maxsplit=-1): # real signature unknown; restored from __doc__
+    def rsplit(self, *args, **kwargs): # real signature unknown
         """
-        B.rsplit(sep=None, maxsplit=-1) -> list of bytearrays
+        Return a list of the sections in the bytearray, using sep as the delimiter.
         
-        Return a list of the sections in B, using sep as the delimiter,
-        starting at the end of B and working to the front.
-        If sep is not given, B is split on ASCII whitespace characters
-        (space, tab, return, newline, formfeed, vertical tab).
-        If maxsplit is given, at most maxsplit splits are done.
+          sep
+            The delimiter according which to split the bytearray.
+            None (the default value) means split on ASCII whitespace characters
+            (space, tab, return, newline, formfeed, vertical tab).
+          maxsplit
+            Maximum number of splits to do.
+            -1 (the default value) means no limit.
+        
+        Splitting is done starting at the end of the bytearray and working to the front.
         """
-        return []
+        pass
 
-    def rstrip(self, bytes=None): # real signature unknown; restored from __doc__
+    def rstrip(self, *args, **kwargs): # real signature unknown
         """
-        B.rstrip([bytes]) -> bytearray
+        Strip trailing bytes contained in the argument.
         
-        Strip trailing bytes contained in the argument
-        and return the result as a new bytearray.
-        If the argument is omitted, strip trailing ASCII whitespace.
+        If the argument is omitted or None, strip trailing ASCII whitespace.
         """
-        return bytearray
+        pass
 
-    def split(self, sep=None, maxsplit=-1): # real signature unknown; restored from __doc__
+    def split(self, *args, **kwargs): # real signature unknown
         """
-        B.split(sep=None, maxsplit=-1) -> list of bytearrays
+        Return a list of the sections in the bytearray, using sep as the delimiter.
         
-        Return a list of the sections in B, using sep as the delimiter.
-        If sep is not given, B is split on ASCII whitespace characters
-        (space, tab, return, newline, formfeed, vertical tab).
-        If maxsplit is given, at most maxsplit splits are done.
+          sep
+            The delimiter according which to split the bytearray.
+            None (the default value) means split on ASCII whitespace characters
+            (space, tab, return, newline, formfeed, vertical tab).
+          maxsplit
+            Maximum number of splits to do.
+            -1 (the default value) means no limit.
         """
-        return []
+        pass
 
-    def splitlines(self, keepends=None): # real signature unknown; restored from __doc__
+    def splitlines(self, *args, **kwargs): # real signature unknown
         """
-        B.splitlines([keepends]) -> list of lines
+        Return a list of the lines in the bytearray, breaking at line boundaries.
         
-        Return a list of the lines in B, breaking at line boundaries.
-        Line breaks are not included in the resulting list unless keepends
-        is given and true.
+        Line breaks are not included in the resulting list unless keepends is given and
+        true.
         """
-        return []
+        pass
 
     def startswith(self, prefix, start=None, end=None): # real signature unknown; restored from __doc__
         """
@@ -1764,15 +1747,13 @@ class bytearray(object):
         """
         return False
 
-    def strip(self, bytes=None): # real signature unknown; restored from __doc__
+    def strip(self, *args, **kwargs): # real signature unknown
         """
-        B.strip([bytes]) -> bytearray
+        Strip leading and trailing bytes contained in the argument.
         
-        Strip leading and trailing bytes contained in the argument
-        and return the result as a new bytearray.
-        If the argument is omitted, strip ASCII whitespace.
+        If the argument is omitted or None, strip leading and trailing ASCII whitespace.
         """
-        return bytearray
+        pass
 
     def swapcase(self): # real signature unknown; restored from __doc__
         """
@@ -1794,14 +1775,16 @@ class bytearray(object):
 
     def translate(self, table, deletechars=None): # real signature unknown; restored from __doc__
         """
-        B.translate(table[, deletechars]) -> bytearray
+        translate(table, [deletechars])
+        Return a copy with each character mapped by the given translation table.
         
-        Return a copy of B, where all characters occurring in the
-        optional argument deletechars are removed, and the remaining
-        characters have been mapped through the given translation
-        table, which must be a bytes object of length 256.
+          table
+            Translation table, which must be a bytes object of length 256.
+        
+        All characters occurring in the optional argument deletechars are removed.
+        The remaining characters are mapped through the given translation table.
         """
-        return bytearray
+        pass
 
     def upper(self): # real signature unknown; restored from __doc__
         """
@@ -1902,6 +1885,10 @@ class bytearray(object):
         """ Return self<value. """
         pass
 
+    def __mod__(self, *args, **kwargs): # real signature unknown
+        """ Return self%value. """
+        pass
+
     def __mul__(self, *args, **kwargs): # real signature unknown
         """ Return self*value.n """
         pass
@@ -1927,6 +1914,10 @@ class bytearray(object):
         """ Return repr(self). """
         pass
 
+    def __rmod__(self, *args, **kwargs): # real signature unknown
+        """ Return value%self. """
+        pass
+
     def __rmul__(self, *args, **kwargs): # real signature unknown
         """ Return self*value. """
         pass
@@ -1935,13 +1926,9 @@ class bytearray(object):
         """ Set self[key] to value. """
         pass
 
-    def __sizeof__(self): # real signature unknown; restored from __doc__
-        """
-        B.__sizeof__() -> int
-         
-        Returns the size of B in memory, in bytes
-        """
-        return 0
+    def __sizeof__(self, *args, **kwargs): # real signature unknown
+        """ Returns the size of the bytearray object in memory, in bytes. """
+        pass
 
     def __str__(self, *args, **kwargs): # real signature unknown
         """ Return str(self). """
@@ -1949,8 +1936,6 @@ class bytearray(object):
 
     __hash__ = None
 
-
-from .object import object
 
 class bytes(object):
     """
@@ -1994,18 +1979,20 @@ class bytes(object):
         """
         return 0
 
-    def decode(self, encoding='utf-8', errors='strict'): # real signature unknown; restored from __doc__
+    def decode(self, *args, **kwargs): # real signature unknown
         """
-        B.decode(encoding='utf-8', errors='strict') -> str
+        Decode the bytes using the codec registered for encoding.
         
-        Decode B using the codec registered for encoding. Default encoding
-        is 'utf-8'. errors may be given to set a different error
-        handling scheme.  Default is 'strict' meaning that encoding errors raise
-        a UnicodeDecodeError.  Other possible values are 'ignore' and 'replace'
-        as well as any other name registerd with codecs.register_error that is
-        able to handle UnicodeDecodeErrors.
+          encoding
+            The encoding with which to decode the bytes.
+          errors
+            The error handling scheme to use for the handling of decoding errors.
+            The default is 'strict' meaning that decoding errors raise a
+            UnicodeDecodeError. Other possible values are 'ignore' and 'replace'
+            as well as any other name registered with codecs.register_error that
+            can handle UnicodeDecodeErrors.
         """
-        return ""
+        pass
 
     def endswith(self, suffix, start=None, end=None): # real signature unknown; restored from __doc__
         """
@@ -2040,15 +2027,23 @@ class bytes(object):
         return 0
 
     @classmethod # known case
-    def fromhex(cls, string): # real signature unknown; restored from __doc__
+    def fromhex(cls, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
         """
-        bytes.fromhex(string) -> bytes
-        
         Create a bytes object from a string of hexadecimal numbers.
+        
         Spaces between two numbers are accepted.
-        Example: bytes.fromhex('B9 01EF') -> b'\xb9\x01\xef'.
+        Example: bytes.fromhex('B9 01EF') -> b'\\xb9\\x01\\xef'.
         """
-        return b""
+        pass
+
+    def hex(self): # real signature unknown; restored from __doc__
+        """
+        B.hex() -> string
+        
+        Create a string of hexadecimal numbers from a bytes object.
+        Example: b'\xb9\x01\xef'.hex() -> 'b901ef'.
+        """
+        return ""
 
     def index(self, sub, start=None, end=None): # real signature unknown; restored from __doc__
         """
@@ -2123,14 +2118,17 @@ class bytes(object):
         """
         return False
 
-    def join(self, iterable_of_bytes): # real signature unknown; restored from __doc__
+    def join(self, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
         """
-        B.join(iterable_of_bytes) -> bytes
+        Concatenate any number of bytes objects.
         
-        Concatenate any number of bytes objects, with B in between each pair.
+        The bytes whose method is called is inserted in between each pair.
+        
+        The result is returned as a new bytes object.
+        
         Example: b'.'.join([b'ab', b'pq', b'rs']) -> b'ab.pq.rs'.
         """
-        return b""
+        pass
 
     def ljust(self, width, fillchar=None): # real signature unknown; restored from __doc__
         """
@@ -2149,46 +2147,51 @@ class bytes(object):
         """
         pass
 
-    def lstrip(self, bytes=None): # real signature unknown; restored from __doc__
+    def lstrip(self, *args, **kwargs): # real signature unknown
         """
-        B.lstrip([bytes]) -> bytes
-        
         Strip leading bytes contained in the argument.
-        If the argument is omitted, strip leading ASCII whitespace.
+        
+        If the argument is omitted or None, strip leading  ASCII whitespace.
         """
-        return b""
+        pass
 
     @staticmethod # known case
-    def maketrans(frm, to): # real signature unknown; restored from __doc__
+    def maketrans(*args, **kwargs): # real signature unknown
         """
-        B.maketrans(frm, to) -> translation table
+        Return a translation table useable for the bytes or bytearray translate method.
         
-        Return a translation table (a bytes object of length 256) suitable
-        for use in the bytes or bytearray translate method where each byte
-        in frm is mapped to the byte at the same position in to.
+        The returned table will be one where each byte in frm is mapped to the byte at
+        the same position in to.
+        
         The bytes objects frm and to must be of the same length.
         """
         pass
 
-    def partition(self, sep): # real signature unknown; restored from __doc__
+    def partition(self, *args, **kwargs): # real signature unknown
         """
-        B.partition(sep) -> (head, sep, tail)
+        Partition the bytes into three parts using the given separator.
         
-        Search for the separator sep in B, and return the part before it,
-        the separator itself, and the part after it.  If the separator is not
-        found, returns B and two empty bytes objects.
+        This will search for the separator sep in the bytes. If the separator is found,
+        returns a 3-tuple containing the part before the separator, the separator
+        itself, and the part after it.
+        
+        If the separator is not found, returns a 3-tuple containing the original bytes
+        object and two empty bytes objects.
         """
         pass
 
-    def replace(self, old, new, count=None): # real signature unknown; restored from __doc__
+    def replace(self, *args, **kwargs): # real signature unknown
         """
-        B.replace(old, new[, count]) -> bytes
+        Return a copy with all occurrences of substring old replaced by new.
         
-        Return a copy of B with all occurrences of subsection
-        old replaced by new.  If the optional argument count is
-        given, only first count occurances are replaced.
+          count
+            Maximum number of occurrences to replace.
+            -1 (the default value) means replace all occurrences.
+        
+        If the optional argument count is given, only the first count occurrences are
+        replaced.
         """
-        return b""
+        pass
 
     def rfind(self, sub, start=None, end=None): # real signature unknown; restored from __doc__
         """
@@ -2219,58 +2222,65 @@ class bytes(object):
         """
         pass
 
-    def rpartition(self, sep): # real signature unknown; restored from __doc__
+    def rpartition(self, *args, **kwargs): # real signature unknown
         """
-        B.rpartition(sep) -> (head, sep, tail)
+        Partition the bytes into three parts using the given separator.
         
-        Search for the separator sep in B, starting at the end of B,
-        and return the part before it, the separator itself, and the
-        part after it.  If the separator is not found, returns two empty
-        bytes objects and B.
+        This will search for the separator sep in the bytes, starting and the end. If
+        the separator is found, returns a 3-tuple containing the part before the
+        separator, the separator itself, and the part after it.
+        
+        If the separator is not found, returns a 3-tuple containing two empty bytes
+        objects and the original bytes object.
         """
         pass
 
-    def rsplit(self, sep=None, maxsplit=-1): # real signature unknown; restored from __doc__
+    def rsplit(self, *args, **kwargs): # real signature unknown
         """
-        B.rsplit(sep=None, maxsplit=-1) -> list of bytes
+        Return a list of the sections in the bytes, using sep as the delimiter.
         
-        Return a list of the sections in B, using sep as the delimiter,
-        starting at the end of B and working to the front.
-        If sep is not given, B is split on ASCII whitespace characters
-        (space, tab, return, newline, formfeed, vertical tab).
-        If maxsplit is given, at most maxsplit splits are done.
+          sep
+            The delimiter according which to split the bytes.
+            None (the default value) means split on ASCII whitespace characters
+            (space, tab, return, newline, formfeed, vertical tab).
+          maxsplit
+            Maximum number of splits to do.
+            -1 (the default value) means no limit.
+        
+        Splitting is done starting at the end of the bytes and working to the front.
         """
-        return []
+        pass
 
-    def rstrip(self, bytes=None): # real signature unknown; restored from __doc__
+    def rstrip(self, *args, **kwargs): # real signature unknown
         """
-        B.rstrip([bytes]) -> bytes
-        
         Strip trailing bytes contained in the argument.
-        If the argument is omitted, strip trailing ASCII whitespace.
-        """
-        return b""
-
-    def split(self, sep=None, maxsplit=-1): # real signature unknown; restored from __doc__
-        """
-        B.split(sep=None, maxsplit=-1) -> list of bytes
         
-        Return a list of the sections in B, using sep as the delimiter.
-        If sep is not specified or is None, B is split on ASCII whitespace
-        characters (space, tab, return, newline, formfeed, vertical tab).
-        If maxsplit is given, at most maxsplit splits are done.
+        If the argument is omitted or None, strip trailing ASCII whitespace.
         """
-        return []
+        pass
 
-    def splitlines(self, keepends=None): # real signature unknown; restored from __doc__
+    def split(self, *args, **kwargs): # real signature unknown
         """
-        B.splitlines([keepends]) -> list of lines
+        Return a list of the sections in the bytes, using sep as the delimiter.
         
-        Return a list of the lines in B, breaking at line boundaries.
-        Line breaks are not included in the resulting list unless keepends
-        is given and true.
+          sep
+            The delimiter according which to split the bytes.
+            None (the default value) means split on ASCII whitespace characters
+            (space, tab, return, newline, formfeed, vertical tab).
+          maxsplit
+            Maximum number of splits to do.
+            -1 (the default value) means no limit.
         """
-        return []
+        pass
+
+    def splitlines(self, *args, **kwargs): # real signature unknown
+        """
+        Return a list of the lines in the bytes, breaking at line boundaries.
+        
+        Line breaks are not included in the resulting list unless keepends is given and
+        true.
+        """
+        pass
 
     def startswith(self, prefix, start=None, end=None): # real signature unknown; restored from __doc__
         """
@@ -2283,14 +2293,13 @@ class bytes(object):
         """
         return False
 
-    def strip(self, bytes=None): # real signature unknown; restored from __doc__
+    def strip(self, *args, **kwargs): # real signature unknown
         """
-        B.strip([bytes]) -> bytes
-        
         Strip leading and trailing bytes contained in the argument.
-        If the argument is omitted, strip leading and trailing ASCII whitespace.
+        
+        If the argument is omitted or None, strip leading and trailing ASCII whitespace.
         """
-        return b""
+        pass
 
     def swapcase(self): # real signature unknown; restored from __doc__
         """
@@ -2312,14 +2321,16 @@ class bytes(object):
 
     def translate(self, table, deletechars=None): # real signature unknown; restored from __doc__
         """
-        B.translate(table[, deletechars]) -> bytes
+        translate(table, [deletechars])
+        Return a copy with each character mapped by the given translation table.
         
-        Return a copy of B, where all characters occurring in the
-        optional argument deletechars are removed, and the remaining
-        characters have been mapped through the given translation
-        table, which must be a bytes object of length 256.
+          table
+            Translation table, which must be a bytes object of length 256.
+        
+        All characters occurring in the optional argument deletechars are removed.
+        The remaining characters are mapped through the given translation table.
         """
-        return b""
+        pass
 
     def upper(self): # real signature unknown; restored from __doc__
         """
@@ -2406,6 +2417,10 @@ class bytes(object):
         """ Return self<value. """
         pass
 
+    def __mod__(self, *args, **kwargs): # real signature unknown
+        """ Return self%value. """
+        pass
+
     def __mul__(self, *args, **kwargs): # real signature unknown
         """ Return self*value.n """
         pass
@@ -2423,20 +2438,18 @@ class bytes(object):
         """ Return repr(self). """
         pass
 
-    def __rmul__(self, *args, **kwargs): # real signature unknown
-        """ Return self*value. """
+    def __rmod__(self, *args, **kwargs): # real signature unknown
+        """ Return value%self. """
         pass
 
-    def __sizeof__(self): # real signature unknown; restored from __doc__
-        """ B.__sizeof__() -> size of B in memory, in bytes """
+    def __rmul__(self, *args, **kwargs): # real signature unknown
+        """ Return self*value. """
         pass
 
     def __str__(self, *args, **kwargs): # real signature unknown
         """ Return str(self). """
         pass
 
-
-from .Exception import Exception
 
 class Warning(Exception):
     """ Base class for warning categories. """
@@ -2448,8 +2461,6 @@ class Warning(Exception):
         """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Warning import Warning
 
 class BytesWarning(Warning):
     """
@@ -2465,15 +2476,11 @@ class BytesWarning(Warning):
         pass
 
 
-from .OSError import OSError
-
 class ChildProcessError(OSError):
     """ Child process error. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-
-from .object import object
 
 class classmethod(object):
     """
@@ -2516,8 +2523,6 @@ class classmethod(object):
 
     __dict__ = None # (!) real value is ''
 
-
-from .object import object
 
 class complex(object):
     """
@@ -2695,15 +2700,11 @@ class complex(object):
 
 
 
-from .ConnectionError import ConnectionError
-
 class ConnectionAbortedError(ConnectionError):
     """ Connection aborted. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-
-from .ConnectionError import ConnectionError
 
 class ConnectionRefusedError(ConnectionError):
     """ Connection refused. """
@@ -2711,15 +2712,11 @@ class ConnectionRefusedError(ConnectionError):
         pass
 
 
-from .ConnectionError import ConnectionError
-
 class ConnectionResetError(ConnectionError):
     """ Connection reset. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-
-from .Warning import Warning
 
 class DeprecationWarning(Warning):
     """ Base class for warnings about deprecated features. """
@@ -2731,8 +2728,6 @@ class DeprecationWarning(Warning):
         """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .object import object
 
 class dict(object):
     """
@@ -2885,8 +2880,6 @@ class dict(object):
     __hash__ = None
 
 
-from .object import object
-
 class enumerate(object):
     """
     enumerate(iterable[, start]) -> iterator for index, value of iterable
@@ -2923,8 +2916,6 @@ class enumerate(object):
         pass
 
 
-from .Exception import Exception
-
 class EOFError(Exception):
     """ Read beyond end of file. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -2936,23 +2927,17 @@ class EOFError(Exception):
         pass
 
 
-from .OSError import OSError
-
 class FileExistsError(OSError):
     """ File already exists. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
 
-from .OSError import OSError
-
 class FileNotFoundError(OSError):
     """ File not found. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-
-from .object import object
 
 class filter(object):
     """
@@ -2985,8 +2970,6 @@ class filter(object):
         """ Return state information for pickling. """
         pass
 
-
-from .object import object
 
 class float(object):
     """
@@ -3238,8 +3221,6 @@ class float(object):
 
 
 
-from .ArithmeticError import ArithmeticError
-
 class FloatingPointError(ArithmeticError):
     """ Floating point operation failed. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3250,8 +3231,6 @@ class FloatingPointError(ArithmeticError):
         """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .object import object
 
 class frozenset(object):
     """
@@ -3406,8 +3385,6 @@ class frozenset(object):
         pass
 
 
-from .Warning import Warning
-
 class FutureWarning(Warning):
     """
     Base class for warnings about constructs that will change semantically
@@ -3422,8 +3399,6 @@ class FutureWarning(Warning):
         pass
 
 
-from .BaseException import BaseException
-
 class GeneratorExit(BaseException):
     """ Request that a generator exit. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3434,8 +3409,6 @@ class GeneratorExit(BaseException):
         """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Exception import Exception
 
 class ImportError(Exception):
     """ Import can't find module, or can't find name in module. """
@@ -3457,8 +3430,6 @@ class ImportError(Exception):
 
 
 
-from .Warning import Warning
-
 class ImportWarning(Warning):
     """ Base class for warnings about probable mistakes in module imports """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3469,8 +3440,6 @@ class ImportWarning(Warning):
         """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Exception import Exception
 
 class SyntaxError(Exception):
     """ Invalid syntax. """
@@ -3501,15 +3470,11 @@ class SyntaxError(Exception):
 
 
 
-from .SyntaxError import SyntaxError
-
 class IndentationError(SyntaxError):
     """ Improper indentation. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-
-from .Exception import Exception
 
 class LookupError(Exception):
     """ Base class for lookup errors. """
@@ -3522,8 +3487,6 @@ class LookupError(Exception):
         pass
 
 
-from .LookupError import LookupError
-
 class IndexError(LookupError):
     """ Sequence index out of range. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3535,23 +3498,17 @@ class IndexError(LookupError):
         pass
 
 
-from .OSError import OSError
-
 class InterruptedError(OSError):
     """ Interrupted by signal. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
 
-from .OSError import OSError
-
 class IsADirectoryError(OSError):
     """ Operation doesn't work on directories. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-
-from .BaseException import BaseException
 
 class KeyboardInterrupt(BaseException):
     """ Program interrupted by user. """
@@ -3564,8 +3521,6 @@ class KeyboardInterrupt(BaseException):
         pass
 
 
-from .LookupError import LookupError
-
 class KeyError(LookupError):
     """ Mapping key not found. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3575,8 +3530,6 @@ class KeyError(LookupError):
         """ Return str(self). """
         pass
 
-
-from .object import object
 
 class list(object):
     """
@@ -3736,8 +3689,6 @@ class list(object):
     __hash__ = None
 
 
-from .object import object
-
 class map(object):
     """
     map(func, *iterables) --> map object
@@ -3770,8 +3721,6 @@ class map(object):
         pass
 
 
-from .Exception import Exception
-
 class MemoryError(Exception):
     """ Out of memory. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3783,45 +3732,27 @@ class MemoryError(Exception):
         pass
 
 
-from .object import object
-
 class memoryview(object):
-    """
-    memoryview(object)
-    
-    Create a new memoryview object which references the given object.
-    """
-    def cast(self, format, shape=None): # real signature unknown; restored from __doc__
-        """
-        M.cast(format[, shape]) -> memoryview
-        
-        Cast a memoryview to a new format or shape.
-        """
-        return memoryview
-
-    def release(self): # real signature unknown; restored from __doc__
-        """
-        M.release() -> None
-        
-        Release the underlying buffer exposed by the memoryview object.
-        """
+    """ Create a new memoryview object which references the given object. """
+    def cast(self, *args, **kwargs): # real signature unknown
+        """ Cast a memoryview to a new format or shape. """
         pass
 
-    def tobytes(self): # real signature unknown; restored from __doc__
-        """
-        M.tobytes() -> bytes
-        
-        Return the data in the buffer as a byte string.
-        """
-        return b""
+    def hex(self, *args, **kwargs): # real signature unknown
+        """ Return the data in the buffer as a string of hexadecimal numbers. """
+        pass
 
-    def tolist(self): # real signature unknown; restored from __doc__
-        """
-        M.tolist() -> list
-        
-        Return the data in the buffer as a list of elements.
-        """
-        return []
+    def release(self, *args, **kwargs): # real signature unknown
+        """ Release the underlying buffer exposed by the memoryview object. """
+        pass
+
+    def tobytes(self, *args, **kwargs): # real signature unknown
+        """ Return the data in the buffer as a byte string. """
+        pass
+
+    def tolist(self, *args, **kwargs): # real signature unknown
+        """ Return the data in the buffer as a list of elements. """
+        pass
 
     def __delitem__(self, *args, **kwargs): # real signature unknown
         """ Delete self[key]. """
@@ -3857,7 +3788,7 @@ class memoryview(object):
         """ Return hash(self). """
         pass
 
-    def __init__(self, p_object): # real signature unknown; restored from __doc__
+    def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
     def __len__(self, *args, **kwargs): # real signature unknown
@@ -3932,8 +3863,6 @@ class memoryview(object):
 
 
 
-from .Exception import Exception
-
 class NameError(Exception):
     """ Name not found globally. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3945,15 +3874,11 @@ class NameError(Exception):
         pass
 
 
-from .OSError import OSError
-
 class NotADirectoryError(OSError):
     """ Operation only works on directories. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-
-from .Exception import Exception
 
 class RuntimeError(Exception):
     """ Unspecified run-time error. """
@@ -3966,8 +3891,6 @@ class RuntimeError(Exception):
         pass
 
 
-from .RuntimeError import RuntimeError
-
 class NotImplementedError(RuntimeError):
     """ Method or function hasn't been implemented yet. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3979,8 +3902,6 @@ class NotImplementedError(RuntimeError):
         pass
 
 
-from .ArithmeticError import ArithmeticError
-
 class OverflowError(ArithmeticError):
     """ Result too large to be represented. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3991,8 +3912,6 @@ class OverflowError(ArithmeticError):
         """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Warning import Warning
 
 class PendingDeprecationWarning(Warning):
     """
@@ -4008,23 +3927,17 @@ class PendingDeprecationWarning(Warning):
         pass
 
 
-from .OSError import OSError
-
 class PermissionError(OSError):
     """ Not enough permissions. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
 
-from .OSError import OSError
-
 class ProcessLookupError(OSError):
     """ Process not found. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-
-from .object import object
 
 class property(object):
     """
@@ -4129,14 +4042,16 @@ class property(object):
 
 
 
-from .object import object
-
 class range(object):
     """
     range(stop) -> range object
     range(start, stop[, step]) -> range object
     
-    Return a virtual sequence of numbers from start to stop by step.
+    Return an object that produces a sequence of integers from start (inclusive)
+    to stop (exclusive) by step.  range(i, j) produces i, i+1, i+2, ..., j-1.
+    start defaults to 0, and stop is omitted!  range(4) produces 0, 1, 2, 3.
+    These are exactly the valid indices for a list of 4 elements.
+    When step is given, it specifies the increment (or decrement).
     """
     def count(self, value): # real signature unknown; restored from __doc__
         """ rangeobject.count(value) -> integer -- return number of occurrences of value """
@@ -4224,7 +4139,16 @@ class range(object):
 
 
 
-from .Exception import Exception
+class RecursionError(RuntimeError):
+    """ Recursion limit exceeded. """
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
+    @staticmethod # known case of __new__
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
+        pass
+
 
 class ReferenceError(Exception):
     """ Weak ref proxy used after referent went away. """
@@ -4237,8 +4161,6 @@ class ReferenceError(Exception):
         pass
 
 
-from .Warning import Warning
-
 class ResourceWarning(Warning):
     """ Base class for warnings about resource usage. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -4249,8 +4171,6 @@ class ResourceWarning(Warning):
         """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .object import object
 
 class reversed(object):
     """
@@ -4291,8 +4211,6 @@ class reversed(object):
         pass
 
 
-from .Warning import Warning
-
 class RuntimeWarning(Warning):
     """ Base class for warnings about dubious runtime behavior. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -4303,8 +4221,6 @@ class RuntimeWarning(Warning):
         """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .object import object
 
 class set(object):
     """
@@ -4530,8 +4446,6 @@ class set(object):
     __hash__ = None
 
 
-from .object import object
-
 class slice(object):
     """
     slice(stop)
@@ -4607,8 +4521,6 @@ class slice(object):
     __hash__ = None
 
 
-from .object import object
-
 class staticmethod(object):
     """
     staticmethod(function) -> method
@@ -4648,7 +4560,16 @@ class staticmethod(object):
     __dict__ = None # (!) real value is ''
 
 
-from .Exception import Exception
+class StopAsyncIteration(Exception):
+    """ Signal the end from iterator.__anext__(). """
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
+    @staticmethod # known case of __new__
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
+        pass
+
 
 class StopIteration(Exception):
     """ Signal the end from iterator.__next__(). """
@@ -4659,8 +4580,6 @@ class StopIteration(Exception):
     """generator return value"""
 
 
-
-from .object import object
 
 class str(object):
     """
@@ -5080,11 +4999,12 @@ class str(object):
         """
         S.translate(table) -> str
         
-        Return a copy of the string S, where all characters have been mapped
-        through the given translation table, which must be a mapping of
-        Unicode ordinals to Unicode ordinals, strings, or None.
-        Unmapped characters are left untouched. Characters mapped to None
-        are deleted.
+        Return a copy of the string S in which each character has been mapped
+        through the given translation table. The table must implement
+        lookup/indexing via __getitem__, for instance a dictionary or list,
+        mapping Unicode ordinals to Unicode ordinals, strings, or None. If
+        this operation raises LookupError, the character is left untouched.
+        Characters mapped to None are deleted.
         """
         return ""
 
@@ -5218,8 +5138,6 @@ class str(object):
         pass
 
 
-from .object import object
-
 class super(object):
     """
     super() -> same as super(__class__, <first argument>)
@@ -5293,8 +5211,6 @@ class super(object):
 
 
 
-from .Warning import Warning
-
 class SyntaxWarning(Warning):
     """ Base class for warnings about dubious syntax. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -5305,8 +5221,6 @@ class SyntaxWarning(Warning):
         """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Exception import Exception
 
 class SystemError(Exception):
     """
@@ -5324,8 +5238,6 @@ class SystemError(Exception):
         pass
 
 
-from .BaseException import BaseException
-
 class SystemExit(BaseException):
     """ Request to exit from the interpreter. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -5336,23 +5248,17 @@ class SystemExit(BaseException):
 
 
 
-from .IndentationError import IndentationError
-
 class TabError(IndentationError):
     """ Improper mixture of spaces and tabs. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
 
-from .OSError import OSError
-
 class TimeoutError(OSError):
     """ Timeout expired. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-
-from .object import object
 
 class tuple(object):
     """
@@ -5454,12 +5360,6 @@ class tuple(object):
         """ Return self*value. """
         pass
 
-    def __sizeof__(self): # real signature unknown; restored from __doc__
-        """ T.__sizeof__() -- size of T in memory, in bytes """
-        pass
-
-
-from .object import object
 
 class type(object):
     """
@@ -5554,11 +5454,11 @@ class type(object):
         object,
     )
     __base__ = object
-    __basicsize__ = 412
-    __dictoffset__ = 132
+    __basicsize__ = 864
+    __dictoffset__ = 264
     __dict__ = None # (!) real value is ''
-    __flags__ = -2146675712
-    __itemsize__ = 20
+    __flags__ = 2148291584
+    __itemsize__ = 40
     __mro__ = (
         None, # (!) forward: type, real value is ''
         object,
@@ -5566,10 +5466,8 @@ class type(object):
     __name__ = 'type'
     __qualname__ = 'type'
     __text_signature__ = None
-    __weakrefoffset__ = 184
+    __weakrefoffset__ = 368
 
-
-from .Exception import Exception
 
 class TypeError(Exception):
     """ Inappropriate argument type. """
@@ -5582,8 +5480,6 @@ class TypeError(Exception):
         pass
 
 
-from .NameError import NameError
-
 class UnboundLocalError(NameError):
     """ Local name referenced but not bound to a value. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -5594,8 +5490,6 @@ class UnboundLocalError(NameError):
         """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .Exception import Exception
 
 class ValueError(Exception):
     """ Inappropriate argument value (of correct type). """
@@ -5608,8 +5502,6 @@ class ValueError(Exception):
         pass
 
 
-from .ValueError import ValueError
-
 class UnicodeError(ValueError):
     """ Unicode related error. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -5620,8 +5512,6 @@ class UnicodeError(ValueError):
         """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .UnicodeError import UnicodeError
 
 class UnicodeDecodeError(UnicodeError):
     """ Unicode decoding error. """
@@ -5654,8 +5544,6 @@ class UnicodeDecodeError(UnicodeError):
 
 
 
-from .UnicodeError import UnicodeError
-
 class UnicodeEncodeError(UnicodeError):
     """ Unicode encoding error. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -5686,8 +5574,6 @@ class UnicodeEncodeError(UnicodeError):
     """exception start"""
 
 
-
-from .UnicodeError import UnicodeError
 
 class UnicodeTranslateError(UnicodeError):
     """ Unicode translation error. """
@@ -5720,8 +5606,6 @@ class UnicodeTranslateError(UnicodeError):
 
 
 
-from .Warning import Warning
-
 class UnicodeWarning(Warning):
     """
     Base class for warnings about Unicode related problems, mostly
@@ -5736,8 +5620,6 @@ class UnicodeWarning(Warning):
         pass
 
 
-from .Warning import Warning
-
 class UserWarning(Warning):
     """ Base class for warnings generated by user code. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -5749,8 +5631,6 @@ class UserWarning(Warning):
         pass
 
 
-from .ArithmeticError import ArithmeticError
-
 class ZeroDivisionError(ArithmeticError):
     """ Second argument to a division or modulo operation was zero. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -5761,8 +5641,6 @@ class ZeroDivisionError(ArithmeticError):
         """ Create and return a new object.  See help(type) for accurate signature. """
         pass
 
-
-from .object import object
 
 class zip(object):
     """
@@ -5798,8 +5676,6 @@ class zip(object):
         pass
 
 
-from .object import object
-
 class __loader__(object):
     """
     Meta path import for built-in modules.
@@ -5807,6 +5683,14 @@ class __loader__(object):
         All methods are either class or static methods to avoid the need to
         instantiate the class.
     """
+    def create_module(self, *args, **kwargs): # real signature unknown
+        """ Create a built-in module """
+        pass
+
+    def exec_module(self, *args, **kwargs): # real signature unknown
+        """ Exec a built-in module """
+        pass
+
     def find_module(self, *args, **kwargs): # real signature unknown
         """
         Find the built-in module.
@@ -5833,7 +5717,11 @@ class __loader__(object):
         pass
 
     def load_module(self, *args, **kwargs): # real signature unknown
-        """ Load a built-in module. """
+        """
+        Load the specified module into sys.modules and return it.
+        
+            This method is deprecated.  Use loader.exec_module instead.
+        """
         pass
 
     def module_repr(module): # reliably restored by inspect
