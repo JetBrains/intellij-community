@@ -249,13 +249,15 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     final Set<PyType> types = new LinkedHashSet<PyType>();
     if (withoutOptional != null) {
       typeString = withoutOptional;
-      types.add(PyNoneType.INSTANCE);
     }
     for (String typeName : NumPyDocString.getNumpyUnionType(typeString)) {
       PyType parsedType = parseSingleNumpyDocType(anchor, typeName);
       if (parsedType != null) {
         types.add(parsedType);
       }
+    }
+    if (!types.isEmpty() && withoutOptional != null) {
+      types.add(PyNoneType.INSTANCE);
     }
     return getPsiFacade(anchor).createUnionType(types);
   }
