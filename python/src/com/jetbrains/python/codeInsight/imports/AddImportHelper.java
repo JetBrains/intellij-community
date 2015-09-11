@@ -227,12 +227,12 @@ public class AddImportHelper {
     else {
       final PyImportElement firstImportElement = ArrayUtil.getFirstElement(importStatement.getImportElements());
       if (firstImportElement == null) {
-        return ImportPriority.PROJECT;
+        return ImportPriority.THIRD_PARTY;
       }
       resolved = firstImportElement.resolve();
     }
     if (resolved == null) {
-      return ImportPriority.PROJECT;
+      return ImportPriority.THIRD_PARTY;
     }
 
     final PsiFileSystemItem resolvedFileOrDir;
@@ -249,7 +249,7 @@ public class AddImportHelper {
   public static ImportPriority getImportPriority(@NotNull PsiElement importLocation, @NotNull PsiFileSystemItem toImport) {
     final VirtualFile vFile = toImport.getVirtualFile();
     if (vFile == null) {
-      return ImportPriority.PROJECT;
+      return ImportPriority.THIRD_PARTY;
     }
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(toImport.getProject());
     if (projectRootManager.getFileIndex().isInContent(vFile)) {
