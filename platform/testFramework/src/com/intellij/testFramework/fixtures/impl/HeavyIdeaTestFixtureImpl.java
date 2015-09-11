@@ -36,7 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -50,7 +49,6 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,40 +98,46 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
   @Override
   public void tearDown() throws Exception {
-    Project project = getProject();
-    LightPlatformTestCase.doTearDown(project, myApplication, false);
+    final Project project = getProject();
+    try {
+      LightPlatformTestCase.doTearDown(project, myApplication, false);
 
-    for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
-      moduleFixtureBuilder.getFixture().tearDown();
-    }
-
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            Disposer.dispose(myProject);
-            myProject = null;
-          }
-        });
+      for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
+        moduleFixtureBuilder.getFixture().tearDown();
       }
-    });
 
-    for (final File fileToDelete : myFilesToDelete) {
-      boolean deleted = FileUtil.delete(fileToDelete);
-      Assert.assertTrue("Can't delete " + fileToDelete, deleted);
+      final CompositeException compositeException = new CompositeException();
+      EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
+        @Override
+        public void run() throws Throwable {
+          PlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(project, compositeException);
+        }
+      });
+      myProject = null;
+
+      for (File fileToDelete : myFilesToDelete) {
+        if (!FileUtil.delete(fileToDelete)) {
+          compositeException.add(new IOException("Can't delete " + fileToDelete));
+        }
+      }
+
+      if (!compositeException.isEmpty()) {
+        throw compositeException;
+      }
     }
-
-    super.tearDown();
-
-    myEditorListenerTracker.checkListenersLeak();
-    myThreadTracker.checkLeak();
-    LightPlatformTestCase.checkEditorsReleased();
-    PlatformTestCase.cleanupApplicationCaches(project);
-    InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
+    finally {
+      try {
+        super.tearDown();
+      }
+      finally {
+        myEditorListenerTracker.checkListenersLeak();
+        myThreadTracker.checkLeak();
+        LightPlatformTestCase.checkEditorsReleased();
+        PlatformTestCase.cleanupApplicationCaches(project);
+        InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
+      }
+    }
   }
-
 
   private void setUpProject() {
     EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {

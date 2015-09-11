@@ -22,6 +22,7 @@ import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -216,7 +217,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     UIUtil.dispatchAllInvocationEvents();
   }
 
-  public Project getProject() {
+  public final Project getProject() {
     return myProject;
   }
 
@@ -427,9 +428,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   @Override
   protected void tearDown() throws Exception {
     CompositeException result = new CompositeException();
-    if (myProject != null) {
+    Project project = myProject;
+    if (project != null) {
       try {
         LightPlatformTestCase.doTearDown(getProject(), ourApplication, false);
+        disposeProject(result);
       }
       catch (Throwable e) {
         result.add(e);
@@ -443,9 +446,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       result.add(e);
     }
     try {
-      Project project = getProject();
-      disposeProject(result);
-
       if (project != null) {
         try {
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
@@ -520,39 +520,53 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         UIUtil.dispatchAllInvocationEvents();
       }
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       result.add(e);
     }
+
+    Project project = myProject;
+    if (project == null) {
+      return;
+    }
+
+    myProject = null;
+    closeAndDisposeProjectAndCheckThatNoOpenProjects(project, result);
+  }
+
+  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) throws CompositeException {
+    CompositeException compositeException = new CompositeException();
+    closeAndDisposeProjectAndCheckThatNoOpenProjects(projectToClose, compositeException);
+    if (!compositeException.isEmpty()) {
+      throw compositeException;
+    }
+  }
+
+  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose, @NotNull CompositeException result) {
     try {
-      if (myProject != null) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-            if (projectManager instanceof ProjectManagerImpl) {
-              Collection<Project> projectsStillOpen = projectManager.closeTestProject(myProject);
-              if (!projectsStillOpen.isEmpty()) {
-                Project project = projectsStillOpen.iterator().next();
-                String message = "Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project);
-                try {
-                  projectManager.closeAndDispose(project);
-                }
-                catch (Exception e) {
-                  // ignore, we already have something to throw
-                }
-                throw new AssertionError(message);
-              }
-            }
-            Disposer.dispose(myProject);
+      ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+      if (projectManager instanceof ProjectManagerImpl) {
+        for (Project project : projectManager.closeTestProject(projectToClose)) {
+          result.add(new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project)));
+          try {
+            ((ProjectManagerImpl)projectManager).closeProject(project, false, true, false);
           }
-        });
+          catch (Throwable e) {
+            result.add(e);
+          }
+        }
       }
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       result.add(e);
     }
     finally {
-      myProject = null;
+      AccessToken token = WriteAction.start();
+      try {
+        Disposer.dispose(projectToClose);
+      }
+      finally {
+        token.finish();
+      }
     }
   }
 

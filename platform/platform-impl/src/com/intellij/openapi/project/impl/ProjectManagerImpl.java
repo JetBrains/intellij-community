@@ -550,8 +550,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @TestOnly
   public Collection<Project> closeTestProject(@NotNull final Project project) {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    closeProject(project);
-    return Arrays.asList(getOpenProjects());
+    closeProject(project, false, false, false);
+    Project[] projects = getOpenProjects();
+    return projects.length == 0 ? Collections.<Project>emptyList() : Arrays.asList(projects);
   }
 
   @Override

@@ -359,22 +359,25 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected void defaultRunBare() throws Throwable {
     Throwable exception = null;
-    long setupStart = System.nanoTime();
-    setUp();
-    long setupCost = (System.nanoTime() - setupStart) / 1000000;
-    logPerClassCost(setupCost, TOTAL_SETUP_COST_MILLIS);
-
     try {
+      long setupStart = System.nanoTime();
+      setUp();
+      long setupCost = (System.nanoTime() - setupStart) / 1000000;
+      logPerClassCost(setupCost, TOTAL_SETUP_COST_MILLIS);
+
       runTest();
-    } catch (Throwable running) {
+    }
+    catch (Throwable running) {
       exception = running;
-    } finally {
+    }
+    finally {
       try {
         long teardownStart = System.nanoTime();
         tearDown();
         long teardownCost = (System.nanoTime() - teardownStart) / 1000000;
         logPerClassCost(teardownCost, TOTAL_TEARDOWN_COST_MILLIS);
-      } catch (Throwable tearingDown) {
+      }
+      catch (Throwable tearingDown) {
         if (exception == null) exception = tearingDown;
       }
     }

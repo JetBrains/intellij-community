@@ -447,86 +447,93 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     Project project = getProject();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     List<Throwable> errors = checkForSettingsDamage();
-    VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-    doTearDown(project, ourApplication, true);
-
     try {
-      super.tearDown();
+      doTearDown(project, ourApplication, true);
     }
     finally {
-      myThreadTracker.checkLeak();
-      InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
-      filePointerManager.assertPointersAreDisposed();
+      try {
+        super.tearDown();
+      }
+      finally {
+        myThreadTracker.checkLeak();
+        InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
+        ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersAreDisposed();
+        CompoundRuntimeException.doThrow(errors);
+      }
     }
-    CompoundRuntimeException.doThrow(errors);
   }
 
   public static void doTearDown(@NotNull final Project project, @NotNull IdeaTestApplication application, boolean checkForEditors) throws Exception {
-    ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
-    DocumentCommitThread.getInstance().clearQueue();
-    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    checkAllTimersAreDisposed();
-    UsefulTestCase.doPostponedFormatting(project);
+    PsiDocumentManagerImpl documentManager;
+    try {
+      ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
+      DocumentCommitThread.getInstance().clearQueue();
+      CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+      checkAllTimersAreDisposed();
+      UsefulTestCase.doPostponedFormatting(project);
 
-    LookupManager lookupManager = LookupManager.getInstance(project);
-    if (lookupManager != null) {
-      lookupManager.hideActiveLookup();
-    }
-    ((StartupManagerImpl)StartupManager.getInstance(project)).prepareForNextTest();
-    InspectionProfileManager.getInstance().deleteProfile(PROFILE);
-    assertNotNull("Application components damaged", ProjectManager.getInstance());
+      LookupManager lookupManager = LookupManager.getInstance(project);
+      if (lookupManager != null) {
+        lookupManager.hideActiveLookup();
+      }
+      ((StartupManagerImpl)StartupManager.getInstance(project)).prepareForNextTest();
+      InspectionProfileManager.getInstance().deleteProfile(PROFILE);
+      assertNotNull("Application components damaged", ProjectManager.getInstance());
 
-    new WriteCommandAction.Simple(project) {
-      @Override
-      protected void run() throws Throwable {
-        if (ourSourceRoot != null) {
-          try {
-            final VirtualFile[] children = ourSourceRoot.getChildren();
-            for (VirtualFile child : children) {
-              child.delete(this);
+      new WriteCommandAction.Simple(project) {
+        @Override
+        protected void run() throws Throwable {
+          if (ourSourceRoot != null) {
+            try {
+              final VirtualFile[] children = ourSourceRoot.getChildren();
+              for (VirtualFile child : children) {
+                child.delete(this);
+              }
+            }
+            catch (IOException e) {
+              //noinspection CallToPrintStackTrace
+              e.printStackTrace();
             }
           }
-          catch (IOException e) {
-            //noinspection CallToPrintStackTrace
-            e.printStackTrace();
+          EncodingManager encodingManager = EncodingManager.getInstance();
+          if (encodingManager instanceof EncodingManagerImpl) ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
+
+          FileDocumentManager manager = FileDocumentManager.getInstance();
+
+          ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flush postponed formatting if any.
+          manager.saveAllDocuments();
+          if (manager instanceof FileDocumentManagerImpl) {
+            ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
           }
         }
-        EncodingManager encodingManager = EncodingManager.getInstance();
-        if (encodingManager instanceof EncodingManagerImpl) ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
+      }.execute().throwException();
 
-        FileDocumentManager manager = FileDocumentManager.getInstance();
-
-        ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flush postponed formatting if any.
-        manager.saveAllDocuments();
-        if (manager instanceof FileDocumentManagerImpl) {
-          ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
+      assertFalse(PsiManager.getInstance(project).isDisposed());
+      if (!ourAssertionsInTestDetected) {
+        if (IdeaLogger.ourErrorsOccurred != null) {
+          throw IdeaLogger.ourErrorsOccurred;
         }
       }
-    }.execute().throwException();
+      documentManager = clearUncommittedDocuments(project);
+      ((HintManagerImpl)HintManager.getInstance()).cleanup();
+      DocumentCommitThread.getInstance().clearQueue();
 
-    assertFalse(PsiManager.getInstance(project).isDisposed());
-    if (!ourAssertionsInTestDetected) {
-      if (IdeaLogger.ourErrorsOccurred != null) {
-        throw IdeaLogger.ourErrorsOccurred;
-      }
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
+          ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
+
+          UIUtil.dispatchAllInvocationEvents();
+        }
+      });
+
+      TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest();
     }
-    PsiDocumentManagerImpl documentManager = clearUncommittedDocuments(project);
-    ((HintManagerImpl)HintManager.getInstance()).cleanup();
-    DocumentCommitThread.getInstance().clearQueue();
+    finally {
+      ProjectManagerEx.getInstanceEx().closeTestProject(project);
+    }
 
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
-        ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
-
-        UIUtil.dispatchAllInvocationEvents();
-      }
-    });
-
-    TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest();
-
-    ProjectManagerEx.getInstanceEx().closeTestProject(project);
     application.setDataProvider(null);
     ourTestCase = null;
     ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
