@@ -50,11 +50,12 @@ public class JUnit4TestListener extends RunListener {
   private long myCurrentTestStart;
 
   public JUnit4TestListener() {
-    myPrintStream = System.out;
+    this(System.out);
   }
 
   public JUnit4TestListener(PrintStream printStream) {
     myPrintStream = printStream;
+    myPrintStream.println("##teamcity[enteredTheMatrix]");
   }
 
   private static String escapeName(String str) {
@@ -62,7 +63,6 @@ public class JUnit4TestListener extends RunListener {
   }
 
   public void testRunStarted(Description description) throws Exception {
-    myPrintStream.println("##teamcity[enteredTheMatrix]");
     if (myRootName != null && !myRootName.startsWith("[")) {
       int lastPointIdx = myRootName.lastIndexOf('.');
       String name = myRootName;
