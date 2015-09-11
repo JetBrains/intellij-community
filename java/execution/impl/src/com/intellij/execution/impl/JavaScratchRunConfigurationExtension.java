@@ -32,6 +32,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.psi.PsiFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -48,20 +50,19 @@ java-impl ->execution-impl, compiler-impl
  */
 public class JavaScratchRunConfigurationExtension extends RunConfigurationExtension{
 
-  public static final Key<String> SCRATCH_FILE_URL = Key.create("_scratch_file_path_");
+  private static final Key<Integer> SCRATCH_FILE_ID = Key.create("_scratch_file_id_");
 
   public void cleanUserData(RunConfigurationBase configuration) {
     super.cleanUserData(configuration);
-    configuration.putCopyableUserData(SCRATCH_FILE_URL, null);
+    configuration.putCopyableUserData(SCRATCH_FILE_ID, null);
   }
 
   protected void extendCreatedConfiguration(@NotNull RunConfigurationBase configuration, @NotNull Location location) {
-    // todo: handle file renamings!
     final VirtualFile vFile = location.getVirtualFile();
-    if (vFile != null && vFile.getFileType() == ScratchFileType.INSTANCE) {
+    if (vFile instanceof VirtualFileWithId && vFile.getFileType() == ScratchFileType.INSTANCE) {
       final PsiFile psiFile = location.getPsiElement().getContainingFile();
       if (psiFile != null && psiFile.getLanguage() == JavaLanguage.INSTANCE) {
-        configuration.putCopyableUserData(SCRATCH_FILE_URL, vFile.getUrl());
+        configuration.putCopyableUserData(SCRATCH_FILE_ID, ((VirtualFileWithId)vFile).getId());
       }
     }
   }
@@ -71,7 +72,7 @@ public class JavaScratchRunConfigurationExtension extends RunConfigurationExtens
   }
 
   public <T extends RunConfigurationBase> void updateJavaParameters(T configuration, JavaParameters params, RunnerSettings runnerSettings) throws ExecutionException {
-    if (getScratchFileUrl(configuration) != null) {
+    if (getScratchFileId(configuration) >= 0) {
       final File scrachesOutput = getScratchOutputDirectory(configuration.getProject());
       if (scrachesOutput != null) {
         params.getClassPath().add(scrachesOutput);
@@ -86,7 +87,18 @@ public class JavaScratchRunConfigurationExtension extends RunConfigurationExtens
 
   @Nullable
   public static String getScratchFileUrl(RunConfiguration configuration) {
-    return configuration instanceof RunConfigurationBase? ((RunConfigurationBase)configuration).getCopyableUserData(SCRATCH_FILE_URL) : null;
+    int id = getScratchFileId(configuration);
+    if (id < 0) {
+      return null;
+    }
+    final VirtualFile vFile = ManagingFS.getInstance().findFileById(id);
+    return vFile != null? vFile.getUrl() : null;
+  }
+
+  private static int getScratchFileId(RunConfiguration configuration) {
+    final Integer id =
+      configuration instanceof RunConfigurationBase ? ((RunConfigurationBase)configuration).getCopyableUserData(SCRATCH_FILE_ID) : null;
+    return id == null? -1 : id.intValue();
   }
 
   @Nullable
@@ -105,22 +117,26 @@ public class JavaScratchRunConfigurationExtension extends RunConfigurationExtens
   protected void readExternal(@NotNull RunConfigurationBase runConfiguration, @NotNull Element element) throws InvalidDataException {
     final Element sourceElement = element.getChild("source");
     if (sourceElement != null) {
-      final String scratchUrl = sourceElement.getAttributeValue("url");
-      if (scratchUrl != null) {
-        runConfiguration.putCopyableUserData(SCRATCH_FILE_URL, scratchUrl);
+      final String idStr = sourceElement.getAttributeValue("fileId");
+      if (idStr != null) {
+        try {
+          runConfiguration.putCopyableUserData(SCRATCH_FILE_ID, Integer.parseInt(idStr));
+        }
+        catch (NumberFormatException ignored) {
+        }
       }
     }
   }
 
   protected void writeExternal(@NotNull RunConfigurationBase runConfiguration, @NotNull Element element) throws WriteExternalException {
-    final String url = getScratchFileUrl(runConfiguration);
-    if (url == null) {
+    final int id = getScratchFileId(runConfiguration);
+    if (id < 0) {
       super.writeExternal(runConfiguration, element);
     }
     else {
-      final Element urlElement = new Element("source");
-      urlElement.setAttribute("url", url);
-      element.addContent(urlElement);
+      final Element sourceElement = new Element("source");
+      sourceElement.setAttribute("fileId", String.valueOf(id));
+      element.addContent(sourceElement);
     }
   }
 
