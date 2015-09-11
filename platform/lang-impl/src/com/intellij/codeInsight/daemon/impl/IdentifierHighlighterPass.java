@@ -139,6 +139,10 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
                               ? findUsagesHandler.findReferencesToHighlight(target, scope)
                               : ReferencesSearch.search(target, scope).findAll();
     for (PsiReference psiReference : refs) {
+      if (psiReference == null) {
+        LOG.error("Null reference returned, findUsagesHandler=" + findUsagesHandler + "; target=" + target + " of " + target.getClass());
+        continue;
+      }
       final List<TextRange> textRanges = HighlightUsagesHandler.getRangesToHighlight(psiReference);
       if (detector == null || detector.getReferenceAccess(target, psiReference) == ReadWriteAccessDetector.Access.Read) {
         readRanges.addAll(textRanges);
