@@ -24,6 +24,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.io.PersistentEnumeratorBase;
@@ -148,7 +149,8 @@ public class LeakHunter {
         catch (ClassCastException ignored) {
         }
       }
-      if (root instanceof Class) { // check for static fields
+      // check for objects leaking via static fields. process classes which already were initialized only
+      if (root instanceof Class && !AtomicFieldUpdater.getUnsafe().shouldBeInitialized((Class<?>)root)) {
         try {
           for (Field field : getAllFields((Class)root)) {
             if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
