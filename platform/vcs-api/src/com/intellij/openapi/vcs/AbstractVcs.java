@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThreeState;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
@@ -268,13 +269,13 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
 
   /**
    * Invoked when a changelist is deleted explicitly by user or implicitly (e.g. after default changelist switch when the previous one was empty).
-   * @return null if the VCS doesn't object to the deletion. A Boolean object indicating the permission to remove if a dialog was shown asking the user whether
+   * @return UNSURE if the VCS doesn't object to the deletion. YES or NO indicating the permission to remove if a dialog was shown asking the user whether
    * the changelist really is to be removed.
    */
   @CalledInAwt
-  @Nullable 
-  public Boolean mayRemoveChangeList(@NotNull LocalChangeList list) {
-    return null;
+  @NotNull
+  public ThreeState mayRemoveChangeList(@NotNull LocalChangeList list) {
+    return ThreeState.UNSURE;
   }
 
   public boolean isTrackingUnchangedContent() {
