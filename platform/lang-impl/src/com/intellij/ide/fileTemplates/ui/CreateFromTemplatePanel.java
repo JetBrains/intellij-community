@@ -35,15 +35,13 @@ import java.util.Properties;
 /*
  * @author: MYakovlev
  */
+public class CreateFromTemplatePanel {
 
-public class CreateFromTemplatePanel{
   private JPanel myMainPanel;
   private JPanel myAttrPanel;
   private JTextField myFilenameField;
   private final String[] myUnsetAttributes;
   private final ArrayList<Pair<String, JTextField>> myAttributes = new ArrayList<Pair<String,JTextField>>();
-
-  private int myLastRow = 0;
 
   private int myHorizontalMargin = -1;
   private int myVerticalMargin = -1;
@@ -152,7 +150,7 @@ public class CreateFromTemplatePanel{
       myAttrPanel.add(myFilenameField, new GridBagConstraints(1, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, insets, 0, 0));
     }
 
-    myLastRow = 2;
+    int lastRow = 2;
     for (String attribute : myUnsetAttributes) {
       if (attribute.equals(FileTemplate.ATTRIBUTE_NAME)) { // already asked above
         continue;
@@ -172,11 +170,11 @@ public class CreateFromTemplatePanel{
         }
       }
       myAttributes.add(Pair.create(attribute, field));
-      myAttrPanel.add(label, new GridBagConstraints(0, myLastRow, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+      myAttrPanel.add(label, new GridBagConstraints(0, lastRow, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                     insets, 0, 0));
-      myAttrPanel.add(field, new GridBagConstraints(1, myLastRow, 1, 1, 1.0, 0.0, GridBagConstraints.WEST,
+      myAttrPanel.add(field, new GridBagConstraints(1, lastRow, 1, 1, 1.0, 0.0, GridBagConstraints.WEST,
                                                     GridBagConstraints.HORIZONTAL, insets, 0, 0));
-      myLastRow++;
+      lastRow++;
     }
 
     myAttrPanel.repaint();
