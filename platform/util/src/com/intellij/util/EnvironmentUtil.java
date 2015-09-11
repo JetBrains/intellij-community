@@ -111,12 +111,20 @@ public class EnvironmentUtil {
   /**
    * Same as {@code getEnvironmentMap().get(name)}.
    * Returns value for the passed environment variable name, or null if no such variable found.
+   *
+   * @see #getEnvironmentMap()
    */
   @Nullable
   public static String getValue(@NotNull String name) {
     return getEnvironmentMap().get(name);
   }
 
+  /**
+   * Same as {@code flattenEnvironment(getEnvironmentMap())}.
+   * Returns an environment as an array of "NAME=VALUE" strings.
+   *
+   * @see #getEnvironmentMap()
+   */
   public static String[] getEnvironment() {
     return flattenEnvironment(getEnvironmentMap());
   }
