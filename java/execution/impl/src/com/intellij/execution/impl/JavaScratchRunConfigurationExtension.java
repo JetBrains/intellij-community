@@ -56,6 +56,7 @@ public class JavaScratchRunConfigurationExtension extends RunConfigurationExtens
   }
 
   protected void extendCreatedConfiguration(@NotNull RunConfigurationBase configuration, @NotNull Location location) {
+    // todo: handle file renamings!
     final VirtualFile vFile = location.getVirtualFile();
     if (vFile != null && vFile.getFileType() == ScratchFileType.INSTANCE) {
       final PsiFile psiFile = location.getPsiElement().getContainingFile();

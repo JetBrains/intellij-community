@@ -18,6 +18,7 @@ package com.intellij.execution.impl;
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
@@ -27,9 +28,12 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -50,22 +54,6 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
   public boolean execute(CompileContext context) {
     final Project project = context.getProject();
 
-    File outputDir = null;
-    File srcDir = null;
-
-    if (context.isRebuild()) {
-      // perform cleanup
-      outputDir = JavaScratchRunConfigurationExtension.getScratchOutputDirectory(project);
-      if (outputDir == null) { // should not happen for normal projects
-        return true;
-      }
-      FileUtil.delete(outputDir);
-      srcDir = JavaScratchRunConfigurationExtension.getScratchTempDirectory(project);
-      if (srcDir != null) {
-        FileUtil.delete(srcDir);
-      }
-    }
-
     final RunConfiguration configuration = CompileStepBeforeRun.getRunConfiguration(context);
     if (!(configuration instanceof ModuleBasedConfiguration)) {
       return true;
@@ -83,23 +71,54 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
     if (targetSdk == null || !(targetSdk.getSdkType() instanceof JavaSdkType)) {
       return true; // todo: show error?
     }
-    if (outputDir == null) {
-      outputDir = JavaScratchRunConfigurationExtension.getScratchOutputDirectory(project);
-      if (outputDir == null) { // should not happen for normal projects
-        return true;
-      }
+
+    final File outputDir = JavaScratchRunConfigurationExtension.getScratchOutputDirectory(project);
+    if (outputDir == null) { // should not happen for normal projects
+      return true;
     }
+    FileUtil.delete(outputDir); // perform cleanup
+
     try {
       final File scratchFile = new File(VirtualFileManager.extractPath(scratchUrl));
       File srcFile = scratchFile;
       if (!StringUtil.endsWith(srcFile.getName(), ".java")) {
-        if (srcDir == null) {
-          srcDir = JavaScratchRunConfigurationExtension.getScratchTempDirectory(project);
-          if (srcDir == null) { // should not happen for normal projects
-            return true;
-          }
+
+        final File srcDir = JavaScratchRunConfigurationExtension.getScratchTempDirectory(project);
+        if (srcDir == null) { // should not happen for normal projects
+          return true;
         }
-        srcFile = new File(srcDir, FileUtil.getNameWithoutExtension(scratchFile) + ".java");
+        FileUtil.delete(srcDir); // perform cleanup
+
+        final String srcFileName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+          @Override
+          public String compute() {
+            final VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(scratchUrl);
+            if (vFile != null) {
+              final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
+              if (psiFile instanceof PsiJavaFile) {
+                String name = null;
+                // take the name of the first found public top-level class, otherwise the name of any available top-level class
+                for (PsiClass aClass : ((PsiJavaFile)psiFile).getClasses()) {
+                  if (name == null) {
+                    name = aClass.getName();
+                    if (isPublic(aClass)) {
+                      break;
+                    }
+                  }
+                  else if (isPublic(aClass)){
+                    name = aClass.getName();
+                    break;
+                  }
+                }
+                if (name != null) {
+                  return name;
+                }
+              }
+            }
+            return FileUtil.getNameWithoutExtension(scratchFile);
+          }
+        });
+        srcFile = new File(srcDir, srcFileName + ".java");
         FileUtil.copy(scratchFile, srcFile);
       }
 
@@ -144,6 +163,11 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
       context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), scratchUrl, -1, -1);
     }
     return true;
+  }
+
+  private static boolean isPublic(PsiClass aClass) {
+    final PsiModifierList modifiers = aClass.getModifierList();
+    return modifiers != null && modifiers.hasModifierProperty(PsiModifier.PUBLIC);
   }
 
   @Override
