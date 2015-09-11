@@ -74,11 +74,12 @@ class JarLoader extends Loader {
   }
 
   @Nullable
-  private static Map<Resource.Attribute, String> getAttributes(ZipFile zipFile) throws IOException {
-    Map<Resource.Attribute, String> map = null;
-
+  private static Map<Resource.Attribute, String> getAttributes(ZipFile zipFile) {
     ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
-    if (entry != null) {
+    if (entry == null) return null;
+
+    Map<Resource.Attribute, String> map = null;
+    try {
       InputStream stream = zipFile.getInputStream(entry);
       try {
         Attributes attributes = new Manifest(stream).getMainAttributes();
@@ -94,7 +95,7 @@ class JarLoader extends Loader {
         stream.close();
       }
     }
-
+    catch (Exception ignored) { }
     return map;
   }
 
