@@ -1104,9 +1104,7 @@ public class GeneratedParserUtilBase {
         tokenCount = 0;
       }
     }
-    if (marker != null) {
-      marker.drop();
-    }
+    marker.drop();
     for (Pair<PsiBuilder.Marker, PsiBuilder.Marker> pair : parenList) {
       pair.first.drop();
     }
