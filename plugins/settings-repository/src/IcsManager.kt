@@ -91,7 +91,7 @@ class IcsManager(dir: File) {
       ProgressManager.getInstance().run(object : Task.Backgroundable(null, IcsBundle.message("task.commit.title")) {
         override fun run(indicator: ProgressIndicator) {
           try {
-            repositoryManager.commit(indicator)
+            repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
           }
           catch (e: Throwable) {
             LOG.error(e)

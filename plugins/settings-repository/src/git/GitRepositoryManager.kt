@@ -120,11 +120,11 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     repository.deletePath(path, isFile, false)
   }
 
-  override fun commit(indicator: ProgressIndicator?, syncType: SyncType?): Boolean {
+  override fun commit(indicator: ProgressIndicator?, syncType: SyncType?, fixStateIfCannotCommit: Boolean): Boolean {
     lock.write {
       try {
         // will be reset if OVERWRITE_LOCAL, so, we should not fix state in this case
-        return commitIfCan(indicator, if (syncType == SyncType.OVERWRITE_LOCAL) repository.getRepositoryState() else repository.fixAndGetState())
+        return commitIfCan(indicator, if (!fixStateIfCannotCommit || syncType == SyncType.OVERWRITE_LOCAL) repository.getRepositoryState() else repository.fixAndGetState())
       }
       catch (e: UnmergedPathsException) {
         if (syncType == SyncType.OVERWRITE_LOCAL) {
