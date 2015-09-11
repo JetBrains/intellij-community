@@ -15,17 +15,13 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
-import com.intellij.formatting.*;
-import com.intellij.lang.LanguageFormatting;
+import com.intellij.formatting.ASTBlock;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.Indent;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.formatter.common.NewLineBlocksIterator;
 import com.intellij.util.Function;
@@ -39,25 +35,17 @@ import java.util.List;
 public class FormatterBasedLineIndentInfoBuilder {
   private static final int MAX_NEW_LINE_BLOCKS_TO_PROCESS = 500;
 
-  private final PsiFile myFile;
   private final Document myDocument;
   private final CharSequence myText;
-  private final CodeStyleSettings mySettings;
-  private final FormattingModelBuilder myFormattingModelBuilder;
+  private final Block myRootBlock;
 
-  public FormatterBasedLineIndentInfoBuilder(@NotNull PsiFile file) {
-    Project project = file.getProject();
-
-    myFile = file;
-    myDocument = PsiDocumentManager.getInstance(project).getDocument(file);
-    myText = myDocument != null ? myDocument.getCharsSequence() : null;
-    mySettings = CodeStyleSettingsManager.getSettings(project);
-    myFormattingModelBuilder = LanguageFormatting.INSTANCE.forContext(myFile);
+  public FormatterBasedLineIndentInfoBuilder(@NotNull Document document, @NotNull Block rootBlock) {
+    myDocument = document;
+    myText = myDocument.getCharsSequence();
+    myRootBlock = rootBlock;
   }
 
   public List<LineIndentInfo> build() {
-    if (myText == null || myFormattingModelBuilder == null) return null;
-
     List<Block> normallyIndentedBlocks = ContainerUtil.filter(getBlocksStartingNewLine(), new Condition<Block>() {
       @Override
       public boolean value(Block block) {
@@ -103,9 +91,7 @@ public class FormatterBasedLineIndentInfoBuilder {
 
   @NotNull
   private List<Block> getBlocksStartingNewLine() {
-    FormattingModel model = myFormattingModelBuilder.createModel(myFile, mySettings);
-    Block root = model.getRootBlock();
-    NewLineBlocksIterator newLineBlocksIterator = new NewLineBlocksIterator(root, myDocument);
+    NewLineBlocksIterator newLineBlocksIterator = new NewLineBlocksIterator(myRootBlock, myDocument);
 
     List<Block> newLineBlocks = new ArrayList<Block>();
     int currentLine = 0;
