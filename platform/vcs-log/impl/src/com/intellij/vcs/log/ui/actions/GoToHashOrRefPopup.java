@@ -184,7 +184,8 @@ public class GoToHashOrRefPopup {
     @Nullable
     @Override
     protected String getTailText(@NotNull VcsRef item) {
-      return null;
+      if (!myColorManager.isMultipleRoots()) return null;
+      return "";
     }
 
     @Nullable
