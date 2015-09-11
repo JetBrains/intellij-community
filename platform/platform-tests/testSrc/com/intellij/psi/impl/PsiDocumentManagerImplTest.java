@@ -566,18 +566,27 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   }
   
   public void testReparseDoesNotModifyDocument() throws Exception {
-    VirtualFile file = createTempFile("txt", null, "foo", Charset.forName("UTF-8"));
-    file.putUserData(TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY, EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+    VirtualFile file = createTempFile("txt", null, "1\n2\n3\n", Charset.forName("UTF-8"));
+    file.putUserData(TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY, EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED);
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     assertNotNull(document);
     WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
       @Override
       public void run() {
-        document.insertString(3, " ");
+        document.insertString(document.getTextLength(), " ");
       }
     });
     
     PsiDocumentManager.getInstance(myProject).reparseFiles(Collections.singleton(file), false);
-    assertEquals("foo ", VfsUtilCore.loadText(file));
+    assertEquals("1\n2\n3\n ", VfsUtilCore.loadText(file));
+
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(0, "-");
+      }
+    });
+    FileDocumentManager.getInstance().saveDocument(document);
+    assertEquals("-1\n2\n3\n", VfsUtilCore.loadText(file));
   }
 }
