@@ -2659,6 +2659,11 @@ public class UIUtil {
     return new JBTreeTraverser<Component>(COMPONENT_CHILDREN);
   }
 
+  @NotNull
+  public static JBTreeTraverser<Component> uiTraverser(@Nullable Component component) {
+    return new JBTreeTraverser<Component>(COMPONENT_CHILDREN).withRoot(component);
+  }
+
   public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
 
   private static final Function<Component, Iterable<Component>> COMPONENT_CHILDREN = new Function<Component, Iterable<Component>>() {
