@@ -55,24 +55,20 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
   private static final Key<Value> EXPRESSION_VALUE = new Key<Value>("EXPRESSION_VALUE");
   private static final Key<NodeRenderer> LAST_CHILDREN_RENDERER = new Key<NodeRenderer>("LAST_CHILDREN_RENDERER");
 
-  private final CachedEvaluator myChildrenExpandable = new CachedEvaluator() {
-    protected String getClassName() {
-      return ExpressionChildrenRenderer.this.getClassName();
-    }
-  };
-
-  private final CachedEvaluator myChildrenExpression = new CachedEvaluator() {
-    protected String getClassName() {
-      return ExpressionChildrenRenderer.this.getClassName();
-    }
-  };
+  private CachedEvaluator myChildrenExpandable = createCachedEvaluator();
+  private CachedEvaluator myChildrenExpression = createCachedEvaluator();
 
   public String getUniqueId() {
     return UNIQUE_ID;
   }
 
   public ExpressionChildrenRenderer clone() {
-    return (ExpressionChildrenRenderer)super.clone();
+    ExpressionChildrenRenderer clone = (ExpressionChildrenRenderer)super.clone();
+    clone.myChildrenExpandable = createCachedEvaluator();
+    clone.setChildrenExpandable(getChildrenExpandable());
+    clone.myChildrenExpression = createCachedEvaluator();
+    clone.setChildrenExpression(getChildrenExpression());
+    return clone;
   }
 
   public void buildChildren(final Value value, final ChildrenBuilder builder, final EvaluationContext evaluationContext) {

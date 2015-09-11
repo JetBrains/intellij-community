@@ -29,15 +29,17 @@ import com.sun.jdi.*;
 import com.sun.jdi.request.BreakpointRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Sep 13, 2006
  */
-public class StepIntoBreakpoint<P extends JavaBreakpointProperties> extends RunToCursorBreakpoint<P> {
+public class StepIntoBreakpoint extends RunToCursorBreakpoint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint");
   @NotNull
   private final BreakpointStepMethodFilter myFilter;

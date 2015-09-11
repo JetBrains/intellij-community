@@ -135,7 +135,7 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
         }
       }
       setSelected(myShortcutLabel, isSelected);
-      //    myShortcutLabel.setForeground(isSelected ? UIManager.getColor("MenuItem.acceleratorSelectionForeground") : UIManager.getColor("MenuItem.acceleratorForeground"));
+      myShortcutLabel.setForeground(isSelected ? UIManager.getColor("MenuItem.acceleratorSelectionForeground") : UIManager.getColor("MenuItem.acceleratorForeground"));
     }
   }
 }

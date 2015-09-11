@@ -757,11 +757,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private volatile RunToCursorBreakpoint myRunToCursorBreakpoint;
 
+  public void setRunToCursorBreakpoint(@Nullable RunToCursorBreakpoint breakpoint) {
+    myRunToCursorBreakpoint = breakpoint;
+  }
+
   public void cancelRunToCursorBreakpoint() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final RunToCursorBreakpoint runToCursorBreakpoint = myRunToCursorBreakpoint;
     if (runToCursorBreakpoint != null) {
-      myRunToCursorBreakpoint = null;
+      setRunToCursorBreakpoint(null);
       getRequestsManager().deleteRequest(runToCursorBreakpoint);
       if (runToCursorBreakpoint.isRestoreBreakpoints()) {
         final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
@@ -1530,7 +1534,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (myBreakpoint != null) {
         myBreakpoint.setSuspendPolicy(suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
         myBreakpoint.createRequest(suspendContext.getDebugProcess());
-        myRunToCursorBreakpoint = myBreakpoint;
+        setRunToCursorBreakpoint(myBreakpoint);
       }
       doStep(suspendContext, stepThread, myStepSize, StepRequest.STEP_INTO, hint);
       super.contextAction();
@@ -1602,7 +1606,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       myRunToCursorBreakpoint.setSuspendPolicy(context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
       final DebugProcessImpl debugProcess = context.getDebugProcess();
       myRunToCursorBreakpoint.createRequest(debugProcess);
-      DebugProcessImpl.this.myRunToCursorBreakpoint = myRunToCursorBreakpoint;
+      setRunToCursorBreakpoint(myRunToCursorBreakpoint);
 
       if (debugProcess.getRequestsManager().getWarning(myRunToCursorBreakpoint) == null) {
         super.contextAction();

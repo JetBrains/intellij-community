@@ -54,7 +54,6 @@ public class JavaSdkUtil {
   @NotNull
   public static List<String> getJUnit4JarPaths() {
     return Arrays.asList(getJunit4JarPath(),
-                         PathUtil.getJarPathForClass(ReflectionUtil.forName("org.hamcrest.Matcher")),
-                         PathUtil.getJarPathForClass(ReflectionUtil.forName("org.hamcrest.Matchers")));
+                         PathUtil.getJarPathForClass(ReflectionUtil.forName("org.hamcrest.Matcher")));
   }
 }

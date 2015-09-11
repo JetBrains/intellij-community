@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class AdditionalOptionsPanel implements RefreshableOnComponent, TagNameFi
 
   public void refresh() {
     myTagName.setText(myConfiguration.TAG_AFTER_PROJECT_COMMIT_NAME);
-    myOverrideExisting.setSelected(myConfiguration.OVERRIDE_EXISTING_TAG_FOR_PROJECT);
+    myOverrideExisting.setSelected(false); // always reset override existing checkbox
     updateEnable();
   }
 

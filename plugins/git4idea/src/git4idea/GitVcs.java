@@ -19,7 +19,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -90,10 +89,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Git VCS implementation
  */
 public class GitVcs extends AbstractVcs<CommittedChangeList> {
-
-  static {
-    NotificationsConfigurationImpl.remove("Git");
-  }
 
   public static final String NAME = "Git";
   public static final String ID = "git";

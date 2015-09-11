@@ -16,17 +16,22 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.impl.stores.BatchUpdateListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,10 +40,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 
@@ -127,17 +129,57 @@ public class ProjectDataManager {
       ExternalSystemUtil.scheduleExternalViewStructureUpdate(project, projectSystemId);
     }
 
-    for (Map.Entry<Key<?>, Collection<DataNode<?>>> entry : grouped.entrySet()) {
-      doImportData(entry.getKey(), entry.getValue(), projectData, project, platformFacade, synchronous);
+    final BatchUpdateListener publisher = project.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC);
+    publisher.onBatchUpdateStarted();
+    try {
+      final Set<Map.Entry<Key<?>, Collection<DataNode<?>>>> entries = grouped.entrySet();
+      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null) {
+        indicator.setIndeterminate(false);
+      }
+      final int size = entries.size();
+      int count = 0;
+      for (Map.Entry<Key<?>, Collection<DataNode<?>>> entry : entries) {
+        if (indicator != null) {
+          String message = ExternalSystemBundle.message(
+            "progress.update.text", projectSystemId != null ? projectSystemId.getReadableName() : "",
+            "Importing " + getReadableText(entry.getKey()));
+          indicator.setText(message);
+          indicator.setFraction((double)count++ / size);
+        }
+        doImportData(entry.getKey(), entry.getValue(), projectData, project, platformFacade, synchronous);
+      }
+      if (indicator != null) {
+        indicator.setIndeterminate(true);
+      }
+    }
+    finally {
+      ExternalSystemApiUtil.executeOnEdt(synchronous, new Runnable() {
+        @Override
+        public void run() {
+          publisher.onBatchUpdateFinished();
+        }
+      });
     }
   }
 
-  /**
-   * @deprecated to be removed in v15, use {@link #importData(Collection, Project, boolean)}
-   */
-  @Deprecated
-  public <T> void importData(@NotNull Key<T> key, @NotNull Collection<DataNode<T>> nodes, @NotNull Project project, boolean synchronous) {
-    importData(nodes, project, synchronous);
+  @NotNull
+  private static String getReadableText(@NotNull Key key) {
+    StringBuilder buffer = new StringBuilder();
+    String s = key.toString();
+    for (int i = 0; i < s.length(); i++) {
+      char currChar = s.charAt(i);
+      if (Character.isUpperCase(currChar)) {
+        if (i != 0) {
+          buffer.append(' ');
+        }
+        buffer.append(StringUtil.toLowerCase(currChar));
+      }
+      else {
+        buffer.append(currChar);
+      }
+    }
+    return buffer.toString();
   }
 
   public <T> void importData(@NotNull Collection<DataNode<T>> nodes, @NotNull Project project, boolean synchronous) {

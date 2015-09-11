@@ -10,9 +10,9 @@ import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
-import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
@@ -20,10 +20,10 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -66,29 +66,24 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
 
   @Override
   public void importData(@NotNull final Collection<DataNode<LibraryData>> toImport,
-                         @Nullable ProjectData projectData,
+                         @Nullable final ProjectData projectData,
                          @NotNull final Project project,
                          @NotNull final PlatformFacade platformFacade,
                          final boolean synchronous) {
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
-      @Override
-      public void execute() {
-        for (DataNode<LibraryData> dataNode : toImport) {
-          importLibrary(dataNode.getData(), project, platformFacade, synchronous);
-        }
-      }
-    });
+    for (DataNode<LibraryData> dataNode : toImport) {
+      importLibrary(dataNode.getData(), project, platformFacade, synchronous);
+    }
   }
 
-  private void importLibrary(@NotNull LibraryData toImport,
-                             @NotNull Project project,
-                             @NotNull PlatformFacade platformFacade,
+  private void importLibrary(@NotNull final LibraryData toImport,
+                             @NotNull final Project project,
+                             @NotNull final PlatformFacade platformFacade,
                              boolean synchronous) {
     Map<OrderRootType, Collection<File>> libraryFiles = prepareLibraryFiles(toImport);
 
     Library library = platformFacade.findIdeLibrary(toImport, project);
     if (library != null) {
-      syncPaths(toImport, library, project, synchronous);
+      syncPaths(toImport, library, platformFacade);
       return;
     }
     importLibrary(toImport.getInternalName(), libraryFiles, project, platformFacade);
@@ -107,28 +102,24 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     return result;
   }
 
-  private void importLibrary(@NotNull String libraryName,
-                             @NotNull Map<OrderRootType, Collection<File>> libraryFiles,
-                             @NotNull Project project,
-                             @NotNull PlatformFacade platformFacade)
+  private void importLibrary(@NotNull final String libraryName,
+                             @NotNull final Map<OrderRootType, Collection<File>> libraryFiles,
+                             @NotNull final Project project,
+                             @NotNull final PlatformFacade platformFacade)
   {
-    // Is assumed to be called from the EDT.
-    LibraryTable libraryTable = platformFacade.getProjectLibraryTable(project);
-    LibraryTable.ModifiableModel projectLibraryModel = libraryTable.getModifiableModel();
-    Library intellijLibrary;
-    try {
-      intellijLibrary = projectLibraryModel.createLibrary(libraryName);
-    }
-    finally {
-      projectLibraryModel.commit();
-    }
-    Library.ModifiableModel libraryModel = intellijLibrary.getModifiableModel();
-    try {
-      registerPaths(libraryFiles, libraryModel, libraryName);
-    }
-    finally {
-      libraryModel.commit();
-    }
+    final Library[] intellijLibrary = new Library[1];
+    platformFacade.updateLibraryTable(project, new Consumer<LibraryTable.ModifiableModel>() {
+      @Override
+      public void consume(LibraryTable.ModifiableModel model) {
+        intellijLibrary[0] = model.createLibrary(libraryName);
+      }
+    });
+    platformFacade.updateLibrary(intellijLibrary[0], new Consumer<Library.ModifiableModel>() {
+      @Override
+      public void consume(Library.ModifiableModel libraryModel) {
+        registerPaths(libraryFiles, libraryModel, libraryName);
+      }
+    });
   }
 
   @SuppressWarnings("MethodMayBeStatic")
@@ -138,7 +129,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
   {
     for (Map.Entry<OrderRootType, Collection<File>> entry : libraryFiles.entrySet()) {
       for (File file : entry.getValue()) {
-        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        VirtualFile virtualFile = ExternalSystemUtil.refreshAndFindFileByIoFile(file);
         if (virtualFile == null) {
           if (ExternalSystemConstants.VERBOSE_PROCESSING && entry.getKey() == OrderRootType.CLASSES) {
             LOG.warn(
@@ -190,35 +181,30 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     if (toRemove.isEmpty()) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
+    platformFacade.updateLibraryTable(project, new Consumer<LibraryTable.ModifiableModel>() {
       @Override
-      public void execute() {
-        final LibraryTable libraryTable = platformFacade.getProjectLibraryTable(project);
-        final LibraryTable.ModifiableModel model = libraryTable.getModifiableModel();
-        try {
-          for (Library library : toRemove) {
-            String libraryName = library.getName();
-            if (libraryName != null) {
-              Library libraryToRemove = model.getLibraryByName(libraryName);
-              if (libraryToRemove != null) {
-                model.removeLibrary(libraryToRemove);
-              }
+      public void consume(LibraryTable.ModifiableModel model) {
+        for (Library library : toRemove) {
+          String libraryName = library.getName();
+          if (libraryName != null) {
+            Library libraryToRemove = model.getLibraryByName(libraryName);
+            if (libraryToRemove != null) {
+              model.removeLibrary(libraryToRemove);
             }
           }
-        }
-        finally {
-          model.commit();
         }
       }
     });
   }
 
-  public void syncPaths(@NotNull LibraryData externalLibrary, @NotNull Library ideLibrary, @NotNull Project project, boolean synchronous) {
+  private void syncPaths(@NotNull final LibraryData externalLibrary,
+                         @NotNull final Library ideLibrary,
+                         @NotNull final PlatformFacade platformFacade) {
     if (externalLibrary.isUnresolved()) {
       return;
     }
-    Map<OrderRootType, Set<String>> toRemove = ContainerUtilRt.newHashMap();
-    Map<OrderRootType, Set<String>> toAdd = ContainerUtilRt.newHashMap();
+    final Map<OrderRootType, Set<String>> toRemove = ContainerUtilRt.newHashMap();
+    final Map<OrderRootType, Set<String>> toAdd = ContainerUtilRt.newHashMap();
     for (LibraryPathType pathType : LibraryPathType.values()) {
       OrderRootType ideType = myLibraryPathTypeMapper.map(pathType);
       HashSet<String> toAddPerType = ContainerUtilRt.newHashSet(externalLibrary.getPaths(pathType));
@@ -237,22 +223,22 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     if (toRemove.isEmpty() && toAdd.isEmpty()) {
       return;
     }
-    Library.ModifiableModel model = ideLibrary.getModifiableModel();
-    try {
-      for (Map.Entry<OrderRootType, Set<String>> entry : toRemove.entrySet()) {
-        for (String path : entry.getValue()) {
-          model.removeRoot(path, entry.getKey());
+
+    platformFacade.updateLibrary(ideLibrary, new Consumer<Library.ModifiableModel>() {
+      @Override
+      public void consume(Library.ModifiableModel model) {
+        for (Map.Entry<OrderRootType, Set<String>> entry : toRemove.entrySet()) {
+          for (String path : entry.getValue()) {
+            model.removeRoot(path, entry.getKey());
+          }
+        }
+
+        for (Map.Entry<OrderRootType, Set<String>> entry : toAdd.entrySet()) {
+          Map<OrderRootType, Collection<File>> roots = ContainerUtilRt.newHashMap();
+          roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
+          registerPaths(roots, model, externalLibrary.getInternalName());
         }
       }
-
-      for (Map.Entry<OrderRootType, Set<String>> entry : toAdd.entrySet()) {
-        Map<OrderRootType, Collection<File>> roots = ContainerUtilRt.newHashMap();
-        roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
-        registerPaths(roots, model, externalLibrary.getInternalName());
-      }
-    }
-    finally {
-      model.commit();
-    }
+    });
   }
 }

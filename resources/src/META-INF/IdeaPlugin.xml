@@ -66,6 +66,10 @@
     <component>
       <implementation-class>com.intellij.execution.testDiscovery.TestDiscoveryIndex</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.execution.impl.JavaScratchCompilationSupport</implementation-class>
+    </component>
   </project-components>
 
   <extensionPoints>
@@ -1621,6 +1625,7 @@
 
     <applicationService serviceImplementation="com.intellij.execution.JavaRunConfigurationExtensionManager"/>
     <runConfigurationExtension implementation="com.intellij.execution.testDiscovery.TestDiscoveryExtension"/>
+    <runConfigurationExtension implementation="com.intellij.execution.impl.JavaScratchRunConfigurationExtension"/>
 
     <regExpLanguageHost forClass="com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl"
                         implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>

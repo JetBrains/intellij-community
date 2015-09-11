@@ -43,6 +43,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class RequestHint {
   public static final int STOP = 0;
+  public static final int RESUME = -100;
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.RequestHint");
   private final int mySize;
   private final int myDepth;
@@ -174,6 +176,13 @@ public class RequestHint {
     }
   }
 
+  private static int reached(MethodFilter filter, SuspendContextImpl context) {
+    if (filter instanceof ActionMethodFilter) {
+      return ((ActionMethodFilter)filter).onReached(context);
+    }
+    return STOP;
+  }
+
   public int getNextStepDepth(final SuspendContextImpl context) {
     try {
       final StackFrameProxyImpl frameProxy = context.getFrameProxy();
@@ -186,7 +195,7 @@ public class RequestHint {
           !isTheSameFrame(context)
         ) {
         myTargetMethodMatched = true;
-        return STOP;
+        return reached(myMethodFilter, context);
       }
 
       if ((myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) && myPosition != null) {

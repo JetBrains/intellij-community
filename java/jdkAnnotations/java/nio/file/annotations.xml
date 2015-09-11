@@ -197,6 +197,9 @@
   <item name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, java.lang.Iterable&lt;? extends java.lang.CharSequence&gt;, java.nio.charset.Charset, java.nio.file.OpenOption...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files java.nio.file.attribute.FileTime getLastModifiedTime(java.nio.file.Path, java.nio.file.LinkOption...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.nio.file.Files java.nio.file.attribute.FileTime getLastModifiedTime(java.nio.file.Path, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

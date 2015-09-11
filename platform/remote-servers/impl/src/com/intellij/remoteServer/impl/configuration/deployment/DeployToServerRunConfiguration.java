@@ -25,6 +25,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.components.ComponentSerializationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -83,7 +84,13 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   @NotNull
   @Override
   public SettingsEditor<DeployToServerRunConfiguration> getConfigurationEditor() {
-    return new DeployToServerSettingsEditor(myServerType, myDeploymentConfigurator, getProject());
+    SettingsEditor<DeployToServerRunConfiguration> commonEditor
+      = new DeployToServerSettingsEditor(myServerType, myDeploymentConfigurator, getProject());
+
+    SettingsEditorGroup<DeployToServerRunConfiguration> group = new SettingsEditorGroup<DeployToServerRunConfiguration>();
+    group.addEditor("Deployment", commonEditor);
+    DeployToServerRunConfigurationExtensionsManager.getInstance().appendEditors(this, group);
+    return group.getEditors().size() == 1 ? commonEditor : group;
   }
 
   @Nullable

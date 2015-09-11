@@ -25,10 +25,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,9 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("ConstantConditions")
@@ -560,7 +555,13 @@ public class FileTypesTest extends PlatformTestCase {
     assertEquals(ArchiveFileType.INSTANCE, myFileTypeManager.getFileTypeByExtension("zip"));
     Element map = myFileTypeManager.getState().getChild("extensionMap");
     if (map != null) {
-      fail(JDOMUtil.writeElement(map));
+      List<Element> mapping = map.getChildren("mapping");
+      assertNull(ContainerUtil.find(mapping, new Condition<Element>() {
+        @Override
+        public boolean value(Element o) {
+          return "zip".equals(o.getAttributeValue("ext"));
+        }
+      }));
     }
   }
 

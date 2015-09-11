@@ -1,5 +1,8 @@
 <component name="libraryTable">
   <library name="http-client">
+    <ANNOTATIONS>
+      <root url="file://$PROJECT_DIR$/lib/annotations/http-client"/>
+    </ANNOTATIONS>
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/httpcore-4.4.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/httpmime-4.4.1.jar!/" />

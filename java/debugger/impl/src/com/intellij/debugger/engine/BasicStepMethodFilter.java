@@ -37,10 +37,20 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
   protected final JVMName myTargetMethodSignature;
   private final Range<Integer> myCallingExpressionLines;
 
-  public BasicStepMethodFilter(PsiMethod psiMethod, Range<Integer> callingExpressionLines) {
-    myDeclaringClassName = JVMNameUtil.getJVMQualifiedName(psiMethod.getContainingClass());
-    myTargetMethodName = JVMNameUtil.getJVMMethodName(psiMethod);
-    myTargetMethodSignature = JVMNameUtil.getJVMSignature(psiMethod);
+  public BasicStepMethodFilter(@NotNull PsiMethod psiMethod, Range<Integer> callingExpressionLines) {
+    this(JVMNameUtil.getJVMQualifiedName(psiMethod.getContainingClass()),
+         JVMNameUtil.getJVMMethodName(psiMethod),
+         JVMNameUtil.getJVMSignature(psiMethod),
+         callingExpressionLines);
+  }
+
+  protected BasicStepMethodFilter(@NotNull JVMName declaringClassName,
+                               @NotNull String targetMethodName,
+                               JVMName targetMethodSignature,
+                               Range<Integer> callingExpressionLines) {
+    myDeclaringClassName = declaringClassName;
+    myTargetMethodName = targetMethodName;
+    myTargetMethodSignature = targetMethodSignature;
     myCallingExpressionLines = callingExpressionLines;
   }
 

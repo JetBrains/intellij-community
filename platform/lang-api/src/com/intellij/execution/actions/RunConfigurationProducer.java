@@ -86,7 +86,15 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   public ConfigurationFromContext createConfigurationFromContext(ConfigurationContext context) {
     final RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
     final Ref<PsiElement> locationRef = new Ref<PsiElement>(context.getPsiLocation());
-    if (!setupConfigurationFromContext((T)settings.getConfiguration(), context, locationRef)) {
+    T configuration = null;
+    try {
+      configuration = (T)settings.getConfiguration();
+    }
+    catch (ClassCastException e) {
+      LOG.error(myConfigurationFactory + " produced wrong type", e);
+      return null;
+    }
+    if (!setupConfigurationFromContext(configuration, context, locationRef)) {
       return null;
     }
     return new ConfigurationFromContextImpl(this, settings, locationRef.get());

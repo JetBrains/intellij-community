@@ -1,5 +1,6 @@
 package com.jetbrains.env.python.testing;
 
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
@@ -34,6 +35,11 @@ public class PythonPyTestingTest extends PyEnvTestCase {
         assertEquals(3, runner.getAllTestsCount());
         assertEquals(3, runner.getPassedTestsCount());
         runner.assertAllTestsPassed();
+
+
+        // This test has "sleep(1)", so duration should be >=1000
+        final AbstractTestProxy testForOneSecond = runner.findTestByName("testOne");
+        Assert.assertThat("Wrong duration", testForOneSecond.getDuration(), Matchers.greaterThanOrEqualTo(1000L));
       }
     });
   }
@@ -59,8 +65,12 @@ public class PythonPyTestingTest extends PyEnvTestCase {
                       Matchers.startsWith("I am test1"));
 
         // Ensure test has stdout even it fails
-        Assert.assertThat("No stdout for fail", MockPrinter.fillPrinter(runner.findTestByName("testFail")).getStdOut(),
+        final AbstractTestProxy testFail = runner.findTestByName("testFail");
+        Assert.assertThat("No stdout for fail", MockPrinter.fillPrinter(testFail).getStdOut(),
                           Matchers.startsWith("I will fail"));
+
+        // This test has "sleep(1)", so duration should be >=1000
+        Assert.assertThat("Wrong duration", testFail.getDuration(), Matchers.greaterThanOrEqualTo(1000L));
       }
     });
   }

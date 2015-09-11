@@ -293,6 +293,11 @@ libraryLicense(name: "imgscalr", libraryName: "imgscalr", version: "4.2", licens
 libraryLicense(name: "Spantable", libraryName: "spantable.jar", version: "patched", license: "LGPL 2.1", licenseUrl: "http://www.gnu.org/licenses/lgpl.html", url: "https://android.googlesource.com/platform/prebuilts/tools/+/master/common/spantable/")
 libraryLicense(name: "JGit", libraryName: "jgit", version: "4.0", license: "Eclipse Distribution License 1.0", licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", url: "https://eclipse.org/jgit/")
 libraryLicense(name: "JGit", libraryName: "jackson", version: "2.5.1", license: "Apache 2.0", licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", url: "https://github.com/FasterXML/jackson")
+libraryLicense(name: "Android Gradle model", libraryName: "android-gradle-model", version: "0.4-SNAPSHOT", license: "Apache 2.0", url: "https://android.googlesource.com/platform/tools/build/+/master/gradle-model/")
+libraryLicense(name: "FreeMarker", libraryName: "freemarker-2.3.20", version: "2.3.20", license: "BSD", url: "http://freemarker.sourceforge.net/")
+libraryLicense(name: "FreeMarker", attachedTo: "coverage", version: "2.3.15", license: "BSD", url: "http://freemarker.sourceforge.net/")
+libraryLicense(name: "Google Feedback", libraryName: "GoogleFeedback.jar", version: "", license: "TBD")
+
 jetbrainsLibrary("Coverage")
 jetbrainsLibrary("CoverageReport")
 jetbrainsLibrary("JPS")

@@ -28,7 +28,6 @@ import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefres
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
@@ -36,7 +35,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
@@ -444,17 +442,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
               System.err.println("Got null External project after import");
               return;
             }
-            ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(myProject) {
-              @Override
-              public void execute() {
-                ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
-                  @Override
-                  public void run() {
-                    ServiceManager.getService(ProjectDataManager.class).importData(externalProject, myProject, true);
-                  }
-                });
-              }
-            });
+            ServiceManager.getService(ProjectDataManager.class).importData(externalProject, myProject, true);
             System.out.println("External project was successfully imported");
           }
 

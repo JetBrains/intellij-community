@@ -16,39 +16,28 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessAdapter;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.ClassObject;
+import com.intellij.openapi.compiler.CompilationException;
+import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
-import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.api.CanceledStatus;
-import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
-import org.jetbrains.jps.javac.DiagnosticOutputConsumer;
-import org.jetbrains.jps.javac.ExternalJavacManager;
-import org.jetbrains.jps.javac.OutputFileConsumer;
-import org.jetbrains.jps.javac.OutputFileObject;
 
-import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -65,23 +54,13 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
 
   @Override
   @NotNull
-  protected Collection<OutputFileObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException {
-    final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getBuildProcessRuntimeSdk(myEvaluationContext.getProject());
+  protected Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException {
     final Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
       @Override
       public Module compute() {
         return ModuleUtilCore.findModuleForPsiElement(myPsiContext);
       }
     });
-    String javaHome = null;
-    final Sdk sdk = runtime.getFirst();
-    final SdkTypeId type = sdk.getSdkType();
-    if (type instanceof JavaSdkType) {
-      javaHome = sdk.getHomePath();
-    }
-    if (javaHome == null) {
-      throw new EvaluateException("Was not able to determine JDK for current evaluation context");
-    }
     final List<String> options = new ArrayList<String>();
     options.add("-proc:none"); // for our purposes annotation processing is not needed
     options.add("-encoding");
@@ -98,6 +77,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       }
     }
 
+    final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getBuildProcessRuntimeSdk(myEvaluationContext.getProject());
     final JavaSdkVersion buildRuntimeVersion = runtime.getSecond();
     // if compiler or debuggee version or both are unknown, let source and target be the compiler's defaults
     if (buildRuntimeVersion != null && debuggeeVersion != null) {
@@ -109,36 +89,25 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       options.add(sourceOption);
     }
 
+    final CompilerManager compilerManager = CompilerManager.getInstance(myEvaluationContext.getProject());
+
     File sourceFile = null;
-    final OutputCollector outputSink = new OutputCollector();
     try {
-      final ExternalJavacManager javacManager = getJavacManager();
-      if (javacManager == null) {
-        throw new EvaluateException("Cannot compile java code");
-      }
-      sourceFile = generateTempSourceFile(javacManager.getWorkingDir());
+      sourceFile = generateTempSourceFile(compilerManager.getJavacCompilerWorkingDir());
       final File srcDir = sourceFile.getParentFile();
-      final Map<File, Set<File>> output = Collections.singletonMap(srcDir, Collections.singleton(srcDir));
-      DiagnosticCollector diagnostic = new DiagnosticCollector();
-      final List<String> vmOptions = Collections.emptyList();
       final List<File> sourcePath = Collections.emptyList();
       final Set<File> sources = Collections.singleton(sourceFile);
-      boolean compiledOK = javacManager.forkJavac(
-        javaHome, -1, vmOptions, options, platformClasspath, classpath, sourcePath, sources, output, diagnostic, outputSink, new JavacCompilerTool(), CanceledStatus.NULL
-      );
 
-      if (!compiledOK) {
-        final StringBuilder res = new StringBuilder("Compilation failed:\n");
-        for (Diagnostic<? extends JavaFileObject> d : diagnostic.getDiagnostics()) {
-          if (d.getKind() == Diagnostic.Kind.ERROR) {
-            res.append(d.getMessage(Locale.US));
-          }
-        }
-        throw new EvaluateException(res.toString());
-      }
+      return compilerManager.compileJavaCode(options, platformClasspath, classpath, sourcePath, sources, srcDir);
     }
-    catch (EvaluateException e) {
-      throw e;
+    catch (CompilationException e) {
+      final StringBuilder res = new StringBuilder("Compilation failed:\n");
+      for (CompilationException.Message m : e.getMessages()) {
+        if (m.getCategory() == CompilerMessageCategory.ERROR) {
+          res.append(m.getText()).append("\n");
+        }
+      }
+      throw new EvaluateException(res.toString());
     }
     catch (Exception e) {
       throw new EvaluateException(e.getMessage());
@@ -148,7 +117,6 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
         FileUtil.delete(sourceFile);
       }
     }
-    return outputSink.getCompiledClasses();
   }
 
   @NotNull
@@ -170,85 +138,8 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     if (fileData.second == null) {
       throw new IOException("Class source code not specified");
     }
-    final File file = new File(workingDir, "src/"+fileData.first);
+    final File file = new File(workingDir, "debugger/src/"+fileData.first);
     FileUtil.writeToFile(file, fileData.second);
     return file;
-  }
-
-  private static final Key<ExternalJavacManager> JAVAC_MANAGER_KEY = Key.create("_external_java_compiler_manager_");
-
-  @Nullable
-  private ExternalJavacManager getJavacManager() throws IOException {
-    // need dedicated thread access to be able to cache the manager in the user data
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-
-    final DebugProcessImpl debugProcess = myEvaluationContext.getDebugProcess();
-    ExternalJavacManager manager = JAVAC_MANAGER_KEY.get(debugProcess);
-    if (manager == null && debugProcess.isAttached()) {
-      final File compilerWorkingDir = getCompilerWorkingDir();
-      if (compilerWorkingDir == null) {
-        return null; // should not happen for real projects
-      }
-      final int listenPort = NetUtils.findAvailableSocketPort();
-      manager = new ExternalJavacManager(compilerWorkingDir);
-      manager.start(listenPort);
-      final ExternalJavacManager _manager = manager;
-      debugProcess.addDebugProcessListener(new DebugProcessAdapter() {
-        public void processDetached(DebugProcess process, boolean closedByUser) {
-          if (process == debugProcess) {
-            _manager.stop();
-          }
-        }
-      });
-      JAVAC_MANAGER_KEY.set(debugProcess, manager);
-    }
-    return manager;
-  }
-
-  @Nullable
-  private File getCompilerWorkingDir() {
-    final File projectBuildDir = BuildManager.getInstance().getProjectSystemDirectory(myEvaluationContext.getProject());
-    if (projectBuildDir == null) {
-      return null;
-    }
-    final File root = new File(projectBuildDir, "debugger");
-    root.mkdirs();
-    return root;
-  }
-
-  private static class DiagnosticCollector implements DiagnosticOutputConsumer {
-    private final List<Diagnostic<? extends JavaFileObject>> myDiagnostics = new ArrayList<Diagnostic<? extends JavaFileObject>>();
-    public void outputLineAvailable(String line) {
-      // for debugging purposes uncomment this line
-      //System.out.println(line);
-    }
-
-    public void registerImports(String className, Collection<String> imports, Collection<String> staticImports) {
-      // ignore
-    }
-
-    public void javaFileLoaded(File file) {
-      // ignore
-    }
-
-    public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
-      myDiagnostics.add(diagnostic);
-    }
-
-    public List<Diagnostic<? extends JavaFileObject>> getDiagnostics() {
-      return myDiagnostics;
-    }
-  }
-
-  private static class OutputCollector implements OutputFileConsumer {
-    private List<OutputFileObject> myClasses = new ArrayList<OutputFileObject>();
-
-    public void save(@NotNull OutputFileObject fileObject) {
-      myClasses.add(fileObject);
-    }
-
-    public List<OutputFileObject> getCompiledClasses() {
-      return myClasses;
-    }
   }
 }

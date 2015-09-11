@@ -155,9 +155,9 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
   }
 
   @NotNull
-  private List<ModifiableRootModel> syncModulesPaths(@NotNull Project project,
-                                                     @NotNull PlatformFacade platformFacade,
-                                                     Collection<DataNode<ModuleData>> toCreate) {
+  private static List<ModifiableRootModel> syncModulesPaths(@NotNull Project project,
+                                                            @NotNull PlatformFacade platformFacade,
+                                                            Collection<DataNode<ModuleData>> toCreate) {
     List<ModifiableRootModel> models = ContainerUtilRt.newArrayList();
     try {
       for (DataNode<ModuleData> moduleData : toCreate) {
@@ -253,15 +253,10 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
 
     ContainerUtil.removeDuplicates(modules);
 
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
-      @Override
-      public void execute() {
-        for (Module module : modules) {
-          if (module.isDisposed()) continue;
-          unlinkModuleFromExternalSystem(module);
-        }
-      }
-    });
+    for (Module module : modules) {
+      if (module.isDisposed()) continue;
+      unlinkModuleFromExternalSystem(module);
+    }
 
     ruleOrphanModules(modules, project, projectData.getOwner(), new Consumer<List<Module>>() {
       @Override
@@ -366,7 +361,7 @@ public class ModuleDataService extends AbstractProjectDataService<ModuleData, Mo
     });
   }
 
-  public static void unlinkModuleFromExternalSystem(@NotNull Module module) {
+  private static void unlinkModuleFromExternalSystem(@NotNull Module module) {
     module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
     module.clearOption(ExternalSystemConstants.LINKED_PROJECT_ID_KEY);
     module.clearOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
