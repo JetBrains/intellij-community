@@ -239,7 +239,7 @@ public class MergeFromTheirsResolver {
 
     @Override
     public String getName() {
-      return "Apply patch";
+      return "Apply Patch";
     }
 
     @Override
