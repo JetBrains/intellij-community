@@ -1734,14 +1734,12 @@ public class AbstractPopup implements JBPopup {
     boolean doRevalidate = false;
     if (myHeaderComponent != null) {
       myHeaderPanel.remove(myHeaderComponent);
-      myHeaderPanel.add(myCaption, BorderLayout.NORTH);
       myHeaderComponent = null;
       doRevalidate = true;
     }
 
     if (c != null) {
-      myHeaderPanel.remove(myCaption);
-      myHeaderPanel.add(c, BorderLayout.NORTH);
+      myHeaderPanel.add(c, BorderLayout.CENTER);
       myHeaderComponent = c;
 
       final Dimension size = myContent.getSize();
