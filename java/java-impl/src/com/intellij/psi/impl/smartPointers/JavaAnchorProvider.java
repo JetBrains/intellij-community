@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public class JavaAnchorProvider extends SmartPointerAnchorProvider {
   @Override
   public PsiElement getAnchor(@NotNull PsiElement element) {
-    if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+    if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE) || !element.isPhysical()) {
       return null;
     }
 
