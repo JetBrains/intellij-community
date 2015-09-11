@@ -126,7 +126,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     return restoreFileFromVirtual(getVirtualFile(), getProject(), myLanguage);
   }
 
-  static PsiElement findElementInside(@NotNull PsiFile file,
+  public static PsiElement findElementInside(@NotNull PsiFile file,
                                       int syncStartOffset,
                                       int syncEndOffset,
                                       @NotNull Class type,

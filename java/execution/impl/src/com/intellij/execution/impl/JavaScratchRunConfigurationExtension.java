@@ -15,14 +15,16 @@
  */
 package com.intellij.execution.impl;
 
+import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessAdapter;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.*;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -80,6 +82,24 @@ public class JavaScratchRunConfigurationExtension extends RunConfigurationExtens
     }
   }
 
+  @Override
+  protected void attachToProcess(@NotNull final RunConfigurationBase configuration, @NotNull final ProcessHandler handler, @Nullable RunnerSettings runnerSettings) {
+    if (runnerSettings instanceof DebuggingRunnerData && getScratchFileId(configuration) >= 0) {
+      final VirtualFile vFile = getScratchVirtualFile(configuration);
+      if (vFile != null) {
+        DebuggerManager.getInstance(configuration.getProject()).addDebugProcessListener(handler, new DebugProcessAdapter() {
+          @Override
+          public void processAttached(DebugProcess process) {
+            if (vFile.isValid()) {
+              process.appendPositionManager(new JavaScratchPositionManager((DebugProcessImpl)process, vFile));
+            }
+            process.removeDebugProcessListener(this);
+          }
+        });
+      }
+    }
+  }
+
   @NotNull
   protected String getSerializationId() {
     return "java-scratch-properties";
@@ -87,12 +107,17 @@ public class JavaScratchRunConfigurationExtension extends RunConfigurationExtens
 
   @Nullable
   public static String getScratchFileUrl(RunConfiguration configuration) {
+    final VirtualFile vFile = getScratchVirtualFile(configuration);
+    return vFile != null? vFile.getUrl() : null;
+  }
+
+  @Nullable
+  private static VirtualFile getScratchVirtualFile(RunConfiguration configuration) {
     int id = getScratchFileId(configuration);
     if (id < 0) {
       return null;
     }
-    final VirtualFile vFile = ManagingFS.getInstance().findFileById(id);
-    return vFile != null? vFile.getUrl() : null;
+    return ManagingFS.getInstance().findFileById(id);
   }
 
   private static int getScratchFileId(RunConfiguration configuration) {

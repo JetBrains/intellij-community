@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
 import kotlin.platform.platformStatic
 
@@ -32,13 +33,13 @@ abstract class ChangeListRemoveConfirmation() {
       val confirmationAsked = ContainerUtil.newIdentityTroveSet<LocalChangeList>()
       val doNotRemove = ContainerUtil.newIdentityTroveSet<LocalChangeList>()
 
-      for (vcs in ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()) {
-        for (list in allLists) {
+      for (list in allLists) {
+        for (vcs in ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()) {
           val permission = vcs.mayRemoveChangeList(list)
-          if (permission != null) {
+          if (permission != ThreeState.UNSURE) {
             confirmationAsked.add(list)
           }
-          if (java.lang.Boolean.FALSE == permission) {
+          if (permission == ThreeState.NO) {
             doNotRemove.add(list)
             break
           }

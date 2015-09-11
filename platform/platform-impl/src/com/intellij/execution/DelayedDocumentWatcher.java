@@ -29,17 +29,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.PsiErrorElementUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +42,6 @@ import java.util.Collection;
 import java.util.Set;
 
 public class DelayedDocumentWatcher {
-
-  private static final Key<CachedValue<Boolean>> CONTAINS_ERROR_ELEMENT = Key.create("CONTAINS_ERROR_ELEMENT");
 
   // All instance fields are be accessed from EDT
   private final Project myProject;
@@ -184,7 +175,7 @@ public class DelayedDocumentWatcher {
           @Override
           public Boolean compute() {
             for (VirtualFile file : files) {
-              if (hasErrors(file)) {
+              if (PsiErrorElementUtil.hasErrors(myProject, file)) {
                 return true;
               }
             }
@@ -199,33 +190,5 @@ public class DelayedDocumentWatcher {
         }, ModalityState.any());
       }
     });
-  }
-
-  // This method is called in a background thread with a read lock acquired
-  private boolean hasErrors(@NotNull VirtualFile file) {
-    if (!file.isValid()) {
-      return false;
-    }
-    // don't use 'WolfTheProblemSolver.hasSyntaxErrors(file)' if possible
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document != null) {
-      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (psiFile != null) {
-        CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(myProject);
-        return cachedValuesManager.getCachedValue(
-          psiFile,
-          CONTAINS_ERROR_ELEMENT,
-          new CachedValueProvider<Boolean>() {
-            @Override
-            public Result<Boolean> compute() {
-              boolean error = PsiTreeUtil.hasErrorElements(psiFile);
-              return Result.create(error, psiFile);
-            }
-          },
-          false
-        );
-      }
-    }
-    return WolfTheProblemSolver.getInstance(myProject).hasSyntaxErrors(file);
   }
 }

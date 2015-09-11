@@ -49,7 +49,7 @@ import java.util.*;
  *         Time: 6:21 PM
  */
 public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
-  public static final String IMPORT_TO_SHELF = "Import to shelf";
+  public static final String IMPORT_TO_SHELF = "Import to Shelf";
   private final Project myProject;
 
   public ImportToShelfExecutor(Project project) {
@@ -122,7 +122,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
         }
       }
     };
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(vcsCatchingRunnable, "Import patch to shelf", true, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(vcsCatchingRunnable, "Import Patch to Shelf", true, myProject);
     if (! vcsCatchingRunnable.get().isEmpty()) {
       AbstractVcsHelper.getInstance(myProject).showErrors(vcsCatchingRunnable.get(), IMPORT_TO_SHELF);
     }
