@@ -95,6 +95,11 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     debugProcess.getManagerThread().schedule(debugProcess.createStepIntoCommand(context, false, null));
   }
 
+  protected void stepOver(SuspendContextImpl context) {
+    DebugProcessImpl debugProcess = context.getDebugProcess();
+    debugProcess.getManagerThread().schedule(debugProcess.createStepOverCommand(context, false));
+  }
+
   protected void waitBreakpoints() {
     myScriptRunnablesSema.down();
     waitFor(new Runnable() {

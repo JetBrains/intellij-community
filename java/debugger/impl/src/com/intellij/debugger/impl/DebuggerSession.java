@@ -781,6 +781,11 @@ public class DebuggerSession implements AbstractDebuggerSession {
     return Registry.is("debugger.enable.breakpoints.during.evaluation");
   }
 
+  public void sessionResumed() {
+    XDebugSession session = getXDebugSession();
+    if (session != null) session.sessionResumed();
+  }
+
   @Nullable
   public XDebugSession getXDebugSession() {
     JavaDebugProcess process = myDebugProcess.getXdebugProcess();
