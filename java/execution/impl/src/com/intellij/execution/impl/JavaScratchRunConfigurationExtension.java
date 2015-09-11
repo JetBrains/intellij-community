@@ -71,9 +71,11 @@ public class JavaScratchRunConfigurationExtension extends RunConfigurationExtens
   }
 
   public <T extends RunConfigurationBase> void updateJavaParameters(T configuration, JavaParameters params, RunnerSettings runnerSettings) throws ExecutionException {
-    final File scrachesOutput = getScratchOutputDirectory(configuration.getProject());
-    if (scrachesOutput != null) {
-      params.getClassPath().add(scrachesOutput);
+    if (getScratchFileUrl(configuration) != null) {
+      final File scrachesOutput = getScratchOutputDirectory(configuration.getProject());
+      if (scrachesOutput != null) {
+        params.getClassPath().add(scrachesOutput);
+      }
     }
   }
 
