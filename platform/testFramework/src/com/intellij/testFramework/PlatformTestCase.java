@@ -529,8 +529,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       return;
     }
 
-    myProject = null;
     closeAndDisposeProjectAndCheckThatNoOpenProjects(project, result);
+    myProject = null;
   }
 
   public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) throws CompositeException {
@@ -563,6 +563,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       AccessToken token = WriteAction.start();
       try {
         Disposer.dispose(projectToClose);
+      }
+      catch (Throwable e) {
+        result.add(e);
       }
       finally {
         token.finish();
