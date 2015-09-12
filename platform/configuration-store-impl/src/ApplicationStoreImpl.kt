@@ -37,8 +37,9 @@ class ApplicationPathMacroManager : BasePathMacroManager(null)
 class ApplicationStoreImpl(private val application: Application, pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
   override val storageManager = ApplicationStorageManager(application, pathMacroManager)
 
-  override val isLoadComponentState: Boolean
-    get() = !application.isUnitTestMode()
+  // number of app components require some state, so, we load default state in test mode
+  override val loadPolicy: StateLoadPolicy
+    get() = if (application.isUnitTestMode()) StateLoadPolicy.LOAD_ONLY_DEFAULT else StateLoadPolicy.LOAD
 
   override fun setPath(path: String) {
     storageManager.addMacro(ROOT_CONFIG, path)

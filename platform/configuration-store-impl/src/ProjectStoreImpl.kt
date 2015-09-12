@@ -51,16 +51,19 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
 
   private var presentableUrl: String? = null
 
-  override var isLoadComponentState = true
+  override var loadPolicy = StateLoadPolicy.LOAD
 
   init {
     assert(!project.isDefault())
   }
 
-  override final fun isOptimiseTestLoadSpeed() = !isLoadComponentState
+  override final fun isOptimiseTestLoadSpeed() = loadPolicy != StateLoadPolicy.LOAD
 
   override final fun setOptimiseTestLoadSpeed(value: Boolean) {
-    isLoadComponentState = !value
+    // we don't load default state in tests as app store does because
+    // 1) we should not do it
+    // 2) it was so before, so, we preserve old behavior (otherwise RunManager will load template run configurations)
+    loadPolicy = if (value) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
   }
 
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
@@ -84,7 +87,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         // load state only if there are existing files
-        isLoadComponentState = File(filePath).exists()
+        setOptimiseTestLoadSpeed(!File(filePath).exists())
       }
     }
     else {
@@ -106,7 +109,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         // load state only if there are existing files
-        isLoadComponentState = dirStore.exists()
+        setOptimiseTestLoadSpeed(!dirStore.exists())
       }
     }
 
@@ -147,7 +150,6 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
           }
           catch (ignored: IOException) {
           }
-
         }
       }
 

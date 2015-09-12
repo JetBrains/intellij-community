@@ -61,8 +61,8 @@ abstract class ComponentStoreImpl : IComponentStore {
   protected open val project: Project?
     get() = null
 
-  open val isLoadComponentState: Boolean
-    get() = true
+  open val loadPolicy: StateLoadPolicy
+    get() = StateLoadPolicy.LOAD
 
   abstract val storageManager: StateStorageManager
 
@@ -199,7 +199,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val componentName = ComponentManagerImpl.getComponentName(component)
     doAddComponent(componentName, component)
 
-    if (!isLoadComponentState) {
+    if (loadPolicy != StateLoadPolicy.LOAD) {
       return null
     }
 
@@ -230,6 +230,10 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   private fun <T> initPersistentComponent(stateSpec: State, component: PersistentStateComponent<T>, changedStorages: Set<StateStorage>?, reloadData: Boolean): String? {
+    if (loadPolicy == StateLoadPolicy.NOT_LOAD) {
+      return null
+    }
+
     val name = stateSpec.name
     val stateClass = ComponentSerializationUtil.getStateClass<T>(component.javaClass)
     if (!stateSpec.defaultStateAsResource && LOG.isDebugEnabled() && getDefaultState(component, name, stateClass) != null) {
@@ -237,7 +241,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
 
     val defaultState = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
-    if (isLoadComponentState) {
+    if (loadPolicy == StateLoadPolicy.LOAD) {
       val storageSpecs = getStorageSpecs(component, stateSpec, StateStorageOperation.READ)
       val storageChooser = component as? StateStorageChooserEx
       for (storageSpec in storageSpecs) {
@@ -456,4 +460,8 @@ abstract class ComponentStoreImpl : IComponentStore {
       return errors
     }
   }
+}
+
+enum class StateLoadPolicy {
+  LOAD, LOAD_ONLY_DEFAULT, NOT_LOAD
 }

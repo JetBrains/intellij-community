@@ -19,7 +19,6 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
-import com.intellij.util.ThreeState
 import java.io.File
 
 open private class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
@@ -37,16 +36,16 @@ open private class ModuleStoreImpl(module: Module, private val pathMacroManager:
 }
 
 private class TestModuleStore(module: Module, pathMacroManager: PathMacroManager) : ModuleStoreImpl(module, pathMacroManager) {
-  private var isLoadModuleComponentState = ThreeState.UNSURE
+  private var moduleComponentLoadPolicy: StateLoadPolicy? = null
 
   override fun setPath(path: String) {
     super.setPath(path)
 
     if (File(path).exists()) {
-      isLoadModuleComponentState = ThreeState.YES
+      moduleComponentLoadPolicy = StateLoadPolicy.LOAD
     }
   }
 
-  override val isLoadComponentState: Boolean
-    get() = if (isLoadModuleComponentState == ThreeState.UNSURE) (project.stateStore as ProjectStoreImpl).isLoadComponentState else isLoadModuleComponentState.toBoolean()
+  override val loadPolicy: StateLoadPolicy
+    get() = moduleComponentLoadPolicy ?: (project.stateStore as ProjectStoreImpl).loadPolicy
 }
