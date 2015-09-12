@@ -77,7 +77,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     myProjectOrNull = context.getProject();
     myBuilder = builder;
     myContext = context;
-    myParentProjectForm = new GradleParentProjectForm(myProjectOrNull, new NullableConsumer<ProjectData>() {
+    myParentProjectForm = new GradleParentProjectForm(context, new NullableConsumer<ProjectData>() {
       @Override
       public void consume(@Nullable ProjectData data) {
         myParent = data;
@@ -191,9 +191,8 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
 
 
   private void updateComponents() {
-    boolean isAddToVisible = !myContext.isCreatingNewProject() && myProjectOrNull != null && isGradleModuleExist();
+    final boolean isAddToVisible = myParentProjectForm.isVisible();
 
-    myAddToPanel.setVisible(isAddToVisible);
     myInheritGroupIdCheckBox.setVisible(isAddToVisible);
     myInheritVersionCheckBox.setVisible(isAddToVisible);
 
@@ -231,7 +230,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     }
   }
 
-  private boolean isGradleModuleExist() {
+  public static boolean isGradleModuleExist(WizardContext myContext) {
     for (Module module : myContext.getModulesProvider().getModules()) {
       if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return true;
     }

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -45,6 +46,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
 
+import static org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleWizardStep.isGradleModuleExist;
+
 public class GradleParentProjectForm {
 
   private static final String EMPTY_PARENT = "<none>";
@@ -56,13 +59,16 @@ public class GradleParentProjectForm {
   @NotNull
   private final Consumer<ProjectData> myConsumer;
 
+  private final boolean myIsVisible;
+
   private JPanel myPanel;
   private JButton mySelectParent;
   private EditorTextField myParentPathField;
 
-  public GradleParentProjectForm(@Nullable Project project, @Nullable NullableConsumer<ProjectData> consumer) {
-    myProjectOrNull = project;
+  public GradleParentProjectForm(WizardContext context, @Nullable NullableConsumer<ProjectData> consumer) {
+    myProjectOrNull = context.getProject();
     myConsumer = consumer == null ? EmptyConsumer.<ProjectData>getInstance() : consumer;
+    myIsVisible = !context.isCreatingNewProject() && myProjectOrNull != null && isGradleModuleExist(context);
     initComponents();
   }
 
@@ -71,6 +77,8 @@ public class GradleParentProjectForm {
   }
 
   private void initComponents() {
+    myPanel.setVisible(myIsVisible);
+    if (!myIsVisible) return;
     mySelectParent.setIcon(AllIcons.Actions.Module);
     mySelectParent.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -87,6 +95,10 @@ public class GradleParentProjectForm {
   @Nullable
   public ProjectData getParentProject() {
     return myParent;
+  }
+
+  public boolean isVisible() {
+    return myIsVisible;
   }
 
   public void updateComponents() {
