@@ -204,6 +204,9 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
       return getReturnStatementType(context);
     }
+    else if (isAsync()) {
+      return createCoroutineType(null);
+    }
     return null;
   }
 
@@ -319,7 +322,9 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         final PyType type = context.getType(node);
         if (node.isDelegating() && type instanceof PyCollectionType) {
           final PyCollectionType collectionType = (PyCollectionType)type;
-          types.add(collectionType.getElementType(context));
+          // TODO: Select the parameter types that matches T in Iterable[T]
+          final List<PyType> elementTypes = collectionType.getElementTypes(context);
+          types.add(elementTypes.isEmpty() ? null : elementTypes.get(0));
         }
         else {
           types.add(type);
@@ -341,7 +346,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     if (elementType != null) {
       final PyClass generator = cache.getClass(PyNames.FAKE_GENERATOR);
       if (generator != null) {
-        return Ref.create(new PyCollectionTypeImpl(generator, false, elementType.get()));
+        final List<PyType> parameters = Arrays.asList(elementType.get(), null, getReturnStatementType(context));
+        return Ref.create(new PyCollectionTypeImpl(generator, false, parameters));
       }
     }
     if (!types.isEmpty()) {
@@ -352,7 +358,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Nullable
   public PyType getReturnStatementType(TypeEvalContext typeEvalContext) {
-    ReturnVisitor visitor = new ReturnVisitor(this, typeEvalContext);
+    final ReturnVisitor visitor = new ReturnVisitor(this, typeEvalContext);
     final PyStatementList statements = getStatementList();
     statements.accept(visitor);
     if (isGeneratedStub() && !visitor.myHasReturns) {
@@ -361,7 +367,18 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
       return null;
     }
-    return visitor.result();
+    final PyType returnType = visitor.result();
+    if (isAsync()) {
+      return createCoroutineType(returnType);
+    }
+    return returnType;
+  }
+
+  @Nullable
+  private PyType createCoroutineType(@Nullable PyType returnType) {
+    final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
+    final PyClass generator = cache.getClass(PyNames.FAKE_COROUTINE);
+    return generator != null ? new PyCollectionTypeImpl(generator, false, Collections.singletonList(returnType)) : null;
   }
 
   public PyFunction asMethod() {
