@@ -278,4 +278,12 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testProhibitedAtClassLevel() {
     doFail("foo", "Cannot perform refactoring at class level");
   }
+
+  public void testAsyncDef() {
+    doTest("bar", LanguageLevel.PYTHON35);
+  }
+
+  public void testAwaitExpression() {
+    doTest("bar", LanguageLevel.PYTHON35);
+  }
 }
