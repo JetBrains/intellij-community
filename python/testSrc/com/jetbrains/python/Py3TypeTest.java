@@ -102,6 +102,21 @@ public class Py3TypeTest extends PyTestCase {
     });
   }
 
+  // Not in PEP 484 as for now, see https://github.com/ambv/typehinting/issues/119
+  public void testCoroutineReturnTypeAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
+      @Override
+      public void run() {
+        doTest("int",
+               "async def foo() -> int: ...\n" +
+               "\n" +
+               "async def bar():\n" +
+               "    expr = await foo()\n");
+      }
+    });
+
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

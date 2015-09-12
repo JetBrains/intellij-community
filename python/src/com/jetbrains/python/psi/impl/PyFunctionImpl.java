@@ -182,6 +182,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Nullable
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    final PyType type = getReturnType(context);
+    return isAsync() ? createCoroutineType(type) : type;
+  }
+
+  @Nullable
+  private PyType getReturnType(@NotNull TypeEvalContext context) {
     for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       final Ref<PyType> returnTypeRef = typeProvider.getReturnType(this, context);
       if (returnTypeRef != null) {
@@ -203,9 +209,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         return yieldTypeRef.get();
       }
       return getReturnStatementType(context);
-    }
-    else if (isAsync()) {
-      return createCoroutineType(null);
     }
     return null;
   }
@@ -367,16 +370,15 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
       return null;
     }
-    final PyType returnType = visitor.result();
-    if (isAsync()) {
-      return createCoroutineType(returnType);
-    }
-    return returnType;
+    return visitor.result();
   }
 
   @Nullable
   private PyType createCoroutineType(@Nullable PyType returnType) {
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
+    if (returnType instanceof PyClassLikeType && PyNames.FAKE_COROUTINE.equals(((PyClassLikeType)returnType).getClassQName())) {
+      return returnType;
+    }
     final PyClass generator = cache.getClass(PyNames.FAKE_COROUTINE);
     return generator != null ? new PyCollectionTypeImpl(generator, false, Collections.singletonList(returnType)) : null;
   }
