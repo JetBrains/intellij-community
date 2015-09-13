@@ -112,6 +112,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
           }
           PluginsAdvertiser.installAndEnablePlugins(pluginIds, new Runnable() {
             public void run() {
+                new PluginsAdvertiserDialog(null, myPlugins.toArray(new PluginDownloader[myPlugins.size()]), myAllPlugins);
               myEnabledExtensions.add(extension);
               myNotifications.updateAllNotifications();
             }
