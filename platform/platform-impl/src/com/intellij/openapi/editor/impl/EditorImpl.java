@@ -2284,6 +2284,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     fill(g, newArea, lineColor);
     print(g, newText, point, ascent, font, color);
+
+    // flush changes (there can be batching / buffering in video driver)
+    Toolkit.getDefaultToolkit().sync();
   }
 
   private boolean canPaintImmediately(@NotNull DocumentEvent e) {
@@ -2357,6 +2360,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       fill(g, newArea, lineColor);
       print(g, newText, point, ascent, font, color);
     }
+
+    // flush changes (there can be batching / buffering in video driver)
+    Toolkit.getDefaultToolkit().sync();
   }
 
   @NotNull
