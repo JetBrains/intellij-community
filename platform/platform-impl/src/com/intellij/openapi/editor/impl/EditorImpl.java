@@ -989,7 +989,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myPanel.add(myScrollPane);
     }
 
-    final AnActionListener.Adapter actionListener = new AnActionListener.Adapter() {
+    AnActionListener.Adapter actionListener = new AnActionListener.Adapter() {
       @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         if (isZeroLatencyTypingEnabled() && IMMEDIATE_EDITING_ACTIONS.contains(action.getClass())) {
@@ -1005,14 +1005,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     };
 
-    ActionManager.getInstance().addAnActionListener(actionListener);
-
-    Disposer.register(myDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        ActionManager.getInstance().removeAnActionListener(actionListener);
-      }
-    });
+    ActionManager.getInstance().addAnActionListener(actionListener, myDisposable);
 
     myEditorComponent.addKeyListener(new KeyListener() {
       @Override
@@ -2292,18 +2285,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean canPaintImmediately(@NotNull DocumentEvent e) {
     return myDocument instanceof DocumentImpl &&
            !isInplaceRenamerActive() &&
-           !contains(e.getOldFragment(), '\n') &&
-           !contains(e.getNewFragment(), '\n') &&
+           StringUtil.indexOf(e.getOldFragment(), '\n') == -1 &&
+           StringUtil.indexOf(e.getNewFragment(), '\n') == -1 &&
            !(e.getNewLength() == 1 && DOCUMENT_CHARS_TO_SKIP.contains(e.getNewFragment().charAt(0)));
-  }
-
-  private static boolean contains(@NotNull CharSequence chars, char c) {
-    for (int i = 0; i < chars.length(); i++) {
-      if (chars.charAt(i) == c) {
-        return true;
-      }
-    }
-    return false;
   }
 
   // Called to display insertion / deletion / replacement within a single line before the general painting routine.
