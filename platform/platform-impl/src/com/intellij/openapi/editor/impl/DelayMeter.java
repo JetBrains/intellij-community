@@ -15,27 +15,30 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import gnu.trove.TLongArrayList;
+
 /**
  * @author Pavel Fatin
  */
 class DelayMeter {
-  private boolean myIsStarted;
-
-  private long myStart;
+  private final TLongArrayList myStartTimes = new TLongArrayList();
 
   private SummaryStatistics myStats = new SummaryStatistics();
 
   void registerStart() {
-    myIsStarted = true;
-    myStart = System.nanoTime();
+    myStartTimes.add(System.nanoTime());
   }
 
   void registerFinish() {
-    if (myIsStarted) {
-      long elapsed = System.nanoTime() - myStart;
-      myStats.accept(elapsed);
+    if (!myStartTimes.isEmpty()) {
+      long now = System.nanoTime();
 
-      myIsStarted = false;
+      for (int i = 0; i < myStartTimes.size(); i++) {
+        long elapsed = now - myStartTimes.get(i);
+        myStats.accept(elapsed);
+      }
+
+      myStartTimes.clear();
     }
   }
 
