@@ -190,7 +190,7 @@ public class ExpressionParsing extends Parsing {
     }
 
     if (atToken(PyTokenTypes.EXP)) {
-      if (!parseStarExpression(false)) {
+      if (!parseDoubleStarExpression(false)) {
         myBuilder.error("expression expected");
         expr.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
         return;
@@ -248,7 +248,7 @@ public class ExpressionParsing extends Parsing {
     while (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
       checkMatches(PyTokenTypes.COMMA, message("PARSE.expected.comma"));
       if (atToken(PyTokenTypes.EXP)) {
-        if (!parseStarExpression(false)) {
+        if (!parseDoubleStarExpression(false)) {
           break;
         }
       }
@@ -789,8 +789,7 @@ public class ExpressionParsing extends Parsing {
   }
 
   private boolean parseStarExpression(boolean isTargetExpression) {
-    final IElementType tokenType = myBuilder.getTokenType();
-    if (tokenType == PyTokenTypes.MULT || tokenType == PyTokenTypes.EXP) {
+    if (atToken(PyTokenTypes.MULT)) {
       PsiBuilder.Marker starExpr = myBuilder.mark();
       nextToken();
       if (!parseBitwiseORExpression(isTargetExpression)) {
@@ -798,7 +797,22 @@ public class ExpressionParsing extends Parsing {
         starExpr.drop();
         return false;
       }
-      starExpr.done(tokenType == PyTokenTypes.MULT ? PyElementTypes.STAR_EXPRESSION : PyElementTypes.DOUBLE_STAR_EXPRESSION);
+      starExpr.done(PyElementTypes.STAR_EXPRESSION);
+      return true;
+    }
+    return parseBitwiseORExpression(isTargetExpression);
+  }
+
+  private boolean parseDoubleStarExpression(boolean isTargetExpression) {
+    if (atToken(PyTokenTypes.EXP)) {
+      PsiBuilder.Marker starExpr = myBuilder.mark();
+      nextToken();
+      if (!parseBitwiseORExpression(isTargetExpression)) {
+        myBuilder.error(message("PARSE.expected.expression"));
+        starExpr.drop();
+        return false;
+      }
+      starExpr.done(PyElementTypes.DOUBLE_STAR_EXPRESSION);
       return true;
     }
     return parseBitwiseORExpression(isTargetExpression);
