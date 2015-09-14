@@ -63,13 +63,13 @@ public class MacIntelliJProgressBarUI extends DarculaProgressBarUI {
     int barRectHeight = h - (insets.top + insets.bottom);
 
     int amountFull = getAmountFull(insets, barRectWidth, barRectHeight);
-    boolean done = amountFull == barRectHeight;
+    boolean done = amountFull == barRectWidth;
     Icon left = MacIntelliJIconCache.getIcon("progressLeft", true, false);
     Icon middle = MacIntelliJIconCache.getIcon("progressMiddle", true, false);
     Icon right = MacIntelliJIconCache.getIcon("progressRight", true, false);
 
-    gg = g.create(0, 0, w-right.getIconWidth(), h);
-    gg.setClip(0, y, amountFull, HEIGHT);
+    gg = g.create(0, 0, barRectWidth + insets.left - right.getIconWidth(), h);
+    gg.setClip(insets.left, y, amountFull - right.getIconWidth(), HEIGHT);
     int cur = left.getIconWidth() + insets.left;
     if (cur <= amountFull) {
       left.paintIcon(c, gg, insets.left, y);
@@ -80,7 +80,7 @@ public class MacIntelliJProgressBarUI extends DarculaProgressBarUI {
     }
     gg.dispose();
     if (done) {
-      right.paintIcon(c, g, w-right.getIconWidth() - insets.right, y);
+      right.paintIcon(c, g, insets.left + barRectWidth - right.getIconWidth(), y);
     }
   }
 
