@@ -259,6 +259,10 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
           exclude(name: "**/src/**")
         }
       }
+      fileset(file: "$home/lib/jgoodies-common-1.2.1.jar")
+      fileset(file: "$home/lib/jgoodies-looks-2.4.2.jar")
+      fileset(file: "$home/lib/ecj-4.4.jar")
+      fileset(file: "$home/lib/markdown4j-2.2.jar")
     }
 
     dir("redist") {
@@ -277,6 +281,10 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     }
   }
 
+  registerLibraryDescriptor(RuntimeModuleId.projectLibrary("jgoodies-common"), ["$targetDirectory/lib/jgoodies-common-1.2.1.jar"])
+  registerLibraryDescriptor(RuntimeModuleId.projectLibrary("jgoodies-looks"), ["$targetDirectory/lib/jgoodies-looks-2.4.2.jar"])
+  registerLibraryDescriptor(RuntimeModuleId.projectLibrary("Eclipse"), ["$targetDirectory/lib/ecj-4.4.jar"])
+  registerLibraryDescriptor(RuntimeModuleId.projectLibrary("markdown4j-2.2"), ["$targetDirectory/lib/markdown4j-2.2.jar"])
   registerLibraryDescriptor(RuntimeModuleId.projectLibrary("KotlinJavaRuntime"), ["$targetDirectory/lib/kotlin-runtime.jar",
                                                                                   "$targetDirectory/lib/kotlin-reflect.jar"])
   registerJarDirLibraryDescriptor(RuntimeModuleId.projectLibrary("Ant"), new File("${home}/community/lib/ant/lib"), "$targetDirectory/lib/ant/lib")
