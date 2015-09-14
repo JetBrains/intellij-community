@@ -207,7 +207,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     PlatformTestUtil.tryGcSoftlyReachableObjects();
-    assertNull(pointer.getElement());
+    assertEquals(myFile.getFirstChild(), pointer.getElement());
   }
 
   public void testChangeInPsi() {
