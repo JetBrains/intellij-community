@@ -169,7 +169,7 @@ fun toDiff(edn: APersistentMap): Diff<Model> =
       !"primitive-diff" -> {
         PrimitiveDiff(edn.get(!"new-value"))
       }
-      !"list-diff" -> ListDiff((edn[!"list"] as List<*>).map { toModel(it as APersistentMap) }, Integer.parseInt(edn[!"index"].toString()))
+      !"list-diff" -> ListDiff((edn[!"list"] as List<*>).map { toModel(it) }, Integer.parseInt(edn[!"index"].toString()))
       !"map-diff" -> MapDiff((edn as Map<Any, APersistentMap>).filter { e -> e.getKey() != typeKeyword }
           .map { entry -> entry.getKey() to toDiff(entry.getValue()) }.toMap())
       !"value-diff" -> {

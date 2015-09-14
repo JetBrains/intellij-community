@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.util.Disposer
@@ -53,10 +54,11 @@ public class EditorHost(val reactiveModel: ReactiveModel,
                         val lifetime: Lifetime,
                         val file: VirtualFile,
                         val textEditor: TextEditor,
-                        init: Initializer) : Host, DataProvider {
+                        init: Initializer,
+                        val forSplitter: Boolean) : Host, DataProvider {
 
   override val tags: Array<String>
-    get() = arrayOf("editor")
+    get() = if (forSplitter) arrayOf("editor", "for-splitter") else arrayOf("editor")
 
   public val editor: Editor = textEditor.getEditor()
   private val caretGuard = Guard()
@@ -106,14 +108,19 @@ public class EditorHost(val reactiveModel: ReactiveModel,
     lifetime += {
       val project = editor.getProject()
       if (project != null) {
-        val manager = FileEditorManager.getInstance(project);
-        manager.closeFile(file)
+        val manager = FileEditorManager.getInstance(project) as FileEditorManagerEx
+        val editorsWithProviders = manager.getEditorsWithProviders(file)
+        editorsWithProviders.second.forEachIndexed { i, it ->
+          if (it == editor) {
+            it.disposeEditor(editorsWithProviders.first[i])
+          }
+        }
       }
     }
 
     init += {
       it.putIn(path / "writable", PrimitiveModel(editor.getDocument().isWritable()))
-      .putIn(path / "extension", PrimitiveModel(file.getExtension()))
+          .putIn(path / "extension", PrimitiveModel(file.getExtension()))
     }
 
     val documentHost = reactiveModel.host(path / "document") { path, lifetime, init ->

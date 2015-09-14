@@ -31,6 +31,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerAdapter
 import com.intellij.pom.Navigatable
+import com.intellij.usages.UsageInfo2UsageAdapter
+import com.intellij.usages.rules.UsageInFile
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.reactiveidea.navigation.SearchByName
@@ -83,9 +85,15 @@ public class ReactiveModelsManager() : ApplicationComponent {
               val psi = host.psi
               FileEditorManager.getInstance(psi.getProject()).openFile(psi.getVirtualFile(), true)
             },
+            "split-editor" to { host: EditorHost ->
+              (FileEditorManager.getInstance(host.editor.getProject()!!) as ServerFileEditorManager).openFileImpl(host.file, true, true, true)
+            },
             "go-usage" to { host: UsagesHost.UsageHost ->
               val node = host.node
               val userObj = node.getUserObject()
+              if(userObj is UsageInfo2UsageAdapter) {
+                FileEditorManager.getInstance(userObj.getUsageInfo().getProject()).openFile(userObj.getFile(), true, true)
+              }
               if (userObj is Navigatable) {
                 userObj.navigate(true)
               }

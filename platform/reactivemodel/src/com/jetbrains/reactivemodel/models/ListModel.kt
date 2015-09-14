@@ -34,7 +34,7 @@ public data class ListModel(val list: PersistentVector<Model> = Persistents.vect
         }
 
         if (diff.index != list.size()) {
-            throw UnsupportedOperationException("conflicts resolution not implemented yet, diff.index ${diff.index} list.size ${list.size()}")
+            return ListModel(list.subList(0, diff.index).plus(diff.nueu))
         }
 
         return ListModel(list.plus(diff.nueu))

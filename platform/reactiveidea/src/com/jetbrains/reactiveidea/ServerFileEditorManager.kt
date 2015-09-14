@@ -308,7 +308,7 @@ public class ServerFileEditorManager(val proj: Project) : FileEditorManagerEx(),
   }
 
   override fun openFileWithProviders(file: VirtualFile, focusEditor: Boolean, searchForSplitter: Boolean): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
-    return openFileImpl(file, focusEditor)
+    return openFileImpl(file, focusEditor, searchForSplitter)
   }
 
   override fun openFileWithProviders(file: VirtualFile, focusEditor: Boolean, window: EditorWindow): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
@@ -461,7 +461,7 @@ public class ServerFileEditorManager(val proj: Project) : FileEditorManagerEx(),
     CommandProcessor.getInstance().executeCommand(proj, object : Runnable {
       override fun run() {
         val file = descriptor.getFile()
-        val editors = openFile(file, focusEditor, !descriptor.isUseCurrentWindow())
+        val editors = openFile(file, focusEditor, false)
         ContainerUtil.addAll<FileEditor, FileEditor, List<FileEditor>>(result, *editors)
 
         var navigated = false
@@ -501,10 +501,10 @@ public class ServerFileEditorManager(val proj: Project) : FileEditorManagerEx(),
     throw UnsupportedOperationException()
   }
 
-  fun openFileImpl(file: VirtualFile, focusEditor: Boolean): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+  fun openFileImpl(file: VirtualFile, focusEditor: Boolean, searchForSplitter: Boolean, markSplitter: Boolean = false): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
     assert(ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed(), "must not open files under read action since we are doing a lot of invokeAndWaits here")
 
-    if (myVirtualFile2Editor.containsKey(file)) {
+    if (!searchForSplitter && myVirtualFile2Editor.containsKey(file)) {
       if (focusEditor) {
         setActive(file)
       }
@@ -580,11 +580,8 @@ public class ServerFileEditorManager(val proj: Project) : FileEditorManagerEx(),
         val textEditor = newEditors[0] as TextEditor
 
         val editorsHost = EditorPoolHost.getInModel(model!!.root)
-        editorsHost.addEditor(textEditor, file)
+        editorsHost.addEditor(textEditor, file, forSplitter = markSplitter)
         setActive(file)
-
-//        val tabHost = Path("tab-view").getIn(model!!.root)!!.meta["host"] as TabViewHost
-//        tabHost.addEditor(textEditor, file, active = true)
 
         //[jeka] this is a hack to support back-forward navigation
         // previously here was incorrect call to fireSelectionChanged() with a side-effect

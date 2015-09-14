@@ -41,10 +41,10 @@ class EditorPoolHost(val reactiveModel: ReactiveModel,
   override val tags: Array<String>
     get() = arrayOf("editors")
 
-  fun addEditor(editor: TextEditor, file: VirtualFile, active: Boolean = true) {
+  fun addEditor(editor: TextEditor, file: VirtualFile, active: Boolean = true, forSplitter: Boolean = false) {
     val idx = nextIdx()
     reactiveModel.host(path / "values" / idx) { path, lifetime, init ->
-      val host = EditorHost(reactiveModel, path, lifetime, file, editor, init)
+      val host = EditorHost(reactiveModel, path, lifetime, file, editor, init, forSplitter)
       if (active) {
         init += { ComponentHost.getInModel(it).setActive(it, path) }
       }
