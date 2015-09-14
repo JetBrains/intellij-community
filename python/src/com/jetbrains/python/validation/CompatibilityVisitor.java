@@ -170,16 +170,32 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyStarExpression(PyStarExpression node) {
     super.visitPyStarExpression(node);
-    int len = 0;
-    StringBuilder message = new StringBuilder(myCommonMessage);
-    for (int i = 0; i != myVersionsToProcess.size(); ++i) {
-      LanguageLevel languageLevel = myVersionsToProcess.get(i);
-      if (!languageLevel.isPy3K()) {
-        len = appendLanguageLevel(message, len, languageLevel);
+
+    if (node.isAssignmentTarget()) {
+      boolean problem = false;
+      for (LanguageLevel level : myVersionsToProcess) {
+        if (level.isOlderThan(LanguageLevel.PYTHON30)) {
+          problem = true;
+          break;
+        }
+      }
+      if (problem) {
+        registerProblem(node, "Python versions < 3.0 do not support starred expressions as assignment targets");
       }
     }
-    commonRegisterProblem(message, " not support this syntax. Starred expressions are not allowed as assignment targets in Python 2",
-                          len, node, null);
+
+    if (node.isUnpacking()) {
+      boolean problem = false;
+      for (LanguageLevel level : myVersionsToProcess) {
+        if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+          problem = true;
+          break;
+        }
+      }
+      if (problem) {
+        registerProblem(node, "Python version < 3.5 do not support starred expressions in tuples, lists, and sets");
+      }
+    }
   }
 
   @Override

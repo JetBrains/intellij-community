@@ -15,9 +15,7 @@
  */
 package com.jetbrains.python.validation;
 
-import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.*;
-import org.jetbrains.annotations.NotNull;
+import com.jetbrains.python.psi.PyStarExpression;
 
 /**
  * @author yole
@@ -26,20 +24,8 @@ public class StarAnnotator extends PyAnnotator {
   @Override
   public void visitPyStarExpression(PyStarExpression node) {
     super.visitPyStarExpression(node);
-    if (!isAssignmentTarget(node) && !isStarUnpacking(node)) {
+    if (!node.isAssignmentTarget() && !node.isUnpacking()) {
       getHolder().createErrorAnnotation(node, "Can't use starred expression here");
     }
-  }
-
-  private static boolean isStarUnpacking(@NotNull PyStarExpression node) {
-    PsiElement parent = node.getParent();
-    while (parent instanceof PyParenthesizedExpression) {
-      parent = parent.getParent();
-    }
-    return parent instanceof PyTupleExpression || parent instanceof PyListLiteralExpression;
-  }
-
-  private static boolean isAssignmentTarget(@NotNull PyStarExpression node) {
-    return node.getExpression() instanceof PyTargetExpression;
   }
 }
