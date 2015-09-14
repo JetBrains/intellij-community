@@ -184,7 +184,13 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
           LOG.error(this + ".createFile() must create new file instance but got the same: " + psiFile);
         }
         if (psiFile instanceof PsiFileEx) {
-          ((PsiFileEx)psiFile).markInvalidated();
+          DebugUtil.startPsiModification("invalidating throw-away copy");
+          try {
+            ((PsiFileEx)psiFile).markInvalidated();
+          }
+          finally {
+            DebugUtil.finishPsiModification();
+          }
         }
         psiFile = alreadyCreated;
       }

@@ -368,7 +368,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     @Override
     public int[] moveRows(int[] rowsIndexes, int destination) {
       List<String> names = getPatchNames(rowsIndexes);
-      myPatches.removeAll(ContainerUtil.newArrayList(names));
+      myPatches.removeAll(names);
       int[] selection = new int[rowsIndexes.length];
       for (int i = 0; i < rowsIndexes.length; i++) {
         selection[i] = destination;

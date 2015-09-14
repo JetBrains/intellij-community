@@ -36,6 +36,12 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   public void testLoadProtocol() throws Exception {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_load_protocol.py") {
       @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        // "load_protocol" does not exist before 2.7
+        return level.compareTo(LanguageLevel.PYTHON26) > 0;
+      }
+
+      @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,

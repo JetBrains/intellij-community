@@ -71,7 +71,7 @@ public class ApplyPatchAction extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
+    if (isProjectOrScopeView(e.getPlace())) {
       VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
       e.getPresentation().setEnabledAndVisible(project != null && vFile != null && vFile.getFileType() == StdFileTypes.PATCH);
     }
@@ -86,7 +86,7 @@ public class ApplyPatchAction extends DumbAwareAction {
     if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not apply patch now")) return;
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
+    if (isProjectOrScopeView(e.getPlace())) {
       VirtualFile vFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
       showApplyPatch(project, vFile);
     }
@@ -107,6 +107,10 @@ public class ApplyPatchAction extends DumbAwareAction {
         }
       });
     }
+  }
+
+  private static boolean isProjectOrScopeView(@NotNull String place) {
+    return place.equals(ActionPlaces.PROJECT_VIEW_POPUP) || place.equals(ActionPlaces.SCOPE_VIEW_POPUP);
   }
 
   // used by TeamCity plugin
