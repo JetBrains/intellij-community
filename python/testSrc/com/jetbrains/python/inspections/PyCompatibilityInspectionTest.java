@@ -55,7 +55,7 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
   }
 
   public void testStarExpression() {
-    setLanguageLevel(LanguageLevel.PYTHON30);
+    setLanguageLevel(LanguageLevel.PYTHON35);
     doTest();
   }
 
@@ -156,6 +156,14 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
   }
 
   public void testAsyncAwait() {
+    doTest(LanguageLevel.PYTHON35);
+  }
+
+  public void testDoubleStarUnpacking() {
+    doTest(LanguageLevel.PYTHON35);
+  }
+
+  public void testArgumentsUnpackingGeneralizations() {
     doTest(LanguageLevel.PYTHON35);
   }
 

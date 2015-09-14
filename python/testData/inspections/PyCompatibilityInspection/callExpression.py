@@ -13,4 +13,4 @@ def foo(a,b,c):
 
 args=['b']
 foo('a', c='c', *args) # OK
-foo('a', *args, <warning descr="Python version < 2.6 doesn't support this syntax. Named parameter cannot appear past *arg or **kwarg.">c='c'</warning>) # Not OK
+foo('a', *args, <warning descr="Python versions < 2.6 do not allow keyword arguments after *expression">c='c'</warning>) # Not OK

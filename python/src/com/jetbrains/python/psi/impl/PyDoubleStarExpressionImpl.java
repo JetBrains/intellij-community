@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,50 +16,37 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyDoubleStarExpression;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 27.02.2010
- * Time: 14:27:28
+ * @author vlan
  */
-public class PyStarExpressionImpl extends PyElementImpl implements PyStarExpression {
-  public PyStarExpressionImpl(ASTNode astNode) {
+public class PyDoubleStarExpressionImpl extends PyElementImpl implements PyDoubleStarExpression {
+  public PyDoubleStarExpressionImpl(ASTNode astNode) {
     super(astNode);
   }
 
   @Nullable
+  @Override
   public PyExpression getExpression() {
     return PsiTreeUtil.getChildOfType(this, PyExpression.class);
   }
 
+  @Nullable
+  @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return null;
   }
 
-  public void acceptPyVisitor(PyElementVisitor visitor) {
-    visitor.visitPyStarExpression(this);
-  }
-
-  public boolean isAssignmentTarget() {
-    return getExpression() instanceof PyTargetExpression;
-  }
-
-  public boolean isUnpacking() {
-    if (isAssignmentTarget()) {
-      return false;
-    }
-    PsiElement parent = getParent();
-    while (parent instanceof PyParenthesizedExpression) {
-      parent = parent.getParent();
-    }
-    return parent instanceof PyTupleExpression || parent instanceof PyListLiteralExpression || parent instanceof PySetLiteralExpression;
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor visitor) {
+    visitor.visitPyDoubleStarExpression(this);
   }
 }

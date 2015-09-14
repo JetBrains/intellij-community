@@ -189,6 +189,16 @@ public class ExpressionParsing extends Parsing {
       return;
     }
 
+    if (atToken(PyTokenTypes.EXP)) {
+      if (!parseDoubleStarExpression(false)) {
+        myBuilder.error("expression expected");
+        expr.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
+        return;
+      }
+      parseDictLiteralContentTail(expr);
+      return;
+    }
+
     final PsiBuilder.Marker firstExprMarker = myBuilder.mark();
     if (!parseSingleExpression(false)) {
       myBuilder.error("expression expected");
@@ -230,15 +240,26 @@ public class ExpressionParsing extends Parsing {
       parseComprehension(startMarker, PyTokenTypes.RBRACE, PyElementTypes.DICT_COMP_EXPRESSION);
     }
     else {
-      while (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
-        checkMatches(PyTokenTypes.COMMA, message("PARSE.expected.comma"));
+      parseDictLiteralContentTail(startMarker);
+    }
+  }
+
+  private void parseDictLiteralContentTail(PsiBuilder.Marker startMarker) {
+    while (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
+      checkMatches(PyTokenTypes.COMMA, message("PARSE.expected.comma"));
+      if (atToken(PyTokenTypes.EXP)) {
+        if (!parseDoubleStarExpression(false)) {
+          break;
+        }
+      }
+      else {
         if (!parseKeyValueExpression()) {
           break;
         }
       }
-      checkMatches(PyTokenTypes.RBRACE, message("PARSE.expected.rbrace"));
-      startMarker.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
     }
+    checkMatches(PyTokenTypes.RBRACE, message("PARSE.expected.rbrace"));
+    startMarker.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
   }
 
   private boolean parseKeyValueExpression() {
@@ -777,6 +798,21 @@ public class ExpressionParsing extends Parsing {
         return false;
       }
       starExpr.done(PyElementTypes.STAR_EXPRESSION);
+      return true;
+    }
+    return parseBitwiseORExpression(isTargetExpression);
+  }
+
+  private boolean parseDoubleStarExpression(boolean isTargetExpression) {
+    if (atToken(PyTokenTypes.EXP)) {
+      PsiBuilder.Marker starExpr = myBuilder.mark();
+      nextToken();
+      if (!parseBitwiseORExpression(isTargetExpression)) {
+        myBuilder.error(message("PARSE.expected.expression"));
+        starExpr.drop();
+        return false;
+      }
+      starExpr.done(PyElementTypes.DOUBLE_STAR_EXPRESSION);
       return true;
     }
     return parseBitwiseORExpression(isTargetExpression);
