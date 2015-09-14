@@ -77,7 +77,7 @@ public class PresentationModeProgressPanel {
   }
 
   @NotNull
-  public Color getTextForeground() {
+  private static Color getTextForeground() {
     return EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground();
   }
 
