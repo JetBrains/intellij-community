@@ -25,7 +25,6 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.*;
@@ -727,48 +726,79 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
   private void highlightIncorrectArguments(@NotNull PyCallExpression callExpression) {
     final Set<String> keywordArgumentNames = new HashSet<String>();
-    boolean seenKeywordOrContainerArgument = false;
+    boolean seenKeywordArgument = false;
     boolean seenKeywordContainer = false;
     boolean seenPositionalContainer = false;
     for (PyExpression argument : callExpression.getArguments()) {
       if (argument instanceof PyKeywordArgument) {
-        for (LanguageLevel level : myVersionsToProcess) {
-          if (level.isOlderThan(LanguageLevel.PYTHON26)) {
-            if (seenPositionalContainer || seenKeywordContainer) {
-              registerProblem(argument, "Python versions < 2.6 do not allow keyword arguments after *arg or **kwarg");
+        seenKeywordArgument = true;
+        final String keyword = ((PyKeywordArgument)argument).getKeyword();
+        boolean reported = false;
+        if (keywordArgumentNames.contains(keyword)) {
+          registerProblem(argument, "Keyword argument repeated", new PyRemoveArgumentQuickFix());
+          reported = true;
+        }
+        if (seenPositionalContainer && !reported) {
+          for (LanguageLevel level : myVersionsToProcess) {
+            if (level.isOlderThan(LanguageLevel.PYTHON26)) {
+              registerProblem(argument, "Python versions < 2.6 do not allow keyword arguments after *expression",
+                              new PyRemoveArgumentQuickFix());
+              reported = true;
               break;
             }
           }
         }
-        seenKeywordOrContainerArgument = true;
-        final String keyword = ((PyKeywordArgument)argument).getKeyword();
-        if (keywordArgumentNames.contains(keyword)) {
-          registerProblem(argument, PyBundle.message("INSP.duplicate.argument"), new PyRemoveArgumentQuickFix());
-        }
-        else if (seenKeywordContainer) {
-          registerProblem(argument, PyBundle.message("INSP.cannot.appear.past.keyword.arg"), new PyRemoveArgumentQuickFix());
+        if (seenKeywordContainer && !reported) {
+          for (LanguageLevel level : myVersionsToProcess) {
+            if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+              registerProblem(argument, "Python versions < 3.5 do not allow keyword arguments after **expression",
+                              new PyRemoveArgumentQuickFix());
+              break;
+            }
+          }
         }
         keywordArgumentNames.add(keyword);
       }
       else if (argument instanceof PyStarArgument) {
-        seenKeywordOrContainerArgument = true;
         final PyStarArgument starArgument = (PyStarArgument)argument;
         if (starArgument.isKeyword()) {
           if (seenKeywordContainer) {
-            registerProblem(argument, PyBundle.message("INSP.duplicate.doublestar.arg"), new PyRemoveArgumentQuickFix());
+            for (LanguageLevel level : myVersionsToProcess) {
+              if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+                registerProblem(argument, "Python versions < 3.5 do not allow duplicate **expressions", new PyRemoveArgumentQuickFix());
+                break;
+              }
+            }
           }
           seenKeywordContainer = true;
         }
         else {
           if (seenPositionalContainer) {
-            registerProblem(argument, PyBundle.message("INSP.duplicate.star.arg"), new PyRemoveArgumentQuickFix());
+            for (LanguageLevel level : myVersionsToProcess) {
+              if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+                registerProblem(argument, "Python versions < 3.5 do not allow duplicate *expressions", new PyRemoveArgumentQuickFix());
+                break;
+              }
+            }
           }
           seenPositionalContainer = true;
         }
       }
       else {
-        if (seenKeywordOrContainerArgument) {
-          registerProblem(argument, PyBundle.message("INSP.cannot.appear.past.keyword.arg"), new PyRemoveArgumentQuickFix());
+        if (seenKeywordArgument) {
+          registerProblem(argument, "Positional argument after keyword argument", new PyRemoveArgumentQuickFix());
+        }
+        else if (seenPositionalContainer) {
+          for (LanguageLevel level : myVersionsToProcess) {
+            if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+              registerProblem(argument, "Python versions < 3.5 do not allow positional arguments after *expression",
+                              new PyRemoveArgumentQuickFix());
+              break;
+            }
+          }
+        }
+        else if (seenKeywordContainer) {
+          registerProblem(argument, "Positional argument after **expression", new PyRemoveArgumentQuickFix());
         }
       }
     }

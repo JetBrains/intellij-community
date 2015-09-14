@@ -4,6 +4,6 @@ def foo(**args):
 
 a = {}
 b = {}
-foo(**a, <error descr="Duplicate **arg">**<caret>b</error>)
+foo(**a, <error descr="Python versions < 3.5 do not allow duplicate **expressions">**<caret>b</error>)
 
 
