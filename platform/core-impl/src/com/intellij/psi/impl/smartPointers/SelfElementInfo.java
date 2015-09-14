@@ -37,9 +37,9 @@ import java.util.List;
 */
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
-  private final Class myType;
+  protected volatile Class myType;
   private final SmartPointerManagerImpl myManager;
-  private final Language myLanguage;
+  protected final Language myLanguage;
   private final MarkerCache myMarkerCache;
   private final boolean myForInjected;
   private boolean myHasRange;
