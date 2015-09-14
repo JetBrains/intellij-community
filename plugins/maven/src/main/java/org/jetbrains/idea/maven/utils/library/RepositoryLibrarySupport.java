@@ -68,22 +68,18 @@ public class RepositoryLibrarySupport {
     }
     final DependencyScope dependencyScope = LibraryDependencyScopeSuggester.getDefaultScope(library);
     final ModifiableRootModel moduleModifiableModel = modifiableModelsProvider.getModuleModifiableModel(module);
-    try {
-      LibraryOrderEntry foundEntry =
-        (LibraryOrderEntry)Iterables.find(Arrays.asList(moduleModifiableModel.getOrderEntries()), new Predicate<OrderEntry>() {
-          @Override
-          public boolean apply(@Nullable OrderEntry entry) {
-            return entry instanceof LibraryOrderEntry
-                   && ((LibraryOrderEntry)entry).getScope() == dependencyScope
-                   && isLibraryEqualsToSelected(((LibraryOrderEntry)entry).getLibrary());
-          }
-        }, null);
-      if (foundEntry == null) {
-        rootModel.addLibraryEntry(library).setScope(dependencyScope);
-      }
-    }
-    finally {
-      moduleModifiableModel.dispose();
+    LibraryOrderEntry foundEntry =
+      (LibraryOrderEntry)Iterables.find(Arrays.asList(moduleModifiableModel.getOrderEntries()), new Predicate<OrderEntry>() {
+        @Override
+        public boolean apply(@Nullable OrderEntry entry) {
+          return entry instanceof LibraryOrderEntry
+                 && ((LibraryOrderEntry)entry).getScope() == dependencyScope
+                 && isLibraryEqualsToSelected(((LibraryOrderEntry)entry).getLibrary());
+        }
+      }, null);
+    modifiableModelsProvider.disposeModuleModifiableModel(moduleModifiableModel);
+    if (foundEntry == null) {
+      rootModel.addLibraryEntry(library).setScope(dependencyScope);
     }
   }
 
