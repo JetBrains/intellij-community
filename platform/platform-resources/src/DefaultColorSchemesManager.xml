@@ -1104,7 +1104,7 @@
       <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_BOTH_CONFLICTS" value="d5756c" />
       <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_CONFLICTS" value="d5756c" />
       <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_PROPERTY_CONFLICTS" value="d5756c" />
-      <option name="FILESTATUS_MERGED" value="9876aa" />
+      <option name="FILESTATUS_MERGED" value="9876aa" deuteranopia="828eba" protanopia="828eba"/>
       <option name="FILESTATUS_MODIFIED" value="6897bb" />
       <option name="FILESTATUS_NOT_CHANGED" value="" />
       <option name="FILESTATUS_NOT_CHANGED_IMMEDIATE" value="6897bb" />
@@ -1142,6 +1142,7 @@
       <option name="ANNOTATION_NAME_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="bbb529" deuteranopia="66a6ff" protanopia="66a6ff"/>
+          <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
           <option name="EFFECT_TYPE" value="1" />
         </value>
       </option>
@@ -1170,35 +1171,10 @@
           <option name="BACKGROUND" value="3a2323" deuteranopia="42372b" protanopia="42372b"/>
         </value>
       </option>
-      <option name="Bad character">
-        <value>
-          <option name="FOREGROUND" value="ff0000" />
-          <option name="EFFECT_TYPE" value="2" />
-          <option name="ERROR_STRIPE_COLOR" value="ff0000" />
-        </value>
-      </option>
-      <option name="COFFEESCRIPT.EXPRESSIONS_SUBSTITUTION_MARK">
-        <value>
-          <option name="FOREGROUND" value="a9b7c6" />
-          <option name="EFFECT_TYPE" value="5" />
-        </value>
-      </option>
       <option name="COFFEESCRIPT.GLOBAL_VARIABLE">
         <value>
           <option name="FONT_TYPE" value="2" />
           <option name="EFFECT_TYPE" value="1" />
-        </value>
-      </option>
-      <option name="COFFEESCRIPT.PARAMETER">
-        <value>
-          <option name="EFFECT_COLOR" value="a9b7c6" />
-          <option name="EFFECT_TYPE" value="1" />
-        </value>
-      </option>
-      <option name="COFFEESCRIPT.JAVASCRIPT_CONTENT">
-        <value>
-          <option name="FOREGROUND" value="a9b7c6" />
-          <option name="EFFECT_TYPE" value="5" />
         </value>
       </option>
       <option name="COFFEESCRIPT.LOCAL_VARIABLE">
@@ -1313,26 +1289,6 @@
           <option name="FOREGROUND" value="FFFF00" />
         </value>
       </option>
-      <option name="CSS.COLOR">
-        <value>
-          <option name="FOREGROUND" value="6897bb" />
-        </value>
-      </option>
-      <option name="CSS.COMMENT">
-        <value>
-          <option name="FOREGROUND" value="808080" />
-        </value>
-      </option>
-      <option name="CSS.FUNCTION">
-        <value>
-          <option name="FOREGROUND" value="ffc66d" />
-        </value>
-      </option>
-      <option name="CSS.IDENT">
-        <value>
-          <option name="FOREGROUND" value="ffc66d" />
-        </value>
-      </option>
       <option name="CSS.IMPORTANT">
         <value>
           <option name="FOREGROUND" value="cc7832" />
@@ -1342,26 +1298,6 @@
       <option name="CSS.KEYWORD">
         <value>
           <option name="FOREGROUND" value="cc7832" />
-        </value>
-      </option>
-      <option name="CSS.NUMBER">
-        <value>
-          <option name="FOREGROUND" value="6897bb" />
-        </value>
-      </option>
-      <option name="CSS.PROPERTY_NAME">
-        <value>
-          <option name="FOREGROUND" value="9876aa" />
-        </value>
-      </option>
-      <option name="CSS.PROPERTY_VALUE">
-        <value>
-          <option name="FOREGROUND" value="a9b7c6" />
-        </value>
-      </option>
-      <option name="CSS.STRING">
-        <value>
-          <option name="FOREGROUND" value="a5c261" />
         </value>
       </option>
       <option name="CSS.TAG_NAME">
@@ -1402,14 +1338,9 @@
           <option name="EFFECT_TYPE" value="1" />
         </value>
       </option>
-      <option name="CUSTOM_NUMBER_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND" value="6897bb" />
-        </value>
-      </option>
       <option name="CUSTOM_STRING_ATTRIBUTES">
         <value>
-          <option name="FOREGROUND" value="6a8759" />
+          <option name="FOREGROUND" value="6a8759" deuteranopia="807d6e" protanopia="807d6e"/>
         </value>
       </option>
       <option name="CUSTOM_VALID_STRING_ESCAPE_ATTRIBUTES">
@@ -1506,7 +1437,7 @@
       </option>
       <option name="DEFAULT_INSTANCE_FIELD">
         <value>
-          <option name="FOREGROUND" value="9876aa" deuteranopia="7280b0" protanopia="7280b0"/>
+          <option name="FOREGROUND" value="9876aa" deuteranopia="828eba" protanopia="828eba"/>
         </value>
       </option>
       <option name="DEFAULT_INVALID_STRING_ESCAPE">
@@ -1556,7 +1487,7 @@
       </option>
       <option name="DEFAULT_STATIC_FIELD">
         <value>
-          <option name="FOREGROUND" value="9876aa" deuteranopia="7280b0" protanopia="7280b0"/>
+          <option name="FOREGROUND" value="9876aa" deuteranopia="828eba" protanopia="828eba"/>
           <option name="FONT_TYPE" value="2" />
         </value>
       </option>
@@ -1715,12 +1646,6 @@
           <option name="FOREGROUND" value="a5c261" deuteranopia="4c84d9" protanopia="4c84d9"/>
         </value>
       </option>
-      <option name="HTML_COMMENT">
-        <value>
-          <option name="FOREGROUND" value="808080" />
-          <option name="FONT_TYPE" value="2" />
-        </value>
-      </option>
       <option name="HTML_ENTITY_REFERENCE">
         <value>
           <option name="FOREGROUND" value="6d9cbe" />
@@ -1777,12 +1702,12 @@
       </option>
       <option name="Instance field">
         <value>
-          <option name="FOREGROUND" value="9876aa" />
+          <option name="FOREGROUND" value="9876aa" deuteranopia="828eba" protanopia="828eba"/>
         </value>
       </option>
       <option name="Instance property reference ID">
         <value>
-          <option name="FOREGROUND" value="9876aa" />
+          <option name="FOREGROUND" value="9876aa" deuteranopia="828eba" protanopia="828eba"/>
         </value>
       </option>
       <option name="Invalid string escape">
@@ -1796,36 +1721,14 @@
           <option name="FOREGROUND" value="cc7832" />
         </value>
       </option>
-      <option name="JAVA_INVALID_STRING_ESCAPE">
-        <value>
-          <option name="FOREGROUND" value="6a8759" />
-          <option name="EFFECT_COLOR" value="ff0000" />
-          <option name="EFFECT_TYPE" value="2" />
-        </value>
-      </option>
       <option name="JAVA_KEYWORD">
         <value>
           <option name="FOREGROUND" value="cc7832" />
         </value>
       </option>
-      <option name="JAVA_LINE_COMMENT">
-        <value>
-          <option name="FOREGROUND" value="808080" />
-        </value>
-      </option>
-      <option name="JAVA_NUMBER">
-        <value>
-          <option name="FOREGROUND" value="6897bb" />
-        </value>
-      </option>
       <option name="JAVA_SEMICOLON">
         <value>
           <option name="FOREGROUND" value="cc7832" />
-        </value>
-      </option>
-      <option name="JAVA_STRING">
-        <value>
-          <option name="FOREGROUND" value="6a8759" />
         </value>
       </option>
       <option name="JAVA_VALID_STRING_ESCAPE">
@@ -1836,12 +1739,6 @@
       <option name="JS.ATTRIBUTE">
         <value>
           <option name="EFFECT_TYPE" value="-1" />
-        </value>
-      </option>
-      <option name="JS.PARAMETER">
-        <value>
-          <option name="EFFECT_COLOR" value="a9b7c6" />
-          <option name="EFFECT_TYPE" value="1" />
         </value>
       </option>
       <option name="JSP_DIRECTIVE_NAME">
@@ -1906,7 +1803,7 @@
       </option>
       <option name="METHOD_DECLARATION_ATTRIBUTES">
         <value>
-          <option name="FOREGROUND" value="ffc66d" />
+          <option name="FOREGROUND" value="ffc66d" deuteranopia="d9af6c" protanopia="d9af6c"/>
         </value>
       </option>
       <option name="Map key">
@@ -1921,33 +1818,11 @@
           <option name="EFFECT_TYPE" value="2" />
         </value>
       </option>
-      <option name="Number">
-        <value>
-          <option name="FOREGROUND" value="6897bb" />
-        </value>
-      </option>
-      <option name="PHP_CONSTANT">
-        <value>
-          <option name="FOREGROUND" value="9876aa" />
-          <option name="FONT_TYPE" value="2" />
-        </value>
-      </option>
-      <option name="PHP_EXEC_COMMAND_ID">
-        <value>
-          <option name="FOREGROUND" value="6a8759" />
-          <option name="BACKGROUND" value="5e6465" />
-        </value>
-      </option>
-      <option name="PHP_VAR">
-        <value>
-          <option name="FOREGROUND" value="9876aa" />
-        </value>
-      </option>
       <option name="PROPERTIES.INVALID_STRING_ESCAPE">
         <value>
           <option name="FOREGROUND" value="ffc66d" />
           <option name="BACKGROUND" value="450505" />
-          <option name="EFFECT_COLOR" value="ff0000" />
+          <option name="EFFECT_COLOR" value="ff0000" deuteranopia="e57132" protanopia="e57132"/>
           <option name="EFFECT_TYPE" value="2" />
         </value>
       </option>
@@ -1964,11 +1839,6 @@
       </option>
       <option name="PROPERTIES.VALID_STRING_ESCAPE">
         <value />
-      </option>
-      <option name="PROPERTIES.VALUE">
-        <value>
-          <option name="FOREGROUND" value="6a8759" />
-        </value>
       </option>
       <option name="PY.BUILTIN_NAME">
         <value>
@@ -1995,14 +1865,6 @@
         <value>
           <option name="FOREGROUND" value="cc7832" />
           <option name="FONT_TYPE" value="1" />
-        </value>
-      </option>
-      <option name="REGEXP.INVALID_STRING_ESCAPE">
-        <value>
-          <option name="FOREGROUND" value="4cd6a3" />
-          <option name="BACKGROUND" value="3d0909" />
-          <option name="EFFECT_COLOR" value="bc3f3c" />
-          <option name="EFFECT_TYPE" value="2" />
         </value>
       </option>
       <option name="REGEXP.META">
@@ -2054,20 +1916,9 @@
           <option name="FOREGROUND" value="d0d0ff" />
         </value>
       </option>
-      <option name="SASS_NUMBER">
-        <value>
-          <option name="FOREGROUND" value="a5c261" />
-          <option name="EFFECT_TYPE" value="1" />
-        </value>
-      </option>
       <option name="SASS_RULE">
         <value>
           <option name="FOREGROUND" value="e8bf6a" />
-        </value>
-      </option>
-      <option name="SASS_STRING">
-        <value>
-          <option name="FOREGROUND" value="a5c261" />
         </value>
       </option>
       <option name="SASS_VARIABLE">
@@ -2221,7 +2072,7 @@
       </option>
       <option name="SPY-JS.EXCEPTION">
         <value>
-          <option name="BACKGROUND" value="532B2E"/>
+          <option name="BACKGROUND" value="532B2E" deuteranopia="453900" protanopia="453900"/>
           <option name="EFFECT_TYPE" value="2"/>
         </value>
       </option>
@@ -2252,7 +2103,7 @@
       </option>
       <option name="STATIC_FINAL_FIELD_ATTRIBUTES">
         <value>
-          <option name="FOREGROUND" value="9876aa" />
+          <option name="FOREGROUND" value="9876aa" deuteranopia="828eba" protanopia="828eba"/>
           <option name="FONT_TYPE" value="2" />
           <option name="EFFECT_TYPE" value="1" />
         </value>
@@ -2282,13 +2133,8 @@
       </option>
       <option name="Static method access">
         <value>
-          <option name="FOREGROUND" value="9876aa" />
+          <option name="FOREGROUND" value="9876aa" deuteranopia="828eba" protanopia="828eba"/>
           <option name="FONT_TYPE" value="2" />
-        </value>
-      </option>
-      <option name="String">
-        <value>
-          <option name="FOREGROUND" value="6a8759" />
         </value>
       </option>
       <option name="TAPESTRY_COMPONENT_PARAMATER">
@@ -2372,11 +2218,6 @@
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>
-      <option name="VELOCITY_NUMBER">
-        <value>
-          <option name="FOREGROUND" value="6897bb" />
-        </value>
-      </option>
       <option name="VELOCITY_REFERENCE">
         <value>
           <option name="FOREGROUND" value="d0d0ff" />
@@ -2385,12 +2226,6 @@
       <option name="VELOCITY_SCRIPTING_BACKGROUND">
         <value>
           <option name="BACKGROUND" value="303030" />
-        </value>
-      </option>
-      <option name="VELOCITY_STRING">
-        <value>
-          <option name="FOREGROUND" value="6a8759" />
-          <option name="FONT_TYPE" value="1" />
         </value>
       </option>
       <option name="Valid string escape">
@@ -2431,17 +2266,6 @@
           <option name="FOREGROUND" value="bababa" />
         </value>
       </option>
-      <option name="XML_ATTRIBUTE_VALUE">
-        <value>
-          <option name="FOREGROUND" value="a5c261" />
-        </value>
-      </option>
-      <option name="XML_COMMENT">
-        <value>
-          <option name="FOREGROUND" value="808080" />
-          <option name="FONT_TYPE" value="2" />
-        </value>
-      </option>
       <option name="XML_ENTITY_REFERENCE">
         <value>
           <option name="FOREGROUND" value="6d9cbe" />
@@ -2468,17 +2292,6 @@
       <option name="XPATH.KEYWORD">
         <value>
           <option name="FOREGROUND" value="cc7832" />
-          <option name="FONT_TYPE" value="1" />
-        </value>
-      </option>
-      <option name="XPATH.NUMBER">
-        <value>
-          <option name="FOREGROUND" value="6897bb" />
-        </value>
-      </option>
-      <option name="XPATH.STRING">
-        <value>
-          <option name="FOREGROUND" value="6a8759" />
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>
