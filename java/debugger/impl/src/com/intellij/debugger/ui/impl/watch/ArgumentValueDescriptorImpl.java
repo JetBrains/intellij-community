@@ -84,7 +84,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
                   body.accept(new LocalVariableNameFinder(getFirstLocalsSlot(method), nameBuilder));
                 }
                 finally {
-                  myName = nameBuilder.length() > 0? myDefaultName + ": " + nameBuilder.toString() : myDefaultName;
+                  myName = nameBuilder.length() > 0 ? nameBuilder.toString() + ": " + myDefaultName : myDefaultName;
                 }
               }
             }
