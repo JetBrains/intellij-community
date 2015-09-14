@@ -189,6 +189,16 @@ public class ExpressionParsing extends Parsing {
       return;
     }
 
+    if (atToken(PyTokenTypes.EXP)) {
+      if (!parseStarExpression(false)) {
+        myBuilder.error("expression expected");
+        expr.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
+        return;
+      }
+      parseDictLiteralContentTail(expr);
+      return;
+    }
+
     final PsiBuilder.Marker firstExprMarker = myBuilder.mark();
     if (!parseSingleExpression(false)) {
       myBuilder.error("expression expected");
@@ -230,15 +240,26 @@ public class ExpressionParsing extends Parsing {
       parseComprehension(startMarker, PyTokenTypes.RBRACE, PyElementTypes.DICT_COMP_EXPRESSION);
     }
     else {
-      while (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
-        checkMatches(PyTokenTypes.COMMA, message("PARSE.expected.comma"));
+      parseDictLiteralContentTail(startMarker);
+    }
+  }
+
+  private void parseDictLiteralContentTail(PsiBuilder.Marker startMarker) {
+    while (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
+      checkMatches(PyTokenTypes.COMMA, message("PARSE.expected.comma"));
+      if (atToken(PyTokenTypes.EXP)) {
+        if (!parseStarExpression(false)) {
+          break;
+        }
+      }
+      else {
         if (!parseKeyValueExpression()) {
           break;
         }
       }
-      checkMatches(PyTokenTypes.RBRACE, message("PARSE.expected.rbrace"));
-      startMarker.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
     }
+    checkMatches(PyTokenTypes.RBRACE, message("PARSE.expected.rbrace"));
+    startMarker.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
   }
 
   private boolean parseKeyValueExpression() {
@@ -768,7 +789,8 @@ public class ExpressionParsing extends Parsing {
   }
 
   private boolean parseStarExpression(boolean isTargetExpression) {
-    if (atToken(PyTokenTypes.MULT)) {
+    final IElementType tokenType = myBuilder.getTokenType();
+    if (tokenType == PyTokenTypes.MULT || tokenType == PyTokenTypes.EXP) {
       PsiBuilder.Marker starExpr = myBuilder.mark();
       nextToken();
       if (!parseBitwiseORExpression(isTargetExpression)) {
@@ -776,7 +798,7 @@ public class ExpressionParsing extends Parsing {
         starExpr.drop();
         return false;
       }
-      starExpr.done(PyElementTypes.STAR_EXPRESSION);
+      starExpr.done(tokenType == PyTokenTypes.MULT ? PyElementTypes.STAR_EXPRESSION : PyElementTypes.DOUBLE_STAR_EXPRESSION);
       return true;
     }
     return parseBitwiseORExpression(isTargetExpression);
