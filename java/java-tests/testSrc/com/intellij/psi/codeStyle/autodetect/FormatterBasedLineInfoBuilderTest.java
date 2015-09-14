@@ -50,7 +50,7 @@ public class FormatterBasedLineInfoBuilderTest extends LightPlatformCodeInsightT
     FormatterBasedLineIndentInfoBuilder builder = new FormatterBasedLineIndentInfoBuilder(document, block);
     
     List<LineIndentInfo> infos = builder.build();
-    long linesWithNormalIndents = infos.stream().filter(LineIndentInfo::isLineWithWhiteSpaceIndent).count();
+    long linesWithNormalIndents = infos.stream().filter(LineIndentInfo::isLineWithNormalIndent).count();
     assertEquals(0, linesWithNormalIndents);
   }
 }

@@ -19,7 +19,6 @@ import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.Indent;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.formatter.common.AbstractBlock;
@@ -46,19 +45,25 @@ public class FormatterBasedLineIndentInfoBuilder {
   }
 
   public List<LineIndentInfo> build() {
-    List<Block> normallyIndentedBlocks = ContainerUtil.filter(getBlocksStartingNewLine(), new Condition<Block>() {
-      @Override
-      public boolean value(Block block) {
-        return hasTotallyNormalOrNoneIndent(block);
-      }
-    });
-
-    return ContainerUtil.map(normallyIndentedBlocks, new Function<Block, LineIndentInfo>() {
+    List<Block> newLineBlocks = getBlocksStartingNewLine();
+    
+    return ContainerUtil.map(newLineBlocks, new Function<Block, LineIndentInfo>() {
       @Override
       public LineIndentInfo fun(Block newLineBlock) {
         int blockStartOffset = newLineBlock.getTextRange().getStartOffset();
-        int lineStartOffset = myDocument.getLineStartOffset(myDocument.getLineNumber(blockStartOffset));
-        return createLineIndentInfo(lineStartOffset, blockStartOffset);
+        int line = myDocument.getLineNumber(blockStartOffset);
+        int lineStartOffset = myDocument.getLineStartOffset(line);
+
+        if (rangeHasTabs(lineStartOffset, blockStartOffset)) {
+          return LineIndentInfo.LINE_WITH_TABS;
+        }
+        
+        if (hasTotallyNormalOrNoneIndent(newLineBlock)) {
+          return LineIndentInfo.newNormalIndent(blockStartOffset - lineStartOffset);
+        }
+        else {
+          return LineIndentInfo.LINE_WITH_NOT_COUNTABLE_INDENT; 
+        }
       }
     });
   }
@@ -106,13 +111,8 @@ public class FormatterBasedLineIndentInfoBuilder {
 
     return newLineBlocks;
   }
-
-  @NotNull
-  private LineIndentInfo createLineIndentInfo(int lineStartOffset, int textStartOffset) {
-    if (CharArrayUtil.indexOf(myText, "\t", lineStartOffset, textStartOffset) > 0) {
-      return LineIndentInfo.LINE_WITH_TABS;
-    }
-    return LineIndentInfo.newWhiteSpaceIndent(textStartOffset - lineStartOffset);
+  
+  private boolean rangeHasTabs(int lineStartOffset, int textStartOffset) {
+    return CharArrayUtil.indexOf(myText, "\t", lineStartOffset, textStartOffset) > 0;
   }
-
 }

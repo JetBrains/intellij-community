@@ -70,8 +70,8 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
       if (lineInfo.isLineWithTabs()) {
         myTotalLinesWithTabs++;
       }
-      else if (lineInfo.isLineWithWhiteSpaceIndent()) {
-        handleWhiteSpaceIndent(lineInfo.getIndentSize());
+      else if (lineInfo.isLineWithNormalIndent()) {
+        handleNormalIndent(lineInfo.getIndentSize());
       }
     }
   }
@@ -84,7 +84,7 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
     return myParentIndents.peek();
   }
 
-  private void handleWhiteSpaceIndent(int currentIndent) {
+  private void handleNormalIndent(int currentIndent) {
     int relativeIndent = currentIndent - myPreviousLineIndent;
     if (relativeIndent < 0) {
       IndentData indentData = findParentIndent(currentIndent);
