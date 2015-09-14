@@ -234,7 +234,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
                                 @NotNull final FileAnnotation fileAnnotation,
                                 @NotNull final AbstractVcs vcs,
                                 @Nullable UpToDateLineNumberProvider getUpToDateLineNumber) {
-    if (fileAnnotation.getFile().isInLocalFileSystem()) {
+    if (fileAnnotation.getFile() != null && fileAnnotation.getFile().isInLocalFileSystem()) {
       ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener().registerAnnotation(fileAnnotation.getFile(), fileAnnotation);
     }
 
