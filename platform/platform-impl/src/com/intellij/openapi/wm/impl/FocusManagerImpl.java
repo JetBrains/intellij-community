@@ -29,7 +29,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -1070,79 +1069,35 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private class AppListener extends ApplicationActivationListener.Adapter {
+
     @Override
     public void applicationActivated(final IdeFrame ideFrame) {
-
-      if (Registry.is("trace.focus.on.app.activation")) {
-        LOG.info("Application is activating");
-      }
-
       final FocusCommand cmd = myFocusCommandOnAppActivation;
       ActionCallback callback = myCallbackOnActivation;
       myFocusCommandOnAppActivation = null;
       myCallbackOnActivation = null;
 
       if (cmd != null) {
-        if (Registry.is("trace.focus.on.app.activation")) {
-          LOG.info("Use focus command that we have saved on deactivation");
-          LOG.info(cmd.getAllocation());
-        }
         requestFocus(cmd, true).notify(callback);
       } else {
-        Component lastFocusedComponent = focusLastFocusedComponent(ideFrame);
-        if (Registry.is("trace.focus.on.app.activation")) {
-          final Project project = ideFrame.getProject();
-          if (project != null) {
-            LOG.info("Use last focused component because we do not have a focus command");
-            LOG.info("Component in [" + project.getName() + "]: " + (lastFocusedComponent != null ? lastFocusedComponent.getClass().getName() : null));
-          }
-        }
+        focusLastFocusedComponent(ideFrame);
       }
     }
 
     @Override
-    public void applicationDeactivated(IdeFrame ideFrame) {
+    public void delayedApplicationDeactivated(IdeFrame ideFrame) {
+        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        Component parent = UIUtil.findUltimateParent(owner);
 
-      if (Registry.is("trace.focus.on.app.activation")) {
-        LOG.info("Application is deactivating");
-      }
-
-      final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      Component parent = UIUtil.findUltimateParent(owner);
-
-      if (parent == ideFrame) {
-        myLastFocusedAtDeactivation.put(ideFrame, owner);
-        if (Registry.is("trace.focus.on.app.activation")) {
-          final Project project = ideFrame.getProject();
-          String projectName = null;
-          if (project != null) {
-            projectName = project.getName();
-          }
-          LOG.info("The next component is set as ths last focused for [" + projectName +"]");
+        if (parent == ideFrame) {
+          myLastFocusedAtDeactivation.put(ideFrame, owner);
         }
-      } else {
-        if (Registry.is("trace.focus.on.app.activation")) {
-          if (owner != null) {
-            final Project project = ideFrame.getProject();
-            String projectName = null;
-            if (project != null) {
-              projectName = project.getName();
-            }
-            LOG.error("The last focused component " +
-                      (owner != null ? owner.getClass().getName() : null) +
-                      " is not in the deactivating frame [" + projectName + "]. Skip it.");
-          } else {
-            LOG.info("The last focused component is null");
-          }
-        }
-      }
     }
 
-    private Component focusLastFocusedComponent(IdeFrame ideFrame) {
+    private void focusLastFocusedComponent(IdeFrame ideFrame) {
       final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-      Component c = null;
       if (mgr.getFocusOwner() == null) {
-        c = getComponent(myLastFocusedAtDeactivation, ideFrame);
+        Component c = getComponent(myLastFocusedAtDeactivation, ideFrame);
         if (c == null || !c.isShowing()) {
           c = getComponent(myLastFocusedAtDeactivation, ideFrame);
         }
@@ -1165,7 +1120,6 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       }
 
       myLastFocusedAtDeactivation.remove(ideFrame);
-      return c;
     }
   }
 

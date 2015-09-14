@@ -246,14 +246,6 @@ binding.setVariable("allModules", {
   return project.modules
 })
 
-binding.setVariable("printUnusedModules", {Set<String> usedModules ->
-  allModules().each {JpsModule m ->
-    if (!usedModules.contains(m.name) && hasSourceRoots(m)) {
-      projectBuilder.warning("Module $m.name is not used in project layout")
-    }
-  }
-})
-
 requireProperty("home", guessHome())
 
 String readSnapshotBuild() {
