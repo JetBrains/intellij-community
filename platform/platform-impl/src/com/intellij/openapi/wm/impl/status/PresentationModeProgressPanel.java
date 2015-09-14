@@ -16,13 +16,18 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.TransparentPanel;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +64,12 @@ public class PresentationModeProgressPanel {
         updateImpl();
       }
     };
+    Disposer.register(progress, new Disposable() {
+      @Override
+      public void dispose() {
+        UIUtil.dispose(myCancelButton);
+      }
+    });
   }
 
   public void update() {
@@ -66,7 +77,7 @@ public class PresentationModeProgressPanel {
   }
 
   @NotNull
-  public Color getTextForeground() {
+  private static Color getTextForeground() {
     return EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground();
   }
 
@@ -98,7 +109,13 @@ public class PresentationModeProgressPanel {
   }
 
   private void createUIComponents() {
-    myRootPanel = new TransparentPanel(0.5f);
+    myRootPanel = new TransparentPanel(0.5f) {
+      @Override
+      public boolean isVisible() {
+        UISettings ui = UISettings.getInstance();
+        return ui.PRESENTATION_MODE || !ui.SHOW_STATUS_BAR && Registry.is("ide.show.progress.without.status.bar");
+      }
+    };
     final IconButton iconButton = new IconButton(myProgress.getInfo().getCancelTooltipText(),
                                                  AllIcons.Process.Stop,
                                                  AllIcons.Process.StopHovered);

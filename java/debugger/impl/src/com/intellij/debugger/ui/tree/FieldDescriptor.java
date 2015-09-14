@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
  */
 package com.intellij.debugger.ui.tree;
 
+import com.intellij.openapi.util.Key;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
 
-public interface FieldDescriptor extends NodeDescriptor{
+public interface FieldDescriptor extends NodeDescriptor {
+  Key<Boolean> SHOW_DECLARING_TYPE = Key.create("SHOW_TYPE_IN_NAME");
+
   Field           getField();
   ObjectReference getObject();
 }

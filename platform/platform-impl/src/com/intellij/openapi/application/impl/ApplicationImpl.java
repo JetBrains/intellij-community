@@ -57,7 +57,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.Splash;
@@ -125,8 +124,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final ExecutorService ourThreadExecutorsService = PooledThreadExecutor.INSTANCE;
   private boolean myLoaded;
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
-
-  private volatile boolean myActive;
 
   private static final int IS_EDT_FLAG = 1<<30; // we don't mess with sign bit since we want to do arithmetic
   private static final int IS_READ_LOCK_ACQUIRED_FLAG = 1<<29;
@@ -1179,46 +1176,18 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return true;
   }
 
-  /**
-   * !!!!! CAUTION !!!!!
-   * !!!!! CAUTION !!!!!
-   * !!!!! CAUTION !!!!!
-   *
-   * THIS IS AN "ABSOLUTELY-GURU METHOD".
-   * NOBODY AND UNDER ANY CIRCUMSTANCES SHOULD ADD OTHER USAGES OF IT :)
-   * ONLY DENIS IS PERMITTED TO USE THIS METHOD!!!
-   *
-   * !!!!! CAUTION !!!!!
-   * !!!!! CAUTION !!!!!
-   * !!!!! CAUTION !!!!!
-   *
-   * There are no legitimate usages of the method outside of IdeEventQueue.processAppActivationEvents()
-   */
-  public void tryToApplyActivationState(Window window, boolean activation) {
-    if (activation && !isActive()) {
-      myActive = true;
-      IdeFrame ideFrame = getIdeFrameFromWindow(window);
-      if (ideFrame != null) {
-        getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationActivated(ideFrame);
-      }
-    }
-    else if (!activation && isActive()) {
-      myActive = false;
-      IdeFrame ideFrame = getIdeFrameFromWindow(window);
-      if (ideFrame != null) {
-        getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationDeactivated(ideFrame);
-      }
-    }
-  }
-
-  private static IdeFrame getIdeFrameFromWindow(Window window) {
-    Component frame = UIUtil.findUltimateParent(window);
-    return frame instanceof IdeFrame ? (IdeFrame)frame : null;
-  }
-
   @Override
   public boolean isActive() {
-    return isUnitTestMode() || myActive;
+    if (isUnitTestMode()) return true;
+
+    Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+
+    if (ApplicationActivationStateManager.getState().isInactive()
+      && activeWindow != null) {
+      ApplicationActivationStateManager.updateState(activeWindow);
+    }
+
+    return ApplicationActivationStateManager.getState().isActive();
   }
 
   @NotNull

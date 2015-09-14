@@ -121,9 +121,16 @@ public class PyTypeChecker {
         if (!matchClasses(superClass, subClass, context)) {
           return false;
         }
-        final PyType superElementType = ((PyCollectionType)expected).getElementType(context);
-        final PyType subElementType = ((PyCollectionType)actual).getElementType(context);
-        return match(superElementType, subElementType, context, substitutions, recursive);
+        // TODO: Match generic parameters based on the correspondence between the generic parameters of subClass and its base classes
+        final List<PyType> superElementTypes = ((PyCollectionType)expected).getElementTypes(context);
+        final List<PyType> subElementTypes = ((PyCollectionType)actual).getElementTypes(context);
+        for (int i = 0; i < subElementTypes.size(); i++) {
+          final PyType superElementType = i < superElementTypes.size() ? superElementTypes.get(i) : null;
+          if (!match(superElementType, subElementTypes.get(i), context, substitutions, recursive)) {
+            return false;
+          }
+        }
+        return true;
       }
       else if (expected instanceof PyTupleType && actual instanceof PyTupleType) {
         final PyTupleType superTupleType = (PyTupleType)expected;
@@ -309,7 +316,9 @@ public class PyTypeChecker {
     }
     else if (type instanceof PyCollectionType) {
       final PyCollectionType collection = (PyCollectionType)type;
-      collectGenerics(collection.getElementType(context), context, collected, visited);
+      for (PyType elementType : collection.getElementTypes(context)) {
+        collectGenerics(elementType, context, collected, visited);
+      }
     }
     else if (type instanceof PyTupleType) {
       final PyTupleType tuple = (PyTupleType)type;
@@ -350,9 +359,12 @@ public class PyTypeChecker {
       }
       else if (type instanceof PyCollectionTypeImpl) {
         final PyCollectionTypeImpl collection = (PyCollectionTypeImpl)type;
-        final PyType elem = collection.getElementType(context);
-        final PyType subst = substitute(elem, substitutions, context);
-        return new PyCollectionTypeImpl(collection.getPyClass(), collection.isDefinition(), subst);
+        final List<PyType> elementTypes = collection.getElementTypes(context);
+        final List<PyType> substitutes = new ArrayList<PyType>();
+        for (PyType elementType : elementTypes) {
+          substitutes.add(substitute(elementType, substitutions, context));
+        }
+        return new PyCollectionTypeImpl(collection.getPyClass(), collection.isDefinition(), substitutes);
       }
       else if (type instanceof PyTupleType) {
         final PyTupleType tuple = (PyTupleType)type;

@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -28,7 +29,7 @@ public class JBProgressBar extends JProgressBar {
 
   @Override
   public void setUI(ProgressBarUI ui) {
-    boolean nativeLaf = UIUtil.isUnderWindowsLookAndFeel() || UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderGTKLookAndFeel();
+    boolean nativeLaf = UIUtil.isUnderWindowsLookAndFeel() || SystemInfo.isMac || UIUtil.isUnderGTKLookAndFeel();
     if (nativeLaf) {
       ui = new DarculaProgressBarUI();
       if (UIUtil.isUnderGTKLookAndFeel()) {

@@ -53,8 +53,6 @@ public class JavaAnchorProvider extends SmartPointerAnchorProvider {
         parent = parent.getParent();
       }
 
-      if (!anchor.equals(AnchorElementInfoFactory.getAnchor(parent))) return null;
-
       return parent;
     }
     return null;

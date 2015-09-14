@@ -20,6 +20,7 @@ import com.intellij.lang.WhitespacesBinders;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.PyBundle.message;
 
@@ -33,23 +34,25 @@ public class FunctionParsing extends Parsing {
     super(context);
   }
 
-  public void parseFunctionDeclaration() {
+  public void parseFunctionDeclaration(@NotNull PsiBuilder.Marker endMarker) {
     assertCurrentToken(PyTokenTypes.DEF_KEYWORD);
-    final PsiBuilder.Marker functionMarker = myBuilder.mark();
-    parseFunctionInnards(functionMarker);
+    parseFunctionInnards(endMarker);
   }
 
   protected IElementType getFunctionType() {
     return FUNCTION_TYPE;
   }
 
-  protected void parseFunctionInnards(PsiBuilder.Marker functionMarker) {
+  protected void parseFunctionInnards(@NotNull PsiBuilder.Marker functionMarker) {
     myBuilder.advanceLexer();
     parseIdentifierOrSkip(PyTokenTypes.LPAR);
     parseParameterList();
     parseReturnTypeAnnotation();
     checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));
-    getStatementParser().parseSuite(functionMarker, getFunctionType(), myContext.emptyParsingScope().withFunction(true));
+    final ParsingContext context = getParsingContext();
+    context.pushScope(context.getScope().withFunction(true));
+    getStatementParser().parseSuite(functionMarker, getFunctionType());
+    context.popScope();
   }
 
   public void parseReturnTypeAnnotation() {
@@ -63,7 +66,7 @@ public class FunctionParsing extends Parsing {
     }
   }
 
-  public void parseDecoratedDeclaration(ParsingScope scope) {
+  public void parseDecoratedDeclaration() {
     assertCurrentToken(PyTokenTypes.AT); // ??? need this?
     final PsiBuilder.Marker decoratorStartMarker = myBuilder.mark();
     final PsiBuilder.Marker decoListMarker = myBuilder.mark();
@@ -92,15 +95,27 @@ public class FunctionParsing extends Parsing {
     }
     if (decorated) decoListMarker.done(PyElementTypes.DECORATOR_LIST);
     //else decoListMarker.rollbackTo();
-    parseDeclarationAfterDecorator(decoratorStartMarker, scope);
+    parseDeclarationAfterDecorator(decoratorStartMarker);
   }
 
-  protected void parseDeclarationAfterDecorator(PsiBuilder.Marker endMarker, ParsingScope scope) {
+  protected void parseDeclarationAfterDecorator(PsiBuilder.Marker endMarker) {
+    if (myBuilder.getTokenType() == PyTokenTypes.ASYNC_KEYWORD) {
+      myBuilder.advanceLexer();
+      myContext.pushScope(myContext.getScope().withAsync());
+      parseSyncDeclarationAfterDecorator(endMarker);
+      myContext.popScope();
+    }
+    else {
+      parseSyncDeclarationAfterDecorator(endMarker);
+    }
+  }
+
+  private void parseSyncDeclarationAfterDecorator(PsiBuilder.Marker endMarker) {
     if (myBuilder.getTokenType() == PyTokenTypes.DEF_KEYWORD) {
-      parseFunctionInnards(endMarker); // it calls endMarker.done()
+      parseFunctionInnards(endMarker);
     }
     else if (myBuilder.getTokenType() == PyTokenTypes.CLASS_KEYWORD) {
-      getStatementParser().parseClassDeclaration(endMarker, scope);
+      getStatementParser().parseClassDeclaration(endMarker);
     }
     else {
       myBuilder.error(message("PARSE.expected.@.or.def"));

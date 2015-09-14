@@ -23,6 +23,8 @@ import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author yole
  */
@@ -357,28 +359,6 @@ public class PyTypeTest extends PyTestCase {
     assertNull(actual);
   }
 
-  // PY-6702
-  public void testYieldFromType() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON33);
-    try {
-      doTest("Union[str, int, float]",
-             "def subgen():\n" +
-             "    for i in [1, 2, 3]:\n" +
-             "        yield i\n" +
-             "\n" +
-             "def gen():\n" +
-             "    yield 'foo'\n" +
-             "    yield from subgen()\n" +
-             "    yield 3.14\n" +
-             "\n" +
-             "for expr in gen():\n" +
-             "    pass\n");
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
-  }
-
   public void testFunctionAssignment() {
     doTest("int",
            "def f():\n" +
@@ -475,6 +455,15 @@ public class PyTypeTest extends PyTestCase {
            "expr = f().next()\n");
   }
 
+  public void testGeneratorFunctionType() {
+    doTest("__generator[str, Any, int]",
+           "def f():\n" +
+           "    yield 'foo'\n" +
+           "    return 0\n" +
+           "\n" +
+           "expr = f()\n");
+  }
+
   // PY-7020
   public void testListComprehensionType() {
     final PyExpression expr = parseExpr("expr = [str(x) for x in range(10)]\n");
@@ -482,11 +471,10 @@ public class PyTypeTest extends PyTestCase {
     final PyType type = context.getType(expr);
     assertNotNull(type);
     assertInstanceOf(type, PyCollectionType.class);
-    assertEquals(type.getName(), "list");
+    assertEquals("list", type.getName());
     final PyCollectionType collectionType = (PyCollectionType)type;
-    final PyType elementType = collectionType.getElementType(context);
-    assertNotNull(elementType);
-    assertEquals(elementType.getName(), "str");
+    final List<PyType> elementTypes = collectionType.getElementTypes(context);
+    assertEquals("str", elementTypes.get(0).getName());
   }
 
   // PY-7021
@@ -496,11 +484,20 @@ public class PyTypeTest extends PyTestCase {
     final PyType type = context.getType(expr);
     assertNotNull(type);
     assertInstanceOf(type, PyCollectionType.class);
-    assertEquals(type.getName(), "__generator");
+    assertEquals("__generator", type.getName());
     final PyCollectionType collectionType = (PyCollectionType)type;
-    final PyType elementType = collectionType.getElementType(context);
-    assertNotNull(elementType);
-    assertEquals(elementType.getName(), "str");
+    final List<PyType> elementTypes = collectionType.getElementTypes(context);
+    assertEquals("str", elementTypes.get(0).getName());
+    assertTrue(PyTypeChecker.isUnknown(elementTypes.get(1)));
+    assertEquals("None", elementTypes.get(2).getName());
+  }
+
+  // PY-7021
+  public void testIterOverGeneratorComprehension() {
+    doTest("str",
+           "xs = (str(x) for x in range(10))\n" +
+           "for expr in xs:\n" +
+           "    pass\n");
   }
 
   // EA-40207

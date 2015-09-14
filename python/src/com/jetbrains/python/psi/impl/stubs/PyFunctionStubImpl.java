@@ -27,13 +27,15 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
   private final String myName;
   private final String myDocString;
   private final StringRef myDeprecationMessage;
+  private final boolean myAsync;
 
-  public PyFunctionStubImpl(final String name, final String docString, @Nullable final StringRef deprecationMessage,
+  public PyFunctionStubImpl(final String name, final String docString, @Nullable final StringRef deprecationMessage, boolean isAsync,
                             final StubElement parent, IStubElementType stubElementType) {
     super(parent, stubElementType);
     myName = name;
     myDocString = docString;
     myDeprecationMessage = deprecationMessage;
+    myAsync = isAsync;
   }
 
   public String getName() {
@@ -47,6 +49,11 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
   @Override
   public String getDeprecationMessage() {
     return myDeprecationMessage == null ? null : myDeprecationMessage.getString();
+  }
+
+  @Override
+  public boolean isAsync() {
+    return myAsync;
   }
 
   @Override
