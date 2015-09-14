@@ -73,6 +73,8 @@ public class PyTokenTypes {
   public static final PyElementType FALSE_KEYWORD = new PyElementType("FALSE_KEYWORD");
   public static final PyElementType NONLOCAL_KEYWORD = new PyElementType("NONLOCAL_KEYWORD");
   public static final PyElementType DEBUG_KEYWORD = new PyElementType("DEBUG_KEYWORD");
+  public static final PyElementType ASYNC_KEYWORD = new PyElementType("ASYNC_KEYWORD");
+  public static final PyElementType AWAIT_KEYWORD = new PyElementType("AWAIT_KEYWORD", "__await__");
 
   public static final PyElementType INTEGER_LITERAL = new PyElementType("INTEGER_LITERAL");
   public static final PyElementType FLOAT_LITERAL = new PyElementType("FLOAT_LITERAL");

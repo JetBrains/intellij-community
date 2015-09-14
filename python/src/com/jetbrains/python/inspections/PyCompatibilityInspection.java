@@ -161,7 +161,7 @@ public class PyCompatibilityInspection extends PyInspection {
       if (element.getTextLength() == 0) {
         return;
       }
-      range = TextRange.create(range.getStartOffset() - element.getTextOffset(), range.getEndOffset() - element.getTextOffset());
+      range = range.shiftRight(-element.getTextRange().getStartOffset());
       if (quickFix != null)
         myHolder.registerProblem(element, range, message, quickFix);
       else

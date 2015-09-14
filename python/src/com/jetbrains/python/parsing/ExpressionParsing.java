@@ -915,7 +915,7 @@ public class ExpressionParsing extends Parsing {
 
   private boolean parsePowerExpression(boolean isTargetExpression) {
     PsiBuilder.Marker expr = myBuilder.mark();
-    if (!parseMemberExpression(isTargetExpression)) {
+    if (!parseAwaitExpression(isTargetExpression)) {
       expr.drop();
       return false;
     }
@@ -932,5 +932,20 @@ public class ExpressionParsing extends Parsing {
     }
 
     return true;
+  }
+
+  private boolean parseAwaitExpression(boolean isTargetExpression) {
+    if (atToken(PyTokenTypes.AWAIT_KEYWORD)) {
+      PsiBuilder.Marker expr = myBuilder.mark();
+      myBuilder.advanceLexer();
+      if (!parseMemberExpression(isTargetExpression)) {
+        myBuilder.error(message("PARSE.expected.expression"));
+      }
+      expr.done(PyElementTypes.PREFIX_EXPRESSION);
+      return true;
+    }
+    else {
+      return parseMemberExpression(isTargetExpression);
+    }
   }
 }

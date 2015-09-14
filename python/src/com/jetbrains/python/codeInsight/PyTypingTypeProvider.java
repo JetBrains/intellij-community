@@ -187,20 +187,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyClass cls = function.getContainingClass();
       if (cls != null) {
         final List<PyGenericType> genericTypes = collectGenericTypes(cls, context);
-
-        final PyType elementType;
-        if (genericTypes.size() == 1) {
-          elementType = genericTypes.get(0);
-        }
-        else if (genericTypes.size() > 1) {
-          elementType = PyTupleType.create(cls, genericTypes.toArray(new PyType[genericTypes.size()]));
-        }
-        else {
-          elementType = null;
-        }
-
-        if (elementType != null) {
-          return new PyCollectionTypeImpl(cls, false, elementType);
+        final List<PyType> elementTypes = new ArrayList<PyType>(genericTypes);
+        if (!elementTypes.isEmpty()) {
+          return new PyCollectionTypeImpl(cls, false, elementTypes);
         }
       }
     }
@@ -438,6 +427,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         types.add(getType(expr, context));
       }
     }
+    else if (indexExpr != null) {
+      types.add(getType(indexExpr, context));
+    }
     return types;
   }
 
@@ -450,13 +442,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyType operandType = getType(operand, context);
       if (operandType instanceof PyClassType) {
         final PyClass cls = ((PyClassType)operandType).getPyClass();
+        final List<PyType> indexTypes = getIndexTypes(subscriptionExpr, context);
         if (PyNames.TUPLE.equals(cls.getQualifiedName())) {
-          final List<PyType> indexTypes = getIndexTypes(subscriptionExpr, context);
           return PyTupleType.create(expression, indexTypes.toArray(new PyType[indexTypes.size()]));
         }
         else if (indexExpr != null) {
-          final PyType indexType = context.getType(indexExpr);
-          return new PyCollectionTypeImpl(cls, false, indexType);
+          return new PyCollectionTypeImpl(cls, false, indexTypes);
         }
       }
     }

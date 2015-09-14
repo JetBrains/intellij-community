@@ -194,7 +194,8 @@ public class PythonSdkUpdater implements StartupActivity {
     addNewSysPathEntries(sdkUpdater, sysPath);
     removeSourceRoots(sdkUpdater);
     removeDuplicateClassRoots(sdkUpdater);
-    updateSkeletonsPath(sdkUpdater);
+    updateBinarySkeletonsPath(sdkUpdater);
+    updateUserSkeletonsPath(sdkUpdater);
   }
 
   /**
@@ -252,28 +253,41 @@ public class PythonSdkUpdater implements StartupActivity {
   }
 
   /**
+   * Updates user skeletons path in the Python SDK table.
+   */
+  private static void updateUserSkeletonsPath(@NotNull PySdkUpdater sdkUpdater) {
+    updateSkeletonsPath(sdkUpdater, PyUserSkeletonsUtil.getUserSkeletonsDirectory(), PyUserSkeletonsUtil.USER_SKELETONS_DIR,
+                        "User skeletons");
+  }
+
+  /**
    * Updates binary skeletons path in the Python SDK table.
    */
-  private static void updateSkeletonsPath(@NotNull PySdkUpdater sdkUpdater) {
+  private static void updateBinarySkeletonsPath(@NotNull PySdkUpdater sdkUpdater) {
     final String skeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdkUpdater.getHomePath());
     if (skeletonsPath != null) {
       final VirtualFile skeletonsDir = StandardFileSystems.local().refreshAndFindFileByPath(skeletonsPath);
       if (skeletonsDir != null) {
-        LOG.info("Binary skeletons directory for SDK \"" + sdkUpdater.getSdk().getName() + "\" (" + sdkUpdater.getHomePath() + "): " + skeletonsDir.getPath());
-        final List<VirtualFile> sourceRoots = Arrays.asList(sdkUpdater.getSdk().getRootProvider().getFiles(OrderRootType.CLASSES));
-        boolean skeletonsDirFound = false;
-        for (final VirtualFile root : sourceRoots) {
-          if (root.equals(skeletonsDir)) {
-            skeletonsDirFound = true;
-          }
-          if (PythonSdkType.isSkeletonsPath(root.getPath()) && !skeletonsDirFound) {
-            sdkUpdater.addRoot(root, OrderRootType.CLASSES);
-          }
-        }
-        if (!skeletonsDirFound) {
-          sdkUpdater.addRoot(skeletonsDir, OrderRootType.CLASSES);
+        updateSkeletonsPath(sdkUpdater, skeletonsDir, PythonSdkType.SKELETON_DIR_NAME, "Binary skeletons");
+      }
+    }
+  }
+
+  private static void updateSkeletonsPath(@NotNull PySdkUpdater sdkUpdater,
+                                          @Nullable VirtualFile skeletonsDir,
+                                          @NotNull String skeletonsDirPattern,
+                                          @NotNull String skeletonsTitle) {
+    if (skeletonsDir != null) {
+      LOG.info(skeletonsTitle + " directory for SDK \"" + sdkUpdater.getSdk().getName() + "\" (" + sdkUpdater.getHomePath() + "): " +
+               skeletonsDir.getPath());
+      final List<VirtualFile> sourceRoots = Arrays.asList(sdkUpdater.getSdk().getRootProvider().getFiles(OrderRootType.CLASSES));
+      sdkUpdater.removeRoots(OrderRootType.CLASSES);
+      for (final VirtualFile root : sourceRoots) {
+        if (!root.getPath().contains(skeletonsDirPattern)) {
+          sdkUpdater.addRoot(root, OrderRootType.CLASSES);
         }
       }
+      sdkUpdater.addRoot(skeletonsDir, OrderRootType.CLASSES);
     }
   }
 

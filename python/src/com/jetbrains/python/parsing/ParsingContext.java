@@ -17,6 +17,10 @@ package com.jetbrains.python.parsing;
 
 import com.intellij.lang.PsiBuilder;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 public class ParsingContext {
   private final StatementParsing stmtParser;
@@ -24,6 +28,7 @@ public class ParsingContext {
   private final FunctionParsing functionParser;
   private final PsiBuilder myBuilder;
   private final LanguageLevel myLanguageLevel;
+  private final Deque<ParsingScope> myScopes;
 
   public ParsingContext(final PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
     myBuilder = builder;
@@ -31,6 +36,22 @@ public class ParsingContext {
     stmtParser = new StatementParsing(this, futureFlag);
     expressionParser = new ExpressionParsing(this);
     functionParser = new FunctionParsing(this);
+    myScopes = new ArrayDeque<ParsingScope>();
+    myScopes.push(emptyParsingScope());
+  }
+
+  @NotNull
+  public ParsingScope popScope() {
+    return myScopes.pop();
+  }
+
+  public void pushScope(@NotNull ParsingScope scope) {
+    myScopes.push(scope);
+  }
+
+  @NotNull
+  public ParsingScope getScope() {
+    return myScopes.peek();
   }
 
   public StatementParsing getStatementParser() {

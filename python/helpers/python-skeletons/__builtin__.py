@@ -382,7 +382,7 @@ class enumerate(object):
 
         :type iterable: collections.Iterable[T]
         :type start: numbers.Integral
-        :rtype: enumerate[int, T]
+        :rtype: enumerate[T]
         """
         pass
 
@@ -396,7 +396,7 @@ class enumerate(object):
     def __iter__(self):
         """x.__iter__() <==> iter(x).
 
-        :rtype: enumerate[int, T]
+        :rtype: collections.Iterator[(int, T)]
         """
         return self
 
@@ -2026,6 +2026,12 @@ class list(object):
         """
         return []
 
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[T]
+        """
+        return []
+
     def __getitem__(self, y):
         """y-th item of x, origin 0.
 
@@ -2450,18 +2456,20 @@ class file(object):
 
 class __generator(object):
     """A mock class representing the generator function type."""
-    def __init__(self, value):
+    def __init__(self):
         """Create a generator object.
 
-        :type value: T
-        :rtype: __generator[T]
+        :rtype: __generator[T, U, V]
         """
         self.gi_code = None
         self.gi_frame = None
         self.gi_running = 0
 
     def __iter__(self):
-        """Defined to support iteration over container."""
+        """Defined to support iteration over container.
+
+        :rtype: collections.Iterator[T]
+        """
         pass
 
     def next(self):
@@ -2483,7 +2491,8 @@ class __generator(object):
         """Resumes the generator and "sends" a value that becomes the
         result of the current yield-expression.
 
-        :rtype: T
+        :type value: U
+        :rtype: None
         """
         pass
 
@@ -2493,6 +2502,7 @@ class __generator(object):
         :rtype: None
         """
         pass
+
 
 class __function(object):
     """A mock class representing function type."""
