@@ -135,6 +135,12 @@ class LineFragmentSplitter {
     return false;
   }
 
+  @NotNull
+  private static WordBlock mergeBlocks(@NotNull WordBlock start, @NotNull WordBlock end) {
+    return new WordBlock(new Range(start.words.start1, end.words.end1, start.words.start2, end.words.end2),
+                         new Range(start.offsets.start1, end.offsets.end1, start.offsets.start2, end.offsets.end2));
+  }
+
   private boolean isEqualsIgnoreWhitespace(@NotNull WordBlock block) {
     CharSequence sequence1 = myText1.subSequence(block.offsets.start1, block.offsets.end1);
     CharSequence sequence2 = myText2.subSequence(block.offsets.start2, block.offsets.end2);
@@ -142,10 +148,14 @@ class LineFragmentSplitter {
     return StringUtil.equalsIgnoreWhitespaces(sequence1, sequence2);
   }
 
-  @NotNull
-  private static WordBlock mergeBlocks(@NotNull WordBlock start, @NotNull WordBlock end) {
-    return new WordBlock(new Range(start.words.start1, end.words.end1, start.words.start2, end.words.end2),
-                         new Range(start.offsets.start1, end.offsets.end1, start.offsets.start2, end.offsets.end2));
+  private boolean noWordsInside(@NotNull WordBlock block) {
+    for (int i = block.words.start1; i < block.words.end1; i++) {
+      if (!(myWords1.get(i) instanceof NewlineChunk)) return false;
+    }
+    for (int i = block.words.start2; i < block.words.end2; i++) {
+      if (!(myWords2.get(i) instanceof NewlineChunk)) return false;
+    }
+    return true;
   }
 
   private static int getOffset(@NotNull List<InlineChunk> words, @NotNull CharSequence text, int index) {
@@ -163,16 +173,6 @@ class LineFragmentSplitter {
   private static boolean isFirstInLine(@NotNull List<InlineChunk> words1, int index) {
     if (index == 0) return true;
     return words1.get(index - 1) instanceof NewlineChunk;
-  }
-
-  private boolean noWordsInside(@NotNull WordBlock block) {
-    for (int i = block.words.start1; i < block.words.end1; i++) {
-      if (!(myWords1.get(i) instanceof NewlineChunk)) return false;
-    }
-    for (int i = block.words.start2; i < block.words.end2; i++) {
-      if (!(myWords2.get(i) instanceof NewlineChunk)) return false;
-    }
-    return true;
   }
 
   //
