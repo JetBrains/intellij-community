@@ -266,6 +266,7 @@ public class PyNames {
   private static final BuiltinDescription _self_other_descr = new BuiltinDescription("(self, other)");
   private static final BuiltinDescription _self_item_descr = new BuiltinDescription("(self, item)");
   private static final BuiltinDescription _self_key_descr = new BuiltinDescription("(self, key)");
+  private static final BuiltinDescription _exit_descr = new BuiltinDescription("(self, exc_type, exc_val, exc_tb)");
 
   private static final ImmutableMap<String, BuiltinDescription> BuiltinMethods = ImmutableMap.<String, BuiltinDescription>builder()
     .put("__abs__", _only_self_descr)
@@ -291,7 +292,7 @@ public class PyNames {
       //_BuiltinMethods.put("__doc__", _only_self_descr);
       //_BuiltinMethods.put("__docformat__", _only_self_descr);
     .put("__enter__", _only_self_descr)
-    .put("__exit__", new BuiltinDescription("(self, exc_type, exc_val, exc_tb)"))
+    .put("__exit__", _exit_descr)
     .put("__eq__", _self_other_descr)
       //_BuiltinMethods.put("__file__", _only_self_descr);
     .put("__float__", _only_self_descr)
@@ -397,6 +398,11 @@ public class PyNames {
     .put("__imatmul__", _self_other_descr)
     .put("__matmul__", _self_other_descr)
     .put("__rmatmul__", _self_other_descr)
+    .put("__await__", _only_self_descr)
+    .put("__aenter__", _only_self_descr)
+    .put("__aexit__", _exit_descr)
+    .put("__aiter__", _only_self_descr)
+    .put("__anext__", _only_self_descr)
     .build();
 
   public static ImmutableMap<String, BuiltinDescription> getBuiltinMethods(LanguageLevel level) {
