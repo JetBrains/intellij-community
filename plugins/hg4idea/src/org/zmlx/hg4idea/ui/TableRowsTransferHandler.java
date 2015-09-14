@@ -30,7 +30,7 @@ import java.awt.dnd.DragSource;
 public class TableRowsTransferHandler extends TransferHandler {
   private static final Logger LOG = Logger.getInstance(TableRowsTransferHandler.class);
   private final DataFlavor myDataFlavor = new ActivationDataFlavor(RowsDragInfo.class, DataFlavor.stringFlavor.getMimeType());
-  private JTable myTable = null;
+  private final JTable myTable;
 
   public TableRowsTransferHandler(JTable table) {
     myTable = table;
