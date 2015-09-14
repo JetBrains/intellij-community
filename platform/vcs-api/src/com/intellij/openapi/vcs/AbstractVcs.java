@@ -268,9 +268,11 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   /**
-   * Invoked when a changelist is deleted explicitly by user or implicitly (e.g. after default changelist switch when the previous one was empty).
-   * @return UNSURE if the VCS doesn't object to the deletion. YES or NO indicating the permission to remove if a dialog was shown asking the user whether
-   * the changelist really is to be removed.
+   * Invoked when a changelist is deleted explicitly by user or implicitly (e.g. after default changelist switch
+   * when the previous one was empty).
+   * @return UNSURE if the VCS has nothing to say about this changelist.
+   * YES or NO if the changelist has to be removed or not, and no further confirmations are needed about this changelist
+   * (in particular, the VCS can show a confirmation to the user by itself)
    */
   @CalledInAwt
   @NotNull
