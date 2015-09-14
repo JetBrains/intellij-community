@@ -141,6 +141,7 @@ public class StudyProjectGenerator {
     if (activeVirtualFile != null) {
       final PsiFile file = PsiManager.getInstance(project).findFile(activeVirtualFile);
       ProjectView.getInstance(project).select(file, activeVirtualFile, true);
+      FileEditorManager.getInstance(project).openFile(activeVirtualFile, true);
     } else {
       String first = StudyUtils.getFirst(taskFiles.keySet());
       if (first != null) {
