@@ -346,20 +346,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   private static PyType getIterationType(@Nullable PyType iterableType, @Nullable PyExpression source, @NotNull PsiElement anchor,
                                          @NotNull TypeEvalContext context) {
-    PyType result = null;
-    if (iterableType instanceof PyCollectionType) {
-      result = ((PyCollectionType)iterableType).getElementType(context);
-      if (iterableType instanceof PyClassType) {
-        final PyClass cls = ((PyClassType)iterableType).getPyClass();
-        if (result instanceof PyTupleType && PyABCUtil.isSubclass(cls, PyNames.MAPPING)) {
-          final PyTupleType mappingType = (PyTupleType)result;
-          if (mappingType.getElementCount() == 2) {
-            result = mappingType.getElementType(0);
-          }
-        }
-      }
-    }
-    else if (iterableType instanceof PyTupleType) {
+    if (iterableType instanceof PyTupleType) {
       final PyTupleType tupleType = (PyTupleType)iterableType;
       final List<PyType> memberTypes = new ArrayList<PyType>();
       for (int i = 0; i < tupleType.getElementCount(); i++) {
@@ -377,30 +364,45 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     }
     else if (iterableType != null && PyABCUtil.isSubtype(iterableType, PyNames.ITERATOR, context)) {
       final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.ITER, context);
-      PyType iterateMethodType = null;
       if (iterateMethod != null) {
-        iterateMethodType = getContextSensitiveType(iterateMethod, context, source);
-      }
-      if (iterateMethodType instanceof PyCollectionType) {
-        final PyCollectionType collectionType = (PyCollectionType)iterateMethodType;
-        result = collectionType.getElementType(context);
-      }
-      if (result == null) {
-        final String nextMethodName = LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30) ?
-                                      PyNames.DUNDER_NEXT : PyNames.NEXT;
-        final PyFunction next = findMethodByName(iterableType, nextMethodName, context);
-        if (next != null) {
-          result = getContextSensitiveType(next, context, source);
+        final PyType iterateReturnType = getContextSensitiveType(iterateMethod, context, source);
+        final PyType type = getCollectionElementType(iterateReturnType, context);
+        if (!isTrivialType(type)) {
+          return type;
         }
       }
-      if (result == null) {
-        final PyFunction getItem = findMethodByName(iterableType, PyNames.GETITEM, context);
-        if (getItem != null) {
-          result = getContextSensitiveType(getItem, context, source);
+      final String nextMethodName = LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30) ?
+                                    PyNames.DUNDER_NEXT : PyNames.NEXT;
+      final PyFunction next = findMethodByName(iterableType, nextMethodName, context);
+      if (next != null) {
+        final PyType type = getContextSensitiveType(next, context, source);
+        if (!isTrivialType(type)) {
+          return type;
+        }
+      }
+      final PyFunction getItem = findMethodByName(iterableType, PyNames.GETITEM, context);
+      if (getItem != null) {
+        final PyType type = getContextSensitiveType(getItem, context, source);
+        if (!isTrivialType(type)) {
+          return type;
         }
       }
     }
-    return result;
+    return null;
+  }
+
+  private static boolean isTrivialType(@Nullable PyType type) {
+    return type == null || type instanceof PyNoneType;
+  }
+
+  @Nullable
+  private static PyType getCollectionElementType(@Nullable PyType type, @NotNull TypeEvalContext context) {
+    if (type instanceof PyCollectionType) {
+      final List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes(context);
+      // TODO: Select the parameter type that matches T in Iterable[T]
+      return elementTypes.isEmpty() ? null : elementTypes.get(0);
+    }
+    return null;
   }
 
   @Nullable

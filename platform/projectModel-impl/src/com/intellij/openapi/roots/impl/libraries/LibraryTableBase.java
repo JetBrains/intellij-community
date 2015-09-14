@@ -68,7 +68,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
         myModel.readExternal(element);
       }
       else {
-        LibraryModel model = new LibraryModel();
+        LibraryModel model = new LibraryModel(myModel);
         AccessToken token = WriteAction.start();
         try {
           model.readExternal(element);
@@ -292,20 +292,12 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
     @Override
     public void readExternal(Element element) throws InvalidDataException {
-      HashMap<String, Library> libraries = new HashMap<String, Library>();
-      for (Library library : myLibraries) {
-        libraries.put(library.getName(), library);
-      }
+      myLibraries.clear();
 
       final List<Element> libraryElements = element.getChildren(LibraryImpl.ELEMENT);
       for (Element libraryElement : libraryElements) {
         final LibraryImpl library = new LibraryImpl(LibraryTableBase.this, libraryElement, null);
         if (library.getName() != null) {
-          Library oldLibrary = libraries.get(library.getName());
-          if (oldLibrary != null) {
-            removeLibrary(oldLibrary);
-          }
-
           myLibraries.add(library);
           fireLibraryAdded(library);
         }

@@ -32,10 +32,13 @@ addtoken
 addusersitepackages
 addval
 adpcm
+aenter
+aexit
 afterfork
 aggr
 aifc
 aiff
+aiter
 alaw
 algor
 aliasmbcs
@@ -46,6 +49,7 @@ altsep
 amost
 amper
 amperequal
+anext
 anyobject
 apilevel
 appbundle

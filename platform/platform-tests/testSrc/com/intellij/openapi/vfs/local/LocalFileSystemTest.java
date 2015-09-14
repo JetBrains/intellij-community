@@ -195,7 +195,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertNotNull(dir);
 
     final VirtualFile child = myFS.refreshAndFindFileByIoFile(childFile);
-    assertNotNull(child);
+    assertNotNull(Arrays.toString(dir.getChildren()), child);
 
     assertTrue(childFile.delete());
   }
@@ -242,6 +242,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertNotNull(root);
 
     File jarFile = IoTestUtil.createTestJar();
+    assertNotNull(getVirtualFile(jarFile));
     root = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath() + "!/");
     assertNotNull(root);
 
@@ -336,7 +337,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     String content = "";
     FileUtil.writeToFile(new File(testDir, "Foo.java"), content);
 
-    VirtualFile virtualDir = myFS.findFileByIoFile(testDir);
+    VirtualFile virtualDir = getVirtualFile(testDir);
     assertNotNull(virtualDir);
     virtualDir.getChildren();
     virtualDir.refresh(false, true);

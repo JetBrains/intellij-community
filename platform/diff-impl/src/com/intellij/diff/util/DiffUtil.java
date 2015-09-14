@@ -69,6 +69,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
@@ -738,6 +739,7 @@ public class DiffUtil {
     @Nullable private final String myCommandName;
     @Nullable private final String myCommandGroupId;
     @NotNull private final UndoConfirmationPolicy myConfirmationPolicy;
+    private final boolean myUnderBulkUpdate;
 
     public DiffCommandAction(@Nullable Project project,
                              @NotNull Document document,
@@ -750,11 +752,21 @@ public class DiffUtil {
                              @Nullable String commandName,
                              @Nullable String commandGroupId,
                              @NotNull UndoConfirmationPolicy confirmationPolicy) {
+      this(project, document, commandName, commandGroupId, confirmationPolicy, false);
+    }
+
+    public DiffCommandAction(@Nullable Project project,
+                             @NotNull Document document,
+                             @Nullable String commandName,
+                             @Nullable String commandGroupId,
+                             @NotNull UndoConfirmationPolicy confirmationPolicy,
+                             boolean underBulkUpdate) {
       myDocument = document;
       myProject = project;
       myCommandName = commandName;
       myCommandGroupId = commandGroupId;
       myConfirmationPolicy = confirmationPolicy;
+      myUnderBulkUpdate = underBulkUpdate;
     }
 
     @CalledInAwt
@@ -770,7 +782,17 @@ public class DiffUtil {
           CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
             @Override
             public void run() {
-              execute();
+              if (myUnderBulkUpdate) {
+                DocumentUtil.executeInBulk(myDocument, true, new Runnable() {
+                  @Override
+                  public void run() {
+                    execute();
+                  }
+                });
+              }
+              else {
+                execute();
+              }
             }
           }, myCommandName, myCommandGroupId, myConfirmationPolicy, myDocument);
         }

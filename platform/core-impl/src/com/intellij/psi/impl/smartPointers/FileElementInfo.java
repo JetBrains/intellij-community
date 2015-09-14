@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -34,18 +35,14 @@ import org.jetbrains.annotations.Nullable;
 * User: cdr
 */
 class FileElementInfo extends SmartPointerElementInfo {
-  protected final VirtualFile myVirtualFile;
-  protected final Project myProject;
-  protected final Language myLanguage;
+  private final VirtualFile myVirtualFile;
+  private final Project myProject;
+  private final Language myLanguage;
 
-  public FileElementInfo(@NotNull PsiFile file) {
-    this(file.getProject(), file.getVirtualFile(), file.getLanguage());
-  }
-
-  protected FileElementInfo(@NotNull Project project, VirtualFile virtualFile, Language lang) {
-    myVirtualFile = virtualFile;
-    myProject = project;
-    myLanguage = lang;
+  public FileElementInfo(@NotNull final PsiFile file) {
+    myVirtualFile = file.getVirtualFile();
+    myProject = file.getProject();
+    myLanguage = LanguageUtil.getRootLanguage(file);
   }
 
   @Override

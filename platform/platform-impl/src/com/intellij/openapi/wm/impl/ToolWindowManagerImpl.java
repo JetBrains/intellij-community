@@ -502,7 +502,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              if (!myProject.isDisposed()) {
+              if (!myProject.isDisposed() && getToolWindow(bean.id) == null) {
                 initToolWindow(bean);
               }
             }

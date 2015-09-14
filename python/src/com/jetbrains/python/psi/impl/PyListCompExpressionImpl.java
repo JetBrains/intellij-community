@@ -26,6 +26,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+
 /**
  * @author yole
  */
@@ -47,7 +49,7 @@ public class PyListCompExpressionImpl extends PyComprehensionElementImpl impleme
     final PyClass list = cache.getClass("list");
     if (resultExpr != null && list != null) {
       final PyType elementType = context.getType(resultExpr);
-      return new PyCollectionTypeImpl(list, false, elementType);
+      return new PyCollectionTypeImpl(list, false, Collections.singletonList(elementType));
     }
     return cache.getListType();
   }

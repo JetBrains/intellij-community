@@ -34,10 +34,12 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import sun.misc.Unsafe;
 
 import javax.swing.*;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
@@ -150,7 +152,7 @@ public class LeakHunter {
         }
       }
       // check for objects leaking via static fields. process classes which already were initialized only
-      if (root instanceof Class && !AtomicFieldUpdater.getUnsafe().shouldBeInitialized((Class<?>)root)) {
+      if (root instanceof Class && isLoadedAlready((Class)root)) {
         try {
           for (Field field : getAllFields((Class)root)) {
             if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
@@ -171,6 +173,19 @@ public class LeakHunter {
         }
       }
     }
+  }
+
+  private static final Method Unsafe_shouldBeInitialized = ReflectionUtil.getDeclaredMethod(Unsafe.class, "shouldBeInitialized", Class.class);
+  private static boolean isLoadedAlready(Class root) {
+    if (Unsafe_shouldBeInitialized == null) return false;
+    boolean isLoadedAlready = false;
+    try {
+      isLoadedAlready = !(Boolean)Unsafe_shouldBeInitialized.invoke(AtomicFieldUpdater.getUnsafe(), root);
+    }
+    catch (Exception ignored) {
+    }
+    //AtomicFieldUpdater.getUnsafe().shouldBeInitialized((Class<?>)root);
+    return isLoadedAlready;
   }
 
   private static final Key<Boolean> IS_NOT_A_LEAK = Key.create("IS_NOT_A_LEAK");

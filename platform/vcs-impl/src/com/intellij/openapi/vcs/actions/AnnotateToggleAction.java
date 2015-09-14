@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -214,7 +213,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
         }
 
         if (!fileAnnotationRef.isNull()) {
-          doAnnotate(editor, project, file, fileAnnotationRef.get(), vcs, true);
+          doAnnotate(editor, project, file, fileAnnotationRef.get(), vcs);
         }
       }
     };
@@ -223,13 +222,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
   public static void doAnnotate(@NotNull final Editor editor,
                                 @NotNull final Project project,
-                                @NotNull final VirtualFile currentFile,
+                                @Nullable final VirtualFile currentFile,
                                 @NotNull final FileAnnotation fileAnnotation,
-                                @NotNull final AbstractVcs vcs,
-                                final boolean onCurrentRevision) {
-    if (onCurrentRevision) {
-      ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener().registerAnnotation(fileAnnotation.getFile(), fileAnnotation);
-    }
+                                @NotNull final AbstractVcs vcs) {
     doAnnotate(editor, project, currentFile, fileAnnotation, vcs, null);
   }
 
@@ -239,6 +234,10 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
                                 @NotNull final FileAnnotation fileAnnotation,
                                 @NotNull final AbstractVcs vcs,
                                 @Nullable UpToDateLineNumberProvider getUpToDateLineNumber) {
+    if (fileAnnotation.getFile() != null && fileAnnotation.getFile().isInLocalFileSystem()) {
+      ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener().registerAnnotation(fileAnnotation.getFile(), fileAnnotation);
+    }
+
     editor.getGutter().closeAllAnnotations();
 
     fileAnnotation.setCloser(new Runnable() {

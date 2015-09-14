@@ -29,6 +29,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -352,6 +353,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   // TODO Should be removed when IDEA adopts typing without starting write actions.
   private static final boolean VIM_PLUGIN_LOADED = isPluginLoaded("IdeaVIM");
+
+  private static final int TYPING_STATS_SAMPLE_SIZE = 50;
+
+  private int myCharsTyped;
+  private final DelayMeter myTypingLatencyMeter = new DelayMeter();
+  private boolean myZeroLatencyTypingWasEnabled = isZeroLatencyTypingEnabled();
 
   static {
     ourCaretBlinkingCommand.start();
@@ -989,7 +996,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myPanel.add(myScrollPane);
     }
 
-    final AnActionListener.Adapter actionListener = new AnActionListener.Adapter() {
+    AnActionListener.Adapter actionListener = new AnActionListener.Adapter() {
       @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         if (isZeroLatencyTypingEnabled() && IMMEDIATE_EDITING_ACTIONS.contains(action.getClass())) {
@@ -1005,14 +1012,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     };
 
-    ActionManager.getInstance().addAnActionListener(actionListener);
-
-    Disposer.register(myDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        ActionManager.getInstance().removeAnActionListener(actionListener);
-      }
-    });
+    ActionManager.getInstance().addAnActionListener(actionListener, myDisposable);
 
     myEditorComponent.addKeyListener(new KeyListener() {
       @Override
@@ -1197,9 +1197,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     DataContext dataContext = getDataContext();
 
+    if (isTypingLatencyStatsEnabled()) {
+      if (myZeroLatencyTypingWasEnabled != isZeroLatencyTypingEnabled()) {
+        resetTypingLatencyStats();
+        myZeroLatencyTypingWasEnabled = isZeroLatencyTypingEnabled();
+      }
+      myTypingLatencyMeter.registerStart();
+    }
+
     if (isZeroLatencyTypingEnabled() && myDocument.isWritable() && !isViewer() && canPaintImmediately(c)) {
       for (Caret caret : myCaretModel.getAllCarets()) {
         paintImmediately(caret.getOffset(), c, myIsInsertMode);
+      }
+      if (isTypingLatencyStatsEnabled()) {
+        // not all chars are painted immediately, so type usual letters / digits to compute precise stats
+        myTypingLatencyMeter.registerFinish();
       }
     }
 
@@ -1207,7 +1219,38 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     MacUIUtil.hideCursor();
     EditorActionManager.getInstance().getTypedAction().actionPerformed(this, c, dataContext);
 
+    if (isTypingLatencyStatsEnabled()) {
+      myCharsTyped++;
+
+      if (myCharsTyped == TYPING_STATS_SAMPLE_SIZE) {
+        String stats = formatTypingLatencyStats(myTypingLatencyMeter);
+        printToEventLog(stats);
+        LOG.info(stats);
+
+        resetTypingLatencyStats();
+      }
+    }
+
     return true;
+  }
+
+  private static String formatTypingLatencyStats(DelayMeter meter) {
+    return String.format("Zero-latency: %3s; typing delay, ms: min: %5.1f | max: %5.1f | avg: %5.1f | sigma: %4.1f",
+                         isZeroLatencyTypingEnabled() ? "on" : "off",
+                         meter.getMin(), meter.getMax(), meter.getMean(), meter.getStandardDeviation());
+  }
+
+  private void printToEventLog(String message) {
+    NotificationGroup group = NotificationGroup.logOnlyGroup("typing-delay-stats");
+    Notification notification = group.createNotification(message, NotificationType.INFORMATION);
+    notification.setImportant(true);
+    notification.notify(myProject);
+    notification.hideBalloon();
+  }
+
+  private void resetTypingLatencyStats() {
+    myCharsTyped = 0;
+    myTypingLatencyMeter.reset();
   }
 
   private void fireFocusLost() {
@@ -2190,6 +2233,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return !VIM_PLUGIN_LOADED && Registry.is("editor.zero.latency.typing");
   }
 
+  private static boolean isTypingLatencyStatsEnabled() {
+    return Registry.is("editor.typing.latency.stats");
+  }
+
   private static boolean isPluginLoaded(@NotNull String id) {
     PluginId pluginId = PluginId.findId(id);
     if (pluginId == null) return false;
@@ -2284,23 +2331,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     fill(g, newArea, lineColor);
     print(g, newText, point, ascent, font, color);
+
+    // flush changes (there can be batching / buffering in video driver)
+    Toolkit.getDefaultToolkit().sync();
   }
 
   private boolean canPaintImmediately(@NotNull DocumentEvent e) {
     return myDocument instanceof DocumentImpl &&
            !isInplaceRenamerActive() &&
-           !contains(e.getOldFragment(), '\n') &&
-           !contains(e.getNewFragment(), '\n') &&
+           StringUtil.indexOf(e.getOldFragment(), '\n') == -1 &&
+           StringUtil.indexOf(e.getNewFragment(), '\n') == -1 &&
            !(e.getNewLength() == 1 && DOCUMENT_CHARS_TO_SKIP.contains(e.getNewFragment().charAt(0)));
-  }
-
-  private static boolean contains(@NotNull CharSequence chars, char c) {
-    for (int i = 0; i < chars.length(); i++) {
-      if (chars.charAt(i) == c) {
-        return true;
-      }
-    }
-    return false;
   }
 
   // Called to display insertion / deletion / replacement within a single line before the general painting routine.
@@ -2357,6 +2398,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       fill(g, newArea, lineColor);
       print(g, newText, point, ascent, font, color);
     }
+
+    // flush changes (there can be batching / buffering in video driver)
+    Toolkit.getDefaultToolkit().sync();
   }
 
   @NotNull
@@ -2454,6 +2498,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       paintCaretCursor(g);
 
       paintComposedTextDecoration(g);
+    }
+
+    if (isTypingLatencyStatsEnabled()) {
+      myTypingLatencyMeter.registerFinish();
     }
   }
 

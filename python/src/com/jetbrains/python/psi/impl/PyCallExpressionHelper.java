@@ -510,8 +510,8 @@ public class PyCallExpressionHelper {
       if (cls != null) {
         if (init.getContainingClass() != cls) {
           if (t instanceof PyCollectionType) {
-            final PyType elementType = ((PyCollectionType)t).getElementType(context);
-            return Ref.create(new PyCollectionTypeImpl(cls, false, elementType));
+            final List<PyType> elementTypes = ((PyCollectionType)t).getElementTypes(context);
+            return Ref.create(new PyCollectionTypeImpl(cls, false, elementTypes));
           }
           return Ref.create(new PyClassTypeImpl(cls, false));
         }

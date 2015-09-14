@@ -23,6 +23,9 @@ public class ParsingScope {
   private boolean myClass = false;
   private boolean mySuite = false;
   private boolean myAfterSemicolon = false;
+  private boolean myAsync = false;
+
+  protected ParsingScope() {}
 
   public ParsingScope withFunction(boolean flag) {
     final ParsingScope result = copy();
@@ -42,6 +45,12 @@ public class ParsingScope {
     return result;
   }
 
+  public ParsingScope withAsync() {
+    final ParsingScope result = copy();
+    result.myAsync = true;
+    return result;
+  }
+
   public boolean isFunction() {
     return myFunction;
   }
@@ -52,6 +61,10 @@ public class ParsingScope {
 
   public boolean isSuite() {
     return mySuite;
+  }
+
+  public boolean isAsync() {
+    return myAsync;
   }
 
   public boolean isAfterSemicolon() {
@@ -71,6 +84,7 @@ public class ParsingScope {
     result.myFunction = myFunction;
     result.myClass = myClass;
     result.mySuite = mySuite;
+    result.myAsync = myAsync;
     return result;
   }
 }

@@ -44,6 +44,7 @@ public class PyFunctionBuilder {
   private String[] myDocStringLines = null;
   @NotNull
   private final Map<String, String> myDecoratorValues = new HashMap<String, String>();
+  private boolean myAsync = false;
 
   /**
    * Creates builder copying signature and doc from another one.
@@ -136,6 +137,11 @@ public class PyFunctionBuilder {
     return this;
   }
 
+  public PyFunctionBuilder makeAsync() {
+    myAsync = true;
+    return this;
+  }
+
   public PyFunctionBuilder statement(String text) {
     myStatements.add(text);
     return this;
@@ -165,6 +171,9 @@ public class PyFunctionBuilder {
         decoratorAppender.append(fakeCall.getArgumentList().getText());
       }
       decoratorAppender.append("\n");
+    }
+    if (myAsync) {
+      builder.append("async ");
     }
     builder.append("def ");
     builder.append(myName).append("(");

@@ -72,7 +72,7 @@ public class PyConsoleParsingContext extends ParsingContext {
 
 
     @Override
-    public void parseStatement(ParsingScope scope) {
+    public void parseStatement() {
       if (myStartsWithIPythonSymbol) {
         parseIPythonCommand();
       }
@@ -89,7 +89,7 @@ public class PyConsoleParsingContext extends ParsingContext {
             myBuilder.advanceLexer();
           }
         }
-        super.parseStatement(scope);
+        super.parseStatement();
       }
     }
 
@@ -101,13 +101,14 @@ public class PyConsoleParsingContext extends ParsingContext {
       ipythonCommand.done(PyElementTypes.EMPTY_EXPRESSION);
     }
 
-    protected void checkEndOfStatement(ParsingScope scope) {
+    protected void checkEndOfStatement() {
       if (myPythonConsoleData.isIPythonEnabled()) {
         PsiBuilder builder = myContext.getBuilder();
         if (builder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
           builder.advanceLexer();
         }
         else if (builder.getTokenType() == PyTokenTypes.SEMICOLON) {
+          final ParsingScope scope = getParsingContext().getScope();
           if (!scope.isSuite()) {
             builder.advanceLexer();
             if (builder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
@@ -131,7 +132,7 @@ public class PyConsoleParsingContext extends ParsingContext {
         }
       }
       else {
-        super.checkEndOfStatement(scope);
+        super.checkEndOfStatement();
       }
     }
   }

@@ -32,8 +32,9 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
     private final TaskFile myTaskFile;
     private AnswerPlaceholder myAnswerPlaceholderWithSelection;
 
-    WindowSelectionListener(@NotNull final TaskFile taskFile) {
+    WindowSelectionListener(@NotNull final TaskFile taskFile, AnswerPlaceholder placeholder) {
       myTaskFile = taskFile;
+      myAnswerPlaceholderWithSelection = placeholder;
     }
 
     @Override
@@ -75,17 +76,21 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
               if (openedFile != null) {
                 final TaskFile taskFile = StudyUtils.getTaskFile(project, openedFile);
                 if (taskFile != null) {
-                  StudyNavigator.navigateToFirstAnswerPlaceholder(editor, taskFile);
-                  StudyEditor.addDocumentListener(document, new EduDocumentListener(taskFile));
                   WolfTheProblemSolver.getInstance(project).clearProblems(openedFile);
-                  StudyUtils.drawAllWindows(editor, taskFile);
-                  editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
                   final ToolWindow studyToolWindow = ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
                   if (studyToolWindow != null) {
                     StudyUtils.updateToolWindows(project);
                     studyToolWindow.show(null);
                   }
-
+                  if (!taskFile.getAnswerPlaceholders().isEmpty()) {
+                    StudyNavigator.navigateToFirstAnswerPlaceholder(editor, taskFile);
+                    StudyEditor.addDocumentListener(document, new EduDocumentListener(taskFile));
+                    StudyUtils.drawAllWindows(editor, taskFile);
+                    AnswerPlaceholder first = StudyUtils.getFirst(taskFile.getAnswerPlaceholders());
+                    int offset = first.getRealStartOffset(document);
+                    editor.getSelectionModel().setSelection(offset, offset + first.getLength());
+                    editor.addEditorMouseListener(new WindowSelectionListener(taskFile, first));
+                  }
                 }
               }
             }

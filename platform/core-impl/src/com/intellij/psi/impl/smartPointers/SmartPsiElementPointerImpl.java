@@ -19,6 +19,7 @@ package com.intellij.psi.impl.smartPointers;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +41,8 @@ import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 
 class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPsiElementPointerImpl");
+
   private Reference<E> myElement;
   private final SmartPointerElementInfo myElementInfo;
   private final Class<? extends PsiElement> myElementClass;
@@ -138,6 +143,18 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project,
                                                                                   @NotNull E element,
                                                                                   PsiFile containingFile) {
+    SmartPointerElementInfo elementInfo = doCreateElementInfo(project, element, containingFile);
+    if (ApplicationManager.getApplication().isUnitTestMode() && !element.equals(elementInfo.restoreElement())) {
+      // likely cause: PSI having isPhysical==true, but which can't be restored by containing file and range. To fix, make isPhysical return false
+      LOG.error("Cannot restore " + element + " of " + element.getClass() + " from " + elementInfo);
+    }
+    return elementInfo;
+  }
+
+  @NotNull
+  private static <E extends PsiElement> SmartPointerElementInfo doCreateElementInfo(@NotNull Project project,
+                                                                                    @NotNull E element,
+                                                                                    PsiFile containingFile) {
     if (element instanceof PsiDirectory) {
       return new DirElementInfo((PsiDirectory)element);
     }
@@ -175,6 +192,11 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
     TextRange elementRange = element.getTextRange();
     if (elementRange == null) {
+      return new HardElementInfo(project, element);
+    }
+    if (elementRange.isEmpty() && PsiTreeUtil.findChildOfType(element, ForeignLeafPsiElement.class) != null) {
+      // PSI built on C-style macro expansions. It has empty ranges, no text, but complicated structure. It can't be reliably
+      // restored by just one offset in a file, so hold it on a hard reference
       return new HardElementInfo(project, element);
     }
     ProperTextRange proper = ProperTextRange.create(elementRange);

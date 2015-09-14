@@ -1,0 +1,30 @@
+PyFile:Await.py
+  PyFunction('f')
+    PsiElement(Py:ASYNC_KEYWORD)('async')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:DEF_KEYWORD)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('f')
+    PyParameterList
+      PsiElement(Py:LPAR)('(')
+      PyNamedParameter('x')
+        PsiElement(Py:IDENTIFIER)('x')
+      PsiElement(Py:RPAR)(')')
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace('\n    ')
+    PyStatementList
+      PyExpressionStatement
+        PyPrefixExpression
+          PsiElement(Py:AWAIT_KEYWORD)('await')
+          PsiWhiteSpace(' ')
+          PyReferenceExpression: x
+            PsiElement(Py:IDENTIFIER)('x')
+  PsiWhiteSpace('\n\n\n')
+  PyAssignmentStatement
+    PyTargetExpression: await
+      PsiElement(Py:IDENTIFIER)('await')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyNumericLiteralExpression
+      PsiElement(Py:INTEGER_LITERAL)('1')
