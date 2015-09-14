@@ -25,11 +25,13 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -532,6 +534,8 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
     commonRegisterProblem(message, " not support this syntax. super() should have arguments in Python 2",
                           len, node, null);
+
+    highlightIncorrectArguments(node);
   }
 
   @Override
@@ -729,5 +733,46 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       }
     }
     return false;
+  }
+
+  private void highlightIncorrectArguments(@NotNull PyCallExpression callExpression) {
+    final Set<String> keywordArgumentNames = new HashSet<String>();
+    boolean seenKeywordOrContainerArgument = false;
+    boolean seenKeywordContainer = false;
+    boolean seenPositionalContainer = false;
+    for (PyExpression argument : callExpression.getArguments()) {
+      if (argument instanceof PyKeywordArgument) {
+        seenKeywordOrContainerArgument = true;
+        final String keyword = ((PyKeywordArgument)argument).getKeyword();
+        if (keywordArgumentNames.contains(keyword)) {
+          registerProblem(argument, PyBundle.message("INSP.duplicate.argument"), new PyRemoveArgumentQuickFix());
+        }
+        else if (seenKeywordContainer) {
+          registerProblem(argument, PyBundle.message("INSP.cannot.appear.past.keyword.arg"), new PyRemoveArgumentQuickFix());
+        }
+        keywordArgumentNames.add(keyword);
+      }
+      else if (argument instanceof PyStarArgument) {
+        seenKeywordOrContainerArgument = true;
+        final PyStarArgument starArgument = (PyStarArgument)argument;
+        if (starArgument.isKeyword()) {
+          if (seenKeywordContainer) {
+            registerProblem(argument, PyBundle.message("INSP.duplicate.doublestar.arg"), new PyRemoveArgumentQuickFix());
+          }
+          seenKeywordContainer = true;
+        }
+        else {
+          if (seenPositionalContainer) {
+            registerProblem(argument, PyBundle.message("INSP.duplicate.star.arg"), new PyRemoveArgumentQuickFix());
+          }
+          seenPositionalContainer = true;
+        }
+      }
+      else {
+        if (seenKeywordOrContainerArgument) {
+          registerProblem(argument, PyBundle.message("INSP.cannot.appear.past.keyword.arg"), new PyRemoveArgumentQuickFix());
+        }
+      }
+    }
   }
 }

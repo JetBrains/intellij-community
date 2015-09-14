@@ -18,7 +18,6 @@ package com.jetbrains.python.inspections;
 import com.google.common.collect.Lists;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
@@ -37,8 +36,9 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Looks at argument lists.
@@ -120,102 +120,12 @@ public class PyArgumentListInspection extends PyInspection {
         return;
       }
     }
-    highlightIncorrectArguments(callExpr, holder, mapping);
-    highlightMissingArguments(node, holder, mapping);
+    highlightParametersMismatch(node, holder, mapping);
     highlightStarArgumentTypeMismatch(node, holder, context);
   }
 
   public static void inspectPyArgumentList(PyArgumentList node, ProblemsHolder holder, final TypeEvalContext context) {
     inspectPyArgumentList(node, holder, context, 0);
-  }
-
-  private enum ArgumentProblem {
-    OK,
-    DUPLICATE_KEYWORD_ARGUMENT,
-    DUPLICATE_KEYWORD_CONTAINER,
-    DUPLICATE_POSITIONAL_CONTAINER,
-    CANNOT_APPEAR_AFTER_KEYWORD_OR_CONTAINER,
-  }
-
-  @NotNull
-  private static Map<PyExpression, ArgumentProblem> analyzeArguments(@NotNull PyCallExpression callExpression) {
-    final Map<PyExpression, ArgumentProblem> results = new HashMap<PyExpression, ArgumentProblem>();
-    final Set<String> keywordArgumentNames = new HashSet<String>();
-    boolean seenKeywordOrContainerArgument = false;
-    boolean seenKeywordContainer = false;
-    boolean seenPositionalContainer = false;
-    for (PyExpression argument : callExpression.getArguments()) {
-      if (argument instanceof PyKeywordArgument) {
-        seenKeywordOrContainerArgument = true;
-        final String keyword = ((PyKeywordArgument)argument).getKeyword();
-        final ArgumentProblem problem;
-        if (keywordArgumentNames.contains(keyword)) {
-          problem = ArgumentProblem.DUPLICATE_KEYWORD_ARGUMENT;
-        }
-        else if (seenKeywordContainer) {
-          problem = ArgumentProblem.CANNOT_APPEAR_AFTER_KEYWORD_OR_CONTAINER;
-        }
-        else {
-          problem = ArgumentProblem.OK;
-        }
-        results.put(argument, problem);
-        keywordArgumentNames.add(keyword);
-      }
-      else if (argument instanceof PyStarArgument) {
-        seenKeywordOrContainerArgument = true;
-        final PyStarArgument starArgument = (PyStarArgument)argument;
-        if (starArgument.isKeyword()) {
-          results.put(argument, seenKeywordContainer ? ArgumentProblem.DUPLICATE_KEYWORD_CONTAINER : ArgumentProblem.OK);
-          seenKeywordContainer = true;
-        }
-        else {
-          results.put(argument, seenPositionalContainer ? ArgumentProblem.DUPLICATE_POSITIONAL_CONTAINER : ArgumentProblem.OK);
-          seenPositionalContainer = true;
-        }
-      }
-      else {
-        results.put(argument, seenKeywordOrContainerArgument ? ArgumentProblem.CANNOT_APPEAR_AFTER_KEYWORD_OR_CONTAINER : ArgumentProblem.OK);
-      }
-    }
-    return results;
-  }
-
-  private static void highlightIncorrectArguments(@NotNull PyCallExpression callExpr,
-                                                  @NotNull ProblemsHolder holder,
-                                                  @NotNull PyCallExpression.PyArgumentsMapping mapping) {
-    final Set<PyExpression> problematicArguments = new HashSet<PyExpression>();
-    for (Map.Entry<PyExpression, ArgumentProblem> entry : analyzeArguments(callExpr).entrySet()) {
-      final PyExpression argument = entry.getKey();
-      final ArgumentProblem problem = entry.getValue();
-      switch (problem) {
-        case OK:
-          break;
-        case DUPLICATE_KEYWORD_ARGUMENT:
-          holder.registerProblem(argument, PyBundle.message("INSP.duplicate.argument"), new PyRemoveArgumentQuickFix());
-          break;
-        case DUPLICATE_KEYWORD_CONTAINER:
-          holder.registerProblem(argument, PyBundle.message("INSP.duplicate.doublestar.arg"), new PyRemoveArgumentQuickFix());
-          break;
-        case DUPLICATE_POSITIONAL_CONTAINER:
-          holder.registerProblem(argument, PyBundle.message("INSP.duplicate.star.arg"), new PyRemoveArgumentQuickFix());
-          break;
-        case CANNOT_APPEAR_AFTER_KEYWORD_OR_CONTAINER:
-          holder.registerProblem(argument, PyBundle.message("INSP.cannot.appear.past.keyword.arg"), ProblemHighlightType.ERROR, new PyRemoveArgumentQuickFix());
-      }
-      if (problem != ArgumentProblem.OK) {
-        problematicArguments.add(argument);
-      }
-    }
-
-    for (PyExpression argument : mapping.getUnmappedArguments()) {
-      if (!problematicArguments.contains(argument)) {
-        final List<LocalQuickFix> quickFixes = Lists.<LocalQuickFix>newArrayList(new PyRemoveArgumentQuickFix());
-        if (argument instanceof PyKeywordArgument) {
-          quickFixes.add(new PyRenameArgumentQuickFix());
-        }
-        holder.registerProblem(argument, PyBundle.message("INSP.unexpected.arg"), quickFixes.toArray(new LocalQuickFix[quickFixes.size() - 1]));
-      }
-    }
   }
 
   private static void highlightStarArgumentTypeMismatch(PyArgumentList node, ProblemsHolder holder, TypeEvalContext context) {
@@ -241,8 +151,36 @@ public class PyArgumentListInspection extends PyInspection {
     }
   }
 
-  private static void highlightMissingArguments(@NotNull PyArgumentList node, @NotNull ProblemsHolder holder,
-                                                @NotNull PyCallExpression.PyArgumentsMapping mapping) {
+  private static Set<String> getDuplicateKeywordArguments(@NotNull PyArgumentList node) {
+    final Set<String> keywordArgumentNames = new HashSet<String>();
+    final Set<String> results = new HashSet<String>();
+    for (PyExpression argument : node.getArguments()) {
+      if (argument instanceof PyKeywordArgument) {
+        final String keyword = ((PyKeywordArgument)argument).getKeyword();
+        if (keywordArgumentNames.contains(keyword)) {
+          results.add(keyword);
+        }
+        keywordArgumentNames.add(keyword);
+      }
+    }
+    return results;
+  }
+
+  private static void highlightParametersMismatch(@NotNull PyArgumentList node, @NotNull ProblemsHolder holder,
+                                                  @NotNull PyCallExpression.PyArgumentsMapping mapping) {
+    final Set<String> duplicateKeywords = getDuplicateKeywordArguments(node);
+    for (PyExpression argument : mapping.getUnmappedArguments()) {
+      final List<LocalQuickFix> quickFixes = Lists.<LocalQuickFix>newArrayList(new PyRemoveArgumentQuickFix());
+      if (argument instanceof PyKeywordArgument) {
+        if (duplicateKeywords.contains(((PyKeywordArgument)argument).getKeyword())) {
+          continue;
+        }
+        quickFixes.add(new PyRenameArgumentQuickFix());
+      }
+      holder.registerProblem(argument, PyBundle.message("INSP.unexpected.arg"),
+                             quickFixes.toArray(new LocalQuickFix[quickFixes.size() - 1]));
+    }
+
     ASTNode our_node = node.getNode();
     if (our_node != null) {
       ASTNode close_paren = our_node.findChildByType(PyTokenTypes.RPAR);

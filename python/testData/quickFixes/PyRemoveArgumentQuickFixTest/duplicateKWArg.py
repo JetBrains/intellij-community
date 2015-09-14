@@ -4,6 +4,6 @@ def foo(**args):
 
 a = {}
 b = {}
-foo(**a, <warning descr="Duplicate **arg">**<caret>b</warning>)
+foo(**a, <error descr="Duplicate **arg">**<caret>b</error>)
 
 
