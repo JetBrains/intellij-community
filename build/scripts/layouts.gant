@@ -633,10 +633,6 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
           }
         }
 
-        fileset(dir: "${home}/plugins/coverage-common/lib") {
-          exclude(name: "**/coverage-src.zip")
-        }
-
         fileset(dir: "${home}/plugins/coverage/lib", excludes: "**/jacoco_src.zip")
       }
     }
