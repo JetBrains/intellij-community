@@ -84,6 +84,11 @@ class AnchorElementInfo extends SelfElementInfo {
     TextRange range = anchor.getTextRange();
     if (range.getStartOffset() != psiRange.getStartOffset() || range.getEndOffset() != psiRange.getEndOffset()) return null;
 
+    return restoreFromAnchor(anchor);
+  }
+
+  @Nullable
+  static PsiElement restoreFromAnchor(PsiElement anchor) {
     for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensions()) {
       final PsiElement element = provider.restoreElement(anchor);
       if (element != null) return element;
