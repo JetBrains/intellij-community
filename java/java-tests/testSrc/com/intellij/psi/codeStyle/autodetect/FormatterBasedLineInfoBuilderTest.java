@@ -40,17 +40,32 @@ public class FormatterBasedLineInfoBuilderTest extends LightPlatformCodeInsightT
     String text = "/**\n" +
                   " *\n" +
                   " */";
-    
+
+    List<LineIndentInfo> infos = getLineInfos(text);
+    assertLinesWithNormalIndent(infos, 0);
+  }
+  
+  public void testXmlContinuationWithoutFirst() throws IOException, JDOMException {
+    String text = "<idea-plugin>\n" +
+                  "    <name/>\n" +
+                  "    <id/>\n" +
+                  "</idea-plugin>";
+
+    List<LineIndentInfo> infos = getLineInfos(text);
+    assertLinesWithNormalIndent(infos, 4);
+  }
+
+  private static void assertLinesWithNormalIndent(List<LineIndentInfo> infos, int expected) {
+    long linesWithNormalIndent = infos.stream().filter(LineIndentInfo::isLineWithNormalIndent).count();
+    assertEquals(expected, linesWithNormalIndent);
+  }
+
+  private List<LineIndentInfo> getLineInfos(String text) throws IOException, JDOMException {
     String file = getTestName(false) + ".xml";
-    
     TestFormattingModel model = new TestFormattingModel(text);
     Document document = model.getDocument();
     TestBlock block = new FormattingModelXmlReader(model).readTestBlock(getTestDataPath(), file);
-    
     FormatterBasedLineIndentInfoBuilder builder = new FormatterBasedLineIndentInfoBuilder(document, block);
-    
-    List<LineIndentInfo> infos = builder.build();
-    long linesWithNormalIndents = infos.stream().filter(LineIndentInfo::isLineWithNormalIndent).count();
-    assertEquals(0, linesWithNormalIndents);
+    return builder.build();
   }
 }
