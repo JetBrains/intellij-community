@@ -159,6 +159,10 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON35);
   }
 
+  public void testDoubleStarUnpacking() {
+    doTest(LanguageLevel.PYTHON35);
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, new Runnable() {
       @Override

@@ -172,28 +172,32 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     super.visitPyStarExpression(node);
 
     if (node.isAssignmentTarget()) {
-      boolean problem = false;
       for (LanguageLevel level : myVersionsToProcess) {
         if (level.isOlderThan(LanguageLevel.PYTHON30)) {
-          problem = true;
+          registerProblem(node, "Python versions < 3.0 do not support starred expressions as assignment targets");
           break;
         }
-      }
-      if (problem) {
-        registerProblem(node, "Python versions < 3.0 do not support starred expressions as assignment targets");
       }
     }
 
     if (node.isUnpacking()) {
-      boolean problem = false;
       for (LanguageLevel level : myVersionsToProcess) {
         if (level.isOlderThan(LanguageLevel.PYTHON35)) {
-          problem = true;
+          registerProblem(node, "Python versions < 3.5 do not support starred expressions in tuples, lists, and sets");
           break;
         }
       }
-      if (problem) {
-        registerProblem(node, "Python version < 3.5 do not support starred expressions in tuples, lists, and sets");
+    }
+  }
+
+  @Override
+  public void visitPyDoubleStarExpression(PyDoubleStarExpression node) {
+    super.visitPyDoubleStarExpression(node);
+
+    for (LanguageLevel level : myVersionsToProcess) {
+      if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+        registerProblem(node, "Python versions < 3.5 do not support starred expressions in dicts");
+        break;
       }
     }
   }
