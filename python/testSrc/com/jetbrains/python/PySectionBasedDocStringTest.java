@@ -328,6 +328,22 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     assertEquals("args", paramSection.getFields().get(1).getName());
   }
 
+  public void testGoogleNoColonAfterParameter() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertSize(1, docString.getSections());
+    final Section paramSection = docString.getSections().get(0);
+    assertSize(2, paramSection.getFields());
+    final SectionField x = paramSection.getFields().get(0);
+    assertEquals("x", x.getName());
+    assertEmpty(x.getType());
+    assertEmpty(x.getDescription());
+
+    final SectionField y = paramSection.getFields().get(1);
+    assertEquals("y", y.getName());
+    assertEquals("int", y.getType());
+    assertEmpty(y.getDescription());
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/docstrings";

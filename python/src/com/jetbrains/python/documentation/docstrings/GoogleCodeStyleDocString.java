@@ -78,12 +78,11 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
                                                           boolean mayHaveType,
                                                           boolean preferType) {
     final Substring line = getLine(lineNum);
-    Substring name, type = null, description;
+    Substring name, type = null;
+    // Napoleon requires that each parameter line contains a colon - we don't because
+    // we need to parse and complete parameter names before colon is typed
     final List<Substring> colonSeparatedParts = splitByFirstColon(line);
     assert colonSeparatedParts.size() <= 2;
-    if (colonSeparatedParts.size() < 2) {
-      return Pair.create(null, lineNum);
-    }
     final Substring textBeforeColon = colonSeparatedParts.get(0);
     name = textBeforeColon.trim();
     if (mayHaveType) {
@@ -104,16 +103,20 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
     if (name != null ? !PyNames.isIdentifierString(name.toString()) : type.isEmpty()) {
       return Pair.create(null, lineNum);
     }
-    description = colonSeparatedParts.get(1);
-    // parse line with indentation at least one space greater than indentation of the field
-    final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum + 1, getLineIndentSize(lineNum));
-    final List<Substring> nestedBlock = pair.getFirst();
-    if (!nestedBlock.isEmpty()) {
-      //noinspection ConstantConditions
-      description = description.union(ContainerUtil.getLastItem(nestedBlock));
+    final Pair<List<Substring>, Integer> pair;
+    if (colonSeparatedParts.size() == 2) {
+      Substring description = colonSeparatedParts.get(1);
+      // parse line with indentation at least one space greater than indentation of the field
+      pair = parseIndentedBlock(lineNum + 1, getLineIndentSize(lineNum));
+      final List<Substring> nestedBlock = pair.getFirst();
+      if (!nestedBlock.isEmpty()) {
+        //noinspection ConstantConditions
+        description = description.union(ContainerUtil.getLastItem(nestedBlock));
+      }
+      description = description.trim();
+      return Pair.create(new SectionField(name, type, description), pair.getSecond());
     }
-    description = description.trim();
-    return Pair.create(new SectionField(name, type, description), pair.getSecond());
+    return Pair.create(new SectionField(name, type, null), lineNum + 1);
   }
 
 

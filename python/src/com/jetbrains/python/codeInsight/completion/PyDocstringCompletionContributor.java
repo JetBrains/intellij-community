@@ -58,6 +58,7 @@ public class PyDocstringCompletionContributor extends CompletionContributor {
       final PsiElement element = parameters.getOriginalPosition();
       if (element == null) return;
       final PsiFile file = element.getContainingFile();
+      // Parameter references are filled with DocStringParameterReference#getVariants
       if (file.findReferenceAt(parameters.getOffset()) != null) return;
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
       final Module module = ModuleUtilCore.findModuleForPsiElement(element);

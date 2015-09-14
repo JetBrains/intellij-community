@@ -42,6 +42,9 @@ public class DocStringSectionHeaderCompletionContributor extends CompletionContr
                final PsiElement stringNode = parameters.getOriginalPosition();
                assert stringNode != null;
                final int offset = parameters.getOffset();
+               if (file.findReferenceAt(offset) != null) {
+                 return;
+               }
                final DocStringFormat format = DocStringUtil.getConfiguredDocStringFormat(file);
                if (!(format == DocStringFormat.GOOGLE || format == DocStringFormat.NUMPY)) {
                  return;
