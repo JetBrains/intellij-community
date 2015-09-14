@@ -507,16 +507,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     int len = 0;
     StringBuilder message = new StringBuilder(myCommonMessage);
 
-    if (myVersionsToProcess.contains(LanguageLevel.PYTHON24) || myVersionsToProcess.contains(LanguageLevel.PYTHON25)) {
-      boolean hasStar = false;
-      for (PyExpression argument : node.getArguments()) {
-        if (hasStar && argument instanceof PyKeywordArgument) {
-          registerProblem(argument, "Python version < 2.6 doesn't support this syntax. Named parameter cannot appear past *arg or **kwarg.");
-        }
-        if (argument instanceof PyStarArgument) hasStar = true;
-      }
-    }
-
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
       LanguageLevel languageLevel = myVersionsToProcess.get(i);
       if (!languageLevel.isPy3K()) {
@@ -742,6 +732,14 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     boolean seenPositionalContainer = false;
     for (PyExpression argument : callExpression.getArguments()) {
       if (argument instanceof PyKeywordArgument) {
+        for (LanguageLevel level : myVersionsToProcess) {
+          if (level.isOlderThan(LanguageLevel.PYTHON26)) {
+            if (seenPositionalContainer || seenKeywordContainer) {
+              registerProblem(argument, "Python versions < 2.6 do not allow keyword arguments after *arg or **kwarg");
+              break;
+            }
+          }
+        }
         seenKeywordOrContainerArgument = true;
         final String keyword = ((PyKeywordArgument)argument).getKeyword();
         if (keywordArgumentNames.contains(keyword)) {
