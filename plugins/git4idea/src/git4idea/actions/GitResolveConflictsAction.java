@@ -24,12 +24,15 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 
 /**
  * Git merge tool for resolving conflicts. Use IDEA built-in 3-way merge tool.
@@ -38,10 +41,8 @@ public class GitResolveConflictsAction extends GitAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final Project project = event.getProject();
-    if (project == null) {
-      return;
-    }
+    Project project = ObjectUtils.assertNotNull(event.getProject());
+    GitVcs vcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
 
     final Set<VirtualFile> conflictedFiles = new TreeSet<VirtualFile>(new Comparator<VirtualFile>() {
       @Override
@@ -53,23 +54,23 @@ public class GitResolveConflictsAction extends GitAction {
       if (change.getFileStatus() != FileStatus.MERGED_WITH_CONFLICTS) {
         continue;
       }
-      final ContentRevision before = change.getBeforeRevision();
-      final ContentRevision after = change.getAfterRevision();
+      ContentRevision before = change.getBeforeRevision();
+      ContentRevision after = change.getAfterRevision();
       if (before != null) {
-        final VirtualFile file = before.getFile().getVirtualFile();
+        VirtualFile file = before.getFile().getVirtualFile();
         if (file != null) {
           conflictedFiles.add(file);
         }
       }
       if (after != null) {
-        final VirtualFile file = after.getFile().getVirtualFile();
+        VirtualFile file = after.getFile().getVirtualFile();
         if (file != null) {
           conflictedFiles.add(file);
         }
       }
     }
 
-    AbstractVcsHelper.getInstance(project).showMergeDialog(new ArrayList<VirtualFile>(conflictedFiles), GitVcs.getInstance(project).getMergeProvider());
+    AbstractVcsHelper.getInstance(project).showMergeDialog(newArrayList(conflictedFiles), vcs.getMergeProvider());
     for (GitRepository repository : GitUtil.getRepositoriesForFiles(project, conflictedFiles)) {
       repository.update();
     }
