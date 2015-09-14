@@ -405,6 +405,27 @@ public class PythonCompletionTest extends PyTestCase {
                            LookupElementBuilder.create("bar").withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
   }
 
+  // PY-16877
+  public void testSectionNamesInGoogleDocstring() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      public void run() {
+        final List<String> variants = doTestByFile();
+        assertNotNull(variants);
+        assertContainsElements(variants, "Args", "Parameters", "Keyword arguments", "Returns");
+      }
+    });
+  }
+
+  // PY-16877
+  public void testTwoWordsSectionNameInGoogleDocstring() throws Exception {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
+  }
+
   public void testPep328Completion() {  // PY-3409
     myFixture.copyDirectoryToProject("pep328", "pep328");
     myFixture.configureByFile("pep328/package/subpackage1/moduleX.py");
