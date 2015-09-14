@@ -83,7 +83,7 @@ public class ApplicationActivationStateManager {
         return setActive(application, window);
       }
     }
-    else if (windowEvent.getID() == WindowEvent.WINDOW_DEACTIVATED && windowEvent.getOppositeWindow() != null) {
+    else if (windowEvent.getID() == WindowEvent.WINDOW_DEACTIVATED && windowEvent.getOppositeWindow() == null) {
       requestToDeactivateTime.getAndSet(System.currentTimeMillis());
 
       // For stuff that cannot wait windowEvent notify about deactivation immediately
