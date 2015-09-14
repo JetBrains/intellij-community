@@ -22,6 +22,7 @@
     <module>maven-server-api</module>
     <module>maven32-server-impl</module>
     <module>maven2-server-impl</module>
+    <module>maven-artifact-resolver-common</module>
     <module>maven-artifact-resolver-m31</module>
     <module scope="IDE,build">maven-jps-plugin</module>
     <module>maven-artifact-resolver-m2</module>
