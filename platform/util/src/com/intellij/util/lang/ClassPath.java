@@ -157,7 +157,7 @@ public class ClassPath {
         initLoaders(url, lastOne, myLoaders.size());
       }
       catch (IOException e) {
-        Logger.getInstance(ClassPath.class).debug("url: " + url, e);
+        Logger.getInstance(ClassPath.class).error("url: " + url, e);
       }
     }
 
