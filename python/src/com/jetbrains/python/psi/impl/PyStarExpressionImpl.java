@@ -60,6 +60,6 @@ public class PyStarExpressionImpl extends PyElementImpl implements PyStarExpress
     while (parent instanceof PyParenthesizedExpression) {
       parent = parent.getParent();
     }
-    return parent instanceof PyTupleExpression || parent instanceof PyListLiteralExpression;
+    return parent instanceof PyTupleExpression || parent instanceof PyListLiteralExpression || parent instanceof PySetLiteralExpression;
   }
 }

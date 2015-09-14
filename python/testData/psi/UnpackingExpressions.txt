@@ -364,3 +364,84 @@ PyFile:UnpackingExpressions.py
                 PsiElement(Py:RPAR)(')')
           PsiElement(Py:RBRACE)('}')
         PsiElement(Py:RPAR)(')')
+  PsiWhiteSpace('\n')
+  PyExpressionStatement
+    PyCallExpression: print
+      PyReferenceExpression: print
+        PsiElement(Py:IDENTIFIER)('print')
+      PyArgumentList
+        PsiElement(Py:LPAR)('(')
+        PySetLiteralExpression
+          PsiElement(Py:LBRACE)('{')
+          PyNumericLiteralExpression
+            PsiElement(Py:INTEGER_LITERAL)('1')
+          PsiElement(Py:COMMA)(',')
+          PsiWhiteSpace(' ')
+          PyNumericLiteralExpression
+            PsiElement(Py:INTEGER_LITERAL)('2')
+          PsiElement(Py:COMMA)(',')
+          PsiWhiteSpace(' ')
+          PyStarExpression
+            PsiElement(Py:MULT)('*')
+            PyParenthesizedExpression
+              PsiElement(Py:LPAR)('(')
+              PyTupleExpression
+                PyNumericLiteralExpression
+                  PsiElement(Py:INTEGER_LITERAL)('3')
+                PsiElement(Py:COMMA)(',')
+                PsiWhiteSpace(' ')
+                PyNumericLiteralExpression
+                  PsiElement(Py:INTEGER_LITERAL)('4')
+              PsiElement(Py:RPAR)(')')
+          PsiElement(Py:RBRACE)('}')
+        PsiElement(Py:RPAR)(')')
+  PsiWhiteSpace('\n')
+  PyExpressionStatement
+    PyCallExpression: print
+      PyReferenceExpression: print
+        PsiElement(Py:IDENTIFIER)('print')
+      PyArgumentList
+        PsiElement(Py:LPAR)('(')
+        PySetLiteralExpression
+          PsiElement(Py:LBRACE)('{')
+          PyStarExpression
+            PsiElement(Py:MULT)('*')
+            PyParenthesizedExpression
+              PsiElement(Py:LPAR)('(')
+              PyTupleExpression
+                PyNumericLiteralExpression
+                  PsiElement(Py:INTEGER_LITERAL)('1')
+                PsiElement(Py:COMMA)(',')
+                PsiWhiteSpace(' ')
+                PyNumericLiteralExpression
+                  PsiElement(Py:INTEGER_LITERAL)('2')
+              PsiElement(Py:RPAR)(')')
+          PsiElement(Py:COMMA)(',')
+          PsiWhiteSpace(' ')
+          PyNumericLiteralExpression
+            PsiElement(Py:INTEGER_LITERAL)('3')
+          PsiElement(Py:RBRACE)('}')
+        PsiElement(Py:RPAR)(')')
+  PsiWhiteSpace('\n')
+  PyExpressionStatement
+    PyCallExpression: print
+      PyReferenceExpression: print
+        PsiElement(Py:IDENTIFIER)('print')
+      PyArgumentList
+        PsiElement(Py:LPAR)('(')
+        PySetLiteralExpression
+          PsiElement(Py:LBRACE)('{')
+          PyStarExpression
+            PsiElement(Py:MULT)('*')
+            PyParenthesizedExpression
+              PsiElement(Py:LPAR)('(')
+              PyTupleExpression
+                PyNumericLiteralExpression
+                  PsiElement(Py:INTEGER_LITERAL)('1')
+                PsiElement(Py:COMMA)(',')
+                PsiWhiteSpace(' ')
+                PyNumericLiteralExpression
+                  PsiElement(Py:INTEGER_LITERAL)('2')
+              PsiElement(Py:RPAR)(')')
+          PsiElement(Py:RBRACE)('}')
+        PsiElement(Py:RPAR)(')')
