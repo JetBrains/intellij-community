@@ -145,6 +145,12 @@ public class GeneralCommandLine implements UserDataHolder {
     return this;
   }
 
+  @NotNull
+  public GeneralCommandLine withEnvironment(@NotNull String key, @NotNull String value) {
+    getEnvironment().put(key, value);
+    return this;
+  }
+
   /** @deprecated use {@link #getParentEnvironmentType()} (to be removed in IDEA 17) */
   @SuppressWarnings("unused")
   public boolean isPassParentEnvironment() {
@@ -190,15 +196,23 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   public void addParameters(String... parameters) {
-    for (String parameter : parameters) {
-      addParameter(parameter);
-    }
+    withParameters(parameters);
   }
 
   public void addParameters(@NotNull List<String> parameters) {
-    for (String parameter : parameters) {
-      addParameter(parameter);
-    }
+    withParameters(parameters);
+  }
+
+  @NotNull
+  public GeneralCommandLine withParameters(@NotNull String... parameters) {
+    for (String parameter : parameters) addParameter(parameter);
+    return this;
+  }
+
+  @NotNull
+  public GeneralCommandLine withParameters(@NotNull List<String> parameters) {
+    for (String parameter : parameters) addParameter(parameter);
+    return this;
   }
 
   public void addParameter(@NotNull String parameter) {
