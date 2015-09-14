@@ -438,6 +438,30 @@ public class PythonCompletionTest extends PyTestCase {
     });
   }
 
+  // PY-16870
+  public void testOverrideParamNameInGoogleDocstring() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        final List<String> variants = doTestByFile();
+        assertNotNull(variants);
+        assertSameElements(variants, "param2");
+      }
+    });
+  }
+
+  // PY-16870
+  public void testOverrideParamNameInRestDocstring() {
+    runWithDocStringFormat(DocStringFormat.REST, new Runnable() {
+      @Override
+      public void run() {
+        final List<String> variants = doTestByFile();
+        assertNotNull(variants);
+        assertSameElements(variants, "param2");
+      }
+    });
+  }
+
   public void testPep328Completion() {  // PY-3409
     myFixture.copyDirectoryToProject("pep328", "pep328");
     myFixture.configureByFile("pep328/package/subpackage1/moduleX.py");

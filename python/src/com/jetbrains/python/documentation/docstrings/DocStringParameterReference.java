@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -121,9 +122,15 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
   @NotNull
   @Override
   public Object[] getVariants() {
+    // see PyDocstringCompletionContributor
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @NotNull
+  public List<PyNamedParameter> collectParameterVariants() {
     PyDocStringOwner owner = PsiTreeUtil.getParentOfType(getElement(), PyDocStringOwner.class);
     if (owner instanceof PyFunction) {
-      List <PyNamedParameter> result = Lists.newArrayList();
+      List<PyNamedParameter> result = Lists.newArrayList();
       final List<PyNamedParameter> namedParameters = ParamHelper.collectNamedParameters(((PyFunction)owner).getParameterList());
       Set<String> usedParameters = new HashSet<String>();
       PyStringLiteralExpression expression = PsiTreeUtil.getParentOfType(getElement(), PyStringLiteralExpression.class, false);
@@ -139,9 +146,9 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
           result.add(param);
       }
 
-      return ArrayUtil.toObjectArray(result);
+      return result;
     }
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return Collections.emptyList();
   }
 
   public ReferenceType getType() {

@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -121,9 +122,16 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
   @NotNull
   @Override
   public Object[] getVariants() {
+    // see PyDocstringCompletionContributor
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @NotNull
+  public List<Object> collectTypeVariants() {
     final PsiFile file = myElement.getContainingFile();
-    final ArrayList<Object> variants = Lists.<Object>newArrayList("str", "int", "basestring", "bool", "buffer", "bytearray", "complex", "dict",
-                                                                  "tuple", "enumerate", "file", "float", "frozenset", "list", "long", "set", "object");
+    final ArrayList<Object>
+      variants = Lists.<Object>newArrayList("str", "int", "basestring", "bool", "buffer", "bytearray", "complex", "dict",
+                                            "tuple", "enumerate", "file", "float", "frozenset", "list", "long", "set", "object");
     if (file instanceof PyFile) {
       variants.addAll(((PyFile)file).getTopLevelClasses());
       final List<PyFromImportStatement> fromImports = ((PyFile)file).getFromImports();
@@ -139,7 +147,6 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
         }
       }
     }
-
-    return variants.toArray();
+    return variants;
   }
 }
