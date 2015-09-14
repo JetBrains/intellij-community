@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.file;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
+import com.intellij.core.CoreJavaDirectoryService;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
@@ -26,6 +27,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
@@ -54,6 +56,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectoriesWithLibSources;
   private volatile SoftReference<Map<String, PsiClass[]>> myClassCache;
+  private volatile SoftReference<Map<GlobalSearchScope, Map<String, PsiClass[]>>> myDumbModeFullCache;
+  private volatile SoftReference<Map<Pair<GlobalSearchScope, String>, PsiClass[]>> myDumbModePartialCache;
 
   public PsiPackageImpl(PsiManager manager, String qualifiedName) {
     super(manager, qualifiedName);
@@ -188,9 +192,9 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @NotNull
-  private PsiClass[] getCachedClassesByName(@NotNull String name) {
+  private PsiClass[] getCachedClassesByName(@NotNull String name, GlobalSearchScope scope) {
     if (DumbService.getInstance(getProject()).isDumb()) {
-      return getCachedClassInDumbMode(name);
+      return getCachedClassInDumbMode(name, scope);
     }
 
     Map<String, PsiClass[]> map = SoftReference.dereference(myClassCache);
@@ -208,32 +212,69 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return classes;
   }
 
-  private PsiClass[] getCachedClassInDumbMode(String name) {
-    Map<String, PsiClass[]> map = SoftReference.dereference(myClassCache);
+  private PsiClass[] getCachedClassInDumbMode(final String name, GlobalSearchScope scope) {
+    Map<GlobalSearchScope, Map<String, PsiClass[]>> scopeMap = SoftReference.dereference(myDumbModeFullCache);
+    if (scopeMap == null) {
+      myDumbModeFullCache = new SoftReference<Map<GlobalSearchScope, Map<String, PsiClass[]>>>(scopeMap = ContainerUtil.newConcurrentMap());
+    }
+    Map<String, PsiClass[]> map = scopeMap.get(scope);
     if (map == null) {
+      // before parsing all files in this package, try cheap heuristics: check if 'name' is a subpackage, check files named like 'name'
+      PsiClass[] array = findClassesHeuristically(name, scope);
+      if (array != null) return array;
+
       map = new HashMap<String, PsiClass[]>();
-      for (PsiClass psiClass : getClasses(new EverythingGlobalScope(getProject()))) {
+      for (PsiClass psiClass : getClasses(scope)) {
         String psiClassName = psiClass.getName();
         if (psiClassName != null) {
           PsiClass[] existing = map.get(psiClassName);
           map.put(psiClassName, existing == null ? new PsiClass[]{psiClass} : ArrayUtil.append(existing, psiClass));
         }
       }
-      myClassCache = new SoftReference<Map<String, PsiClass[]>>(map);
+      scopeMap.put(scope, map);
     }
     PsiClass[] classes = map.get(name);
     return classes == null ? PsiClass.EMPTY_ARRAY : classes;
   }
 
+  @Nullable
+  private PsiClass[] findClassesHeuristically(final String name, GlobalSearchScope scope) {
+    if (findSubPackageByName(name) != null) {
+      return PsiClass.EMPTY_ARRAY;
+    }
+
+    Map<Pair<GlobalSearchScope, String>, PsiClass[]> partial = SoftReference.dereference(myDumbModePartialCache);
+    if (partial == null) {
+      myDumbModePartialCache = new SoftReference<Map<Pair<GlobalSearchScope, String>, PsiClass[]>>(partial = ContainerUtil.newConcurrentMap());
+    }
+    PsiClass[] result = partial.get(Pair.create(scope, name));
+    if (result == null) {
+      List<PsiClass> fastClasses = ContainerUtil.newArrayList();
+      for (PsiDirectory directory : getDirectories(scope)) {
+        List<PsiFile> sameNamed = ContainerUtil.filter(directory.getFiles(), new Condition<PsiFile>() {
+          @Override
+          public boolean value(PsiFile file) {
+            return file.getName().contains(name);
+          }
+        });
+        Collections.addAll(fastClasses, CoreJavaDirectoryService.getPsiClasses(directory, sameNamed.toArray(new PsiFile[sameNamed.size()])));
+      }
+      if (!fastClasses.isEmpty()) {
+        partial.put(Pair.create(scope, name), result = fastClasses.toArray(new PsiClass[fastClasses.size()]));
+      }
+    }
+    return result;
+  }
+
   @Override
   public boolean containsClassNamed(@NotNull String name) {
-    return getCachedClassesByName(name).length > 0;
+    return getCachedClassesByName(name, new EverythingGlobalScope(getProject())).length > 0;
   }
 
   @NotNull
   @Override
   public PsiClass[] findClassByShortName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
-    PsiClass[] allClasses = getCachedClassesByName(name);
+    PsiClass[] allClasses = getCachedClassesByName(name, scope);
     if (allClasses.length == 0) return allClasses;
     if (allClasses.length == 1) {
       return PsiSearchScopeUtil.isInScope(scope, allClasses[0]) ? allClasses : PsiClass.EMPTY_ARRAY;

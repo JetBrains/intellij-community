@@ -144,7 +144,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       return PsiClass.EMPTY_ARRAY;
     }
 
-    if (pkg == null || !pkg.containsClassNamed(className)) {
+    if (pkg == null) {
       return PsiClass.EMPTY_ARRAY;
     }
 
