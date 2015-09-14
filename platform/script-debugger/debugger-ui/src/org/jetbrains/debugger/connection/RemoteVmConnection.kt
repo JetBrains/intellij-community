@@ -89,7 +89,7 @@ public abstract class RemoteVmConnection : VmConnection<Vm>() {
 
 public fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemToString: (T) -> String): Promise<T> {
   if (targets.size() == 1) {
-    return ResolvedPromise(ContainerUtil.getFirstItem(targets))
+    return ResolvedPromise(ContainerUtil.getFirstItem(targets)!!)
   }
   else if (targets.isEmpty()) {
     return RejectedPromise("No tabs to inspect")

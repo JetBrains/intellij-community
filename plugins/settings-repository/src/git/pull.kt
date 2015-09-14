@@ -300,10 +300,9 @@ private fun resolveConflicts(mergeResult: MergeResultEx, repository: Repository)
 }
 
 private fun resolveConflicts(mergeProvider: JGitMergeProvider<out Any>, unresolvedFiles: MutableList<VirtualFile>, repository: Repository): List<String> {
-  val resolvedFiles: List<VirtualFile>
   val mergedFiles = SmartList<String>()
   while (true) {
-    resolvedFiles = resolveConflicts(unresolvedFiles, mergeProvider)
+    val resolvedFiles = resolveConflicts(unresolvedFiles, mergeProvider)
 
     for (file in resolvedFiles) {
       mergedFiles.add(file.getPath())

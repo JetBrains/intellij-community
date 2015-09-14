@@ -28,7 +28,7 @@ private class DonePromise<T>(private val result: T) : Promise<T> {
     return this
   }
 
-  override fun processed(processed: (T) -> Unit): Promise<T> {
+  override fun processed(processed: (T?) -> Unit): Promise<T> {
     done(processed)
     return this
   }

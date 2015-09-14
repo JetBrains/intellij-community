@@ -17,7 +17,7 @@ package org.jetbrains.util.concurrency
 
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.concurrency.Obsolescent
-import java.util.ArrayList
+import java.util.*
 
 public class AsyncPromise<T> : Promise<T> {
   companion object {
@@ -116,7 +116,7 @@ public class AsyncPromise<T> : Promise<T> {
     return this
   }
 
-  public fun get(): T {
+  public fun get(): T? {
     @suppress("UNCHECKED_CAST")
     return when (state) {
       Promise.State.FULFILLED -> result as T
@@ -128,7 +128,7 @@ public class AsyncPromise<T> : Promise<T> {
 
   override fun <SUB_RESULT> thenAsync(done: (T) -> Promise<SUB_RESULT>): Promise<SUB_RESULT> = thenImpl(done, true)
 
-  private fun <SUB_RESULT> thenImpl(done: (T) -> Any, asyncResult: Boolean): Promise<SUB_RESULT> {
+  private fun <SUB_RESULT> thenImpl(done: (T) -> Any?, asyncResult: Boolean): Promise<SUB_RESULT> {
     when (state) {
       Promise.State.PENDING -> {
       }
@@ -238,7 +238,7 @@ public class AsyncPromise<T> : Promise<T> {
     rejected = null
   }
 
-  override fun processed(processed: (T) -> Unit): Promise<T> {
+  override fun processed(processed: (T?) -> Unit): Promise<T> {
     done(processed)
     rejected { processed(null) }
     return this

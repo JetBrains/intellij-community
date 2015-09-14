@@ -33,7 +33,7 @@ public interface Promise<T> {
 
   public fun rejected(rejected: (Throwable) -> Unit): Promise<T>
 
-  public fun processed(processed: (T) -> Unit): Promise<T>
+  public fun processed(processed: (T?) -> Unit): Promise<T>
 
   public fun <SUB_RESULT> then(done: (T) -> SUB_RESULT): Promise<SUB_RESULT>
 

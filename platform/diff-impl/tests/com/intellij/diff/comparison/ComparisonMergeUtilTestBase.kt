@@ -27,7 +27,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
 import com.intellij.util.containers.ContainerUtil
-import java.util.BitSet
+import java.util.*
 
 public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
   private fun doCharTest(texts: Trio<Document>, expected: List<Change>?, matchings: Trio<BitSet>?) {
@@ -52,9 +52,9 @@ public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
       var empty = true
       var squashed = true
       ThreeSide.values().forEach {
-        val start = starts(it)
-        val end = ends(it)
-        val last = lasts(it)
+        val start = starts(it)!!
+        val end = ends(it)!!
+        val last = lasts(it)!!
 
         assertTrue(last <= start)
         assertTrue(start <= end)
@@ -179,8 +179,8 @@ public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
     val starts = Trio(start1, start2, start3)
     val ends = Trio(end1, end2, end3)
 
-    public fun start(side: ThreeSide): Int = this(side).val1
-    public fun end(side: ThreeSide): Int = this(side).val2
+    public fun start(side: ThreeSide): Int = this(side)!!.val1
+    public fun end(side: ThreeSide): Int = this(side)!!.val2
 
     override fun toString(): String {
       return "($start1, $end1) - ($start2, $end2) - ($start3, $end3)"

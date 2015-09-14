@@ -151,7 +151,7 @@ public class ComparisonUtilAutoTest : DiffTestCase() {
         val sequence1 = text1.subsequence(fragment.getStartOffset1(), fragment.getEndOffset1())
         val sequence2 = text2.subsequence(fragment.getStartOffset2(), fragment.getEndOffset2())
 
-        checkResultWord(sequence1, sequence2, fragment.getInnerFragments(), policy)
+        checkResultWord(sequence1, sequence2, fragment.getInnerFragments()!!, policy)
       }
     }
 

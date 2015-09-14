@@ -28,7 +28,7 @@ class RejectedPromise<T>(private val error: Throwable) : Promise<T> {
     return this
   }
 
-  override fun processed(processed: (T) -> Unit): RejectedPromise<T> {
+  override fun processed(processed: (T?) -> Unit): RejectedPromise<T> {
     processed(null)
     return this
   }

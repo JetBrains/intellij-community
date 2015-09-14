@@ -41,7 +41,6 @@ import com.intellij.util.Processor
 class DefaultWebServerRootsProvider : WebServerRootsProvider() {
   override fun resolve(path: String, project: Project): PathInfo? {
     var effectivePath = path
-    val resolver: PairFunction<String, VirtualFile, VirtualFile>
     if (PlatformUtils.isIntelliJ()) {
       val index = effectivePath.indexOf('/')
       if (index > 0 && !effectivePath.regionMatches(0, project.getName(), 0, index, !SystemInfo.isFileSystemCaseSensitive)) {
@@ -57,7 +56,7 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
 
         if (module != null && !module.isDisposed()) {
           effectivePath = effectivePath.substring(index + 1)
-          resolver = WebServerPathToFileManager.getInstance(project).getResolver(effectivePath)
+          val resolver = WebServerPathToFileManager.getInstance(project).getResolver(effectivePath)
 
           val moduleRootManager = ModuleRootManager.getInstance(module)
           for (rootProvider in RootProvider.values()) {
@@ -76,7 +75,7 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
     }
 
     val modules = runReadAction { ModuleManager.getInstance(project).getModules() }
-    resolver = WebServerPathToFileManager.getInstance(project).getResolver(effectivePath)
+    val resolver = WebServerPathToFileManager.getInstance(project).getResolver(effectivePath)
     for (rootProvider in RootProvider.values()) {
       val result = findByRelativePath(project, effectivePath, modules, rootProvider, resolver)
       if (result != null) {

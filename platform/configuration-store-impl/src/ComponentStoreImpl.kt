@@ -32,7 +32,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -47,10 +46,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.io.IOException
-import java.util.Arrays
-import java.util.Collections
-import java.util.Comparator
-import java.util.LinkedHashSet
+import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 
 private val LOG = Logger.getInstance(javaClass<ComponentStoreImpl>())
@@ -86,7 +82,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       componentNameIfStateExists = if (component is PersistentStateComponent<*>) {
         val stateSpec = StoreUtil.getStateSpec(component)
         doAddComponent(stateSpec.name, component)
-        initPersistentComponent(stateSpec, component, null, false)
+        initPersistentComponent(stateSpec, component as PersistentStateComponent<Any>, null, false)
       }
       else {
         initJdomExternalizable(component as JDOMExternalizable)
@@ -133,7 +129,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
     }
 
-    errors = doSave(externalizationSession?.createSaveSessions(), readonlyFiles, errors)
+    errors = doSave(externalizationSession!!.createSaveSessions(), readonlyFiles, errors)
     CompoundRuntimeException.doThrow(errors)
   }
 
@@ -186,7 +182,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<Pair<SaveSession, VirtualFile>> = arrayListOf(), prevErrors: MutableList<Throwable>? = null): MutableList<Throwable>? {
+  protected open fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<util.Pair<SaveSession, VirtualFile>> = arrayListOf(), prevErrors: MutableList<Throwable>? = null): MutableList<Throwable>? {
     var errors = prevErrors
     for (session in saveSessions) {
       errors = executeSave(session, readonlyFiles, prevErrors)
@@ -228,7 +224,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  private fun <T> initPersistentComponent(stateSpec: State, component: PersistentStateComponent<T>, changedStorages: Set<StateStorage>?, reloadData: Boolean): String? {
+  private fun <T : Any> initPersistentComponent(stateSpec: State, component: PersistentStateComponent<T>, changedStorages: Set<StateStorage>?, reloadData: Boolean): String? {
     if (optimizeTestLoading()) {
       return null
     }
@@ -361,14 +357,14 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   override final fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
     val stateSpec = StoreUtil.getStateSpecOrError(componentClass)
-    val component = components.get(stateSpec.name) as PersistentStateComponent<*>?
+    val component = components.get(stateSpec.name) as PersistentStateComponent<Any>?
     if (component != null) {
       initPersistentComponent(stateSpec, component, emptySet(), true)
     }
   }
 
   private fun reloadState(componentName: String, changedStorages: Set<StateStorage>): Boolean {
-    val component = components.get(componentName) as PersistentStateComponent<*>?
+    val component = components.get(componentName) as PersistentStateComponent<Any>?
     if (component == null) {
       return false
     }
@@ -432,7 +428,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       throw AssertionError("All storages are deprecated")
     }
 
-    protected fun executeSave(session: SaveSession, readonlyFiles: MutableList<Pair<SaveSession, VirtualFile>>, previousErrors: MutableList<Throwable>?): MutableList<Throwable>? {
+    protected fun executeSave(session: SaveSession, readonlyFiles: MutableList<util.Pair<SaveSession, VirtualFile>>, previousErrors: MutableList<Throwable>?): MutableList<Throwable>? {
       var errors = previousErrors
       try {
         session.save()

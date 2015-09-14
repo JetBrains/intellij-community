@@ -33,7 +33,7 @@ public abstract class StateStorageBase<T : Any> : StateStorage {
     return getState(component, componentName, stateClass, true, reload, mergeInto)
   }
 
-  fun <S : Any> getState(component: Any?, componentName: String, stateClass: Class<S>, archive: Boolean = true, reload: Boolean = false, mergeInto: S? = null): S? {
+  fun <S> getState(component: Any?, componentName: String, stateClass: Class<S>, archive: Boolean = true, reload: Boolean = false, mergeInto: S? = null): S? {
     return deserializeState(getSerializedState(getStorageData(reload), component, componentName, archive), stateClass, mergeInto)
   }
 
