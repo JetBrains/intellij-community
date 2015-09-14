@@ -2427,6 +2427,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     public void sideStatusChanged(final InternalDecorator source, final boolean isSideTool) {
       setSideTool(source.getToolWindow().getId(), isSideTool);
     }
+
+    public void visibleStripeButtonChanged(InternalDecorator source, boolean visible) {
+      setShowStripeButton(source.getToolWindow().getId(), visible);
+    }
   }
 
   private void updateComponentTreeUI() {
@@ -2559,5 +2563,23 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
     return IdeFocusManager.getInstance(myProject).getTimestamp(trackOnlyForcedCommands);
+  }
+
+  public void setShowStripeButton(String id, boolean visibleOnPanel) {
+    checkId(id);
+    WindowInfoImpl info = getInfo(id);
+    if (visibleOnPanel == info.isShowStripeButton()) {
+      return;
+    }
+    info.setShowStripeButton(visibleOnPanel);
+
+    final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
+    appendApplyWindowInfoCmd(info, commandList);
+    execute(commandList);
+  }
+
+  public boolean isShowStripeButton(String id) {
+    checkId(id);
+    return getInfo(id).isShowStripeButton();
   }
 }

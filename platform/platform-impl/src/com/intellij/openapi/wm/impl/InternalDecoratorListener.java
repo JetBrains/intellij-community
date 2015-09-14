@@ -45,4 +45,5 @@ interface InternalDecoratorListener extends EventListener{
 
   public void contentUiTypeChanges(InternalDecorator sources, @NotNull ToolWindowContentUiType type);
 
+  public void visibleStripeButtonChanged(InternalDecorator source, boolean visible);
 }
