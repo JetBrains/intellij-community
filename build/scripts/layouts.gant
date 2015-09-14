@@ -315,8 +315,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
   // product specific custom layout
   customLayout(targetDirectory)
 
-  printUnusedModules(info.usedModules)
-
   reorder(home, targetDirectory)
   return info
 }

@@ -6,7 +6,6 @@ contributor ([ctx], {
   method name:"findModule", type:"org.jetbrains.jps.model.module.JpsModule", params:[name:"String"]
   method name:"requireProperty", type:"String", params:[key:"String"]
   method name:"requireProperty", type:"String", params:[key:"String", defaultValue:"String"]
-  method name:"printUnusedModules", type:"void", params:[usedModules:"java.util.Set<String>"]
   method name:"notifyArtifactBuilt", type:"void", params:[artifactPath:"String"]
   property name: "productProperties", type: "ProductProperties"
 })
