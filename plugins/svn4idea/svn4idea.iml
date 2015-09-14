@@ -94,4 +94,7 @@
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="diff-impl" />
   </component>
+  <component name="RuntimeResources">
+    <runtime-resource name="licenses" url="file://$MODULE_DIR$/lib/licenses" />
+  </component>
 </module>
