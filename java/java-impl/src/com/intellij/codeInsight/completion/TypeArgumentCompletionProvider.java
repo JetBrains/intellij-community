@@ -220,7 +220,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
         PsiType type = myTypeItems.get(0).getType();
         PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
         if (aClass != null && !aClass.hasTypeParameters()) {
-          JavaCompletionUtil.setShowFQN(myTypeItems.get(0));
+          myTypeItems.get(0).setShowPackage();
           inheritors.registerClass(aClass);
         }
       }

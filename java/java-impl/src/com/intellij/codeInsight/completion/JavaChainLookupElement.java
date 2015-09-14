@@ -98,8 +98,8 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     final String qualifierText = myQualifier.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY) != null ? "(" + name + ")" : name;
     presentation.setItemText(qualifierText + "." + presentation.getItemText());
 
-    if (myQualifier instanceof LookupItem && getQualifierObject() instanceof PsiClass) {
-      String locationString = JavaPsiClassReferenceElement.getLocationString((LookupItem)myQualifier);
+    if (myQualifier instanceof JavaPsiClassReferenceElement) {
+      String locationString = ((JavaPsiClassReferenceElement)myQualifier).getLocationString();
       presentation.setTailText(StringUtil.notNullize(presentation.getTailText()) + locationString);
     }
   }

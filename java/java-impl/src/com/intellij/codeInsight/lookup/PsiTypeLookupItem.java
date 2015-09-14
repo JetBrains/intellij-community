@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -56,6 +57,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
   private boolean myIndicateAnonymous;
   private final InsertHandler<PsiTypeLookupItem> myImportFixer;
   private boolean myAddArrayInitializer;
+  private String myLocationString = "";
 
   private PsiTypeLookupItem(Object o, @NotNull @NonNls String lookupString, boolean diamond, int bracketsCount, InsertHandler<PsiTypeLookupItem> fixer) {
     super(o, lookupString);
@@ -263,7 +265,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
   public void renderElement(LookupElementPresentation presentation) {
     final Object object = getObject();
     if (object instanceof PsiClass) {
-      JavaPsiClassReferenceElement.renderClassItem(presentation, this, (PsiClass)object, myDiamond);
+      JavaPsiClassReferenceElement.renderClassItem(presentation, this, (PsiClass)object, myDiamond, myLocationString);
     } else {
       assert object instanceof PsiType;
 
@@ -281,6 +283,14 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
     if (myBracketsCount > 0) {
       presentation.setTailText(StringUtil.repeat("[]", myBracketsCount) + StringUtil.notNullize(presentation.getTailText()), true);
     }
+  }
+
+  public PsiTypeLookupItem setShowPackage() {
+    Object object = getObject();
+    if (object instanceof PsiClass) {
+      myLocationString = " (" + PsiFormatUtil.getPackageDisplayName((PsiClass)object) + ")";
+    }
+    return this;
   }
 
   public static void addImportForItem(InsertionContext context, PsiClass aClass) {

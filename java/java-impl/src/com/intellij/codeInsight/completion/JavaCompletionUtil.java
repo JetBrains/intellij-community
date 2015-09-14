@@ -582,11 +582,6 @@ public class JavaCompletionUtil {
     return allLookupStrings;
   }
 
-  public static LookupItem setShowFQN(final LookupItem ret) {
-    ret.setAttribute(JavaPsiClassReferenceElement.PACKAGE_NAME, PsiFormatUtil.getPackageDisplayName((PsiClass)ret.getObject()));
-    return ret;
-  }
-
   public static boolean mayHaveSideEffects(@Nullable final PsiElement element) {
     return element instanceof PsiExpression && SideEffectChecker.mayHaveSideEffects((PsiExpression)element);
   }
