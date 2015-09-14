@@ -317,11 +317,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
     final Condition<String> nameCondition = processor.getHint(JavaCompletionHints.NAME_FILTER);
 
+    NameHint nameHint = processor.getHint(NameHint.KEY);
+    final String hintName = nameHint == null ? null : nameHint.getName(state);
+
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
-      NameHint nameHint = processor.getHint(NameHint.KEY);
-      if (nameHint != null) {
-        final String shortName = nameHint.getName(state);
-        final PsiClass[] classes = findClassByShortName(shortName, scope);
+      if (hintName != null) {
+        final PsiClass[] classes = findClassByShortName(hintName, scope);
         if (!processClasses(processor, state, classes, Conditions.<String>alwaysTrue())) return false;
       }
       else {
@@ -330,9 +331,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       }
     }
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.PACKAGE)) {
-      NameHint nameHint = processor.getHint(NameHint.KEY);
-      if (nameHint != null) {
-        PsiPackage aPackage = findSubPackageByName(nameHint.getName(state));
+      if (hintName != null) {
+        PsiPackage aPackage = findSubPackageByName(hintName);
         if (aPackage != null) {
           if (!processor.execute(aPackage, state)) return false;
         }
@@ -391,31 +391,22 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   private class PackageAnnotationValueProvider implements CachedValueProvider<PsiModifierList> {
-    private final Object[] OOCB_DEPENDENCY = { PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT };
-
     @Override
     public Result<PsiModifierList> compute() {
-      List<PsiModifierList> list = new ArrayList<PsiModifierList>();
+      List<PsiModifierList> modifiers = ContainerUtil.newArrayList();
       for(PsiDirectory directory: getDirectories()) {
         PsiFile file = directory.findFile(PACKAGE_INFO_FILE);
-        if (file != null) {
-          PsiPackageStatement stmt = PsiTreeUtil.getChildOfType(file, PsiPackageStatement.class);
-          if (stmt != null) {
-            final PsiModifierList modifierList = stmt.getAnnotationList();
-            if (modifierList != null) {
-              list.add(modifierList);
-            }
-          }
-        }
+        PsiPackageStatement stmt = file == null ? null : PsiTreeUtil.getChildOfType(file, PsiPackageStatement.class);
+        PsiModifierList modifierList = stmt == null ? null : stmt.getAnnotationList();
+        ContainerUtil.addIfNotNull(modifiers, modifierList);
       }
 
-      final JavaPsiFacade facade = getFacade();
-      final GlobalSearchScope scope = allScope();
-      for (PsiClass aClass : facade.findClasses(getQualifiedName() + ".package-info", scope)) {
-        ContainerUtil.addIfNotNull(aClass.getModifierList(), list);
+      for (PsiClass aClass : getFacade().findClasses(getQualifiedName() + ".package-info", allScope())) {
+        ContainerUtil.addIfNotNull(modifiers, aClass.getModifierList());
       }
 
-      return new Result<PsiModifierList>(list.isEmpty() ? null : new PsiCompositeModifierList(getManager(), list), OOCB_DEPENDENCY);
+      PsiCompositeModifierList result = modifiers.isEmpty() ? null : new PsiCompositeModifierList(getManager(), modifiers);
+      return new Result<PsiModifierList>(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }
   }
 
