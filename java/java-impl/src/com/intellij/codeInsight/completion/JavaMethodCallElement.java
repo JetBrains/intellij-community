@@ -35,6 +35,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   @Nullable private final PsiClass myContainingClass;
   private final PsiMethod myMethod;
   private final MemberLookupHelper myHelper;
+  private PsiSubstitutor myQualifierSubstitutor = PsiSubstitutor.EMPTY;
   private PsiSubstitutor myInferenceSubstitutor = PsiSubstitutor.EMPTY;
   private boolean myMayNeedExplicitTypeParameters;
 
@@ -69,10 +70,14 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     myMayNeedExplicitTypeParameters = mayNeedTypeParameters(place);
   }
 
+  public JavaMethodCallElement setQualifierSubstitutor(@NotNull PsiSubstitutor qualifierSubstitutor) {
+    myQualifierSubstitutor = qualifierSubstitutor;
+    return this;
+  }
+
   @NotNull
   public PsiSubstitutor getSubstitutor() {
-    final PsiSubstitutor substitutor = (PsiSubstitutor)getAttribute(SUBSTITUTOR);
-    return substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
+    return myQualifierSubstitutor;
   }
 
   @NotNull

@@ -530,14 +530,19 @@ public class JavaCompletionUtil {
       return Collections.singletonList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, "new", PsiSubstitutor.EMPTY, null));
     }
 
-    LookupElement _ret = LookupItemUtil.objectToLookupItem(completion);
-    if (_ret instanceof LookupItem) {
-      final PsiSubstitutor substitutor = completionElement.getSubstitutor();
-      if (substitutor != null) {
-        ((LookupItem<?>)_ret).setAttribute(LookupItem.SUBSTITUTOR, substitutor);
-      }
+    PsiSubstitutor substitutor = completionElement.getSubstitutor();
+    if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
+    if (completion instanceof PsiClass) {
+      return Collections.singletonList(JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)completion, true).setSubstitutor(substitutor));
     }
-    return Collections.singletonList(_ret);
+    if (completion instanceof PsiMethod) {
+      return Collections.singletonList(new JavaMethodCallElement((PsiMethod)completion).setQualifierSubstitutor(substitutor));
+    }
+    if (completion instanceof PsiVariable) {
+      return Collections.singletonList(new VariableLookupItem((PsiVariable)completion).setSubstitutor(substitutor));
+    }
+
+    return Collections.singletonList(LookupItemUtil.objectToLookupItem(completion));
   }
 
   public static boolean hasAccessibleConstructor(PsiType type) {

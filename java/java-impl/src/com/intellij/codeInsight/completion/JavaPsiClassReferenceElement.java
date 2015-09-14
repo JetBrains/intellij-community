@@ -45,6 +45,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   private final String myQualifiedName;
   private String myForcedPresentableName;
   private String myPackageDisplayName;
+  private PsiSubstitutor mySubstitutor = PsiSubstitutor.EMPTY;
 
   public JavaPsiClassReferenceElement(PsiClass psiClass) {
     super(psiClass.getName(), psiClass.getName());
@@ -64,8 +65,16 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   @Override
   public PsiType getType() {
     PsiClass psiClass = getObject();
-    final PsiSubstitutor substitutor = (PsiSubstitutor)getAttribute(LookupItem.SUBSTITUTOR);
-    return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, substitutor == null ? PsiSubstitutor.EMPTY : substitutor);
+    return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, getSubstitutor());
+  }
+
+  public PsiSubstitutor getSubstitutor() {
+    return mySubstitutor;
+  }
+
+  public JavaPsiClassReferenceElement setSubstitutor(PsiSubstitutor substitutor) {
+    mySubstitutor = substitutor;
+    return this;
   }
 
   @NotNull
@@ -148,21 +157,20 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   public void renderElement(LookupElementPresentation presentation) {
     LookupItem item = this;
     PsiClass psiClass = getObject();
-    renderClassItem(presentation, item, psiClass, false, " (" + myPackageDisplayName + ")");
+    renderClassItem(presentation, item, psiClass, false, " (" + myPackageDisplayName + ")", mySubstitutor);
   }
 
   public static void renderClassItem(LookupElementPresentation presentation, LookupItem item, PsiClass psiClass, boolean diamond,
-                                     @NotNull String locationString) {
+                                     @NotNull String locationString, @NotNull PsiSubstitutor substitutor) {
     if (!(psiClass instanceof PsiTypeParameter)) {
       presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item, presentation.isReal()));
     }
 
     boolean strikeout = JavaElementLookupRenderer.isToStrikeout(item);
-    presentation.setItemText(getName(psiClass, item, diamond));
+    presentation.setItemText(getName(psiClass, item, diamond, substitutor));
     presentation.setStrikeout(strikeout);
 
     String tailText = locationString;
-    PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
 
     if (item instanceof PsiTypeLookupItem) {
       if (((PsiTypeLookupItem)item).isIndicateAnonymous() &&
@@ -171,7 +179,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
         tailText = "{...}" + tailText;
       }
     }
-    if (substitutor == null && !diamond && psiClass.getTypeParameters().length > 0) {
+    if (substitutor == PsiSubstitutor.EMPTY && !diamond && psiClass.getTypeParameters().length > 0) {
       tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), new Function<PsiTypeParameter, String>() {
         @Override
         public String fun(PsiTypeParameter psiTypeParameter) {
@@ -186,7 +194,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     return " (" + myPackageDisplayName + ")";
   }
 
-  private static String getName(final PsiClass psiClass, final LookupItem<?> item, boolean diamond) {
+  private static String getName(final PsiClass psiClass, final LookupItem<?> item, boolean diamond, @NotNull PsiSubstitutor substitutor) {
     if (item instanceof JavaPsiClassReferenceElement) {
       String forced = ((JavaPsiClassReferenceElement)item).getForcedPresentableName();
       if (forced != null) {
@@ -206,8 +214,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
       return name + "<>";
     }
 
-    PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
-    if (substitutor != null) {
+    if (substitutor != PsiSubstitutor.EMPTY) {
       final PsiTypeParameter[] params = psiClass.getTypeParameters();
       if (params.length > 0) {
         return name + formatTypeParameters(substitutor, params);

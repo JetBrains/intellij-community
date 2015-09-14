@@ -47,6 +47,7 @@ import java.util.Collection;
 public class VariableLookupItem extends LookupItem<PsiVariable> implements TypedLookupItem, StaticallyImportable {
   @Nullable private final MemberLookupHelper myHelper;
   private final Color myColor;
+  private PsiSubstitutor mySubstitutor = PsiSubstitutor.EMPTY;
 
   public VariableLookupItem(PsiVariable var) {
     super(var, var.getName());
@@ -100,12 +101,12 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
 
   @NotNull
   public PsiSubstitutor getSubstitutor() {
-    final PsiSubstitutor substitutor = (PsiSubstitutor)getAttribute(LookupItem.SUBSTITUTOR);
-    return substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
+    return mySubstitutor;
   }
 
-  public void setSubstitutor(@NotNull PsiSubstitutor substitutor) {
-    setAttribute(SUBSTITUTOR, substitutor);
+  public VariableLookupItem setSubstitutor(@NotNull PsiSubstitutor substitutor) {
+    mySubstitutor = substitutor;
+    return this;
   }
   
   @Override

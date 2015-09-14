@@ -53,10 +53,6 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
       return null;
     }
 
-    final PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
-    if (substitutor != null) {
-      return substitutor.substitute(returnType).getPresentableText();
-    }
     return returnType.getPresentableText();
   }
 
