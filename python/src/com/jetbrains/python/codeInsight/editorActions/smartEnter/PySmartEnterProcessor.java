@@ -51,6 +51,7 @@ public class PySmartEnterProcessor extends SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor");
   private static final List<PyFixer> ourFixers = ImmutableList.<PyFixer>builder()
     .add(new PyStringLiteralFixer())
+    .add(new GoogleDocStringSectionFixer())
     .add(new PyParenthesizedFixer())
     .add(new PyMissingBracesFixer())
     .add(new PyConditionalStatementPartFixer())

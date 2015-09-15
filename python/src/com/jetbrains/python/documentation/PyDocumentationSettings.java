@@ -24,8 +24,10 @@ import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -42,16 +44,14 @@ import java.util.List;
   storages = @Storage(file = StoragePathMacros.MODULE_FILE)
 )
 public class PyDocumentationSettings implements PersistentStateComponent<PyDocumentationSettings> {
-  public String myDocStringFormat = DocStringFormat.REST;
-  public boolean analyzeDoctest = true;
+  public static final DocStringFormat DEFAULT_DOCSTRING_FORMAT = DocStringFormat.REST;
 
-  public boolean isEpydocFormat(PsiFile file) {
-    return isFormat(file, DocStringFormat.EPYTEXT);
+  public static PyDocumentationSettings getInstance(@NotNull Module module) {
+    return ModuleServiceManager.getService(module, PyDocumentationSettings.class);
   }
 
-  public boolean isReSTFormat(PsiFile file) {
-    return isFormat(file, DocStringFormat.REST);
-  }
+  @NotNull private DocStringFormat myDocStringFormat = DEFAULT_DOCSTRING_FORMAT;
+  private boolean myAnalyzeDoctest = true;
 
   public boolean isNumpyFormat(PsiFile file) {
     return isFormat(file, DocStringFormat.NUMPY);
@@ -61,31 +61,65 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
     return isFormat(file, DocStringFormat.PLAIN);
   }
 
-  private boolean isFormat(PsiFile file, final String format) {
+  private boolean isFormat(@Nullable PsiFile file, @NotNull DocStringFormat format) {
+    return file instanceof PyFile ? getFormatForFile(file) == format : myDocStringFormat == format;
+  }
+
+  @NotNull
+  public DocStringFormat getFormatForFile(@NotNull PsiFile file) {
+    final DocStringFormat fileFormat = getFormatFromDocformatAttribute(file);
+    return fileFormat != null && fileFormat != DocStringFormat.PLAIN ? fileFormat : myDocStringFormat;
+  }
+
+  @Nullable
+  public static DocStringFormat getFormatFromDocformatAttribute(@NotNull PsiFile file) {
     if (file instanceof PyFile) {
-      PyTargetExpression expr = ((PyFile)file).findTopLevelAttribute(PyNames.DOCFORMAT);
+      final PyTargetExpression expr = ((PyFile)file).findTopLevelAttribute(PyNames.DOCFORMAT);
       if (expr != null) {
-        String docformat = PyPsiUtils.strValue(expr.findAssignedValue());
+        final String docformat = PyPsiUtils.strValue(expr.findAssignedValue());
         if (docformat != null) {
           final List<String> words = StringUtil.split(docformat, " ");
-          return words.size() > 0 && format.equalsIgnoreCase(words.get(0));
+          if (words.size() > 0) {
+            final DocStringFormat fileFormat = DocStringFormat.fromName(words.get(0));
+            if (fileFormat != null) {
+              return fileFormat;
+            }
+          }
         }
       }
     }
-    return format.equalsIgnoreCase(myDocStringFormat);
-  }
-
-  public static PyDocumentationSettings getInstance(@NotNull Module module) {
-    return ModuleServiceManager.getService(module, PyDocumentationSettings.class);
-  }
-
-  public void setFormat(String format) {
-    myDocStringFormat = format;
+    return null;
   }
 
   @Transient
-  public String getFormat() {
+  @NotNull
+  public DocStringFormat getFormat() {
     return myDocStringFormat;
+  }
+
+  public void setFormat(@NotNull DocStringFormat format) {
+    myDocStringFormat = format;
+  }
+
+  // Legacy name of the field to preserve settings format
+  @SuppressWarnings("unused")
+  @OptionTag("myDocStringFormat")
+  @NotNull
+  public String getFormatName() {
+    return myDocStringFormat.getName();
+  }
+
+  @SuppressWarnings("unused")
+  public void setFormatName(@NotNull String name) {
+    myDocStringFormat = DocStringFormat.fromNameOrPlain(name);
+  }
+
+  public boolean isAnalyzeDoctest() {
+    return myAnalyzeDoctest;
+  }
+
+  public void setAnalyzeDoctest(boolean analyze) {
+    myAnalyzeDoctest = analyze;
   }
 
   @Override
@@ -96,22 +130,5 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
   @Override
   public void loadState(PyDocumentationSettings state) {
     XmlSerializerUtil.copyBean(state, this);
-  }
-
-  /**
-   * TODO: Use this factory for the whole document infrastructure to simplify new documentation engine support
-   * Factory that returns appropriate instance of {@link StructuredDocStringBase} if specificed
-   *
-   * @return instance or null if no doctype os set
-   */
-  @Nullable
-  public StructuredDocStringBase getDocString() {
-    if (myDocStringFormat.equals(DocStringFormat.EPYTEXT)) {
-      return new EpydocString();
-    }
-    if (myDocStringFormat.equals(DocStringFormat.REST)) {
-      return new SphinxDocString();
-    }
-    return null;
   }
 }

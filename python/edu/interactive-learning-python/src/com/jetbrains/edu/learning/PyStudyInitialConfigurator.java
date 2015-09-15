@@ -20,6 +20,7 @@ public class PyStudyInitialConfigurator {
   private static final Logger LOG = Logger.getInstance(PyStudyInitialConfigurator.class.getName());
   @NonNls private static final String CONFIGURED_V1 = "StudyPyCharm.InitialConfiguration";
   @NonNls private static final String CONFIGURED_V11 = "StudyPyCharm.InitialConfiguration1.1";
+  @NonNls private static final String CONFIGURED_V2 = "StudyPyCharm.InitialConfiguration2";
 
   /**
    * @noinspection UnusedParameters
@@ -36,7 +37,6 @@ public class PyStudyInitialConfigurator {
         FileUtil.createDirectory(newCourses);
         copyCourse(file, newCourses);
         propertiesComponent.setValue(CONFIGURED_V1, "true");
-
       }
       catch (IOException e) {
         LOG.warn("Couldn't copy bundled courses " + e);
@@ -52,6 +52,22 @@ public class PyStudyInitialConfigurator {
         catch (IOException e) {
           LOG.warn("Couldn't copy bundled courses " + e);
         }
+      }
+    }
+    if (!propertiesComponent.getBoolean(CONFIGURED_V2)) {
+      final File newCourses = new File(PathManager.getConfigPath(), "courses");
+      try {
+        File[] children = newCourses.listFiles();
+        if (children != null) {
+          for (File child : children) {
+            FileUtil.delete(child);
+          }
+        }
+        copyCourse(file, newCourses);
+        propertiesComponent.setValue(CONFIGURED_V11, "true");
+      }
+      catch (IOException e) {
+        LOG.warn("Couldn't copy bundled courses " + e);
       }
     }
   }
@@ -73,7 +89,6 @@ public class PyStudyInitialConfigurator {
       return new File(pluginBaseDir, "courses");
     }
 
-    return new File(jarPath , "courses");
+    return new File(jarPath, "courses");
   }
-
 }

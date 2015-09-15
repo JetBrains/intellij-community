@@ -16,11 +16,6 @@
 package com.jetbrains.python.configuration;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -45,6 +40,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
@@ -311,7 +307,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
           }
         }
       }
-      rehighlightStrings(myProject);
+      PyUtil.rehighlightOpenEditors(myProject);
     }
     finally {
       mySdkSettingsWereModified = false;
@@ -328,24 +324,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     if (myModule != null) {
       ModuleRootModificationUtil.setModuleSdk(myModule, item);
     }
-  }
-
-  public static void rehighlightStrings(final @NotNull Project project) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-
-        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-          if (editor instanceof EditorEx && editor.getProject() == project) {
-            final VirtualFile vFile = ((EditorEx)editor).getVirtualFile();
-            if (vFile != null) {
-              final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, vFile);
-              ((EditorEx)editor).setHighlighter(highlighter);
-            }
-          }
-        }
-      }
-    });
   }
 
   @Override

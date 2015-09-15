@@ -22,12 +22,6 @@ import com.intellij.facet.impl.ui.FacetErrorPanel;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.ValidationResult;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -39,22 +33,23 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.ReSTService;
-import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.packaging.PyPackageManagerUI;
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyRequirement;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
@@ -64,6 +59,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -91,14 +87,21 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myProject = myModule.getProject();
     myDocumentationSettings = PyDocumentationSettings.getInstance(myModule);
     //noinspection unchecked
-    myDocstringFormatComboBox.setModel(new CollectionComboBoxModel(DocStringFormat.ALL, myDocumentationSettings.myDocStringFormat));
+    myDocstringFormatComboBox.setModel(new CollectionComboBoxModel<DocStringFormat>(Arrays.asList(DocStringFormat.values()),
+                                                                                    myDocumentationSettings.getFormat()));
+    myDocstringFormatComboBox.setRenderer(new ListCellRendererWrapper<DocStringFormat>() {
+      @Override
+      public void customize(JList list, DocStringFormat value, int index, boolean selected, boolean hasFocus) {
+        setText(value.getName());
+      }
+    });
 
     final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myWorkDir.addBrowseFolderListener("Please choose working directory:", null, myProject, fileChooserDescriptor);
     ReSTService service = ReSTService.getInstance(myModule);
     myWorkDir.setText(service.getWorkdir());
     txtIsRst.setSelected(service.txtIsRst());
-    analyzeDoctest.setSelected(myDocumentationSettings.analyzeDoctest);
+    analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
     myRequirementsPathField.addBrowseFolderListener("Choose path to the package requirements file:", null, myProject,
                                                     FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
     myRequirementsPathField.setText(getRequirementsPath());
@@ -209,10 +212,10 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (myTestRunnerComboBox.getSelectedItem() != myModel.getTestRunner()) {
       return true;
     }
-    if (!Comparing.equal(myDocstringFormatComboBox.getSelectedItem(), myDocumentationSettings.myDocStringFormat)) {
+    if (myDocstringFormatComboBox.getSelectedItem() != myDocumentationSettings.getFormat()) {
       return true;
     }
-    if (analyzeDoctest.isSelected() != myDocumentationSettings.analyzeDoctest) {
+    if (analyzeDoctest.isSelected() != myDocumentationSettings.isAnalyzeDoctest()) {
       return true;
     }
     if (!ReSTService.getInstance(myModule).getWorkdir().equals(myWorkDir.getText())) {
@@ -229,10 +232,10 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
 
   @Override
   public void apply() throws ConfigurationException {
-    if (!Comparing.equal(myDocstringFormatComboBox.getSelectedItem(), myDocumentationSettings.myDocStringFormat)) {
+    if (myDocstringFormatComboBox.getSelectedItem() != myDocumentationSettings.getFormat()) {
       DaemonCodeAnalyzer.getInstance(myProject).restart();
     }
-    if (analyzeDoctest.isSelected() != myDocumentationSettings.analyzeDoctest) {
+    if (analyzeDoctest.isSelected() != myDocumentationSettings.isAnalyzeDoctest()) {
       final List<VirtualFile> files = Lists.newArrayList();
       ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(new ContentIterator() {
         @Override
@@ -246,14 +249,14 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       FileContentUtil.reparseFiles(myProject, Lists.newArrayList(files), false);
     }
     myModel.apply();
-    myDocumentationSettings.myDocStringFormat = (String) myDocstringFormatComboBox.getSelectedItem();
+    myDocumentationSettings.setFormat((DocStringFormat)myDocstringFormatComboBox.getSelectedItem());
     final ReSTService reSTService = ReSTService.getInstance(myModule);
     reSTService.setWorkdir(myWorkDir.getText());
     if (txtIsRst.isSelected() != reSTService.txtIsRst()) {
       reSTService.setTxtIsRst(txtIsRst.isSelected());
       reparseFiles(Collections.singletonList(PlainTextFileType.INSTANCE.getDefaultExtension()));
     }
-    myDocumentationSettings.analyzeDoctest = analyzeDoctest.isSelected();
+    myDocumentationSettings.setAnalyzeDoctest(analyzeDoctest.isSelected());
     PyPackageRequirementsSettings.getInstance(myModule).setRequirementsPath(myRequirementsPathField.getText());
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
@@ -271,21 +274,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     });
     FileContentUtilCore.reparseFiles(filesToReparse);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-
-        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-          if (editor instanceof EditorEx && editor.getProject() == myProject) {
-            final VirtualFile vFile = ((EditorEx)editor).getVirtualFile();
-            if (vFile != null) {
-              final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, vFile);
-              ((EditorEx)editor).setHighlighter(highlighter);
-            }
-          }
-        }
-      }
-    });
+    PyUtil.rehighlightOpenEditors(myProject);
 
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
@@ -295,10 +284,10 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myTestRunnerComboBox.setSelectedItem(myModel.getTestRunner());
     myTestRunnerComboBox.repaint();
     myModel.reset();
-    myDocstringFormatComboBox.setSelectedItem(myDocumentationSettings.myDocStringFormat);
+    myDocstringFormatComboBox.setSelectedItem(myDocumentationSettings.getFormat());
     myWorkDir.setText(ReSTService.getInstance(myModule).getWorkdir());
     txtIsRst.setSelected(ReSTService.getInstance(myModule).txtIsRst());
-    analyzeDoctest.setSelected(myDocumentationSettings.analyzeDoctest);
+    analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
     myRequirementsPathField.setText(getRequirementsPath());
   }
 
