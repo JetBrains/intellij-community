@@ -79,6 +79,22 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     assertSame(a, getLibraryTable().getLibraryByName("b"));
   }
 
+  public void testFindLibraryByNameAfterChainedRename() {
+    Library a = createLibrary("a", null, null);
+    Library b = createLibrary("b", null, null);
+    assertSame(a, getLibraryTable().getLibraryByName("a"));
+    assertSame(b, getLibraryTable().getLibraryByName("b"));
+    Library.ModifiableModel bModel = b.getModifiableModel();
+    bModel.setName("c");
+    commit(bModel);
+    Library.ModifiableModel aModel = a.getModifiableModel();
+    aModel.setName("b");
+    commit(aModel);
+    assertNull(getLibraryTable().getLibraryByName("a"));
+    assertSame(a, getLibraryTable().getLibraryByName("b"));
+    assertSame(b, getLibraryTable().getLibraryByName("c"));
+  }
+
   public void testReloadLibraryTable() {
     ((LibraryTableBase)getLibraryTable()).loadState(new Element("component"));
     createLibrary("a", null, null);
