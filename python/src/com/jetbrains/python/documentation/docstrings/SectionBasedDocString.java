@@ -342,7 +342,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   }
 
   @Nullable
-  private SectionField getFirstFieldForParameter(@NotNull final String name) {
+  public SectionField getFirstFieldForParameter(@NotNull final String name) {
     return ContainerUtil.find(getParameterFields(), new Condition<SectionField>() {
       @Override
       public boolean value(SectionField field) {
