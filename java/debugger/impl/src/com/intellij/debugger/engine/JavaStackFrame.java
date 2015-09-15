@@ -321,8 +321,7 @@ public class JavaStackFrame extends XStackFrame {
         children.add(new DummyMessageValueNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
         // trying to collect values from variable slots
         try {
-          Map<DecompiledLocalVariable, Value> values = LocalVariablesUtil.fetchValues(getStackFrameProxy());
-          for (Map.Entry<DecompiledLocalVariable, Value> entry : values.entrySet()) {
+          for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil.fetchValues(getStackFrameProxy()).entrySet()) {
             DecompiledLocalVariable var = entry.getKey();
             children.add(createArgumentValue(var.getSlot(), entry.getValue(), var.isParam(), evaluationContext));
           }
