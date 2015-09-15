@@ -23,9 +23,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.CheckUtil;
-import com.intellij.psi.impl.PsiElementBase;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.ArrayUtil;
@@ -37,12 +35,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Map;
 
-public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, Cloneable, Queryable {
+public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, PsiFileEx, Cloneable, Queryable {
   private final PsiManagerImpl myManager;
   private String myName; // for myFile == null only
   private byte[] myContents; // for myFile == null only
   private final long myModificationStamp;
   private final FileViewProvider myViewProvider;
+  private boolean myInvalidated;
 
   public PsiBinaryFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider) {
     myViewProvider = viewProvider;
@@ -248,7 +247,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   @Override
   public boolean isValid() {
     if (isCopy()) return true; // "dummy" file
-    return getVirtualFile().isValid() && !myManager.getProject().isDisposed() && myManager.getFileManager().findFile(getVirtualFile()) == this;
+    return getVirtualFile().isValid() && !myManager.getProject().isDisposed() && !myInvalidated;
   }
 
   @Override
@@ -308,5 +307,20 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   public void putInfo(@NotNull Map<String, String> info) {
     info.put("fileName", getName());
     info.put("fileType", getFileType().getName());
+  }
+
+  @Override
+  public boolean isContentsLoaded() {
+    return false;
+  }
+
+  @Override
+  public void onContentReload() {
+  }
+
+  @Override
+  public void markInvalidated() {
+    myInvalidated = true;
+    DebugUtil.onInvalidated(this);
   }
 }
