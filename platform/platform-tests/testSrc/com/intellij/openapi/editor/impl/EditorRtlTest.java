@@ -40,8 +40,12 @@ public class EditorRtlTest extends AbstractEditorTest {
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
-    Registry.get("editor.new.rendering").setValue(false);
+    try {
+      Registry.get("editor.new.rendering").setValue(false);
+    }
+    finally {
+      super.tearDown();      
+    }
   }
 
   public void testPositionCalculations() throws IOException {
@@ -499,12 +503,12 @@ public class EditorRtlTest extends AbstractEditorTest {
   }
   
   public void testJavadocTokensAreMergedForBidiLayoutPurposes() throws Exception {
-    prepare("<caret>/** R R */ class Foo {}", TestFileType.JAVA);
-    for (int i = 0; i < 5; i++) {
+    prepare("<caret>/**R R*/ class Foo {}", TestFileType.JAVA);
+    for (int i = 0; i < 4; i++) {
       right();
     }
 
-    checkResult("/** R R<caret> */ class Foo {}");
+    checkResult("/**R R<caret>*/ class Foo {}");
   }
   
   public void testXmlTextIsLaidOutCorrectly() throws Exception {
@@ -551,6 +555,12 @@ public class EditorRtlTest extends AbstractEditorTest {
     assertVisualCaretLocation(1, 2, true);
     right();
     assertVisualCaretLocation(1, 3, true);
+  }
+  
+  public void testLineGeneralDirectionAutodetection() throws Exception {
+    prepareText("<caret>RLR");
+    right();
+    checkResult("RLR<caret>");
   }
   
   private void prepareText(String text) throws IOException {
