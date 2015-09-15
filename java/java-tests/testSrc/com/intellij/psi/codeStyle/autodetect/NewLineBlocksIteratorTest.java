@@ -57,7 +57,7 @@ public class NewLineBlocksIteratorTest extends AbstractNewLineBlocksIteratorTest
     checkStartOffsets(newLineBlocksStartOffsets);
   }
   
-  public void testFirstBlockOnNewLine_NotStartsIt() throws IOException, JDOMException {
+  public void testFirstBlockOnNewLineNotStartsIt() throws IOException, JDOMException {
     String text = "var x = r'''\n" +
                   "''';";
     
