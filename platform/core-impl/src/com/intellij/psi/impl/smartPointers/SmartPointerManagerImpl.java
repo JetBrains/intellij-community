@@ -309,11 +309,11 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         PointerReference reference = references[i];
         if (reference != null && reference.get() == smartPointer) {
           references[i] = null;
+          size--;
           result = true;
           break;
         }
       }
-      size--;
       return result;
     }
 
