@@ -628,7 +628,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
     @Override
     public int hashCode() {
-      return myAction.getTemplatePresentation().getText().hashCode();
+      String text = myAction.getTemplatePresentation().getText();
+      return text != null ? text.hashCode() : 0;
     }
 
     @Override

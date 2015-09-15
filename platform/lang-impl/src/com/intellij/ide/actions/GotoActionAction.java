@@ -236,35 +236,33 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
   public static void performAction(Object element, @Nullable final Component component, @Nullable final AnActionEvent e) {
     // element could be AnAction (SearchEverywhere)
     final AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
-    if (action != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (component == null) return;
-          DataManager instance = DataManager.getInstance();
-          DataContext context = instance != null ? instance.getDataContext(component) : DataContext.EMPTY_CONTEXT;
-          InputEvent inputEvent = e == null ? null : e.getInputEvent();
-          AnActionEvent event = AnActionEvent.createFromAnAction(action, inputEvent, ActionPlaces.ACTION_SEARCH, context);
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (component == null) return;
+        DataManager instance = DataManager.getInstance();
+        DataContext context = instance != null ? instance.getDataContext(component) : DataContext.EMPTY_CONTEXT;
+        InputEvent inputEvent = e == null ? null : e.getInputEvent();
+        AnActionEvent event = AnActionEvent.createFromAnAction(action, inputEvent, ActionPlaces.ACTION_SEARCH, context);
 
-          if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-            if (action instanceof ActionGroup && ((ActionGroup)action).getChildren(event).length > 0) {
-              ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-                event.getPresentation().getText(), (ActionGroup)action, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
-              Window window = SwingUtilities.getWindowAncestor(component);
-              if (window != null) {
-                popup.showInCenterOf(window);
-              }
-              else {
-                popup.showInFocusCenter();
-              }
-            } 
-            else {
-              ActionUtil.performActionDumbAware(action, event);
+        if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+          if (action instanceof ActionGroup && ((ActionGroup)action).getChildren(event).length > 0) {
+            ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
+              event.getPresentation().getText(), (ActionGroup)action, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
+            Window window = SwingUtilities.getWindowAncestor(component);
+            if (window != null) {
+              popup.showInCenterOf(window);
             }
+            else {
+              popup.showInFocusCenter();
+            }
+          } 
+          else {
+            ActionUtil.performActionDumbAware(action, event);
           }
         }
-      }, ModalityState.NON_MODAL);
-    }
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   @Override
