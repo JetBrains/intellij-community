@@ -73,4 +73,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testTypingIterableForLoop() {
     doTest();
   }
+
+  // PY-16146
+  public void testTypingListSubscriptionExpression() {
+    doTest();
+  }
 }
