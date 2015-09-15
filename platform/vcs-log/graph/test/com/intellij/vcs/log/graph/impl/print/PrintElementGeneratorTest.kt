@@ -62,7 +62,7 @@ public open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("eleme
     runTest(`in`, out, 7, 2, 10)
   }
 
-  private fun runTest(`in`: String, out: String, longSize: Int, showingPartSize: Int, addNearArrowSize: Int) {
+  private fun runTest(`in`: String, out: String, longEdgeSize: Int, visiblePartSize: Int, edgeWithArrowSize: Int) {
     val graph = LinearGraphParser.parse(`in`)
     val graphLayout = GraphLayoutBuilder.build(graph, object : Comparator<Int> {
       override fun compare(o1: Int, o2: Int): Int {
@@ -75,7 +75,7 @@ public open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("eleme
       }
     })
     val elementManager = TestPrintElementManager(graphElementComparator)
-    val printElementGenerator = PrintElementGeneratorImpl(graph, elementManager, longSize, showingPartSize, addNearArrowSize)
+    val printElementGenerator = PrintElementGeneratorImpl(graph, elementManager, longEdgeSize, visiblePartSize, edgeWithArrowSize)
     val actual = printElementGenerator.asString(graph.nodesCount())
     assertEquals(out, actual)
   }
