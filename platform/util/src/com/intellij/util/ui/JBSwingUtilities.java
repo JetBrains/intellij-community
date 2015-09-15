@@ -16,23 +16,20 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.util.Function;
-import com.intellij.util.containers.FilteredTraverser;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
 
 /**
  * @author gregsh
  */
 public class JBSwingUtilities {
 
-  public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
+  @Deprecated
+  public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = UIUtil.NOT_IN_HIERARCHY_COMPONENTS;
 
   /**
    * Replaces SwingUtilities#isLeftMouseButton() for consistency with other button-related methods
@@ -63,37 +60,10 @@ public class JBSwingUtilities {
     return (anEvent.getModifiersEx() & InputEvent.BUTTON3_DOWN_MASK) > 0;
   }
 
+  @Deprecated
   @NotNull
-  public static FilteredTraverser<Component> uiTraverser() {
-    return new FilteredTraverser<Component>(COMPONENT_CHILDREN);
+  public static JBTreeTraverser<Component> uiTraverser() {
+    return UIUtil.uiTraverser();
   }
 
-  private static final Function<Component, Iterable<Component>> COMPONENT_CHILDREN = new Function<Component, Iterable<Component>>() {
-    @NotNull
-    @Override
-    public JBIterable<Component> fun(@NotNull Component c) {
-      JBIterable<Component> result;
-      if (c instanceof JMenu) {
-        result = JBIterable.of(((JMenu)c).getMenuComponents());
-      }
-      else if (c instanceof Container) {
-        result = JBIterable.of(((Container)c).getComponents());
-      }
-      else {
-        result = JBIterable.empty();
-      }
-      if (c instanceof JComponent) {
-        JComponent jc = (JComponent)c;
-        Iterable<? extends Component> orphans = UIUtil.getClientProperty(jc, NOT_IN_HIERARCHY_COMPONENTS);
-        if (orphans != null) {
-          result = result.append(orphans);
-        }
-        JPopupMenu jpm = jc.getComponentPopupMenu();
-        if (jpm != null && jpm.isVisible() && jpm.getInvoker() == jc) {
-          result = result.append(Collections.singletonList(jpm));
-        }
-      }
-      return result;
-    }
-  };
 }

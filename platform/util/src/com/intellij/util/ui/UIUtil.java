@@ -27,6 +27,8 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FilteredTraverser;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.WeakHashMap;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -88,7 +90,8 @@ import java.util.regex.Pattern;
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public class UIUtil {
 
-  @NonNls public static final String BORDER_LINE = "<hr size=1 noshade>";
+  public static final String BORDER_LINE = "<hr size=1 noshade>";
+
   private static final StyleSheet DEFAULT_HTML_KIT_CSS;
 
   static {
@@ -2640,6 +2643,52 @@ public class UIUtil {
 
     return null;
   }
+
+  @NotNull
+  public static JBIterable<Component> getParents(@Nullable Component c) {
+    return JBIterable.generate(c, new Function.Mono<Component>() {
+      @Override
+      public Component fun(Component c) {
+        return c.getParent();
+      }
+    });
+  }
+
+  @NotNull
+  public static FilteredTraverser<Component> uiTraverser() {
+    return new FilteredTraverser<Component>(COMPONENT_CHILDREN);
+  }
+
+  public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
+
+  private static final Function<Component, Iterable<Component>> COMPONENT_CHILDREN = new Function<Component, Iterable<Component>>() {
+    @NotNull
+    @Override
+    public JBIterable<Component> fun(@NotNull Component c) {
+      JBIterable<Component> result;
+      if (c instanceof JMenu) {
+        result = JBIterable.of(((JMenu)c).getMenuComponents());
+      }
+      else if (c instanceof Container) {
+        result = JBIterable.of(((Container)c).getComponents());
+      }
+      else {
+        result = JBIterable.empty();
+      }
+      if (c instanceof JComponent) {
+        JComponent jc = (JComponent)c;
+        Iterable<? extends Component> orphans = getClientProperty(jc, NOT_IN_HIERARCHY_COMPONENTS);
+        if (orphans != null) {
+          result = result.append(orphans);
+        }
+        JPopupMenu jpm = jc.getComponentPopupMenu();
+        if (jpm != null && jpm.isVisible() && jpm.getInvoker() == jc) {
+          result = result.append(Collections.singletonList(jpm));
+        }
+      }
+      return result;
+    }
+  };
 
   public static void scrollListToVisibleIfNeeded(@NotNull final JList list) {
     SwingUtilities.invokeLater(new Runnable() {
