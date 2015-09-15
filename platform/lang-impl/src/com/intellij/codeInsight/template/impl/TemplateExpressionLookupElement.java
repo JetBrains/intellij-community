@@ -22,7 +22,6 @@ import com.intellij.codeInsight.completion.OffsetMap;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.TemplateLookupSelectionHandler;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -81,8 +80,7 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     TextRange range = myState.getCurrentVariableRange();
-    final TemplateLookupSelectionHandler handler =
-      item instanceof LookupItem ? ((LookupItem<?>)item).getAttribute(TemplateLookupSelectionHandler.KEY_IN_LOOKUP_ITEM) : null;
+    final TemplateLookupSelectionHandler handler = item.getUserData(TemplateLookupSelectionHandler.KEY_IN_LOOKUP_ITEM);
     if (handler != null && range != null) {
       handler.itemSelected(item, context.getFile(), context.getDocument(), range.getStartOffset(), range.getEndOffset());
     }
