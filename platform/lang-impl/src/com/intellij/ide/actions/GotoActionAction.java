@@ -26,18 +26,25 @@ import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
+import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -156,6 +163,30 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
         }
       }
     });
+
+    new DumbAwareAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        Object o = popup.getChosenElement();
+        if (o instanceof GotoActionModel.MatchedValue) {
+          Comparable value = ((GotoActionModel.MatchedValue)o).value;
+          if (value instanceof GotoActionModel.ActionWrapper) {
+            GotoActionModel.ActionWrapper aw = (GotoActionModel.ActionWrapper)value;
+            boolean available = aw.isAvailable();
+            if (available) {
+              AnAction action = aw.getAction();
+              String id = ActionManager.getInstance().getId(action);
+              KeymapManagerImpl km = ((KeymapManagerImpl)KeymapManager.getInstance());
+              Keymap k = km.getActiveKeymap();
+              if (!k.canModify()) return;
+              KeymapPanel.addKeyboardShortcut(id, ArrayUtil.getFirstElement(k.getShortcuts(id)), k, component, new QuickList[]{});
+              popup.repaintListImmediate();
+            }
+          }
+        }
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("alt ENTER"), popup.getTextField());
+
     return popup;
   }
 
