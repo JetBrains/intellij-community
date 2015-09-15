@@ -237,6 +237,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     return myThisReference;
   }
 
+  @NotNull
   public List<LocalVariableProxyImpl> visibleVariables() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     InvalidStackFrameException error = null;
@@ -312,6 +313,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     throw new EvaluateException(error.getMessage(), error);
   }
 
+  @NotNull
   public List<Value> getArgumentValues() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     InvalidStackFrameException error = null;
