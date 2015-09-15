@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -70,22 +69,11 @@ public class ViewStructureAction extends DumbAwareAction {
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file.structure");
 
-    Navigatable navigatable = e.getData(CommonDataKeys.NAVIGATABLE);
-    if (Registry.is("file.structure.tree.mode")) {
-      FileStructurePopup popup = createPopup(project, fileEditor);
-      if (popup == null) return;
+    FileStructurePopup popup = createPopup(project, fileEditor);
+    if (popup == null) return;
 
-      popup.setTitle(title);
-      popup.show();
-    }
-    else {
-      assert editor != null;
-      DialogWrapper dialog = createDialog(editor, project, navigatable, fileEditor);
-      if (dialog == null) return;
-
-      dialog.setTitle(title);
-      dialog.show();
-    }
+    popup.setTitle(title);
+    popup.show();
   }
 
   @Nullable
