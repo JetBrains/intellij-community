@@ -362,7 +362,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       }
       return PyUnionType.union(iterationTypes);
     }
-    else if (iterableType != null && PyABCUtil.isSubtype(iterableType, PyNames.ITERATOR, context)) {
+    else if (iterableType != null && PyABCUtil.isSubtype(iterableType, PyNames.ITERABLE, context)) {
       final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.ITER, context);
       if (iterateMethod != null) {
         final PyType iterateReturnType = getContextSensitiveType(iterateMethod, context, source);
