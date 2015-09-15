@@ -63,6 +63,7 @@ import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionC
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class JavaCompletionUtil {
+  public static final Key<Boolean> FORCE_SHOW_SIGNATURE_ATTR = Key.create("forceShowSignature");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaCompletionUtil");
   public static final Key<PairFunction<PsiExpression, CompletionParameters, PsiType>> DYNAMIC_TYPE_EVALUATOR = Key.create("DYNAMIC_TYPE_EVALUATOR");
 
@@ -102,7 +103,7 @@ public class JavaCompletionUtil {
 
   private static final Key<List<SmartPsiElementPointer<PsiMethod>>> ALL_METHODS_ATTRIBUTE = Key.create("allMethods");
 
-  public static PsiType getQualifierType(LookupItem item) {
+  public static PsiType getQualifierType(LookupElement item) {
     return item.getUserData(QUALIFIER_TYPE_ATTR);
   }
 

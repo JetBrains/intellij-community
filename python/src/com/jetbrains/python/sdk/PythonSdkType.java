@@ -530,14 +530,18 @@ public class PythonSdkType extends SdkType {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        final boolean success = doSetupSdkPaths(project, ownerComponent, PySdkUpdater.fromSdkPath(sdk.getHomePath()));
+        try {
+          final boolean success = doSetupSdkPaths(project, ownerComponent, PySdkUpdater.fromSdkPath(sdk.getHomePath()));
 
-        if (!success) {
-          Messages.showErrorDialog(
-            project,
-            PyBundle.message("MSG.cant.setup.sdk.$0", FileUtil.toSystemDependentName(sdk.getSdkModificator().getHomePath())),
-            PyBundle.message("MSG.title.bad.sdk")
-          );
+          if (!success) {
+            Messages.showErrorDialog(
+              project,
+              PyBundle.message("MSG.cant.setup.sdk.$0", FileUtil.toSystemDependentName(sdk.getSdkModificator().getHomePath())),
+              PyBundle.message("MSG.title.bad.sdk")
+            );
+          }
+        } catch (PySdkUpdater.PySdkNotFoundException e) {
+          // sdk was removed from sdk table so no need to setup paths
         }
       }
     }, ModalityState.NON_MODAL);

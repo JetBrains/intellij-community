@@ -37,20 +37,8 @@ public class InterfaceNamingConventionInspectionBase extends ConventionInspectio
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final String interfaceName = (String)infos[0];
-    if (interfaceName.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message(
-        "interface.name.convention.problem.descriptor.short");
-    }
-    else if (interfaceName.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message(
-        "interface.name.convention.problem.descriptor.long");
-    }
-    return InspectionGadgetsBundle.message(
-      "interface.name.convention.problem.descriptor.regex.mismatch",
-      getRegex());
+  protected String getElementDescription() {
+    return InspectionGadgetsBundle.message("interface.naming.convention.element.description");
   }
 
   @Override

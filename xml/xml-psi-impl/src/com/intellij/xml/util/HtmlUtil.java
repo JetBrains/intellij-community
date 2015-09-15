@@ -632,7 +632,13 @@ public class HtmlUtil {
   }
 
   public static boolean supportsXmlTypedHandlers(PsiFile file) {
-    return "JavaScript".equals(file.getLanguage().getID());
+    Language language = file.getLanguage();
+    while (language != null) {
+      if ("JavaScript".equals(language.getID())) return true;
+      language = language.getBaseLanguage();
+    }
+
+    return false;
   }
 
   public static boolean hasHtmlPrefix(@NotNull String url) {

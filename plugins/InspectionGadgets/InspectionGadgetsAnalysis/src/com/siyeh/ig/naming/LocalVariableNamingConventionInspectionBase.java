@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,18 +39,8 @@ public class LocalVariableNamingConventionInspectionBase extends ConventionInspe
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final String varName = (String)infos[0];
-    if (varName.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message("local.variable.naming.convention.problem.descriptor.short");
-    }
-    else if (varName.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message("local.variable.naming.convention.problem.descriptor.long");
-    }
-    else {
-      return InspectionGadgetsBundle.message("local.variable.naming.convention.problem.descriptor.regex.mismatch", getRegex());
-    }
+  protected String getElementDescription() {
+    return InspectionGadgetsBundle.message("local.variable.naming.convention.element.description");
   }
 
   @Override

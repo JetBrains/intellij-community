@@ -43,16 +43,8 @@ public class ConstantNamingConventionInspectionBase extends ConventionInspection
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final String fieldName = (String)infos[0];
-    if (fieldName.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message("constant.naming.convention.problem.descriptor.short");
-    }
-    else if (fieldName.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message("constant.naming.convention.problem.descriptor.long");
-    }
-    return InspectionGadgetsBundle.message("constant.naming.convention.problem.descriptor.regex.mismatch", getRegex());
+  protected String getElementDescription() {
+    return InspectionGadgetsBundle.message("constant.naming.convention.element.description");
   }
 
   @Override

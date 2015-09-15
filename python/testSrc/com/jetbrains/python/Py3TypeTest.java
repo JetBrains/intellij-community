@@ -114,7 +114,6 @@ public class Py3TypeTest extends PyTestCase {
                "    expr = await foo()\n");
       }
     });
-
   }
 
   private void doTest(final String expectedType, final String text) {

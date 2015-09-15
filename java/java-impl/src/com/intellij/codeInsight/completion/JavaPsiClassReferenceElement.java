@@ -155,12 +155,10 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
 
   @Override
   public void renderElement(LookupElementPresentation presentation) {
-    LookupItem item = this;
-    PsiClass psiClass = getObject();
-    renderClassItem(presentation, item, psiClass, false, " (" + myPackageDisplayName + ")", mySubstitutor);
+    renderClassItem(presentation, this, getObject(), false, " (" + myPackageDisplayName + ")", mySubstitutor);
   }
 
-  public static void renderClassItem(LookupElementPresentation presentation, LookupItem item, PsiClass psiClass, boolean diamond,
+  public static void renderClassItem(LookupElementPresentation presentation, LookupElement item, PsiClass psiClass, boolean diamond,
                                      @NotNull String locationString, @NotNull PsiSubstitutor substitutor) {
     if (!(psiClass instanceof PsiTypeParameter)) {
       presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item, presentation.isReal()));
@@ -194,7 +192,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     return " (" + myPackageDisplayName + ")";
   }
 
-  private static String getName(final PsiClass psiClass, final LookupItem<?> item, boolean diamond, @NotNull PsiSubstitutor substitutor) {
+  private static String getName(final PsiClass psiClass, final LookupElement item, boolean diamond, @NotNull PsiSubstitutor substitutor) {
     if (item instanceof JavaPsiClassReferenceElement) {
       String forced = ((JavaPsiClassReferenceElement)item).getForcedPresentableName();
       if (forced != null) {

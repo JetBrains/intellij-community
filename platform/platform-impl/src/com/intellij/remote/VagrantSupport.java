@@ -67,6 +67,9 @@ public abstract class VagrantSupport {
     return t.getMessage().contains("not yet ready for SSH");
   }
 
+  @Nullable
+  public abstract String findVagrantFolder(@NotNull Project project);
+
 
   public static class MultipleMachinesException extends Exception {}
 }

@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
@@ -185,7 +184,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
 
               editor.getCaretModel().moveToOffset(context.getTailOffset());
               editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-              GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), ((LookupItem)item));
+              GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
             }
           });
           result.addElement(item);
@@ -293,9 +292,9 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         final PsiType _type = GenericsUtil.eliminateWildcards(type);
         final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(_type, place, PsiTypeLookupItem.isDiamond(_type), ChooseTypeExpression.IMPORT_FIXER).setShowPackage();
         if (item.getObject() instanceof PsiClass) {
-          item.setInsertHandler(new InsertHandler<LookupItem>() {
+          item.setInsertHandler(new InsertHandler<LookupElement>() {
             @Override
-            public void handleInsert(InsertionContext context, LookupItem item) {
+            public void handleInsert(InsertionContext context, LookupElement item) {
               GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
             }
           });

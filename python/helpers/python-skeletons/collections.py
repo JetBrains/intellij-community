@@ -5,6 +5,19 @@ import sys
 import collections
 
 
+class Iterable(object):
+    def __init__(self):
+        """
+        :rtype: collections.Iterable[T]
+        """
+        pass
+
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[T]
+        """
+
+
 class Iterator(collections.Iterable):
     def __init__(self):
         """
