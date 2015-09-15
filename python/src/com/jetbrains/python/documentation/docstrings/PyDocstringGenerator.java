@@ -441,8 +441,8 @@ public class PyDocstringGenerator {
         sectionBuilder.startReturnsSection();
         boolean hasTypedReturns = false;
         for (DocstringParam returnValue : returnValues) {
-          if (returnValue.getType() != null) {
-            sectionBuilder.addReturnValue(null, getDefaultType(returnValue), "");
+          if (StringUtil.isNotEmpty(returnValue.getType())) {
+            sectionBuilder.addReturnValue(null, returnValue.getType(), "");
             hasTypedReturns = true;
           }
         }

@@ -8,6 +8,6 @@ def f(x, y):
 
     Returns
     -------
-    object
+
     """
     return 42

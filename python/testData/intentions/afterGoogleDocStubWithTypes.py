@@ -6,6 +6,6 @@ def f(x, y):
       y ():
 
     Returns:
-      object:
+
     """
     return 42
