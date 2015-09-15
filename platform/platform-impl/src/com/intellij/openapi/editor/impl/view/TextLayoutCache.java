@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,7 +32,7 @@ import java.util.Collections;
 class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private final EditorView myView;
   private final Document myDocument;
-  private final ArrayList<LineLayout> myLines = new ArrayList<LineLayout>();
+  private ArrayList<LineLayout> myLines = new ArrayList<LineLayout>();
   private int myDocumentChangeOldEndLine;
 
   TextLayoutCache(EditorView view) {
@@ -61,6 +60,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
 
   @Override
   public void dispose() {
+    myLines = null;
   }
 
   private int getAdjustedLineNumber(int offset) {
@@ -68,10 +68,12 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   }
 
   void resetToDocumentSize() {
+    checkDisposed();
     invalidateLines(0, myLines.size() - 1, myDocument.getLineCount() - 1);
   }
   
   void invalidateLines(int startLine, int oldEndLine, int newEndLine) {
+    checkDisposed();
     int endLine = Math.min(oldEndLine, newEndLine);
     for (int line = startLine; line <= endLine; line++) {
       myLines.set(line, null);
@@ -85,7 +87,8 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   
   @NotNull
   LineLayout getLineLayout(int line) {
-    LineLayout result = getCachedLineLayout(line);
+    checkDisposed();
+    LineLayout result = myLines.get(line);
     if (result == null) {
       int lineStart = myDocument.getLineStartOffset(line);
       int lineEnd = myDocument.getLineEndOffset(line);
@@ -94,9 +97,8 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     }
     return result;
   }
-  
-  @Nullable
-  LineLayout getCachedLineLayout(int line) {
-    return myLines.get(line);
+
+  private void checkDisposed() {
+    if (myLines == null) throw new IllegalStateException("Editor is already disposed");
   }
 }
