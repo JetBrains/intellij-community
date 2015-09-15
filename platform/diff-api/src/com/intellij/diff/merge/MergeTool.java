@@ -29,16 +29,19 @@ import java.util.List;
 public interface MergeTool {
   ExtensionPointName<MergeTool> EP_NAME = ExtensionPointName.create("com.intellij.diff.merge.MergeTool");
 
+  /**
+   * Creates viewer for the given request. Clients should call {@link #canShow(MergeContext, MergeRequest)} first.
+   */
   @CalledInAwt
   @NotNull
   MergeViewer createComponent(@NotNull MergeContext context, @NotNull MergeRequest request);
 
   boolean canShow(@NotNull MergeContext context, @NotNull MergeRequest request);
 
-  /*
-   * Merge viewer should call MergeContext.finishMerge(MergeResult) when processing is over.
+  /**
+   * Merge viewer should call {@link MergeContext#finishMerge(MergeResult)} when processing is over.
    *
-   * MergeRequest.applyResult() will be performed by the caller, so it shouldn't be called by MergeViewer directly.
+   * {@link MergeRequest#applyResult(MergeResult)} will be performed by the caller, so it shouldn't be called by MergeViewer directly.
    */
   interface MergeViewer extends Disposable {
     @NotNull
@@ -47,9 +50,20 @@ public interface MergeTool {
     @Nullable
     JComponent getPreferredFocusedComponent();
 
+    /**
+     * @return Action that should be triggered on the corresponding action.
+     * <p/>
+     * Typical implementation can perform some checks and either call finishMerge(result) or do nothing
+     * <p/>
+     * return null if action is not available
+     */
     @Nullable
     Action getResolveAction(@NotNull MergeResult result);
 
+    /**
+     * Should be called after adding {@link #getComponent()} to the components hierarchy.
+     */
+    @NotNull
     @CalledInAwt
     ToolbarComponents init();
 
@@ -61,6 +75,10 @@ public interface MergeTool {
   class ToolbarComponents {
     @Nullable public List<AnAction> toolbarActions;
     @Nullable public JComponent statusPanel;
-    @Nullable public BooleanGetter closeHandler; // return false if merge window should be prevented from closing and canceling resolve.
+
+    /**
+     * return false if merge window should be prevented from closing and canceling resolve.
+     */
+    @Nullable public BooleanGetter closeHandler;
   }
 }

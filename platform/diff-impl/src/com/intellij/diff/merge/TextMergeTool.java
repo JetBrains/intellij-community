@@ -155,6 +155,7 @@ public class TextMergeTool implements MergeTool {
       return myViewer.getPreferredFocusedComponent();
     }
 
+    @NotNull
     @Override
     public ToolbarComponents init() {
       ToolbarComponents components = new ToolbarComponents();

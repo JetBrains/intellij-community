@@ -28,8 +28,10 @@ public abstract class MergeRequest implements UserDataHolder {
   @Nullable
   public abstract String getTitle();
 
-  /*
-   * Called on conflict resolve end.
+  /**
+   * Called on conflict resolve end. Should be called exactly once for each request, that was shown.
+   *
+   * MergeRequest should keep initial state of its content and restore it on {@link MergeResult.CANCEL}
    */
   @CalledInAwt
   public abstract void applyResult(@NotNull MergeResult result);

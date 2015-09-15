@@ -86,6 +86,7 @@ public class ApplyPatchMergeTool implements MergeTool {
       return myViewer.getPreferredFocusedComponent();
     }
 
+    @NotNull
     @Override
     public ToolbarComponents init() {
       final Project project = myMergeContext.getProject();
