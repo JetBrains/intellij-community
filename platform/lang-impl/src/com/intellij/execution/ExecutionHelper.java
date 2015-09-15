@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -388,7 +389,7 @@ public class ExecutionHelper {
         };
       }
       else {
-        process = createTimeLimitedExecutionProcess(processHandler, mode.getTimeout(), presentableCmdline);
+        process = createTimeLimitedExecutionProcess(processHandler, mode, presentableCmdline);
       }
     }
     if (mode.withModalProgress()) {
@@ -482,7 +483,7 @@ public class ExecutionHelper {
   }
 
   private static Runnable createTimeLimitedExecutionProcess(final ProcessHandler processHandler,
-                                                            final int timeout,
+                                                            final ExecutionMode mode,
                                                             @NotNull final String presentableCmdline) {
     return new Runnable() {
       private final Semaphore mySemaphore = new Semaphore();
@@ -491,10 +492,9 @@ public class ExecutionHelper {
         @Override
         public void run() {
           try {
-            final boolean finished = processHandler.waitFor(1000 * timeout);
+            final boolean finished = processHandler.waitFor(1000 * mode.getTimeout());
             if (!finished) {
-              final String msg = "Timeout (" + timeout + " sec) on executing: " + presentableCmdline;
-              LOG.error(msg);
+              mode.getTimeoutCallback().fun(Pair.create(mode, presentableCmdline));
               processHandler.destroyProcess();
             }
           }

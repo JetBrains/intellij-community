@@ -15,6 +15,10 @@
  */
 package com.intellij.execution;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,6 +27,16 @@ import javax.swing.*;
  * @author Roman.Chernyatchik, oleg
  */
 public class ExecutionModes {
+  private static final Logger LOG = Logger.getInstance(ExecutionMode.class);
+  private static final Function<Pair<ExecutionMode, String>, Void> DEFAULT_TIMEOUT_CALLBACK = new Function<Pair<ExecutionMode, String>, Void>() {
+    @Override
+    public Void fun(Pair<ExecutionMode, String> pair) {
+      final String msg = "Timeout (" + pair.getFirst().getTimeout() + " sec) on executing: " + pair.getSecond();
+      LOG.error(msg);
+      return null;
+    }
+  };
+
   /**
    * Process will be run in back ground mode
    */
@@ -60,12 +74,23 @@ public class ExecutionModes {
    */
   public static class SameThreadMode extends ExecutionMode {
     private final int myTimeout;
+    @NotNull
+    private final Function<Pair<ExecutionMode, String>, Void> myTimeoutCallback;
 
     public SameThreadMode(final boolean cancelable,
                           @Nullable final String title2,
                           final int timeout) {
+      this(cancelable, title2, timeout, DEFAULT_TIMEOUT_CALLBACK);
+    }
+
+    public SameThreadMode(final boolean cancelable,
+                          @Nullable final String title2,
+                          final int timeout,
+                          @NotNull final Function<Pair<ExecutionMode, String>, Void> timeoutCallback
+    ) {
       super(cancelable, null, title2, false, false, null);
       myTimeout = timeout;
+      myTimeoutCallback = timeoutCallback;
     }
 
     public SameThreadMode(@Nullable final String title2) {
@@ -93,6 +118,12 @@ public class ExecutionModes {
     @Override
     public int getTimeout() {
       return myTimeout;
+    }
+
+    @NotNull
+    @Override
+    public Function<Pair<ExecutionMode, String>, Void> getTimeoutCallback() {
+      return myTimeoutCallback;
     }
   }
 }

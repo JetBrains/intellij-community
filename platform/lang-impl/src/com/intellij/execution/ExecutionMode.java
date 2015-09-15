@@ -16,7 +16,9 @@
 package com.intellij.execution;
 
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
+import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +57,11 @@ public class ExecutionMode {
   public int getTimeout() {
     // it is ignored
     return -1;
+  }
+
+  @NotNull
+  public Function<Pair<ExecutionMode, String>, Void> getTimeoutCallback() {
+    return Functions.identity();
   }
 
   @Nullable
