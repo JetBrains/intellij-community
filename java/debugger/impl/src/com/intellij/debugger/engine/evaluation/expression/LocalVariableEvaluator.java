@@ -28,9 +28,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.impl.SimpleStackFrameContext;
-import com.intellij.debugger.jdi.LocalVariableProxyImpl;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,7 +41,9 @@ import com.intellij.psi.PsiVariable;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 class LocalVariableEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.LocalVariableEvaluator");
@@ -93,6 +93,22 @@ class LocalVariableEvaluator implements Evaluator {
           if (!(e.getCause() instanceof AbsentInformationException)) {
             throw e;
           }
+
+          // try to look in slots
+          try {
+            Map<DecompiledLocalVariable, Value> vars = LocalVariablesUtil.fetchValues(frameProxy);
+            for (Map.Entry<DecompiledLocalVariable, Value> entry : vars.entrySet()) {
+              Collection<String> names =
+                LocalVariablesUtil.calcNames(new SimpleStackFrameContext(frameProxy, context.getDebugProcess()), entry.getKey().getSlot());
+              if (names.contains(myLocalVariableName) || entry.getKey().getName().equals(myLocalVariableName)) {
+                return entry.getValue();
+              }
+            }
+          }
+          catch (Exception e1) {
+            LOG.info(e1);
+          }
+
           if (topFrame) {
             if (myParameterIndex < 0) {
               throw e;

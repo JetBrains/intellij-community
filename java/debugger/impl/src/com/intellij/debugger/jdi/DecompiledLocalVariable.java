@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.intellij.debugger.jdi;
+
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
@@ -31,23 +33,32 @@ public class DecompiledLocalVariable{
 
   private final int mySlot;
   private final String mySignature;
-  private final String myName;
+  private final boolean myIsParam;
 
-  public DecompiledLocalVariable(int slot, String name, String signature) {
+  public DecompiledLocalVariable(int slot, boolean isParam, @Nullable String signature) {
     mySlot = slot;
+    myIsParam = isParam;
     mySignature = signature;
-    myName = name;
   }
 
   public int getSlot() {
     return mySlot;
   }
 
+  @Nullable
   public String getSignature() {
     return mySignature;
   }
 
   public String getName() {
-    return myName;
+    return getDefaultName(mySlot, myIsParam);
+  }
+
+  public static String getDefaultName(int slot, boolean isParam) {
+    return isParam ? "arg_" + slot : "slot_" + slot;
+  }
+
+  public boolean isParam() {
+    return myIsParam;
   }
 }

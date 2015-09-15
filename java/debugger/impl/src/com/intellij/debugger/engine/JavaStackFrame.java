@@ -24,7 +24,10 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.jdi.*;
+import com.intellij.debugger.jdi.DecompiledLocalVariable;
+import com.intellij.debugger.jdi.LocalVariableProxyImpl;
+import com.intellij.debugger.jdi.LocalVariablesUtil;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -52,7 +55,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author egor
@@ -313,29 +318,17 @@ public class JavaStackFrame extends XStackFrame {
     }
     catch (EvaluateException e) {
       if (e.getCause() instanceof AbsentInformationException) {
-        final StackFrameProxyImpl frame = getStackFrameProxy();
-
-        final Collection<Value> argValues = frame.getArgumentValues();
-        int index = 0;
-        for (Value argValue : argValues) {
-          children.add(createArgumentValue(index++, argValue, null, evaluationContext));
-        }
-        //node.setMessage(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
         children.add(new DummyMessageValueNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
-        //myChildren.add(myNodeManager.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE));
-
         // trying to collect values from variable slots
-        final List<DecompiledLocalVariable> decompiled = FrameVariablesTree.collectVariablesFromBytecode(frame, argValues.size());
-        if (!decompiled.isEmpty()) {
-          try {
-            final Map<DecompiledLocalVariable, Value> values = LocalVariablesUtil.fetchValues(frame.getStackFrame(), decompiled);
-            for (DecompiledLocalVariable var : decompiled) {
-              children.add(createArgumentValue(var.getSlot(), values.get(var), var.getName(), evaluationContext));
-            }
+        try {
+          Map<DecompiledLocalVariable, Value> values = LocalVariablesUtil.fetchValues(getStackFrameProxy());
+          for (Map.Entry<DecompiledLocalVariable, Value> entry : values.entrySet()) {
+            DecompiledLocalVariable var = entry.getKey();
+            children.add(createArgumentValue(var.getSlot(), entry.getValue(), var.isParam(), evaluationContext));
           }
-          catch (Exception ex) {
-            LOG.info(ex);
-          }
+        }
+        catch (Exception ex) {
+          LOG.info(ex);
         }
       }
       else {
@@ -394,8 +387,8 @@ public class JavaStackFrame extends XStackFrame {
     }
   }
 
-  private JavaValue createArgumentValue(int index, Value value, String name, EvaluationContextImpl evaluationContext) {
-    ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(null, index, value, name);
+  private JavaValue createArgumentValue(int index, Value value, boolean isParam, EvaluationContextImpl evaluationContext) {
+    ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(null, index, value, isParam);
     // setContext is required to calculate correct name
     descriptor.setContext(evaluationContext);
     return JavaValue.create(null, descriptor, evaluationContext, myNodeManager, true);

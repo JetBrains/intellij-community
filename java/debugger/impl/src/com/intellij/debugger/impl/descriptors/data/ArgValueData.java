@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,21 @@ import com.intellij.debugger.ui.impl.watch.ArgumentValueDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class ArgValueData extends DescriptorData<ArgumentValueDescriptorImpl>{
   private final int myIndex;
   private final Value myValue;
-  @Nullable
-  private final String myDisplayName;
+  private final boolean myIsParam;
 
-  public ArgValueData(int index, Value value, @Nullable String displayName) {
+  public ArgValueData(int index, Value value, boolean isParam) {
     super();
     myIndex = index;
     myValue = value;
-    myDisplayName = displayName;
+    myIsParam = isParam;
   }
 
   protected ArgumentValueDescriptorImpl createDescriptorImpl(@NotNull Project project) {
-    return new ArgumentValueDescriptorImpl(project, myIndex, myValue, myDisplayName);
+    return new ArgumentValueDescriptorImpl(project, myIndex, myValue, myIsParam);
   }
 
   public boolean equals(Object object) {

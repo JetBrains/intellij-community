@@ -30,7 +30,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.jdi.*;
@@ -51,9 +50,9 @@ import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
-import com.sun.jdi.*;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectProcedure;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -194,26 +193,25 @@ public class FrameVariablesTree extends DebuggerTree {
           final Collection<Value> argValues = frame.getArgumentValues();
           int index = 0;
           for (Value argValue : argValues) {
-            final ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(stackDescriptor, index++, argValue, null);
+            final ArgumentValueDescriptorImpl descriptor =
+              myNodeManager.getArgumentValueDescriptor(stackDescriptor, index++, argValue, false);
             final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(descriptor, evaluationContext);
             myChildren.add(variableNode);
           }
           myChildren.add(myNodeManager.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE));
           // trying to collect values from variable slots
-          final List<DecompiledLocalVariable> decompiled = collectVariablesFromBytecode(frame, argValues.size());
-          if (!decompiled.isEmpty()) {
-            try {
-              final Map<DecompiledLocalVariable, Value> values = LocalVariablesUtil.fetchValues(frame.getStackFrame(), decompiled);
-              for (DecompiledLocalVariable var : decompiled) {
-                final Value value = values.get(var);
-                final ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(stackDescriptor, var.getSlot(), value, var.getName());
-                final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(descriptor, evaluationContext);
-                myChildren.add(variableNode);
-              }
+          try {
+            Map<DecompiledLocalVariable, Value> values = LocalVariablesUtil.fetchValues(frame);
+            for (Map.Entry<DecompiledLocalVariable, Value> entry : values.entrySet()) {
+              DecompiledLocalVariable var = entry.getKey();
+              final ArgumentValueDescriptorImpl descriptor =
+                myNodeManager.getArgumentValueDescriptor(stackDescriptor, var.getSlot(), entry.getValue(), var.isParam());
+              final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(descriptor, evaluationContext);
+              myChildren.add(variableNode);
             }
-            catch (Exception ex) {
-              LOG.info(ex);
-            }
+          }
+          catch (Exception ex) {
+            LOG.info(ex);
           }
         }
         else {
@@ -221,59 +219,6 @@ public class FrameVariablesTree extends DebuggerTree {
         }
       }
     }
-  }
-
-  public static List<DecompiledLocalVariable> collectVariablesFromBytecode(final StackFrameProxy frame, int argumentCount) throws EvaluateException {
-    if (!frame.getVirtualMachine().canGetBytecodes()) {
-      return Collections.emptyList();
-    }
-    try {
-      final Location location = frame.location();
-      LOG.assertTrue(location != null);
-      final Method method = location.method();
-      final Location methodLocation = method.location();
-      if (methodLocation == null || methodLocation.codeIndex() < 0) {
-        // native or abstract method
-        return Collections.emptyList();
-      }
-      final byte[] bytecodes = method.bytecodes();
-      if (bytecodes != null && bytecodes.length > 0) {
-        final int firstLocalVariableSlot = ArgumentValueDescriptorImpl.getFirstLocalsSlot(method);
-        final TIntObjectHashMap<DecompiledLocalVariable> usedVars = new TIntObjectHashMap<DecompiledLocalVariable>();
-        new InstructionParser(bytecodes, location.codeIndex()) {
-          @Override
-          protected void localVariableInstructionFound(int opcode, int slot, String typeSignature) {
-            if (slot >= firstLocalVariableSlot) {
-              DecompiledLocalVariable variable = usedVars.get(slot);
-              if (variable == null || !typeSignature.equals(variable.getSignature())) {
-                variable = new DecompiledLocalVariable(slot, "slot_" + slot, typeSignature);
-                usedVars.put(slot, variable);
-              }
-            }
-          }
-        }.parse();
-
-        if (usedVars.isEmpty()) {
-          return Collections.emptyList();
-        }
-        final List<DecompiledLocalVariable> vars = new ArrayList<DecompiledLocalVariable>(usedVars.size());
-        usedVars.forEachValue(new TObjectProcedure<DecompiledLocalVariable>() {
-          @Override
-          public boolean execute(DecompiledLocalVariable var) {
-            vars.add(var);
-            return true;
-          }
-        });
-        Collections.sort(vars, DecompiledLocalVariable.COMPARATOR);
-        return vars;
-      }
-    }
-    catch (UnsupportedOperationException ignored) {
-    }
-    catch (Exception e) {
-      LOG.info(e);
-    }
-    return Collections.emptyList();
   }
 
   public static Map<String, LocalVariableProxyImpl> getVisibleVariables(final StackFrameProxyImpl frame) throws EvaluateException {
