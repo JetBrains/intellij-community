@@ -19,6 +19,8 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,18 +30,19 @@ import java.util.List;
  * @author peter
  */
 @State(
-  name = "ProjectCodeInsightSettings",
+  name = "JavaProjectCodeInsightSettings",
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
     @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/codeInsightSettings.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
-
-public class ProjectCodeInsightSettings implements PersistentStateComponent<ProjectCodeInsightSettings> {
+public class JavaProjectCodeInsightSettings implements PersistentStateComponent<JavaProjectCodeInsightSettings> {
+  @Tag("excluded-names")
+  @AbstractCollection(surroundWithTag = false, elementTag = "name", elementValueAttribute = "")
   public List<String> excludedNames = ContainerUtil.newArrayList();
 
-  public static ProjectCodeInsightSettings getSettings(@NotNull Project project) {
-    return ServiceManager.getService(project, ProjectCodeInsightSettings.class);
+  public static JavaProjectCodeInsightSettings getSettings(@NotNull Project project) {
+    return ServiceManager.getService(project, JavaProjectCodeInsightSettings.class);
   }
 
   public boolean isExcluded(@NotNull String name) {
@@ -63,12 +66,12 @@ public class ProjectCodeInsightSettings implements PersistentStateComponent<Proj
 
   @Nullable
   @Override
-  public ProjectCodeInsightSettings getState() {
+  public JavaProjectCodeInsightSettings getState() {
     return this;
   }
 
   @Override
-  public void loadState(ProjectCodeInsightSettings state) {
+  public void loadState(JavaProjectCodeInsightSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }

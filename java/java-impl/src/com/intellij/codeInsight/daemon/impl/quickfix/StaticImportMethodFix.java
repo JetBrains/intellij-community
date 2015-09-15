@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.ProjectCodeInsightSettings;
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
@@ -252,7 +252,7 @@ public class StaticImportMethodFix implements IntentionAction {
 
   public static boolean isExcluded(PsiMember method) {
     String name = PsiUtil.getMemberQualifiedName(method);
-    return name != null && ProjectCodeInsightSettings.getSettings(method.getProject()).isExcluded(name);
+    return name != null && JavaProjectCodeInsightSettings.getSettings(method.getProject()).isExcluded(name);
   }
 
   @Override

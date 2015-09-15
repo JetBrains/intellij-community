@@ -152,7 +152,7 @@ public class JavaCompletionUtil {
       }
     }
 
-    return ProjectCodeInsightSettings.getSettings(member.getProject()).isExcluded(name);
+    return JavaProjectCodeInsightSettings.getSettings(member.getProject()).isExcluded(name);
   }
 
   @SuppressWarnings({"unchecked"})

@@ -555,7 +555,7 @@
                         serviceImplementation="com.intellij.framework.library.impl.DownloadableLibraryServiceImpl"/>
 
     <projectService serviceImplementation="com.intellij.javadoc.JavadocGenerationManager"/>
-    <projectService serviceImplementation="com.intellij.codeInsight.ProjectCodeInsightSettings"/>
+    <projectService serviceImplementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
 
