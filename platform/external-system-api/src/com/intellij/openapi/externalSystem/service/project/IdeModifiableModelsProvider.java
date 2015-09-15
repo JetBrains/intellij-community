@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,52 +13,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.importing;
+package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.project.MavenModelsProvider;
 
-public interface MavenModifiableModelsProvider extends MavenModelsProvider {
-  ModifiableModuleModel getModuleModel();
+/**
+ * @author Vladislav.Soroka
+ * @since 9/11/2015
+ */
+public interface IdeModifiableModelsProvider extends IdeModelsProvider {
+  @NotNull
+  Module newModule(@NotNull @NonNls String filePath, final String moduleTypeId);
 
-  ModifiableRootModel getRootModel(Module module);
+  @NotNull
+  ModifiableModuleModel getModifiableModuleModel();
 
-  ModifiableFacetModel getFacetModel(Module module);
+  @NotNull
+  ModifiableRootModel getModifiableRootModel(Module module);
 
-  ModifiableArtifactModel getArtifactModel();
+  @NotNull
+  ModifiableFacetModel getModifiableFacetModel(Module module);
 
-  PackagingElementResolvingContext getPackagingElementResolvingContext();
+  @NotNull
+  LibraryTable.ModifiableModel getModifiableProjectLibrariesModel();
 
-  ArtifactExternalDependenciesImporter getArtifactExternalDependenciesImporter();
+  Library.ModifiableModel getModifiableLibraryModel(Library library);
 
-  LibraryTable.ModifiableModel getProjectLibrariesModel();
-
-  Library[] getAllLibraries();
-
-  Library getLibraryByName(String name);
+  @NotNull
+  ModifiableArtifactModel getModifiableArtifactModel();
 
   Library createLibrary(String name);
 
   void removeLibrary(Library library);
 
-  Library.ModifiableModel getLibraryModel(Library library);
+  ModalityState getModalityStateForQuestionDialogs();
 
-  @NotNull
-  String[] getLibraryUrls(@NotNull Library library, @NotNull OrderRootType type);
+  ArtifactExternalDependenciesImporter getArtifactExternalDependenciesImporter();
+
+  PackagingElementResolvingContext getPackagingElementResolvingContext();
 
   void commit();
 
   void dispose();
-
-  ModalityState getModalityStateForQuestionDialogs();
 }

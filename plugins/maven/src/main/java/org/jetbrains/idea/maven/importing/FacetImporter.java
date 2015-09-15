@@ -19,6 +19,7 @@ import com.intellij.facet.*;
 import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.impl.FrameworkDetectionUtil;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -66,7 +67,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
   public void preProcess(Module module,
                          MavenProject mavenProject,
                          MavenProjectChanges changes,
-                         MavenModifiableModelsProvider modifiableModelsProvider) {
+                         IdeModifiableModelsProvider modifiableModelsProvider) {
     prepareImporter(mavenProject);
 
     if (!isFacetDetectionDisabled(module.getProject())) {
@@ -75,8 +76,8 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     }
   }
 
-  private void ensureFacetExists(Module module, MavenProject mavenProject, MavenModifiableModelsProvider modifiableModelsProvider) {
-    ModifiableFacetModel model = modifiableModelsProvider.getFacetModel(module);
+  private void ensureFacetExists(Module module, MavenProject mavenProject, IdeModifiableModelsProvider modifiableModelsProvider) {
+    ModifiableFacetModel model = modifiableModelsProvider.getModifiableFacetModel(module);
 
     FACET_TYPE f = findFacet(model);
     if (f != null) return;
@@ -89,7 +90,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
   protected void prepareImporter(MavenProject p) {
   }
 
-  private void disableFacetAutodetection(Module module, MavenModifiableModelsProvider provider) {
+  private void disableFacetAutodetection(Module module, IdeModifiableModelsProvider provider) {
     final DetectionExcludesConfiguration excludesConfiguration = DetectionExcludesConfiguration.getInstance(module.getProject());
     final FrameworkType frameworkType = FrameworkDetectionUtil.findFrameworkTypeForFacetDetector(myFacetType);
     if (frameworkType != null) {
@@ -102,7 +103,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
   protected abstract void setupFacet(FACET_TYPE f, MavenProject mavenProject);
 
   @Override
-  public void process(MavenModifiableModelsProvider modifiableModelsProvider,
+  public void process(IdeModifiableModelsProvider modifiableModelsProvider,
                       Module module,
                       MavenRootModelAdapter rootModel,
                       MavenProjectsTree mavenModel,
@@ -110,7 +111,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
                       MavenProjectChanges changes,
                       Map<MavenProject, String> mavenProjectToModuleName,
                       List<MavenProjectsProcessorTask> postTasks) {
-    FACET_TYPE f = findFacet(modifiableModelsProvider.getFacetModel(module));
+    FACET_TYPE f = findFacet(modifiableModelsProvider.getModifiableFacetModel(module));
     if (f == null) return; // facet may has been removed between preProcess and process calls
 
     if (!isFacetDetectionDisabled(module.getProject())) {
@@ -128,7 +129,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     return result;
   }
 
-  protected abstract void reimportFacet(MavenModifiableModelsProvider modelsProvider,
+  protected abstract void reimportFacet(IdeModifiableModelsProvider modelsProvider,
                                         Module module,
                                         MavenRootModelAdapter rootModel,
                                         FACET_TYPE facet,

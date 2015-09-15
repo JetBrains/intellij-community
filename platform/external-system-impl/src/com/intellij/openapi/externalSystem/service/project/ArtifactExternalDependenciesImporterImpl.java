@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.importing;
+package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.roots.ui.configuration.artifacts.ManifestFilesInfo;
 import com.intellij.openapi.util.Pair;
@@ -39,16 +39,18 @@ import java.util.Map;
 /**
  * @author nik
  */
-public class ArtifactExternalDependenciesImporter {
+public class ArtifactExternalDependenciesImporterImpl implements ArtifactExternalDependenciesImporter {
   private final ManifestFilesInfo myManifestFiles = new ManifestFilesInfo();
   private final Map<Artifact, List<PackagingElement<?>>> myExternalDependencies = new HashMap<Artifact, List<PackagingElement<?>>>();
 
   @Nullable
+  @Override
   public ManifestFileConfiguration getManifestFile(@NotNull Artifact artifact,
                                                    @NotNull PackagingElementResolvingContext context) {
     return myManifestFiles.getManifestFile(artifact.getRootElement(), artifact.getArtifactType(), context);
   }
 
+  @Override
   public List<PackagingElement<?>> getExternalDependenciesList(@NotNull Artifact artifact) {
     List<PackagingElement<?>> elements = myExternalDependencies.get(artifact);
     if (elements == null) {
@@ -58,6 +60,7 @@ public class ArtifactExternalDependenciesImporter {
     return elements;
   }
 
+  @Override
   public void applyChanges(ModifiableArtifactModel artifactModel, final PackagingElementResolvingContext context) {
     myManifestFiles.saveManifestFiles();
     final List<Pair<? extends CompositePackagingElement<?>, List<PackagingElement<?>>>> elementsToInclude =

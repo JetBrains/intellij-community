@@ -20,6 +20,7 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -27,6 +28,7 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -35,7 +37,7 @@ import java.util.Collection;
  * @since 2/21/13 2:40 PM
  */
 @Order(ExternalSystemConstants.BUILTIN_PROJECT_DATA_SERVICE_ORDER)
-public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, Project> {
+public class ProjectDataServiceImpl extends AbstractProjectDataService<ProjectData, Project> {
   
   @NotNull
   @Override
@@ -44,7 +46,10 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, P
   }
 
   @Override
-  public void importData(@NotNull Collection<DataNode<ProjectData>> toImport, @NotNull Project project, boolean synchronous) {
+  public void importData(@NotNull Collection<DataNode<ProjectData>> toImport,
+                         @Nullable ProjectData projectData,
+                         @NotNull final Project project,
+                         @NotNull IdeModifiableModelsProvider modelsProvider) {
     // root project can be marked as ignored
     if(toImport.isEmpty()) return;
 
@@ -52,31 +57,25 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, P
       throw new IllegalArgumentException(String.format("Expected to get a single project but got %d: %s", toImport.size(), toImport));
     }
     DataNode<ProjectData> node = toImport.iterator().next();
-    ProjectData projectData = node.getData();
+    assert projectData == node.getData();
 
     if (!ExternalSystemApiUtil.isOneToOneMapping(project, node)) {
       return;
     }
     
     if (!project.getName().equals(projectData.getInternalName())) {
-      renameProject(projectData.getInternalName(), projectData.getOwner(), project, synchronous);
+      renameProject(projectData.getInternalName(), projectData.getOwner(), project);
     }
   }
 
-  @Override
-  public void removeData(@NotNull Collection<? extends Project> toRemove, @NotNull Project project, boolean synchronous) {
-  }
-
-  @SuppressWarnings("MethodMayBeStatic")
-  public void renameProject(@NotNull final String newName,
-                            @NotNull final ProjectSystemId externalSystemId,
-                            @NotNull final Project project,
-                            boolean synchronous)
+  private static void renameProject(@NotNull final String newName,
+                                    @NotNull final ProjectSystemId externalSystemId,
+                                    @NotNull final Project project)
   {
     if (!(project instanceof ProjectEx) || newName.equals(project.getName())) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
+    ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(project) {
       @Override
       public void execute() {
         String oldName = project.getName();

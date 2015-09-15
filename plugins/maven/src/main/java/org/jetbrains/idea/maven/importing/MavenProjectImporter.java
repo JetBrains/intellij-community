@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -61,7 +62,7 @@ public class MavenProjectImporter {
   private volatile Map<MavenProject, MavenProjectChanges> myProjectsToImportWithChanges;
   private volatile Set<MavenProject> myAllProjects;
   private final boolean myImportModuleGroupsRequired;
-  private final MavenModifiableModelsProvider myModelsProvider;
+  private final IdeModifiableModelsProvider myModelsProvider;
   private final MavenImportingSettings myImportingSettings;
 
   private final ModifiableModuleModel myModuleModel;
@@ -77,7 +78,7 @@ public class MavenProjectImporter {
                               Map<VirtualFile, Module> fileToModuleMapping,
                               Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
                               boolean importModuleGroupsRequired,
-                              MavenModifiableModelsProvider modelsProvider,
+                              IdeModifiableModelsProvider modelsProvider,
                               MavenImportingSettings importingSettings) {
     myProject = p;
     myProjectsTree = projectsTree;
@@ -87,7 +88,7 @@ public class MavenProjectImporter {
     myModelsProvider = modelsProvider;
     myImportingSettings = importingSettings;
 
-    myModuleModel = modelsProvider.getModuleModel();
+    myModuleModel = modelsProvider.getModifiableModuleModel();
   }
 
   @Nullable
@@ -605,12 +606,12 @@ public class MavenProjectImporter {
     Map<Module, ModuleRootModel> rootModels = new THashMap<Module, ModuleRootModel>();
     for (MavenProject each : myProjectsToImportWithChanges.keySet()) {
       Module module = myMavenProjectToModule.get(each);
-      ModifiableRootModel rootModel = myModelsProvider.getRootModel(module);
+      ModifiableRootModel rootModel = myModelsProvider.getModifiableRootModel(module);
       rootModels.put(module, rootModel);
     }
     for (Module each : myModuleModel.getModules()) {
       if (rootModels.containsKey(each)) continue;
-      rootModels.put(each, myModelsProvider.getRootModel(each));
+      rootModels.put(each, myModelsProvider.getModifiableRootModel(each));
     }
     return rootModels.values();
   }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.importing;
+package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ModalityState;
@@ -27,18 +27,18 @@ import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.annotations.NotNull;
 
-public class MavenUIModifiableModelsProvider extends MavenBaseModifiableModelsProvider {
+public class IdeUIModifiableModelsProvider extends AbstractIdeModifiableModelsProvider {
   private final ModifiableModuleModel myModel;
   private final ModulesConfigurator myModulesConfigurator;
   private final ModifiableArtifactModel myModifiableArtifactModel;
   private final LibrariesModifiableModel myLibrariesModel;
 
-  public MavenUIModifiableModelsProvider(Project project,
-                                         ModifiableModuleModel model,
-                                         ModulesConfigurator modulesConfigurator,
-                                         ModifiableArtifactModel modifiableArtifactModel) {
+  public IdeUIModifiableModelsProvider(Project project,
+                                       ModifiableModuleModel model,
+                                       ModulesConfigurator modulesConfigurator,
+                                       ModifiableArtifactModel modifiableArtifactModel) {
     super(project);
     myModel = model;
     myModulesConfigurator = modulesConfigurator;
@@ -48,49 +48,34 @@ public class MavenUIModifiableModelsProvider extends MavenBaseModifiableModelsPr
     myLibrariesModel = configurable.getModelProvider().getModifiableModel();
   }
 
+  @NotNull
   @Override
-  protected ModifiableArtifactModel doGetArtifactModel() {
+  public LibraryTable.ModifiableModel getModifiableProjectLibrariesModel() {
+    return myLibrariesModel;
+  }
+
+  @Override
+  protected ModifiableArtifactModel doGetModifiableArtifactModel() {
     return myModifiableArtifactModel;
   }
 
   @Override
-  protected ModifiableModuleModel doGetModuleModel() {
+  protected ModifiableModuleModel doGetModifiableModuleModel() {
     return myModel;
   }
 
   @Override
-  protected ModifiableRootModel doGetRootModel(Module module) {
+  protected ModifiableRootModel doGetModifiableRootModel(Module module) {
     return myModulesConfigurator.getOrCreateModuleEditor(module).getModifiableRootModel();
   }
 
   @Override
-  protected ModifiableFacetModel doGetFacetModel(Module module) {
+  protected ModifiableFacetModel doGetModifiableFacetModel(Module module) {
     return (ModifiableFacetModel)myModulesConfigurator.getFacetModel(module);
   }
 
   @Override
-  public LibraryTable.ModifiableModel getProjectLibrariesModel() {
-    return myLibrariesModel;
-  }
-
-  public Library[] getAllLibraries() {
-    return myLibrariesModel.getLibraries();
-  }
-
-  public Library getLibraryByName(String name) {
-    return myLibrariesModel.getLibraryByName(name);
-  }
-
-  public Library createLibrary(String name) {
-    return myLibrariesModel.createLibrary(name);
-  }
-
-  public void removeLibrary(Library library) {
-    myLibrariesModel.removeLibrary(library);
-  }
-
-  @Override
-  protected Library.ModifiableModel doGetLibraryModel(Library library) {
+  protected Library.ModifiableModel doGetModifiableLibraryModel(Library library) {
     return myLibrariesModel.getLibraryModifiableModel(library);
   }
 

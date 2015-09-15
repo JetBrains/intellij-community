@@ -19,7 +19,7 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -53,8 +53,7 @@ public class JavaProjectDataService extends AbstractProjectDataService<JavaProje
   public void importData(@NotNull final Collection<DataNode<JavaProjectData>> toImport,
                          @Nullable final ProjectData projectData,
                          @NotNull final Project project,
-                         @NotNull final PlatformFacade platformFacade,
-                         final boolean synchronous) {
+                         @NotNull final IdeModifiableModelsProvider modelsProvider) {
     if (toImport.isEmpty() || projectData == null) {
       return;
     }
@@ -93,7 +92,7 @@ public class JavaProjectDataService extends AbstractProjectDataService<JavaProje
       }
     }
     // Language level.
-    setLanguageLevel(javaProjectData.getLanguageLevel(), project, synchronous);
+    setLanguageLevel(javaProjectData.getLanguageLevel(), project);
   }
 
   @Nullable
@@ -114,12 +113,12 @@ public class JavaProjectDataService extends AbstractProjectDataService<JavaProje
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  public void setLanguageLevel(@NotNull final LanguageLevel languageLevel, @NotNull Project project, boolean synchronous) {
+  public void setLanguageLevel(@NotNull final LanguageLevel languageLevel, @NotNull Project project) {
     final LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
     if (languageLevelExtension.getLanguageLevel().isAtLeast(languageLevel)) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
+    ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(project) {
       @Override
       public void execute() {
         languageLevelExtension.setLanguageLevel(languageLevel);
