@@ -7,7 +7,7 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/coverage-src.zip!/com/intellij/rt/coverage" />
+      <root url="jar://$PROJECT_DIR$/lib/src/coverage-src.zip!/" />
     </SOURCES>
   </library>
 </component>

@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.oldCourseFormat.OldCourse;
@@ -292,8 +291,7 @@ public class EduUtils {
     course.setName(oldCourse.name);
     course.setAuthors(new String[]{oldCourse.author});
 
-    String name = PathUtil.getFileName(PathUtil.getParentPath(oldCourse.myResourcePath));
-    String updatedCoursePath = FileUtil.join(PathManager.getConfigPath(), "courses", name);
+    String updatedCoursePath = FileUtil.join(PathManager.getConfigPath(), "courses", oldCourse.name);
     if (new File(updatedCoursePath).exists()) {
       course.setCourseDirectory(FileUtil.toSystemIndependentName(updatedCoursePath));
     }
@@ -301,12 +299,12 @@ public class EduUtils {
     for (com.jetbrains.edu.oldCourseFormat.Lesson oldLesson : oldCourse.lessons) {
       final Lesson lesson = new Lesson();
       lesson.setName(oldLesson.name);
-      lesson.setIndex(oldLesson.myIndex);
+      lesson.setIndex(oldLesson.myIndex + 1);
 
       final ArrayList<Task> tasks = new ArrayList<Task>();
       for (com.jetbrains.edu.oldCourseFormat.Task oldTask : oldLesson.taskList) {
         final Task task = new Task();
-        task.setIndex(oldTask.myIndex);
+        task.setIndex(oldTask.myIndex + 1);
         task.setName(oldTask.name);
         task.setLesson(lesson);
         final HashMap<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
@@ -326,6 +324,9 @@ public class EduUtils {
             placeholder.setPossibleAnswer(window.possibleAnswer);
             placeholder.setStart(window.start);
             placeholders.add(placeholder);
+            placeholder.setInitialState(new AnswerPlaceholder.MyInitialState(window.myInitialLine,
+                                                                             window.myInitialLength,
+                                                                             window.myInitialStart));
             if (setStatus != null) {
               setStatus.fun(Pair.create(placeholder, window.myStatus));
             }
@@ -343,7 +344,7 @@ public class EduUtils {
       lessons.add(lesson);
     }
     course.setLessons(lessons);
-    course.initCourse(false);
+    course.initCourse(true);
     return course;
   }
 

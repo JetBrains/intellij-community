@@ -56,7 +56,12 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     myContainingClass = method.getContainingClass();
     myHelper = new MemberLookupHelper(method, myContainingClass, shouldImportStatic, mergedOverloads);
     if (!shouldImportStatic) {
-      forceQualify();
+      if (myContainingClass != null) {
+        String className = myContainingClass.getName();
+        if (className != null) {
+          addLookupStrings(className + "." + myMethod.getName());
+        }
+      }
     }
   }
 
@@ -133,9 +138,9 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       qualifyMethodCall(file, startOffset, document);
       insertExplicitTypeParameters(context, refStart);
     }
-    else if (myHelper != null || getAttribute(FORCE_QUALIFY) != null) {
+    else if (myHelper != null) {
       context.commitDocument();
-      if (myHelper != null && willBeImported()) {
+      if (willBeImported()) {
         final PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiReferenceExpression.class, false);
         if (ref != null && myContainingClass != null && !ref.isReferenceTo(method)) {
           ref.bindToElementViaStaticImport(myContainingClass);
@@ -235,17 +240,6 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   @Override
-  public LookupItem<PsiMethod> forceQualify() {
-    if (myContainingClass != null) {
-      String className = myContainingClass.getName();
-      if (className != null) {
-        addLookupStrings(className + "." + myMethod.getName());
-      }
-    }
-    return super.forceQualify();
-  }
-
-  @Override
   public boolean isValid() {
     return super.isValid() && myInferenceSubstitutor.isValid() && getSubstitutor().isValid();
   }
@@ -257,8 +251,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     presentation.setStrikeout(JavaElementLookupRenderer.isToStrikeout(this));
 
     MemberLookupHelper helper = myHelper != null ? myHelper : new MemberLookupHelper(myMethod, myContainingClass, false, false);
-    final Boolean qualify = getAttribute(FORCE_QUALIFY) != null ? Boolean.TRUE : myHelper == null ? Boolean.FALSE : null;
-    helper.renderElement(presentation, qualify, getSubstitutor());
+    helper.renderElement(presentation, myHelper != null, myHelper != null && !myHelper.willBeImported(), getSubstitutor());
 
     if (shouldInsertTypeParameters()) {
       String typeParamsText = getTypeParamsText(true);

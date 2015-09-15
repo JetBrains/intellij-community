@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,8 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.util.FileStructureDialog;
 import com.intellij.ide.util.FileStructurePopup;
 import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -31,10 +29,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.PlaceHolder;
@@ -70,33 +65,11 @@ public class ViewStructureAction extends DumbAwareAction {
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file.structure");
 
-    Navigatable navigatable = e.getData(CommonDataKeys.NAVIGATABLE);
-    if (Registry.is("file.structure.tree.mode")) {
-      FileStructurePopup popup = createPopup(project, fileEditor);
-      if (popup == null) return;
+    FileStructurePopup popup = createPopup(project, fileEditor);
+    if (popup == null) return;
 
-      popup.setTitle(title);
-      popup.show();
-    }
-    else {
-      assert editor != null;
-      DialogWrapper dialog = createDialog(editor, project, navigatable, fileEditor);
-      if (dialog == null) return;
-
-      dialog.setTitle(title);
-      dialog.show();
-    }
-  }
-
-  @Nullable
-  private static DialogWrapper createDialog(@NotNull Editor editor,
-                                            @NotNull Project project,
-                                            @Nullable Navigatable navigatable,
-                                            @NotNull FileEditor fileEditor) {
-    final StructureViewBuilder structureViewBuilder = fileEditor.getStructureViewBuilder();
-    if (structureViewBuilder == null) return null;
-    StructureView structureView = structureViewBuilder.createStructureView(fileEditor, project);
-    return createStructureViewBasedDialog(structureView.getTreeModel(), editor, project, navigatable, structureView);
+    popup.setTitle(title);
+    popup.show();
   }
 
   @Nullable
@@ -110,15 +83,6 @@ public class ViewStructureAction extends DumbAwareAction {
       ((PlaceHolder)model).setPlace(TreeStructureUtil.PLACE);
     }
     return createStructureViewPopup(project, fileEditor, structureView);
-  }
-
-  @NotNull
-  private static FileStructureDialog createStructureViewBasedDialog(@NotNull StructureViewModel structureViewModel,
-                                                                    @NotNull Editor editor,
-                                                                    @NotNull Project project,
-                                                                    Navigatable navigatable,
-                                                                    @NotNull Disposable alternativeDisposable) {
-    return new FileStructureDialog(structureViewModel, editor, project, navigatable, alternativeDisposable, true);
   }
 
   private static FileStructurePopup createStructureViewPopup(Project project,

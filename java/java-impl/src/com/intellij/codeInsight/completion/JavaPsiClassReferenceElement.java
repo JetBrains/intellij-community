@@ -203,13 +203,6 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     }
 
     String name = PsiUtilCore.getName(psiClass);
-
-    if (item.getAttribute(LookupItem.FORCE_QUALIFY) != null) {
-      if (psiClass.getContainingClass() != null) {
-        name = psiClass.getContainingClass().getName() + "." + name;
-      }
-    }
-
     if (diamond) {
       return name + "<>";
     }

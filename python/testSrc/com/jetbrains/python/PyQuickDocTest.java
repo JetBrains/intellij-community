@@ -20,9 +20,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.TestDataFile;
-import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
@@ -36,7 +36,7 @@ import java.util.Map;
  */
 public class PyQuickDocTest extends LightMarkedTestCase {
   private PythonDocumentationProvider myProvider;
-  private String myFormat;
+  private DocStringFormat myFormat;
 
   @Override
   protected void setUp() throws Exception {

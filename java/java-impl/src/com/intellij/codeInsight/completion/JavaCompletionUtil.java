@@ -562,10 +562,6 @@ public class JavaCompletionUtil {
     return false;
   }
 
-  public static LookupItem qualify(final LookupItem ret) {
-    return ret.forceQualify();
-  }
-
   public static Set<String> getAllLookupStrings(@NotNull PsiMember member) {
     Set<String> allLookupStrings = ContainerUtil.newLinkedHashSet();
     String name = member.getName();

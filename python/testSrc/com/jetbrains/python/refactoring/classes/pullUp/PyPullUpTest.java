@@ -111,6 +111,20 @@ public class PyPullUpTest extends PyClassRefactoringTest {
     checkMultiFile(modules);
   }
 
+  // PY-16747
+  public void testAbstractMethodDocStringIndentationPreserved() {
+    myFixture.configureByFile(getMultiFileBaseName() + ".py");
+    doPullUp("B", "A", true, ".m");
+    myFixture.checkResultByFile(getMultiFileBaseName() + ".after.py");
+  }
+
+  // PY-16770
+  public void testAbstractMethodDocStringPrefixPreserved() {
+    myFixture.configureByFile(getMultiFileBaseName() + ".py");
+    doPullUp("B", "A", true, ".m");
+    myFixture.checkResultByFile(getMultiFileBaseName() + ".after.py");
+  }
+
   private void doMultiFileTest() {
     final String[] modules = {"Class", "SuperClass"};
     configureMultiFile(modules);

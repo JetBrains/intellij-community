@@ -18,26 +18,18 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.debugger.PySignature;
-import com.jetbrains.python.debugger.PySignatureCacheManager;
-import com.jetbrains.python.documentation.DocStringFormat;
-import com.jetbrains.python.documentation.PyDocstringGenerator;
-import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyStatementList;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: catherine
@@ -70,19 +62,12 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
       return false;
     }
     if (!elementAt.equals(function.getNameNode())) return false;
-    return isAvailableForFunction(project, function);
+    return isAvailableForFunction(function);
   }
 
-  private boolean isAvailableForFunction(Project project, PyFunction function) {
+  private boolean isAvailableForFunction(PyFunction function) {
     if (function.getDocStringValue() != null) {
-      PySignature signature = PySignatureCacheManager.getInstance(project).findSignature(function);
-
-      PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(function);
-
-      docstringGenerator.addFunctionArguments(function, signature);
-
-
-      if (docstringGenerator.haveParametersToAdd()) {
+      if (PyDocstringGenerator.forDocStringOwner(function).withInferredParameters(false).hasParametersToAdd()) {
         myText = PyBundle.message("INTN.add.parameters.to.docstring");
         return true;
       }
@@ -108,25 +93,22 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
       return;
     }
 
-    generateDocstringForFunction(project, editor, function);
+    generateDocstring(function, editor);
   }
 
-  public static void generateDocstringForFunction(Project project, Editor editor, PyFunction function) {
-    final Module module = ModuleManager.getInstance(project).getModules()[0];
-    final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
-    if (documentationSettings.isPlain(function.getContainingFile())) {
-      final String[] values = {DocStringFormat.EPYTEXT, DocStringFormat.REST};
-      final int i = Messages.showChooseDialog("Docstring format:", "Select Docstring Type", values, DocStringFormat.EPYTEXT, null);
-      if (i < 0) return;
-      final String value = values[i];
-      documentationSettings.setFormat(value);
+  public static void generateDocstring(@NotNull PyDocStringOwner docStringOwner, @Nullable Editor editor) {
+    if (!DocStringUtil.ensureNotPlainDocstringFormat(docStringOwner)) {
+      return;
     }
-    PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(function).withSignatures();
-
-    if (function.getDocStringValue() == null) {
-      docstringGenerator.withReturn();
+    final PyDocstringGenerator docstringGenerator = PyDocstringGenerator
+      .forDocStringOwner(docStringOwner)
+      .withInferredParameters(false)
+      .addFirstEmptyLine();
+    final PyStringLiteralExpression updated = docstringGenerator.buildAndInsert().getDocStringExpression();
+    if (updated != null && editor != null) {
+      final int offset = updated.getTextOffset();
+      editor.getCaretModel().moveToOffset(offset);
+      editor.getCaretModel().moveCaretRelatively(0, 1, false, false, false);
     }
-
-    docstringGenerator.build();
   }
 }

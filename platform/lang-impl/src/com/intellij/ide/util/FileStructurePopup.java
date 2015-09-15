@@ -60,6 +60,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
@@ -209,7 +210,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       @NotNull
       @Override
       protected MinusculeMatcher createMatcher(@NotNull String pattern) {
-        return FileStructureDialog.createFileStructureMatcher(pattern);
+        return new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE, " ()");
       }
     });
 

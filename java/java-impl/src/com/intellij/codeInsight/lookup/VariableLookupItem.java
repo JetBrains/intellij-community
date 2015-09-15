@@ -59,7 +59,9 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     super(field, field.getName());
     myHelper = new MemberLookupHelper(field, field.getContainingClass(), shouldImport, false);
     if (!shouldImport) {
-      forceQualify();
+      for (String s : JavaCompletionUtil.getAllLookupStrings(field)) {
+        setLookupString(s); //todo set the string that will be inserted
+      }
     }
     myColor = getInitializerColor(field);
   }
@@ -127,7 +129,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
 
   @Override
   public void renderElement(LookupElementPresentation presentation) {
-    boolean qualify = getAttribute(FORCE_QUALIFY) != null;
+    boolean qualify = myHelper != null && !myHelper.willBeImported();
 
     PsiVariable variable = getObject();
     String name = variable.getName();
@@ -140,24 +142,13 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     presentation.setStrikeout(JavaElementLookupRenderer.isToStrikeout(this));
 
     if (myHelper != null) {
-      myHelper.renderElement(presentation, qualify ? Boolean.TRUE : null, getSubstitutor());
+      myHelper.renderElement(presentation, qualify, true, getSubstitutor());
     }
     if (myColor != null) {
       presentation.setTypeText("", new ColorIcon(12, myColor));
     } else {
       presentation.setTypeText(getType().getPresentableText());
     }
-  }
-
-  @Override
-  public LookupItem<PsiVariable> forceQualify() {
-    PsiVariable var = getObject();
-    if (var instanceof PsiField) {
-      for (String s : JavaCompletionUtil.getAllLookupStrings((PsiField)var)) {
-        setLookupString(s); //todo set the string that will be inserted
-      }
-    }
-    return super.forceQualify();
   }
 
   @Override
@@ -243,10 +234,6 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
 
   private boolean shouldQualify(PsiField field, InsertionContext context) {
     if (myHelper != null && !myHelper.willBeImported()) {
-      return true;
-    }
-
-    if (getAttribute(FORCE_QUALIFY) != null) {
       return true;
     }
 

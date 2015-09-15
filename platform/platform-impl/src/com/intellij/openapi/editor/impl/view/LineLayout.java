@@ -150,7 +150,7 @@ class LineLayout {
   
   private static void addRuns(List<BidiRun> runs, char[] text, int start, int end) {
     if (start >= end) return;
-    Bidi bidi = new Bidi(text, start, null, 0, end - start, Bidi.DIRECTION_LEFT_TO_RIGHT);
+    Bidi bidi = new Bidi(text, start, null, 0, end - start, Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT);
     int runCount = bidi.getRunCount();
     for (int i = 0; i < runCount; i++) {
       addOrMergeRun(runs, new BidiRun((byte)bidi.getRunLevel(i), start + bidi.getRunStart(i), start + bidi.getRunLimit(i)));

@@ -35,6 +35,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.documentation.docstrings.NumpyDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
@@ -208,7 +209,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
             docString = pyClass.getStructuredDocString();
           }
         }
-        if (docString != null) {
+        // FIXME Temporarily disable type extraction directly from NumpyDocString in favor of NumpyDocStringTypeProvider 
+        if (docString != null && !(docString instanceof NumpyDocString)) {
           String typeName = docString.getParamType(getName());
           if (typeName != null) {
             return PyTypeParser.getTypeByName(this, typeName);
