@@ -1712,8 +1712,7 @@
     </action>
   </actions>
 
-  <xi:include href="/META-INF/ReactiveIdeaPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
-    <condition>com.jetbrains.reactiveidea.server</condition>
+  <xi:include href="/META-INF/OnAirPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+      <xi:fallback></xi:fallback>
   </xi:include>
-
 </idea-plugin>

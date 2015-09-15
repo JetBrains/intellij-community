@@ -17,7 +17,6 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -119,7 +118,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
                               @Nullable FileEditorProvider fallbackProvider)
   {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if(ApplicationManager.getApplication().isServer()) {
+    if(ApplicationManager.getApplication().isOnAir()) {
       return;
     }
     // don't add files that cannot be found via VFM (light & etc.)

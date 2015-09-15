@@ -177,7 +177,7 @@ public abstract class CreateClassFix {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              if (editor != null && (editor.getComponent().isDisplayable() || ApplicationManager.getApplication().isServer())) {
+              if (editor != null && (editor.getComponent().isDisplayable() || ApplicationManager.getApplication().isOnAir())) {
                 HintManager.getInstance().showErrorHint(editor, GroovyIntentionsBundle.message("cannot.create.class"));
               }
             }

@@ -160,7 +160,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     component.showIntentionHintImpl(!showExpanded, position);
     Disposer.register(project, component);
     if (showExpanded) {
-      if (ApplicationManager.getApplication().isServer()) {
+      if (ApplicationManager.getApplication().isOnAir()) {
         component.showPopup(false);
       } else {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -590,7 +590,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     }
 
     private void showImpl(JComponent parentComponent, int x, int y, JComponent focusBackComponent) {
-      if (!parentComponent.isShowing() && !ApplicationManager.getApplication().isServer()) return;
+      if (!parentComponent.isShowing() && !ApplicationManager.getApplication().isOnAir()) return;
       super.show(parentComponent, x, y, focusBackComponent, new HintHint(parentComponent, new Point(x, y)));
     }
 

@@ -340,7 +340,7 @@ public interface Application extends ComponentManager {
    */
   boolean isHeadlessEnvironment();
 
-  boolean isServer();
+  boolean isOnAir();
 
   boolean hasUI();
 

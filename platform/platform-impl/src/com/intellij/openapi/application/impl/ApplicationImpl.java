@@ -354,13 +354,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public boolean isServer() {
+  public boolean isOnAir() {
     return myIsServer;
   }
 
   @Override
   public boolean hasUI() {
-    return !isHeadlessEnvironment() && !isUnitTestMode() && !isServer();
+    return !isHeadlessEnvironment() && !isUnitTestMode() && !isOnAir();
   }
 
   @Override
@@ -1230,7 +1230,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isActive() {
-    return isUnitTestMode() || myActive || isServer();
+    return isUnitTestMode() || myActive || isOnAir();
   }
 
   @NotNull

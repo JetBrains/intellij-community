@@ -147,7 +147,7 @@ public class MockApplicationEx extends MockApplication implements ApplicationEx 
   }
 
   @Override
-  public boolean isServer() {
+  public boolean isOnAir() {
     return false;
   }
 }

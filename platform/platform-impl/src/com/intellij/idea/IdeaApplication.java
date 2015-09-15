@@ -42,7 +42,7 @@ import java.util.List;
 public class IdeaApplication {
   @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
   @NonNls public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
-  @NonNls public static final String IDEA_IS_SERVER = "com.jetbrains.reactiveidea.server";
+  @NonNls public static final String IDEA_IS_SERVER = "com.jetbrains.onair";
 
   private static final String[] SAFE_JAVA_ENV_PARAMETERS = {"idea.required.plugins.id"};
 

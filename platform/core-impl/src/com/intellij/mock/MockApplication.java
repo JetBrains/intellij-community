@@ -97,7 +97,7 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public boolean isServer() {
+  public boolean isOnAir() {
     return false;
   }
 
