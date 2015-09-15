@@ -28,8 +28,6 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +62,7 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
 
   @Override
   public Library createLibrary(String name, @Nullable PersistentLibraryKind type) {
-    final Library library = ((LibraryTableBase.ModifiableModelEx)getLibrariesModifiableModel()).createLibrary(name, type);
+    final Library library = getLibrariesModifiableModel().createLibrary(name, type);
     //createLibraryEditor(library);                     \
     final BaseLibrariesConfigurable configurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
     configurable.createLibraryNode(library);

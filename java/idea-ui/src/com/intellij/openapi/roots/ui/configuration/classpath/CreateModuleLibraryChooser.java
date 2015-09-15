@@ -22,7 +22,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
@@ -81,7 +80,7 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
 
   private Library createLibraryFromRoots(List<OrderRoot> roots, @Nullable final LibraryType libraryType) {
     final PersistentLibraryKind kind = libraryType == null ? null : libraryType.getKind();
-    final Library library = ((LibraryTableBase.ModifiableModelEx)myModuleLibrariesModel).createLibrary(null, kind);
+    final Library library = myModuleLibrariesModel.createLibrary(null, kind);
     final LibraryEx.ModifiableModelEx libModel = (LibraryEx.ModifiableModelEx)library.getModifiableModel();
     if (myDefaultPropertiesFactory != null) {
       libModel.setProperties(myDefaultPropertiesFactory.fun(libraryType));
