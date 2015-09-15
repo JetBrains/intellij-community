@@ -292,7 +292,7 @@ public class JavaStackFrame extends XStackFrame {
           ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
             @Override
             public Pair<Set<String>, Set<TextWithImports>> compute() {
-              return findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition, evaluationContext);
+              return findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition);
             }
           });
         // add locals
@@ -427,24 +427,21 @@ public class JavaStackFrame extends XStackFrame {
   private static class VariablesCollector extends JavaRecursiveElementVisitor {
     private final Set<String> myVisibleLocals;
     private final TextRange myLineRange;
-    private final Set<TextWithImports> myExpressions;
-    private final Set<String> myVars;
-    private final SourcePosition myPosition;
-    private final EvaluationContextImpl myEvalContext;
-    private final boolean myCollectExpressions;
+    private final Set<TextWithImports> myExpressions = new HashSet<TextWithImports>();
+    private final Set<String> myVars = new HashSet<String>();
+    private final boolean myCollectExpressions = XDebuggerSettingsManager.getInstance().getDataViewSettings().isAutoExpressions();
 
-    public VariablesCollector(final Set<String> visibleLocals,
-                              final TextRange lineRange,
-                              final Set<TextWithImports> expressions,
-                              final Set<String> vars,
-                              SourcePosition position, EvaluationContextImpl evalContext) {
+    public VariablesCollector(Set<String> visibleLocals, TextRange lineRange) {
       myVisibleLocals = visibleLocals;
       myLineRange = lineRange;
-      myExpressions = expressions;
-      myVars = vars;
-      myPosition = position;
-      myEvalContext = evalContext;
-      myCollectExpressions = XDebuggerSettingsManager.getInstance().getDataViewSettings().isAutoExpressions();
+    }
+
+    public Set<String> getVars() {
+      return myVars;
+    }
+
+    public Set<TextWithImports> getExpressions() {
+      return myExpressions;
     }
 
     @Override
@@ -546,7 +543,7 @@ public class JavaStackFrame extends XStackFrame {
     }
   }
 
-  public static Map<String, LocalVariableProxyImpl> getVisibleVariables(final StackFrameProxyImpl frame) throws EvaluateException {
+  private static Map<String, LocalVariableProxyImpl> getVisibleVariables(final StackFrameProxyImpl frame) throws EvaluateException {
     final Map<String, LocalVariableProxyImpl> vars = new HashMap<String, LocalVariableProxyImpl>();
     for (LocalVariableProxyImpl localVariableProxy : frame.visibleVariables()) {
       vars.put(localVariableProxy.name(), localVariableProxy);
@@ -587,9 +584,7 @@ public class JavaStackFrame extends XStackFrame {
     return true;
   }
 
-  public static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(final Set<String> visibleVars,
-                                                                           final SourcePosition position,
-                                                                           EvaluationContextImpl evalContext) {
+  private static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(Set<String> visibleVars, SourcePosition position) {
     final int line = position.getLine();
     if (line < 0) {
       return Pair.create(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
@@ -647,12 +642,9 @@ public class JavaStackFrame extends XStackFrame {
           return Pair.create(visibleVars, Collections.<TextWithImports>emptySet());
         }
         else {
-          final Set<String> vars = new HashSet<String>();
-          final Set<TextWithImports> expressions = new HashSet<TextWithImports>();
-          final PsiElementVisitor variablesCollector = new VariablesCollector(visibleVars, adjustRange(element, lineRange), expressions, vars, position, evalContext);
-          element.accept(variablesCollector);
-
-          return Pair.create(vars, expressions);
+          VariablesCollector collector = new VariablesCollector(visibleVars, adjustRange(element, lineRange));
+          element.accept(collector);
+          return Pair.create(collector.getVars(), collector.getExpressions());
         }
       }
     }
