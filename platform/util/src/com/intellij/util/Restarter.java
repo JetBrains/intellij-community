@@ -92,9 +92,10 @@ public class Restarter {
     if (! FileUtilRt.createDirectory(restartDir)) throw new IOException("Cannot create dir: " + restartDir);
     File restarter = new File(restartDir.getPath() + "/restarter.sh");
     BufferedWriter output = new BufferedWriter(new FileWriter(restarter));
-    output.write("#!/bin/sh \n");
+    output.write("#!/bin/sh\n");
     for (String command : beforeRestart ){
-      output.write(command + " ");
+      output.write(command);
+      output.write(" ");
     }
     output.close();
     if (! restarter.setExecutable(true, true)) throw new IOException("Cannot make file executable: " + restarter);
