@@ -12,12 +12,12 @@ public class StaticMethodNamingConvention
 
     }
 
-    public static void <warning descr="'static' method name 'foo' is too short">foo</warning>()
+    public static void <warning descr="'static' method name 'foo' is too short (3 < 4)">foo</warning>()
     {
 
     }
 
-    public static void <warning descr="'static' method name 'methodNameTooLoooooooooooooooooooooooooooooooooooooooooooooong' is too long">methodNameTooLoooooooooooooooooooooooooooooooooooooooooooooong</warning>()
+    public static void <warning descr="'static' method name 'methodNameTooLoooooooooooooooooooooooooooooooooooooooooooooong' is too long (62 > 32)">methodNameTooLoooooooooooooooooooooooooooooooooooooooooooooong</warning>()
     {
 
     }

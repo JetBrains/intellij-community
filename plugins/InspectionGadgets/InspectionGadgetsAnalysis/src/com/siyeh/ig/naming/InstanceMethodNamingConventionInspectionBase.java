@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,16 +43,8 @@ public class InstanceMethodNamingConventionInspectionBase extends ConventionInsp
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final String methodName = (String)infos[0];
-    if (methodName.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message("instance.method.name.convention.problem.descriptor.short");
-    }
-    else if (methodName.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message("instance.method.name.convention.problem.descriptor.long");
-    }
-    return InspectionGadgetsBundle.message("instance.method.name.convention.problem.descriptor.regex.mismatch", getRegex());
+  protected String getElementDescription() {
+    return InspectionGadgetsBundle.message("instance.method.naming.convention.element.description");
   }
 
   @Override
