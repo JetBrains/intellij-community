@@ -342,7 +342,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       }
 
       @NotNull
-      private TailTypeDecorator<LookupItem> createCatchTypeVariant(PsiCodeBlock tryBlock, PsiClassType type) {
+      private LookupElement createCatchTypeVariant(PsiCodeBlock tryBlock, PsiClassType type) {
         return TailTypeDecorator.withTail(PsiTypeLookupItem.createLookupItem(type, tryBlock).setInsertHandler(new DefaultInsertHandler()),
                                           TailType.HUMBLE_SPACE_BEFORE_WORD);
       }

@@ -103,7 +103,7 @@ public class JavaCompletionUtil {
 
   private static final Key<List<SmartPsiElementPointer<PsiMethod>>> ALL_METHODS_ATTRIBUTE = Key.create("allMethods");
 
-  public static PsiType getQualifierType(LookupItem item) {
+  public static PsiType getQualifierType(LookupElement item) {
     return item.getUserData(QUALIFIER_TYPE_ATTR);
   }
 
