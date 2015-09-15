@@ -4,6 +4,7 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -11,11 +12,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.oldCourseFormat.OldCourse;
@@ -25,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -288,6 +292,11 @@ public class EduUtils {
     course.setName(oldCourse.name);
     course.setAuthors(new String[]{oldCourse.author});
 
+    String name = PathUtil.getFileName(PathUtil.getParentPath(oldCourse.myResourcePath));
+    String updatedCoursePath = FileUtil.join(PathManager.getConfigPath(), "courses", name);
+    if (new File(updatedCoursePath).exists()) {
+      course.setCourseDirectory(FileUtil.toSystemIndependentName(updatedCoursePath));
+    }
     final ArrayList<Lesson> lessons = new ArrayList<Lesson>();
     for (com.jetbrains.edu.oldCourseFormat.Lesson oldLesson : oldCourse.lessons) {
       final Lesson lesson = new Lesson();
