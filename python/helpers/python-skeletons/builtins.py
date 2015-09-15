@@ -1876,7 +1876,7 @@ class dict(object):
     def __init__(self, iterable=None, **kwargs):
         """Create a dictionary object.
 
-        :type iterable: collections.Iterable[T, V]
+        :type iterable: collections.Iterable[(T, V)]
         :rtype: dict[T, V]
         """
         pass
@@ -2048,6 +2048,51 @@ class __generator(object):
     def throw(self, type, value=None, traceback=None):
         """Used to raise an exception inside the generator.
 
+        :rtype: None
+        """
+        pass
+
+
+class __coroutine(object):
+    """A mock class representing the generator function type."""
+
+    def __init__(self):
+        """
+        :rtype: __coroutine[V]
+        """
+        self.__name__ = ''
+        self.__qualname__ = ''
+        self.cr_await = None
+        self.cr_frame = None
+        self.cr_running = False
+        self.cr_code = None
+
+    def __await__(self):
+        """
+        :rtype: __generator[unknown, unknown, V]
+        """
+        return []
+
+    def __iter__(self):
+        """
+        :rtype: collections.Iterable[unknown]
+        """
+        return []
+
+    def close(self):
+        """
+        :rtype: None
+        """
+        pass
+
+    def send(self, value):
+        """
+        :rtype: None
+        """
+        pass
+
+    def throw(self, type, value=None, traceback=None):
+        """
         :rtype: None
         """
         pass
