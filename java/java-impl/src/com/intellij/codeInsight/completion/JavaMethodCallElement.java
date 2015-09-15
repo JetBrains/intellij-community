@@ -128,7 +128,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     final PsiMethod method = getObject();
 
     final LookupElement[] allItems = context.getElements();
-    final boolean overloadsMatter = allItems.length == 1 && getUserData(FORCE_SHOW_SIGNATURE_ATTR) == null;
+    final boolean overloadsMatter = allItems.length == 1 && getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) == null;
     final boolean hasParams = MethodParenthesesHandler.hasParams(this, allItems, overloadsMatter, method);
     JavaCompletionUtil.insertParentheses(context, this, overloadsMatter, hasParams);
 
