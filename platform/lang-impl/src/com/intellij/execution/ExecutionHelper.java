@@ -494,7 +494,7 @@ public class ExecutionHelper {
           try {
             final boolean finished = processHandler.waitFor(1000 * mode.getTimeout());
             if (!finished) {
-              mode.getTimeoutCallback().fun(Pair.create(mode, presentableCmdline));
+              mode.getTimeoutCallback().consume(mode, presentableCmdline);
               processHandler.destroyProcess();
             }
           }
