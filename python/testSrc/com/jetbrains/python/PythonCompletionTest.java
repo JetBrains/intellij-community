@@ -23,8 +23,8 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.testFramework.PsiTestUtil;
-import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
@@ -403,6 +403,63 @@ public class PythonCompletionTest extends PyTestCase {
     assertNotNull(elements);
     assertContainsElements(Lists.newArrayList(elements),
                            LookupElementBuilder.create("bar").withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
+  }
+
+  // PY-16877
+  public void testSectionNamesInGoogleDocstring() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      public void run() {
+        final List<String> variants = doTestByFile();
+        assertNotNull(variants);
+        assertContainsElements(variants, "Args", "Parameters", "Keyword arguments", "Returns");
+      }
+    });
+  }
+
+  // PY-16877
+  public void testTwoWordsSectionNameInGoogleDocstring() throws Exception {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
+  }
+
+  // PY-16870
+  public void testParamNameInGoogleDocstring() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        final List<String> variants = doTestByFile();
+        assertNotNull(variants);
+        assertSameElements(variants, "param1", "param2");
+      }
+    });
+  }
+
+  // PY-16870
+  public void testOverrideParamNameInGoogleDocstring() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        final List<String> variants = doTestByFile();
+        assertNotNull(variants);
+        assertSameElements(variants, "param2");
+      }
+    });
+  }
+
+  // PY-16870
+  public void testOverrideParamNameInRestDocstring() {
+    runWithDocStringFormat(DocStringFormat.REST, new Runnable() {
+      @Override
+      public void run() {
+        final List<String> variants = doTestByFile();
+        assertNotNull(variants);
+        assertSameElements(variants, "param2");
+      }
+    });
   }
 
   public void testPep328Completion() {  // PY-3409

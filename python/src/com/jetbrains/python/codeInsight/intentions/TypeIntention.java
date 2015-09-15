@@ -31,6 +31,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * User: ktisha
  *
@@ -97,11 +99,12 @@ public abstract class TypeIntention implements IntentionAction {
   }
 
   @Nullable
-  protected static PyParameter getParameter(PyExpression problemElement, PsiElement resolved) {
-    PyParameter parameter = problemElement instanceof PyParameter? (PyParameter)problemElement : null;
-    if (resolved instanceof PyParameter)
-      parameter = (PyParameter)resolved;
-    return parameter;
+  protected static PyNamedParameter getParameter(PyExpression problemElement, PsiElement resolved) {
+    PyNamedParameter parameter = as(problemElement, PyNamedParameter.class);
+    if (resolved instanceof PyNamedParameter) {
+      parameter = (PyNamedParameter)resolved;
+    }
+    return parameter == null || parameter.isSelf() ? null : parameter;
   }
 
   private boolean isAvailableForReturn(@NotNull final PsiElement elementAt) {

@@ -29,6 +29,11 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -47,9 +52,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -896,6 +899,27 @@ public class PyUtil {
     return result;
   }
 
+  /**
+   * Force re-highlighting in all open editors that belong to specified project.
+   */
+  public static void rehighlightOpenEditors(final @NotNull Project project) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+
+        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+          if (editor instanceof EditorEx && editor.getProject() == project) {
+            final VirtualFile vFile = ((EditorEx)editor).getVirtualFile();
+            if (vFile != null) {
+              final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, vFile);
+              ((EditorEx)editor).setHighlighter(highlighter);
+            }
+          }
+        }
+      }
+    });
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
@@ -1504,6 +1528,7 @@ public class PyUtil {
     return resultCasted;
   }
 
+
   /**
    * Inserts specified element into the statement list either at the beginning or at its end. If new element is going to be
    * inserted at the beginning, any preceding docstrings and/or calls to super methods will be skipped.
@@ -1559,20 +1584,12 @@ public class PyUtil {
       }
     }
     if (statementListWasEmpty) {
-      final PsiElement parent = statementList.getParent();
-      if (parent instanceof PyStatementListContainer) {
-        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(parent.getProject());
-        final PsiFile pyFile = parent.getContainingFile();
-        final Document document = documentManager.getDocument(pyFile);
-        if (document != null && document.getLineNumber(parent.getTextOffset()) == document.getLineNumber(statementList.getTextOffset())) {
-          final CodeStyleSettings codeStyleManager = CodeStyleSettingsManager.getSettings(parent.getProject());
-          final IndentOptions indentOptions = codeStyleManager.getCommonSettings(pyFile.getLanguage()).getIndentOptions();
-          final int indentSize = indentOptions.INDENT_SIZE;
-          final String indentation = StringUtil.repeatSymbol(' ', PyPsiUtils.getElementIndentation(parent) + indentSize);
-          documentManager.doPostponedOperationsAndUnblockDocument(document);
-          document.insertString(statementList.getTextOffset(), "\n" + indentation);
-          documentManager.commitDocument(document);
-        }
+      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(statementList.getProject());
+      final Document document = documentManager.getDocument(statementList.getContainingFile());
+      if (document != null) {
+        documentManager.doPostponedOperationsAndUnblockDocument(document);
+        document.insertString(statementList.getTextOffset(), "\n" + PyIndentUtil.getElementIndent(statementList));
+        documentManager.commitDocument(document);
       }
     }
     return element;

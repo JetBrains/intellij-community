@@ -37,7 +37,7 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.documentation.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyTargetReference;
@@ -294,7 +294,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   public static PyType getTypeFromComment(PyTargetExpressionImpl targetExpression) {
     String docComment = DocStringUtil.getAttributeDocComment(targetExpression);
     if (docComment != null) {
-      StructuredDocString structuredDocString = DocStringUtil.parse(docComment);
+      StructuredDocString structuredDocString = DocStringUtil.parse(docComment, targetExpression);
       if (structuredDocString != null) {
         String typeName = structuredDocString.getParamType(null);
         if (typeName == null) {

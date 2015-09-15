@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -507,6 +508,24 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testReferenceInDocstring() {
     assertResolvesTo(PyClass.class, "datetime");
+  }
+  
+  // PY-9795
+  public void testGoogleDocstringParamType() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      public void run() {
+        assertResolvesTo(PyClass.class, "datetime");
+      }
+    });
+  }
+  
+  // PY-9795
+  public void testGoogleDocstringReturnType() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      public void run() {
+        assertResolvesTo(PyClass.class, "MyClass");
+      }
+    });
   }
 
   // PY-7541

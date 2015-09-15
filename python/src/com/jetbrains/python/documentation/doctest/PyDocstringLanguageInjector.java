@@ -42,7 +42,7 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
       return;
     }
     final Module module = ModuleUtilCore.findModuleForPsiElement(host);
-    if (module == null || !PyDocumentationSettings.getInstance(module).analyzeDoctest) return;
+    if (module == null || !PyDocumentationSettings.getInstance(module).isAnalyzeDoctest()) return;
 
     final PyDocStringOwner
       docStringOwner = PsiTreeUtil.getParentOfType(host, PyDocStringOwner.class);

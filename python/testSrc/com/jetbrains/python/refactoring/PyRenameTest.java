@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
@@ -198,6 +199,44 @@ public class PyRenameTest extends PyTestCase {
   // PY-11879
   public void testDocstringParams() {
     doTest("bar");
+  }
+
+  // PY-9795
+  public void testGoogleDocStringParam() {
+    renameWithDocStringFormat("bar");
+  }
+
+  // PY-9795
+  public void testGoogleDocStringAttribute() {
+    renameWithDocStringFormat("bar");
+  }
+
+  // PY-9795
+  public void testGoogleDocStringParamType() {
+    renameWithDocStringFormat("Bar");
+  }
+
+  // PY-9795
+  public void testGoogleDocStringReturnType() {
+    renameWithDocStringFormat("Bar");
+  }
+
+  // PY-16761
+  public void testGoogleDocStringPositionalVararg() {
+    renameWithDocStringFormat("bar");
+  }
+
+  // PY-16761
+  public void testGoogleDocStringKeywordVararg() {
+    renameWithDocStringFormat("bar");
+  }
+
+  private void renameWithDocStringFormat(final String newName) {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      public void run() {
+        doTest(newName);
+      }
+    });
   }
 
   private void doRenameConflictTest(String newName, String expectedConflict) {
