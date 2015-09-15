@@ -127,6 +127,20 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     myScriptRunnables.add(runnable);
   }
 
+  protected void doWhenPausedThenResume(final SuspendContextRunnable runnable) {
+    onBreakpoint(new SuspendContextRunnable() {
+      @Override
+      public void run(SuspendContextImpl suspendContext) throws Exception {
+        try {
+          runnable.run(suspendContext);
+        }
+        finally {
+          resume(suspendContext);
+        }
+      }
+    });
+  }
+
   protected void addDefaultBreakpointListener() {
     if (myPauseScriptListener == null) {
       final DebugProcessImpl debugProcess = getDebugProcess();

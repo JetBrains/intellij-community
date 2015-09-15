@@ -16,8 +16,7 @@
 package com.intellij.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.Function;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,12 +27,11 @@ import javax.swing.*;
  */
 public class ExecutionModes {
   private static final Logger LOG = Logger.getInstance(ExecutionMode.class);
-  private static final Function<Pair<ExecutionMode, String>, Void> DEFAULT_TIMEOUT_CALLBACK = new Function<Pair<ExecutionMode, String>, Void>() {
+  private static final PairConsumer<ExecutionMode, String> DEFAULT_TIMEOUT_CALLBACK = new PairConsumer<ExecutionMode, String>() {
     @Override
-    public Void fun(Pair<ExecutionMode, String> pair) {
-      final String msg = "Timeout (" + pair.getFirst().getTimeout() + " sec) on executing: " + pair.getSecond();
+    public void consume(ExecutionMode mode, String presentableCmdLine) {
+      final String msg = "Timeout (" + mode.getTimeout() + " sec) on executing: " + presentableCmdLine;
       LOG.error(msg);
-      return null;
     }
   };
 
@@ -75,7 +73,7 @@ public class ExecutionModes {
   public static class SameThreadMode extends ExecutionMode {
     private final int myTimeout;
     @NotNull
-    private final Function<Pair<ExecutionMode, String>, Void> myTimeoutCallback;
+    private final PairConsumer<ExecutionMode, String> myTimeoutCallback;
 
     public SameThreadMode(final boolean cancelable,
                           @Nullable final String title2,
@@ -86,7 +84,7 @@ public class ExecutionModes {
     public SameThreadMode(final boolean cancelable,
                           @Nullable final String title2,
                           final int timeout,
-                          @NotNull final Function<Pair<ExecutionMode, String>, Void> timeoutCallback
+                          @NotNull final PairConsumer<ExecutionMode, String> timeoutCallback
     ) {
       super(cancelable, null, title2, false, false, null);
       myTimeout = timeout;
@@ -122,7 +120,7 @@ public class ExecutionModes {
 
     @NotNull
     @Override
-    public Function<Pair<ExecutionMode, String>, Void> getTimeoutCallback() {
+    public PairConsumer<ExecutionMode, String> getTimeoutCallback() {
       return myTimeoutCallback;
     }
   }

@@ -20,6 +20,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -31,16 +32,21 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
-import com.intellij.debugger.ui.impl.FrameVariablesTree;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -55,9 +61,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author egor
@@ -246,7 +250,7 @@ public class JavaStackFrame extends XStackFrame {
 
   // copied from FrameVariablesTree
   private void buildVariables(DebuggerContextImpl debuggerContext,
-                              EvaluationContextImpl evaluationContext,
+                              final EvaluationContextImpl evaluationContext,
                               @NotNull DebugProcessImpl debugProcess,
                               XValueChildrenList children,
                               ObjectReference thisObjectReference,
@@ -283,13 +287,12 @@ public class JavaStackFrame extends XStackFrame {
         superBuildVariables(evaluationContext, children);
       }
       else {
-        final Map<String, LocalVariableProxyImpl> visibleVariables = FrameVariablesTree.getVisibleVariables(getStackFrameProxy());
-        final EvaluationContextImpl evalContext = evaluationContext;
+        final Map<String, LocalVariableProxyImpl> visibleVariables = getVisibleVariables(getStackFrameProxy());
         final Pair<Set<String>, Set<TextWithImports>> usedVars =
           ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
             @Override
             public Pair<Set<String>, Set<TextWithImports>> compute() {
-              return FrameVariablesTree.findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition, evalContext);
+              return findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition, evaluationContext);
             }
           });
         // add locals
@@ -307,7 +310,7 @@ public class JavaStackFrame extends XStackFrame {
         final EvaluationContextImpl evalContextCopy = evaluationContext.createEvaluationContext(evaluationContext.getThisObject());
         evalContextCopy.setAutoLoadClasses(false);
 
-        final Set<TextWithImports> extraVars = computeExtraVars(usedVars, sourcePosition, evalContext);
+        final Set<TextWithImports> extraVars = computeExtraVars(usedVars, sourcePosition, evaluationContext);
 
         // add extra vars
         addToChildrenFrom(extraVars, children, evaluationContext);
@@ -419,5 +422,268 @@ public class JavaStackFrame extends XStackFrame {
     else {
       return "JavaFrame position unknown";
     }
+  }
+
+  private static class VariablesCollector extends JavaRecursiveElementVisitor {
+    private final Set<String> myVisibleLocals;
+    private final TextRange myLineRange;
+    private final Set<TextWithImports> myExpressions;
+    private final Set<String> myVars;
+    private final SourcePosition myPosition;
+    private final EvaluationContextImpl myEvalContext;
+    private final boolean myCollectExpressions;
+
+    public VariablesCollector(final Set<String> visibleLocals,
+                              final TextRange lineRange,
+                              final Set<TextWithImports> expressions,
+                              final Set<String> vars,
+                              SourcePosition position, EvaluationContextImpl evalContext) {
+      myVisibleLocals = visibleLocals;
+      myLineRange = lineRange;
+      myExpressions = expressions;
+      myVars = vars;
+      myPosition = position;
+      myEvalContext = evalContext;
+      myCollectExpressions = XDebuggerSettingsManager.getInstance().getDataViewSettings().isAutoExpressions();
+    }
+
+    @Override
+    public void visitElement(final PsiElement element) {
+      if (myLineRange.intersects(element.getTextRange())) {
+        super.visitElement(element);
+      }
+    }
+
+    @Override
+    public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
+      if (myCollectExpressions) {
+        final PsiMethod psiMethod = expression.resolveMethod();
+        if (psiMethod != null && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(expression, myVisibleLocals)) {
+          myExpressions.add(new TextWithImportsImpl(expression));
+        }
+      }
+      super.visitMethodCallExpression(expression);
+    }
+
+    @Override
+    public void visitReferenceExpression(final PsiReferenceExpression reference) {
+      if (myLineRange.intersects(reference.getTextRange())) {
+        final PsiElement psiElement = reference.resolve();
+        if (psiElement instanceof PsiVariable) {
+          final PsiVariable var = (PsiVariable)psiElement;
+          if (var instanceof PsiField) {
+            if (myCollectExpressions && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(reference, myVisibleLocals)) {
+              /*
+              if (var instanceof PsiEnumConstant && reference.getQualifier() == null) {
+                final PsiClass enumClass = ((PsiEnumConstant)var).getContainingClass();
+                if (enumClass != null) {
+                  final PsiExpression expression = JavaPsiFacade.getInstance(var.getProject()).getParserFacade().createExpressionFromText(enumClass.getName() + "." + var.getName(), var);
+                  final PsiReference ref = expression.getReference();
+                  if (ref != null) {
+                    ref.bindToElement(var);
+                    myExpressions.add(new TextWithImportsImpl(expression));
+                  }
+                }
+              }
+              else {
+                myExpressions.add(new TextWithImportsImpl(reference));
+              }
+              */
+              final PsiModifierList modifierList = var.getModifierList();
+              boolean isConstant = (var instanceof PsiEnumConstant) ||
+                                   (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC) && modifierList.hasModifierProperty(PsiModifier.FINAL));
+              if (!isConstant) {
+                myExpressions.add(new TextWithImportsImpl(reference));
+              }
+            }
+          }
+          else {
+            if (myVisibleLocals.contains(var.getName())) {
+              myVars.add(var.getName());
+            }
+            else {
+              // fix for variables used in inner classes
+              if (!Comparing.equal(PsiTreeUtil.getParentOfType(reference, PsiClass.class),
+                                   PsiTreeUtil.getParentOfType(var, PsiClass.class))) {
+                myExpressions.add(new TextWithImportsImpl(reference));
+              }
+            }
+          }
+        }
+      }
+      super.visitReferenceExpression(reference);
+    }
+
+    @Override
+    public void visitArrayAccessExpression(final PsiArrayAccessExpression expression) {
+      if (myCollectExpressions && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(expression, myVisibleLocals)) {
+        myExpressions.add(new TextWithImportsImpl(expression));
+      }
+      super.visitArrayAccessExpression(expression);
+    }
+
+    @Override
+    public void visitParameter(final PsiParameter parameter) {
+      processVariable(parameter);
+      super.visitParameter(parameter);
+    }
+
+    @Override
+    public void visitLocalVariable(final PsiLocalVariable variable) {
+      processVariable(variable);
+      super.visitLocalVariable(variable);
+    }
+
+    private void processVariable(final PsiVariable variable) {
+      if (myLineRange.intersects(variable.getTextRange()) && myVisibleLocals.contains(variable.getName())) {
+        myVars.add(variable.getName());
+      }
+    }
+
+    @Override
+    public void visitClass(final PsiClass aClass) {
+      // Do not step in to local and anonymous classes...
+    }
+  }
+
+  public static Map<String, LocalVariableProxyImpl> getVisibleVariables(final StackFrameProxyImpl frame) throws EvaluateException {
+    final Map<String, LocalVariableProxyImpl> vars = new HashMap<String, LocalVariableProxyImpl>();
+    for (LocalVariableProxyImpl localVariableProxy : frame.visibleVariables()) {
+      vars.put(localVariableProxy.name(), localVariableProxy);
+    }
+    return vars;
+  }
+
+  private static boolean shouldSkipLine(final PsiFile file, Document doc, int line) {
+    final int start = doc.getLineStartOffset(line);
+    final int end = doc.getLineEndOffset(line);
+    final int _start = CharArrayUtil.shiftForward(doc.getCharsSequence(), start, " \n\t");
+    if (_start >= end) {
+      return true;
+    }
+
+    TextRange alreadyChecked = null;
+    for (PsiElement elem = file.findElementAt(_start); elem != null && elem.getTextOffset() <= end && (alreadyChecked == null || !alreadyChecked .contains(elem.getTextRange())); elem = elem.getNextSibling()) {
+      for (PsiElement _elem = elem; _elem.getTextOffset() >= _start; _elem = _elem.getParent()) {
+        alreadyChecked = _elem.getTextRange();
+
+        if (_elem instanceof PsiDeclarationStatement) {
+          final PsiElement[] declared = ((PsiDeclarationStatement)_elem).getDeclaredElements();
+          for (PsiElement declaredElement : declared) {
+            if (declaredElement instanceof PsiVariable) {
+              return false;
+            }
+          }
+        }
+
+        if (_elem instanceof PsiJavaCodeReferenceElement) {
+          final PsiElement resolved = ((PsiJavaCodeReferenceElement)_elem).resolve();
+          if (resolved instanceof PsiVariable) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  public static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(final Set<String> visibleVars,
+                                                                           final SourcePosition position,
+                                                                           EvaluationContextImpl evalContext) {
+    final int line = position.getLine();
+    if (line < 0) {
+      return Pair.create(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
+    }
+    final PsiFile positionFile = position.getFile();
+    if (!positionFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+      return Pair.create(visibleVars, Collections.<TextWithImports>emptySet());
+    }
+
+    final VirtualFile vFile = positionFile.getVirtualFile();
+    final Document doc = vFile != null ? FileDocumentManager.getInstance().getDocument(vFile) : null;
+    if (doc == null || doc.getLineCount() == 0 || line > (doc.getLineCount() - 1)) {
+      return Pair.create(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
+    }
+
+    final TextRange limit = calculateLimitRange(positionFile, doc, line);
+
+    int startLine = Math.max(limit.getStartOffset(), line - 1);
+    startLine = Math.min(startLine, limit.getEndOffset());
+    while (startLine > limit.getStartOffset() && shouldSkipLine(positionFile, doc, startLine)) {
+      startLine--;
+    }
+    final int startOffset = doc.getLineStartOffset(startLine);
+
+    int endLine = Math.min(line + 2, limit.getEndOffset());
+    while (endLine < limit.getEndOffset() && shouldSkipLine(positionFile, doc, endLine)) {
+      endLine++;
+    }
+    final int endOffset = doc.getLineEndOffset(endLine);
+
+    final TextRange lineRange = new TextRange(startOffset, endOffset);
+    if (!lineRange.isEmpty()) {
+      final int offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), doc.getLineStartOffset(line), " \t");
+      PsiElement element = positionFile.findElementAt(offset);
+      if (element != null) {
+        PsiMethod method = PsiTreeUtil.getNonStrictParentOfType(element, PsiMethod.class);
+        if (method != null) {
+          element = method;
+        }
+        else {
+          PsiField field = PsiTreeUtil.getNonStrictParentOfType(element, PsiField.class);
+          if (field != null) {
+            element = field;
+          }
+          else {
+            final PsiClassInitializer initializer = PsiTreeUtil.getNonStrictParentOfType(element, PsiClassInitializer.class);
+            if (initializer != null) {
+              element = initializer;
+            }
+          }
+        }
+
+        //noinspection unchecked
+        if (element instanceof PsiCompiledElement) {
+          return Pair.create(visibleVars, Collections.<TextWithImports>emptySet());
+        }
+        else {
+          final Set<String> vars = new HashSet<String>();
+          final Set<TextWithImports> expressions = new HashSet<TextWithImports>();
+          final PsiElementVisitor variablesCollector = new VariablesCollector(visibleVars, adjustRange(element, lineRange), expressions, vars, position, evalContext);
+          element.accept(variablesCollector);
+
+          return Pair.create(vars, expressions);
+        }
+      }
+    }
+    return Pair.create(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
+  }
+
+  private static TextRange calculateLimitRange(final PsiFile file, final Document doc, final int line) {
+    final int offset = doc.getLineStartOffset(line);
+    if (offset > 0) {
+      PsiMethod method = PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiMethod.class, false);
+      if (method != null) {
+        final TextRange elemRange = method.getTextRange();
+        return new TextRange(doc.getLineNumber(elemRange.getStartOffset()), doc.getLineNumber(elemRange.getEndOffset()));
+      }
+    }
+    return new TextRange(0, doc.getLineCount() - 1);
+  }
+
+  private static TextRange adjustRange(final PsiElement element, final TextRange originalRange) {
+    final Ref<TextRange> rangeRef = new Ref<TextRange>(originalRange);
+    element.accept(new JavaRecursiveElementVisitor() {
+      @Override public void visitExpressionStatement(final PsiExpressionStatement statement) {
+        final TextRange stRange = statement.getTextRange();
+        if (originalRange.intersects(stRange)) {
+          final TextRange currentRange = rangeRef.get();
+          final int start = Math.min(currentRange.getStartOffset(), stRange.getStartOffset());
+          final int end = Math.max(currentRange.getEndOffset(), stRange.getEndOffset());
+          rangeRef.set(new TextRange(start, end));
+        }
+      }
+    });
+    return rangeRef.get();
   }
 }

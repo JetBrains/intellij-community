@@ -140,6 +140,7 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
       }
 
       final List<String> options = new ArrayList<String>();
+      options.add("-g"); // always compile with debug info
       final JavaSdkVersion sdkVersion = JavaSdk.getInstance().getVersion(targetSdk);
       if (sdkVersion != null) {
         final String langLevel = "1." + Integer.valueOf(3 + sdkVersion.getMaxLanguageLevel().ordinal());
