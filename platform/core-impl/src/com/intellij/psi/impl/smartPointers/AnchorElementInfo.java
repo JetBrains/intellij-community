@@ -93,7 +93,7 @@ class AnchorElementInfo extends SelfElementInfo {
       final PsiElement element = provider.restoreElement(anchor);
       if (element != null) return element;
     }
-    return null;
+    return anchor;
   }
 
   @Override

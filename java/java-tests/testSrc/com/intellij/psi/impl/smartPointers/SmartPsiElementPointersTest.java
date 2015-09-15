@@ -814,4 +814,24 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertNotNull(pointer.getElement());
   }
 
+  public void testNonAnchoredStubbedElement() {
+    PsiFile file = configureByText(JavaFileType.INSTANCE, "class Foo { { @NotNull String foo; } }");
+    StubTree stubTree = ((PsiFileImpl)file).getStubTree();
+    assertNotNull(stubTree);
+    PsiElement anno = stubTree.getPlainList().stream().map(element -> element.getPsi()).filter(psiElement -> psiElement instanceof PsiAnnotation).findFirst().get();
+
+    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(anno);
+    assertNotNull(((PsiFileImpl)file).getStubTree());
+
+    stubTree = null;
+    anno = null;
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(((SmartPointerEx) pointer).getCachedElement());
+
+    file.getViewProvider().getDocument().insertString(0, " ");
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+    assertNotNull(pointer.getElement());
+  }
+
 }
