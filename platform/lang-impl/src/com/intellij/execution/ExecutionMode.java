@@ -16,9 +16,8 @@
 package com.intellij.execution;
 
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
-import com.intellij.util.Functions;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +29,11 @@ import java.util.List;
 * @author Roman.Chernyatchik
 */
 public class ExecutionMode {
+  private static final PairConsumer<ExecutionMode, String> NOOP_CONSUMER = new PairConsumer<ExecutionMode, String>() {
+    @Override
+    public void consume(ExecutionMode mode, String s) {
+    }
+  };
   private final boolean myCancelable;
   private final String myTitle;
   private final String myTitle2;
@@ -60,8 +64,8 @@ public class ExecutionMode {
   }
 
   @NotNull
-  public Function<Pair<ExecutionMode, String>, Void> getTimeoutCallback() {
-    return Functions.identity();
+  public PairConsumer<ExecutionMode, String> getTimeoutCallback() {
+    return NOOP_CONSUMER;
   }
 
   @Nullable
