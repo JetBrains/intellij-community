@@ -93,26 +93,31 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
     }
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
     if (sdkData instanceof PyRemoteSdkAdditionalDataBase) { //remote interpreter
-      boolean docker = false;
+      final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+
       RemoteSdkCredentials remoteSdkCredentials;
-      try {
-        remoteSdkCredentials = ((RemoteSdkAdditionalData)sdkData).getRemoteSdkCredentials(false);
-      }
-      catch (InterruptedException e) {
-        LOG.error(e);
-        remoteSdkCredentials = null;
-      }
-      catch (ExecutionException e) {
-        // TODO [Docker] refactor!
-        if (e.getCause() instanceof UnsupportedDockerRemoteSdkCredentialsProductionException) {
-          docker = true;
+      if (((PyRemoteSdkAdditionalDataBase)sdkData).getRemoteConnectionType() != CredentialsType.DOCKER) {
+        try {
+          remoteSdkCredentials = ((RemoteSdkAdditionalData)sdkData).getRemoteSdkCredentials(false);
+        }
+        catch (InterruptedException e) {
+          LOG.error(e);
           remoteSdkCredentials = null;
-        } else {
+        }
+        catch (ExecutionException e) {
           throw analyzeException(e, helperPath, args);
         }
+        if (manager != null && remoteSdkCredentials != null) {
+          if (askForSudo) {
+            askForSudo = !manager.ensureCanWrite(null, remoteSdkCredentials, remoteSdkCredentials.getInterpreterPath());
+          }
+        }
+        else {
+          throw new PyExecutionException(PythonRemoteInterpreterManager.WEB_DEPLOYMENT_PLUGIN_IS_DISABLED, helperPath, args);
+        }
       }
-      final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-      if (manager != null && (docker || remoteSdkCredentials != null)) {
+
+      if (manager != null) {
         final List<String> cmdline = new ArrayList<String>();
         cmdline.add(homePath);
         cmdline.add(RemoteFile.detectSystemByPath(homePath).createRemoteFile(helperPath).getPath());
@@ -122,9 +127,6 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
             return quoteIfNeeded(input);
           }
         }));
-        if (askForSudo && !docker) {
-          askForSudo = !manager.ensureCanWrite(null, remoteSdkCredentials, remoteSdkCredentials.getInterpreterPath());
-        }
         ProcessOutput processOutput;
         do {
           final PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdkData;
