@@ -24,12 +24,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.util.text.CharArrayUtil.*;
 
 /**
  * Advises typing in javadoc if necessary.
@@ -148,7 +150,7 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
     }
 
     PsiElement element = elementAtCaret;
-    while(element instanceof PsiWhiteSpace) {
+    while(element instanceof PsiWhiteSpace || element != null && containsOnlyWhiteSpaces(element.getText())) {
       element = element.getPrevSibling();
     }
 
@@ -161,16 +163,9 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
     }
     
     if (element instanceof PsiDocTag) {
-      // We don't want to provide closing tag for the type parameters, i.e. at situations like the one below:
-      // /**
-      //  * @param <T>[caret]
-      //  */
       PsiDocTag tag = (PsiDocTag)element;
       if ("param".equals(tag.getName())) {
-        final PsiDocTagValue value = tag.getValueElement();
-        if (value == null || value.getTextRange().getEndOffset() == offset) {
-          return false;
-        } 
+        return false; 
       }
     }
 
