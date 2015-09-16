@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ReflectionUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -129,8 +128,26 @@ public class LocalVariablesUtil {
       return map;
     }
 
+    // now try to fetch stack values
     List<DecompiledLocalVariable> vars = collectVariablesFromBytecode(frameProxy);
     StackFrame frame = frameProxy.getStackFrame();
+    int size = vars.size();
+    while (size > 0) {
+      try {
+        return fetchSlotValues(map, vars.subList(0, size), frame);
+      }
+      catch (Exception e) {
+        LOG.info(e);
+      }
+      size--; // try with the reduced list
+    }
+
+    return map;
+  }
+
+  private static Map<DecompiledLocalVariable, Value> fetchSlotValues(Map<DecompiledLocalVariable, Value> map,
+                                                                     List<DecompiledLocalVariable> vars,
+                                                                     StackFrame frame) throws Exception {
     final Field frameIdField = frame.getClass().getDeclaredField("id");
     frameIdField.setAccessible(true);
     final Object frameId = frameIdField.get(frame);
@@ -147,27 +164,18 @@ public class LocalVariablesUtil {
       ps = ourEnqueueMethod.invoke(null, vm, frame.thread(), frameId, slotInfoArray);
     }
 
-    try {
-      final Object reply = ourWaitForReplyMethod.invoke(null, vm, ps);
-      final Field valuesField = reply.getClass().getDeclaredField("values");
-      valuesField.setAccessible(true);
-      final Value[] values = (Value[])valuesField.get(reply);
-      if (vars.size() != values.length) {
-        throw new InternalException("Wrong number of values returned from target VM");
-      }
-      int idx = 0;
-      for (DecompiledLocalVariable var : vars) {
-        map.put(var, values[idx++]);
-      }
-      return map;
+    final Object reply = ourWaitForReplyMethod.invoke(null, vm, ps);
+    final Field valuesField = reply.getClass().getDeclaredField("values");
+    valuesField.setAccessible(true);
+    final Value[] values = (Value[])valuesField.get(reply);
+    if (vars.size() != values.length) {
+      throw new InternalException("Wrong number of values returned from target VM");
     }
-    catch (InvocationTargetException e) {
-      final Throwable target = e.getTargetException();
-      if (target instanceof Exception) {
-        throw (Exception)target;
-      }
-      throw e;
+    int idx = 0;
+    for (DecompiledLocalVariable var : vars) {
+      map.put(var, values[idx++]);
     }
+    return map;
   }
 
   private static Object createSlotInfoArray(Collection<DecompiledLocalVariable> vars) throws Exception {
