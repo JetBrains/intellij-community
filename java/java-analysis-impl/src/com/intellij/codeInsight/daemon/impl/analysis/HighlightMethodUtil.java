@@ -354,7 +354,7 @@ public class HighlightMethodUtil {
         if (invalidCallMessage != null) {
           highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(invalidCallMessage).range(fixRange).create();
           if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-            QuickFixAction.registerQuickFixAction(highlightInfo, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_8));
+            QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(LanguageLevel.JDK_1_8));
           }
         } else {
           highlightInfo = GenericsHighlightUtil.checkInferredIntersections(substitutor, fixRange);
