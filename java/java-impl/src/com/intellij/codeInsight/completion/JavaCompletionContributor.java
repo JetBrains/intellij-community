@@ -716,8 +716,6 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
       }
 
-      JavaCompletionUtil.initOffsets(file, context.getOffsetMap());
-
       if (context.getCompletionType() == CompletionType.BASIC) {
         if (semicolonNeeded(context.getEditor(), file, context.getStartOffset())) {
           context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
