@@ -343,8 +343,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
       @NotNull
       private LookupElement createCatchTypeVariant(PsiCodeBlock tryBlock, PsiClassType type) {
-        return TailTypeDecorator.withTail(PsiTypeLookupItem.createLookupItem(type, tryBlock).setInsertHandler(new DefaultInsertHandler()),
-                                          TailType.HUMBLE_SPACE_BEFORE_WORD);
+        return TailTypeDecorator.withTail(PsiTypeLookupItem.createLookupItem(type, tryBlock), TailType.HUMBLE_SPACE_BEFORE_WORD);
       }
     });
 
@@ -400,11 +399,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   }
 
   public static SmartCompletionDecorator decorate(LookupElement lookupElement, Collection<ExpectedTypeInfo> infos) {
-    LookupItem item = lookupElement.as(LookupItem.CLASS_CONDITION_KEY);
-    if (item != null && item.getInsertHandler() == null) {
-      item.setInsertHandler(DefaultInsertHandler.NO_TAIL_HANDLER);
-    }
-
     return new SmartCompletionDecorator(lookupElement, infos);
   }
 

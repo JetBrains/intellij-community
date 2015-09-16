@@ -136,7 +136,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
     InsertHandler handler = getInsertHandler();
-    if (handler != null && !(handler instanceof DefaultInsertHandler)) {
+    if (handler != null) {
       //noinspection unchecked
       handler.handleInsert(context, this);
     }

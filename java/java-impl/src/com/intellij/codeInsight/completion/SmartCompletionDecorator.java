@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.openapi.editor.Document;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -114,7 +115,14 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
   public void handleInsert(InsertionContext context) {
     if (getObject() instanceof PsiVariable && context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
       context.commitDocument();
-      DefaultInsertHandler.removeEndOfIdentifier(context);
+      final Document document = context.getDocument();
+      JavaCompletionUtil.initOffsets(context.getFile(), context.getOffsetMap());
+      document.deleteString(context.getSelectionEndOffset(), context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
+      if(context.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET) > 0){
+        document.deleteString(context.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET),
+                              context.getOffsetMap().getOffset(JavaCompletionUtil.ARG_LIST_END_OFFSET));
+        JavaCompletionUtil.resetParensInfo(context.getOffsetMap());
+      }
       context.commitDocument();
     }
     myPosition = getPosition(context, this);
