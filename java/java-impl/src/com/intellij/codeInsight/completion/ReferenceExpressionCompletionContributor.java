@@ -124,7 +124,7 @@ public class ReferenceExpressionCompletionContributor {
     if (JavaKeywordCompletion.isAfterPrimitiveOrArrayType(element)) return null;
 
     final int offset = parameters.getParameters().getOffset();
-    final PsiReference reference = element.getContainingFile().findReferenceAt(offset);
+    final PsiJavaCodeReferenceElement reference = PsiTreeUtil.findElementOfClassAtOffset(element.getContainingFile(), offset, PsiJavaCodeReferenceElement.class, false);
     if (reference != null) {
       final ElementFilter filter = getReferenceFilter(element, false);
       for (final LookupElement item : completeFinalReference(element, reference, filter, parameters)) {
@@ -168,7 +168,7 @@ public class ReferenceExpressionCompletionContributor {
     return null;
   }
 
-  private static Set<LookupElement> completeFinalReference(final PsiElement element, PsiReference reference, ElementFilter filter,
+  private static Set<LookupElement> completeFinalReference(final PsiElement element, PsiJavaCodeReferenceElement reference, ElementFilter filter,
                                                            final JavaSmartCompletionParameters parameters) {
     final Set<PsiField> used = parameters.getParameters().getInvocationCount() < 2 ? findConstantsUsedInSwitch(element) : Collections.<PsiField>emptySet();
 

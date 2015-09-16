@@ -31,7 +31,6 @@ import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.getters.JavaMembersGetter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.filters.types.AssignableToFilter;
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.*;
@@ -125,7 +124,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         if (SmartCastProvider.shouldSuggestCast(parameters)) return;
         
         final PsiElement element = parameters.getPosition();
-        final PsiReference reference = element.getContainingFile().findReferenceAt(parameters.getOffset());
+        final PsiJavaCodeReferenceElement reference = 
+          PsiTreeUtil.findElementOfClassAtOffset(element.getContainingFile(), parameters.getOffset(), PsiJavaCodeReferenceElement.class, false);
         if (reference != null) {
           ElementFilter filter = getClassReferenceFilter(element);
           if (filter != null) {
@@ -274,44 +274,34 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   }
 
   static Set<LookupElement> completeReference(final PsiElement element,
-                                              PsiReference reference,
+                                              PsiJavaCodeReferenceElement reference,
                                               final ElementFilter filter,
                                               final boolean acceptClasses,
                                               final boolean acceptMembers,
                                               CompletionParameters parameters, final PrefixMatcher matcher) {
-    if (reference instanceof PsiMultiReference) {
-      reference = ContainerUtil.findInstance(((PsiMultiReference) reference).getReferences(), PsiJavaReference.class);
-    }
+    ElementFilter checkClass = new ElementFilter() {
+      @Override
+      public boolean isAcceptable(Object element, PsiElement context) {
+        return filter.isAcceptable(element, context);
+      }
 
-    if (reference instanceof PsiJavaReference) {
-      final PsiJavaReference javaReference = (PsiJavaReference)reference;
-
-      ElementFilter checkClass = new ElementFilter() {
-        @Override
-        public boolean isAcceptable(Object element, PsiElement context) {
-          return filter.isAcceptable(element, context);
+      @Override
+      public boolean isClassAcceptable(Class hintClass) {
+        if (ReflectionUtil.isAssignable(PsiClass.class, hintClass)) {
+          return acceptClasses;
         }
 
-        @Override
-        public boolean isClassAcceptable(Class hintClass) {
-          if (ReflectionUtil.isAssignable(PsiClass.class, hintClass)) {
-            return acceptClasses;
-          }
-
-          if (ReflectionUtil.isAssignable(PsiVariable.class, hintClass) ||
-              ReflectionUtil.isAssignable(PsiMethod.class, hintClass) ||
-              ReflectionUtil.isAssignable(CandidateInfo.class, hintClass)) {
-            return acceptMembers;
-          }
-          return false;
+        if (ReflectionUtil.isAssignable(PsiVariable.class, hintClass) ||
+            ReflectionUtil.isAssignable(PsiMethod.class, hintClass) ||
+            ReflectionUtil.isAssignable(CandidateInfo.class, hintClass)) {
+          return acceptMembers;
         }
-      };
-      JavaCompletionProcessor.Options options =
-        JavaCompletionProcessor.Options.DEFAULT_OPTIONS.withFilterStaticAfterInstance(parameters.getInvocationCount() <= 1);
-      return JavaCompletionUtil.processJavaReference(element, javaReference, checkClass, options, matcher, parameters);
-    }
-
-    return Collections.emptySet();
+        return false;
+      }
+    };
+    JavaCompletionProcessor.Options options =
+      JavaCompletionProcessor.Options.DEFAULT_OPTIONS.withFilterStaticAfterInstance(parameters.getInvocationCount() <= 1);
+    return JavaCompletionUtil.processJavaReference(element, reference, checkClass, options, matcher, parameters);
   }
 
   @Override
