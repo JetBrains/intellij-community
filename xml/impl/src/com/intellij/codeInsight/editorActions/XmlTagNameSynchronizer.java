@@ -72,6 +72,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
                                                                            XMLLanguage.INSTANCE.getID(),
                                                                            XHTMLLanguage.INSTANCE.getID(),
                                                                            "JavaScript",
+                                                                           "JSX Harmony",
                                                                            "ECMA Script Level 4");
 
   private static final Key<TagNameSynchronizer> SYNCHRONIZER_KEY = Key.create("tag_name_synchronizer");
@@ -162,7 +163,9 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
 
       final Document document = event.getDocument();
       if (myState == State.APPLYING || UndoManager.getInstance(myEditor.getProject()).isUndoInProgress() ||
-          !PomModelImpl.isAllowPsiModification() || ((DocumentEx)document).isInBulkUpdate()) return;
+          !PomModelImpl.isAllowPsiModification() || ((DocumentEx)document).isInBulkUpdate()) {
+        return;
+      }
 
       final int offset = event.getOffset();
       final int oldLength = event.getOldLength();
@@ -268,7 +271,8 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
             break;
           }
           if (!XmlUtil.isValidTagNameChar(c)) break;
-        } catch (IndexOutOfBoundsException e) {
+        }
+        catch (IndexOutOfBoundsException e) {
           LOG.error("incorrect offset:" + i + ", initial: " + offset, new Attachment("document.txt", sequence.toString()));
           return null;
         }
@@ -308,7 +312,8 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
           final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
           if (lookup != null) {
             lookup.performGuardedChange(apply);
-          } else {
+          }
+          else {
             apply.run();
           }
         }
