@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,6 +126,12 @@ public class XDebuggerTestUtil {
     XTestStackFrameContainer container = new XTestStackFrameContainer();
     thread.computeStackFrames(0, container);
     return container.waitFor(timeout).first;
+  }
+
+  public static List<XValue> collectVariables(XStackFrame frame) throws InterruptedException {
+    XTestCompositeNode container = new XTestCompositeNode();
+    frame.computeChildren(container);
+    return container.waitFor(TIMEOUT).first;
   }
 
   public static Pair<XValue, String> evaluate(XDebugSession session, XExpression expression) {
