@@ -168,7 +168,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       JComponent preferred = ((BaseConfigurable)myConfigurable).getPreferredFocusedComponent();
       if (preferred != null) return preferred;
     }
-    return super.getPreferredFocusedComponent();
+    return UIUtil.getPreferredFocusedComponent(getContent(myConfigurable));
   }
 
   @Override
