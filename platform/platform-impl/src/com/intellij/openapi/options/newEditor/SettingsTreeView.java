@@ -573,12 +573,12 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       }
       // configure node icon
       Icon nodeIcon = null;
-      if (node != null) {
-        if (0 == node.getChildCount()) {
+      if (value instanceof DefaultMutableTreeNode) {
+        DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
+        if (0 == treeNode.getChildCount()) {
           nodeIcon = myTree.getEmptyHandle();
         }
-        else if (value instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
+        else {
           nodeIcon = myTree.isExpanded(new TreePath(treeNode.getPath()))
                      ? myTree.getExpandedHandle()
                      : myTree.getCollapsedHandle();
