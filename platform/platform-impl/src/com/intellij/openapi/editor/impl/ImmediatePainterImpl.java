@@ -81,6 +81,10 @@ class ImmediatePainterImpl implements ImmediatePainter {
                                                                                                PasteAction.class));
   public static final String ZERO_LATENCY_TYPING_KEY = "editor.zero.latency.typing";
 
+  public static final String ZERO_LATENCY_TYPING_DEBUG_KEY = "editor.zero.latency.typing.debug";
+
+  public static final int DEBUG_PAUSE_DURATION = 1000;
+
   public static final String TYPING_LATENCY_STATS_KEY = "editor.typing.latency.stats";
 
   private static final int TYPING_STATS_SAMPLE_SIZE = 50;
@@ -231,6 +235,10 @@ class ImmediatePainterImpl implements ImmediatePainter {
     return !VIM_PLUGIN_LOADED && Registry.is(ZERO_LATENCY_TYPING_KEY);
   }
 
+  private static boolean isZeroLatencyTypingDebugEnabled() {
+    return Registry.is(ZERO_LATENCY_TYPING_DEBUG_KEY);
+  }
+
   private static boolean isTypingLatencyStatsEnabled() {
     return Registry.is(TYPING_LATENCY_STATS_KEY);
   }
@@ -330,6 +338,19 @@ class ImmediatePainterImpl implements ImmediatePainter {
 
     // flush changes (there can be batching / buffering in video driver)
     Toolkit.getDefaultToolkit().sync();
+
+    if (isZeroLatencyTypingDebugEnabled()) {
+      pause();
+    }
+  }
+
+  private static void pause() {
+    try {
+      Thread.sleep(DEBUG_PAUSE_DURATION);
+    }
+    catch (InterruptedException e) {
+      // ...
+    }
   }
 
   private boolean canPaintImmediately(@NotNull DocumentEvent e) {
@@ -395,6 +416,10 @@ class ImmediatePainterImpl implements ImmediatePainter {
 
     // flush changes (there can be batching / buffering in video driver)
     Toolkit.getDefaultToolkit().sync();
+
+    if (isZeroLatencyTypingDebugEnabled()) {
+      pause();
+    }
   }
 
   @NotNull
