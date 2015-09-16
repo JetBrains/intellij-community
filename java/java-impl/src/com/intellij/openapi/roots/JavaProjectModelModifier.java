@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -72,4 +73,15 @@ public abstract class JavaProjectModelModifier {
    */
   @Nullable
   public abstract Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope);
+
+  /**
+   * Implementation of this method should set language level for module {@code module} to the specified value accordingly
+   * to this dependencies management system. If it takes some time to propagate changes in the external project configuration to IDEA's
+   * project model the method may schedule this work for asynchronous execution and return {@link Promise} instance which will be fulfilled
+   * when the work is done.
+   *
+   * @return {@link Promise} instance if language level can be set by this dependencies management system or {@code null} otherwise
+   */
+  @Nullable
+  public abstract Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull LanguageLevel level);
 }

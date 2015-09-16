@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.roots.JavaProjectModelModifier;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlFile;
@@ -149,6 +150,11 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
       String mavenCoordinates = StringUtil.trimStart(name, MavenArtifact.MAVEN_LIB_PREFIX);
       return addDependency(Collections.singletonList(from), RepositoryAttachHandler.getMavenId(mavenCoordinates), scope);
     }
+    return null;
+  }
+
+  @Override
+  public Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull LanguageLevel level) {
     return null;
   }
 
