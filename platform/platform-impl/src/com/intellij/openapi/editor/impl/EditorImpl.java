@@ -2313,7 +2313,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       tailArea.width += EditorUtil.getSpaceWidth(fontType, this); // include caret
     }
 
-    Color lineColor = getCaretRowBackground();
+    Color background = attributes.getBackgroundColor() == null ? getCaretRowBackground() : attributes.getBackgroundColor();
 
     Rectangle newArea = lineRectangleBetween(offset, offset);
     newArea.width += charWidth;
@@ -2321,7 +2321,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     String newText = Character.toString(c);
     Point point = newArea.getLocation();
     int ascent = getAscent();
-    Color color = attributes.getForegroundColor() == null ? getForegroundColor() : attributes.getForegroundColor();
+    Color foreground = attributes.getForegroundColor() == null ? getForegroundColor() : attributes.getForegroundColor();
 
     EditorUIUtil.setupAntialiasing(g);
 
@@ -2329,8 +2329,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (delta != 0) {
       shift(g, tailArea, delta);
     }
-    fill(g, newArea, lineColor);
-    print(g, newText, point, ascent, font, color);
+    fill(g, newArea, background);
+    print(g, newText, point, ascent, font, foreground);
 
     // flush changes (there can be batching / buffering in video driver)
     Toolkit.getDefaultToolkit().sync();
@@ -2355,7 +2355,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     String newText = e.getNewFragment().toString();
     Rectangle newArea = lineRectangleBetween(offset, offset + newText.length());
     int delta = newArea.width - myOldArea.width;
-    Color lineColor = getCaretRowBackground();
+    Color background = getCaretRowBackground();
 
     if (delta != 0) {
       if (delta < 0) {
@@ -2377,7 +2377,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (delta < 0) {
         Rectangle remainingArea = new Rectangle(myOldTailArea.x + myOldTailArea.width + delta,
                                                 myOldTailArea.y, -delta, myOldTailArea.height);
-        fill(g, remainingArea, lineColor);
+        fill(g, remainingArea, background);
       }
     }
 
@@ -2390,13 +2390,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       FontInfo fontInfo = EditorUtil.fontForChar(newText.charAt(0), attributes.getFontType(), this);
       Font font = fontInfo.getFont();
 
-      Color color = attributes.getForegroundColor() == null ? getForegroundColor() : attributes.getForegroundColor();
+      Color foreground = attributes.getForegroundColor() == null ? getForegroundColor() : attributes.getForegroundColor();
 
       EditorUIUtil.setupAntialiasing(g);
 
       // pre-compute all the arguments beforehand to minimize delay between the calls (as there's no double-buffering)
-      fill(g, newArea, lineColor);
-      print(g, newText, point, ascent, font, color);
+      fill(g, newArea, background);
+      print(g, newText, point, ascent, font, foreground);
     }
 
     // flush changes (there can be batching / buffering in video driver)
