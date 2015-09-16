@@ -754,11 +754,6 @@ public class PythonSdkType extends SdkType {
     return getSkeletonsRootPath(basePath) + sep + FileUtil.toSystemIndependentName(sdkHome).hashCode() + sep;
   }
 
-  public static String getDockerSkeletonsPath(String basePath, String sdkHome) {
-    String sep = File.separator;
-    return getSkeletonsRootPath(basePath) + sep + FileUtil.toSystemIndependentName(sdkHome).hashCode() + sep;
-  }
-
   public static String getSkeletonsRootPath(String basePath) {
     return basePath + File.separator + SKELETON_DIR_NAME;
   }
