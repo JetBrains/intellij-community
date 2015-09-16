@@ -19,21 +19,25 @@ import com.intellij.debugger.ui.impl.watch.ArgumentValueDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ArgValueData extends DescriptorData<ArgumentValueDescriptorImpl>{
   private final int myIndex;
   private final Value myValue;
   private final boolean myIsParam;
+  @Nullable
+  private final String myDisplayName;
 
-  public ArgValueData(int index, Value value, boolean isParam) {
+  public ArgValueData(int index, Value value, boolean isParam, @Nullable String displayName) {
     super();
     myIndex = index;
     myValue = value;
     myIsParam = isParam;
+    myDisplayName = displayName;
   }
 
   protected ArgumentValueDescriptorImpl createDescriptorImpl(@NotNull Project project) {
-    return new ArgumentValueDescriptorImpl(project, myIndex, myValue, myIsParam);
+    return new ArgumentValueDescriptorImpl(project, myIndex, myValue, myIsParam, myDisplayName);
   }
 
   public boolean equals(Object object) {

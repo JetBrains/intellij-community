@@ -22,6 +22,7 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -41,7 +42,6 @@ import com.intellij.psi.PsiVariable;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -74,6 +74,7 @@ class LocalVariableEvaluator implements Evaluator {
       ThreadReferenceProxyImpl threadProxy = null;
       int lastFrameIndex = -1;
       PsiVariable variable = null;
+      DebugProcessImpl process = context.getDebugProcess();
 
       boolean topFrame = true;
 
@@ -82,7 +83,7 @@ class LocalVariableEvaluator implements Evaluator {
           LocalVariableProxyImpl local = frameProxy.visibleVariableByName(myLocalVariableName);
           if (local != null) {
             if (topFrame ||
-                variable.equals(resolveVariable(frameProxy, myLocalVariableName, context.getProject(), context.getDebugProcess()))) {
+                variable.equals(resolveVariable(frameProxy, myLocalVariableName, context.getProject(), process))) {
               myEvaluatedVariable = local;
               myContext = context;
               return frameProxy.getValue(local);
@@ -96,11 +97,10 @@ class LocalVariableEvaluator implements Evaluator {
 
           // try to look in slots
           try {
-            Map<DecompiledLocalVariable, Value> vars = LocalVariablesUtil.fetchValues(frameProxy);
+            Map<DecompiledLocalVariable, Value> vars = LocalVariablesUtil.fetchValues(frameProxy, process);
             for (Map.Entry<DecompiledLocalVariable, Value> entry : vars.entrySet()) {
-              Collection<String> names =
-                LocalVariablesUtil.calcNames(new SimpleStackFrameContext(frameProxy, context.getDebugProcess()), entry.getKey().getSlot());
-              if (names.contains(myLocalVariableName) || entry.getKey().getName().equals(myLocalVariableName)) {
+              DecompiledLocalVariable var = entry.getKey();
+              if (var.getMatchedNames().contains(myLocalVariableName) || var.getDefaultName().equals(myLocalVariableName)) {
                 return entry.getValue();
               }
             }
@@ -123,7 +123,7 @@ class LocalVariableEvaluator implements Evaluator {
 
         if (myCanScanFrames) {
           if (topFrame) {
-            variable = resolveVariable(frameProxy, myLocalVariableName, context.getProject(), context.getDebugProcess());
+            variable = resolveVariable(frameProxy, myLocalVariableName, context.getProject(), process);
             if (variable == null) break;
           }
           if (threadProxy == null /* initialize it lazily */) {

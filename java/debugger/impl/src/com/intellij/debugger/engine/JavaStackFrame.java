@@ -324,9 +324,11 @@ public class JavaStackFrame extends XStackFrame {
         children.add(new DummyMessageValueNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
         // trying to collect values from variable slots
         try {
-          for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil.fetchValues(getStackFrameProxy()).entrySet()) {
+          for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil.fetchValues(getStackFrameProxy(), debugProcess).entrySet()) {
             DecompiledLocalVariable var = entry.getKey();
-            children.add(createArgumentValue(var.getSlot(), entry.getValue(), var.isParam(), evaluationContext));
+            children.add(JavaValue.create(
+              myNodeManager.getArgumentValueDescriptor(null, var.getSlot(), entry.getValue(), var.isParam(), var.getDisplayName()),
+              evaluationContext, myNodeManager));
           }
         }
         catch (Exception ex) {
@@ -387,13 +389,6 @@ public class JavaStackFrame extends XStackFrame {
         }
       }, false);
     }
-  }
-
-  private JavaValue createArgumentValue(int index, Value value, boolean isParam, EvaluationContextImpl evaluationContext) {
-    ArgumentValueDescriptorImpl descriptor = myNodeManager.getArgumentValueDescriptor(null, index, value, isParam);
-    // setContext is required to calculate correct name
-    descriptor.setContext(evaluationContext);
-    return JavaValue.create(null, descriptor, evaluationContext, myNodeManager, true);
   }
 
   protected void superBuildVariables(final EvaluationContextImpl evaluationContext, XValueChildrenList children) throws EvaluateException {

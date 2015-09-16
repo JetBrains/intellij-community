@@ -20,10 +20,7 @@ import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
-import com.intellij.debugger.jdi.DecompiledLocalVariable;
-import com.intellij.debugger.jdi.LocalVariablesUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
@@ -31,19 +28,17 @@ import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 
-import java.util.Collection;
-
 public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
   private final int myIndex;
   private final Value myValue;
   private String myName;
   private final boolean myIsParam;
 
-  public ArgumentValueDescriptorImpl(Project project, int index, Value value, boolean isParam) {
-    super(project);
+  public ArgumentValueDescriptorImpl(Project project, int index, Value value, boolean isParam, String displayName) {
+    super(project, value);
     myIndex = index;
     myValue = value;
-    myName = getDefaultName();
+    myName = displayName;
     myIsParam = isParam;
     setLvalue(true);
   }
@@ -58,19 +53,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
   }
 
   public Value calcValue(final EvaluationContextImpl evaluationContext) throws EvaluateException {
-    Collection<String> names = LocalVariablesUtil.calcNames(evaluationContext, myIndex);
-    String nameString = StringUtil.join(names, " | ");
-    if (myIsParam && names.size() == 1) {
-      myName = nameString;
-    }
-    else if (!names.isEmpty()) {
-      myName = nameString + ": " + getDefaultName();
-    }
     return myValue;
-  }
-
-  private String getDefaultName() {
-    return DecompiledLocalVariable.getDefaultName(myIndex, myIsParam);
   }
 
   public String getName() {

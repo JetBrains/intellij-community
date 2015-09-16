@@ -15,8 +15,11 @@
  */
 package com.intellij.debugger.jdi;
 
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Comparator;
 
 /**
@@ -34,11 +37,13 @@ public class DecompiledLocalVariable{
   private final int mySlot;
   private final String mySignature;
   private final boolean myIsParam;
+  private final Collection<String> myMatchedNames;
 
-  public DecompiledLocalVariable(int slot, boolean isParam, @Nullable String signature) {
+  public DecompiledLocalVariable(int slot, boolean isParam, @Nullable String signature, @NotNull Collection<String> names) {
     mySlot = slot;
     myIsParam = isParam;
     mySignature = signature;
+    myMatchedNames = names;
   }
 
   public int getSlot() {
@@ -50,20 +55,33 @@ public class DecompiledLocalVariable{
     return mySignature;
   }
 
-  public String getName() {
-    return getDefaultName(mySlot, myIsParam);
-  }
-
-  public static String getDefaultName(int slot, boolean isParam) {
-    return isParam ? "arg_" + slot : "slot_" + slot;
-  }
-
   public boolean isParam() {
     return myIsParam;
   }
 
+  @NotNull
+  public String getDefaultName() {
+    return myIsParam ? "arg_" + mySlot : "slot_" + mySlot;
+  }
+
+  public String getDisplayName() {
+    String nameString = StringUtil.join(myMatchedNames, " | ");
+    if (myIsParam && myMatchedNames.size() == 1) {
+      return nameString;
+    }
+    else if (!myMatchedNames.isEmpty()) {
+      return nameString + ": " + getDefaultName();
+    }
+    return getDefaultName();
+  }
+
+  @NotNull
+  public Collection<String> getMatchedNames() {
+    return myMatchedNames;
+  }
+
   @Override
   public String toString() {
-    return getName() + " (" + mySignature + ")";
+    return getDisplayName() + " (slot " + mySlot + ", " + mySignature + ")";
   }
 }

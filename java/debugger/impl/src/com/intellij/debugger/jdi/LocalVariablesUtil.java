@@ -17,13 +17,16 @@ package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.SimpleStackFrameContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.util.containers.MultiMap;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -116,13 +119,17 @@ public class LocalVariablesUtil {
     ourInitializationOk = success;
   }
 
-  public static Map<DecompiledLocalVariable, Value> fetchValues(StackFrameProxyImpl frameProxy) throws Exception {
+  public static Map<DecompiledLocalVariable, Value> fetchValues(StackFrameProxyImpl frameProxy, DebugProcess process) throws Exception {
     Map<DecompiledLocalVariable, Value> map = new LinkedHashMap<DecompiledLocalVariable, Value>(); // LinkedHashMap for correct order
+
+    // gather code variables names
+    MultiMap<Integer, String> namesMap = calcNames(new SimpleStackFrameContext(frameProxy, process));
 
     // first add arguments
     int slot = 0;
     for (Value value : frameProxy.getArgumentValues()) {
-      map.put(new DecompiledLocalVariable(slot++, true, null), value);
+      map.put(new DecompiledLocalVariable(slot, true, null, namesMap.get(slot)), value);
+      slot++;
     }
 
     if (!ourInitializationOk) {
@@ -130,7 +137,7 @@ public class LocalVariablesUtil {
     }
 
     // now try to fetch stack values
-    List<DecompiledLocalVariable> vars = collectVariablesFromBytecode(frameProxy);
+    List<DecompiledLocalVariable> vars = collectVariablesFromBytecode(frameProxy, namesMap);
     StackFrame frame = frameProxy.getStackFrame();
     int size = vars.size();
     while (size > 0) {
@@ -201,7 +208,8 @@ public class LocalVariablesUtil {
   }
 
   @NotNull
-  private static List<DecompiledLocalVariable> collectVariablesFromBytecode(final StackFrameProxyImpl frame) throws EvaluateException {
+  private static List<DecompiledLocalVariable> collectVariablesFromBytecode(StackFrameProxyImpl frame,
+                                                                            final MultiMap<Integer, String> namesMap) throws EvaluateException {
     if (!frame.getVirtualMachine().canGetBytecodes()) {
       return Collections.emptyList();
     }
@@ -225,7 +233,7 @@ public class LocalVariablesUtil {
             if (slot >= firstLocalVariableSlot) {
               DecompiledLocalVariable variable = usedVars.get(slot);
               if (variable == null || !typeSignature.equals(variable.getSignature())) {
-                variable = new DecompiledLocalVariable(slot, false, typeSignature);
+                variable = new DecompiledLocalVariable(slot, false, typeSignature, namesMap.get(slot));
                 usedVars.put(slot, variable);
               }
             }
@@ -250,49 +258,45 @@ public class LocalVariablesUtil {
   }
 
   @NotNull
-  public static Collection<String> calcNames(@NotNull final StackFrameContext context, final int slotNumber) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Collection<String>>() {
+  private static MultiMap<Integer, String> calcNames(@NotNull final StackFrameContext context) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<MultiMap<Integer, String>>() {
       @Override
-      public Collection<String> compute() {
+      public MultiMap<Integer, String> compute() {
         SourcePosition position = ContextUtil.getSourcePosition(context);
         if (position != null) {
           PsiElement method = DebuggerUtilsEx.getContainingMethod(position.getElementAt());
           if (method != null) {
             PsiParameterList params = DebuggerUtilsEx.getParameterList(method);
             if (params != null) {
-              if (slotNumber < params.getParametersCount()) {
-                return Collections.singleton(params.getParameters()[slotNumber].getName());
+              MultiMap<Integer, String> res = new MultiMap<Integer, String>();
+              for (int i = 0; i < params.getParametersCount(); i++) {
+                res.putValue(i, params.getParameters()[i].getName());
               }
-              else {
-                PsiElement body = DebuggerUtilsEx.getBody(method);
-                if (body != null) {
-                  Set<String> res = new HashSet<String>();
-                  try {
-                    body.accept(new LocalVariableNameFinder(slotNumber, getFirstLocalsSlot(method), res));
-                  }
-                  catch (Exception e) {
-                    LOG.info(e);
-                  }
-                  return res;
+              PsiElement body = DebuggerUtilsEx.getBody(method);
+              if (body != null) {
+                try {
+                  body.accept(new LocalVariableNameFinder(getFirstLocalsSlot(method), res));
+                }
+                catch (Exception e) {
+                  LOG.info(e);
                 }
               }
+              return res;
             }
           }
         }
-        return Collections.emptyList();
+        return MultiMap.empty();
       }
     });
   }
 
   private static class LocalVariableNameFinder extends JavaRecursiveElementVisitor {
     private final int myStartSlot;
-    private final Collection<String> myNames;
+    private final MultiMap<Integer, String> myNames;
     private int myCurrentSlotIndex;
     private final Stack<Integer> myIndexStack;
-    private final int mySlotIndex;
 
-    public LocalVariableNameFinder(int slot, int startSlot, Set<String> names) {
-      mySlotIndex = slot;
+    public LocalVariableNameFinder(int startSlot, MultiMap<Integer, String> names) {
       myStartSlot = startSlot;
       myNames = names;
       myCurrentSlotIndex = myStartSlot;
@@ -318,9 +322,7 @@ public class LocalVariablesUtil {
     }
 
     private void appendName(String varName) {
-      if (myCurrentSlotIndex == mySlotIndex) {
-        myNames.add(varName);
-      }
+      myNames.putValue(myCurrentSlotIndex, varName);
     }
 
     @Override
