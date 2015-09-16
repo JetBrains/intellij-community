@@ -19,8 +19,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import com.intellij.openapi.roots.ProjectModelModificationService;
-import com.intellij.openapi.roots.ProjectModelModifier;
+import com.intellij.openapi.roots.JavaProjectModelModificationService;
+import com.intellij.openapi.roots.JavaProjectModelModifier;
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
@@ -30,16 +30,16 @@ import java.util.Collection;
 /**
  * @author nik
  */
-public class ProjectModelModificationServiceImpl extends ProjectModelModificationService {
+public class JavaProjectModelModificationServiceImpl extends JavaProjectModelModificationService {
   private final Project myProject;
 
-  public ProjectModelModificationServiceImpl(Project project) {
+  public JavaProjectModelModificationServiceImpl(Project project) {
     myProject = project;
   }
 
   @Override
   public Promise<Void> addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope) {
-    for (ProjectModelModifier modifier : getModelModifiers()) {
+    for (JavaProjectModelModifier modifier : getModelModifiers()) {
       Promise<Void> promise = modifier.addModuleDependency(from, to, scope);
       if (promise != null) {
         return promise;
@@ -50,7 +50,7 @@ public class ProjectModelModificationServiceImpl extends ProjectModelModificatio
 
   @Override
   public Promise<Void> addDependency(@NotNull Collection<Module> from, @NotNull ExternalLibraryDescriptor libraryDescriptor, @NotNull DependencyScope scope) {
-    for (ProjectModelModifier modifier : getModelModifiers()) {
+    for (JavaProjectModelModifier modifier : getModelModifiers()) {
       Promise<Void> promise = modifier.addExternalLibraryDependency(from, libraryDescriptor, scope);
       if (promise != null) {
         return promise;
@@ -61,7 +61,7 @@ public class ProjectModelModificationServiceImpl extends ProjectModelModificatio
 
   @Override
   public Promise<Void> addDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
-    for (ProjectModelModifier modifier : getModelModifiers()) {
+    for (JavaProjectModelModifier modifier : getModelModifiers()) {
       Promise<Void> promise = modifier.addLibraryDependency(from, library, scope);
       if (promise != null) {
         return promise;
@@ -71,7 +71,7 @@ public class ProjectModelModificationServiceImpl extends ProjectModelModificatio
   }
 
   @NotNull
-  private ProjectModelModifier[] getModelModifiers() {
-    return ProjectModelModifier.EP_NAME.getExtensions(myProject);
+  private JavaProjectModelModifier[] getModelModifiers() {
+    return JavaProjectModelModifier.EP_NAME.getExtensions(myProject);
   }
 }

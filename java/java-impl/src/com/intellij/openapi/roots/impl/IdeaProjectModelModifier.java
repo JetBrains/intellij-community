@@ -37,7 +37,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class IdeaProjectModelModifier extends ProjectModelModifier {
+public class IdeaProjectModelModifier extends JavaProjectModelModifier {
   private static final Logger LOG = Logger.getInstance(IdeaProjectModelModifier.class);
   private final Project myProject;
 

@@ -23,7 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import com.intellij.openapi.roots.ProjectModelModifier;
+import com.intellij.openapi.roots.JavaProjectModelModifier;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -50,7 +50,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public class MavenProjectModelModifier extends ProjectModelModifier {
+public class MavenProjectModelModifier extends JavaProjectModelModifier {
   private final Project myProject;
   private final MavenProjectsManager myProjectsManager;
   private MavenProjectIndicesManager myIndicesManager;

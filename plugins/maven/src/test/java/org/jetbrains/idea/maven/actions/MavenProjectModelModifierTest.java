@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.actions;
 
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import com.intellij.openapi.roots.ProjectModelModifier;
+import com.intellij.openapi.roots.JavaProjectModelModifier;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -129,7 +129,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
   }
 
   private MavenProjectModelModifier getExtension() {
-    return ContainerUtil.findInstance(ProjectModelModifier.EP_NAME.getExtensions(myProject), MavenProjectModelModifier.class);
+    return ContainerUtil.findInstance(JavaProjectModelModifier.EP_NAME.getExtensions(myProject), MavenProjectModelModifier.class);
   }
 
   private static class CommonsIoLibraryDescriptor extends ExternalLibraryDescriptor {

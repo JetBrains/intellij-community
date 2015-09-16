@@ -142,7 +142,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
       @Override
       public void run() {
         final boolean test = ModuleRootManager.getInstance(myCurrentModule).getFileIndex().isInTestSourceContent(myClassVFile);
-        ProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module,
+        JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module,
                                                                            test ? DependencyScope.TEST : DependencyScope.COMPILE);
         if (editor != null) {
           final List<PsiClass> targetClasses = new ArrayList<PsiClass>();

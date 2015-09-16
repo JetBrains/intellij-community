@@ -25,16 +25,16 @@ import org.jetbrains.concurrency.Promise;
 import java.util.Collection;
 
 /**
- * Register implementation of this extension to support custom dependency management system for {@link ProjectModelModificationService}.
+ * Register implementation of this extension to support custom dependency management system for {@link JavaProjectModelModificationService}.
  * The default implementation which modify IDEA's project model directly is registered as the last extension so it'll be executed if all other
  * extensions refuse to handle modification by returning {@code null}.
  *
- * @see ProjectModelModificationService
+ * @see JavaProjectModelModificationService
  *
  * @author nik
  */
-public abstract class ProjectModelModifier {
-  public static final ExtensionPointName<ProjectModelModifier> EP_NAME = ExtensionPointName.create("com.intellij.projectModelModifier");
+public abstract class JavaProjectModelModifier {
+  public static final ExtensionPointName<JavaProjectModelModifier> EP_NAME = ExtensionPointName.create("com.intellij.projectModelModifier");
 
   /**
    * Implementation of this method should add dependency from module {@code from} to module {@code to} with scope {@code scope} accordingly

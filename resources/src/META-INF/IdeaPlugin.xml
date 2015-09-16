@@ -250,7 +250,7 @@
     <extensionPoint name="getterSetterProvider" interface="com.intellij.codeInsight.generation.GetterSetterPrototypeProvider"/>
 
     <extensionPoint name="library.dependencyScopeSuggester" interface="com.intellij.openapi.roots.LibraryDependencyScopeSuggester"/>
-    <extensionPoint name="projectModelModifier" interface="com.intellij.openapi.roots.ProjectModelModifier"
+    <extensionPoint name="projectModelModifier" interface="com.intellij.openapi.roots.JavaProjectModelModifier"
                     area="IDEA_PROJECT"/>
 
     <extensionPoint name="refactoring.safeDelete.JavaSafeDeleteDelegate" beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -526,8 +526,8 @@
     <moduleService serviceInterface="com.intellij.openapi.roots.ModulePackageIndex"
                    serviceImplementation="com.intellij.openapi.roots.impl.ModulePackageIndexImpl"/>
 
-    <projectService serviceInterface="com.intellij.openapi.roots.ProjectModelModificationService"
-                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectModelModificationServiceImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.JavaProjectModelModificationService"
+                    serviceImplementation="com.intellij.openapi.roots.impl.JavaProjectModelModificationServiceImpl"/>
     <projectModelModifier implementation="com.intellij.openapi.roots.impl.IdeaProjectModelModifier" order="last"/>
 
     <projectService serviceInterface="com.intellij.usages.impl.rules.DirectoryGroupingRule"
