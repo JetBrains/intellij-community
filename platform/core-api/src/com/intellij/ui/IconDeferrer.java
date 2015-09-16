@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,4 +33,7 @@ public abstract class IconDeferrer {
 
   public abstract <T> Icon defer(Icon base, T param, @NotNull Function<T, Icon> f);
   public abstract <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<T, Icon> f);
+  public boolean equalIcons(Icon icon1, Icon icon2) {
+    return Comparing.equal(icon1, icon2);
+  }
 }

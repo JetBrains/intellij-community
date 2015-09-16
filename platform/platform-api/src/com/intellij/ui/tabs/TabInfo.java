@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ package com.intellij.ui.tabs;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
@@ -103,8 +105,10 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   public TabInfo setText(String text) {
-    clearText(false);
-    append(text, getDefaultAttributes());
+    if (!myText.toString().equals(text)) {
+      clearText(false);
+      append(text, getDefaultAttributes());
+    }
     return this;
   }
 
@@ -135,8 +139,10 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
 
   public TabInfo setIcon(Icon icon) {
     Icon old = myIcon;
-    myIcon = icon;
-    myChangeSupport.firePropertyChange(ICON, old, icon);
+    if (!IconDeferrer.getInstance().equalIcons(old, icon)) {
+      myIcon = icon;
+      myChangeSupport.firePropertyChange(ICON, old, icon);
+    }
     return this;
   }
 
@@ -168,6 +174,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return myIcon;
   }
 
+  @Override
   public String getPlace() {
     return myPlace;
   }
@@ -339,8 +346,10 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
 
   public TabInfo setTooltipText(final String text) {
     String old = myTooltipText;
-    myTooltipText = text;
-    myChangeSupport.firePropertyChange(TEXT, old, myTooltipText);
+    if (!Comparing.equal(old, text)) {
+      myTooltipText = text;
+      myChangeSupport.firePropertyChange(TEXT, old, myTooltipText);
+    }
     return this;
   }
 
@@ -350,8 +359,10 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
 
   public TabInfo setTabColor(Color color) {
     Color old = myTabColor;
-    myTabColor = color;
-    myChangeSupport.firePropertyChange(TAB_COLOR, old, color);
+    if (!Comparing.equal(color, old)) {
+      myTabColor = color;
+      myChangeSupport.firePropertyChange(TAB_COLOR, old, color);
+    }
     return this;
   }
 
@@ -364,6 +375,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return this;
   }
 
+  @Override
   public void putInfo(@NotNull Map<String, String> info) {
     if (myQueryable != null) {
       myQueryable.putInfo(info);
