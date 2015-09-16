@@ -54,20 +54,15 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
   protected String getHelperPath(String helper) throws ExecutionException {
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
     if (sdkData instanceof PyRemoteSdkAdditionalDataBase) {
-      final PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
+      final PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase) sdkData;
       try {
         String helpersPath;
-        try {
+        if (remoteSdkData.getRemoteConnectionType() != CredentialsType.DOCKER) {
           final RemoteSdkCredentials remoteSdkCredentials = remoteSdkData.getRemoteSdkCredentials(false);
           helpersPath = remoteSdkCredentials.getHelpersPath();
         }
-        catch (ExecutionException e) {
-          // TODO [Docker] refactor!
-          if (e.getCause() instanceof UnsupportedDockerRemoteSdkCredentialsProductionException) {
-            helpersPath = remoteSdkData.getHelpersPath();
-          } else {
-            throw e;
-          }
+        else {
+          helpersPath = remoteSdkData.getHelpersPath();
         }
         if (!StringUtil.isEmpty(helpersPath)) {
           return new RemoteFile(helpersPath, helper).getPath();
