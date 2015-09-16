@@ -105,7 +105,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myComponent.add(myProcessName, BorderLayout.NORTH);
       myProcessName.setForeground(UIUtil.getPanelBackground().brighter().brighter());
       myProcessName.setBorder(new EmptyBorder(2, 2, 2, 2));
-      myProcessName.setDecorate(false);
 
       final NonOpaquePanel content = new NonOpaquePanel(new BorderLayout());
       content.setBorder(new EmptyBorder(2, 2, 2, myInfo.isCancellable() ? 2 : 4));
@@ -119,9 +118,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       content.add(myText, BorderLayout.NORTH);
       content.add(myProgress, BorderLayout.CENTER);
       content.add(myText2, BorderLayout.SOUTH);
-
-      myText.setDecorate(false);
-      myText2.setDecorate(false);
 
       myComponent.setBorder(new EmptyBorder(2, 2, 2, 2));
     }
