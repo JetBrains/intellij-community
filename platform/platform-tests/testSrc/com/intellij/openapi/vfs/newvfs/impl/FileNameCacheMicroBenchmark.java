@@ -44,10 +44,12 @@ public class FileNameCacheMicroBenchmark {
         try {
           IdeaTestFixture fixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR).getFixture();
           fixture.setUp();
-
+          long start = System.currentTimeMillis();
           runTest(200, "All names in cache");
           runTest(50000, "Cache almost overflows");
           runTest(120000, "Cache certain overflow");
+          long elapsed = System.currentTimeMillis() - start;
+          System.out.println("Total elapsed: " + elapsed/1000.0 +"s");
 
           fixture.tearDown();
         }
@@ -68,10 +70,15 @@ public class FileNameCacheMicroBenchmark {
       for (int j = 0; j < queryCount; j++) {
         final CharSequence name = FileNameCache.getVFileName(ids[threadRandom.nextInt(ids.length)]);
 
-        if (blackHole == System.identityHashCode(name.hashCode())) {
+        if (blackHole == name.hashCode() && blackHole+1 == name.hashCode()) {
           failure();
         }
       }
+    }
+
+    @Override
+    public String toString() {
+      return "random access";
     }
   };
 
@@ -87,6 +94,11 @@ public class FileNameCacheMicroBenchmark {
           failure();
         }
       }
+    }
+
+    @Override
+    public String toString() {
+      return "random access + getPath";
     }
   };
 
@@ -110,6 +122,11 @@ public class FileNameCacheMicroBenchmark {
 
       LONG_RANDOM_ACCESS_WITH_GET_PATH.doTest(threadNumber, ids, threadRandom, queryCount);
     }
+
+    @Override
+    public String toString() {
+      return "linear scan + random access + getPath";
+    }
   };
 
   private static void runTest(int nameCount, String name) throws InterruptedException, ExecutionException {
@@ -123,20 +140,19 @@ public class FileNameCacheMicroBenchmark {
     measureAverageTime(ids, 1, LONG_RANDOM_ACCESS);
     measureAverageTime(ids, 4, LONG_RANDOM_ACCESS);
 
-    //measureAverageTime(ids, 1, LONG_RANDOM_ACCESS_WITH_GET_PATH);
-    //measureAverageTime(ids, 4, LONG_RANDOM_ACCESS_WITH_GET_PATH);
-    //
-    //measureAverageTime(ids, 1, LINEAR_SCAN_AND_RANDOM_ACCESS_WITH_GET_PATH);
-    //measureAverageTime(ids, 4, LINEAR_SCAN_AND_RANDOM_ACCESS_WITH_GET_PATH);
+    measureAverageTime(ids, 1, LONG_RANDOM_ACCESS_WITH_GET_PATH);
+    measureAverageTime(ids, 4, LONG_RANDOM_ACCESS_WITH_GET_PATH);
+
+    measureAverageTime(ids, 1, LINEAR_SCAN_AND_RANDOM_ACCESS_WITH_GET_PATH);
+    measureAverageTime(ids, 4, LINEAR_SCAN_AND_RANDOM_ACCESS_WITH_GET_PATH);
   }
 
   private static boolean warmedUp;
   private static void warmUp(int[] ids) throws InterruptedException, ExecutionException {
     if (warmedUp) return;
+    System.out.println("Warming up");
     for (int i = 0; i < 200000; i++) {
       runThreads(ids, 2, 1000, LONG_RANDOM_ACCESS);
-      //runThreads(ids, 2, 1000, LONG_RANDOM_ACCESS_WITH_GET_PATH);
-      //runThreads(ids, 2, 1000, LINEAR_SCAN_AND_RANDOM_ACCESS_WITH_GET_PATH);
     }
 
     Thread.sleep(10000);
@@ -146,32 +162,32 @@ public class FileNameCacheMicroBenchmark {
 
   private static int getPath(int id, int[] ids) {
     int result = 0;
-    result += System.identityHashCode(FileNameCache.getVFileName(ids[id]));
 
-    while (id > 10) {
-      result += System.identityHashCode(FileNameCache.getVFileName(ids[id / 10]));
+    while (id > 0) {
+      result += FileNameCache.getVFileName(ids[id]).hashCode();
       id /= 10;
     }
     return result;
   }
 
   private static void measureAverageTime(int[] ids, int threadCount, TestIteration iteration) throws InterruptedException, ExecutionException {
-    System.out.println("Running "+threadCount+" threads");
+    System.out.println("Running "+threadCount+" threads, using "+iteration);
     TLongArrayList times = new TLongArrayList();
     for (int i = 0; i < 10; i++) {
-      long time = runThreads(ids, threadCount, 20000000, iteration);
+      long time = runThreads(ids, threadCount, 2000000/*0*/, iteration);
       System.out.println(time);
       times.add(time);
     }
 
     times.sort();
-    System.out.println("Median for " + threadCount + " threads: " + times.get(times.size() / 2));
+    long median = times.get(times.size() / 2);
+    System.out.println("Median for " + threadCount + " threads: " + median+"ms");
     System.out.println();
   }
 
-  abstract static class TestIteration {
+  private abstract static class TestIteration {
     abstract void doTest(int threadNumber, int[] ids, Random threadRandom, int queryCount);
-    protected final void failure() {
+    static void failure() {
       System.out.println("Failure");
       assert false;
     }
