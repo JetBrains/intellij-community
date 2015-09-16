@@ -173,7 +173,16 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
     return myLibrariesModifiableModel;
   }
 
-  public void disposeUncommittedLibraries() {
+  @Override
+  public void dispose() {
+    if (myLibrariesModifiableModel != null) {
+      Disposer.dispose(myLibrariesModifiableModel);
+      myLibrariesModifiableModel = null;
+    }
+    disposeUncommittedLibraries();
+  }
+
+  private void disposeUncommittedLibraries() {
     for (final Library library : new ArrayList<Library>(myLibrary2EditorMap.keySet())) {
       final Library existingLibrary = myTable.getLibraryByName(library.getName());
       if (existingLibrary != library) {

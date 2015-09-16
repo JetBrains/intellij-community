@@ -63,6 +63,9 @@ public class RepositoryLibrarySupport {
     if (library == null) {
       library = createNewLibrary(module, modifiableModel);
     }
+    else {
+      modifiableModelsProvider.disposeLibraryTableModifiableModel(modifiableModel);
+    }
     final DependencyScope dependencyScope = LibraryDependencyScopeSuggester.getDefaultScope(library);
     final ModifiableRootModel moduleModifiableModel = modifiableModelsProvider.getModuleModifiableModel(module);
     try {

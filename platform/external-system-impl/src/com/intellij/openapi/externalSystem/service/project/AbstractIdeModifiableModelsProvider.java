@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -411,6 +410,7 @@ public abstract class AbstractIdeModifiableModelsProvider implements IdeModifiab
       if (each.isDisposed()) continue;
       each.dispose();
     }
+    Disposer.dispose(getModifiableProjectLibrariesModel());
 
     for (Library.ModifiableModel each : myModifiableLibraryModels.values()) {
       Disposer.dispose(each);
