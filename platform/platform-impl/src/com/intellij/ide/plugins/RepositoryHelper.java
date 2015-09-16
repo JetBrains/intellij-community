@@ -23,18 +23,24 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.RequestBuilder;
 import com.intellij.util.io.URLUtil;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.JsonReaderEx;
+import org.jetbrains.io.JsonUtil;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -105,8 +111,65 @@ public class RepositoryHelper {
   }
 
   @NotNull
+  public static List<IdeaPluginDescriptor> loadPlugins(@Nullable final String repositoryUrl,
+                                                       @Nullable BuildNumber buildnumber,
+                                                       boolean forceHttps,
+                                                       @Nullable final ProgressIndicator indicator) throws IOException {
+    List<IdeaPluginDescriptor> plugins = loadPlugins(repositoryUrl, buildnumber, null, forceHttps, indicator);
+
+    Map<PluginId, List<Pair<String, IdeaPluginDescriptor>>> pluginsFromChannels = loadPluginsFromChannels(buildnumber, indicator);
+
+    return plugins;
+  }
+
+  @NotNull
+  public static Map<PluginId, List<Pair<String, IdeaPluginDescriptor>>> loadPluginsFromChannels(@Nullable BuildNumber buildnumber,
+                                                                                                @Nullable final ProgressIndicator indicator)
+      throws IOException {
+    Map<PluginId, List<Pair<String, IdeaPluginDescriptor>>> result = new LinkedHashMap<PluginId, List<Pair<String, IdeaPluginDescriptor>>>();
+
+    String url;
+    try {
+      URIBuilder uriBuilder = new URIBuilder(ApplicationInfoImpl.getShadowInstance().getChannelsListUrl());
+      uriBuilder.addParameter("build",
+                              (buildnumber != null ? buildnumber.asString() : ApplicationInfoImpl.getShadowInstance().getApiVersion()));
+      url = uriBuilder.build().toString();
+    }
+    catch (URISyntaxException e) {
+      throw new IOException(e);
+    }
+
+    boolean forceHttps = IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
+    List<String> channelList =
+        HttpRequests.request(url).forceHttps(forceHttps).connect(new HttpRequests.RequestProcessor<List<String>>() {
+          @Override
+          public List<String> process(@NotNull HttpRequests.Request request) throws IOException {
+            //{"channels":["alpha","eap","ideadev","nightly"]}
+            return (List<String>)JsonUtil.nextObject(new JsonReaderEx(request.getReader().readLine())).get("channels");
+          }
+        });
+
+
+    for (String channel : channelList) {
+      List<IdeaPluginDescriptor> channelPlugins = loadPlugins(null, buildnumber, channel, forceHttps, indicator);
+      for (IdeaPluginDescriptor plugin : channelPlugins) {
+        PluginId pluginId = plugin.getPluginId();
+        List<Pair<String, IdeaPluginDescriptor>> pluginChannelDescriptors = result.get(pluginId);
+        if (pluginChannelDescriptors == null) {
+          pluginChannelDescriptors = new SmartList<Pair<String, IdeaPluginDescriptor>>();
+          result.put(pluginId, pluginChannelDescriptors);
+        }
+        pluginChannelDescriptors.add(Pair.create(channel, plugin));
+      }
+    }
+
+    return result;
+  }
+
+  @NotNull
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
                                                        @Nullable BuildNumber buildnumber,
+                                                       @Nullable String channel,
                                                        boolean forceHttps,
                                                        @Nullable final ProgressIndicator indicator) throws IOException {
     final String url;
@@ -117,7 +180,7 @@ public class RepositoryHelper {
       URIBuilder uriBuilder;
       if (repositoryUrl == null) {
         uriBuilder = new URIBuilder(ApplicationInfoImpl.getShadowInstance().getPluginsListUrl());
-        pluginListFile = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
+        pluginListFile = new File(PathManager.getPluginsPath(), channel == null ? PLUGIN_LIST_FILE : channel + "_" + PLUGIN_LIST_FILE);
         if (pluginListFile.length() > 0) {
           uriBuilder.addParameter("crc32", Files.hash(pluginListFile, Hashing.crc32()).toString());
         }
@@ -128,7 +191,9 @@ public class RepositoryHelper {
       }
 
       if (!URLUtil.FILE_PROTOCOL.equals(uriBuilder.getScheme())) {
-        uriBuilder.addParameter("build", (buildnumber != null ? buildnumber.asString() : ApplicationInfoImpl.getShadowInstance().getApiVersion()));
+        uriBuilder.addParameter("build",
+                                (buildnumber != null ? buildnumber.asString() : ApplicationInfoImpl.getShadowInstance().getApiVersion()));
+        if (channel != null) uriBuilder.addParameter("channel", channel);
       }
 
       host = uriBuilder.getHost();
