@@ -197,8 +197,9 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
       }
 
-      constraints.add(new TypeCompatibilityConstraint(returnType,
-                                                      session.substituteWithInferenceVariables(psiSubstitutor.substitute(referencedMethodReturnType))));
+      final PsiType capturedReturnType = PsiImplUtil.normalizeWildcardTypeByPosition(psiSubstitutor.substitute(referencedMethodReturnType),
+                                                                                     myExpression);
+      constraints.add(new TypeCompatibilityConstraint(returnType, session.substituteWithInferenceVariables(capturedReturnType)));
     }
     
     return true;
