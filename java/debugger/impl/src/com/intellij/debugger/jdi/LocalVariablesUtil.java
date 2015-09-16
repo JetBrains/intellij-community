@@ -19,15 +19,16 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -255,25 +256,25 @@ public class LocalVariablesUtil {
       public Collection<String> compute() {
         SourcePosition position = ContextUtil.getSourcePosition(context);
         if (position != null) {
-          // TODO: what about lambdas?
-          PsiMethod method = PsiTreeUtil.getParentOfType(position.getElementAt(), PsiMethod.class);
+          PsiElement method = DebuggerUtilsEx.getContainingMethod(position.getElementAt());
           if (method != null) {
-            PsiParameterList params = method.getParameterList();
-            if (slotNumber < params.getParametersCount()) {
-              return Collections.singleton(params.getParameters()[slotNumber].getName());
-            }
-            else {
-              // treat myIndex as a variable slot index
-              PsiCodeBlock body = method.getBody();
-              if (body != null) {
-                Set<String> res = new HashSet<String>();
-                try {
-                  body.accept(new LocalVariableNameFinder(slotNumber, getFirstLocalsSlot(method), res));
+            PsiParameterList params = DebuggerUtilsEx.getParameterList(method);
+            if (params != null) {
+              if (slotNumber < params.getParametersCount()) {
+                return Collections.singleton(params.getParameters()[slotNumber].getName());
+              }
+              else {
+                PsiElement body = DebuggerUtilsEx.getBody(method);
+                if (body != null) {
+                  Set<String> res = new HashSet<String>();
+                  try {
+                    body.accept(new LocalVariableNameFinder(slotNumber, getFirstLocalsSlot(method), res));
+                  }
+                  catch (Exception e) {
+                    LOG.info(e);
+                  }
+                  return res;
                 }
-                catch (Exception e) {
-                  LOG.info(e);
-                }
-                return res;
               }
             }
           }
@@ -383,10 +384,16 @@ public class LocalVariablesUtil {
     }
   }
 
-  private static int getFirstLocalsSlot(PsiMethod method) {
-    int startSlot = method.hasModifierProperty(PsiModifier.STATIC) ? 0 : 1;
-    for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      startSlot += getTypeSlotSize(parameter.getType());
+  private static int getFirstLocalsSlot(PsiElement method) {
+    int startSlot = 0;
+    if (method instanceof PsiModifierListOwner) {
+      startSlot = ((PsiModifierListOwner)method).hasModifierProperty(PsiModifier.STATIC) ? 0 : 1;
+    }
+    PsiParameterList params = DebuggerUtilsEx.getParameterList(method);
+    if (params != null) {
+      for (PsiParameter parameter : params.getParameters()) {
+        startSlot += getTypeSlotSize(parameter.getType());
+      }
     }
     return startSlot;
   }

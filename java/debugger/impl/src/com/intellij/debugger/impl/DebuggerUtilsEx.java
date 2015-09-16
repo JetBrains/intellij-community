@@ -872,6 +872,28 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @Nullable
+  public static PsiElement getBody(@Nullable PsiElement containingMethod) {
+    if (containingMethod instanceof PsiMethod) {
+      return ((PsiMethod)containingMethod).getBody();
+    }
+    else if (containingMethod instanceof PsiLambdaExpression) {
+      return ((PsiLambdaExpression)containingMethod).getBody();
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiParameterList getParameterList(@Nullable PsiElement containingMethod) {
+    if (containingMethod instanceof PsiMethod) {
+      return ((PsiMethod)containingMethod).getParameterList();
+    }
+    else if (containingMethod instanceof PsiLambdaExpression) {
+      return ((PsiLambdaExpression)containingMethod).getParameterList();
+    }
+    return null;
+  }
+
+  @Nullable
   public static PsiElement getContainingMethod(@NotNull SourcePosition position) {
     return getContainingMethod(position.getElementAt());
   }
