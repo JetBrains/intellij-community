@@ -17,7 +17,6 @@ package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 
@@ -100,7 +99,7 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
     if (name != null) {
       name = cleanUpName(name);
     }
-    if (name != null ? !PyNames.isIdentifierString(name.toString()) : type.isEmpty()) {
+    if (name != null ? !isValidName(name.toString()) : !isValidType(type.toString())) {
       return Pair.create(null, lineNum);
     }
     final Pair<List<Substring>, Integer> pair;

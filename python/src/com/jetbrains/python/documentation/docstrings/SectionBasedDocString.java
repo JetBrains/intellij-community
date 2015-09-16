@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.toolbox.Substring;
@@ -51,6 +52,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NonNls public static final String METHODS_SECTION = "methods";
   @NonNls public static final String OTHER_PARAMETERS_SECTION = "other parameters";
   @NonNls public static final String YIELDS_SECTION = "yields";
+  
+  private static final Pattern PLAIN_TEXT = Pattern.compile("\\w+(\\s+\\w+){2}"); // dumb heuristic - consecutive words
 
   protected static final Map<String, String> SECTION_ALIASES =
     ImmutableMap.<String, String>builder()
@@ -161,8 +164,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     final int sectionIndent = getLineIndentSize(sectionStartLine);
     int lineNum = consumeEmptyLines(parsedHeader.getSecond());
     while (!isSectionBreak(lineNum, sectionIndent)) {
-      final Pair<SectionField, Integer> parsedField = parseSectionField(lineNum, normalized, sectionIndent);
       if (!isEmpty(lineNum)) {
+        final Pair<SectionField, Integer> parsedField = parseSectionField(lineNum, normalized, sectionIndent);
         if (parsedField.getFirst() != null) {
           fields.add(parsedField.getFirst());
           lineNum = parsedField.getSecond();
@@ -241,6 +244,14 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @Override
   protected boolean isBlockEnd(int lineNum) {
     return isSectionStart(lineNum);
+  }
+
+  protected boolean isValidType(@NotNull String type) {
+    return !type.isEmpty() && !PLAIN_TEXT.matcher(type).find();
+  }
+
+  protected boolean isValidName(@NotNull String name) {
+    return PyNames.isIdentifierString(name.toString());
   }
 
   /**

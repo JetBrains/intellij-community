@@ -344,6 +344,13 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     assertEmpty(y.getDescription());
   }
 
+  public void testNumpyMultipleReturns() {
+    final NumpyDocString docString = findAndParseNumpyStyleDocString();
+    assertSize(1, docString.getSections());
+    final Section returnSection = docString.getSections().get(0);
+    assertSize(2, returnSection.getFields());
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/docstrings";
