@@ -61,4 +61,9 @@ public class DecompiledLocalVariable{
   public boolean isParam() {
     return myIsParam;
   }
+
+  @Override
+  public String toString() {
+    return getName() + " (" + mySignature + ")";
+  }
 }
