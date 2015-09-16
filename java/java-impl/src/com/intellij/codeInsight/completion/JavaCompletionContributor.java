@@ -222,13 +222,11 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     final InheritorsHolder inheritors = new InheritorsHolder(result);
-    if (JavaSmartCompletionContributor.IN_TYPE_ARGS.accepts(position)) {
+    if (TypeArgumentCompletionProvider.IN_TYPE_ARGS.accepts(position)) {
       new TypeArgumentCompletionProvider(false, inheritors).addCompletions(parameters, new ProcessingContext(), result);
     }
 
-    if (JavaSmartCompletionContributor.LAMBDA.accepts(parameters.getPosition())) {
-      result.addAllElements(FunctionalExpressionCompletionProvider.getLambdaVariants(parameters, true));
-    }
+    result.addAllElements(FunctionalExpressionCompletionProvider.getLambdaVariants(parameters, true));
 
     PrefixMatcher matcher = result.getPrefixMatcher();
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
@@ -404,7 +402,7 @@ public class JavaCompletionContributor extends CompletionContributor {
           return;
         }
         if (reference instanceof PsiLabelReference) {
-          processLabelReference(result, (PsiLabelReference)reference);
+          LabelReferenceCompletion.processLabelReference(result, (PsiLabelReference)reference);
           return;
         }
 
@@ -832,12 +830,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     return null;
   }
 
-  static void processLabelReference(CompletionResultSet result, PsiLabelReference ref) {
-    for (String s : ref.getVariants()) {
-      result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailType.SEMICOLON));
-    }
-  }
-  
   private static class IndentingDecorator extends LookupElementDecorator<LookupElement> {
     public IndentingDecorator(LookupElement delegate) {
       super(delegate);

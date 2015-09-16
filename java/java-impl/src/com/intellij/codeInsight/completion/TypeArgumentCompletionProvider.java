@@ -27,6 +27,7 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -48,6 +49,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 * @author peter
 */
 class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
+  static final ElementPattern<PsiElement> IN_TYPE_ARGS = psiElement().inside(PsiReferenceParameterList.class);
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.TypeArgumentCompletionProvider");
   private final boolean mySmart;
   @Nullable private final InheritorsHolder myInheritors;

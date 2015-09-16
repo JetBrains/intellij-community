@@ -26,6 +26,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PatternCondition;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -43,10 +45,26 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+
 /**
  * User: anna
  */
 public class FunctionalExpressionCompletionProvider extends CompletionProvider<CompletionParameters> {
+  static final ElementPattern<PsiElement> LAMBDA = psiElement().with(new PatternCondition<PsiElement>("LAMBDA_CONTEXT") {
+    @Override
+    public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
+      return isLambdaContext(element);
+    }});
+
+  private static boolean isLambdaContext(@NotNull PsiElement element) {
+    final PsiElement rulezzRef = element.getParent();
+    return rulezzRef != null &&
+           rulezzRef instanceof PsiReferenceExpression &&
+           ((PsiReferenceExpression)rulezzRef).getQualifier() == null &&
+           LambdaUtil.isValidLambdaContext(rulezzRef.getParent());
+  }
+
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
                                 ProcessingContext context,
@@ -55,7 +73,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
   }
 
   static List<LookupElement> getLambdaVariants(@NotNull CompletionParameters parameters, boolean prioritize) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(parameters.getOriginalFile())) return Collections.emptyList();
+    if (!PsiUtil.isLanguageLevel8OrHigher(parameters.getOriginalFile()) || !isLambdaContext(parameters.getPosition())) return Collections.emptyList();
 
     List<LookupElement> result = ContainerUtil.newArrayList();
     for (ExpectedTypeInfo expectedType : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {

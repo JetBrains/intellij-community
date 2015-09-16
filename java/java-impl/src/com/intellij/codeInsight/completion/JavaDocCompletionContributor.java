@@ -53,10 +53,10 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.string;
 
 /**
  * Created by IntelliJ IDEA.
@@ -130,6 +130,25 @@ public class JavaDocCompletionContributor extends CompletionContributor {
         }
 
         return LookupItemUtil.objectToLookupItem(element);
+      }
+    });
+
+    extend(CompletionType.SMART, psiElement().inside(
+      psiElement(PsiDocTag.class).withName(
+        string().oneOf(PsiKeyword.THROWS, "exception"))), new CompletionProvider<CompletionParameters>() {
+      @Override
+      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+        final PsiElement element = parameters.getPosition();
+        final Set<PsiClass> throwsSet = new HashSet<PsiClass>();
+        final PsiMethod method = PsiTreeUtil.getContextOfType(element, PsiMethod.class, true);
+        if(method != null){
+          for (PsiClassType ref : method.getThrowsList().getReferencedTypes()) {
+            final PsiClass exception = ref.resolve();
+            if (exception != null && throwsSet.add(exception)) {
+              result.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(exception), TailType.HUMBLE_SPACE_BEFORE_WORD));
+            }
+          }
+        }
       }
     });
   }
