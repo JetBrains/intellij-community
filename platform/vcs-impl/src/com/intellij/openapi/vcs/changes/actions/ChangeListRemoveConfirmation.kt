@@ -21,21 +21,20 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
-import kotlin.platform.platformStatic
 
 abstract class ChangeListRemoveConfirmation() {
   
   abstract fun askIfShouldRemoveChangeLists(ask: List<LocalChangeList>): Boolean
   
   companion object {
-    platformStatic
-    fun processLists(project: Project, allLists: Collection<LocalChangeList>, ask: ChangeListRemoveConfirmation) {
+    @JvmStatic
+    fun processLists(project: Project, explicitly: Boolean, allLists: Collection<LocalChangeList>, ask: ChangeListRemoveConfirmation) {
       val confirmationAsked = ContainerUtil.newIdentityTroveSet<LocalChangeList>()
       val doNotRemove = ContainerUtil.newIdentityTroveSet<LocalChangeList>()
 
       for (list in allLists) {
-        for (vcs in ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()) {
-          val permission = vcs.mayRemoveChangeList(list)
+        for (vcs in ProjectLevelVcsManager.getInstance(project).allActiveVcss) {
+          val permission = vcs.mayRemoveChangeList(list, explicitly)
           if (permission != ThreeState.UNSURE) {
             confirmationAsked.add(list)
           }
@@ -50,7 +49,7 @@ abstract class ChangeListRemoveConfirmation() {
       if (toAsk.isNotEmpty() && !ask.askIfShouldRemoveChangeLists(toAsk)) {
         doNotRemove.addAll(toAsk)
       }
-      allLists.filter { it !in doNotRemove }.forEach { ChangeListManager.getInstance(project).removeChangeList(it.getName()) }
+      allLists.filter { it !in doNotRemove }.forEach { ChangeListManager.getInstance(project).removeChangeList(it.name) }
     }
   }
 }

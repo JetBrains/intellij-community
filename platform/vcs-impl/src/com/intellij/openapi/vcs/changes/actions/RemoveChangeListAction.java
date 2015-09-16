@@ -71,7 +71,7 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
     }
 
     //noinspection unchecked
-    ChangeListRemoveConfirmation.processLists(project, (Collection)Arrays.asList(lists), new ChangeListRemoveConfirmation() {
+    ChangeListRemoveConfirmation.processLists(project, true, (Collection)Arrays.asList(lists), new ChangeListRemoveConfirmation() {
       @Override
       public boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> lists1) {
         return RemoveChangeListAction.askIfShouldRemoveChangeLists(lists1, project);

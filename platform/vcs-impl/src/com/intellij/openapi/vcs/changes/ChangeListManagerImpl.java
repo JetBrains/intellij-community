@@ -197,7 +197,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       return;
     }
 
-    ChangeListRemoveConfirmation.processLists(myProject, lists, new ChangeListRemoveConfirmation() {
+    ChangeListRemoveConfirmation.processLists(myProject, false, lists, new ChangeListRemoveConfirmation() {
       @Override
       public boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> toAsk) {
         return myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION || 

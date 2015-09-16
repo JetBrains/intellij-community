@@ -269,13 +269,15 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   /**
    * Invoked when a changelist is deleted explicitly by user or implicitly (e.g. after default changelist switch
    * when the previous one was empty).
+   * @param list change list that's about to be removed
+   * @param explicitly whether it's a result of explicit Delete action, or just after switching the active changelist.
    * @return UNSURE if the VCS has nothing to say about this changelist.
    * YES or NO if the changelist has to be removed or not, and no further confirmations are needed about this changelist
    * (in particular, the VCS can show a confirmation to the user by itself)
    */
   @CalledInAwt
   @NotNull
-  public ThreeState mayRemoveChangeList(@NotNull LocalChangeList list) {
+  public ThreeState mayRemoveChangeList(@NotNull LocalChangeList list, boolean explicitly) {
     return ThreeState.UNSURE;
   }
 
