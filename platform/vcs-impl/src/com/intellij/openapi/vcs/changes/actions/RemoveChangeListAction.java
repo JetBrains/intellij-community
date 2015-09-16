@@ -82,7 +82,7 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
   private static boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> lists, Project project) {
     for (LocalChangeList list : lists) {
       if (list.isDefault()) {
-        return removeActiveChangeList(project, lists, list.getChanges().isEmpty());
+        return confirmActiveChangeListRemoval(project, lists, list.getChanges().isEmpty());
       }
     }
 
@@ -109,7 +109,7 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
     return rc == Messages.YES;
   }
 
-  private static boolean removeActiveChangeList(final Project project, final List<? extends LocalChangeList> lists, final boolean empty) {
+  static boolean confirmActiveChangeListRemoval(final Project project, final List<? extends LocalChangeList> lists, final boolean empty) {
     List<LocalChangeList> remainingLists = ChangeListManager.getInstance(project).getChangeListsCopy();
     remainingLists.removeAll(lists);
     String[] names = new String[remainingLists.size()];

@@ -49,7 +49,13 @@ abstract class ChangeListRemoveConfirmation() {
       if (toAsk.isNotEmpty() && !ask.askIfShouldRemoveChangeLists(toAsk)) {
         doNotRemove.addAll(toAsk)
       }
-      allLists.filter { it !in doNotRemove }.forEach { ChangeListManager.getInstance(project).removeChangeList(it.name) }
+      val toRemove = allLists.filter { it !in doNotRemove }
+      val active = toRemove.find { it.isDefault }
+      toRemove.forEach { if (it != active) ChangeListManager.getInstance(project).removeChangeList(it.name) }
+
+      if (active != null && RemoveChangeListAction.confirmActiveChangeListRemoval(project, listOf(active), active.changes.isEmpty())) {
+        ChangeListManager.getInstance(project).removeChangeList(active.name)
+      }
     }
   }
 }
