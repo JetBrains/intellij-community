@@ -1124,6 +1124,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       mySideStack.remove(id);
     }
 
+    if (!toBeShownInfo.isShowStripeButton()) {
+      toBeShownInfo.setShowStripeButton(true);
+    }
+
     appendApplyWindowInfoCmd(toBeShownInfo, commandsList);
   }
 
