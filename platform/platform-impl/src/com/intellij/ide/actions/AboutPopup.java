@@ -322,7 +322,7 @@ public class AboutPopup {
             myLinks.add(new Link(new Rectangle(x, yBase + y - fontAscent, metrics.stringWidth(s), fontHeight), line.getUrl()));
           }
           else {
-            g2.setColor(Gray.x33);
+            g2.setColor(Registry.is("ide.new.about") ? Gray.x33 : appInfo.getAboutForeground());
           }
           renderString(s, indentX);
           if (!line.isKeepWithNext() && !line.equals(lines.get(lines.size()-1))) {
