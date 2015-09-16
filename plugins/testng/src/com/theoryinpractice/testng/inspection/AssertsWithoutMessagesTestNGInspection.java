@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class AssertsWithoutMessagesTestNGInspection extends BaseJavaLocalInspect
       }
       final PsiClass containingClass = method.getContainingClass();
       final boolean messageFirst;
-      if (InheritanceUtil.isInheritor(containingClass, "org.testng.AssertJUnit")) {
+      if (InheritanceUtil.isInheritor(containingClass, "org.testng.AssertJUnit") || methodName.equals("fail")) {
         messageFirst = true;
       }
       else if (InheritanceUtil.isInheritor(containingClass, "org.testng.Assert")) {
