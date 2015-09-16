@@ -38,7 +38,12 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
+import com.intellij.psi.search.scope.packageSet.ParsingException;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -768,5 +773,13 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     model.setPromptOnReplace(false);
     FindUtil.replace(myProject, myEditor, 0, model);
     assertEquals("soMething\telse", myEditor.getDocument().getText());
+  }
+
+  public void testNoFilesFromAdditionalIndexedRootsWithCustomExclusionScope() throws ParsingException {
+    FindModel findModel = FindManagerTestUtils.configureFindModel("Object.prototype.__defineGetter__");
+    PackageSet compile = PackageSetFactory.getInstance().compile("!src[subdir]:*..*");
+    findModel.setCustomScope(GlobalSearchScopesCore.filterScope(myProject, new NamedScope.UnnamedScope(compile)));
+    findModel.setCustomScope(true);
+    assertSize(0, findUsages(findModel));
   }
 }
