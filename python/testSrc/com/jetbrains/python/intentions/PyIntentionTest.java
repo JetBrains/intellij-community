@@ -550,6 +550,11 @@ public class  PyIntentionTest extends PyTestCase {
     }
   }
 
+  // PY-16904
+  public void testNumpyAddMissingParameterPreservesNoneIndent() {
+    doDocAddMissingParamsTest(DocStringFormat.NUMPY);
+  }
+
   // PY-9795
   public void testAddMissingParamsInGoogleDocString() {
     doDocAddMissingParamsTest(DocStringFormat.GOOGLE);

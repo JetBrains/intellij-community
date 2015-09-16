@@ -299,7 +299,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
   protected String getFieldIndent(@NotNull Section section, @NotNull SectionField field) {
     final String titleIndent = getSectionIndent(section);
     final String fieldIndent = getLineIndent(getFieldStartLine(field));
-    final int diffSize = Math.max(1, PyIndentUtil.getLineIndentSize(fieldIndent) - PyIndentUtil.getLineIndentSize(titleIndent));
+    final int diffSize = Math.max(0, PyIndentUtil.getLineIndentSize(fieldIndent) - PyIndentUtil.getLineIndentSize(titleIndent));
     return StringUtil.repeatSymbol(' ', diffSize);
   }
 
