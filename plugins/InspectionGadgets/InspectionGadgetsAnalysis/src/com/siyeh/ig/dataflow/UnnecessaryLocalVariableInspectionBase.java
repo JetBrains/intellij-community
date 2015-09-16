@@ -169,6 +169,9 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
         !HighlightControlFlowUtil.isEffectivelyFinal(initialization, containingScope, null) && 
         HighlightControlFlowUtil.isEffectivelyFinal(variable, containingScope, null);
 
+      final PsiType variableType = variable.getType();
+      final PsiType initializationType = initialization.getType();
+      final boolean sameType = Comparing.equal(variableType, initializationType);
       for (PsiReference ref : ReferencesSearch.search(variable, new LocalSearchScope(containingScope))) {
         final PsiElement refElement = ref.getElement();
         if (finalVariableIntroduction) {
@@ -181,9 +184,20 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
         if (resolveHelper.resolveReferencedVariable(initializationName, refElement) != initialization) {
           return false;
         }
+        
+        if (!sameType) {
+          final PsiElement parent = refElement.getParent();
+          if (parent instanceof PsiReferenceExpression) {
+            final PsiElement resolve = ((PsiReferenceExpression)parent).resolve();
+            if (resolve instanceof PsiMember && 
+                ((PsiMember)resolve).hasModifierProperty(PsiModifier.PRIVATE)) {
+              return false;
+            }
+          }
+        }
       }
 
-      return !TypeConversionUtil.boxingConversionApplicable(variable.getType(), initialization.getType());
+      return !TypeConversionUtil.boxingConversionApplicable(variableType, initializationType);
     }
 
     private boolean isImmediatelyReturned(PsiVariable variable) {

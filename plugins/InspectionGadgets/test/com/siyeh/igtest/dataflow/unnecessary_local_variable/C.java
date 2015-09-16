@@ -154,4 +154,35 @@ class C {
       }
     };
   }
+
+  abstract class AbstractSchedulingElement<T extends AbstractSchedulingElement<T>>  {
+    private String scenarioSettings;
+    public String scenarioSettings1;
+
+    public T copyInto(T target) {
+      AbstractSchedulingElement<T> targetAsAbstractSchedulingElement = target;
+      targetAsAbstractSchedulingElement.scenarioSettings = scenarioSettings;
+      return target;
+    }
+    
+    public T copyInto1(T target) {
+      AbstractSchedulingElement<T> <warning descr="Local variable 'targetAsAbstractSchedulingElement' is redundant">targetAsAbstractSchedulingElement</warning> = target;
+      targetAsAbstractSchedulingElement.scenarioSettings1 = scenarioSettings1;
+      return target;
+    }
+
+    public SchedulingElement copyInto2(SchedulingElement target) {
+      AbstractSchedulingElement<SchedulingElement> targetAsAbstractSchedulingElement = target;
+      targetAsAbstractSchedulingElement.scenarioSettings = scenarioSettings;
+      return target;
+    }
+    
+    public SchedulingElement copyInto3(SchedulingElement target) {
+      AbstractSchedulingElement<SchedulingElement> <warning descr="Local variable 'targetAsAbstractSchedulingElement' is redundant">targetAsAbstractSchedulingElement</warning> = target;
+      targetAsAbstractSchedulingElement.scenarioSettings1 = scenarioSettings1;
+      return target;
+    }
+  }
+
+  class SchedulingElement extends AbstractSchedulingElement<SchedulingElement>{}
 }
