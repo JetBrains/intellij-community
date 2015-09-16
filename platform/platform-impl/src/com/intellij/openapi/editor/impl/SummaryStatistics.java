@@ -15,51 +15,50 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import gnu.trove.TLongArrayList;
-
 /**
  * @author Pavel Fatin
  */
-class DelayMeter {
-  private final TLongArrayList myStartTimes = new TLongArrayList();
+class SummaryStatistics {
+  private int myCount = 0;
 
-  private SummaryStatistics myStats = new SummaryStatistics();
+  private double myMin = Double.MAX_VALUE;
 
-  void registerStart() {
-    myStartTimes.add(System.nanoTime());
-  }
+  private double myMax = 0.0D;
 
-  void registerFinish() {
-    if (!myStartTimes.isEmpty()) {
-      long now = System.nanoTime();
+  private double myMean = 0.0D;
 
-      for (int i = 0; i < myStartTimes.size(); i++) {
-        long elapsed = now - myStartTimes.get(i);
-        myStats.accept(elapsed);
-      }
+  private double myS = 0.0D;
 
-      myStartTimes.clear();
+  void accept(double value) {
+    myCount++;
+
+    myMin = Math.min(myMin, value);
+
+    myMax = Math.max(myMax, value);
+
+    if (myCount == 1) {
+      myMean = value;
+    }
+    else {
+      double previousMean = myMean;
+      myMean += (value - myMean) / myCount;
+      myS += (value - previousMean) * (value - myMean);
     }
   }
 
-  void reset() {
-    myStats = new SummaryStatistics();
-  }
-
   double getMin() {
-    return myStats.getMin() / 1000000.0D;
+    return myMin == Double.MAX_VALUE ? 0.0D : myMin;
   }
 
   double getMax() {
-    return myStats.getMax() / 1000000.0D;
+    return myMax;
   }
 
   double getMean() {
-    return myStats.getMean() / 1000000.0D;
+    return myMean;
   }
 
   double getStandardDeviation() {
-    return myStats.getStandardDeviation() / 1000000.0D;
+    return Math.sqrt(myS / (myCount - 1));
   }
 }
-
