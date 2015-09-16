@@ -73,6 +73,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
                                                                            XHTMLLanguage.INSTANCE.getID(),
                                                                            "JavaScript",
                                                                            "JSX Harmony",
+                                                                           "TypeScript JSX",
                                                                            "ECMA Script Level 4");
 
   private static final Key<TagNameSynchronizer> SYNCHRONIZER_KEY = Key.create("tag_name_synchronizer");
