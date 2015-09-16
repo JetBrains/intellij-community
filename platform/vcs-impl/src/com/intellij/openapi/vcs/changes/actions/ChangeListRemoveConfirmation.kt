@@ -21,19 +21,20 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
+import kotlin.platform.platformStatic
 
 abstract class ChangeListRemoveConfirmation() {
   
   abstract fun askIfShouldRemoveChangeLists(ask: List<LocalChangeList>): Boolean
   
   companion object {
-    @JvmStatic
+    platformStatic
     fun processLists(project: Project, explicitly: Boolean, allLists: Collection<LocalChangeList>, ask: ChangeListRemoveConfirmation) {
       val confirmationAsked = ContainerUtil.newIdentityTroveSet<LocalChangeList>()
       val doNotRemove = ContainerUtil.newIdentityTroveSet<LocalChangeList>()
 
       for (list in allLists) {
-        for (vcs in ProjectLevelVcsManager.getInstance(project).allActiveVcss) {
+        for (vcs in ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()) {
           val permission = vcs.mayRemoveChangeList(list, explicitly)
           if (permission != ThreeState.UNSURE) {
             confirmationAsked.add(list)
@@ -50,11 +51,11 @@ abstract class ChangeListRemoveConfirmation() {
         doNotRemove.addAll(toAsk)
       }
       val toRemove = allLists.filter { it !in doNotRemove }
-      val active = toRemove.find { it.isDefault }
-      toRemove.forEach { if (it != active) ChangeListManager.getInstance(project).removeChangeList(it.name) }
+      val active = toRemove.find { it.isDefault() }
+      toRemove.forEach { if (it != active) ChangeListManager.getInstance(project).removeChangeList(it.getName()) }
 
-      if (active != null && RemoveChangeListAction.confirmActiveChangeListRemoval(project, listOf(active), active.changes.isEmpty())) {
-        ChangeListManager.getInstance(project).removeChangeList(active.name)
+      if (active != null && RemoveChangeListAction.confirmActiveChangeListRemoval(project, listOf(active), active.getChanges().isEmpty())) {
+        ChangeListManager.getInstance(project).removeChangeList(active.getName())
       }
     }
   }
