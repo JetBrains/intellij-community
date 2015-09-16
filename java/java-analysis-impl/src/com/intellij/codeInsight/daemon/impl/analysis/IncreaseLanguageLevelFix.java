@@ -75,7 +75,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     return isLanguageLevelAcceptable(project, module, myLevel);
   }
 
-  private static boolean isLanguageLevelAcceptable(@NotNull Project project, Module module, @NotNull LanguageLevel level) {
+  private static boolean isLanguageLevelAcceptable(@NotNull Project project, @NotNull Module module, @NotNull LanguageLevel level) {
     return isJdkSupportsLevel(getRelevantJdk(project, module), level);
   }
 
@@ -84,7 +84,9 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     final VirtualFile virtualFile = file.getVirtualFile();
     LOG.assertTrue(virtualFile != null);
     final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
-    final LanguageLevel moduleLevel = module == null ? null : LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
+    if (module == null) return;
+
+    final LanguageLevel moduleLevel = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
     if (moduleLevel != null && isLanguageLevelAcceptable(project, module, myLevel)) {
       final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
       rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLevel);
@@ -97,9 +99,9 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
   }
 
   @Nullable
-  private static Sdk getRelevantJdk(@NotNull Project project, @Nullable Module module) {
+  private static Sdk getRelevantJdk(@NotNull Project project, @NotNull Module module) {
     Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    Sdk moduleJdk = module == null ? null : ModuleRootManager.getInstance(module).getSdk();
+    Sdk moduleJdk = ModuleRootManager.getInstance(module).getSdk();
     return moduleJdk == null ? projectJdk : moduleJdk;
   }
 
