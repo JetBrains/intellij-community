@@ -123,7 +123,7 @@ public class PythonSdkUpdater implements StartupActivity {
                 for (final Sdk sdk : sdksToUpdate) {
                   try {
                     LOG.info("Performing background update of skeletons for SDK " + sdk.getHomePath());
-                    updateSdk(project, null, PySdkUpdater.fromSdkPath(sdk.getHomePath()), PythonSdkType.findSkeletonsPath(sdk));
+                    updateSdk(project, null, PySdkUpdater.fromSdkPath(sdk.getHomePath()));
                   }
                   catch (InvalidSdkException e) {
                     if (PythonSdkType.isVagrant(sdk)) {
@@ -148,8 +148,10 @@ public class PythonSdkUpdater implements StartupActivity {
     });
   }
 
-  public static void updateSdk(@Nullable Project project, @Nullable Component ownerComponent, @NotNull final PySdkUpdater sdkUpdater, String skeletonsPath)
+  public static void updateSdk(@Nullable Project project, @Nullable Component ownerComponent, @NotNull final PySdkUpdater sdkUpdater)
     throws InvalidSdkException {
+    String skeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdkUpdater.getHomePath());
+
     PySkeletonRefresher.refreshSkeletonsOfSdk(project, ownerComponent, skeletonsPath, sdkUpdater); // NOTE: whole thing would need a rename
     if (!PySdkUtil.isRemote(sdkUpdater.getSdk())) {
       updateSysPath(sdkUpdater);

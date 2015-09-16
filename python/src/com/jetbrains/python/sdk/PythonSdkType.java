@@ -461,17 +461,6 @@ public class PythonSdkType extends SdkType {
     return PythonSdkAdditionalData.load(currentSdk, additional);
   }
 
-  @Nullable
-  public static String findSkeletonsPath(Sdk sdk) {
-    final String[] urls = sdk.getRootProvider().getUrls(BUILTIN_ROOT_TYPE);
-    for (String url : urls) {
-      if (isSkeletonsPath(url)) {
-        return VfsUtilCore.urlToPath(url);
-      }
-    }
-    return null;
-  }
-
   public static boolean isSkeletonsPath(String path) {
     return path.contains(SKELETON_DIR_NAME);
   }
@@ -558,23 +547,7 @@ public class PythonSdkType extends SdkType {
       new Computable<Boolean>() {
         @Override
         public Boolean compute() {
-          sdkUpdater.modifySdk(new PySdkUpdater.SdkModificationProcessor() {
-            @Override
-            public void process(@NotNull Sdk sdk,
-                                @NotNull SdkModificator sdkModificator) {
-              sdkModificator.removeAllRoots();
-            }
-          });
-          try {
-            updateSdkRootsFromSysPath(sdkUpdater);
-            updateUserAddedPaths(sdkUpdater);
-            PythonSdkUpdater.getInstance()
-              .markAlreadyUpdated(sdkUpdater.getHomePath());
-            return true;
-          }
-          catch (InvalidSdkException ignored) {
-          }
-          return false;
+          return updateSdkPaths(sdkUpdater);
         }
       }
     );
@@ -588,8 +561,7 @@ public class PythonSdkType extends SdkType {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               try {
-                final String skeletonsPath = getSkeletonsPath(PathManager.getSystemPath(), sdkUpdater.getHomePath());
-                PythonSdkUpdater.updateSdk(project, ownerComponent, sdkUpdater, skeletonsPath);
+                PythonSdkUpdater.updateSdk(project, ownerComponent, sdkUpdater);
               }
               catch (InvalidSdkException e) {
                 // If the SDK is invalid, the user should worry about the SDK itself, not about skeletons generation errors
@@ -611,6 +583,27 @@ public class PythonSdkType extends SdkType {
       });
     }
     return sdkPathsUpdated;
+  }
+
+  @NotNull
+  public static Boolean updateSdkPaths(@NotNull PySdkUpdater sdkUpdater) {
+    sdkUpdater.modifySdk(new PySdkUpdater.SdkModificationProcessor() {
+      @Override
+      public void process(@NotNull Sdk sdk,
+                          @NotNull SdkModificator sdkModificator) {
+        sdkModificator.removeAllRoots();
+      }
+    });
+    try {
+      updateSdkRootsFromSysPath(sdkUpdater);
+      updateUserAddedPaths(sdkUpdater);
+      PythonSdkUpdater.getInstance()
+        .markAlreadyUpdated(sdkUpdater.getHomePath());
+      return true;
+    }
+    catch (InvalidSdkException ignored) {
+    }
+    return false;
   }
 
   public static void notifyRemoteSdkSkeletonsFail(final InvalidSdkException e, @Nullable final Runnable restartAction) {
