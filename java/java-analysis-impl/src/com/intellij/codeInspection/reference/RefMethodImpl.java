@@ -287,26 +287,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
     setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && (body == null || body.getStatements().length == 0));
 
-    PsiType retType = method.getReturnType();
-    if (retType != null) {
-      PsiType psiType = retType;
-      RefClass ownerClass = refUtil.getOwnerClass(getRefManager(), method);
-
-      if (ownerClass != null) {
-        psiType = psiType.getDeepComponentType();
-
-        if (psiType instanceof PsiClassType) {
-          PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
-          if (psiClass != null && getRefManager().belongsToScope(psiClass)) {
-              RefClassImpl refClass = (RefClassImpl) getRefManager().getReference(psiClass);
-            if (refClass != null) {
-              refClass.addTypeReference(ownerClass);
-              refClass.addClassExporter(this);
-            }
-          }
-        }
-      }
-    }
+    refUtil.addTypeReference(method, method.getReturnType(), getRefManager(), this);
 
     for (RefParameter parameter : getParameters()) {
       refUtil.setIsFinal(parameter, parameter.getElement().hasModifierProperty(PsiModifier.FINAL));
