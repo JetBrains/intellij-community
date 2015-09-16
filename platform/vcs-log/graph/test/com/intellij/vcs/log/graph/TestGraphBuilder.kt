@@ -147,10 +147,10 @@ public class TestGraphBuilder : BaseTestGraphBuilder {
 private fun LinearGraph.assertEdge(nodeIndex: Int, edge: GraphEdge) {
   if (edge.getType().isNormalEdge()) {
     if (nodeIndex == edge.getUpNodeIndex()) {
-      assertTrue(getAdjacentEdges(edge.getDownNodeIndex(), EdgeFilter.NORMAL_UP).contains(edge))
+      assertTrue(getAdjacentEdges(edge.getDownNodeIndex()!!, EdgeFilter.NORMAL_UP).contains(edge))
     } else {
       assertTrue(nodeIndex == edge.getDownNodeIndex())
-      assertTrue(getAdjacentEdges(edge.getUpNodeIndex(), EdgeFilter.NORMAL_DOWN).contains(edge))
+      assertTrue(getAdjacentEdges(edge.getUpNodeIndex()!!, EdgeFilter.NORMAL_DOWN).contains(edge))
     }
   } else {
     when (edge.getType()) {
@@ -189,7 +189,7 @@ public fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = Stri
       assertEdge(nodeIndex, it)
       if (it.getUpNodeIndex() == nodeIndex) {
         val startId = if (it.getType().isNormalEdge()) {
-          getNodeId(it.getDownNodeIndex()).toString()
+          getNodeId(it.getDownNodeIndex()!!).toString()
         } else if (it.getTargetId() != null) {
           it.getTargetId().toString()
         } else {
@@ -266,7 +266,7 @@ class TestPermanentGraphInfo(
   }
 
   override fun getPermanentCommitsInfo() = commitInfo
-  override fun getPermanentLinearGraph() = object : PermanentLinearGraphImpl(), LinearGraph by graph {}
+  override fun getPermanentLinearGraph(): PermanentLinearGraphImpl = object : PermanentLinearGraphImpl(), LinearGraph by graph {}
   override fun getPermanentGraphLayout() = graphLayout
   override fun getBranchNodeIds() = branchNodes
 

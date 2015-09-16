@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,21 +19,23 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.io.EnumeratorStringDescriptor
+import gnu.trove.THashSet
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.DirtyFilesHolder
-import org.jetbrains.jps.incremental.*
+import org.jetbrains.jps.builders.storage.StorageProvider
+import org.jetbrains.jps.incremental.BuilderCategory
+import org.jetbrains.jps.incremental.CompileContext
+import org.jetbrains.jps.incremental.ModuleBuildTarget
+import org.jetbrains.jps.incremental.ModuleLevelBuilder
+import org.jetbrains.jps.incremental.storage.AbstractStateStorage
+import org.jetbrains.jps.incremental.storage.PathStringDescriptor
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassWriter
 import org.jetbrains.org.objectweb.asm.Opcodes
-
 import java.io.File
 import java.util.*
 import java.util.regex.Pattern
-import gnu.trove.THashSet
-import org.jetbrains.jps.builders.storage.StorageProvider
-import org.jetbrains.jps.incremental.storage.AbstractStateStorage
-import org.jetbrains.jps.incremental.storage.PathStringDescriptor
-import com.intellij.util.io.EnumeratorStringDescriptor
 
 /**
  * Mock builder which produces class file from several source files to test that our build infrastructure handle such cases properly.
@@ -99,13 +101,13 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
       filesToCompile[target].forEach {
         val currentName = getPackageName(it)
         if (currentName !in packagesToGenerate) packagesToGenerate[currentName] = ArrayList()
-        packagesToGenerate[currentName].add(it)
+        packagesToGenerate[currentName]!!.add(it)
         val oldName = packagesStorage.getState(it.getAbsolutePath())
         if (oldName != null && oldName != currentName && oldName !in packagesToGenerate) {
           packagesToGenerate[oldName] = ArrayList()
         }
       }
-      val packagesFromDeletedFiles = dirtyFilesHolder.getRemovedFiles(target).filter { isCompilable(File(it)) }.mapNotNull { packagesStorage.getState(it) }
+      val packagesFromDeletedFiles = dirtyFilesHolder.getRemovedFiles(target).filter { isCompilable(File(it)) }.map { packagesStorage.getState(it) }.filterNotNull()
       packagesFromDeletedFiles.forEach {
         if (it !in packagesToGenerate) {
           packagesToGenerate[it] = ArrayList()
@@ -114,8 +116,9 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
 
       val getParentFile: (File) -> File = { it.getParentFile() }
       val dirsToCheck = filesToCompile[target].mapTo(THashSet(FileUtil.FILE_HASHING_STRATEGY), getParentFile)
-      packagesFromDeletedFiles.flatMap { mappings.getClassSources(mappings.getName(StringUtil.getQualifiedName(it, "PackageFacade"))) }
-                              .map(getParentFile).filterNotNullTo(dirsToCheck)
+      packagesFromDeletedFiles.flatMap {
+        mappings.getClassSources(mappings.getName(StringUtil.getQualifiedName(it, "PackageFacade"))) ?: emptyList()
+      }.map(getParentFile).filterNotNullTo(dirsToCheck)
 
       for ((packageName, dirtyFiles) in packagesToGenerate) {
         val files = dirsToCheck.map { it.listFiles() }.filterNotNull().flatMap { it.toList() }.filter { isCompilable(it) && packageName == getPackageName(it) }

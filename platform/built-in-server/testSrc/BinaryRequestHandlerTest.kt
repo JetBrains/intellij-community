@@ -20,7 +20,7 @@ import org.jetbrains.io.NettyUtil
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
-import java.util.UUID
+import java.util.*
 
 // we don't handle String in efficient way - because we want to test readContent/readChars also
 public class BinaryRequestHandlerTest {
@@ -105,7 +105,7 @@ public class BinaryRequestHandlerTest {
       private var state = State.HEADER
 
       private enum class State {
-        HEADER
+        HEADER,
         CONTENT
       }
 

@@ -63,7 +63,7 @@ class TestManager(val projectFixture: IdeaProjectTestFixture) : TestWatcher() {
     }
 
     invokeAndWaitIfNeed {
-      val normalizedFilePath = FileUtilRt.toSystemIndependentName(filePath)
+      val normalizedFilePath = FileUtilRt.toSystemIndependentName(filePath!!)
       if (annotation!!.relativeToProject) {
         val root = projectFixture.getProject().getBaseDir()
         runWriteAction {
@@ -105,7 +105,7 @@ class TestManager(val projectFixture: IdeaProjectTestFixture) : TestWatcher() {
       fileToDelete = null
     }
 
-    if (ioFileToDelete != null && !FileUtilRt.delete(ioFileToDelete)) {
+    if (ioFileToDelete != null && !FileUtilRt.delete(ioFileToDelete!!)) {
       ioFileToDelete!!.deleteOnExit()
     }
 
