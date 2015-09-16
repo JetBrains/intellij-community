@@ -33,10 +33,12 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.diagnostic.Logger;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Dictionary;
@@ -66,6 +68,26 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
   }
 
+  private static final ListCellRenderer  ourListCellRenderer = new ListCellRenderer() {
+
+    private final DefaultListCellRenderer ourDefaultListCellRenderer = new DefaultListCellRenderer();
+
+    @Override
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      if (AntialiasingType.SUBPIXEL.equals(value)) {
+        ourDefaultListCellRenderer.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, new SwingUtilities2.AATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, 140));
+      } else if (AntialiasingType.GREYSCALE.equals(value)) {
+        ourDefaultListCellRenderer.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY,new SwingUtilities2.AATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_ON, 140));
+      } else if (AntialiasingType.OFF.equals(value)) {
+        ourDefaultListCellRenderer.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, null);
+      }
+
+      ourDefaultListCellRenderer.setText(value.toString());
+
+      return ourDefaultListCellRenderer;
+    }
+  };
+
   public JComponent createComponent() {
 
     UISettings settings = UISettings.getInstance();
@@ -85,7 +107,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAntialiasingInEditor.setModel(new DefaultComboBoxModel(AntialiasingType.values()));
 
     myComponent.myAntialiasingInIDE.setSelectedItem(settings.IDE_AA_TYPE);
+
     myComponent.myAntialiasingInEditor.setSelectedItem(settings.EDITOR_AA_TYPE);
+
+    myComponent.myAntialiasingInIDE.setRenderer(ourListCellRenderer);
+    myComponent.myAntialiasingInEditor.setRenderer(ourListCellRenderer);
 
     Dictionary<Integer, JComponent> delayDictionary = new Hashtable<Integer, JComponent>();
     delayDictionary.put(new Integer(0), new JLabel("0"));
