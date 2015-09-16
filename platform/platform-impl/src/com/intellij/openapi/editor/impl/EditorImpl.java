@@ -999,7 +999,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     AnActionListener.Adapter actionListener = new AnActionListener.Adapter() {
       @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        if (isZeroLatencyTypingEnabled() && IMMEDIATE_EDITING_ACTIONS.contains(action.getClass())) {
+        if (isZeroLatencyTypingEnabled() && IMMEDIATE_EDITING_ACTIONS.contains(action.getClass()) &&
+            !(action.getClass() == PasteAction.class && mySelectionModel.hasSelection())) {
           myImmediateEditingInProgress = true;
         }
       }
