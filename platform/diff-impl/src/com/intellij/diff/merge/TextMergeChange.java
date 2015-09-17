@@ -187,7 +187,18 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     myResolved[side.getIndex()] = value;
 
     markInnerFragmentsDamaged();
-    destroyInnerHighlighter();
+    if (isResolved()) {
+      destroyInnerHighlighter();
+    }
+    else {
+      // Destroy only resolved side to reduce blinking
+      Document document = myViewer.getEditor(side.select(ThreeSide.LEFT, ThreeSide.RIGHT)).getDocument();
+      for (RangeHighlighter highlighter : myInnerHighlighters) {
+        if (document.equals(highlighter.getDocument())) {
+          highlighter.dispose(); // it's OK to call dispose() few times
+        }
+      }
+    }
   }
 
   public boolean isResolved() {
