@@ -117,16 +117,16 @@ public class RepositoryHelper {
   }
 
   @NotNull
-  public static List<IdeaPluginDescriptor> loadPlugins(@Nullable final String repositoryUrl,
+  public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
                                                        @Nullable BuildNumber buildnumber,
                                                        boolean forceHttps,
-                                                       @Nullable final ProgressIndicator indicator) throws IOException {
+                                                       @Nullable ProgressIndicator indicator) throws IOException {
     return loadPlugins(repositoryUrl, buildnumber, null, forceHttps, indicator);
   }
 
   @NotNull
   public static Map<PluginId, List<Pair<String, IdeaPluginDescriptor>>> loadPluginsFromChannels(@Nullable BuildNumber buildnumber,
-                                                                                                @Nullable final ProgressIndicator indicator)
+                                                                                                @Nullable ProgressIndicator indicator)
       throws IOException {
     Map<PluginId, List<Pair<String, IdeaPluginDescriptor>>> result = new LinkedHashMap<PluginId, List<Pair<String, IdeaPluginDescriptor>>>();
 
@@ -174,7 +174,7 @@ public class RepositoryHelper {
                                                        @Nullable String channel,
                                                        boolean forceHttps,
                                                        @Nullable final ProgressIndicator indicator) throws IOException {
-    final String url;
+    String url;
     final File pluginListFile;
     final String host;
 
