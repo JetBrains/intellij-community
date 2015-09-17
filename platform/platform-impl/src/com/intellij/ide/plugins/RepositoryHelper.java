@@ -115,11 +115,7 @@ public class RepositoryHelper {
                                                        @Nullable BuildNumber buildnumber,
                                                        boolean forceHttps,
                                                        @Nullable final ProgressIndicator indicator) throws IOException {
-    List<IdeaPluginDescriptor> plugins = loadPlugins(repositoryUrl, buildnumber, null, forceHttps, indicator);
-
-    Map<PluginId, List<Pair<String, IdeaPluginDescriptor>>> pluginsFromChannels = loadPluginsFromChannels(buildnumber, indicator);
-
-    return plugins;
+    return loadPlugins(repositoryUrl, buildnumber, null, forceHttps, indicator);
   }
 
   @NotNull
