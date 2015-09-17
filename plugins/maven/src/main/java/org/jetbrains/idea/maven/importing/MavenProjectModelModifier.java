@@ -30,14 +30,14 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
@@ -154,8 +154,54 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
   }
 
   @Override
-  public Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull LanguageLevel level) {
-    return null;
+  public Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull final LanguageLevel level) {
+    if (!myProjectsManager.isMavenizedModule(module)) return null;
+
+    MavenProject mavenProject = myProjectsManager.findProject(module);
+    if (mavenProject == null) return null;
+
+    final MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
+    if (model == null) return null;
+
+    new WriteCommandAction(myProject, "Add Maven Dependency", DomUtil.getFile(model)) {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        MavenDomConfiguration configuration = getCompilerPlugin(model).getConfiguration();
+        XmlTag tag = configuration.ensureTagExists();
+        setChildTagValue(tag, "source", level.getCompilerComplianceOption());
+        setChildTagValue(tag, "target", level.getCompilerComplianceOption());
+        Document document = PsiDocumentManager.getInstance(myProject).getDocument(DomUtil.getFile(model));
+        if (document != null) {
+          FileDocumentManager.getInstance().saveDocument(document);
+        }
+      }
+    }.execute();
+    return myProjectsManager.forceUpdateProjects(Collections.singleton(mavenProject));
+  }
+
+  private static void setChildTagValue(@NotNull XmlTag tag, @NotNull String subTagName, @NotNull String value) {
+    XmlTag subTag = tag.findFirstSubTag(subTagName);
+    if (subTag != null) {
+      subTag.getValue().setText(value);
+    }
+    else {
+      tag.addSubTag(tag.createChildTag(subTagName, tag.getNamespace(), value, false), false);
+    }
+  }
+
+  @NotNull
+  private static MavenDomPlugin getCompilerPlugin(MavenDomProjectModel model) {
+    MavenDomPlugins plugins = model.getBuild().getPlugins();
+    for (MavenDomPlugin plugin : plugins.getPlugins()) {
+      if ("org.apache.maven.plugins".equals(plugin.getGroupId().getValue()) &&
+          "maven-compiler-plugin".equals(plugin.getArtifactId().getValue())) {
+        return plugin;
+      }
+    }
+    MavenDomPlugin plugin = plugins.addPlugin();
+    plugin.getGroupId().setValue("org.apache.maven.plugins");
+    plugin.getArtifactId().setValue("maven-compiler-plugin");
+    return plugin;
   }
 
   @Nullable

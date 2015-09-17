@@ -15,13 +15,17 @@
  */
 package org.jetbrains.idea.maven.actions;
 
+import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.roots.JavaProjectModelModifier;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
@@ -96,6 +100,27 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertHasDependency(m1, "junit", "junit");
     waitUntilImported(result);
     assertModuleLibDep("m1", libName);
+  }
+
+  public void testChangeLanguageLevel() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    Module module = getModule("project");
+    assertEquals(LanguageLevel.JDK_1_5, EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module));
+    Promise<Void> result = getExtension().changeLanguageLevel(module, LanguageLevel.JDK_1_8);
+    assertNotNull(result);
+    XmlTag tag = findTag("project.build.plugins.plugin");
+    assertNotNull(tag);
+    assertEquals("maven-compiler-plugin", tag.getSubTagText("artifactId"));
+    XmlTag configuration = tag.findFirstSubTag("configuration");
+    assertNotNull(configuration);
+    assertEquals("1.8", configuration.getSubTagText("source"));
+    assertEquals("1.8", configuration.getSubTagText("target"));
+
+    waitUntilImported(result);
+    assertEquals(LanguageLevel.JDK_1_8, EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module));
   }
 
   private void createTwoModulesPom(final String m1, final String m2) throws IOException {
