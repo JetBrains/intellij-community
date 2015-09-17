@@ -224,6 +224,11 @@ public class FileReferenceSet {
   }
 
   protected List<FileReference> reparse(String str, int startInElement) {
+    String separatorString = getSeparatorString(); // separator's length can be more then 1 char
+    int sepLen = separatorString.length();
+    int currentSlash = -sepLen;
+    int wsTail = 0;
+
     LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper;
     TextRange valueRange;
     CharSequence decoded;
@@ -233,18 +238,14 @@ public class FileReferenceSet {
       StringBuilder sb = new StringBuilder();
       escaper.decode(valueRange, sb);
       decoded = sb;
+      currentSlash += startInElement - valueRange.getStartOffset();
     }
     else {
       escaper = null;
-      valueRange = null;
       decoded = str;
+      valueRange = TextRange.from(startInElement, decoded.length());
     }
     List<FileReference> referencesList = ContainerUtil.newArrayList();
-
-    String separatorString = getSeparatorString(); // separator's length can be more then 1 char
-    int sepLen = separatorString.length();
-    int currentSlash = -sepLen;
-    int wsTail = 0;
 
     // skip head white spaces
     for (int i = currentSlash + sepLen; i < decoded.length() && Character.isWhitespace(decoded.charAt(i)); i++) {
@@ -269,9 +270,9 @@ public class FileReferenceSet {
     while (true) {
       int nextSlash = StringUtil.indexOf(decoded, separatorString, currentSlash + sepLen);
       String subReferenceText = decoded.subSequence(currentSlash + sepLen, nextSlash > 0 ? nextSlash : decoded.length()).toString();
+      int end = nextSlash > 0 ? nextSlash : decoded.length() - 1 - wsTail;
       TextRange r = new TextRange(offset(currentSlash + sepLen, escaper, valueRange),
-                                  offset((nextSlash > 0 ? nextSlash : startInElement + decoded.length() - 1 - wsTail), escaper,
-                                         valueRange));
+                                  offset(end, escaper, valueRange) + (nextSlash > 0 ? 0 : 1));
       referencesList.add(createFileReference(r, index++, subReferenceText));
       if ((currentSlash = nextSlash) < 0) {
         break;
@@ -282,7 +283,7 @@ public class FileReferenceSet {
   }
 
   private static int offset(int offset, LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper, TextRange valueRange) {
-    return escaper == null ? offset : escaper.getOffsetInHost(offset, valueRange);
+    return escaper == null ? offset + valueRange.getStartOffset() : escaper.getOffsetInHost(offset, valueRange);
   }
 
   public FileReference getReference(int index) {
