@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -137,7 +138,7 @@ public class Splash extends JDialog implements StartupProgress {
     final int progressWidth = (int)((myImage.getIconWidth() - 2) * myProgress);
     final int width = progressWidth - myProgressLastPosition;
     g.setColor(color);
-    g.fillRect(1, getProgressY(), width, getProgressHeight());
+    g.fillRect(Registry.is("ide.new.about") ? 0 : 1, getProgressY(), width, getProgressHeight());
     if (myProgressTail != null) {
       myProgressTail.paintIcon(this, g, (int)(width - (myProgressTail.getIconWidth() / JBUI.scale(1f) / 2f * JBUI.scale(1f))),
                                (int)(getProgressY() - (myProgressTail.getIconHeight() - getProgressHeight()) / JBUI.scale(1f) / 2f * JBUI.scale(1f))); //I'll buy you a beer if you understand this line without playing with it
