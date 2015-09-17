@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.documentation.docstrings.SectionBasedDocString.Section;
 import com.jetbrains.python.documentation.docstrings.SectionBasedDocString.SectionField;
 import com.jetbrains.python.psi.PyIndentUtil;
@@ -131,40 +132,29 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
   private static Substring expandParamNameSubstring(@NotNull Substring name) {
     final String superString = name.getSuperString();
     int startWithStars = name.getStartOffset();
-    int prevNonWhitespace;
-    do {
-      prevNonWhitespace = skipWhitespaces(superString, startWithStars - 1, true);
-      if (prevNonWhitespace >= 0 && superString.charAt(prevNonWhitespace) == '*') {
-        startWithStars = prevNonWhitespace;
-      }
-      else {
-        break;
-      }
+    int prevNonWhitespace = skipSpacesBackward(superString, name.getStartOffset() - 1);
+    if (prevNonWhitespace >= 0 && superString.charAt(prevNonWhitespace) == '*') {
+      startWithStars = CharArrayUtil.shiftBackward(superString, prevNonWhitespace, "*") + 1;
+      prevNonWhitespace = skipSpacesBackward(superString, startWithStars - 1);
     }
-    while (startWithStars >= 0);
     if (prevNonWhitespace >= 0 && superString.charAt(prevNonWhitespace) == ',') {
       return new Substring(superString, prevNonWhitespace, name.getEndOffset());
     }
     // end offset is always exclusive
-    final int nextNonWhitespace = skipWhitespaces(superString, name.getEndOffset(), false);
+    final int nextNonWhitespace = skipSpacesForward(superString, name.getEndOffset());
     if (nextNonWhitespace < superString.length() && superString.charAt(nextNonWhitespace) == ',') {
       // if we remove parameter with trailing comma (i.e. first parameter) remove whitespaces after it as well
-      return new Substring(superString, startWithStars, skipWhitespaces(superString, nextNonWhitespace + 1, false)); 
+      return new Substring(superString, startWithStars, skipSpacesForward(superString, nextNonWhitespace + 1)); 
     }
     return name;
   }
 
-  private static int skipWhitespaces(@NotNull String s, int start, boolean backward) {
-    int result = start;
-    while (start >= 0 && start < s.length() && " \t".indexOf(s.charAt(result)) >= 0) {
-      if (backward) {
-        result--;
-      }
-      else{
-        result++;
-      }
-    }
-    return result;
+  private static int skipSpacesForward(@NotNull String superString, int offset) {
+    return CharArrayUtil.shiftForward(superString, offset, " \t");
+  }
+
+  private static int skipSpacesBackward(@NotNull String superString, int offset) {
+    return CharArrayUtil.shiftBackward(superString, offset, " \t");
   }
 
   @Override
