@@ -119,15 +119,17 @@ public class LocalVariablesUtil {
     ourInitializationOk = success;
   }
 
-  public static Map<DecompiledLocalVariable, Value> fetchValues(StackFrameProxyImpl frameProxy, DebugProcess process) throws Exception {
+  public static Map<DecompiledLocalVariable, Value> fetchValues(@NotNull StackFrameProxyImpl frameProxy, DebugProcess process) throws Exception {
     Map<DecompiledLocalVariable, Value> map = new LinkedHashMap<DecompiledLocalVariable, Value>(); // LinkedHashMap for correct order
 
+    List<Value> argValues = frameProxy.getArgumentValues();
+
     // gather code variables names
-    MultiMap<Integer, String> namesMap = calcNames(new SimpleStackFrameContext(frameProxy, process));
+    MultiMap<Integer, String> namesMap = calcNames(new SimpleStackFrameContext(frameProxy, process), argValues.size());
 
     // first add arguments
     int slot = 0;
-    for (Value value : frameProxy.getArgumentValues()) {
+    for (Value value : argValues) {
       map.put(new DecompiledLocalVariable(slot, true, null, namesMap.get(slot)), value);
       slot++;
     }
@@ -258,7 +260,7 @@ public class LocalVariablesUtil {
   }
 
   @NotNull
-  private static MultiMap<Integer, String> calcNames(@NotNull final StackFrameContext context) {
+  private static MultiMap<Integer, String> calcNames(@NotNull final StackFrameContext context, final int methodArgsNumber) {
     return ApplicationManager.getApplication().runReadAction(new Computable<MultiMap<Integer, String>>() {
       @Override
       public MultiMap<Integer, String> compute() {
@@ -269,8 +271,10 @@ public class LocalVariablesUtil {
             PsiParameterList params = DebuggerUtilsEx.getParameterList(method);
             if (params != null) {
               MultiMap<Integer, String> res = new MultiMap<Integer, String>();
-              for (int i = 0; i < params.getParametersCount(); i++) {
-                res.putValue(i, params.getParameters()[i].getName());
+              int paramCount = params.getParametersCount();
+              int offset = Math.max(0, methodArgsNumber - paramCount);
+              for (int i = 0; i < paramCount; i++) {
+                res.putValue(i + offset, params.getParameters()[i].getName());
               }
               PsiElement body = DebuggerUtilsEx.getBody(method);
               if (body != null) {

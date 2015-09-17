@@ -42,7 +42,6 @@ import com.intellij.psi.PsiVariable;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Map;
 
 class LocalVariableEvaluator implements Evaluator {
@@ -52,15 +51,10 @@ class LocalVariableEvaluator implements Evaluator {
   private EvaluationContextImpl myContext;
   private LocalVariableProxyImpl myEvaluatedVariable;
   private final boolean myCanScanFrames;
-  private int myParameterIndex = -1;
 
   public LocalVariableEvaluator(String localVariableName, boolean canScanFrames) {
     myLocalVariableName = localVariableName;
     myCanScanFrames = canScanFrames;
-  }
-
-  public void setParameterIndex(int parameterIndex) {
-    myParameterIndex = parameterIndex;
   }
 
   @Override
@@ -107,17 +101,6 @@ class LocalVariableEvaluator implements Evaluator {
           }
           catch (Exception e1) {
             LOG.info(e1);
-          }
-
-          if (topFrame) {
-            if (myParameterIndex < 0) {
-              throw e;
-            }
-            final List<Value> values = frameProxy.getArgumentValues();
-            if (values.isEmpty() || myParameterIndex >= values.size()) {
-              throw e;
-            }
-            return values.get(myParameterIndex);
           }
         }
 

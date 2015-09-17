@@ -648,17 +648,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         final String localName = psiVar.getName();
         PsiClass variableClass = getContainingClass(psiVar);
         if (getContextPsiClass() == null || getContextPsiClass().equals(variableClass)) {
-          PsiElement method = PsiTreeUtil.getContextOfType(expression, PsiMethod.class, PsiLambdaExpression.class);
+          PsiElement method = DebuggerUtilsEx.getContainingMethod(expression);
           boolean canScanFrames = method instanceof PsiLambdaExpression || ContextUtil.isJspImplicit(element);
-          LocalVariableEvaluator localVarEvaluator = new LocalVariableEvaluator(localName, canScanFrames);
-          if (psiVar instanceof PsiParameter) {
-            final PsiParameter param = (PsiParameter)psiVar;
-            final PsiParameterList paramList = PsiTreeUtil.getParentOfType(param, PsiParameterList.class, true);
-            if (paramList != null) {
-              localVarEvaluator.setParameterIndex(paramList.getParameterIndex(param));
-            }
-          }
-          myResult = localVarEvaluator;
+          myResult = new LocalVariableEvaluator(localName, canScanFrames);
           return;
         }
         // the expression references final var outside the context's class (in some of the outer classes)
