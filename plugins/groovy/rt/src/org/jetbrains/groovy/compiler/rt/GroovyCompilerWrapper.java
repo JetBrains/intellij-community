@@ -86,7 +86,11 @@ public class GroovyCompilerWrapper {
       processException(e, INCOMPATIBLE_CLASS_CHANGE_ERROR);
     }
     catch (LinkageError e) {
-      processException(e, LINKAGE_ERROR);
+      if (e.getCause() instanceof GroovyRuntimeException) {
+        processException(e, getExceptionMessage((GroovyRuntimeException)e.getCause()));
+      } else {
+        processException(e, LINKAGE_ERROR);
+      }
     }
     finally {
       addWarnings(unit.getErrorCollector());
@@ -207,6 +211,9 @@ public class GroovyCompilerWrapper {
 
     final StringWriter writer = new StringWriter();
     writer.append(prefix);
+    if (!prefix.endsWith("\n")) {
+      writer.append("\n\n");
+    }
     //noinspection IOResourceOpenedButNotSafelyClosed
     exception.printStackTrace(new PrintWriter(writer));
     collector.add(new CompilerMessage(forStubs ? GroovyCompilerMessageCategories.INFORMATION : GroovyCompilerMessageCategories.ERROR, writer.toString(), null, -1, -1));
