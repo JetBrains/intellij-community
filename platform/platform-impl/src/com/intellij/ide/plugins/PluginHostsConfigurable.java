@@ -194,7 +194,7 @@ public class PluginHostsConfigurable extends BaseConfigurable implements Configu
               public void run(@NotNull ProgressIndicator indicator) {
                 String host = correctRepositoryRule(getTextField().getText());
                 try {
-                  result = RepositoryHelper.loadPlugins(host, null, indicator).size();
+                  result = RepositoryHelper.loadPlugins(host, indicator).size();
                 }
                 catch (Exception e) {
                   error = e;

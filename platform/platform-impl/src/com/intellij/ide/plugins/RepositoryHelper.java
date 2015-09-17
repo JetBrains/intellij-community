@@ -81,7 +81,7 @@ public class RepositoryHelper {
     List<IdeaPluginDescriptor> result = new ArrayList<IdeaPluginDescriptor>();
     Set<String> addedPluginIds = new HashSet<String>();
     for (String host : getPluginHosts()) {
-      List<IdeaPluginDescriptor> plugins = loadPlugins(host, null, indicator);
+      List<IdeaPluginDescriptor> plugins = loadPlugins(host, indicator);
       for (IdeaPluginDescriptor plugin : plugins) {
         if (addedPluginIds.add(plugin.getPluginId().getIdString())) {
           result.add(plugin);
@@ -96,16 +96,22 @@ public class RepositoryHelper {
    */
   @NotNull
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable ProgressIndicator indicator) throws IOException {
-    return loadPlugins(null, null, indicator);
+    return loadPlugins(null, indicator);
   }
 
+  @NotNull
+  public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl, @Nullable ProgressIndicator indicator) throws IOException {
+    boolean forceHttps = repositoryUrl == null && IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
+    return loadPlugins(repositoryUrl, null, forceHttps, indicator);
+  }
+  
   /**
    * Loads list of plugins, compatible with a given build, from a given plugin repository (main repository if null).
    */
   @NotNull
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
                                                        @Nullable BuildNumber buildnumber,
-                                                       @Nullable final ProgressIndicator indicator) throws IOException {
+                                                       @Nullable ProgressIndicator indicator) throws IOException {
     boolean forceHttps = repositoryUrl == null && IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
     return loadPlugins(repositoryUrl, buildnumber, forceHttps, indicator);
   }
