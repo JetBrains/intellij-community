@@ -80,13 +80,13 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       return true;
     }
     
-    if (myExpression instanceof PsiCallExpression) {
-      final PsiExpressionList argumentList = ((PsiCallExpression)myExpression).getArgumentList();
+    if (myExpression instanceof PsiCall) {
+      final PsiExpressionList argumentList = ((PsiCall)myExpression).getArgumentList();
       if (argumentList != null) {
-        final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(((PsiCallExpression)myExpression).getArgumentList());
+        final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(((PsiCall)myExpression).getArgumentList());
         PsiType returnType = null;
         PsiTypeParameter[] typeParams = null;
-        final JavaResolveResult resolveResult = candidateProperties != null ? null : InferenceSession.getResolveResult((PsiCallExpression)myExpression, argumentList);
+        final JavaResolveResult resolveResult = candidateProperties != null ? null : InferenceSession.getResolveResult((PsiCall)myExpression, argumentList);
         PsiMethod method = null;
         if (candidateProperties != null) {
           method = candidateProperties.getMethod();
