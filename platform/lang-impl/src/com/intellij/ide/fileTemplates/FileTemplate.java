@@ -81,6 +81,10 @@ public interface FileTemplate extends Cloneable {
 
   void setReformatCode(boolean reformat);
 
+  boolean isHasEmbeddedLiveTemplate();
+
+  void setHasEmbeddedLiveTemplate(boolean hasEmbeddedLiveTemplate);
+
   FileTemplate clone();
 
   @NotNull String[] getUnsetAttributes(@NotNull Properties properties, Project project) throws ParseException;

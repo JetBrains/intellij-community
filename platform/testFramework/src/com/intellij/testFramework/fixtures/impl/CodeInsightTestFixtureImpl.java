@@ -1610,7 +1610,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     Editor editor = instance.openTextEditor(new OpenFileDescriptor(project, file), false);
     if (editor != null) {
-      editor.getCaretModel().moveToOffset(0);
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
     }
     return editor;
