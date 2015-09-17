@@ -57,9 +57,13 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
             return;
           }
         }
-        final String resourceBundleBaseName = propertiesFile.getResourceBundle().getBaseName();
-        if (!isResourceBundleAlphaSortedExceptOneFile(propertiesFile.getResourceBundle(), propertiesFile)) {
-          holder.registerProblem(file, String.format(MESSAGE_TEMPLATE_WHOLE_RESOURCE_BUNDLE, resourceBundleBaseName), ProblemHighlightType.INFO, new PropertiesSorterQuickFix(true, propertiesFile));
+        final ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
+        final String resourceBundleBaseName = resourceBundle.getBaseName();
+        if (!isResourceBundleAlphaSortedExceptOneFile(resourceBundle, propertiesFile)) {
+          final List<PropertiesFile> allFiles = resourceBundle.getPropertiesFiles();
+          holder.registerProblem(file, String.format(MESSAGE_TEMPLATE_WHOLE_RESOURCE_BUNDLE, resourceBundleBaseName),
+                                 ProblemHighlightType.INFO,
+                                 new PropertiesSorterQuickFix(true, allFiles.toArray(new PropertiesFile[allFiles.size()])));
           return;
         }
         if (!propertiesFile.isAlphaSorted()) {
