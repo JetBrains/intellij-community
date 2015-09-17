@@ -268,7 +268,7 @@ public class FileReferenceSet {
 
     while (true) {
       int nextSlash = StringUtil.indexOf(decoded, separatorString, currentSlash + sepLen);
-      String subReferenceText = nextSlash > 0 ? str.substring(currentSlash + sepLen, nextSlash) : str.substring(currentSlash + sepLen);
+      String subReferenceText = decoded.subSequence(currentSlash + sepLen, nextSlash > 0 ? nextSlash : decoded.length()).toString();
       TextRange r = new TextRange(offset(currentSlash + sepLen, escaper, valueRange),
                                   offset((nextSlash > 0 ? nextSlash : startInElement + decoded.length() - 1 - wsTail), escaper,
                                          valueRange));
