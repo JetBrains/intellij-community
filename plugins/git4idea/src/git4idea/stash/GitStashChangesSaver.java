@@ -104,7 +104,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
   }
 
   @Override
-  protected boolean wereChangesSaved() {
+  public boolean wereChangesSaved() {
     return !myStashedRoots.isEmpty();
   }
 
@@ -113,8 +113,14 @@ public class GitStashChangesSaver extends GitChangesSaver {
     return "stash";
   }
 
+  @NotNull
   @Override
-  protected void showSavedChanges() {
+  public String getOperationName() {
+    return "stash";
+  }
+
+  @Override
+  public void showSavedChanges() {
     GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myStashedRoots.iterator().next());
   }
 
