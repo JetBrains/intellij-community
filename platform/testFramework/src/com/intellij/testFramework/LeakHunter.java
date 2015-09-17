@@ -73,6 +73,9 @@ public class LeakHunter {
         }
         cached = fields.isEmpty() ? EMPTY_FIELD_ARRAY : fields.toArray(new Field[fields.size()]);
       }
+      catch (IncompatibleClassChangeError e) {
+        throw new RuntimeException("Failed to get fields of " + aClass, e);
+      }
       catch (SecurityException e) {
         cached = EMPTY_FIELD_ARRAY;
       }
