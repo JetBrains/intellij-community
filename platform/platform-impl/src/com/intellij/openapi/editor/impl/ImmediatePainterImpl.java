@@ -173,18 +173,12 @@ class ImmediatePainterImpl implements ImmediatePainter {
       myCharsTyped++;
 
       if (myCharsTyped == TYPING_STATS_SAMPLE_SIZE) {
-        String stats = formatTypingLatencyStats(myTypingLatencyMeter);
+        String stats = "Zero-latency: "+isZeroLatencyTypingEnabled()+"; "+myTypingLatencyMeter.stat();
         printToEventLog(stats);
 
         resetTypingLatencyStats();
       }
     }
-  }
-
-  private static String formatTypingLatencyStats(DelayMeter meter) {
-    return String.format("Zero-latency: %3s; typing delay, ms: min: %5.1f | max: %5.1f | avg: %5.1f | sigma: %4.1f",
-                         isZeroLatencyTypingEnabled() ? "on" : "off",
-                         meter.getMin(), meter.getMax(), meter.getMean(), meter.getStandardDeviation());
   }
 
   private void printToEventLog(String message) {

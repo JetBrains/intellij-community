@@ -15,21 +15,25 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import gnu.trove.TDoubleArrayList;
+
 /**
  * @author Pavel Fatin
  */
 class SummaryStatistics {
-  private int myCount = 0;
+  private int myCount;
 
   private double myMin = Double.MAX_VALUE;
 
-  private double myMax = 0.0D;
+  private double myMax;
 
-  private double myMean = 0.0D;
+  private double myMean;
 
-  private double myS = 0.0D;
+  private double myS;
+  private final TDoubleArrayList values = new TDoubleArrayList();
 
   void accept(double value) {
+    values.add(value);
     myCount++;
 
     myMin = Math.min(myMin, value);
@@ -47,18 +51,25 @@ class SummaryStatistics {
   }
 
   double getMin() {
-    return myMin == Double.MAX_VALUE ? 0.0D : myMin;
+    return (myMin == Double.MAX_VALUE ? 0.0D : myMin) / 1000000;
   }
 
   double getMax() {
-    return myMax;
+    return myMax / 1000000;
   }
 
   double getMean() {
-    return myMean;
+    return myMean / 1000000;
   }
 
   double getStandardDeviation() {
-    return Math.sqrt(myS / (myCount - 1));
+    return Math.sqrt(myS / (myCount - 1)) / 1000000;
+  }
+
+  public String stat() {
+    values.sort();
+    double median = values.get(values.size() / 2)/1000000;
+    return String.format("typing delay, ms: min: %5.1f | max: %5.1f | avg: %5.1f | median: %4.1f",
+                         getMin(), getMax(), getMean(), median);
   }
 }
