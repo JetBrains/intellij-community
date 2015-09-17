@@ -154,7 +154,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
     if (doc instanceof DocumentWindow) doc = ((DocumentWindow)doc).getDelegate();
     final PostprocessReformattingAspect component = myProject.getComponent(PostprocessReformattingAspect.class);
     final FileViewProvider viewProvider = getCachedViewProvider(doc);
-    if (viewProvider != null) component.doPostponedFormatting(viewProvider);
+    if (viewProvider != null && component != null) component.doPostponedFormatting(viewProvider);
   }
 
   @Override
