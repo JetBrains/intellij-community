@@ -135,7 +135,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
     Runnable runnableWithProgress = new Runnable() {
       @Override
       public void run() {
-        for (final Module module : myModuleModel.myModules) {
+        for (final Module module : myModuleModel.myModules.values()) {
           final Application app = ApplicationManager.getApplication();
           final Runnable swingRunnable = new Runnable() {
             @Override
