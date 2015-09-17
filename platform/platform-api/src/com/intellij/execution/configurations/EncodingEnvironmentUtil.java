@@ -83,12 +83,11 @@ public class EncodingEnvironmentUtil {
   }
 
   private static boolean isLocaleDefined(@NotNull GeneralCommandLine commandLine) {
-    return isLocaleDefined(commandLine.getEnvironment()) ||
-           commandLine.isPassParentEnvironment() && isLocaleDefined(commandLine.getParentEnvironment());
+    return isLocaleDefined(commandLine.getEnvironment()) || isLocaleDefined(commandLine.getParentEnvironment());
   }
 
   private static boolean isLocaleDefined(@NotNull Map<String, String> env) {
-    return env.containsKey(LC_ALL) || env.containsKey(LC_CTYPE) || env.containsKey(LANG);
+    return !env.isEmpty() && (env.containsKey(LC_CTYPE) || env.containsKey(LC_ALL) || env.containsKey(LANG));
   }
 
   /** @deprecated use {@link #setLocaleEnvironmentIfMac(GeneralCommandLine)} instead (to be removed in IDEA 16) */
@@ -99,7 +98,7 @@ public class EncodingEnvironmentUtil {
     }
   }
 
-  /** @deprecated use {@link #setLocaleEnvironmentIfMac(Map, Charset)} instead (to be removed in IDEA 15) */
+  /** @deprecated use {@link #setLocaleEnvironmentIfMac(Map, Charset)} instead (to be removed in IDEA 16) */
   @SuppressWarnings("unused")
   public static void fixDefaultEncodingIfMac(@NotNull Map<String, String> env, @Nullable Project project) {
     if (SystemInfo.isMac && !isLocaleDefined(env)) {
