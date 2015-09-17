@@ -232,7 +232,8 @@ public class FileReferenceSet {
     LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper;
     TextRange valueRange;
     CharSequence decoded;
-    if (myElement instanceof PsiLanguageInjectionHost) {
+    // todo replace @param str with honest @param rangeInElement; and drop the following startsWith(..)
+    if (myElement instanceof PsiLanguageInjectionHost && !StringUtil.startsWith(myElement.getText(), startInElement, str)) {
       escaper = ((PsiLanguageInjectionHost)myElement).createLiteralTextEscaper();
       valueRange = ElementManipulators.getValueTextRange(myElement);
       StringBuilder sb = new StringBuilder();
