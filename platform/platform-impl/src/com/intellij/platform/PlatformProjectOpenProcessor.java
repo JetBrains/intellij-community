@@ -129,7 +129,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     final File projectDir = new File(FileUtil.toSystemDependentName(baseDir.getPath()), Project.DIRECTORY_STORE_FOLDER);
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    if (!forceOpenInNewFrame && openProjects.length > 0) {
+    if (!forceOpenInNewFrame && openProjects.length > 0 && !ApplicationManager.getApplication().isOnAir()) {
       if (projectToClose == null) {
         projectToClose = openProjects[openProjects.length - 1];
       }
