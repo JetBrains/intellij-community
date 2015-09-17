@@ -534,6 +534,46 @@ public class PyQuickFixTest extends PyTestCase {
     });
   }
 
+  // PY-16908
+  public void testNumpyDocStringRemoveFirstOfCombinedParams() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "x"), true, true);
+      }
+    });
+  }
+
+  // PY-16908
+  public void testNumpyDocStringRemoveMidOfCombinedParams() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "y"), true, true);
+      }
+    });
+  }
+  
+  // PY-16908
+  public void testNumpyDocStringRemoveLastOfCombinedParams() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "z"), true, true);
+      }
+    });
+  }
+
+  // PY-16908
+  public void testNumpyDocStringRemoveCombinedVarargParam() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "args"), true, true);
+      }
+    });
+  }
+
   public void testUnnecessaryBackslash() {
     String[] testFiles = new String[]{"UnnecessaryBackslash.py"};
     myFixture.enableInspections(PyUnnecessaryBackslashInspection.class);
@@ -625,6 +665,7 @@ public class PyQuickFixTest extends PyTestCase {
    * @param available       true if the fix should be available, false if it should be explicitly not available.
    * @throws Exception
    */
+  @SuppressWarnings("Duplicates")
   protected void doInspectionTest(@NonNls @NotNull String[] testFiles,
                                   @NotNull Class inspectionClass,
                                   @NonNls @NotNull String quickFixName,
@@ -635,10 +676,14 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, false);
     final List<IntentionAction> intentionActions = myFixture.filterAvailableIntentions(quickFixName);
     if (available) {
-      assertOneElement(intentionActions);
+      if (intentionActions.isEmpty()) {
+        throw new AssertionError("Quickfix \"" + quickFixName + "\" is not available");
+      }
+      if (intentionActions.size() > 1) {
+        throw new AssertionError("There are more than one quickfix with the name \"" + quickFixName + "\"");
+      }
       if (applyFix) {
         myFixture.launchAction(intentionActions.get(0));
-
         myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"));
       }
     }

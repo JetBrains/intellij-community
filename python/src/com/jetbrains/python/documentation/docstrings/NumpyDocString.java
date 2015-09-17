@@ -20,6 +20,7 @@ import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -30,6 +31,7 @@ import java.util.regex.Pattern;
  */
 public class NumpyDocString extends SectionBasedDocString {
   private static final Pattern SIGNATURE = Pattern.compile("^[ \t]*([\\w., ]+=)?[ \t]*[\\w\\.]+\\(.*\\)[ \t]*$", Pattern.MULTILINE);
+  private static final Pattern NAME_SEPARATOR = Pattern.compile("[ \t]*,[ \t]*");
   public static final Pattern SECTION_HEADER = Pattern.compile("^[ \t]*[-=]{2,}[ \t]*$", Pattern.MULTILINE);
 
   private Substring mySignature;
@@ -67,25 +69,35 @@ public class NumpyDocString extends SectionBasedDocString {
                                                           boolean mayHaveType,
                                                           boolean preferType) {
     final Substring line = getLine(lineNum);
-    Substring name, type = null, description = null;
+    Substring namesPart, type = null, description = null;
     if (mayHaveType) {
       final List<Substring> colonSeparatedParts = splitByFirstColon(line);
-      name = colonSeparatedParts.get(0).trim();
+      namesPart = colonSeparatedParts.get(0).trim();
       if (colonSeparatedParts.size() == 2) {
         type = colonSeparatedParts.get(1).trim();
       }
     }
     else {
-      name = line.trim();
+      namesPart = line.trim();
     }
     if (preferType && type == null) {
-      type = name;
-      name = null;
+      type = namesPart;
+      namesPart = null;
     }
-    if (name != null) {
-      name = cleanUpName(name);
+    final List<Substring> names = new ArrayList<Substring>();
+    if (namesPart != null) {
+      // Unlike Google code style, Numpydoc allows to list several parameter with same file together, e.g.
+      // x1, x2 : array_like
+      //     Input arrays, description of `x1`, `x2`.
+      for (Substring name : namesPart.split(NAME_SEPARATOR)) {
+        final Substring identifier = cleanUpName(name);
+        if (!isValidName(identifier.toString())) {
+          return Pair.create(null, lineNum);
+        }
+        names.add(identifier);
+      }
     }
-    if (name != null ? !isValidName(name.toString()) : !isValidType(type.toString())) {
+    if (namesPart == null && !isValidType(type.toString())) {
       return Pair.create(null, lineNum);
     }
     final Pair<List<Substring>, Integer> parsedDescription = parseIndentedBlock(lineNum + 1, getLineIndentSize(lineNum));
@@ -93,7 +105,7 @@ public class NumpyDocString extends SectionBasedDocString {
     if (!descriptionLines.isEmpty()) {
       description = descriptionLines.get(0).union(descriptionLines.get(descriptionLines.size() - 1));
     }
-    return Pair.create(new SectionField(name, type, description != null ? description.trim() : null), parsedDescription.getSecond());
+    return Pair.create(new SectionField(names, type, description != null ? description.trim() : null), parsedDescription.getSecond());
   }
 
   @NotNull

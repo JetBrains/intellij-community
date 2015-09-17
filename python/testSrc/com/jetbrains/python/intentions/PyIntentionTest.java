@@ -619,7 +619,17 @@ public class  PyIntentionTest extends PyTestCase {
   public void testParamTypeInNumpyDocStringOtherSectionExists() {
     doDocParamTypeTest(DocStringFormat.NUMPY);
   }
-  
+
+  // PY-16908
+  public void testParamTypeInNumpyDocStringCombinedParams() {
+    doDocParamTypeTest(DocStringFormat.NUMPY);
+  }
+
+  // PY-16908
+  public void testParamTypeInNumpyDocStringCombinedParamsColon() {
+    doDocParamTypeTest(DocStringFormat.NUMPY);
+  }
+
   // PY-4717
   public void testReturnTypeInEmptyNumpyDocString() {
     doDocReturnTypeTest(DocStringFormat.NUMPY);

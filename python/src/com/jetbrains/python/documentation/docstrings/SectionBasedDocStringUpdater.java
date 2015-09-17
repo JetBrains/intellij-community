@@ -91,28 +91,80 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
   }
 
   @Override
-  public void removeParameter(@NotNull String name) {
+  public void removeParameter(@NotNull final String name) {
     for (Section section : myOriginalDocString.getParameterSections()) {
       final List<SectionField> sectionFields = section.getFields();
-      for (SectionField param : sectionFields) {
-        if (param.getName().equals(name)) {
-          final int endLine = getFieldEndLine(param);
-          if (sectionFields.size() == 1) {
-            removeLinesAndSpacesAfter(getSectionStartLine(section), endLine + 1);
+      for (SectionField field : sectionFields) {
+        final Substring nameSub = ContainerUtil.find(field.getNamesAsSubstrings(), new Condition<Substring>() {
+          @Override
+          public boolean value(Substring substring) {
+            return substring.toString().equals(name);
           }
-          else {
-            final int startLine = getFieldStartLine(param);
-            if (ContainerUtil.getLastItem(sectionFields) == param) {
-              removeLines(startLine, endLine + 1);
+        });
+        if (nameSub != null) {
+          if (field.getNamesAsSubstrings().size() == 1) {
+            final int endLine = getFieldEndLine(field);
+            if (sectionFields.size() == 1) {
+              removeLinesAndSpacesAfter(getSectionStartLine(section), endLine + 1);
             }
             else {
-              removeLinesAndSpacesAfter(startLine, endLine + 1);
+              final int startLine = getFieldStartLine(field);
+              if (ContainerUtil.getLastItem(sectionFields) == field) {
+                removeLines(startLine, endLine + 1);
+              }
+              else {
+                removeLinesAndSpacesAfter(startLine, endLine + 1);
+              }
             }
+          }
+          else {
+            final Substring wholeParamName = expandParamNameSubstring(nameSub);
+            remove(wholeParamName.getStartOffset(), wholeParamName.getEndOffset());
           }
           break;
         }
       }
     }
+  }
+
+  @NotNull
+  private static Substring expandParamNameSubstring(@NotNull Substring name) {
+    final String superString = name.getSuperString();
+    int startWithStars = name.getStartOffset();
+    int prevNonWhitespace;
+    do {
+      prevNonWhitespace = skipWhitespaces(superString, startWithStars - 1, true);
+      if (prevNonWhitespace >= 0 && superString.charAt(prevNonWhitespace) == '*') {
+        startWithStars = prevNonWhitespace;
+      }
+      else {
+        break;
+      }
+    }
+    while (startWithStars >= 0);
+    if (prevNonWhitespace >= 0 && superString.charAt(prevNonWhitespace) == ',') {
+      return new Substring(superString, prevNonWhitespace, name.getEndOffset());
+    }
+    // end offset is always exclusive
+    final int nextNonWhitespace = skipWhitespaces(superString, name.getEndOffset(), false);
+    if (nextNonWhitespace < superString.length() && superString.charAt(nextNonWhitespace) == ',') {
+      // if we remove parameter with trailing comma (i.e. first parameter) remove whitespaces after it as well
+      return new Substring(superString, startWithStars, skipWhitespaces(superString, nextNonWhitespace + 1, false)); 
+    }
+    return name;
+  }
+
+  private static int skipWhitespaces(@NotNull String s, int start, boolean backward) {
+    int result = start;
+    while (start >= 0 && start < s.length() && " \t".indexOf(s.charAt(result)) >= 0) {
+      if (backward) {
+        result--;
+      }
+      else{
+        result++;
+      }
+    }
+    return result;
   }
 
   @Override

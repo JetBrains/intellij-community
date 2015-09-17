@@ -203,36 +203,41 @@ public class PyRenameTest extends PyTestCase {
 
   // PY-9795
   public void testGoogleDocStringParam() {
-    renameWithDocStringFormat("bar");
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "bar");
   }
 
   // PY-9795
   public void testGoogleDocStringAttribute() {
-    renameWithDocStringFormat("bar");
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "bar");
   }
 
   // PY-9795
   public void testGoogleDocStringParamType() {
-    renameWithDocStringFormat("Bar");
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "Bar");
   }
 
   // PY-9795
   public void testGoogleDocStringReturnType() {
-    renameWithDocStringFormat("Bar");
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "Bar");
   }
 
   // PY-16761
   public void testGoogleDocStringPositionalVararg() {
-    renameWithDocStringFormat("bar");
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "bar");
   }
 
   // PY-16761
   public void testGoogleDocStringKeywordVararg() {
-    renameWithDocStringFormat("bar");
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "bar");
   }
 
-  private void renameWithDocStringFormat(final String newName) {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+  // PY-16908
+  public void testNumpyDocStringCombinedParam() {
+    renameWithDocStringFormat(DocStringFormat.NUMPY, "bar");
+  }
+
+  private void renameWithDocStringFormat(DocStringFormat format, final String newName) {
+    runWithDocStringFormat(format, new Runnable() {
       public void run() {
         doTest(newName);
       }
