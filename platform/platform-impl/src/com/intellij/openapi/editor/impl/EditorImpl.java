@@ -349,7 +349,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myCommandProcessor = CommandProcessor.getInstance();
 
-    myImmediatePainter = new ImmediatePainterImpl(this);
+    myImmediatePainter = new ImmediatePainter(this);
 
     if (project != null) {
       myConnection = project.getMessageBus().connect();
