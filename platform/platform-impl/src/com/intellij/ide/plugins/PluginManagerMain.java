@@ -339,7 +339,7 @@ public abstract class PluginManagerMain implements Disposable {
         for (String host : hosts) {
           try {
             if (host == null || acceptHost(host)) {
-              List<IdeaPluginDescriptor> plugins = RepositoryHelper.loadPlugins(host, null, indicator);
+              List<IdeaPluginDescriptor> plugins = RepositoryHelper.loadPlugins(host, indicator);
               for (IdeaPluginDescriptor plugin : plugins) {
                 if (unique.add(plugin.getPluginId())) {
                   list.add(plugin);
