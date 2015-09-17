@@ -33,6 +33,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
+import java.util.List;
 import java.util.Map;
 
 public final class TabInfo implements Queryable, PlaceProvider<String> {
@@ -84,7 +85,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   private static final AlertIcon DEFAULT_ALERT_ICON = new AlertIcon(AllIcons.Nodes.TabAlert);
 
   private boolean myEnabled = true;
-  private Color myTabColor = null;
+  private Color myTabColor;
 
   private Queryable myQueryable;
   private DragOutDelegate myDragOutDelegate;
@@ -105,9 +106,12 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   public TabInfo setText(String text) {
-    if (!myText.toString().equals(text)) {
+    List<SimpleTextAttributes> attributes = myText.getAttributes();
+    SimpleTextAttributes textAttributes = attributes.isEmpty() ? null : attributes.get(0);
+    SimpleTextAttributes defaultAttributes = getDefaultAttributes();
+    if (!myText.toString().equals(text) || !Comparing.equal(textAttributes, defaultAttributes)) {
       clearText(false);
-      append(text, getDefaultAttributes());
+      append(text, defaultAttributes);
     }
     return this;
   }
