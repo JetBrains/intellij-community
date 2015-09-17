@@ -227,7 +227,7 @@ class VisiblePackBuilderTest {
   class ConstantVcsLogHashMap(val map: Map<Hash, Int>) : VcsLogHashMap {
     val reverseMap = map.entrySet().map { Pair(it.value, it.key) }.toMap()
 
-    override fun getCommitIndex(hash: Hash) = map.get(hash)!!
+    override fun getCommitIndex(hash: Hash, root: VirtualFile) = map.get(hash)!!
 
     override fun getHash(commitIndex: Int) = reverseMap.get(commitIndex)!!
 

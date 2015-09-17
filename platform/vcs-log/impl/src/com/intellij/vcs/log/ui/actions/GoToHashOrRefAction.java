@@ -48,7 +48,7 @@ public class GoToHashOrRefAction extends DumbAwareAction {
     }, new Function<VcsRef, Future>() {
       @Override
       public Future fun(VcsRef vcsRef) {
-        return logUi.jumpToCommit(vcsRef.getCommitHash());
+        return logUi.jumpToCommit(vcsRef.getCommitHash(), vcsRef.getRoot());
       }
     }, logUi.getColorManager(), new VcsRefComparator(logUi.getDataPack().getLogProviders()));
     popup.show(logUi.getTable());

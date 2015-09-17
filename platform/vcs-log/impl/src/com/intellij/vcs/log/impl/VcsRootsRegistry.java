@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log;
+package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- */
-public interface VcsLogDataProvider {
+public interface VcsRootsRegistry {
+  int getId(@NotNull VirtualFile root);
 
-  @NotNull
-  Hash getHash(int commitIndex);
-
-  int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root);
-
+  @Nullable
+  VirtualFile getRootById(int id);
 }

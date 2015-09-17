@@ -43,7 +43,7 @@ public class RefsModel implements VcsLogRefs {
   private TIntObjectHashMap<SmartList<VcsRef>> prepareRefsToIndicesMap(@NotNull Collection<VcsRef> refs) {
     TIntObjectHashMap<SmartList<VcsRef>> map = new TIntObjectHashMap<SmartList<VcsRef>>();
     for (VcsRef ref : refs) {
-      int index = myHashMap.getCommitIndex(ref.getCommitHash());
+      int index = myHashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
       SmartList<VcsRef> list = map.get(index);
       if (list == null) map.put(index, list = new SmartList<VcsRef>());
       list.add(ref);

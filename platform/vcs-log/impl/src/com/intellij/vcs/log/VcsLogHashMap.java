@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface VcsLogHashMap {
 
-  int getCommitIndex(@NotNull Hash hash);
+  int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root);
 
   @NotNull
   Hash getHash(int commitIndex);
@@ -35,5 +36,5 @@ public interface VcsLogHashMap {
    * @return
    */
   @Nullable
-  Hash findHashByString(@NotNull String string);
+  CommitId findHashByString(@NotNull String string);
 }
