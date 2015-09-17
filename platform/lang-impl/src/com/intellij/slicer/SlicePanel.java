@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
@@ -85,6 +86,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   private final Project myProject;
   private boolean isDisposed;
   private final ToolWindow myToolWindow;
+  private final SliceLanguageSupportProvider myProvider;
 
   public SlicePanel(@NotNull final Project project,
                     boolean dataFlowToThis,
@@ -92,6 +94,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
                     boolean splitByLeafExpressions,
                     @NotNull final ToolWindow toolWindow) {
     super(new BorderLayout());
+    myProvider = rootNode.getProvider();
     myToolWindow = toolWindow;
     final ToolWindowManagerListener listener = new ToolWindowManagerListener() {
       ToolWindowAnchor myAnchor = toolWindow.getAnchor();
@@ -194,7 +197,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     tree.setOpaque(false);
 
     tree.setToggleClickCount(-1);
-    SliceUsageCellRenderer renderer = new SliceUsageCellRenderer();
+    SliceUsageCellRendererBase renderer = myProvider.getRenderer();
     renderer.setOpaque(false);
     tree.setCellRenderer(renderer);
     UIUtil.setLineStyleAngled(tree);
@@ -354,10 +357,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       });
     }
 
-    if (myBuilder.dataFlowToThis) {
-      actionGroup.add(new GroupByLeavesAction(myBuilder));
-      actionGroup.add(new CanItBeNullAction(myBuilder));
-    }
+    myProvider.registerExtraPanelActions(actionGroup, myBuilder);
 
     //actionGroup.add(new ContextHelpAction(HELP_ID));
 
