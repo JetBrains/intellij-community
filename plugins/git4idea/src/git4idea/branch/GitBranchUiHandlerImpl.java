@@ -69,8 +69,8 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
           description.append(message).append("<br/>");
         }
         description.append(rollbackProposal);
-        ok.set(Messages.YES == MessageManager.showYesNoDialog(myProject, XmlStringUtil.wrapInHtml(description), title,
-                                                             "Rollback", "Don't rollback", Messages.getErrorIcon()));
+        ok.set(Messages.YES == DialogManager.showOkCancelDialog(myProject, XmlStringUtil.wrapInHtml(description), title,
+                                                                "Rollback", "Don't rollback", Messages.getErrorIcon()));
       }
     });
     return ok.get();
@@ -107,8 +107,8 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
                                            operationName, rollbackProposal);
         // suppressing: this message looks ugly if capitalized by words
         //noinspection DialogTitleCapitalization
-        ok.set(Messages.YES == MessageManager.showYesNoDialog(myProject, description, unmergedFilesErrorTitle(operationName),
-                                                             "Rollback", "Don't rollback", Messages.getErrorIcon()));
+        ok.set(Messages.YES == DialogManager.showOkCancelDialog(myProject, description, unmergedFilesErrorTitle(operationName),
+                                                                "Rollback", "Don't rollback", Messages.getErrorIcon()));
       }
     });
     return ok.get();
