@@ -122,16 +122,19 @@ public class LocalVariablesUtil {
   public static Map<DecompiledLocalVariable, Value> fetchValues(@NotNull StackFrameProxyImpl frameProxy, DebugProcess process) throws Exception {
     Map<DecompiledLocalVariable, Value> map = new LinkedHashMap<DecompiledLocalVariable, Value>(); // LinkedHashMap for correct order
 
+    com.sun.jdi.Method method = frameProxy.location().method();
+    final int firstLocalVariableSlot = getFirstLocalsSlot(method);
+
     List<Value> argValues = frameProxy.getArgumentValues();
 
     // gather code variables names
-    MultiMap<Integer, String> namesMap = calcNames(new SimpleStackFrameContext(frameProxy, process), argValues.size());
+    MultiMap<Integer, String> namesMap = calcNames(new SimpleStackFrameContext(frameProxy, process), firstLocalVariableSlot);
 
     // first add arguments
     int slot = 0;
     for (Value value : argValues) {
       map.put(new DecompiledLocalVariable(slot, true, null, namesMap.get(slot)), value);
-      slot++;
+      slot += getTypeSlotSize(value.type().name());
     }
 
     if (!ourInitializationOk) {
@@ -260,7 +263,7 @@ public class LocalVariablesUtil {
   }
 
   @NotNull
-  private static MultiMap<Integer, String> calcNames(@NotNull final StackFrameContext context, final int methodArgsNumber) {
+  private static MultiMap<Integer, String> calcNames(@NotNull final StackFrameContext context, final int firstLocalsSlot) {
     return ApplicationManager.getApplication().runReadAction(new Computable<MultiMap<Integer, String>>() {
       @Override
       public MultiMap<Integer, String> compute() {
@@ -271,15 +274,17 @@ public class LocalVariablesUtil {
             PsiParameterList params = DebuggerUtilsEx.getParameterList(method);
             if (params != null) {
               MultiMap<Integer, String> res = new MultiMap<Integer, String>();
-              int paramCount = params.getParametersCount();
-              int offset = Math.max(0, methodArgsNumber - paramCount);
-              for (int i = 0; i < paramCount; i++) {
-                res.putValue(i + offset, params.getParameters()[i].getName());
+              int psiFirstLocalsSlot = getFirstLocalsSlot(method);
+              int slot = Math.max(0, firstLocalsSlot - psiFirstLocalsSlot);
+              for (int i = 0; i < params.getParametersCount(); i++) {
+                PsiParameter parameter = params.getParameters()[i];
+                res.putValue(slot, parameter.getName());
+                slot += getTypeSlotSize(parameter.getType());
               }
               PsiElement body = DebuggerUtilsEx.getBody(method);
               if (body != null) {
                 try {
-                  body.accept(new LocalVariableNameFinder(getFirstLocalsSlot(method), res));
+                  body.accept(new LocalVariableNameFinder(firstLocalsSlot, res));
                 }
                 catch (Exception e) {
                   LOG.info(e);
