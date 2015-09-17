@@ -41,6 +41,10 @@ public class GroovyCompilerWrapper {
   private static final String LINKAGE_ERROR =
     "A groovyc error occurred while trying to load one of the classes in project dependencies, please ensure it's present. " +
     "See the message and the stack trace below for reference\n\n";
+  private static final String INCOMPATIBLE_CLASS_CHANGE_ERROR =
+    "A groovyc error occurred while trying to load one of the classes in project dependencies. " +
+    "Please ensure its version is compatible with other jars (including Groovy ones) in the dependencies. " +
+    "See the message and the stack trace below for reference\n\n";
   private final List<CompilerMessage> collector;
   private boolean forStubs;
 
@@ -74,10 +78,12 @@ public class GroovyCompilerWrapper {
       } else {
         throw e;
       }
-
     }
     catch (TypeNotPresentException e) {
       processException(e, LINKAGE_ERROR);
+    }
+    catch (IncompatibleClassChangeError e) {
+      processException(e, INCOMPATIBLE_CLASS_CHANGE_ERROR);
     }
     catch (LinkageError e) {
       processException(e, LINKAGE_ERROR);
