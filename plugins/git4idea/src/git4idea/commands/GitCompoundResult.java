@@ -16,6 +16,8 @@
 package git4idea.commands;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -87,5 +89,15 @@ public final class GitCompoundResult {
       }
     }
     return sb.toString();
+  }
+
+  @Override
+  public String toString() {
+    return "GitCompoundResult: " + StringUtil.join(resultsByRepos.keySet(), new Function<GitRepository, String>() {
+      @Override
+      public String fun(GitRepository repository) {
+        return repository.getRoot().getName() + ": " + resultsByRepos.get(repository).toString();
+      }
+    }, "\n");
   }
 }
