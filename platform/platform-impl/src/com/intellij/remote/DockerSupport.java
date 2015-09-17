@@ -16,10 +16,7 @@
 package com.intellij.remote;
 
 import com.intellij.openapi.components.ServiceManager;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author Alexander Koshevoy
@@ -28,16 +25,5 @@ public abstract class DockerSupport {
   @Nullable
   public static DockerSupport getInstance() {
     return ServiceManager.getService(DockerSupport.class);
-  }
-
-  @NotNull
-  public abstract List<DockerServer> getDockerServers();
-
-  @Nullable
-  public abstract DockerServer findDockerServerByName(@NotNull String name);
-
-  public interface DockerServer {
-    @NotNull
-    String getName();
   }
 }

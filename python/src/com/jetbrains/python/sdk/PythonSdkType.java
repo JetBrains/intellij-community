@@ -1037,7 +1037,6 @@ public class PythonSdkType extends SdkType {
 
         @Override
         public void docker(@NotNull DockerCredentialsHolder credentials) {
-          result.set(credentials.getDockerServer() == null);
         }
       });
       return result.get();
