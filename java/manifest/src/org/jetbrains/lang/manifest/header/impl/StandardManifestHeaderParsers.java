@@ -59,6 +59,12 @@ public class StandardManifestHeaderParsers implements HeaderParserProvider {
     myParsers.put("MD5-Digest", StandardHeaderParser.INSTANCE);
     myParsers.put("SHA-Digest", StandardHeaderParser.INSTANCE);
     myParsers.put("Magic", StandardHeaderParser.INSTANCE);
+    myParsers.put("Premain-Class", ClassReferenceParser.INSTANCE);
+    myParsers.put("Agent-Class", ClassReferenceParser.INSTANCE);
+    myParsers.put("Boot-Class-Path", StandardHeaderParser.INSTANCE);
+    myParsers.put("Can-Redefine-Classes", StandardHeaderParser.INSTANCE);
+    myParsers.put("Can-Retransform-Classes", StandardHeaderParser.INSTANCE);
+    myParsers.put("Can-Set-Native-Method-Prefix", StandardHeaderParser.INSTANCE);
   }
 
   @NotNull
