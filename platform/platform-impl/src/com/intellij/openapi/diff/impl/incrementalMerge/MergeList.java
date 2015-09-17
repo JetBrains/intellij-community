@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -237,7 +238,8 @@ public class MergeList implements UserDataHolder {
     for (int i = 0; i < changeList.getCount(); i++) {
       final Change change = changeList.getChange(i);
       if (!change.canHasActions(originalSide)) continue;
-      AnAction applyAction = new DumbAwareAction(DiffBundle.message("merge.dialog.apply.change.action.name"), null, AllIcons.Diff.Arrow) {
+      Icon arrowIcon = side == FragmentSide.SIDE1 ? AllIcons.Diff.ArrowRight : AllIcons.Diff.Arrow;
+      AnAction applyAction = new DumbAwareAction(DiffBundle.message("merge.dialog.apply.change.action.name"), null, arrowIcon) {
         @Override
         public void actionPerformed(@Nullable AnActionEvent e) {
           apply(change);
