@@ -18,12 +18,14 @@ package com.intellij.ui;
 import com.intellij.util.ui.AbstractLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
 public class ExpandedItemRendererComponentWrapper extends JComponent {
-  public ExpandedItemRendererComponentWrapper(@NotNull final Component rendererComponent) {
+  private ExpandedItemRendererComponentWrapper(@NotNull final Component rendererComponent) {
     add(rendererComponent);
     setOpaque(false);
     setLayout(new AbstractLayoutManager() {
@@ -40,6 +42,25 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
         rendererComponent.setBounds(i.left, i.top, Math.max(pref.width, size.width - i.left - i.right), size.height - i.top - i.bottom);
       }
     });
+  }
+  private ExpandedItemRendererComponentWrapper() {}
+
+  public static ExpandedItemRendererComponentWrapper wrap(@NotNull Component rendererComponent) {
+    if (rendererComponent instanceof Accessible) {
+      return new MyAccessibleComponent((Accessible)rendererComponent);
+    }
+    return new ExpandedItemRendererComponentWrapper(rendererComponent);
+  }
+
+  private static class MyAccessibleComponent extends ExpandedItemRendererComponentWrapper implements Accessible {
+    private Accessible myAccessible;
+    MyAccessibleComponent(Accessible comp) {
+      myAccessible = comp;
+    }
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      return myAccessible.getAccessibleContext();
+    }
   }
 
   @Override

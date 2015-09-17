@@ -498,7 +498,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
 
     if (myExpandableItemsHandler.getExpandedItems().contains(new TableCell(row, column))) {
-      result = new ExpandedItemRendererComponentWrapper(result);
+      result = ExpandedItemRendererComponentWrapper.wrap(result);
     }
     return result;
   }
