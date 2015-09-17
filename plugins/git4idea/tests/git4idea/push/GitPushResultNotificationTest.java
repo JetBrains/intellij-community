@@ -15,7 +15,6 @@
  */
 package git4idea.push;
 
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -42,6 +41,7 @@ import java.util.Map;
 
 import static git4idea.push.GitPushNativeResult.Type.*;
 import static git4idea.push.GitPushRepoResult.convertFromNative;
+import static git4idea.test.GitTestUtil.assertNotification;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
@@ -124,7 +124,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     GitPushResultNotification notification = notification(convertFromNative(branchResult, singletonList(tagResult), 1,
                                                                             from("master"), to("origin/master")));
     assertNotification(NotificationType.INFORMATION, "Push successful",
-                       "Pushed 1 commit to origin/master, and tag v0.1 to origin", notification);
+                                   "Pushed 1 commit to origin/master, and tag v0.1 to origin", notification);
   }
 
   public void test_nothing() {
@@ -245,11 +245,4 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     });
     return new MockGitRepository(ourProject, root);
   }
-
-  private static void assertNotification(NotificationType type, String title, String content, Notification actual) {
-    assertEquals(type, actual.getType());
-    assertEquals(title, actual.getTitle());
-    assertEquals(content, actual.getContent());
-  }
-
 }
