@@ -126,16 +126,16 @@ public class LocalVariablesUtil {
     com.sun.jdi.Method method = frameProxy.location().method();
     final int firstLocalVariableSlot = getFirstLocalsSlot(method);
 
-    List<Value> argValues = frameProxy.getArgumentValues();
-
     // gather code variables names
     MultiMap<Integer, String> namesMap = calcNames(new SimpleStackFrameContext(frameProxy, process), firstLocalVariableSlot);
 
     // first add arguments
     int slot = 0;
-    for (Value value : argValues) {
-      map.put(new DecompiledLocalVariable(slot, true, null, namesMap.get(slot)), value);
-      slot += getTypeSlotSize(value.type().name());
+    List<String> typeNames = method.argumentTypeNames();
+    List<Value> argValues = frameProxy.getArgumentValues();
+    for (int i = 0; i < argValues.size(); i++) {
+      map.put(new DecompiledLocalVariable(slot, true, null, namesMap.get(slot)), argValues.get(i));
+      slot += getTypeSlotSize(typeNames.get(i));
     }
 
     if (!ourInitializationOk) {
