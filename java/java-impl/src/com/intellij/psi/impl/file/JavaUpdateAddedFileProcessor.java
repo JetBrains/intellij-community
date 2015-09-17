@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.file;
 
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.util.IncorrectOperationException;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaUpdateAddedFileProcessor extends UpdateAddedFileProcessor {
   @Override
   public boolean canProcessElement(@NotNull final PsiFile file) {
-    return file instanceof PsiClassOwner;
+    return file instanceof PsiClassOwner && !JavaProjectRootsUtil.isOutsideJavaSourceRoot(file);
   }
 
   @Override
