@@ -125,8 +125,8 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
 
     Collections.sort(properties, new Comparator<IProperty>() {
       @Override
-      public int compare(IProperty p1, IProperty p2) {
-        return Comparing.compare(p1.getKey(), p2.getKey());
+      public int compare(@NotNull IProperty p1, @NotNull IProperty p2) {
+        return Comparing.compare(p1.getKey(), p2.getKey(), String.CASE_INSENSITIVE_ORDER);
       }
     });
     final char delimiter = PropertiesCodeStyleSettings.getInstance(file.getProject()).KEY_VALUE_DELIMITER;
