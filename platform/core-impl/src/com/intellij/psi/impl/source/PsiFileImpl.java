@@ -197,6 +197,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
       if (stub != null) {
         treeElement.putUserData(STUB_TREE_IN_PARSED_TREE, new SoftReference<StubTree>(stub));
+        putUserData(ObjectStubTree.LAST_STUB_TREE_HASH, stub.hashCode());
       }
 
       switchFromStubToAst(bindings);
@@ -684,6 +685,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         final StubTree stubTree = new StubTree(matchingStub);
         stubTree.setDebugInfo("created in getStubTree()");
         if (root.second == this) stubHolder = stubTree;
+        root.second.putUserData(ObjectStubTree.LAST_STUB_TREE_HASH, null);
         ((PsiFileImpl)root.second).myStub = new SoftReference<StubTree>(stubTree);
       }
       return stubHolder;
