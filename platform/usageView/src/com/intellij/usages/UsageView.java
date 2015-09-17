@@ -66,6 +66,8 @@ public interface UsageView extends Disposable {
   void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text, char mnemonic);
   void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text);
 
+  void setAdditionalComponent(@Nullable JComponent component);
+
   void addPerformOperationAction(@NotNull Runnable processRunnable, String commandName, String cannotMakeString, @NotNull String shortDescription);
 
   /**
