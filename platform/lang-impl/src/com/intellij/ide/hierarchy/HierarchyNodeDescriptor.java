@@ -47,10 +47,13 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
 
   @Nullable
   public PsiFile getContainingFile() {
-    return myElement != null && myElement.isValid() ? myElement.getContainingFile() : null;
+    PsiElement element = getPsiElement();
+    return element != null ? element.getContainingFile() : null;
   }
 
-  public abstract boolean isValid();
+  public boolean isValid() {
+    return getPsiElement() != null;
+  }
 
   public final Object[] getCachedChildren() {
     return myCachedChildren;
