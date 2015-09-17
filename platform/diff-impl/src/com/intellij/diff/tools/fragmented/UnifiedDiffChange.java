@@ -17,18 +17,13 @@ package com.intellij.diff.tools.fragmented;
 
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUtil.UpdatedLineRange;
-import com.intellij.diff.util.Side;
-import com.intellij.diff.util.TextDiffType;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
@@ -240,62 +235,25 @@ public class UnifiedDiffChange {
   private GutterIconRenderer createIconRenderer(@NotNull final Side sourceSide,
                                                 @NotNull final String tooltipText,
                                                 @NotNull final Icon icon) {
-    return new GutterIconRenderer() {
-      @NotNull
+    return new DiffGutterRenderer(icon, tooltipText) {
       @Override
-      public Icon getIcon() {
-        return icon;
-      }
+      protected void performAction(AnActionEvent e) {
+        if (myViewer.isStateIsOutOfDate()) return;
+        if (!myViewer.isEditable(sourceSide.other(), true)) return;
 
-      public boolean isNavigateAction() {
-        return true;
-      }
+        final Project project = e.getProject();
+        final Document document = myViewer.getDocument(sourceSide.other());
 
-      @Nullable
-      @Override
-      public AnAction getClickAction() {
-        return new DumbAwareAction() {
+        DiffUtil.executeWriteCommand(document, project, "Replace change", new Runnable() {
           @Override
-          public void actionPerformed(AnActionEvent e) {
-            if (myViewer.isStateIsOutOfDate()) return;
-            if (!myViewer.isEditable(sourceSide.other(), true)) return;
-
-            final Project project = e.getProject();
-            final Document document = myViewer.getDocument(sourceSide.other());
-
-            DiffUtil.executeWriteCommand(document, project, "Replace change", new Runnable() {
-              @Override
-              public void run() {
-                myViewer.replaceChange(UnifiedDiffChange.this, sourceSide);
-                myViewer.scheduleRediff();
-              }
-            });
-            // applyChange() will schedule rediff, but we want to try to do it in sync
-            // and we can't do it inside write action
-            myViewer.rediff();
+          public void run() {
+            myViewer.replaceChange(UnifiedDiffChange.this, sourceSide);
+            myViewer.scheduleRediff();
           }
-        };
-      }
-
-      @Override
-      public boolean equals(Object obj) {
-        return obj == this;
-      }
-
-      @Override
-      public int hashCode() {
-        return System.identityHashCode(this);
-      }
-
-      @Nullable
-      @Override
-      public String getTooltipText() {
-        return tooltipText;
-      }
-
-      @Override
-      public boolean isDumbAware() {
-        return true;
+        });
+        // applyChange() will schedule rediff, but we want to try to do it in sync
+        // and we can't do it inside write action
+        myViewer.rediff();
       }
     };
   }
