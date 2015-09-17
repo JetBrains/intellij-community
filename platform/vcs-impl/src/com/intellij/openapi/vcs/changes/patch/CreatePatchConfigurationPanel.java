@@ -147,6 +147,7 @@ public class CreatePatchConfigurationPanel {
     myReversePatchCheckbox = new JCheckBox(VcsBundle.message("create.patch.reverse.checkbox"));
     myEncoding = new ComboBox();
     myIncludeBaseRevisionTextCheckBox = new JCheckBox(VcsBundle.message("create.patch.base.revision", 0));
+    myIncludeBaseRevisionTextCheckBox.setToolTipText(VcsBundle.message("create.patch.base.revision.tooltip"));
     myErrorLabel = new JLabel();
 
     myMainPanel = FormBuilder.createFormBuilder()
