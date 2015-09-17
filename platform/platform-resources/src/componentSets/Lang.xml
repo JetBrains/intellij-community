@@ -125,6 +125,10 @@
       <skipForDefaultProject/>
     </component>
     <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.ChameleonSyntaxHighlightingPass$Factory</implementation-class>
+      <skipForDefaultProject/>
+    </component>
+    <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.InjectedGeneralHighlightingPassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>
