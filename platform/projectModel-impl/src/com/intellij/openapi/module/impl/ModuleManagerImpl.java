@@ -815,10 +815,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     @Override
     public Module findModuleByName(@NotNull String name) {
-      for (Module module : myModules.values()) {
-        if (!module.isDisposed() && module.getName().equals(name)) {
-          return module;
-        }
+      Module module = myModules.get(name);
+      if (module != null && !module.isDisposed()) {
+        return module;
       }
       return null;
     }
