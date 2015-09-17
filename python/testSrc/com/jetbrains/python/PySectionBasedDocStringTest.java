@@ -344,6 +344,25 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     assertEmpty(y.getDescription());
   }
 
+  public void testNumpyMultipleReturns() {
+    final NumpyDocString docString = findAndParseNumpyStyleDocString();
+    assertSize(1, docString.getSections());
+    final Section returnSection = docString.getSections().get(0);
+    assertSize(2, returnSection.getFields());
+  }
+
+  // PY-16908
+  public void testNumpyCombinedParamDeclarations() {
+    final NumpyDocString docString = findAndParseNumpyStyleDocString();
+    assertSize(1, docString.getSections());
+    final Section paramSection = docString.getSections().get(0);
+    assertSize(1, paramSection.getFields());
+    final SectionField firstField = paramSection.getFields().get(0);
+    assertSameElements(firstField.getNames(), "x", "y", "args", "kwargs");
+    assertEquals(firstField.getType(), "Any");
+    assertEquals(firstField.getDescription(), "description");
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/docstrings";

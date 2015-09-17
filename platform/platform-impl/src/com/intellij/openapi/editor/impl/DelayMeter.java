@@ -47,64 +47,24 @@ class DelayMeter {
   }
 
   double getMin() {
-    return myStats.getMin() / 1000000.0D;
+    return myStats.getMin();
   }
 
   double getMax() {
-    return myStats.getMax() / 1000000.0D;
+    return myStats.getMax();
   }
 
   double getMean() {
-    return myStats.getMean() / 1000000.0D;
+    return myStats.getMean();
   }
 
   double getStandardDeviation() {
-    return myStats.getStandardDeviation() / 1000000.0D;
+    return myStats.getStandardDeviation();
   }
 
-
-  private static class SummaryStatistics {
-    private int myCount = 0;
-
-    private double myMin = Double.MAX_VALUE;
-
-    private double myMax = 0.0D;
-
-    private double myMean = 0.0D;
-
-    private double myS = 0.0D;
-
-    void accept(double value) {
-      myCount++;
-
-      myMin = Math.min(myMin, value);
-
-      myMax = Math.max(myMax, value);
-
-      if (myCount == 1) {
-        myMean = value;
-      } else {
-        double previousMean = myMean;
-        myMean += (value - myMean) / myCount;
-        myS += (value - previousMean) * (value - myMean);
-      }
-    }
-
-    double getMin() {
-      return myMin == Double.MAX_VALUE ? 0.0D : myMin;
-    }
-
-    double getMax() {
-      return myMax;
-    }
-
-    double getMean() {
-      return myMean;
-    }
-
-    double getStandardDeviation() {
-      return Math.sqrt(myS / (myCount - 1));
-    }
+  public String stat() {
+    return myStats.stat();
   }
+
 }
 

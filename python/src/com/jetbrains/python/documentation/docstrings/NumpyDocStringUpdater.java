@@ -30,7 +30,7 @@ public class NumpyDocStringUpdater extends SectionBasedDocStringUpdater {
 
   @Override
   protected void updateParamDeclarationWithType(@NotNull Substring nameSubstring, @NotNull String type) {
-    insert(nameSubstring.getEndOffset(), " : " + type);
+    insert(myOriginalDocString.getLine(nameSubstring.getEndLine()).trimRight().getEndOffset(), " : " + type);
   }
 
   @Override

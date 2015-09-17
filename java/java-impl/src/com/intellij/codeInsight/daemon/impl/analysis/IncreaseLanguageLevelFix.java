@@ -22,18 +22,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JdkVersionUtil;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
@@ -59,24 +54,13 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     return CodeInsightBundle.message("set.language.level");
   }
 
-  private static boolean isJdkSupportsLevel(@Nullable final Sdk jdk, @NotNull LanguageLevel level) {
-    if (jdk == null) return true;
-    String versionString = jdk.getVersionString();
-    JavaSdkVersion version = versionString == null ? null : JdkVersionUtil.getVersion(versionString);
-    return version != null && version.getMaxLanguageLevel().isAtLeast(level);
-  }
-
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;
     final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
     if (module == null) return false;
-    return isLanguageLevelAcceptable(project, module, myLevel);
-  }
-
-  private static boolean isLanguageLevelAcceptable(@NotNull Project project, @NotNull Module module, @NotNull LanguageLevel level) {
-    return isJdkSupportsLevel(getRelevantJdk(project, module), level);
+    return JavaSdkUtil.isLanguageLevelAcceptable(project, module, myLevel);
   }
 
   @Override
@@ -86,23 +70,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
     if (module == null) return;
 
-    final LanguageLevel moduleLevel = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
-    if (moduleLevel != null && isLanguageLevelAcceptable(project, module, myLevel)) {
-      final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-      rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLevel);
-      rootModel.commit();
-    }
-    else {
-      LanguageLevelProjectExtension.getInstance(project).setLanguageLevel(myLevel);
-      ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.INSTANCE, false, true);
-    }
-  }
-
-  @Nullable
-  private static Sdk getRelevantJdk(@NotNull Project project, @NotNull Module module) {
-    Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    Sdk moduleJdk = ModuleRootManager.getInstance(module).getSdk();
-    return moduleJdk == null ? projectJdk : moduleJdk;
+    JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, myLevel);
   }
 
   @Override

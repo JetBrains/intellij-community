@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.toolbox.Substring;
@@ -51,6 +52,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NonNls public static final String METHODS_SECTION = "methods";
   @NonNls public static final String OTHER_PARAMETERS_SECTION = "other parameters";
   @NonNls public static final String YIELDS_SECTION = "yields";
+  
+  private static final Pattern PLAIN_TEXT = Pattern.compile("\\w+(\\s+\\w+){2}"); // dumb heuristic - consecutive words
 
   protected static final Map<String, String> SECTION_ALIASES =
     ImmutableMap.<String, String>builder()
@@ -161,8 +164,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     final int sectionIndent = getLineIndentSize(sectionStartLine);
     int lineNum = consumeEmptyLines(parsedHeader.getSecond());
     while (!isSectionBreak(lineNum, sectionIndent)) {
-      final Pair<SectionField, Integer> parsedField = parseSectionField(lineNum, normalized, sectionIndent);
       if (!isEmpty(lineNum)) {
+        final Pair<SectionField, Integer> parsedField = parseSectionField(lineNum, normalized, sectionIndent);
         if (parsedField.getFirst() != null) {
           fields.add(parsedField.getFirst());
           lineNum = parsedField.getSecond();
@@ -206,7 +209,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     final Substring firstLine = ContainerUtil.getFirstItem(pair.getFirst());
     final Substring lastLine = ContainerUtil.getLastItem(pair.getFirst());
     if (firstLine != null && lastLine != null) {
-      return Pair.create(new SectionField(null, null, firstLine.union(lastLine).trim()), pair.getSecond());
+      return Pair.create(new SectionField((Substring)null, null, firstLine.union(lastLine).trim()), pair.getSecond());
     }
     return Pair.create(null, pair.getSecond());
   }
@@ -241,6 +244,14 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @Override
   protected boolean isBlockEnd(int lineNum) {
     return isSectionStart(lineNum);
+  }
+
+  protected boolean isValidType(@NotNull String type) {
+    return !type.isEmpty() && !PLAIN_TEXT.matcher(type).find();
+  }
+
+  protected boolean isValidName(@NotNull String name) {
+    return PyNames.isIdentifierString(name.toString());
   }
 
   /**
@@ -286,10 +297,10 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NotNull
   @Override
   public List<String> getParameters() {
-    return ContainerUtil.map(getParameterFields(), new Function<SectionField, String>() {
+    return ContainerUtil.map(getParameterSubstrings(), new Function<Substring, String>() {
       @Override
-      public String fun(SectionField field) {
-        return field.getName();
+      public String fun(Substring substring) {
+        return substring.toString();
       }
     });
   }
@@ -297,12 +308,11 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NotNull
   @Override
   public List<Substring> getParameterSubstrings() {
-    return ContainerUtil.mapNotNull(getParameterFields(), new Function<SectionField, Substring>() {
-      @Override
-      public Substring fun(SectionField field) {
-        return field.getNameAsSubstring();
-      }
-    });
+    final List<Substring> result = new ArrayList<Substring>();
+    for (SectionField field : getParameterFields()) {
+      ContainerUtil.addAllNotNull(result, field.getNamesAsSubstrings());
+    }
+    return result;
   }
 
   @Nullable
@@ -342,11 +352,11 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   }
 
   @Nullable
-  private SectionField getFirstFieldForParameter(@NotNull final String name) {
+  public SectionField getFirstFieldForParameter(@NotNull final String name) {
     return ContainerUtil.find(getParameterFields(), new Condition<SectionField>() {
       @Override
       public boolean value(SectionField field) {
-        return name.equals(field.getName());
+        return field.getNames().contains(name);
       }
     });
   }
@@ -368,25 +378,23 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NotNull
   @Override
   public List<String> getKeywordArguments() {
-    return ContainerUtil.mapNotNull(getKeywordArgumentFields(), new Function<SectionField, String>() {
-      @Override
-      public String fun(SectionField field) {
-        return field.getName();
-      }
-    });
+    final List<String> result = new ArrayList<String>();
+    for (SectionField field : getKeywordArgumentFields()) {
+      result.addAll(field.getNames());
+    }
+    return result;
   }
 
   @NotNull
   @Override
   public List<Substring> getKeywordArgumentSubstrings() {
-    return ContainerUtil.mapNotNull(getKeywordArgumentFields(), new Function<SectionField, Substring>() {
-      @Override
-      public Substring fun(SectionField field) {
-        return field.getNameAsSubstring();
-      }
-    });
+    final List<Substring> result = new ArrayList<Substring>();
+    for (SectionField field : getKeywordArgumentFields()) {
+      ContainerUtil.addAllNotNull(field.getNamesAsSubstrings());
+    }
+    return result;
   }
-
+  
   @Nullable
   @Override
   public String getKeywordArgumentDescription(@Nullable String paramName) {
@@ -413,7 +421,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     return ContainerUtil.find(getKeywordArgumentFields(), new Condition<SectionField>() {
       @Override
       public boolean value(SectionField field) {
-        return name.equals(field.getName());
+        return field.getNames().contains(name);
       }
     });
   }
@@ -587,24 +595,43 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   }
 
   public static class SectionField {
-    private final Substring myName;
+    private final List<Substring> myNames;
     private final Substring myType;
     private final Substring myDescription;
 
     public SectionField(@Nullable Substring name, @Nullable Substring type, @Nullable Substring description) {
-      myName = name;
+      this(name == null ? Collections.<Substring>emptyList() : Collections.singletonList(name), type, description);
+    }
+
+    public SectionField(@NotNull List<Substring> names, @Nullable Substring type, @Nullable Substring description) {
+      myNames = names;
       myType = type;
       myDescription = description;
     }
 
     @NotNull
     public String getName() {
-      return myName == null ? "" : myName.toString();
+      return myNames.isEmpty() ? "" : myNames.get(0).toString();
     }
 
     @Nullable
     public Substring getNameAsSubstring() {
-      return myName;
+      return myNames.isEmpty() ? null : myNames.get(0);
+    }
+
+    @NotNull
+    public List<Substring> getNamesAsSubstrings() {
+      return myNames;
+    }
+
+    @NotNull
+    public List<String> getNames() {
+      return ContainerUtil.map(myNames, new Function<Substring, String>() {
+        @Override
+        public String fun(Substring substring) {
+          return substring.toString();
+        }
+      });
     }
 
     @NotNull
@@ -634,7 +661,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
       SectionField field = (SectionField)o;
 
-      if (myName != null ? !myName.equals(field.myName) : field.myName != null) return false;
+      if (myNames != null ? !myNames.equals(field.myNames) : field.myNames != null) return false;
       if (myType != null ? !myType.equals(field.myType) : field.myType != null) return false;
       if (myDescription != null ? !myDescription.equals(field.myDescription) : field.myDescription != null) return false;
 
@@ -643,7 +670,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
     @Override
     public int hashCode() {
-      int result = myName != null ? myName.hashCode() : 0;
+      int result = myNames != null ? myNames.hashCode() : 0;
       result = 31 * result + (myType != null ? myType.hashCode() : 0);
       result = 31 * result + (myDescription != null ? myDescription.hashCode() : 0);
       return result;

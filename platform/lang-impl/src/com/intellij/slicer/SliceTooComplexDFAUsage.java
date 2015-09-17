@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.slicer;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.ui.JBColor;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsagePresentation;
@@ -32,13 +31,29 @@ import java.awt.*;
  * User: cdr
  */
 public class SliceTooComplexDFAUsage extends SliceUsage {
-  public SliceTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
-    super(element, parent, substitutor,0,"");
+  public SliceTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent) {
+    super(element, parent);
   }
 
   @Override
   public void processChildren(@NotNull Processor<SliceUsage> processor) {
     // no children
+  }
+
+  @Override
+  protected void processUsagesFlownFromThe(PsiElement element, Processor<SliceUsage> uniqueProcessor) {
+    // no children
+  }
+
+  @Override
+  protected void processUsagesFlownDownTo(PsiElement element, Processor<SliceUsage> uniqueProcessor) {
+    // no children
+  }
+
+  @Override
+  @NotNull
+  protected SliceUsage copy() {
+    return new SliceTooComplexDFAUsage(getUsageInfo().getElement(), getParent());
   }
 
   @NotNull

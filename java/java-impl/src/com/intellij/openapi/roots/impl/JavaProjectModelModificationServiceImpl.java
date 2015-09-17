@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.openapi.roots.JavaProjectModelModifier;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 
@@ -63,6 +64,17 @@ public class JavaProjectModelModificationServiceImpl extends JavaProjectModelMod
   public Promise<Void> addDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
     for (JavaProjectModelModifier modifier : getModelModifiers()) {
       Promise<Void> promise = modifier.addLibraryDependency(from, library, scope);
+      if (promise != null) {
+        return promise;
+      }
+    }
+    return Promise.REJECTED;
+  }
+
+  @Override
+  public Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull LanguageLevel languageLevel) {
+    for (JavaProjectModelModifier modifier : getModelModifiers()) {
+      Promise<Void> promise = modifier.changeLanguageLevel(module, languageLevel);
       if (promise != null) {
         return promise;
       }

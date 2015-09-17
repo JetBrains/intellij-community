@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -145,14 +146,12 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
     if (myJdk != null) {
       VfsRootAccess.allowRootAccessTemporarily(module, myJdk);
       jdk = JavaSdk.getInstance().createJdk(module.getName() + "_jdk", myJdk, false);
-      ((ProjectJdkImpl)jdk).setVersionString("java 1.5");
+      ((ProjectJdkImpl)jdk).setVersionString(StringUtil.notNullize(IdeaTestUtil.getMockJdkVersion(myJdk), "java 1.5"));
     }
     else {
       jdk = IdeaTestUtil.getMockJdk17();
     }
-    if (jdk != null) {
-      model.setSdk(new MockJdkWrapper(CompilerConfigurationImpl.getTestsExternalCompilerHome(), jdk));
-    }
+    model.setSdk(new MockJdkWrapper(CompilerConfigurationImpl.getTestsExternalCompilerHome(), jdk));
 
     if (myLanguageLevel != null) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);

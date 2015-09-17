@@ -68,7 +68,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   private final ToggleWindowedModeAction myToggleWindowedModeAction;
   private final ToggleSideModeAction myToggleSideModeAction;
   private final ToggleContentUiTypeAction myToggleContentUiTypeAction;
-  private final ToggleShowStripeButtonAction myToggleShowStipeButtonAction;
+  private final RemoveStripeButtonAction myHideStripeButtonAction;
 
   private ActionGroup myAdditionalGearActions;
   /**
@@ -98,7 +98,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myToggleDockModeAction = new ToggleDockModeAction();
     myToggleAutoHideModeAction = new TogglePinnedModeAction();
     myToggleContentUiTypeAction = new ToggleContentUiTypeAction();
-    myToggleShowStipeButtonAction = new ToggleShowStripeButtonAction();
+    myHideStripeButtonAction = new RemoveStripeButtonAction();
     myToggleToolbarGroup = ToggleToolbarAction.createToggleToolbarGroup(myProject, myToolWindow);
 
     myHeader = new ToolWindowHeader(toolWindow, info, new Producer<ActionGroup>() {
@@ -173,7 +173,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     else { // docked and floating windows don't have divider
       remove(myDivider);
     }
-    myHeader.updateHideButton();
 
     validate();
     repaint();
@@ -458,7 +457,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       group.add(myToggleWindowedModeAction);
       group.add(myToggleSideModeAction);
     }
-    group.add(myToggleShowStipeButtonAction);
+    group.add(myHideStripeButtonAction);
     return group;
   }
 
@@ -641,26 +640,22 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
   }
 
-  private final class ToggleShowStripeButtonAction extends AnAction implements DumbAware {
-    public ToggleShowStripeButtonAction() {
+  private final class RemoveStripeButtonAction extends AnAction implements DumbAware {
+    public RemoveStripeButtonAction() {
       Presentation presentation = getTemplatePresentation();
-      presentation.setText(ActionsBundle.message("action.ToggleShowStripeButton.text"));
-      presentation.setDescription(ActionsBundle.message("action.ToggleShowStripeButton.description"));
+      presentation.setText(ActionsBundle.message("action.RemoveStripeButton.text"));
+      presentation.setDescription(ActionsBundle.message("action.RemoveStripeButton.description"));
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setText(myInfo.isShowStripeButton()
-                                  ? ActionsBundle.message("action.ToggleShowStripeButton.text")
-                                  : ActionsBundle.message("action.ToggleShowStripeButton.text2"));
-      e.getPresentation().setEnabledAndVisible(!myInfo.isFloating() && !myInfo.isWindowed());
+      e.getPresentation().setEnabledAndVisible(myInfo.isShowStripeButton());
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      boolean newState = !myInfo.isShowStripeButton();
-      fireVisibleOnPanelChanged(newState);
-      if (!newState && getToolWindow().isActive()) {
+      fireVisibleOnPanelChanged(false);
+      if (getToolWindow().isActive()) {
         fireHidden();
       }
     }

@@ -120,17 +120,25 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
       if (psiElement instanceof PsiClassOwner) {
         final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
         for (PsiClass aClass : classes) {
-          if ((!checkIsTest || isTestClass(aClass)) && !collectingProcessor.execute(aClass)) {
+          if ((!checkIsTest && aClass.hasModifierProperty(PsiModifier.PUBLIC) || checkIsTest && isTestClass(aClass)) && 
+              !collectingProcessor.execute(aClass)) {
             return;
           }
         }
       } else if (psiElement instanceof PsiClass) {
-        if ((!checkIsTest || isTestClass((PsiClass)psiElement)) && !collectingProcessor.execute(psiElement)) {
+        if ((!checkIsTest && ((PsiClass)psiElement).hasModifierProperty(PsiModifier.PUBLIC) || checkIsTest && isTestClass((PsiClass)psiElement)) && 
+            !collectingProcessor.execute(psiElement)) {
           return;
         }
       } else if (psiElement instanceof PsiMethod) {
-        if ((!checkIsTest || isTestMethod(checkAbstract, psiElement)) && !collectingProcessor.execute(psiElement)) {
+        if (checkIsTest && isTestMethod(checkAbstract, psiElement) && !collectingProcessor.execute(psiElement)) {
           return;
+        }
+        if (!checkIsTest) {
+          final PsiClass containingClass = ((PsiMethod)psiElement).getContainingClass();
+          if (containingClass != null && containingClass.hasModifierProperty(PsiModifier.PUBLIC) && !collectingProcessor.execute(psiElement)) {
+            return;
+          }
         }
       } else if (psiElement instanceof PsiDirectory) {
         final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)psiElement);

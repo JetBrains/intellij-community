@@ -142,7 +142,9 @@ public class BugzillaRepository extends BaseRepositoryImpl {
       }
       String version = (String)result.get("version");
       String[] parts = version.split("\\.", 3);
-      myVersion = new Version(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
+      myVersion = new Version(Integer.parseInt(parts[0]), 
+                              parts.length > 1 ? Integer.parseInt(parts[1]) : 0, 
+                              parts.length > 2 ? Integer.parseInt(parts[2]) : 0);
       if (myVersion.lessThan(3, 4)) {
         throw new RequestFailedException("Bugzilla before 3.4 is not supported");
       }

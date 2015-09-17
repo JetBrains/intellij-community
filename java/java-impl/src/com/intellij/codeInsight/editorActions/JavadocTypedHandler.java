@@ -20,13 +20,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -164,7 +164,7 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
     
     if (element instanceof PsiDocTag) {
       PsiDocTag tag = (PsiDocTag)element;
-      if ("param".equals(tag.getName())) {
+      if ("param".equals(tag.getName()) && isTypeParamBracketClosedAfterParamTag(tag, offset)) {
         return false; 
       }
     }
@@ -179,4 +179,23 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
            && (JavaDocTokenType.ALL_JAVADOC_TOKENS.contains(node.getElementType())
                || JavaDocElementType.ALL_JAVADOC_ELEMENTS.contains(node.getElementType()));
   }
+  
+  private static boolean isTypeParamBracketClosedAfterParamTag(PsiDocTag tag, int bracketOffset) {
+    PsiElement paramToDocument = getDocumentingParameter(tag);
+    if (paramToDocument == null) return false;
+    
+    TextRange paramRange = paramToDocument.getTextRange();
+    return paramRange.getEndOffset() == bracketOffset;
+  }
+
+  @Nullable
+  private static PsiElement getDocumentingParameter(PsiDocTag tag) {
+    for (PsiElement element : tag.getChildren()) {
+      if (element instanceof PsiDocParamRef) {
+        return element;
+      }
+    }
+    return null;
+  }
+  
 }

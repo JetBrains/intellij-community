@@ -387,7 +387,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final UsageViewPresentation presentation = createPresentation(viewDescriptor, usages);
 
     final UsageView usageView = viewManager.showUsages(targets, usages, presentation, factory);
+    customizeUsagesView(viewDescriptor, usageView);
+  }
 
+  protected void customizeUsagesView(@NotNull final UsageViewDescriptor viewDescriptor, @NotNull final UsageView usageView) {
     final Runnable refactoringRunnable = new Runnable() {
       @Override
       public void run() {

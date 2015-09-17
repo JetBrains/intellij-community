@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.documentation.docstrings.SectionBasedDocString.Section;
 import com.jetbrains.python.documentation.docstrings.SectionBasedDocString.SectionField;
 import com.jetbrains.python.psi.PyIndentUtil;
@@ -91,28 +92,69 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
   }
 
   @Override
-  public void removeParameter(@NotNull String name) {
+  public void removeParameter(@NotNull final String name) {
     for (Section section : myOriginalDocString.getParameterSections()) {
       final List<SectionField> sectionFields = section.getFields();
-      for (SectionField param : sectionFields) {
-        if (param.getName().equals(name)) {
-          final int endLine = getFieldEndLine(param);
-          if (sectionFields.size() == 1) {
-            removeLinesAndSpacesAfter(getSectionStartLine(section), endLine + 1);
+      for (SectionField field : sectionFields) {
+        final Substring nameSub = ContainerUtil.find(field.getNamesAsSubstrings(), new Condition<Substring>() {
+          @Override
+          public boolean value(Substring substring) {
+            return substring.toString().equals(name);
           }
-          else {
-            final int startLine = getFieldStartLine(param);
-            if (ContainerUtil.getLastItem(sectionFields) == param) {
-              removeLines(startLine, endLine + 1);
+        });
+        if (nameSub != null) {
+          if (field.getNamesAsSubstrings().size() == 1) {
+            final int endLine = getFieldEndLine(field);
+            if (sectionFields.size() == 1) {
+              removeLinesAndSpacesAfter(getSectionStartLine(section), endLine + 1);
             }
             else {
-              removeLinesAndSpacesAfter(startLine, endLine + 1);
+              final int startLine = getFieldStartLine(field);
+              if (ContainerUtil.getLastItem(sectionFields) == field) {
+                removeLines(startLine, endLine + 1);
+              }
+              else {
+                removeLinesAndSpacesAfter(startLine, endLine + 1);
+              }
             }
+          }
+          else {
+            final Substring wholeParamName = expandParamNameSubstring(nameSub);
+            remove(wholeParamName.getStartOffset(), wholeParamName.getEndOffset());
           }
           break;
         }
       }
     }
+  }
+
+  @NotNull
+  private static Substring expandParamNameSubstring(@NotNull Substring name) {
+    final String superString = name.getSuperString();
+    int startWithStars = name.getStartOffset();
+    int prevNonWhitespace = skipSpacesBackward(superString, name.getStartOffset() - 1);
+    if (prevNonWhitespace >= 0 && superString.charAt(prevNonWhitespace) == '*') {
+      startWithStars = CharArrayUtil.shiftBackward(superString, prevNonWhitespace, "*") + 1;
+      prevNonWhitespace = skipSpacesBackward(superString, startWithStars - 1);
+    }
+    if (prevNonWhitespace >= 0 && superString.charAt(prevNonWhitespace) == ',') {
+      return new Substring(superString, prevNonWhitespace, name.getEndOffset());
+    }
+    // end offset is always exclusive
+    final int nextNonWhitespace = skipSpacesForward(superString, name.getEndOffset());
+    if (nextNonWhitespace < superString.length() && superString.charAt(nextNonWhitespace) == ',') {
+      // if we remove parameter with trailing comma (i.e. first parameter) remove whitespaces after it as well
+      return new Substring(superString, startWithStars, skipSpacesForward(superString, nextNonWhitespace + 1)); 
+    }
+    return name;
+  }
+
+  private static int skipSpacesForward(@NotNull String superString, int offset) {
+    return CharArrayUtil.shiftForward(superString, offset, " \t");
+  }
+
+  private static int skipSpacesBackward(@NotNull String superString, int offset) {
+    return CharArrayUtil.shiftBackward(superString, offset, " \t");
   }
 
   @Override
@@ -299,7 +341,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
   protected String getFieldIndent(@NotNull Section section, @NotNull SectionField field) {
     final String titleIndent = getSectionIndent(section);
     final String fieldIndent = getLineIndent(getFieldStartLine(field));
-    final int diffSize = Math.max(1, PyIndentUtil.getLineIndentSize(fieldIndent) - PyIndentUtil.getLineIndentSize(titleIndent));
+    final int diffSize = Math.max(0, PyIndentUtil.getLineIndentSize(fieldIndent) - PyIndentUtil.getLineIndentSize(titleIndent));
     return StringUtil.repeatSymbol(' ', diffSize);
   }
 

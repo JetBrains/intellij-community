@@ -130,10 +130,11 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
                                                          @Nullable DocStringParameterReference.ReferenceType nameRefType) {
     final List<PsiReference> result = new ArrayList<PsiReference>();
     for (SectionBasedDocString.SectionField field : fields) {
-      final Substring nameSub = field.getNameAsSubstring();
-      if (nameRefType != null && nameSub != null && !nameSub.isEmpty()) {
-        final TextRange range = nameSub.getTextRange().shiftRight(offset);
-        result.add(new DocStringParameterReference(element, range, nameRefType));
+      for (Substring nameSub: field.getNamesAsSubstrings()) {
+        if (nameRefType != null && nameSub != null && !nameSub.isEmpty()) {
+          final TextRange range = nameSub.getTextRange().shiftRight(offset);
+          result.add(new DocStringParameterReference(element, range, nameRefType));
+        }
       }
       final Substring typeSub = field.getTypeAsSubstring();
       if (typeSub != null && !typeSub.isEmpty()) {

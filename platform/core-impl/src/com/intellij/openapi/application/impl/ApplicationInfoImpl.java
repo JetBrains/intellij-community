@@ -88,6 +88,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myReleaseFeedbackUrl;
   private String myPluginManagerUrl;
   private String myPluginsListUrl;
+  private String myChannelsListUrl;
   private String myPluginsDownloadUrl;
   private String myBuiltinPluginsUrl;
   private String myWhatsNewUrl;
@@ -162,6 +163,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private static final String ATTRIBUTE_EAP_URL = "eap-url";
   private static final String ELEMENT_PLUGINS = "plugins";
   private static final String ATTRIBUTE_LIST_URL = "list-url";
+  private static final String ATTRIBUTE_CHANNEL_LIST_URL = "channel-list-url";
   private static final String ATTRIBUTE_DOWNLOAD_URL = "download-url";
   private static final String ATTRIBUTE_BUILTIN_URL = "builtin-url";
   private static final String ATTRIBUTE_WEBHELP_URL = "webhelp-url";
@@ -412,6 +414,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @Override
   public String getPluginsListUrl() {
     return myPluginsListUrl;
+  }
+
+  @Override
+  public String getChannelsListUrl() {
+    return myChannelsListUrl;
   }
 
   @Override
@@ -733,6 +740,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       String listUrl = pluginsElement.getAttributeValue(ATTRIBUTE_LIST_URL);
       myPluginsListUrl = listUrl != null ? listUrl : myPluginManagerUrl + (closed ? "" : "/") + "plugins/list/";
 
+      String channelListUrl = pluginsElement.getAttributeValue(ATTRIBUTE_CHANNEL_LIST_URL);
+      myChannelsListUrl = channelListUrl != null ? channelListUrl  : myPluginManagerUrl + (closed ? "" : "/") + "channels/list/";
+
       String downloadUrl = pluginsElement.getAttributeValue(ATTRIBUTE_DOWNLOAD_URL);
       myPluginsDownloadUrl = downloadUrl != null ? downloadUrl : myPluginManagerUrl + (closed ? "" : "/") + "pluginManager/";
 
@@ -743,12 +753,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     else {
       myPluginManagerUrl = DEFAULT_PLUGINS_HOST;
       myPluginsListUrl = DEFAULT_PLUGINS_HOST + "/plugins/list/";
+      myChannelsListUrl = DEFAULT_PLUGINS_HOST + "/channels/list/";
       myPluginsDownloadUrl = DEFAULT_PLUGINS_HOST + "/pluginManager/";
     }
 
     final String pluginsHost = System.getProperty("idea.plugins.host");
     if (pluginsHost != null) {
       myPluginsListUrl = myPluginsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
+      myChannelsListUrl = myChannelsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
       myPluginsDownloadUrl = myPluginsDownloadUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
     }
 

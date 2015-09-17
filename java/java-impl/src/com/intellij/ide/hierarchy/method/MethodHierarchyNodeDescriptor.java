@@ -57,7 +57,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
   }
 
   public final PsiElement getPsiClass() {
-    return myElement;
+    return getPsiElement();
   }
 
   /**
@@ -71,11 +71,6 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
     final PsiMethod method = getMethod(aClass, false);
     if (method != null) return method;
     return aClass;
-  }
-
-  public final boolean isValid() {
-    final PsiElement psiElement = getPsiClass();
-    return psiElement != null && psiElement.isValid();
   }
 
   public final boolean update() {

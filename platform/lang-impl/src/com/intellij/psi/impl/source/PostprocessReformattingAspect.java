@@ -553,9 +553,12 @@ public class PostprocessReformattingAspect implements PomModelAspect {
           }
           if (!currentNodeGenerated && inGeneratedContext) {
             if (element.getElementType() == TokenType.WHITE_SPACE) return false;
-            final int oldIndent = CodeEditUtil.getOldIndentation(element);
+            int oldIndent = CodeEditUtil.getOldIndentation(element);
+            if (oldIndent < 0) {
+              LOG.warn("For not generated items old indentation must be defined: element " + element);
+              oldIndent = 0;
+            }
             CodeEditUtil.setOldIndentation(element, -1);
-            LOG.assertTrue(oldIndent >= 0, "for not generated items old indentation must be defined: element " + element);
             for (TextRange indentRange : getEnabledRanges(element.getPsi())) {
               rangesToProcess.add(new ReindentTask(document.createRangeMarker(indentRange), oldIndent));
             }

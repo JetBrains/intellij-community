@@ -176,7 +176,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   }
 
   private static void createSourceRootIfAbsent(
-    @NotNull ContentEntry entry, @NotNull SourceRoot root, @NotNull String moduleName,
+    @NotNull ContentEntry entry, @NotNull final SourceRoot root, @NotNull String moduleName,
     @NotNull JpsModuleSourceRootType<?> sourceRootType, boolean generated, boolean createEmptyContentRootDirectories) {
     List<SourceFolder> folders = entry.getSourceFolders(sourceRootType);
     for (SourceFolder folder : folders) {
@@ -200,12 +200,17 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       }
     }
     if(createEmptyContentRootDirectories) {
-      try {
-        VfsUtil.createDirectoryIfMissing(root.getPath());
-      }
-      catch (IOException e) {
-        LOG.warn(String.format("Unable to create directory for the path: %s", root.getPath()), e);
-      }
+      ExternalSystemApiUtil.doWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            VfsUtil.createDirectoryIfMissing(root.getPath());
+          }
+          catch (IOException e) {
+            LOG.warn(String.format("Unable to create directory for the path: %s", root.getPath()), e);
+          }
+        }
+      });
     }
   }
 

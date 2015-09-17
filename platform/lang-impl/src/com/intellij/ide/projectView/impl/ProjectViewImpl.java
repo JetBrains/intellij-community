@@ -141,6 +141,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final Map<String, Boolean> myAutoscrollToSource = new THashMap<String, Boolean>();
   private final Map<String, Boolean> myAutoscrollFromSource = new THashMap<String, Boolean>();
   private static final boolean ourAutoscrollFromSourceDefaults = false;
+  
+  private boolean myFoldersAlwaysOnTop = true;
+  
 
   private String myCurrentViewId;
   private String myCurrentViewSubId;
@@ -178,6 +181,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NonNls private static final String ELEMENT_AUTOSCROLL_TO_SOURCE = "autoscrollToSource";
   @NonNls private static final String ELEMENT_AUTOSCROLL_FROM_SOURCE = "autoscrollFromSource";
   @NonNls private static final String ELEMENT_SORT_BY_TYPE = "sortByType";
+  @NonNls private static final String ELEMENT_FOLDERS_ALWAYS_ON_TOP = "foldersAlwaysOnTop";
+  @NonNls private static final String ELEMENT_MANUAL_ORDER = "manualOrder";
 
   private static final String ATTRIBUTE_ID = "id";
   private JPanel myViewContentPanel;
@@ -194,7 +199,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final Map<String, Element> myUninitializedPaneState = new HashMap<String, Element>();
   private final Map<String, SelectInTarget> mySelectInTargets = new LinkedHashMap<String, SelectInTarget>();
   private ContentManager myContentManager;
-  private boolean myFoldersAlwaysOnTop = true;
 
   public ProjectViewImpl(@NotNull Project project, final FileEditorManager fileEditorManager, final ToolWindowManagerEx toolWindowManager) {
     myProject = project;
@@ -1339,7 +1343,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       readOption(navigatorElement.getChild(ELEMENT_AUTOSCROLL_TO_SOURCE), myAutoscrollToSource);
       readOption(navigatorElement.getChild(ELEMENT_AUTOSCROLL_FROM_SOURCE), myAutoscrollFromSource);
       readOption(navigatorElement.getChild(ELEMENT_SORT_BY_TYPE), mySortByType);
+      readOption(navigatorElement.getChild(ELEMENT_MANUAL_ORDER), myManualOrder);
 
+      Element foldersElement = navigatorElement.getChild(ELEMENT_FOLDERS_ALWAYS_ON_TOP);
+      if (foldersElement != null) myFoldersAlwaysOnTop = Boolean.valueOf(foldersElement.getAttributeValue("value"));
+      
       try {
         splitterProportions.readExternal(navigatorElement);
       }
@@ -1395,6 +1403,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     writeOption(navigatorElement, myAutoscrollToSource, ELEMENT_AUTOSCROLL_TO_SOURCE);
     writeOption(navigatorElement, myAutoscrollFromSource, ELEMENT_AUTOSCROLL_FROM_SOURCE);
     writeOption(navigatorElement, mySortByType, ELEMENT_SORT_BY_TYPE);
+    writeOption(navigatorElement, myManualOrder, ELEMENT_MANUAL_ORDER);
+    
+    Element foldersElement = new Element(ELEMENT_FOLDERS_ALWAYS_ON_TOP);
+    foldersElement.setAttribute("value", Boolean.toString(myFoldersAlwaysOnTop));
+    navigatorElement.addContent(foldersElement);
 
     splitterProportions.saveSplitterProportions(myPanel);
     try {

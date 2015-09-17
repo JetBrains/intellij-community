@@ -74,6 +74,44 @@ class Test {
     assert LookupElementPresentation.renderElement(items[0]).itemText == 'x -> {}'
   }
 
+  public void "test suggest this method references"() {
+    myFixture.configureByText "a.java", """
+interface I {
+  void m(int x);
+}
+
+class Test {
+  {
+    I i = <caret>
+  }
+  void bar(int i) {}
+}"""
+    def items = myFixture.completeBasic()
+    assert LookupElementPresentation.renderElement(items[0]).itemText == 'x -> {}'
+    assert items.find { LookupElementPresentation.renderElement(it).itemText.contains('this::bar') } != null
+  }
+
+  public void "test suggest receiver method reference"() throws Exception {
+    myFixture.configureByText "a.java", """
+class MethodRef {
+
+    private void m() {
+        zoo(<caret>);
+    }
+
+    interface I<T> {
+        void foo(MethodRef m, T a);
+    }
+
+    void boo(String s) {
+    }
+
+    void zoo(I<String> i) {}
+}
+"""
+    def items = myFixture.completeBasic()
+    assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('MethodRef::boo')}
+  }
 
   public void "test constructor ref"() {
     myFixture.configureByText "a.java", """

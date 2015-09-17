@@ -301,9 +301,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   }
 
   private static Icon getHideToolWindowIcon(ToolWindow toolWindow) {
-    if (!toolWindow.isShowStripeButton()) {
-      return AllIcons.Actions.Close;
-    }
     ToolWindowAnchor anchor = toolWindow.getAnchor();
     if (anchor == ToolWindowAnchor.BOTTOM) {
       return AllIcons.General.HideDownPart;
@@ -316,9 +313,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   }
 
   private static Icon getHideIcon(ToolWindow toolWindow) {
-    if (!toolWindow.isShowStripeButton()) {
-      return AllIcons.Actions.Close;
-    }
     ToolWindowAnchor anchor = toolWindow.getAnchor();
     if (anchor == ToolWindowAnchor.BOTTOM) {
       return AllIcons.General.HideDown;
@@ -331,9 +325,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   }
 
   private static Icon getHideToolWindowHoveredIcon(ToolWindow toolWindow) {
-    if (!toolWindow.isShowStripeButton()) {
-      return AllIcons.Actions.CloseHovered;
-    }
     ToolWindowAnchor anchor = toolWindow.getAnchor();
     if (anchor == ToolWindowAnchor.BOTTOM) {
       return AllIcons.General.HideDownPartHover;
@@ -346,9 +337,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   }
 
   private static Icon getHideHoveredIcon(ToolWindow toolWindow) {
-    if (!toolWindow.isShowStripeButton()) {
-      return AllIcons.Actions.CloseHovered;
-    }
     ToolWindowAnchor anchor = toolWindow.getAnchor();
     if (anchor == ToolWindowAnchor.BOTTOM) {
       return AllIcons.General.HideDownHover;
@@ -450,10 +438,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     return new Dimension(size.width, TabsUtil.getTabsHeight());
   }
 
-  public void updateHideButton() {
-    myHideButton.updateIcon();
-  }
-
   private class ActionButton extends Wrapper implements ActionListener, AltStateManager.AltListener {
     private final InplaceButton myButton;
     private final AnAction myAction;
@@ -487,7 +471,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
       setContent(myButton);
       setOpaque(false);
 
-      updateIcon();
+      setIcon(getActiveIcon(), getInactiveIcon() == null ? getActiveIcon() : getInactiveIcon(), getActiveHoveredIcon());
 
       PropertyChangeListener listener = new PropertyChangeListener() {
         @Override
@@ -506,10 +490,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
       };
 
       addPropertyChangeListener(listener);
-    }
-
-    private void updateIcon() {
-      setIcon(getActiveIcon(), getInactiveIcon() == null ? getActiveIcon() : getInactiveIcon(), getActiveHoveredIcon());
     }
 
     public void updateTooltip() {

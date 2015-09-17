@@ -38,30 +38,24 @@ public abstract class RecursiveLighterASTNodeWalkingVisitor extends LighterASTNo
   private static class IndexedLighterASTNode {
     private static final IndexedLighterASTNode[] EMPTY_ARRAY = new IndexedLighterASTNode[0];
     private final LighterASTNode node;
-    private final int indexInParent;
+    private final IndexedLighterASTNode prev;
+    private IndexedLighterASTNode next;
 
-    IndexedLighterASTNode(@NotNull LighterASTNode node, int indexInParent) {
+    IndexedLighterASTNode(@NotNull LighterASTNode node, IndexedLighterASTNode prev) {
       this.node = node;
-      this.indexInParent = indexInParent;
+      this.prev = prev;
     }
   }
 
   private class LighterASTGuide implements WalkingState.TreeGuide<IndexedLighterASTNode> {
     @Override
     public IndexedLighterASTNode getNextSibling(@NotNull IndexedLighterASTNode element) {
-      IndexedLighterASTNode[] children = element == parentStack.peek() ? childrenStack.get(childrenStack.size() - 2) : childrenStack.peek();
-      int indexInParent = element.indexInParent;
-      assert children[indexInParent] == element;
-      return indexInParent==children.length-1 ? null : children[indexInParent+1];
+      return element.next;
     }
 
     @Override
     public IndexedLighterASTNode getPrevSibling(@NotNull IndexedLighterASTNode element) {
-      IndexedLighterASTNode[] children =
-        element == parentStack.peek() ? childrenStack.get(childrenStack.size() - 2) : childrenStack.peek();
-      int indexInParent = element.indexInParent;
-      assert children[indexInParent] == element;
-      return indexInParent==0 ? null : children[indexInParent-1];
+      return element.prev;
     }
 
     @Override
@@ -70,8 +64,11 @@ public abstract class RecursiveLighterASTNodeWalkingVisitor extends LighterASTNo
       IndexedLighterASTNode[] indexedChildren = children.isEmpty() ? IndexedLighterASTNode.EMPTY_ARRAY : new IndexedLighterASTNode[children.size()];
       for (int i = 0; i < children.size(); i++) {
         LighterASTNode child = children.get(i);
-        IndexedLighterASTNode indexedNode = new IndexedLighterASTNode(child, i);
+        IndexedLighterASTNode indexedNode = new IndexedLighterASTNode(child, i == 0 ? null : indexedChildren[i - 1]);
         indexedChildren[i] = indexedNode;
+        if (i != 0) {
+          indexedChildren[i-1].next = indexedNode;
+        }
       }
       childrenStack.push(indexedChildren);
       parentStack.push(element);
@@ -129,7 +126,7 @@ public abstract class RecursiveLighterASTNodeWalkingVisitor extends LighterASTNo
 
   @Override
   public void visitNode(@NotNull LighterASTNode element) {
-    myWalkingState.elementStarted(new IndexedLighterASTNode(element, 0));
+    myWalkingState.elementStarted(new IndexedLighterASTNode(element, null));
   }
 
   public void stopWalking() {

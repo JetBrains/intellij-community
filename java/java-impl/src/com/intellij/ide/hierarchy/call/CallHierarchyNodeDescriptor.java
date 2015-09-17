@@ -61,7 +61,8 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
    * @return PsiMethod or PsiClass or JspFile
    */
   public final PsiMember getEnclosingElement(){
-    return myElement == null ? null : getEnclosingElement(myElement);
+    PsiElement element = getPsiElement();
+    return element == null ? null : getEnclosingElement(element);
   }
 
   public static PsiMember getEnclosingElement(final PsiElement element){
@@ -76,12 +77,11 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
    * Element for OpenFileDescriptor
    */
   public final PsiElement getTargetElement(){
-    return myElement;
+    return getPsiElement();
   }
 
   public final boolean isValid(){
-    final PsiElement element = getEnclosingElement();
-    return element != null && element.isValid();
+    return getEnclosingElement() != null;
   }
 
   public final boolean update(){
@@ -182,8 +182,9 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
 
   public void navigate(boolean requestFocus) {
     if (!myNavigateToReference) {
-      if (myElement instanceof Navigatable && ((Navigatable)myElement).canNavigate()) {
-        ((Navigatable)myElement).navigate(requestFocus);
+      PsiElement element = getPsiElement();
+      if (element instanceof Navigatable && ((Navigatable)element).canNavigate()) {
+        ((Navigatable)element).navigate(requestFocus);
       }
       return;
     }
@@ -223,7 +224,8 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
 
   public boolean canNavigate() {
     if (!myNavigateToReference) {
-      return myElement instanceof Navigatable && ((Navigatable) myElement).canNavigate();
+      PsiElement element = getPsiElement();
+      return element instanceof Navigatable && ((Navigatable)element).canNavigate();
     }
     if (myReferences.isEmpty()) return false;
     final PsiReference firstReference = myReferences.get(0);

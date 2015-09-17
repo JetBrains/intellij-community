@@ -66,9 +66,11 @@ public class SliceHandler implements CodeInsightActionHandler {
     }
     PsiElement atCaret = file.findElementAt(offset);
 
-    PsiElement element = PsiTreeUtil.getParentOfType(atCaret, PsiExpression.class, PsiVariable.class);
-    if (myDataFlowToThis && element instanceof PsiLiteralExpression) return null;
-    return element;
+    SliceLanguageSupportProvider provider = LanguageSlicing.getProvider(file);
+    if(provider == null){
+      return null;
+    }
+    return provider.getExpressionAtCaret(atCaret, myDataFlowToThis);
   }
 
   public SliceAnalysisParams askForParams(PsiElement element, boolean dataFlowToThis, SliceManager.StoredSettingsBean storedSettingsBean, String dialogTitle) {

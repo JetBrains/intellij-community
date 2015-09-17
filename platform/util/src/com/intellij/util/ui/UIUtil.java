@@ -3422,4 +3422,26 @@ public class UIUtil {
       ((JTextArea)textComponent).setColumns(columns);
     }
   }
+
+  /**
+   * Returns the first focusable component in the specified container.
+   * This method returns {@code null} if container is {@code null},
+   * or if focus traversal policy cannot be determined,
+   * or if found focusable component is not a {@link JComponent}.
+   *
+   * @param container a container whose first focusable component is to be returned
+   * @return the first focusable component or {@code null} if it cannot be found
+   */
+  public static JComponent getPreferredFocusedComponent(Container container) {
+    Container parent = container;
+    if (parent == null) return null;
+    FocusTraversalPolicy policy = parent.getFocusTraversalPolicy();
+    while (policy == null) {
+      parent = parent.getParent();
+      if (parent == null) return null;
+      policy = parent.getFocusTraversalPolicy();
+    }
+    Component component = policy.getFirstComponent(container);
+    return component instanceof JComponent ? (JComponent)component : null;
+  }
 }

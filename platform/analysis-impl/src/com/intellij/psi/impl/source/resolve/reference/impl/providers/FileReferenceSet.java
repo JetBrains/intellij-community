@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
@@ -223,41 +224,66 @@ public class FileReferenceSet {
   }
 
   protected List<FileReference> reparse(String str, int startInElement) {
-    final List<FileReference> referencesList = new ArrayList<FileReference>();
-
     String separatorString = getSeparatorString(); // separator's length can be more then 1 char
     int sepLen = separatorString.length();
     int currentSlash = -sepLen;
+    int wsTail = 0;
 
-    // skip white space
-    while (currentSlash + sepLen < str.length() && Character.isWhitespace(str.charAt(currentSlash + sepLen))) {
+    LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper;
+    TextRange valueRange;
+    CharSequence decoded;
+    if (myElement instanceof PsiLanguageInjectionHost) {
+      escaper = ((PsiLanguageInjectionHost)myElement).createLiteralTextEscaper();
+      valueRange = ElementManipulators.getValueTextRange(myElement);
+      StringBuilder sb = new StringBuilder();
+      escaper.decode(valueRange, sb);
+      decoded = sb;
+      currentSlash += startInElement - valueRange.getStartOffset();
+    }
+    else {
+      escaper = null;
+      decoded = str;
+      valueRange = TextRange.from(startInElement, decoded.length());
+    }
+    List<FileReference> referencesList = ContainerUtil.newArrayList();
+
+    // skip head white spaces
+    for (int i = currentSlash + sepLen; i < decoded.length() && Character.isWhitespace(decoded.charAt(i)); i++) {
       currentSlash++;
     }
+    // skip tail white spaces
+    for (int i = decoded.length() - 1; i >= 0 && Character.isWhitespace(decoded.charAt(i)); i--) {
+      wsTail++;
+    }
 
-    if (currentSlash + sepLen + sepLen < str.length() &&
-        str.substring(currentSlash + sepLen, currentSlash + sepLen + sepLen).equals(separatorString)) {
-      currentSlash+=sepLen;
+    if (currentSlash + 2 * sepLen < decoded.length() &&
+        StringUtil.equals(decoded.subSequence(currentSlash + sepLen, currentSlash + 2 * sepLen), separatorString)) {
+      currentSlash += sepLen;
     }
     int index = 0;
 
-    if (str.equals(separatorString)) {
-      final FileReference fileReference =
-        createFileReference(new TextRange(startInElement, startInElement + sepLen), index++, separatorString);
-      referencesList.add(fileReference);
+    if (decoded.equals(separatorString)) {
+      TextRange r = new TextRange(startInElement, offset(sepLen, escaper, valueRange) + 1);
+      referencesList.add(createFileReference(r, index++, separatorString));
     }
 
     while (true) {
-      int nextSlash = str.indexOf(separatorString, currentSlash + sepLen);
-      String subReferenceText = nextSlash > 0 ? str.substring(currentSlash + sepLen, nextSlash) : str.substring(currentSlash + sepLen);
-      TextRange range = new TextRange(startInElement + currentSlash + sepLen, startInElement + (nextSlash > 0 ? nextSlash : str.length()));
-      FileReference ref = createFileReference(range, index++, subReferenceText);
-      referencesList.add(ref);
+      int nextSlash = StringUtil.indexOf(decoded, separatorString, currentSlash + sepLen);
+      String subReferenceText = decoded.subSequence(currentSlash + sepLen, nextSlash > 0 ? nextSlash : decoded.length()).toString();
+      int end = nextSlash > 0 ? nextSlash : decoded.length() - 1 - wsTail;
+      TextRange r = new TextRange(offset(currentSlash + sepLen, escaper, valueRange),
+                                  offset(end, escaper, valueRange) + (nextSlash > 0 ? 0 : 1));
+      referencesList.add(createFileReference(r, index++, subReferenceText));
       if ((currentSlash = nextSlash) < 0) {
         break;
       }
     }
 
     return referencesList;
+  }
+
+  private static int offset(int offset, LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper, TextRange valueRange) {
+    return escaper == null ? offset + valueRange.getStartOffset() : escaper.getOffsetInHost(offset, valueRange);
   }
 
   public FileReference getReference(int index) {

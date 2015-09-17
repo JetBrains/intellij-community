@@ -27,8 +27,8 @@ import javax.swing.*;
 /**
  * User: cdr
  */
-public class SliceDereferenceUsage extends SliceUsage {
-  public SliceDereferenceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
+public class JavaSliceDereferenceUsage extends JavaSliceUsage {
+  public JavaSliceDereferenceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
     super(element, parent, substitutor,0,"");
   }
 

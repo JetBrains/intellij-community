@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.DuplicateNodeRenderer;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -207,7 +209,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   @Override
-  public void customizeCellRenderer(@NotNull SliceUsageCellRenderer renderer, @NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+  public void customizeCellRenderer(@NotNull SliceUsageCellRendererBase renderer, @NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     renderer.setIcon(getPresentation().getIcon(expanded));
     if (isValid()) {
       SliceUsage sliceUsage = getValue();
@@ -215,12 +217,29 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
       renderer.setToolTipText(sliceUsage.getPresentation().getTooltipText());
     }
     else {
-      renderer.append(UsageViewBundle.message("node.invalid") + " ", SliceUsageCellRenderer.ourInvalidAttributes);
+      renderer.append(UsageViewBundle.message("node.invalid") + " ", SliceUsageCellRendererBase.ourInvalidAttributes);
     }
   }
 
   public void setChanged() {
     changed = true;
+  }
+
+  @Nullable
+  public SliceLanguageSupportProvider getProvider(){
+    AbstractTreeNode<SliceUsage> element = getElement();
+    if(element == null){
+      return null;
+    }
+    SliceUsage usage = element.getValue();
+    if(usage == null){
+      return null;
+    }
+    PsiElement psiElement = usage.getElement();
+    if(psiElement == null){
+      return null;
+    }
+    return LanguageSlicing.getProvider(psiElement);
   }
 
   @Override

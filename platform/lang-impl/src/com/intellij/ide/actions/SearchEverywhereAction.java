@@ -113,6 +113,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
@@ -1058,8 +1060,22 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private String myLocationString;
     private Icon myLocationIcon;
     private Project myProject;
-    private JPanel myMainPanel = new JPanel(new BorderLayout());
+    private MyAccessibleComponent myMainPanel = new MyAccessibleComponent(new BorderLayout());
     private JLabel myTitle = new JLabel();
+
+    private class MyAccessibleComponent extends JPanel {
+      private Accessible myAccessible;
+      public MyAccessibleComponent(LayoutManager layout) {
+        super(layout);
+      }
+      void setAccessible(Accessible comp) {
+        myAccessible = comp;
+      }
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        return myAccessible != null ? myAccessible.getAccessibleContext() : super.getAccessibleContext();
+      }
+    }
 
     @Override
     public void clear() {
@@ -1130,6 +1146,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myMainPanel.add(createTitle(" " + title), BorderLayout.NORTH);
       }
       myMainPanel.add(cmp, BorderLayout.CENTER);
+      if (cmp instanceof Accessible) {
+        myMainPanel.setAccessible((Accessible)cmp);
+      }
       final int width = myMainPanel.getPreferredSize().width;
       if (width > myPopupActualWidth) {
         myPopupActualWidth = width;
