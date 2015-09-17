@@ -927,7 +927,16 @@ class AppTest {
       myFixture.addFileToProject("a.groovy", "class A { int s = 'foo' }")
       shouldFail { make() }
     }
-    
+
+    public void "test user-level diagnostic for missing dependency of groovy-all"() {
+      myFixture.addFileToProject 'Bar.groovy', '''import groovy.util.logging.Commons
+@Commons
+class Bar {}'''
+      def msg = assertOneElement(make())
+      assert msg.message.contains('Please')
+      assert msg.message.contains('org.apache.commons.logging.Log')
+    }
+
   }
 
   static class EclipseTest extends GroovyCompilerTest {

@@ -236,16 +236,30 @@ public class GroovyCompilerWrapper {
     int lineNumber = astNode == null ? -1 : astNode.getLineNumber();
     int columnNumber = astNode == null ? -1 : astNode.getColumnNumber();
 
-    String message = exception.getMessageWithoutLocationText();
-    if (message == null) {
-      StringWriter stringWriter = new StringWriter();
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      PrintWriter writer = new PrintWriter(stringWriter);
-      exception.printStackTrace(writer);
-      message = stringWriter.getBuffer().toString();
+    collector.add(new CompilerMessage(GroovyCompilerMessageCategories.ERROR, getExceptionMessage(exception), moduleName, lineNumber, columnNumber));
+  }
+
+  @NotNull
+  private static String getExceptionMessage(GroovyRuntimeException exception) {
+    if (exception.getCause() instanceof ClassNotFoundException) {
+      String className = exception.getCause().getMessage();
+      return "An error occurred while trying to load a required class " + className + "." +
+               " Please ensure it's present in the project dependencies. " +
+               "See the message and the stack trace below for reference\n\n" + getStackTrace(exception);
     }
 
-    collector.add(new CompilerMessage(GroovyCompilerMessageCategories.ERROR, message, moduleName, lineNumber, columnNumber));
+    String message = exception.getMessageWithoutLocationText();
+    return message == null ? getStackTrace(exception) : message;
+  }
+
+  @NotNull
+  private static String getStackTrace(GroovyRuntimeException exception) {
+    String message;StringWriter stringWriter = new StringWriter();
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    PrintWriter writer = new PrintWriter(stringWriter);
+    exception.printStackTrace(writer);
+    message = stringWriter.getBuffer().toString();
+    return message;
   }
 
   private static ModuleNode findModule(ASTNode node) {
