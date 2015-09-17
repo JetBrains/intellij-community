@@ -20,6 +20,7 @@ import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
@@ -29,17 +30,11 @@ import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 
 public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
-  private final int myIndex;
-  private final Value myValue;
-  private String myName;
-  private final boolean myIsParam;
+  private final DecompiledLocalVariable myVariable;
 
-  public ArgumentValueDescriptorImpl(Project project, int index, Value value, boolean isParam, String displayName) {
+  public ArgumentValueDescriptorImpl(Project project, DecompiledLocalVariable variable, Value value) {
     super(project, value);
-    myIndex = index;
-    myValue = value;
-    myName = displayName;
-    myIsParam = isParam;
+    myVariable = variable;
     setLvalue(true);
   }
 
@@ -49,19 +44,23 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
   }
 
   public boolean isPrimitive() {
-    return myValue instanceof PrimitiveValue;
+    return getValue() instanceof PrimitiveValue;
   }
 
   public Value calcValue(final EvaluationContextImpl evaluationContext) throws EvaluateException {
-    return myValue;
+    return getValue();
+  }
+
+  public DecompiledLocalVariable getVariable() {
+    return myVariable;
   }
 
   public String getName() {
-    return myName;
+    return myVariable.getDisplayName();
   }
 
   public boolean isParameter() {
-    return myIsParam;
+    return myVariable.isParam();
   }
 
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {

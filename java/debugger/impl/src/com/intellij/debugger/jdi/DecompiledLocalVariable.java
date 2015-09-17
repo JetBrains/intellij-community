@@ -70,7 +70,7 @@ public class DecompiledLocalVariable{
       return nameString;
     }
     else if (!myMatchedNames.isEmpty()) {
-      return nameString + ": " + getDefaultName();
+      return nameString + " (" + getDefaultName() + ")";
     }
     return getDefaultName();
   }
