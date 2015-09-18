@@ -30,6 +30,7 @@ public final class BundledFileTemplate extends FileTemplateBase {
   public BundledFileTemplate(@NotNull DefaultTemplate defaultTemplate, boolean internal) {
     myDefaultTemplate = defaultTemplate;
     myInternal = internal;
+    setLiveTemplateEnabled(defaultTemplate.getText().contains("#[[$"));
   }
 
   @Override
