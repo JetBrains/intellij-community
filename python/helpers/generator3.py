@@ -162,10 +162,17 @@ def list_sources(paths, target_path):
 
             path = os.path.normpath(path)
 
-            if path.endswith('.egg') and os.path.isfile(path):
-                say("%s\t%s\t%d", path, path, os.path.getsize(path))
+            target_dir_path = ''
+            extra_info = ''
 
-            target_dir_hash = str(compute_path_hash(path))
+            if path.endswith('.egg') and os.path.isfile(path):
+                if target_path is not None:
+                    extra_info = '\t' + os.path.basename(path)
+                say("%s\t%s\t%d%s", path, path, os.path.getsize(path), extra_info)
+            else:
+                target_dir_path = compute_path_hash(path)
+                if target_path is not None:
+                    extra_info = '\t' + target_dir_path
 
             for root, files in walk_python_path(path):
                 for name in files:
@@ -173,11 +180,11 @@ def list_sources(paths, target_path):
                         file_path = os.path.join(root, name)
                         if target_path is not None:
                             relpath = os.path.relpath(root, path)
-                            folder_path = os.path.join(target_path, target_dir_hash, relpath)
+                            folder_path = os.path.join(target_path, target_dir_path, relpath)
                             if not os.path.exists(folder_path):
                                 os.makedirs(folder_path)
                             shutil.copyfile(file_path, os.path.join(folder_path, name))
-                        say("%s\t%s\t%d", os.path.normpath(file_path), path, os.path.getsize(file_path))
+                        say("%s\t%s\t%d%s", os.path.normpath(file_path), path, os.path.getsize(file_path), extra_info)
         say('END')
         sys.stdout.flush()
     except:
@@ -187,11 +194,12 @@ def list_sources(paths, target_path):
         sys.exit(1)
 
 def compute_path_hash(path):
-    # computes hash for provided path following contract of Java String's hashCode() method
+    # computes hash string of provided path
     h = 0
     for c in path:
         h = (31 * h + ord(c)) & 0xFFFFFFFF
-    return ((h + 0x80000000) & 0xFFFFFFFF) - 0x80000000
+    h = ((h + 0x80000000) & 0xFFFFFFFF) - 0x80000000
+    return str(h)
 
 #noinspection PyBroadException
 def zip_sources(zip_path):
