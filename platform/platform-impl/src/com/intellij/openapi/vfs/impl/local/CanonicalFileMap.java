@@ -69,10 +69,12 @@ public final class CanonicalFileMap extends CanonicalFileMapper {
       runningPath = new File(runningPath, pathComponents.get(i));
       Collection<OriginalWatchPath> possibleOriginalPaths = canonicalPathToOriginalPath.get(runningPath.getPath());
       for (OriginalWatchPath possibleOriginalPath : possibleOriginalPaths) {
-        // For a flat root, i + 1 would be the last item in the list
+        // For a flat root, we will match if this is a direct child of the root or if this is the root exactly
         if (possibleOriginalPath.mappingType == MappingType.RECURSIVE ||
             (i + 1) == (pathComponents.size() - 1)) {
           originalPathsToFile.add(combine(possibleOriginalPath.path, pathComponents, i + 1));
+        } else if (i == (pathComponents.size() - 1)) {
+          originalPathsToFile.add(possibleOriginalPath.path);
         }
       }
     }

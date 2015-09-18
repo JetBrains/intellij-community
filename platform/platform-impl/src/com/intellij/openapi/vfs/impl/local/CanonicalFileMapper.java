@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -59,11 +60,12 @@ public abstract class CanonicalFileMapper {
 
   @NotNull
   public final List<String> getMapping(@NotNull Collection<String> paths) {
-    List<String> nonCanonicalPaths = Lists.newArrayList();
+    // Use a set so we don't have duplicates in our list that we return
+    ImmutableSet.Builder<String> setBuilder = ImmutableSet.builder();
     for (String path : paths) {
-      nonCanonicalPaths.addAll(getMapping(path));
+      setBuilder.addAll(getMapping(path));
     }
-    return nonCanonicalPaths;
+    return setBuilder.build().asList();
   }
 
   @Nullable
