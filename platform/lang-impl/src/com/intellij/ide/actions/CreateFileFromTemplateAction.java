@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbModePermission;
@@ -76,7 +77,12 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
       final VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
         if (openFile) {
-          FileEditorManager.getInstance(project).openFile(virtualFile, true);
+          if (template.isLiveTemplateEnabled()) {
+            CreateFromTemplateActionBase.startLiveTemplate(psiFile);
+          }
+          else {
+            FileEditorManager.getInstance(project).openFile(virtualFile, true);
+          }
         }
         if (defaultTemplateProperty != null) {
           PropertiesComponent.getInstance(project).setValue(defaultTemplateProperty, template.getName());

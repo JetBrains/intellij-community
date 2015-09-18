@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.fileTemplates;
 
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -31,14 +32,31 @@ public class EmbeddedLiveTemplatesTest extends LightPlatformCodeInsightFixtureTe
 
   public void testCreateFromTemplateAction() throws Exception {
 
-    myFixture.configureByText(PlainTextFileType.INSTANCE, "");
+    doTest("Put caret here: #[[$END$]]# end of template",
+           "Put caret here: <caret> end of template");
+  }
+
+  public void testSupportVariables() throws Exception {
+
+    doTest("First: #[[$Var$]]# Second: #[[$Var$]]#",
+           "First: <caret> Second: ");
+  }
+
+  protected void doTest(String text, String result) {
     CustomFileTemplate template = new CustomFileTemplate("foo", "txt");
-    template.setText("Put caret here: #[[$END$]]# end of template");
+    template.setText(text);
     template.setLiveTemplateEnabled(true);
     myFixture.testAction(new TestAction(template));
     VirtualFile[] files = FileEditorManager.getInstance(getProject()).getSelectedFiles();
     myFixture.openFileInEditor(files[0]);
-    myFixture.checkResult("Put caret here: <caret> end of template");
+    myFixture.checkResult(result);
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    myFixture.configureByText(PlainTextFileType.INSTANCE, ""); // enable editor action context
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
   }
 
   private static class TestAction extends CreateFromTemplateActionBase {

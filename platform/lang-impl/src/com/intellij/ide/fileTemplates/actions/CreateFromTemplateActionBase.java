@@ -37,6 +37,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class CreateFromTemplateActionBase extends AnAction {
 
@@ -79,13 +81,24 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
     }
   }
 
-  private static void startLiveTemplate(PsiFile file) {
+  public static void startLiveTemplate(PsiFile file) {
     Project project = file.getProject();
     final Editor editor = EditorHelper.openInEditor(file);
     if (editor == null) return;
 
     final TemplateImpl template = new TemplateImpl("", file.getText(), "");
     template.setInline(true);
+    int count = template.getSegmentsCount();
+    if (count == 0) return;
+
+    Set<String> variables = new HashSet<String>();
+    for (int i = 0; i < count; i++) {
+      String name = template.getSegmentName(i);
+      variables.add(name);
+    }
+    for (String variable : variables) {
+      template.addVariable(variable, null, variable, true);
+    }
     WriteCommandAction.runWriteCommandAction(project, new Runnable() {
       @Override
       public void run() {
