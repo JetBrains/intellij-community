@@ -126,7 +126,16 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public static boolean isJetBrainsPlugin(@NotNull IdeaPluginDescriptor plugin) {
-    return JETBRAINS_VENDOR.equals(plugin.getVendor());
+    return isDevelopedByJetBrains(plugin.getVendor());
+  }
+
+  private static boolean isDevelopedByJetBrains(String vendorString) {
+    for (String vendor : StringUtil.split(vendorString, ",")) {
+      if (vendor.trim().equals(JETBRAINS_VENDOR)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   protected void init() {
