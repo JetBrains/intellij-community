@@ -96,6 +96,7 @@ public final class BundledFileTemplate extends FileTemplateBase {
   public void revertToDefaults() {
     setText(null);
     setReformatCode(DEFAULT_REFORMAT_CODE_VALUE);
+    setLiveTemplateEnabled(false);
   }
 
   public boolean isTextModified() {

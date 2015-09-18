@@ -34,7 +34,7 @@ public class EmbeddedLiveTemplatesTest extends LightPlatformCodeInsightFixtureTe
     myFixture.configureByText(PlainTextFileType.INSTANCE, "");
     CustomFileTemplate template = new CustomFileTemplate("foo", "txt");
     template.setText("Put caret here: #[[$END$]]# end of template");
-    template.setHasEmbeddedLiveTemplate(true);
+    template.setLiveTemplateEnabled(true);
     myFixture.testAction(new TestAction(template));
     VirtualFile[] files = FileEditorManager.getInstance(getProject()).getSelectedFiles();
     myFixture.openFileInEditor(files[0]);

@@ -81,9 +81,9 @@ public interface FileTemplate extends Cloneable {
 
   void setReformatCode(boolean reformat);
 
-  boolean isHasEmbeddedLiveTemplate();
+  boolean isLiveTemplateEnabled();
 
-  void setHasEmbeddedLiveTemplate(boolean hasEmbeddedLiveTemplate);
+  void setLiveTemplateEnabled(boolean value);
 
   FileTemplate clone();
 

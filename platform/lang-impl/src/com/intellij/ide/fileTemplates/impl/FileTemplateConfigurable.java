@@ -46,19 +46,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.HyperlinkLabel;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
+import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,7 +84,6 @@ import java.util.List;
 public class FileTemplateConfigurable implements Configurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable");
   @NonNls private static final String EMPTY_HTML = "<html></html>";
-  @NonNls private static final String CONTENT_TYPE_PLAIN = "text/plain";
 
   private JPanel myMainPanel;
   private FileTemplate myTemplate;
@@ -92,6 +92,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   private JTextField myNameField;
   private JTextField myExtensionField;
   private JCheckBox myAdjustBox;
+  private JCheckBox myLiveTemplateBox;
   private JPanel myTopPanel;
   private JEditorPane myDescriptionComponent;
   private boolean myModified = false;
@@ -101,8 +102,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   private final List<ChangeListener> myChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private Splitter mySplitter;
   private final FileType myVelocityFileType = FileTypeManager.getInstance().getFileTypeByExtension("ft");
-  private JPanel myDescriptionPanel;
-  private float myProportion = 0.5f;
+  private float myProportion = 0.6f;
 
   public FileTemplateConfigurable(Project project) {
     myProject = project;
@@ -164,33 +164,31 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myExtensionField = new JTextField();
     mySplitter = new Splitter(true, myProportion);
     myAdjustBox = new JCheckBox(IdeBundle.message("checkbox.reformat.according.to.style"));
-
+    myLiveTemplateBox = new JCheckBox(IdeBundle.message("checkbox.enable.live.templates"));
     myTemplateEditor = createEditor();
 
     myDescriptionComponent = new JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML);
     myDescriptionComponent.setEditable(false);
+    myDescriptionComponent.addHyperlinkListener(new BrowserHyperlinkListener());
 
     myTopPanel = new JPanel(new GridBagLayout());
 
-    myDescriptionPanel = new JPanel(new GridBagLayout());
-    myDescriptionPanel.add(SeparatorFactory.createSeparator(IdeBundle.message("label.description"), null),
-                           new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+    JPanel descriptionPanel = new JPanel(new GridBagLayout());
+    descriptionPanel.add(SeparatorFactory.createSeparator(IdeBundle.message("label.description"), null),
+                         new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                                   new Insets(0, 0, 2, 0), 0, 0));
-    myDescriptionPanel.add(ScrollPaneFactory.createScrollPane(myDescriptionComponent),
-                           new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+    descriptionPanel.add(ScrollPaneFactory.createScrollPane(myDescriptionComponent),
+                         new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                                   new Insets(2, 0, 0, 0), 0, 0));
 
     myMainPanel.add(myTopPanel,
                     new GridBagConstraints(0, 0, 4, 1, 1.0, 0.0, GridBagConstraints.CENTER,
                                            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    //myMainPanel.add(myAdjustBox,
-    //                new GridBagConstraints(0, 1, 4, 1, 0.0, 0.0, GridBagConstraints.WEST,
-    //                                       GridBagConstraints.HORIZONTAL, new Insets(2, 0, 2, 0), 0, 0));
     myMainPanel.add(mySplitter,
                     new GridBagConstraints(0, 2, 4, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                            new Insets(0, 0, 0, 0), 0, 0));
 
-    mySplitter.setSecondComponent(myDescriptionPanel);
+    mySplitter.setSecondComponent(descriptionPanel);
     setShowInternalMessage(null);
 
     myNameField.addFocusListener(new FocusAdapter() {
@@ -241,13 +239,9 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     ((EditorEx)editor).setHighlighter(createHighlighter());
     
     JPanel topPanel = new JPanel(new BorderLayout());
-    HyperlinkLabel hyperlinkLabel = new HyperlinkLabel();
-    hyperlinkLabel.setHyperlinkText("", "Apache Velocity", " template language is used");
-    hyperlinkLabel.setHyperlinkTarget(
-      "http://velocity.apache.org/engine/devel/user-guide.html#Velocity_Template_Language_VTL:_An_Introduction");
-    JPanel southPanel = new JPanel(new BorderLayout());
-    southPanel.add(myAdjustBox, BorderLayout.WEST);
-    southPanel.add(hyperlinkLabel, BorderLayout.EAST);
+    JPanel southPanel = new JPanel(new HorizontalLayout(40));
+    southPanel.add(myAdjustBox);
+    southPanel.add(myLiveTemplateBox);
 
     topPanel.add(southPanel, BorderLayout.SOUTH);
     topPanel.add(editor.getComponent(), BorderLayout.CENTER);
@@ -261,10 +255,6 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
   public String getNameValue() {
     return myNameField.getText();
-  }
-
-  public String getExtensionValue() {
-    return myExtensionField.getText();
   }
 
   private void onNameChanged() {
@@ -298,7 +288,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
       return true;
     }
     if (myTemplate != null) {
-      if (myTemplate.isReformatCode() != myAdjustBox.isSelected()) {
+      if (myTemplate.isReformatCode() != myAdjustBox.isSelected() || myTemplate.isLiveTemplateEnabled() != myLiveTemplateBox.isSelected()) {
         return true;
       }
     }
@@ -322,6 +312,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
       myTemplate.setName(name);
       myTemplate.setExtension(extension);
       myTemplate.setReformatCode(myAdjustBox.isSelected());
+      myTemplate.setLiveTemplateEnabled(myLiveTemplateBox.isSelected());
     }
     myModified = false;
   }
@@ -355,22 +346,23 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myFile = createFile(text, name);
     myTemplateEditor = createEditor();
 
-    boolean adjust = (myTemplate != null) && myTemplate.isReformatCode();
     myNameField.setText(name);
     myExtensionField.setText(extension);
-    myAdjustBox.setSelected(adjust);
-    String desc = description.length() > 0 ? description : EMPTY_HTML;
+    myAdjustBox.setSelected(myTemplate != null && myTemplate.isReformatCode());
+    myLiveTemplateBox.setSelected(myTemplate != null && myTemplate.isLiveTemplateEnabled());
 
-    // [myakovlev] do not delete these stupid lines! Or you get Exception!
-    myDescriptionComponent.setContentType(CONTENT_TYPE_PLAIN);
-    myDescriptionComponent.setEditable(true);
-    myDescriptionComponent.setText(desc);
-    myDescriptionComponent.setContentType(UIUtil.HTML_MIME);
-    myDescriptionComponent.setText(desc);
+    int i = description.indexOf("<html>");
+    if (i > 0) {
+      description = description.substring(i);
+    }
+    description = XmlStringUtil.stripHtml(description);
+    description = description.replace("\n", "").replace("\r", "");
+    description = XmlStringUtil.stripHtml(description);
+    description = description + "<hr> <font face=\"verdana\" size=\"-1\"><a href='http://velocity.apache.org/engine/devel/user-guide.html#Velocity_Template_Language_VTL:_An_Introduction'>\n" +
+                  "Apache Velocity</a> template language is used</font>";
+
+    myDescriptionComponent.setText(description);
     myDescriptionComponent.setCaretPosition(0);
-    myDescriptionComponent.setEditable(false);
-    
-    myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
 
     myNameField.setEditable((myTemplate != null) && (!myTemplate.isDefault()));
     myExtensionField.setEditable((myTemplate != null) && (!myTemplate.isDefault()));
