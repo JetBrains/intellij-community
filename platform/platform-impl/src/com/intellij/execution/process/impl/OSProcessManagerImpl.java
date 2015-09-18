@@ -57,12 +57,10 @@ public class OSProcessManagerImpl extends OSProcessManager {
     return false;
   }
 
+  @SuppressWarnings("deprecation")
   @NotNull
   private static WinProcess createWinProcess(@NotNull Process process) {
-    if (process instanceof RunnerWinProcess) {
-      RunnerWinProcess runnerWinProcess = (RunnerWinProcess) process;
-      return new WinProcess(runnerWinProcess.getOriginalProcess());
-    }
+    if (process instanceof RunnerWinProcess) process = ((RunnerWinProcess)process).getOriginalProcess();
     return new WinProcess(process);
   }
 
