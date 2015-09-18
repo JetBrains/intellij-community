@@ -224,11 +224,9 @@ public class ColorAndFontDescriptionPanel extends JPanel {
       setEditEnabled(!description.isInherited(), description);
     }
     else {
-      myInheritanceLabel.setToolTipText(null);
-      myInheritanceLabel.setText("<html><br>&nbsp;");
-      myInheritanceLabel.setEnabled(true);
-      myInheritAttributesBox.setEnabled(false);
+      myInheritanceLabel.setVisible(false);
       myInheritAttributesBox.setSelected(false);
+      myInheritAttributesBox.setVisible(false);
       setEditEnabled(true, description);
     }
   }
