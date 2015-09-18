@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
@@ -32,11 +31,8 @@ import java.io.File;
 import static com.intellij.vcsUtil.UIVcsUtil.SPACE_AND_THIN_SPACE;
 
 public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode implements TreeLinkMouseListener.HaveTooltip {
-  private final Project myProject;
-
-  public ChangesBrowserLocallyDeletedNode(LocallyDeletedChange userObject, Project project) {
+  public ChangesBrowserLocallyDeletedNode(LocallyDeletedChange userObject) {
     super(userObject);
-    myProject = project;
     myCount = 1;
   }
 

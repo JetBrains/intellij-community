@@ -80,8 +80,8 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
-  public static ChangesBrowserNode create(final Project project, @NotNull final LocallyDeletedChange change) {
-    return new ChangesBrowserLocallyDeletedNode(change, project);
+  public static ChangesBrowserNode create(@NotNull final LocallyDeletedChange change) {
+    return new ChangesBrowserLocallyDeletedNode(change);
   }
 
   public static ChangesBrowserNode create(final Project project, @NotNull Object userObject) {
