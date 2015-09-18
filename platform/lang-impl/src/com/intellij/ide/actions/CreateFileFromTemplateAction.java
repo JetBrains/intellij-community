@@ -55,7 +55,6 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
     return file[0];
   }
 
-  @SuppressWarnings("DialogTitleCapitalization")
   @Nullable
   public static PsiFile createFileFromTemplate(@Nullable String name,
                                                @NotNull FileTemplate template,
@@ -71,7 +70,7 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
     PsiElement element;
     Project project = dir.getProject();
     try {
-      element = FileTemplateUtil.createFromTemplate(template, name, FileTemplateManager.getInstance(dir.getProject()).getDefaultProperties(project), dir);
+      element = FileTemplateUtil.createFromTemplate(template, name, FileTemplateManager.getInstance(dir.getProject()).getDefaultProperties(), dir);
       final PsiFile psiFile = element.getContainingFile();
 
       final VirtualFile virtualFile = psiFile.getVirtualFile();
