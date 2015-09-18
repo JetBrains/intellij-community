@@ -85,19 +85,16 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   @Nullable
   public ConfigurationFromContext createConfigurationFromContext(ConfigurationContext context) {
     final RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
-    final Ref<PsiElement> locationRef = new Ref<PsiElement>(context.getPsiLocation());
-    T configuration = null;
     try {
-      configuration = (T)settings.getConfiguration();
+      if (!setupConfigurationFromContext((T)settings.getConfiguration(), context, new Ref<PsiElement>(context.getPsiLocation()))) {
+       return null;
+     }
     }
     catch (ClassCastException e) {
       LOG.error(myConfigurationFactory + " produced wrong type", e);
       return null;
     }
-    if (!setupConfigurationFromContext(configuration, context, locationRef)) {
-      return null;
-    }
-    return new ConfigurationFromContextImpl(this, settings, locationRef.get());
+    return new ConfigurationFromContextImpl(this, settings, context.getPsiLocation());
   }
 
   /**
@@ -248,7 +245,13 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   @Nullable
   public RunConfiguration createLightConfiguration(@NotNull final ConfigurationContext context) {
     RunConfiguration configuration = myConfigurationFactory.createTemplateConfiguration(context.getProject());
-    if (!setupConfigurationFromContext((T)configuration, context, new Ref<PsiElement>(context.getPsiLocation()))) {
+    try {
+      if (!setupConfigurationFromContext((T)configuration, context, new Ref<PsiElement>(context.getPsiLocation()))) {
+        return null;
+      }
+    }
+    catch (Exception e) {
+      LOG.error(myConfigurationFactory + " produced wrong type", e);
       return null;
     }
     return configuration;
