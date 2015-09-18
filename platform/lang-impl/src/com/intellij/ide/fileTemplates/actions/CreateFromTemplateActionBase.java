@@ -93,11 +93,11 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
 
     Set<String> variables = new HashSet<String>();
     for (int i = 0; i < count; i++) {
-      String name = template.getSegmentName(i);
-      variables.add(name);
+      variables.add(template.getSegmentName(i));
     }
+    variables.removeAll(TemplateImpl.INTERNAL_VARS_SET);
     for (String variable : variables) {
-      template.addVariable(variable, null, variable, true);
+      template.addVariable(variable, null, "\"" + variable + "\"", true);
     }
     WriteCommandAction.runWriteCommandAction(project, new Runnable() {
       @Override

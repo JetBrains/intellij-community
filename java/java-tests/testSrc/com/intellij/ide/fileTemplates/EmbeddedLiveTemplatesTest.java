@@ -39,7 +39,7 @@ public class EmbeddedLiveTemplatesTest extends LightPlatformCodeInsightFixtureTe
   public void testSupportVariables() throws Exception {
 
     doTest("First: #[[$Var$]]# Second: #[[$Var$]]#",
-           "First: <caret> Second: ");
+           "First: Var Second: Var");
   }
 
   protected void doTest(String text, String result) {
