@@ -57,7 +57,7 @@ public class StudyFillPlaceholdersAction extends AnAction {
         e.getPresentation().setEnabledAndVisible(false);
       }
       TaskFile taskFile = studyState.getTaskFile();
-      if (taskFile.getAnswerPlaceholders().isEmpty()) {
+      if (taskFile == null || taskFile.getAnswerPlaceholders().isEmpty()) {
         e.getPresentation().setEnabledAndVisible(false);
       }
     }
