@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.smartPointers.SelfElementInfo;
 import com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -40,7 +39,6 @@ import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -104,9 +102,8 @@ public abstract class PsiAnchor {
 
     Language lang = null;
     final FileViewProvider viewProvider = file.getViewProvider();
-    final Set<Language> languages = viewProvider.getLanguages();
-    for (Language l : languages) {
-      if (PsiTreeUtil.isAncestor(viewProvider.getPsi(l), element, false)) {
+    for (Language l : viewProvider.getLanguages()) {
+      if (viewProvider.getPsi(l) == file) {
         lang = l;
         break;
       }
