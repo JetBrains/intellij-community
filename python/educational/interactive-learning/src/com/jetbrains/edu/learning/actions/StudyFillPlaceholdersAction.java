@@ -12,7 +12,7 @@ import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 
-public class StudyShowAnswersAction extends AnAction {
+public class StudyFillPlaceholdersAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
@@ -54,6 +54,10 @@ public class StudyShowAnswersAction extends AnAction {
       StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
       StudyState studyState = new StudyState(studyEditor);
       if (!studyState.isValid()) {
+        e.getPresentation().setEnabledAndVisible(false);
+      }
+      TaskFile taskFile = studyState.getTaskFile();
+      if (taskFile.getAnswerPlaceholders().isEmpty()) {
         e.getPresentation().setEnabledAndVisible(false);
       }
     }
