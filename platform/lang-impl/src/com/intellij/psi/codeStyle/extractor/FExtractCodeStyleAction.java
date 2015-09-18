@@ -15,11 +15,10 @@
  */
 package com.intellij.psi.codeStyle.extractor;
 
+import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -27,15 +26,16 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.extractor.differ.FLangCodeStyleExtractor;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
@@ -53,8 +53,9 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.util.List;
 
-public class FExtractCodeStyleAction extends AnAction {
+public class FExtractCodeStyleAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -109,15 +110,16 @@ public class FExtractCodeStyleAction extends AnAction {
                   boolean apply = "apply".equals(e.getDescription());
                   if (!apply) {
                     @NonNls StringBuilder descriptions = new StringBuilder("<html>Set formatting options:");
-                    final java.util.List<FValue> values = forSelection.getValues();
+                    final List<FValue> values = forSelection.getValues();
                     final LanguageCodeStyleSettingsProvider[] providers = Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME);
                     Language language = file.getLanguage();
-                    FCodeStyleSettingsNameProvider nameProvider = new FCodeStyleSettingsNameProvider(cloneSettings);
+                    FCodeStyleSettingsNameProvider nameProvider = new FCodeStyleSettingsNameProvider();
                     for (final LanguageCodeStyleSettingsProvider provider : providers) {
                       Language target = provider.getLanguage();
                       if (target.equals(language)) {
                         //this is our language
-                        nameProvider.addSettings(descriptions, values, provider);
+                        nameProvider.addSettings(provider);
+                        descriptions.append(nameProvider.getSettings(values));
                         break;
                       }
                     }
@@ -163,4 +165,32 @@ public class FExtractCodeStyleAction extends AnAction {
 
               );
             }
+
+    @Override
+    public void update(AnActionEvent event){
+      //TODO allow launch on file not opened in editor
+      Presentation presentation = event.getPresentation();
+      DataContext dataContext = event.getDataContext();
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      if (project == null){
+        presentation.setEnabled(false);
+        return;
+      }
+
+      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+
+      if (editor != null){
+        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+        if (file == null || file.getVirtualFile() == null) {
+          presentation.setEnabled(false);
+          return;
+        }
+
+        if (LanguageFormatting.INSTANCE.forContext(file)  != null) {
+          presentation.setEnabled(true);
+        }
+      } else {
+        presentation.setEnabled(false);
+      }
+    }
   }

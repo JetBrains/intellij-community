@@ -16,14 +16,14 @@
 package com.intellij.psi.codeStyle.extractor.ui;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
-import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.extractor.values.FValue;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.codeStyle.CodeStyleSettingRepresentation.SettingsGroup;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -33,63 +33,125 @@ import java.util.*;
  */
 public class FCodeStyleSettingsNameProvider implements CodeStyleSettingsCustomizable {
 
-  private Map<Pair<String, String>, String> groupAndFieldToName = new LinkedHashMap<Pair<String, String>, String>();
-  private Map<Pair<String, String>, CustomValueToNameContainer> groupAndFieldToNameCustom =
-      new LinkedHashMap<Pair<String, String>, CustomValueToNameContainer>();
-  private Map<String, List<String>> groupToFields = new LinkedHashMap<String, List<String>>();
-  private Map<String, String> renamedStandardOptions = new HashMap<String, String>();
+  protected Map<SettingsType, Map<SettingsGroup, Set<CodeStyleSettingRepresentation>>> mySettings =
+    ContainerUtil.newHashMap();
+  private Map<SettingsType, Map<SettingsGroup, Set<CodeStyleSettingRepresentation>>> standardSettings =
+    ContainerUtil.newHashMap();
 
-  private final CodeStyleSettings mySettings;
-  private final FCodeStyleSpacesNameProvider mySpacesProvider;
-  private final FCodeStyleWrapNameProvider myWrapNameProvider;
-  private final FCodeStyleBlankLinesProvider myBlankLinesProvider;
+  public FCodeStyleSettingsNameProvider() {
+    for (SettingsType settingsType : SettingsType.values()) {
+      standardSettings.put(settingsType, CodeStyleSettingRepresentation.getStandardSettings(settingsType));
+    }
+  }
 
-  public FCodeStyleSettingsNameProvider(CodeStyleSettings settings) {
-    mySettings = settings;
-    mySpacesProvider = new FCodeStyleSpacesNameProvider();
-    myWrapNameProvider = new FCodeStyleWrapNameProvider();
-    myBlankLinesProvider = new FCodeStyleBlankLinesProvider();
+  protected void addSetting(@NotNull SettingsGroup group, @NotNull CodeStyleSettingRepresentation setting) {
+    for (Map.Entry<SettingsType, Map<SettingsGroup, Set<CodeStyleSettingRepresentation>>> entry: mySettings.entrySet()) {
+      if (entry.getValue().containsKey(group)) {
+        addSetting(entry.getKey(), group, setting);
+        return;
+      }
+    }
+    addSetting(SettingsType.LANGUAGE_SPECIFIC, group, setting);
+  }
 
+  protected void addSetting(@NotNull SettingsType settingsType, @NotNull SettingsGroup group, @NotNull CodeStyleSettingRepresentation setting) {
+    Map<CodeStyleSettingRepresentation.SettingsGroup, Set<CodeStyleSettingRepresentation>> groups = mySettings.get(settingsType);
+    if (groups == null) {
+      groups = ContainerUtil.newLinkedHashMap();
+    }
+    Set<CodeStyleSettingRepresentation> settingsList = groups.get(group);
+    if (settingsList == null) {
+      settingsList = ContainerUtil.newLinkedHashSet();
+    }
+    settingsList.add(setting);
+    groups.put(group, settingsList);
   }
 
   @Override
   public void showAllStandardOptions() {
-    //nothing to do here, all standard options are already in some map
-  }
-
-  @Override
-  public void showStandardOptions(String... optionNames) {
-    //nothing to do here, all standard options are already in some map
-  }
-
-  @Override
-  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass, String fieldName, String title, String groupName, Object... options) {
-    if (options.length == 2) {
-      String[] valueNames = (String[]) options[0];
-      int[] values = (int[]) options[1];
-      addToGroupsMap(groupAndFieldToNameCustom, groupToFields, fieldName, new CustomValueToNameContainer(title, values, valueNames), groupName);
-    } else {
-      addToGroupsMap(groupAndFieldToName, groupToFields, fieldName, title, groupName);
+    for (SettingsType settingsType : SettingsType.values()) {
+      Map<SettingsGroup, Set<CodeStyleSettingRepresentation>> standardGroups = standardSettings.get(settingsType);
+      for (Map.Entry<SettingsGroup, Set<CodeStyleSettingRepresentation>> entry : standardGroups.entrySet()) {
+        for (CodeStyleSettingRepresentation setting: entry.getValue()) {
+          addSetting(settingsType, entry.getKey(), setting);
+        }
+      }
     }
   }
 
   @Override
-  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass, String fieldName, String title, String groupName, OptionAnchor anchor, String anchorFieldName, Object... options) {
-    //TODO for now, ignore the anchor; it should be accounted for in actual implementation
-    showCustomOption(settingsClass, fieldName, title, groupName, options);
+  public void showStandardOptions(String... optionNames) {
+    List<String> options = Arrays.asList(optionNames);
+    for (SettingsType settingsType : SettingsType.values()) {
+      Map<SettingsGroup, Set<CodeStyleSettingRepresentation>> standardGroups = standardSettings.get(settingsType);
+      for (Map.Entry<SettingsGroup, Set<CodeStyleSettingRepresentation>> entry : standardGroups.entrySet()) {
+        for (CodeStyleSettingRepresentation setting: entry.getValue()) {
+          if (options.contains(setting.getFieldName())) {
+            addSetting(settingsType, entry.getKey(), setting);
+          }
+        }
+      }
+    }
+  }
+
+  @Override
+  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass, @NotNull String fieldName, @NotNull String title, @Nullable String groupName, Object... options) {
+    showCustomOption(settingsClass, fieldName, title, groupName, null, null, options);
+  }
+
+  @Override
+  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass, @NotNull String fieldName, @NotNull String title,
+                               @Nullable String groupName, @Nullable OptionAnchor anchor, @Nullable String anchorFieldName, Object... options) {
+    if (options.length == 2) {
+      addSetting(new SettingsGroup(groupName), new CodeStyleSelectSettingRepresentation(fieldName, title, (int[])options[1], (String[])options[0]));
+    } else {
+      addSetting(new SettingsGroup(groupName), new CodeStyleSettingRepresentation(fieldName, title));
+    }
   }
 
   @Override
   public void renameStandardOption(String fieldName, String newTitle) {
-    renamedStandardOptions.put(fieldName, newTitle);
+    for (SettingsType settingsType : SettingsType.values()) {
+      Map<SettingsGroup, Set<CodeStyleSettingRepresentation>> standardGroups = mySettings.get(settingsType);
+      if (standardGroups == null) {
+        continue;
+      }
+      for (Map.Entry<SettingsGroup, Set<CodeStyleSettingRepresentation>> entry : standardGroups.entrySet()) {
+        for (CodeStyleSettingRepresentation setting: entry.getValue()) {
+          if (setting.getFieldName().equals(fieldName)) {
+            setting.setUiName(newTitle);
+            return;
+          }
+        }
+      }
+    }
   }
 
   @Override
   public void moveStandardOption(String fieldName, String newGroup) {
-    //TODO implement me
+    for (SettingsType settingsType : SettingsType.values()) {
+      Map<SettingsGroup, Set<CodeStyleSettingRepresentation>> standardGroups = mySettings.get(settingsType);
+      if (standardGroups == null) {
+        standardGroups = ContainerUtil.newLinkedHashMap();
+        mySettings.put(settingsType, standardGroups);
+      }
+      for (Map.Entry<SettingsGroup, Set<CodeStyleSettingRepresentation>> entry : standardGroups.entrySet()) {
+        CodeStyleSettingRepresentation moveSetting = null;
+        for (CodeStyleSettingRepresentation setting: entry.getValue()) {
+          if (setting.getFieldName().equals(fieldName)) {
+            moveSetting = setting;
+            break;
+          }
+        }
+        if (moveSetting != null) {
+          entry.getValue().remove(moveSetting);
+          addSetting(new SettingsGroup(newGroup), moveSetting);
+        }
+      }
+    }
   }
 
-  private String getSettingsTypeName(LanguageCodeStyleSettingsProvider.SettingsType settingsType) {
+  private static String getSettingsTypeName(LanguageCodeStyleSettingsProvider.SettingsType settingsType) {
     switch (settingsType) {
       case BLANK_LINES_SETTINGS: return ApplicationBundle.message("title.blank.lines");
       case SPACING_SETTINGS: return ApplicationBundle.message("title.spaces");
@@ -100,147 +162,51 @@ public class FCodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiz
     }
   }
 
-  private boolean addFields(StringBuilder builder, String groupName, List<String> fields, List<FValue> values, Map<Pair<String, String>, String> map,
-                         Map<Pair<String, String>, CustomValueToNameContainer> mapCustom, String groupPrefix, String typePrefix, boolean typePrefixPrinted) {
-    boolean groupPrefixAppended = false;
-    for (String field : fields) {
-      for (FValue value: values) {
-        if (value.state == FValue.STATE.SELECTED && value.name.equals(field)) {
-          String name = null;
-          String valueName = null;
-          Pair<String, String> myPair = Pair.create(groupName, field);
-          if (map != null) {
-            name = map.get(myPair);
-            if (name != null) {
-              valueName = value.value.toString();
-            }
-          }
-          if (name == null && mapCustom != null) {
-            CustomValueToNameContainer container = mapCustom.get(myPair);
-            if (container != null) {
-              name = container.myName;
-              valueName = container.getNameForValue((Integer) value.value);
-            }
-          }
-          String renamed = renamedStandardOptions.get(field);
-          if (renamed != null) {
-            name = renamed;
-          }
-          if (name != null && valueName != null) {
-            if (!typePrefixPrinted) {
-              builder.append(typePrefix);
-              typePrefixPrinted = true;
-            }
-            if (groupName != null && groupPrefix != null && !groupPrefixAppended) {
-              builder.append(groupPrefix);
-              groupPrefixAppended = true;
-            }
-            String postNameSign = name.endsWith(":") ?  " " : ": ";
-            builder.append("<br>").append(groupName == null ? "<b>" + name + "</b>" : name).append(postNameSign).append(valueName);
-          } else {
-            System.err.println("Failed to deduce name for field " + field + " in group " + groupName); //TODO switch to more robust logging
-          }
-        }
-      }
-    }
-    return typePrefixPrinted;
-  }
-
-  private void addSettings(List<FValue> values, StringBuilder builder, Map<Pair<String, String>, String> map,
-                           Map<Pair<String, String>, CustomValueToNameContainer> mapCustom, Map<String,
-                           List<String>> defaultGroupToFields, String typePrefix) {
-    assert(defaultGroupToFields != groupToFields);
-    boolean typePrefixPrinted = false;
-    //process default groups
-    for (String group: defaultGroupToFields.keySet()) {
-      //TODO the order gets messed up because of lack of decent API; ignore it for now
-      typePrefixPrinted = addFields(builder, group, defaultGroupToFields.get(group), values, map, mapCustom,
-          "<br><b>" + group + "</b>", typePrefix, typePrefixPrinted) | typePrefixPrinted;
-      //now, process custom settings for the group
-      if (groupToFields.containsKey(group)) {
-        typePrefixPrinted = addFields(builder, group, groupToFields.get(group), values, groupAndFieldToName,
-            groupAndFieldToNameCustom, null, typePrefix, typePrefixPrinted) | typePrefixPrinted;
-        //remove the processed group from custom groups to avoid duplication
-        groupToFields.remove(group);
-      }
-    }
-    //process custom groups
-    for (String group: groupToFields.keySet()) {
-      builder.append("<br><b>").append(group).append("</b>");
-      typePrefixPrinted = addFields(builder, group, groupToFields.get(group), values, groupAndFieldToName,
-          groupAndFieldToNameCustom,  "<br><b>" + group + "</b>", typePrefix, typePrefixPrinted) | typePrefixPrinted;
-    }
-  }
-
-  public void addSettings(StringBuilder stringBuilder, List<FValue> values, LanguageCodeStyleSettingsProvider provider) {
-    for (LanguageCodeStyleSettingsProvider.SettingsType settingsType : LanguageCodeStyleSettingsProvider.SettingsType.values()) {
-      groupAndFieldToName.clear();
-      groupAndFieldToNameCustom.clear();
-      groupToFields.clear();
-
-      String typePrefix = "<br><b><u>" + getSettingsTypeName(settingsType) + "</u></b>";
-//      stringBuilder.append("<br><b><u>").append(getSettingsTypeName(settingsType)).append("</u></b>");
-
+  public void addSettings(LanguageCodeStyleSettingsProvider provider) {
+    for (SettingsType settingsType : LanguageCodeStyleSettingsProvider.SettingsType.values()) {
       provider.customizeSettings(this, settingsType);
-      //TODO there is a lot of duplication that should go away once there is a stable API in the IDEA core for field name and value extraction
-      switch (settingsType) {
-        case SPACING_SETTINGS:
-          addSettings(values, stringBuilder, mySpacesProvider.getGroupAndFieldToName(), null, mySpacesProvider.getGroupToFields(), typePrefix);
-          break;
-        case BLANK_LINES_SETTINGS:
-          addSettings(values, stringBuilder, myBlankLinesProvider.getGroupAndFieldToName(), null, myBlankLinesProvider.getGroupToFields(), typePrefix);
-          break;
-        case WRAPPING_AND_BRACES_SETTINGS:
-          addSettings(values, stringBuilder, myWrapNameProvider.getGroupAndFieldToName(), myWrapNameProvider.getGroupAndFieldToNameCustom(), myWrapNameProvider.getGroupToFields(), typePrefix);
-          break;
-        case INDENT_SETTINGS:
-          //TODO probably this should be unified somehow
-          Map<Pair<String, String>, String> map = new LinkedHashMap<Pair<String, String>, String>();
-          Map<String, List<String>> groupMap = new LinkedHashMap<String, List<String>>();
-          String groupName = null;//getSettingsTypeName(settingsType);
-          map.put(Pair.create(groupName, "INDENT_SIZE"), ApplicationBundle.message("editbox.indent.indent"));
-          map.put(Pair.create(groupName, "CONTINUATION_INDENT_SIZE"), ApplicationBundle.message("editbox.indent.continuation.indent"));
-          map.put(Pair.create(groupName, "TAB_SIZE"), ApplicationBundle.message("editbox.indent.tab.size"));
-          List<String> fields = new LinkedList<String>();
-          Collections.addAll(fields, "INDENT_SIZE", "CONTINUATION_INDENT_SIZE", "TAB_SIZE");
-          groupMap.put(groupName, fields);
-          addSettings(values, stringBuilder, map, null, groupMap, typePrefix);
-          break;
-        default:
-          addSettings(values, stringBuilder, null, null, Collections.EMPTY_MAP, typePrefix);
-          break;
-      }
     }
   }
 
-  public static <T> void addToGroupsMap(@NotNull Map<Pair<String, String>, T> groupToFieldMap,
-                                        @NotNull Map<String, List<String>> groupToFields,
-                                        @NonNls String fieldName, T title, String groupName) {
-    if (!groupToFields.keySet().contains(groupName)) {
-      groupToFields.put(groupName, new LinkedList<String>());
-    }
-    groupToFields.get(groupName).add(fieldName);
-    groupToFieldMap.put(Pair.create(groupName, fieldName), title);
-  }
-
-  public static class CustomValueToNameContainer {
-    public final String myName;
-    private final int[] myValues;
-    private final String[] myValueNames;
-
-    public CustomValueToNameContainer(String name, int[] values, String[] valueNames) {
-      myName = name;
-      myValues = values;
-      myValueNames = valueNames;
-    }
-
-    public String getNameForValue(int value) {
-      for (int i = 0; i < myValues.length; ++i) {
-        if (myValues[i] == value) {
-          return myValueNames[i];
+  public String getSettings(List<FValue> values) {
+    StringBuilder builder = new StringBuilder();
+    for (SettingsType settingsType : LanguageCodeStyleSettingsProvider.SettingsType.values()) {
+      builder.append("<br><b><u>").append(getSettingsTypeName(settingsType)).append("</u></b>");
+      Map<SettingsGroup, Set<CodeStyleSettingRepresentation>> groups = mySettings.get(settingsType);
+      if (groups != null) {
+        for (Map.Entry<SettingsGroup, Set<CodeStyleSettingRepresentation>> entry : groups.entrySet()) {
+          boolean firstSettingGroupTop = entry.getKey().isNull();
+          boolean groupReported = false;
+          for (final CodeStyleSettingRepresentation setting : entry.getValue()) {
+            FValue myValue = ContainerUtil.find(values, new Condition<FValue>() {
+              @Override
+              public boolean value(FValue value) {
+                return value.state == FValue.STATE.SELECTED && value.name.equals(setting.getFieldName());
+              }
+            });
+            if (myValue == null) {
+              continue;
+            }
+            if (!groupReported) {
+              if (firstSettingGroupTop) {
+                builder.append("<b>");
+              } else {
+                builder.append("<br><b>").append(entry.getKey().name).append("</b>");
+              }
+            }
+            builder.append("<br>");
+            String postNameSign = setting.getUiName().endsWith(":") ?  " " : ": ";
+            builder.append(setting.getUiName()).append(postNameSign).append(setting.getValueUiName(myValue.value));
+            if (!groupReported) {
+              if (firstSettingGroupTop) {
+                builder.append("</b>");
+              }
+            }
+            groupReported = true;
+          }
         }
       }
-      throw new IllegalArgumentException("Unexpected value " + value);
     }
+    return builder.toString();
   }
 }
