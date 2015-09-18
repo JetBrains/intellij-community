@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import com.intellij.util.PlatformIcons;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+
+import static com.intellij.vcsUtil.UIVcsUtil.SPACE_AND_THIN_SPACE;
 
 public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode implements TreeLinkMouseListener.HaveTooltip {
   private final Project myProject;
@@ -68,7 +70,7 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode impleme
     if (renderer.isShowFlatten()) {
       final File parentFile = filePath.getIOFile().getParentFile();
       if (parentFile != null) {
-        renderer.append(" (" + parentFile.getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderer.append(SPACE_AND_THIN_SPACE + parentFile.getPath(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }
     else if (getCount() != 1 || getDirectoryCount() != 0) {
