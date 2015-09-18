@@ -1,12 +1,9 @@
 package git4idea;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,16 +30,7 @@ public class DialogManager {
                                 final int focusedButtonIndex,
                                 @Nullable final Icon icon,
                                 @Nullable final DialogWrapper.DoNotAskOption dontAskOption) {
-    final Ref<Integer> choice = Ref.create(Messages.CANCEL);
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        choice.set(dialogManager().showMessageDialog(description, title, options,
-                                                     defaultButtonIndex, focusedButtonIndex, icon,
-                                                     dontAskOption));
-      }
-    }, ModalityState.defaultModalityState());
-    return choice.get();
+    return dialogManager().showMessageDialog(description, title, options, defaultButtonIndex, focusedButtonIndex, icon, dontAskOption);
   }
 
   public static int showOkCancelDialog(@NotNull Project project,
