@@ -98,12 +98,22 @@ public class UnshelveChangesAction extends DumbAwareAction {
   @Nullable
   private static LocalChangeList tryToMatchWithExistingChangelist(@NotNull ChangeListManager changeListManager,
                                                                   @NotNull final String defaultName) {
-    return ContainerUtil.find(changeListManager.getChangeListsCopy(), new Condition<LocalChangeList>() {
+    List<LocalChangeList> matched = ContainerUtil.findAll(changeListManager.getChangeListsCopy(), new Condition<LocalChangeList>() {
       @Override
       public boolean value(LocalChangeList list) {
-        return defaultName.contains(list.getName());
+        return defaultName.contains(list.getName().trim());
       }
     });
+    int maxLen = -1;
+    LocalChangeList bestMatch = null;
+    for (LocalChangeList changeList : matched) {
+      int len = changeList.getName().trim().length();
+      if (len > maxLen) {
+        maxLen = len;
+        bestMatch = changeList;
+      }
+    }
+    return bestMatch;
   }
 
   @Override
