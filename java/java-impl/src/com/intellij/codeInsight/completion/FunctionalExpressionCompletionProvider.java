@@ -135,7 +135,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
             }
             collectThisVariants(functionalInterfaceType, params, originalPosition, substitutor, expectedReturnType, result);
             final PsiClass psiClass = PsiUtil.resolveClassInType(expectedReturnType);
-            if (psiClass != null) {
+            if (psiClass != null && !(psiClass instanceof PsiTypeParameter)) {
               if (expectedReturnType.getArrayDimensions() == 0) {
                 final PsiMethod[] constructors = psiClass.getConstructors();
                 for (PsiMethod psiMethod : constructors) {
