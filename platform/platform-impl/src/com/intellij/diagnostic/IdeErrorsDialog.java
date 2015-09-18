@@ -602,7 +602,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (submitter == null) {
         PluginId pluginId = findPluginId(throwable);
         IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-        if (plugin == null || PluginManagerMain.isJetBrainsPlugin(plugin)) {
+        if (plugin == null || PluginManagerMain.isDevelopedByJetBrains(plugin)) {
           myForeignPluginWarningPanel.setVisible(false);
           return;
         }
@@ -1010,7 +1010,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       return null;
     }
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    if (plugin == null || PluginManagerMain.isJetBrainsPlugin(plugin)) {
+    if (plugin == null || PluginManagerMain.isDevelopedByJetBrains(plugin)) {
       return getCorePluginSubmitter(reporters);
     }
     for (ErrorReportSubmitter reporter : reporters) {

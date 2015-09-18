@@ -125,11 +125,11 @@ public abstract class PluginManagerMain implements Disposable {
     myUISettings = uiSettings;
   }
 
-  public static boolean isJetBrainsPlugin(@NotNull IdeaPluginDescriptor plugin) {
+  public static boolean isDevelopedByJetBrains(@NotNull IdeaPluginDescriptor plugin) {
     return isDevelopedByJetBrains(plugin.getVendor());
   }
 
-  private static boolean isDevelopedByJetBrains(String vendorString) {
+  public static boolean isDevelopedByJetBrains(String vendorString) {
     for (String vendor : StringUtil.split(vendorString, ",")) {
       if (vendor.trim().equals(JETBRAINS_VENDOR)) {
         return true;
