@@ -31,7 +31,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.util.JDOMExternalizable
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -46,7 +49,10 @@ import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.util.Arrays
+import java.util.Collections
+import java.util.Comparator
+import java.util.LinkedHashSet
 import java.util.concurrent.CopyOnWriteArrayList
 
 private val LOG = Logger.getInstance(javaClass<ComponentStoreImpl>())
@@ -85,6 +91,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       componentNameIfStateExists = if (component is PersistentStateComponent<*>) {
         val stateSpec = StoreUtil.getStateSpec(component)
         doAddComponent(stateSpec.name, component)
+        @suppress("UNCHECKED_CAST")
         initPersistentComponent(stateSpec, component as PersistentStateComponent<Any>, null, false)
       }
       else {
@@ -229,7 +236,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  private fun <T> initPersistentComponent(stateSpec: State, component: PersistentStateComponent<T>, changedStorages: Set<StateStorage>?, reloadData: Boolean): String? {
+  private fun <T: Any> initPersistentComponent(stateSpec: State, component: PersistentStateComponent<T>, changedStorages: Set<StateStorage>?, reloadData: Boolean): String? {
     if (loadPolicy == StateLoadPolicy.NOT_LOAD) {
       return null
     }
@@ -370,6 +377,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   override final fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
     val stateSpec = StoreUtil.getStateSpecOrError(componentClass)
+    @suppress("UNCHECKED_CAST")
     val component = components.get(stateSpec.name) as PersistentStateComponent<Any>?
     if (component != null) {
       initPersistentComponent(stateSpec, component, emptySet(), true)
@@ -377,6 +385,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   private fun reloadState(componentName: String, changedStorages: Set<StateStorage>): Boolean {
+    @suppress("UNCHECKED_CAST")
     val component = components.get(componentName) as PersistentStateComponent<Any>?
     if (component == null) {
       return false
