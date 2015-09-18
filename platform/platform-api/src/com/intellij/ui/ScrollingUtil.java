@@ -573,12 +573,12 @@ public class ScrollingUtil {
     }.registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), table);
     new DumbAwareAction() {
       public void actionPerformed(AnActionEvent e) {
-        moveDown(table, e.getModifiers(), UISettings.getInstance().CYCLE_SCROLLING);
+        moveDown(table, e.getModifiers(), cycleScrolling);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveDown(), table);
     new DumbAwareAction() {
       public void actionPerformed(AnActionEvent e) {
-        moveUp(table, e.getModifiers(), UISettings.getInstance().CYCLE_SCROLLING);
+        moveUp(table, e.getModifiers(), cycleScrolling);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveUp(), table);
     new DumbAwareAction() {

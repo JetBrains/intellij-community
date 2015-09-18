@@ -71,7 +71,7 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
         if (createdElement != null) {
           elementCreated(dialog, createdElement);
           view.selectElement(createdElement);
-          if (selectedTemplate.isHasEmbeddedLiveTemplate() && createdElement instanceof PsiFile) {
+          if (selectedTemplate.isLiveTemplateEnabled() && createdElement instanceof PsiFile) {
             startLiveTemplate((PsiFile)createdElement);
           }
         }

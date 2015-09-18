@@ -128,13 +128,6 @@ public class JavaProjectData extends AbstractExternalEntityData {
 
   public void setLanguageLevel(@Nullable String languageLevel) {
     LanguageLevel level = LanguageLevel.parse(languageLevel);
-    if (level == null && languageLevel != null) {
-      Matcher matcher = JDK_VERSION_PATTERN.matcher(languageLevel);
-      if (matcher.matches()) {
-        String versionAsString = matcher.group(1);
-        level = LanguageLevel.parse("1." + versionAsString);
-      }
-    }
     if (level != null) {
       myLanguageLevel = level;
     }

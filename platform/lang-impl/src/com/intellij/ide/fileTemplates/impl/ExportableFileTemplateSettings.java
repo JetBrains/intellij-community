@@ -40,6 +40,7 @@ public class ExportableFileTemplateSettings extends FileTemplatesLoader implemen
   static final String ELEMENT_TEMPLATE = "template";
   static final String ATTRIBUTE_NAME = "name";
   static final String ATTRIBUTE_REFORMAT = "reformat";
+  static final String ATTRIBUTE_LIVE_TEMPLATE = "live-template-enabled";
   static final String ATTRIBUTE_ENABLED = "enabled";
 
   private boolean myLoaded = false;
@@ -60,7 +61,7 @@ public class ExportableFileTemplateSettings extends FileTemplatesLoader implemen
       Element templatesGroup = null;
       for (FileTemplateBase template : manager.getAllTemplates(true)) {
         // save only those settings that differ from defaults
-        boolean shouldSave = template.isReformatCode() != FileTemplateBase.DEFAULT_REFORMAT_CODE_VALUE;
+        boolean shouldSave = template.isReformatCode() != FileTemplateBase.DEFAULT_REFORMAT_CODE_VALUE || template.isLiveTemplateEnabled();
         if (template instanceof BundledFileTemplate) {
           shouldSave |= ((BundledFileTemplate)template).isEnabled() != FileTemplateBase.DEFAULT_ENABLED_VALUE;
         }
@@ -70,6 +71,7 @@ public class ExportableFileTemplateSettings extends FileTemplatesLoader implemen
         final Element templateElement = new Element(ELEMENT_TEMPLATE);
         templateElement.setAttribute(ATTRIBUTE_NAME, template.getQualifiedName());
         templateElement.setAttribute(ATTRIBUTE_REFORMAT, Boolean.toString(template.isReformatCode()));
+        templateElement.setAttribute(ATTRIBUTE_LIVE_TEMPLATE, Boolean.toString(template.isLiveTemplateEnabled()));
         if (template instanceof BundledFileTemplate) {
           templateElement.setAttribute(ATTRIBUTE_ENABLED, Boolean.toString(((BundledFileTemplate)template).isEnabled()));
         }
@@ -108,8 +110,8 @@ public class ExportableFileTemplateSettings extends FileTemplatesLoader implemen
         if (template == null) {
           continue;
         }
-        final boolean reformat = Boolean.TRUE.toString().equals(child.getAttributeValue(ATTRIBUTE_REFORMAT));
-        template.setReformatCode(reformat);
+        template.setReformatCode(Boolean.TRUE.toString().equals(child.getAttributeValue(ATTRIBUTE_REFORMAT)));
+        template.setLiveTemplateEnabled(Boolean.TRUE.toString().equals(child.getAttributeValue(ATTRIBUTE_LIVE_TEMPLATE)));
         if (template instanceof BundledFileTemplate) {
           final boolean enabled = Boolean.parseBoolean(child.getAttributeValue(ATTRIBUTE_ENABLED, "true"));
           ((BundledFileTemplate)template).setEnabled(enabled);

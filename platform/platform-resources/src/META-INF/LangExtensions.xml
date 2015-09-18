@@ -330,6 +330,11 @@
     <projectService serviceInterface="com.intellij.openapi.roots.impl.LibraryScopeCache"
                     serviceImplementation="com.intellij.openapi.roots.impl.LibraryScopeCache"/>
 
+    <projectService serviceInterface="com.intellij.slicer.SliceToolwindowSettings"
+                    serviceImplementation="com.intellij.slicer.SliceToolwindowSettings"/>
+    <projectService serviceInterface="com.intellij.slicer.SliceManager"
+                    serviceImplementation="com.intellij.slicer.SliceManager"/>
+
     <moduleService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore" serviceImplementation="com.intellij.configurationStore.ModuleStoreImpl"/>
     <moduleService serviceImplementation="com.intellij.openapi.module.impl.ModuleImpl$DeprecatedModuleOptionManager"/>
     <moduleService serviceInterface="com.intellij.openapi.components.PathMacroManager" serviceImplementation="com.intellij.openapi.components.impl.ModulePathMacroManager"/>

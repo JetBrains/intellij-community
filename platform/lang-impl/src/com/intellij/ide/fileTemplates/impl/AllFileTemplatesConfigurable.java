@@ -164,6 +164,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     final FileTemplate newTemplate = new CustomFileTemplate(name, selected.getExtension());
     newTemplate.setText(selected.getText());
     newTemplate.setReformatCode(selected.isReformatCode());
+    newTemplate.setLiveTemplateEnabled(selected.isLiveTemplateEnabled());
     myCurrentTab.addTemplate(newTemplate);
     myModified = true;
     myCurrentTab.selectTemplate(newTemplate);

@@ -125,7 +125,8 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     SliceAnalysisParams params = handler.askForParams(element, dataFlowToThis, myStoredSettings, dialogTitle);
     if (params == null) return;
 
-    SliceRootNode rootNode = new SliceRootNode(myProject, new DuplicateMap(), SliceUsage.createRootUsage(element, params));
+    SliceRootNode rootNode = new SliceRootNode(myProject, new DuplicateMap(),
+                                               LanguageSlicing.getProvider(element).createRootUsage(element, params));
 
     createToolWindow(dataFlowToThis, rootNode, false, getElementDescription(null, element, null));
   }
@@ -171,10 +172,11 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
   }
 
   public static String getElementDescription(String prefix, PsiElement element, String suffix) {
-    PsiElement elementToSlice = element;
-    if (element instanceof PsiReferenceExpression) elementToSlice = ((PsiReferenceExpression)element).resolve();
-    if (elementToSlice == null) elementToSlice = element;
-    String desc = ElementDescriptionUtil.getElementDescription(elementToSlice, RefactoringDescriptionLocation.WITHOUT_PARENT);
+    SliceLanguageSupportProvider provider = LanguageSlicing.getProvider(element);
+    if(provider != null){
+      element = provider.getElementForDescription(element);
+    }
+    String desc = ElementDescriptionUtil.getElementDescription(element, RefactoringDescriptionLocation.WITHOUT_PARENT);
     return "<html><head>" + UIUtil.getCssFontDeclaration(BaseLabel.getLabelFont()) + "</head><body>" +
            (prefix == null ? "" : prefix) + StringUtil.first(desc, 100, true)+(suffix == null ? "" : suffix) +
            "</body></html>";
