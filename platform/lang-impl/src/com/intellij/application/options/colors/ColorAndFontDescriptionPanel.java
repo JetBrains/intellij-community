@@ -216,9 +216,11 @@ public class ColorAndFontDescriptionPanel extends JPanel {
         labelText = style + attrLabel + "<br>&nbsp;";
       }
 
+      myInheritanceLabel.setVisible(true);
       myInheritanceLabel.setText(labelText);
       myInheritanceLabel.setToolTipText(tooltipText);
       myInheritanceLabel.setEnabled(description.isInherited());
+      myInheritAttributesBox.setVisible(true);
       myInheritAttributesBox.setEnabled(true);
       myInheritAttributesBox.setSelected(description.isInherited());
       setEditEnabled(!description.isInherited(), description);
