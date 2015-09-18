@@ -21,7 +21,6 @@ import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ObjectUtils;
@@ -37,13 +36,11 @@ import java.util.*;
  * @author: Roman Chernyatchik
  */
 public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
-  private static final Logger LOG = Logger.getInstance(GeneralToSMTRunnerEventsConvertor.class.getName());
 
   private final Map<String, SMTestProxy> myRunningTestsFullNameToProxy = new HashMap<String, SMTestProxy>();
   private final Set<AbstractTestProxy> myFailedTestsSet = new HashSet<AbstractTestProxy>();
   private final TestSuiteStack mySuitesStack;
   private final SMTestProxy.SMRootTestProxy myTestsRootNode;
-  private final String myTestFrameworkName;
 
   private boolean myIsTestingFinished;
   private SMTestLocator myLocator = null;
@@ -51,10 +48,9 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   public GeneralToSMTRunnerEventsConvertor(Project project, @NotNull SMTestProxy.SMRootTestProxy testsRootNode,
                                            @NotNull String testFrameworkName) {
-    super(project);
+    super(project, testFrameworkName);
     myTestsRootNode = testsRootNode;
     mySuitesStack = new TestSuiteStack(testFrameworkName);
-    myTestFrameworkName = testFrameworkName;
   }
 
   @Override
@@ -588,27 +584,5 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       currentProxy = mySuitesStack.isEmpty() ? myTestsRootNode : getCurrentSuite();
     }
     return currentProxy;
-  }
-
-  public static String getTFrameworkPrefix(final String testFrameworkName) {
-    return "[" + testFrameworkName + "]: ";
-  }
-
-  private void logProblem(final String msg) {
-    logProblem(LOG, msg, myTestFrameworkName);
-  }
-
-  public static void logProblem(final Logger log, final String msg, final String testFrameworkName) {
-    logProblem(log, msg, SMTestRunnerConnectionUtil.isInDebugMode(), testFrameworkName);
-  }
-
-  public static void logProblem(final Logger log, final String msg, boolean throwError, final String testFrameworkName) {
-    final String text = getTFrameworkPrefix(testFrameworkName) + msg;
-    if (throwError) {
-      log.error(text);
-    }
-    else {
-      log.warn(text);
-    }
   }
 }
