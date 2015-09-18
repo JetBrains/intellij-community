@@ -137,6 +137,8 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     updateColorChooser(myCbErrorStripe, myErrorStripeColorChooser, false, false, null);
     updateColorChooser(myCbEffects, myEffectsColorChooser, false, false, null);
     myEffectsCombo.setEnabled(false);
+    myInheritanceLabel.setVisible(false);
+    myInheritAttributesBox.setVisible(false);
   }
 
   private static void updateColorChooser(JCheckBox checkBox,
