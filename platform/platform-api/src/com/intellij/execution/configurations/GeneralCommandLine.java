@@ -43,9 +43,21 @@ import java.util.*;
  * OS-independent way of executing external processes with complex parameters.
  * <p>
  * Main idea of the class is to accept parameters "as-is", just as they should look to an external process, and quote/escape them
- * as required by the underlying platform.
+ * as required by the underlying platform - so to run some program with a "parameter with space" all that's needed is
+ * {@code new GeneralCommandLine("some program", "parameter with space").createProcess()}.
  * <p>
- * Consider setting working directory (if relevant), and take a look at {@link GeneralCommandLine.ParentEnvironmentType}.
+ * Consider the following things when using this class.
+ * <p>
+ * <strong>Working directory</strong>.
+ * By default, a current directory of the IDE process is used (usually a "bin/" directory of IDE installation).
+ * If a child process may create files in it, this choice is unwelcome. On the other hand, informational commands (e.g. "git --version")
+ * are safe. When unsure, set it to something neutral - like user's home or a temp directory.
+ * <p>
+ * <strong>Parent Environment</strong>.
+ * todo work in progress
+ * <p>
+ * <strong>Encoding/Charset</strong>.
+ * todo work in progress
  *
  * @see com.intellij.execution.util.ExecUtil
  * @see com.intellij.execution.process.OSProcessHandler
