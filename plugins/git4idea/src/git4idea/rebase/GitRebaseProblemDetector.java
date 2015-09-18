@@ -37,7 +37,7 @@ public class GitRebaseProblemDetector extends GitLineHandlerAdapter {
     "Failed to merge in the changes",
     "could not apply"};
   private static final String REBASE_NO_CHANGE_INDICATOR = "No changes - did you forget to use 'git add'?";
-  private static final String[] DIRTY_TREE = {
+  private static final String[] DIRTY_TREE_INDICATORS = {
     "you have unstaged changes",
     "your index contains uncommitted changes"
   };
@@ -72,7 +72,7 @@ public class GitRebaseProblemDetector extends GitLineHandlerAdapter {
       return;
     }
 
-    for (String indicator : DIRTY_TREE) {
+    for (String indicator : DIRTY_TREE_INDICATORS) {
       if (StringUtil.containsIgnoreCase(line, indicator)) {
         myDirtyTree = true;
         return;
