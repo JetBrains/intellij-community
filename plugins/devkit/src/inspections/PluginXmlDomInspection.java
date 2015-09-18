@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.*;
@@ -35,7 +36,9 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author mike
@@ -212,8 +215,33 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       PsiFile file = descriptor.getPsiElement().getContainingFile();
       DomFileElement<IdeaPlugin> fileElement = DomManager.getDomManager(project).getFileElement((XmlFile)file, IdeaPlugin.class);
       if (fileElement != null) {
-        fileElement.getRootElement().addVendor().setValue(PluginManagerMain.JETBRAINS_VENDOR);
+        IdeaPlugin root = fileElement.getRootElement();
+        XmlTag after = getLastSubTag(root, root.getId(), ContainerUtil.getLastItem(root.getDescriptions()), ContainerUtil.getLastItem(root.getVersions()), root.getName());
+        XmlTag rootTag = root.getXmlTag();
+        XmlTag vendorTag = rootTag.createChildTag("vendor", rootTag.getNamespace(), PluginManagerMain.JETBRAINS_VENDOR, false);
+        if (after == null) {
+          rootTag.addSubTag(vendorTag, true);
+        }
+        else {
+          rootTag.addAfter(vendorTag, after);
+        }
       }
+    }
+
+    private static XmlTag getLastSubTag(IdeaPlugin root, DomElement... children) {
+      Set<XmlTag> childrenTags = new HashSet<XmlTag>();
+      for (DomElement child : children) {
+        if (child != null) {
+          childrenTags.add(child.getXmlTag());
+        }
+      }
+      XmlTag[] subTags = root.getXmlTag().getSubTags();
+      for (int i = subTags.length - 1; i >= 0; i--) {
+        if (childrenTags.contains(subTags[i])) {
+          return subTags[i];
+        }
+      }
+      return null;
     }
   }
 }

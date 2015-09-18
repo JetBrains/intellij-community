@@ -27,6 +27,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author Konstantin Bulenkov
@@ -153,6 +154,11 @@ public class PsiUtil {
     }
 
     return false;
+  }
+
+  @TestOnly
+  public static void markAsIdeaProject(@NotNull Project project, boolean value) {
+    project.putUserData(IDEA_PROJECT, value);
   }
 
   private static boolean checkIdeaProject(@NotNull Project project) {

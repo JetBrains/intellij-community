@@ -1,0 +1,4 @@
+<idea-plugin>
+  <id>test</id>
+  <<error descr="Plugin developed as a part of IntelliJ IDEA project should include 'JetBrains' as one of its vendors">vendor</error>>me</vendor>
+</idea-plugin>
