@@ -67,7 +67,7 @@ public class GitRebaseProblemDetector extends GitLineHandlerAdapter {
       }
     }
 
-    if (line.contains(REBASE_NO_CHANGE_INDICATOR)) {
+    if (StringUtil.containsIgnoreCase(line, REBASE_NO_CHANGE_INDICATOR)) {
       myNoChangeError = true;
       return;
     }
