@@ -165,7 +165,7 @@ def list_sources(paths, target_path):
             if path.endswith('.egg') and os.path.isfile(path):
                 say("%s\t%s\t%d", path, path, os.path.getsize(path))
 
-            target_dir_hash = str(java_string_hashcode(path))
+            target_dir_hash = str(compute_path_hash(path))
 
             for root, files in walk_python_path(path):
                 for name in files:
@@ -186,9 +186,10 @@ def list_sources(paths, target_path):
         traceback.print_exc()
         sys.exit(1)
 
-def java_string_hashcode(s):
+def compute_path_hash(path):
+    # computes hash for provided path following contract of Java String's hashCode() method
     h = 0
-    for c in s:
+    for c in path:
         h = (31 * h + ord(c)) & 0xFFFFFFFF
     return ((h + 0x80000000) & 0xFFFFFFFF) - 0x80000000
 
