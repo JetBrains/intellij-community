@@ -168,8 +168,8 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
       protected void run(@NotNull Result result) throws Throwable {
         MavenDomConfiguration configuration = getCompilerPlugin(model).getConfiguration();
         XmlTag tag = configuration.ensureTagExists();
-        setChildTagValue(tag, "source", level.getCompilerComplianceOption());
-        setChildTagValue(tag, "target", level.getCompilerComplianceOption());
+        setChildTagValue(tag, "source", level.getCompilerComplianceDefaultOption());
+        setChildTagValue(tag, "target", level.getCompilerComplianceDefaultOption());
         Document document = PsiDocumentManager.getInstance(myProject).getDocument(DomUtil.getFile(model));
         if (document != null) {
           FileDocumentManager.getInstance().saveDocument(document);
