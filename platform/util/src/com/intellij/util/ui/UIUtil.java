@@ -1977,7 +1977,7 @@ public class UIUtil {
     @NonNls String fontFamilyAndSize = "font-family:'" + font.getFamily() + "'; font-size:" + font.getSize() + "pt;";
     @NonNls @Language("HTML")
     String body = "body, div, td, p {" + fontFamilyAndSize + " " + (fgColor != null ? "color:#" + ColorUtil.toHex(fgColor)+";" : "") + "}\n" +
-                  "code { font-size:" + font.getSize() + "}\n";
+                  "code {font-size:" + font.getSize() + "pt;}\n";
     if (resource != null) {
       body += "ul {list-style-image:url('" + StringUtil.escapeCharCharacters(resource.toExternalForm()) + "');}\n";
     }
