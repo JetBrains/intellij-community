@@ -25,7 +25,6 @@ import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -68,8 +67,7 @@ public class JavaI18nUtil extends I18nUtil {
     return psiElement.getTextRange();
   }
 
-  public static boolean mustBePropertyKey(@NotNull Project project,
-                                          @NotNull PsiExpression expression,
+  public static boolean mustBePropertyKey(@NotNull PsiExpression expression,
                                           @NotNull Map<String, Object> annotationAttributeValues) {
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiVariable) {
@@ -78,15 +76,14 @@ public class JavaI18nUtil extends I18nUtil {
         return processAnnotationAttributes(annotationAttributeValues, annotation);
       }
     }
-    return isPassedToAnnotatedParam(project, expression, AnnotationUtil.PROPERTY_KEY, annotationAttributeValues, null);
+    return isPassedToAnnotatedParam(expression, AnnotationUtil.PROPERTY_KEY, annotationAttributeValues, null);
   }
 
-  static boolean isPassedToAnnotatedParam(@NotNull Project project,
-                                          @NotNull PsiExpression expression,
+  static boolean isPassedToAnnotatedParam(@NotNull PsiExpression expression,
                                           final String annFqn,
                                           @Nullable Map<String, Object> annotationAttributeValues,
                                           @Nullable final Set<PsiModifierListOwner> nonNlsTargets) {
-    expression = getToplevelExpression(project, expression);
+    expression = getTopLevelExpression(expression);
     final PsiElement parent = expression.getParent();
 
     if (!(parent instanceof PsiExpressionList)) return false;
@@ -117,49 +114,47 @@ public class JavaI18nUtil extends I18nUtil {
     return false;
   }
 
-  private static final Key<ParameterizedCachedValue<PsiExpression, Pair<Project, PsiExpression>>> TOP_LEVEL_EXPRESSION = Key.create("TOP_LEVEL_EXPRESSION");
-  private static final ParameterizedCachedValueProvider<PsiExpression, Pair<Project, PsiExpression>> TOP_LEVEL_PROVIDER =
-    new ParameterizedCachedValueProvider<PsiExpression, Pair<Project, PsiExpression>>() {
-      @Override
-      public CachedValueProvider.Result<PsiExpression> compute(Pair<Project, PsiExpression> pair) {
-        PsiExpression param = pair.second;
-        Project project = pair.first;
-        PsiExpression topLevel = getTopLevel(project, param);
-        ParameterizedCachedValue<PsiExpression, Pair<Project, PsiExpression>> cachedValue = param.getUserData(TOP_LEVEL_EXPRESSION);
-        assert cachedValue != null;
-        int i = 0;
-        for (PsiElement element = param; element != topLevel; element = element.getParent(), i++) {
-          if (i % 10 == 0) {   // optimization: store up link to the top level expression in each 10nth element
-            element.putUserData(TOP_LEVEL_EXPRESSION, cachedValue);
-          }
-        }
-        return CachedValueProvider.Result.create(topLevel, PsiManager.getInstance(project).getModificationTracker());
-      }
-    };
+  private static final Key<CachedValue<PsiExpression>> TOP_LEVEL_EXPRESSION = Key.create("TOP_LEVEL_EXPRESSION");
 
   @NotNull
-  static PsiExpression getToplevelExpression(@NotNull final Project project, @NotNull final PsiExpression expression) {
+  static PsiExpression getTopLevelExpression(@NotNull final PsiExpression expression) {
     if (expression instanceof PsiBinaryExpression || expression.getParent() instanceof PsiBinaryExpression) {  //can be large, cache
-      return CachedValuesManager.getManager(project).getParameterizedCachedValue(expression, TOP_LEVEL_EXPRESSION, TOP_LEVEL_PROVIDER, true,
-                                                                                 Pair.create(project, expression));
+      CachedValue<PsiExpression> cachedValue = expression.getUserData(TOP_LEVEL_EXPRESSION);
+      if (cachedValue == null) {
+        expression.putUserData(TOP_LEVEL_EXPRESSION, cachedValue = CachedValuesManager.getManager(expression.getProject()).createCachedValue(new CachedValueProvider<PsiExpression>() {
+          @Nullable
+          @Override
+          public Result<PsiExpression> compute() {
+            PsiExpression topLevel = getTopLevel(expression);
+            CachedValue<PsiExpression> cachedValue = expression.getUserData(TOP_LEVEL_EXPRESSION);
+            assert cachedValue != null;
+            int i = 0;
+            for (PsiElement element = expression; element != topLevel; element = element.getParent(), i++) {
+              if (i % 10 == 0) {   // optimization: store up link to the top level expression in each 10nth element
+                element.putUserData(TOP_LEVEL_EXPRESSION, cachedValue);
+              }
+            }
+            return Result.create(topLevel, expression, PsiModificationTracker.MODIFICATION_COUNT);
+          }
+        }, false));
+      }
+      return cachedValue.getValue();
     }
-    return getTopLevel(project, expression);
+    return getTopLevel(expression);
   }
 
   @NotNull
-  private static PsiExpression getTopLevel(Project project, @NotNull PsiExpression expression) {
-    int i = 0;
+  private static PsiExpression getTopLevel(@NotNull PsiExpression expression) {
     while (expression.getParent() instanceof PsiExpression) {
-      i++;
       final PsiExpression parent = (PsiExpression)expression.getParent();
       if (parent instanceof PsiConditionalExpression &&
           ((PsiConditionalExpression)parent).getCondition() == expression) break;
       expression = parent;
       if (expression instanceof PsiAssignmentExpression) break;
-      if (i > 10 && expression instanceof PsiBinaryExpression) {
-        ParameterizedCachedValue<PsiExpression, Pair<Project, PsiExpression>> value = expression.getUserData(TOP_LEVEL_EXPRESSION);
-        if (value != null && value.hasUpToDateValue()) {
-          return getToplevelExpression(project, expression); // optimization: use caching for big hierarchies
+      if (expression instanceof PsiBinaryExpression) {
+        CachedValue<PsiExpression> value = expression.getUserData(TOP_LEVEL_EXPRESSION);
+        if (value != null) {
+          return value.getValue(); // optimization: use caching for big hierarchies
         }
       }
     }
@@ -233,7 +228,7 @@ public class JavaI18nUtil extends I18nUtil {
                                           @NotNull Ref<String> outResourceBundle) {
     final HashMap<String, Object> annotationAttributeValues = new HashMap<String, Object>();
     annotationAttributeValues.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
-    if (mustBePropertyKey(project, expression, annotationAttributeValues)) {
+    if (mustBePropertyKey(expression, annotationAttributeValues)) {
       final Object resourceBundleName = annotationAttributeValues.get(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
       if (!(resourceBundleName instanceof PsiExpression)) {
         return false;
