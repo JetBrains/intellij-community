@@ -182,11 +182,11 @@ public abstract class CachedValueBase<T> {
   public T setValue(final CachedValueProvider.Result<T> result) {
     Data<T> data = computeData(result);
     setData(data);
-    valueUpdated();
+    valueUpdated(result.getDependencyItems());
     return data.myValue;
   }
 
-  protected void valueUpdated() {}
+  protected void valueUpdated(@Nullable Object[] dependencies) {}
 
   public abstract boolean isFromMyProject(Project project);
 
@@ -227,7 +227,7 @@ public abstract class CachedValueBase<T> {
         boolean reuse = alreadyComputed != null && isUpToDate(alreadyComputed);
         Data<T> toReturn = cacheOrGetData(alreadyComputed, reuse ? null : data);
         if (toReturn != null) {
-          valueUpdated();
+          valueUpdated(toReturn.myDependencies);
           return toReturn.myValue;
         }
       }
