@@ -40,6 +40,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -463,7 +464,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION);
         }
         int count = node.getChildCount();
-        String numFilesText = SPACE_AND_THIN_SPACE + count + ((count == 1) ? " file" : " files") + ",";
+        String numFilesText = SPACE_AND_THIN_SPACE + count + " " + StringUtil.pluralize("file", 1) + ",";
         append(numFilesText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
         
         String date = DateFormatUtil.formatPrettyDateTime(changeListData.DATE);
