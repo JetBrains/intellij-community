@@ -66,6 +66,9 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
 
   @Nullable
   public static ZenCodingGenerator findApplicableDefaultGenerator(@NotNull PsiElement context, boolean wrapping) {
+    if (!context.isValid()) {
+      return null;
+    }
     for (ZenCodingGenerator generator : ZenCodingGenerator.getInstances()) {
       if (generator.isMyContext(context, wrapping) && generator.isAppliedByDefault(context)) {
         return generator;
