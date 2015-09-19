@@ -42,7 +42,7 @@ import java.util.List;
 public class IdeaApplication {
   @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
   @NonNls public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
-  @NonNls public static final String IDEA_IS_SERVER = "com.jetbrains.onair";
+  @NonNls public static final String IDEA_IS_ON_AIR = "com.jetbrains.onair";
 
   private static final String[] SAFE_JAVA_ENV_PARAMETERS = {"idea.required.plugins.id"};
 
@@ -70,7 +70,7 @@ public class IdeaApplication {
     myArgs = processProgramArguments(args);
     boolean isInternal = Boolean.getBoolean(IDEA_IS_INTERNAL_PROPERTY);
     boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
-    boolean isServer = Boolean.getBoolean(IDEA_IS_SERVER);
+    boolean isServer = Boolean.getBoolean(IDEA_IS_ON_AIR);
 
     boolean headless = Main.isHeadless();
     patchSystem(headless);
