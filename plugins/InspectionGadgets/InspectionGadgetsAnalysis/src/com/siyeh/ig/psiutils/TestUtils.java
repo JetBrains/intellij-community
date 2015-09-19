@@ -39,14 +39,8 @@ public class TestUtils {
       return false;
     }
     final PsiFile file = element.getContainingFile();
-    final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) {
-      return true;
-    }
-    final Project project = element.getProject();
-    final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-    final ProjectFileIndex fileIndex = rootManager.getFileIndex();
-    return fileIndex.isInTestSourceContent(virtualFile);
+    final VirtualFile virtualFile = file == null ? null : file.getVirtualFile();
+    return virtualFile != null && ProjectRootManager.getInstance(file.getProject()).getFileIndex().isInTestSourceContent(virtualFile);
   }
 
   public static boolean isPartOfJUnitTestMethod(@NotNull PsiElement element) {
