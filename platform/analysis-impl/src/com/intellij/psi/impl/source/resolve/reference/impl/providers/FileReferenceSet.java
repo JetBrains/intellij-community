@@ -263,9 +263,10 @@ public class FileReferenceSet {
     int curSep = findSeparatorOffset(decoded, wsHead);
     int sepLen = curSep >= wsHead ? findSeparatorLength(decoded, curSep) : 0;
 
-    if (curSep >= 0 && decoded.length() == curSep + sepLen + wsTail) {
-      TextRange r = TextRange.create(startInElement, offset(curSep + sepLen, escaper, valueRange) + 1);
-      return Collections.singletonList(createFileReference(r, 0, decoded.subSequence(curSep, curSep + sepLen).toString()));
+    if (curSep >= 0 && decoded.length() == wsHead + sepLen + wsTail) {
+      // add extra reference for the only & leading "/"
+      TextRange r = TextRange.create(startInElement, offset(curSep + Math.max(0, sepLen - 1), escaper, valueRange) + 1);
+      referencesList.add(createFileReference(r, 0, decoded.subSequence(curSep, curSep + sepLen).toString()));
     }
     curSep = curSep == wsHead ? curSep + sepLen : wsHead; // reset offsets & start again for simplicity
     sepLen = 0;
@@ -273,7 +274,7 @@ public class FileReferenceSet {
       int nextSep = findSeparatorOffset(decoded, curSep + sepLen);
       int start = curSep + sepLen;
       int endTrimmed = nextSep > 0 ? nextSep : Math.max(start, decoded.length() - wsTail);
-      int endInclusive = nextSep > 0 ? nextSep : Math.max(start, decoded.length() - 1);
+      int endInclusive = nextSep > 0 ? nextSep : Math.max(start, decoded.length() - 1 - wsTail);
       // todo move ${placeholder} support (the str usage below) to a reference implementation
       // todo reference-set should be bound to exact range & text in a file, consider: ${slash}path${slash}file&amp;.txt
       String refText = index == 0 && nextSep < 0 && !StringUtil.contains(decoded, str) ? str :
