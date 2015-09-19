@@ -57,7 +57,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       if (freezed != null) {
         renderer.append(SPACE_AND_THIN_SPACE + freezed, SimpleTextAttributes.GRAYED_ATTRIBUTES);
       } else if (myClManager.isInUpdate()) {
-        renderer.append(SPACE_AND_THIN_SPACE + VcsBundle.message("changes.nodetitle.updating"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderer.append(", " + VcsBundle.message("changes.nodetitle.updating"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       if (! myChangeListRemoteState.getState()) {
         renderer.append(SPACE_AND_THIN_SPACE);
