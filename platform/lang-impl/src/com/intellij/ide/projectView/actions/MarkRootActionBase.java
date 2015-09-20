@@ -47,7 +47,10 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
     if (module == null) {
       return;
     }
+    modifyRoots(e, module, files);
+  }
 
+  protected void modifyRoots(@NotNull  AnActionEvent e, @NotNull final Module module, @NotNull VirtualFile[] files) {
     final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     for (VirtualFile file : files) {
       ContentEntry entry = findContentEntry(model, file);

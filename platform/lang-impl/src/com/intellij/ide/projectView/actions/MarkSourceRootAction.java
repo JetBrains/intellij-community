@@ -44,7 +44,7 @@ public class MarkSourceRootAction extends MarkRootActionBase {
     presentation.setDescription(ProjectBundle.message("module.toggle.sources.action.description", editHandler.getRootTypeName()));
   }
 
-  protected void modifyRoots(VirtualFile vFile, ContentEntry entry) {
+  protected void modifyRoots(@NotNull VirtualFile vFile, @NotNull ContentEntry entry) {
     entry.addSourceFolder(vFile, myRootType);
   }
 

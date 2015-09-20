@@ -75,7 +75,7 @@ public class UnmarkRootAction extends MarkRootActionBase {
     return selection.mySelectedDirectories.isEmpty() && !getHandlersForSelectedRoots(selection).isEmpty();
   }
 
-  protected void modifyRoots(VirtualFile file, ContentEntry entry) {
+  protected void modifyRoots(@NotNull VirtualFile file, @NotNull ContentEntry entry) {
     for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
       if (file.equals(excludeFolder.getFile())) {
         entry.removeExcludeFolder(excludeFolder);

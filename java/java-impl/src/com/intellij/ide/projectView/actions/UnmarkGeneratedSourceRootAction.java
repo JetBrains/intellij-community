@@ -49,7 +49,7 @@ public class UnmarkGeneratedSourceRootAction extends MarkRootActionBase {
   }
 
   @Override
-  protected void modifyRoots(VirtualFile vFile, ContentEntry entry) {
+  protected void modifyRoots(@NotNull VirtualFile vFile, @NotNull ContentEntry entry) {
     entry.addSourceFolder(vFile, JavaSourceRootType.SOURCE);
   }
 }

@@ -49,7 +49,7 @@ public class MarkExcludeRootAction extends MarkRootActionBase {
            " from the project?\nYou can restore excluded directories later using the Project Structure dialog.";
   }
 
-  protected void modifyRoots(VirtualFile vFile, ContentEntry entry) {
+  protected void modifyRoots(@NotNull VirtualFile vFile, @NotNull ContentEntry entry) {
     entry.addExcludeFolder(vFile);
   }
 

@@ -68,7 +68,7 @@ public class MarkGeneratedSourceRootAction extends MarkRootActionBase {
   }
 
   @Override
-  protected void modifyRoots(VirtualFile vFile, ContentEntry entry) {
+  protected void modifyRoots(@NotNull VirtualFile vFile, @NotNull ContentEntry entry) {
     JavaSourceRootProperties properties = JpsJavaExtensionService.getInstance().createSourceRootProperties("", true);
     entry.addSourceFolder(vFile, JavaSourceRootType.SOURCE, properties);
   }
