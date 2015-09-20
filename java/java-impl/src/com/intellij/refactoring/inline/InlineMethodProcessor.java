@@ -224,7 +224,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         if (usage instanceof NonCodeUsageInfo) return;
 
         throw new UnsupportedOperationException(
-          "usage: " + usage.getClass().getName() + ", referenced: " + referenced.getClass().getName() + "text: " + referenced.getText());
+          "usage: " + usage.getClass().getName() + 
+          ", usage element: " + usage.getElement() + 
+          ", referenced: " + referenced.getClass().getName() + 
+          ", text: " + referenced.getText());
       }
     });
 
@@ -1520,5 +1523,19 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       if (!checkReadOnly()) return Collections.emptyList();
       return myReference == null ? Collections.singletonList(myMethod) : Arrays.asList(myReference, myMethod);
     }
+  }
+}
+enum E {A, B, C;}
+class FooBar {
+  public FooBar(E e) {
+  }
+
+  // TODO(jayen): inline (bug in intellij 142.4859.6)
+  public FooBar() {
+    this(E.A);
+  }
+
+  public static void main(String[] args) {
+    new FooBar(E.A);
   }
 }

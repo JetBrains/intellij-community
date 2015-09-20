@@ -137,6 +137,8 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     updateColorChooser(myCbErrorStripe, myErrorStripeColorChooser, false, false, null);
     updateColorChooser(myCbEffects, myEffectsColorChooser, false, false, null);
     myEffectsCombo.setEnabled(false);
+    myInheritanceLabel.setVisible(false);
+    myInheritAttributesBox.setVisible(false);
   }
 
   private static void updateColorChooser(JCheckBox checkBox,
@@ -216,19 +218,19 @@ public class ColorAndFontDescriptionPanel extends JPanel {
         labelText = style + attrLabel + "<br>&nbsp;";
       }
 
+      myInheritanceLabel.setVisible(true);
       myInheritanceLabel.setText(labelText);
       myInheritanceLabel.setToolTipText(tooltipText);
       myInheritanceLabel.setEnabled(description.isInherited());
+      myInheritAttributesBox.setVisible(true);
       myInheritAttributesBox.setEnabled(true);
       myInheritAttributesBox.setSelected(description.isInherited());
       setEditEnabled(!description.isInherited(), description);
     }
     else {
-      myInheritanceLabel.setToolTipText(null);
-      myInheritanceLabel.setText("<html><br>&nbsp;");
-      myInheritanceLabel.setEnabled(true);
-      myInheritAttributesBox.setEnabled(false);
+      myInheritanceLabel.setVisible(false);
       myInheritAttributesBox.setSelected(false);
+      myInheritAttributesBox.setVisible(false);
       setEditEnabled(true, description);
     }
   }

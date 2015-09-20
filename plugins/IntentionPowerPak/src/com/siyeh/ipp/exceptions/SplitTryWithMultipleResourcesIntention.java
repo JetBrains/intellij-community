@@ -61,6 +61,10 @@ public class SplitTryWithMultipleResourcesIntention extends Intention {
     for (PsiCatchSection catchSection : catchSections) {
       newTryStatementText.append(catchSection.getText());
     }
+    final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+    if (finallyBlock != null) {
+      newTryStatementText.append("finally").append(finallyBlock.getText());
+    }
     PsiReplacementUtil.replaceStatement(tryStatement, newTryStatementText.toString());
   }
 }

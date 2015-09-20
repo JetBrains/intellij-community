@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,11 +33,11 @@ import org.jetbrains.annotations.Nullable;
 public enum LanguageLevel {
   JDK_1_3("Java 1.3", JavaCoreBundle.message("jdk.1.3.language.level.description"), "1.3"),
   JDK_1_4("Java 1.4", JavaCoreBundle.message("jdk.1.4.language.level.description"), "1.4"),
-  JDK_1_5("Java 5.0", JavaCoreBundle.message("jdk.1.5.language.level.description"), "1.5"),
-  JDK_1_6("Java 6", JavaCoreBundle.message("jdk.1.6.language.level.description"), "1.6"),
-  JDK_1_7("Java 7", JavaCoreBundle.message("jdk.1.7.language.level.description"), "1.7"),
-  JDK_1_8("Java 8", JavaCoreBundle.message("jdk.1.8.language.level.description"), "1.8"),
-  JDK_1_9("Java 9", JavaCoreBundle.message("jdk.1.9.language.level.description"), "1.9"),
+  JDK_1_5("Java 5.0", JavaCoreBundle.message("jdk.1.5.language.level.description"), "1.5", "5"),
+  JDK_1_6("Java 6", JavaCoreBundle.message("jdk.1.6.language.level.description"), "1.6", "6"),
+  JDK_1_7("Java 7", JavaCoreBundle.message("jdk.1.7.language.level.description"), "1.7", "7"),
+  JDK_1_8("Java 8", JavaCoreBundle.message("jdk.1.8.language.level.description"), "1.8", "8"),
+  JDK_1_9("Java 9", JavaCoreBundle.message("jdk.1.9.language.level.description"), "1.9", "9"),
   JDK_X("Java X", JavaCoreBundle.message("jdk.X.language.level.description"), "");
 
   public static final LanguageLevel HIGHEST = JDK_1_8; // TODO! when language level 9 is really supported, update this field
@@ -44,12 +45,18 @@ public enum LanguageLevel {
 
   private final String myName;
   private final String myPresentableText;
-  private final String myCompilerComplianceOption;
+  private final String myCompilerComplianceDefaultOption;
+  private final String[] myCompilerComplianceOptionVariants;
 
-  LanguageLevel(@NotNull String name, @NotNull @Nls String presentableText, @NotNull String compilerComplianceOption) {
+  /**
+   * @param compilerComplianceAlternativeOptions synonyms supported by javac -source parameter (see http://docs.oracle.com/javase/8/docs/technotes/tools/windows/javac.html)
+   */
+  LanguageLevel(@NotNull String name, @NotNull @Nls String presentableText, @NotNull String compilerComplianceDefaultOption,
+                @NotNull String... compilerComplianceAlternativeOptions) {
     myName = name;
     myPresentableText = presentableText;
-    myCompilerComplianceOption = compilerComplianceOption;
+    myCompilerComplianceDefaultOption = compilerComplianceDefaultOption;
+    myCompilerComplianceOptionVariants = ArrayUtil.prepend(compilerComplianceDefaultOption, compilerComplianceAlternativeOptions);
   }
 
   @NotNull
@@ -74,16 +81,19 @@ public enum LanguageLevel {
   /**
    * String representation of the level, suitable to pass as a value of compiler's "-source" and "-target" options
    */
-  public String getCompilerComplianceOption() {
-    return myCompilerComplianceOption;
+  public String getCompilerComplianceDefaultOption() {
+    return myCompilerComplianceDefaultOption;
   }
 
+  /**
+   * Parses string accordingly to format of '-source' parameter of javac. Synonyms ("8" for "1.8") are supported.
+   */
   @Nullable
   public static LanguageLevel parse(@Nullable String compilerComplianceOption) {
     if (StringUtil.isEmpty(compilerComplianceOption)) return null;
 
     for (LanguageLevel level : values()) {
-      if (level.getCompilerComplianceOption().equals(compilerComplianceOption)) {
+      if (ArrayUtil.contains(compilerComplianceOption, level.myCompilerComplianceOptionVariants)) {
         return level;
       }
     }

@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.google.common.primitives.Ints;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,6 +42,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class UnshelveChangesAction extends DumbAwareAction {
@@ -98,10 +101,17 @@ public class UnshelveChangesAction extends DumbAwareAction {
   @Nullable
   private static LocalChangeList tryToMatchWithExistingChangelist(@NotNull ChangeListManager changeListManager,
                                                                   @NotNull final String defaultName) {
-    return ContainerUtil.find(changeListManager.getChangeListsCopy(), new Condition<LocalChangeList>() {
+    List<LocalChangeList> matched = ContainerUtil.findAll(changeListManager.getChangeListsCopy(), new Condition<LocalChangeList>() {
       @Override
       public boolean value(LocalChangeList list) {
-        return defaultName.contains(list.getName());
+        return defaultName.contains(list.getName().trim());
+      }
+    });
+
+    return matched.isEmpty() ? null : Collections.max(matched, new Comparator<LocalChangeList>() {
+      @Override
+      public int compare(LocalChangeList o1, LocalChangeList o2) {
+        return Ints.compare(o1.getName().trim().length(), o2.getName().trim().length());
       }
     });
   }

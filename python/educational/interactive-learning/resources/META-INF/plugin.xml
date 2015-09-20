@@ -61,7 +61,7 @@
             description="Show hint for answer placeholder"/>
     <action id="StudyRunAction" class="com.jetbrains.edu.learning.actions.StudyRunAction" text="Run File With Tests"
             description="Run your code with tests"/>
-    <action id="StudyShowAnswersAction" class="com.jetbrains.edu.learning.actions.StudyShowAnswersAction"
+    <action id="StudyShowAnswersAction" class="com.jetbrains.edu.learning.actions.StudyFillPlaceholdersAction"
             text="Fill Answer Placeholders">
       <add-to-group group-id="HelpMenu" anchor="first"/>
     </action>

@@ -81,6 +81,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
   @NonNls private static final String METHOD_COMMIT = "commit";
+  private boolean myEditorsInitialized;
 
   protected History myHistory;
 
@@ -267,6 +268,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
     final JComponent component = createCenterPanel();
     myGenericSettingsPanel.add(component, BorderLayout.CENTER);
+    myEditorsInitialized = true;
     return myGenericSettingsPanel;
   }
 
@@ -279,14 +281,16 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   }
 
   public void moduleCountChanged() {
-    updateOrderEntriesInEditors();
+    updateOrderEntriesInEditors(false);
   }
 
-  private void updateOrderEntriesInEditors() {
+  private void updateOrderEntriesInEditors(boolean forceInitEditors) {
     if (getModule() != null) { //module with attached module libraries was deleted
-      getPanel();  //init editor if needed
-      for (final ModuleConfigurationEditor myEditor : myEditors) {
-        myEditor.moduleStateChanged();
+      if (myEditorsInitialized || forceInitEditors) {
+        getPanel();  //init editor if needed
+        for (final ModuleConfigurationEditor myEditor : myEditors) {
+          myEditor.moduleStateChanged();
+        }
       }
       myEventDispatcher.getMulticaster().moduleStateChanged(getModifiableRootModelProxy());
     }
@@ -377,7 +381,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       }
       finally {
         if (needUpdate) {
-          updateOrderEntriesInEditors();
+          updateOrderEntriesInEditors(true);
         }
       }
     }
@@ -425,7 +429,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       }
       finally {
         if (needUpdate) {
-          updateOrderEntriesInEditors();
+          updateOrderEntriesInEditors(true);
         }
       }
     }
@@ -482,7 +486,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       }
       finally {
         if (needUpdate) {
-          updateOrderEntriesInEditors();
+          updateOrderEntriesInEditors(true);
         }
       }
     }
@@ -526,7 +530,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       }
       finally {
         if (needUpdate) {
-          updateOrderEntriesInEditors();
+          updateOrderEntriesInEditors(true);
         }
       }
     }

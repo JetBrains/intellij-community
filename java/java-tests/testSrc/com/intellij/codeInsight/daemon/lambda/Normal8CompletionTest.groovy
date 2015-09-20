@@ -148,6 +148,42 @@ class Test88 {
 }
 """
   }
+  
+  public void "test constructor ref without start"() {
+    myFixture.configureByText "a.java", """
+interface Foo9 {
+  Bar test(int p);
+}
+
+class Bar {
+  public Bar(int p) {}
+}
+
+class Test88 {
+  {
+    Foo9 f = <caret>;
+  }
+}
+"""
+    def items = myFixture.completeBasic()
+    assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('Bar::new')}
+  }
+  
+  public void "test new array ref"() {
+    myFixture.configureByText "a.java", """
+interface Foo9<T> {
+  T test(int p);
+}
+
+class Test88 {
+  {
+    Foo9<String[]> f = <caret>;
+  }
+}
+"""
+    def items = myFixture.completeBasic()
+    assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('String[]::new')}
+  }
 
   public void testCollectorsToList() {
     configureByTestName()

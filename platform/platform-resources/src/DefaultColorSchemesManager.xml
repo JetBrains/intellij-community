@@ -1289,20 +1289,25 @@
           <option name="FOREGROUND" value="FFFF00" />
         </value>
       </option>
+      <option name="CSS.COLOR">
+        <value>
+          <option name="FOREGROUND" value="6897bb" deuteranopia="4c84d9" protanopia="4c84d9"/>
+        </value>
+      </option>
       <option name="CSS.IMPORTANT">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>
       <option name="CSS.KEYWORD">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="CSS.TAG_NAME">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="CSS.URL">
@@ -1319,7 +1324,7 @@
       </option>
       <option name="CUSTOM_KEYWORD1_ATTRIBUTES">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="CUSTOM_KEYWORD2_ATTRIBUTES">
@@ -1700,16 +1705,6 @@
           <option name="EFFECT_TYPE" value="1" />
         </value>
       </option>
-      <option name="Instance field">
-        <value>
-          <option name="FOREGROUND" value="9876aa" deuteranopia="828eba" protanopia="828eba"/>
-        </value>
-      </option>
-      <option name="Instance property reference ID">
-        <value>
-          <option name="FOREGROUND" value="9876aa" deuteranopia="828eba" protanopia="828eba"/>
-        </value>
-      </option>
       <option name="Invalid string escape">
         <value>
           <option name="EFFECT_COLOR" value="ff0000" />
@@ -1718,22 +1713,22 @@
       </option>
       <option name="JAVA_COMMA">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="JAVA_KEYWORD">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="JAVA_SEMICOLON">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="JAVA_VALID_STRING_ESCAPE">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="JS.ATTRIBUTE">
@@ -1743,13 +1738,13 @@
       </option>
       <option name="JSP_DIRECTIVE_NAME">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>
       <option name="JSP_SCRIPTING_BACKGROUND">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="LESS_VARIABLE">
@@ -1828,7 +1823,7 @@
       </option>
       <option name="PROPERTIES.KEY">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
           <option name="EFFECT_TYPE" value="1" />
         </value>
       </option>
@@ -1863,13 +1858,13 @@
       </option>
       <option name="REGEXP.ESC_CHARACTER">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>
       <option name="REGEXP.META">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>
@@ -1880,7 +1875,7 @@
       </option>
       <option name="REGEXP.QUOTE_CHARACTER">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>
@@ -2145,7 +2140,7 @@
       </option>
       <option name="TAPESTRY_COMPONENT_TAG">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>
@@ -2214,7 +2209,7 @@
       </option>
       <option name="VELOCITY_KEYWORD">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>
@@ -2230,7 +2225,7 @@
       </option>
       <option name="Valid string escape">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="WARNING_ATTRIBUTES">
@@ -2291,7 +2286,7 @@
       </option>
       <option name="XPATH.KEYWORD">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>
@@ -2368,7 +2363,7 @@
       </option>
       <option name="osmorc.headerName">
         <value>
-          <option name="FOREGROUND" value="cc7832" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>

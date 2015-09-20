@@ -765,7 +765,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       for (final VirtualFile file : files) {
         progress.checkCanceled();
         for (final IdIndexEntry entry : keys) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
+          DumbService.getInstance(myManager.getProject()).runReadActionInSmartMode(new Runnable() {
             @Override
             public void run() {
               FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, file, new FileBasedIndex.ValueProcessor<Integer>() {

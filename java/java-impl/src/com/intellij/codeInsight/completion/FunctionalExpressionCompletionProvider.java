@@ -134,11 +134,36 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
               collectVariantsByReceiver(prioritize, functionalInterfaceType, params, originalPosition, substitutor, expectedReturnType, result);
             }
             collectThisVariants(functionalInterfaceType, params, originalPosition, substitutor, expectedReturnType, result);
+            final PsiClass psiClass = PsiUtil.resolveClassInType(expectedReturnType);
+            if (psiClass != null && !(psiClass instanceof PsiTypeParameter)) {
+              if (expectedReturnType.getArrayDimensions() == 0) {
+                final PsiMethod[] constructors = psiClass.getConstructors();
+                for (PsiMethod psiMethod : constructors) {
+                  if (areParameterTypesAppropriate(psiMethod, params, substitutor, 0)) {
+                    result.add(createConstructorReferenceLookup(functionalInterfaceType, expectedReturnType));
+                  }
+                }
+                if (constructors.length == 0 && params.length == 0) {
+                  result.add(createConstructorReferenceLookup(functionalInterfaceType, expectedReturnType));
+                }
+              }
+              else if (params.length == 1 && PsiType.INT.equals(params[0].getType())){
+                result.add(createConstructorReferenceLookup(functionalInterfaceType, expectedReturnType));
+              }
+            }
           }
         }
       }
     }
     return result;
+  }
+
+  private static LookupElement createConstructorReferenceLookup(PsiType functionalInterfaceType, PsiType expectedReturnType) {
+    return LookupElementBuilder
+                      .create(expectedReturnType.getPresentableText() + "::new")
+                      .withTypeText(functionalInterfaceType.getPresentableText())
+                      .withIcon(AllIcons.Nodes.MethodReference)
+                      .withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
   }
 
   private static void collectThisVariants(PsiType functionalInterfaceType,

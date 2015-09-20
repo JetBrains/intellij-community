@@ -30,6 +30,7 @@ public final class BundledFileTemplate extends FileTemplateBase {
   public BundledFileTemplate(@NotNull DefaultTemplate defaultTemplate, boolean internal) {
     myDefaultTemplate = defaultTemplate;
     myInternal = internal;
+    setLiveTemplateEnabled(defaultTemplate.getText().contains("#[[$"));
   }
 
   @Override
@@ -96,6 +97,7 @@ public final class BundledFileTemplate extends FileTemplateBase {
   public void revertToDefaults() {
     setText(null);
     setReformatCode(DEFAULT_REFORMAT_CODE_VALUE);
+    setLiveTemplateEnabled(false);
   }
 
   public boolean isTextModified() {

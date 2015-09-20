@@ -95,8 +95,13 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
   public static Query<PsiClass> search(@NotNull SearchParameters parameters) {
     return INSTANCE.createUniqueResultsQuery(parameters, ContainerUtil.<SmartPsiElementPointer<PsiClass>>canonicalStrategy(), new Function<PsiClass, SmartPsiElementPointer<PsiClass>>() {
       @Override
-      public SmartPsiElementPointer<PsiClass> fun(PsiClass psiClass) {
-        return SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass);
+      public SmartPsiElementPointer<PsiClass> fun(final PsiClass psiClass) {
+        return ApplicationManager.getApplication().runReadAction(new Computable<SmartPsiElementPointer<PsiClass>>() {
+          @Override
+          public SmartPsiElementPointer<PsiClass> compute() {
+            return SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass);
+          }
+        });
       }
     });
   }

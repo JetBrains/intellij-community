@@ -297,6 +297,13 @@ libraryLicense(name: "Android Gradle model", libraryName: "android-gradle-model"
 libraryLicense(name: "FreeMarker", libraryName: "freemarker-2.3.20", version: "2.3.20", license: "BSD", url: "http://freemarker.sourceforge.net/")
 libraryLicense(name: "FreeMarker", attachedTo: "coverage", version: "2.3.15", license: "BSD", url: "http://freemarker.sourceforge.net/")
 libraryLicense(name: "Google Feedback", libraryName: "GoogleFeedback.jar", version: "", license: "TBD")
+libraryLicense(name: "six.py", attachedTo: "python-helpers", version: "1.9.0", license: "MIT", url: "http://pythonhosted.org/six/")
+libraryLicense(name: "pep8.py", attachedTo: "python-helpers", version: "1.6.2", license: "MIT", url: "http://pep8.readthedocs.org/")
+libraryLicense(name: "coverage.py", attachedTo: "python-helpers", version: "3.7.1", license: "Apache 2.0", url: "http://coverage.readthedocs.org/")
+libraryLicense(name: "docutils", attachedTo: "python-helpers", version: "0.8", license: "BSD", url: "http://docutils.sourceforge.net/")
+libraryLicense(name: "epydoc", attachedTo: "python-helpers", version: "3.0.1", license: "MIT", url: "http://epydoc.sourceforge.net/")
+libraryLicense(name: "pockets", attachedTo: "python-helpers", version: "0.2.4", license: "BSD", url: "http://pockets.readthedocs.org/")
+libraryLicense(name: "sphinxcontrib-napoleon", attachedTo: "python-helpers", version: "0.3.11", license: "BSD", url: "http://sphinxcontrib-napoleon.readthedocs.org/")
 
 jetbrainsLibrary("Coverage")
 jetbrainsLibrary("CoverageReport")

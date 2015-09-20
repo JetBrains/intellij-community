@@ -17,27 +17,36 @@ package git4idea.util;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
+import git4idea.DialogManager;
 import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class UntrackedFilesNotifier {
+public class GitUntrackedFilesHelper {
 
-  private UntrackedFilesNotifier() {
+  private GitUntrackedFilesHelper() {
   }
 
   /**
@@ -46,7 +55,7 @@ public class UntrackedFilesNotifier {
    * @param root
    * @param relativePaths
    * @param operation   the name of the Git operation that caused the error: {@code rebase, merge, checkout}.
-   * @param description the content of the notification or null if the deafult content is to be used.
+   * @param description the content of the notification or null if the default content is to be used.
    */
   public static void notifyUntrackedFilesOverwrittenBy(@NotNull final Project project,
                                                        @NotNull final VirtualFile root, @NotNull Collection<String> relativePaths,
@@ -82,6 +91,7 @@ public class UntrackedFilesNotifier {
     });
   }
   
+  @NotNull
   public static String createUntrackedFilesOverwrittenDescription(@NotNull final String operation, boolean addLinkToViewFiles) {
     final String description1 = " untracked working tree files would be overwritten by " + operation + ".";
     final String description2 = "Please move or remove them before you can " + operation + ".";
@@ -93,6 +103,51 @@ public class UntrackedFilesNotifier {
       notificationDesc = "These" + description1 + "<br/>" + description2;
     }
     return notificationDesc;
+  }
+
+  /**
+   * Show dialog for the "Untracked Files Would be Overwritten by checkout/merge/rebase" error,
+   * with a proposal to rollback the action (checkout/merge/rebase) in successful repositories.
+   * <p/>
+   * The method receives the relative paths to some untracked files, returned by Git command,
+   * and tries to find corresponding VirtualFiles, based on the given root, to display in the standard dialog.
+   * If for some reason it doesn't find any VirtualFile, it shows the paths in a simple dialog.
+   *
+   * @return true if the user agrees to rollback, false if the user decides to keep things as is and simply close the dialog.
+   */
+  public static boolean showUntrackedFilesDialogWithRollback(@NotNull final Project project,
+                                                             @NotNull final String operationName,
+                                                             @NotNull final String rollbackProposal,
+                                                             @NotNull VirtualFile root,
+                                                             @NotNull final Collection<String> relativePaths) {
+    final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativePaths);
+    final List<VirtualFile> untrackedFiles = ContainerUtil.mapNotNull(absolutePaths, new Function<String, VirtualFile>() {
+      @Override
+      public VirtualFile fun(String absolutePath) {
+        return GitUtil.findRefreshFileOrLog(absolutePath);
+      }
+    });
+
+    final Ref<Boolean> rollback = Ref.create();
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        JComponent filesBrowser;
+        if (untrackedFiles.isEmpty()) {
+          filesBrowser = new GitSimplePathsBrowser(project, absolutePaths);
+        }
+        else {
+          filesBrowser = new SelectFilesDialog.VirtualFileList(project, untrackedFiles, false, false);
+        }
+        String title = "Could not " + StringUtil.capitalize(operationName);
+        String description = StringUtil.stripHtml(createUntrackedFilesOverwrittenDescription(operationName, false), true);
+        DialogWrapper dialog = new UntrackedFilesRollBackDialog(project, filesBrowser, description, rollbackProposal);
+        dialog.setTitle(title);
+        DialogManager.show(dialog);
+        rollback.set(dialog.isOK());
+      }
+    }, ModalityState.defaultModalityState());
+    return rollback.get();
   }
 
   private static class UntrackedFilesDialog extends SelectFilesDialog {
@@ -108,5 +163,49 @@ public class UntrackedFilesNotifier {
       return new Action[]{getOKAction()};
     }
 
+  }
+
+  private static class UntrackedFilesRollBackDialog extends DialogWrapper {
+
+    @NotNull private final JComponent myFilesBrowser;
+    @NotNull private final String myPrompt;
+    @NotNull private final String myRollbackProposal;
+
+    public UntrackedFilesRollBackDialog(@NotNull Project project, @NotNull JComponent filesBrowser, @NotNull String prompt,
+                                        @NotNull String rollbackProposal) {
+      super(project);
+      myFilesBrowser = filesBrowser;
+      myPrompt = prompt;
+      myRollbackProposal = rollbackProposal;
+      setOKButtonText("Rollback");
+      setCancelButtonText("Don't rollback");
+      init();
+    }
+
+    @Override
+    protected JComponent createSouthPanel() {
+      JComponent buttons = super.createSouthPanel();
+      JPanel panel = new JPanel(new VerticalFlowLayout());
+      panel.add(new JBLabel(XmlStringUtil.wrapInHtml(myRollbackProposal)));
+      if (buttons != null) {
+        panel.add(buttons);
+      }
+      return panel;
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createCenterPanel() {
+      return myFilesBrowser;
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createNorthPanel() {
+      JLabel label = new JLabel(myPrompt);
+      label.setUI(new MultiLineLabelUI());
+      label.setBorder(new EmptyBorder(5, 1, 5, 1));
+      return label;
+    }
   }
 }

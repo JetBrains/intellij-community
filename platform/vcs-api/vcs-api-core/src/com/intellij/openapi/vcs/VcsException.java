@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -87,6 +88,7 @@ public class VcsException extends Exception {
   }
 
   @Override
+  @NotNull
   public String getMessage() {
     return StringUtil.join(myMessages, ", ");
   }

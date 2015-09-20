@@ -26,6 +26,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.vcsUtil.UIVcsUtil.SPACE_AND_THIN_SPACE;
+
 /**
  * @author yole
  */
@@ -53,12 +55,12 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       }
       final String freezed = myClManager.isFreezed();
       if (freezed != null) {
-        renderer.append(" " + freezed, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderer.append(SPACE_AND_THIN_SPACE + freezed, SimpleTextAttributes.GRAYED_ATTRIBUTES);
       } else if (myClManager.isInUpdate()) {
-        renderer.append(" " + VcsBundle.message("changes.nodetitle.updating"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderer.append(", " + VcsBundle.message("changes.nodetitle.updating"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       if (! myChangeListRemoteState.getState()) {
-        renderer.append(" ");
+        renderer.append(SPACE_AND_THIN_SPACE);
         renderer.append(VcsBundle.message("changes.nodetitle.have.outdated.files"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
     }

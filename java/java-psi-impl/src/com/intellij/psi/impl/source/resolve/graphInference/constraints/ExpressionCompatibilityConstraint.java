@@ -53,6 +53,10 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       if (exprType instanceof PsiLambdaParameterType) {
         return false;
       }
+      
+      if (exprType instanceof PsiClassType && ((PsiClassType)exprType).resolve() == null) {
+        return true;
+      }
 
       if (exprType != null && exprType != PsiType.NULL) {
         constraints.add(new TypeCompatibilityConstraint(myT, exprType));

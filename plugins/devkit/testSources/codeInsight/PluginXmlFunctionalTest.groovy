@@ -35,6 +35,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.xmlb.annotations.AbstractCollection
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection
+import org.jetbrains.idea.devkit.util.PsiUtil
 /**
  * @author peter
  */
@@ -260,6 +261,47 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   public void testPluginWithXInclude() throws Throwable {
     myFixture.testHighlighting("pluginWithXInclude.xml", "pluginWithXInclude-extensionPoints.xml");
+  }
+
+  public void testPluginXmlInIdeaProjectWithoutVendor() {
+    testHighlightingInIdeaProject("pluginWithoutVendor.xml")
+  }
+
+  public void testPluginXmlInIdeaProjectWithThirdPartyVendor() {
+    testHighlightingInIdeaProject("pluginWithThirdPartyVendor.xml")
+  }
+
+  public void testPluginWithJetBrainsAsVendor() {
+    testHighlightingInIdeaProject("pluginWithJetBrainsAsVendor.xml")
+  }
+
+  public void testPluginWithJetBrainsAndMeAsVendor() {
+    testHighlightingInIdeaProject("pluginWithJetBrainsAndMeAsVendor.xml")
+  }
+
+  public void testSpecifyJetBrainsAsVendorQuickFix() {
+    myFixture.enableInspections(PluginXmlDomInspection.class)
+    PsiUtil.markAsIdeaProject(project, true)
+    try {
+      myFixture.configureByFile("pluginWithoutVendor_before.xml")
+      def fix = myFixture.findSingleIntention("Specify JetBrains")
+      myFixture.launchAction(fix)
+      myFixture.checkResultByFile("pluginWithoutVendor_after.xml")
+    }
+    finally {
+      PsiUtil.markAsIdeaProject(project, false)
+    }
+  }
+
+  private void testHighlightingInIdeaProject(String path) {
+    myFixture.enableInspections(PluginXmlDomInspection.class)
+    PsiUtil.markAsIdeaProject(project, true)
+    try {
+      myFixture.testHighlighting(path);
+    }
+    finally {
+      PsiUtil.markAsIdeaProject(project, false)
+    }
   }
 
   public void testExtensionPointPresentation() {

@@ -133,7 +133,10 @@ public class SelfElementInfo extends SmartPointerElementInfo {
                                       @NotNull Language language) {
     PsiElement anchor = file.getViewProvider().findElementAt(syncStartOffset, language);
     if (anchor == null && syncStartOffset == file.getTextLength()) {
-      anchor = PsiTreeUtil.getDeepestLast(file.getViewProvider().getPsi(language).getLastChild());
+      PsiElement lastChild = file.getViewProvider().getPsi(language).getLastChild();
+      if (lastChild != null) {
+        anchor = PsiTreeUtil.getDeepestLast(lastChild);
+      }
     }
     if (anchor == null) return null;
 
