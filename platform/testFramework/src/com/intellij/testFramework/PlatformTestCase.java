@@ -264,7 +264,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @NotNull
   public static Project createProject(@NotNull String path, String creationPlace) {
-    return createProject(path, creationPlace, true);
+    return createProject(path, creationPlace, false);
   }
 
   @NotNull
