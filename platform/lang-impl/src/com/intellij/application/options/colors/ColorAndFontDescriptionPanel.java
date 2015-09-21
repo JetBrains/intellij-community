@@ -28,6 +28,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,8 +36,8 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author cdr
@@ -67,6 +68,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     myEffectsMap = Collections.unmodifiableMap(map);
   }
   private JComboBox myEffectsCombo;
+  private final EffectsComboModel myEffectsModel;
 
   private JBCheckBox myCbBold;
   private JBCheckBox myCbItalic;
@@ -80,7 +82,10 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     add(myPanel, BorderLayout.CENTER);
 
     setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 4));
-    myEffectsCombo.setModel(new CollectionComboBoxModel(ContainerUtil.newArrayList(myEffectsMap.keySet())));
+    myEffectsModel = new EffectsComboModel(ContainerUtil.newArrayList(myEffectsMap.keySet()));
+    //noinspection unchecked
+    myEffectsCombo.setModel(myEffectsModel);
+    //noinspection unchecked
     myEffectsCombo.setRenderer(new ListCellRendererWrapper<String>() {
       @Override
       public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
@@ -186,7 +191,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
 
     if (description.isEffectsColorEnabled() && description.isEffectsColorChecked()) {
       myEffectsCombo.setEnabled(true);
-      myEffectsCombo.getModel().setSelectedItem(ContainerUtil.reverseMap(myEffectsMap).get(effectType));
+      myEffectsModel.setEffectName(ContainerUtil.reverseMap(myEffectsMap).get(effectType));
     }
     else {
       myEffectsCombo.setEnabled(false);
@@ -288,6 +293,22 @@ public class ColorAndFontDescriptionPanel extends JPanel {
         }
       }
       description.apply(scheme);
+    }
+  }
+
+  private static class EffectsComboModel extends CollectionComboBoxModel<String> {
+    public EffectsComboModel(List<String> names) {
+      super(names);
+    }
+
+    /**
+     * Set the current effect name when a text attribute selection changes without notifying the listeners since otherwise it will
+     * be considered as an actual change and lead to unnecessary evens including 'read-only scheme' check.
+     *
+     * @param effectName
+     */
+    public void setEffectName(@NotNull String effectName) {
+      mySelection = effectName;
     }
   }
 }
