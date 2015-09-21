@@ -26,4 +26,6 @@ public abstract class DockerSupport {
   public static DockerSupport getInstance() {
     return ServiceManager.getService(DockerSupport.class);
   }
+
+  public abstract String getDefaultCertificatesFolder();
 }
