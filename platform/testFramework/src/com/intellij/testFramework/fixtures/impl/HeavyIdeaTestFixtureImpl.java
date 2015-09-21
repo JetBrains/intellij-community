@@ -139,18 +139,20 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     }
   }
 
-  private void setUpProject() {
+  private void setUpProject() throws IOException {
+    File tempDirectory = FileUtil.createTempDirectory(myName, "");
+    PlatformTestCase.synchronizeTempDirVfs(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory));
+    myFilesToDelete.add(tempDirectory);
+
+    String projectPath = FileUtil.toSystemIndependentName(tempDirectory.getPath()) + "/" + myName + ProjectFileType.DOT_DEFAULT_EXTENSION;
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    new Throwable(projectPath).printStackTrace(new PrintStream(buffer));
+    myProject = PlatformTestCase.createProject(projectPath, buffer.toString());
+
     EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
+      @SuppressWarnings("TestOnlyProblems")
       @Override
       public void run() throws Throwable {
-        File tempDirectory = FileUtil.createTempDirectory(myName, "");
-        PlatformTestCase.synchronizeTempDirVfs(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory));
-        myFilesToDelete.add(tempDirectory);
-
-        String projectPath = FileUtil.toSystemIndependentName(tempDirectory.getPath()) + "/" + myName + ProjectFileType.DOT_DEFAULT_EXTENSION;
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        new Throwable(projectPath).printStackTrace(new PrintStream(buffer));
-        myProject = PlatformTestCase.createProject(projectPath, buffer.toString());
         ProjectManagerEx.getInstanceEx().openTestProject(myProject);
 
         for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
