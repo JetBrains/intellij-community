@@ -30,8 +30,8 @@ jgoodies-common-1.2.1.jar
 jgoodies-forms.jar
 jgoodies-looks-2.4.2.jar
 jh.jar
-jna-utils.jar
 jna.jar
+jna-platform.jar
 jsch-0.1.52.jar
 jsch.agentproxy.connector-factory.jar
 jsch.agentproxy.core.jar
@@ -56,7 +56,7 @@ oromatcher.jar
 picocontainer.jar
 protobuf-2.5.0.jar
 proxy-vole_20131209.jar
-pty4j-0.4.22.jar
+pty4j-0.4.23.jar
 purejavacomm.jar
 resolver.jar
 rhino-js-1_7R4.jar

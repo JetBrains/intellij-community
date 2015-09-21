@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -350,6 +352,8 @@ public class Foundation {
   }
 
   public static class NSRect extends Structure implements Structure.ByValue {
+    private static final List __FIELDS = Arrays.asList("origin", "size");
+
     public NSPoint origin;
     public NSSize size;
 
@@ -357,9 +361,16 @@ public class Foundation {
       origin = new NSPoint(x, y);
       size = new NSSize(w, h);
     }
+
+    @Override
+    protected List getFieldOrder() {
+      return __FIELDS;
+    }
   }
 
   public static class NSPoint extends Structure implements Structure.ByValue {
+    private static final List __FIELDS = Arrays.asList("x", "y");
+
     public CGFloat x;
     public CGFloat y;
 
@@ -372,9 +383,16 @@ public class Foundation {
       this.x = new CGFloat(x);
       this.y = new CGFloat(y);
     }
+
+    @Override
+    protected List getFieldOrder() {
+      return __FIELDS;
+    }
   }
 
   public static class NSSize extends Structure implements Structure.ByValue {
+    private static final List __FIELDS = Arrays.asList("width", "height");
+
     public CGFloat width;
     public CGFloat height;
 
@@ -386,6 +404,11 @@ public class Foundation {
     public NSSize(double width, double height) {
       this.width = new CGFloat(width);
       this.height = new CGFloat(height);
+    }
+
+    @Override
+    protected List getFieldOrder() {
+      return __FIELDS;
     }
   }
 

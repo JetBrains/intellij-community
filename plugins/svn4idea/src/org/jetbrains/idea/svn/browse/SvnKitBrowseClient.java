@@ -42,6 +42,7 @@ public class SvnKitBrowseClient extends BaseSvnClient implements BrowseClient {
     SVNLogClient client = getLogClient();
     ISVNDirEntryHandler wrappedHandler = wrapHandler(handler);
 
+    client.setIgnoreExternals(true);
     try {
       if (target.isFile()) {
         client.doList(target.getFile(), target.getPegRevision(), notNullize(revision), true, toDepth(depth), SVNDirEntry.DIRENT_ALL, wrappedHandler);

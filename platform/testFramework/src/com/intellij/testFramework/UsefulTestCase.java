@@ -136,7 +136,7 @@ public abstract class UsefulTestCase extends TestCase {
     super.setUp();
 
     if (shouldContainTempFiles()) {
-      String testName = getTestName(true);
+      String testName =  FileUtil.sanitizeFileName(getTestName(true));
       if (StringUtil.isEmptyOrSpaces(testName)) testName = "";
       testName = new File(testName).getName(); // in case the test name contains file separators
       File tempDirectory = FileUtil.createTempDirectory(new File(ORIGINAL_TEMP_DIR), TEMP_DIR_MARKER + testName, "");

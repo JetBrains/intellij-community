@@ -79,7 +79,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(element);
     final PsiElement firstChild = element.getFirstChild();
     if (interfaceMethod != null && firstChild != null) {
-      return createSuperMethodLineMarkerInfo(firstChild, AllIcons.Gutter.ImplementingMethod, Pass.UPDATE_ALL);
+      return createSuperMethodLineMarkerInfo(firstChild, AllIcons.Gutter.ImplementingFunctional, Pass.UPDATE_ALL);
     }
 
     if (myDaemonSettings.SHOW_METHOD_SEPARATORS && firstChild == null) {

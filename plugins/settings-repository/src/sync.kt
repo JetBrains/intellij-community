@@ -31,10 +31,10 @@ import com.intellij.openapi.util.Computable
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.ui.UIUtil
 import gnu.trove.THashSet
-import java.util.LinkedHashSet
+import java.util.*
 
 class SyncManager(private val icsManager: IcsManager, private val autoSyncManager: AutoSyncManager) {
-  volatile var writeAndDeleteProhibited = false
+  @Volatile var writeAndDeleteProhibited = false
     private set
 
   public fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult? {
@@ -47,7 +47,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
         writeAndDeleteProhibited = true
         ProgressManager.getInstance().run(object : Task.Modal(project, IcsBundle.message("task.sync.title"), true) {
           override fun run(indicator: ProgressIndicator) {
-            indicator.setIndeterminate(true)
+            indicator.isIndeterminate = true
 
             autoSyncManager.waitAutoSync(indicator)
 
@@ -73,7 +73,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
               }
             }
 
-            if (indicator.isCanceled()) {
+            if (indicator.isCanceled) {
               return
             }
 
@@ -114,7 +114,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
             icsManager.repositoryActive = true
             if (updateResult != null) {
               val app = ApplicationManager.getApplication()
-              restartApplication = updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult!!, app.getMessageBus())
+              restartApplication = updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult!!, app.messageBus)
             }
             if (!restartApplication && syncType == SyncType.OVERWRITE_LOCAL) {
               (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
@@ -140,7 +140,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
   }
 }
 
-private fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateResult: UpdateResult, messageBus: MessageBus): Boolean {
+internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateResult: UpdateResult, messageBus: MessageBus): Boolean {
   val changedComponentNames = LinkedHashSet<String>()
   val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted)
   if (changed.isEmpty() && deleted.isEmpty()) {
