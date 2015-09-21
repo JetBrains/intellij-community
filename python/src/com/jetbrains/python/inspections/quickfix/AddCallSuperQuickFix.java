@@ -86,16 +86,11 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       addSelfToCall = true;
       superCall.append(superClass.getName()).append(".__init__(");
     }
-    final StringBuilder newFunction = new StringBuilder("def __init__(");
 
     final Couple<List<String>> couple = buildNewFunctionParamsAndSuperInitCallArgs(origInfo, superInfo, addSelfToCall);
-    StringUtil.join(couple.getFirst(), ", ", newFunction);
-    newFunction.append(")");
-
-    if (problemFunction.getAnnotation() != null) {
-      newFunction.append(problemFunction.getAnnotation().getText());
-    }
-    newFunction.append(": pass");
+    final StringBuilder newParameters = new StringBuilder("(");
+    StringUtil.join(couple.getFirst(), ", ", newParameters);
+    newParameters.append(")");
 
     StringUtil.join(couple.getSecond(), ", ", superCall);
     superCall.append(")");
@@ -103,10 +98,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     final PyElementGenerator generator = PyElementGenerator.getInstance(project);
     final LanguageLevel languageLevel = LanguageLevel.forElement(problemFunction);
     final PyStatement callSuperStatement = generator.createFromText(languageLevel, PyStatement.class, superCall.toString());
-    final PyParameterList newParameterList = generator.createFromText(languageLevel,
-                                                                      PyParameterList.class,
-                                                                      newFunction.toString(),
-                                                                      new int[]{0, 3});
+    final PyParameterList newParameterList = generator.createParameterList(languageLevel, newParameters.toString());
     problemFunction.getParameterList().replace(newParameterList);
     final PyStatementList statementList = problemFunction.getStatementList();
     PyUtil.addElementToStatementList(callSuperStatement, statementList, true);
