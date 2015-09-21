@@ -1,5 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="IssueNavigationConfiguration">
+    <option name="links">
+      <list>
+        <IssueNavigationLink>
+          <option name="issueRegexp" value="[A-Z]+\-\d+" />
+          <option name="linkRegexp" value="http://youtrack.jetbrains.com/issue/$0" />
+        </IssueNavigationLink>
+        <IssueNavigationLink>
+          <option name="issueRegexp" value="EA\-(\d+)" />
+          <option name="linkRegexp" value="http://ea.jetbrains.com/browser/ea_problems/$1" />
+        </IssueNavigationLink>
+        <IssueNavigationLink>
+          <option name="issueRegexp" value="ZD\-(\d+)" />
+          <option name="linkRegexp" value="https://jetbrains.zendesk.com/agent/#/tickets/$1" />
+        </IssueNavigationLink>
+        <IssueNavigationLink>
+          <option name="issueRegexp" value="IDEA-COMMUNITY-CR-\d+" />
+          <option name="linkRegexp" value="https://upsource.jetbrains.com/idea-community/review/$0" />
+        </IssueNavigationLink>
+      </list>
+    </option>
+  </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/android" vcs="Git" />
