@@ -589,7 +589,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
       getTemplatePresentation().setText("Replace");
-      getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.ArrowRight, AllIcons.Diff.Arrow));
+      getTemplatePresentation().setIcon(DiffUtil.getArrowIcon(focusedSide));
     }
 
     @Override
@@ -611,7 +611,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")).getShortcutSet());
       getTemplatePresentation().setText("Insert");
-      getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.ArrowRightDown, AllIcons.Diff.ArrowLeftDown));
+      getTemplatePresentation().setIcon(DiffUtil.getArrowDownIcon(focusedSide));
     }
 
     @Override

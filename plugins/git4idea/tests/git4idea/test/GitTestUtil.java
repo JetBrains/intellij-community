@@ -15,6 +15,8 @@
  */
 package git4idea.test;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -43,6 +45,7 @@ import static com.intellij.openapi.vcs.Executor.mkdir;
 import static com.intellij.openapi.vcs.Executor.touch;
 import static git4idea.test.GitExecutor.*;
 import static junit.framework.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -125,6 +128,7 @@ public class GitTestUtil {
   }
 
   @SuppressWarnings("unchecked")
+  @NotNull
   public static <T> T overrideService(@NotNull Project project, Class<? super T> serviceInterface, Class<T> serviceImplementation) {
     String key = serviceInterface.getName();
     MutablePicoContainer picoContainer = (MutablePicoContainer) project.getPicoContainer();
@@ -134,6 +138,7 @@ public class GitTestUtil {
   }
 
   @SuppressWarnings("unchecked")
+  @NotNull
   public static <T> T overrideService(Class<? super T> serviceInterface, Class<T> serviceImplementation) {
     String key = serviceInterface.getName();
     MutablePicoContainer picoContainer = (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer();
@@ -157,5 +162,24 @@ public class GitTestUtil {
     append(file, "some content");
     addCommit("some message");
     return last();
+  }
+
+  public static void assertNotification(@NotNull NotificationType type,
+                                        @NotNull String title,
+                                        @NotNull String content,
+                                        @NotNull Notification actual) {
+    assertEquals("Incorrect type of notification: " + tos(actual), type, actual.getType());
+    assertEquals(title, actual.getTitle());
+    assertEquals(cleanupForAssertion(content), cleanupForAssertion(actual.getContent()));
+  }
+
+  @NotNull
+  public static String cleanupForAssertion(@NotNull String content) {
+    return content.replace("<br/>", "\n").replace("\n", " ").replaceAll("[ ]{2,}", " ").replaceAll(" href='[^']*'", "").trim();
+  }
+
+  @NotNull
+  private static String tos(@NotNull Notification notification) {
+    return notification.getTitle() + "|" + notification.getContent();
   }
 }

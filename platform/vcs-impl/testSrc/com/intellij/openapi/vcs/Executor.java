@@ -291,7 +291,7 @@ public class Executor {
     return path;
   }
 
-  private static File child(String fileName) {
+  protected static File child(String fileName) {
     assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command.";
     return new File(ourCurrentDir, fileName);
   }

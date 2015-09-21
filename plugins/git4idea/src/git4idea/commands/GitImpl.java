@@ -31,6 +31,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitCommit;
 import git4idea.GitExecutionException;
 import git4idea.GitVcs;
+import git4idea.branch.GitRebaseParams;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRemote;
@@ -137,7 +138,7 @@ public class GitImpl implements Git {
 
     return untrackedFiles;
   }
-  
+
   @Override
   @NotNull
   public GitCommandResult clone(@NotNull final Project project, @NotNull final File parentDirectory, @NotNull final String url,
@@ -268,7 +269,7 @@ public class GitImpl implements Git {
     }
     if (newBranch == null) { // simply checkout
       h.addParameters(detach ? reference + "^0" : reference); // we could use `--detach` here, but it is supported only since 1.7.5.
-    } 
+    }
     else { // checkout reference as new branch
       h.addParameters("-b", newBranch, reference);
     }
@@ -555,6 +556,17 @@ public class GitImpl implements Git {
         return h;
       }
     });
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult rebase(@NotNull GitRepository repository,
+                                 @NotNull GitRebaseParams params,
+                                 @NotNull GitLineHandlerListener... listeners) {
+    GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REBASE);
+    handler.addParameters(params.getCommandLineArguments());
+    addListeners(handler, listeners);
+    return run(handler);
   }
 
   @NotNull
