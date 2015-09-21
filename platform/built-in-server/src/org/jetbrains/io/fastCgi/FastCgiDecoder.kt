@@ -76,7 +76,7 @@ class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private 
 
   override fun channelInactive(context: ChannelHandlerContext) {
     try {
-      if (!dataBuffers.isEmpty()) {
+      if (!dataBuffers.isEmpty) {
         dataBuffers.forEachEntry(object : TIntObjectProcedure<ByteBuf> {
           override fun execute(a: Int, buffer: ByteBuf): Boolean {
             try {
@@ -92,7 +92,7 @@ class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private 
       }
     }
     finally {
-      super<Decoder>.channelInactive(context)
+      super.channelInactive(context)
     }
   }
 

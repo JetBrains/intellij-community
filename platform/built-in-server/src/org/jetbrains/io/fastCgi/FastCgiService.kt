@@ -51,7 +51,7 @@ public abstract class FastCgiService(project: Project) : SingleConnectionNetServ
 
     private fun parseHeaders(response: HttpResponse, buffer: ByteBuf) {
       val builder = StringBuilder()
-      while (buffer.isReadable()) {
+      while (buffer.isReadable) {
         builder.setLength(0)
 
         var key: String? = null
@@ -187,7 +187,7 @@ public abstract class FastCgiService(project: Project) : SingleConnectionNetServ
 
   fun responseReceived(id: Int, buffer: ByteBuf?) {
     val channel = requests.remove(id)
-    if (channel == null || !channel.isActive()) {
+    if (channel == null || !channel.isActive) {
       buffer?.release()
       return
     }
