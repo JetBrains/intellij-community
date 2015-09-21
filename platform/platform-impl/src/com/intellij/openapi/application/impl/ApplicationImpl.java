@@ -65,8 +65,8 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TLongArrayList;
-import gnu.trove.TLongProcedure;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntProcedure;
 import jsr166e.StampedLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -537,10 +537,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     Disposer.dispose(myLastDisposable); // dispose it last
 
     if (LOG.isDebugEnabled()) {
-      final long[] sum = {0};
-      writePauses.forEach(new TLongProcedure() {
+      final int[] sum = {0};
+      writePauses.forEach(new TIntProcedure() {
         @Override
-        public boolean execute(long value) {
+        public boolean execute(int value) {
           sum[0] += value;
           return true;
         }
@@ -549,8 +549,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                 "\nTotal write actions: " + writePauses.size() +
                 "\nTotal write pauses : " + sum[0] + "ms"+
                 "\nAverage write pause: " + sum[0] / writePauses.size() + "ms" +
-                "\nMedian  write pause: " + ArrayUtil.averageAmongMedians(writePauses.toNativeArray(), 3) + "ms" +
-                ""
+                "\nMedian  write pause: " + ArrayUtil.averageAmongMedians(writePauses.toNativeArray(), 3) + "ms"
       );
     }
   }
@@ -1194,7 +1193,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myWriteActionPending;
   }
 
-  private final TLongArrayList writePauses = new TLongArrayList();
+  private final TIntArrayList writePauses = new TIntArrayList();
   private void startWrite(@Nullable Class clazz) {
     Status status = getStatus();
     assertIsDispatchThread(status, "Write access is allowed from event dispatch thread only");
@@ -1239,7 +1238,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myWriteActionsStack.push(clazz);
     if (LOG.isDebugEnabled()) {
       long end = System.currentTimeMillis();
-      writePauses.add(end - start);
+      writePauses.add((int)(end - start));
     }
     fireWriteActionStarted(clazz);
   }
