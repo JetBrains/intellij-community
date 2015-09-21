@@ -278,7 +278,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.eventRequestManager();
   }
 
-  public VoidValue mirrorOf() throws EvaluateException {
+  public VoidValue mirrorOf() {
     return myVirtualMachine.mirrorOfVoid();
   }
 
@@ -459,6 +459,15 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   };
   public boolean canPopFrames() {
     return myPopFrames.isAvailable();
+  }
+
+  private final Capability myForceEarlyReturn = new Capability() {
+    protected boolean calcValue() {
+      return myVirtualMachine.canForceEarlyReturn();
+    }
+  };
+  public boolean canForceEarlyReturn() {
+    return myForceEarlyReturn.isAvailable();
   }
 
   private final Capability myCanGetInstanceInfo = new Capability() {

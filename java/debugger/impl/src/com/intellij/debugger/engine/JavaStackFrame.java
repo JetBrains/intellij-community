@@ -397,6 +397,7 @@ public class JavaStackFrame extends XStackFrame {
     }
   }
 
+  @NotNull
   public StackFrameProxyImpl getStackFrameProxy() {
     return myDescriptor.getFrameProxy();
   }

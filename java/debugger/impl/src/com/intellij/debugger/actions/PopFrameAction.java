@@ -70,7 +70,7 @@ public class PopFrameAction extends DebuggerAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final JavaStackFrame stackFrame = getStackFrame(e);
-    if(stackFrame == null) {
+    if (stackFrame == null || stackFrame.getStackFrameProxy().isBottom()) {
       return;
     }
     try {
@@ -214,21 +214,12 @@ public class PopFrameAction extends DebuggerAction {
     return res;
   }
 
-  private static JavaStackFrame getStackFrame(AnActionEvent e) {
+  static JavaStackFrame getStackFrame(AnActionEvent e) {
     StackFrameDescriptorImpl descriptor = getSelectedStackFrameDescriptor(e);
     if (descriptor != null) {
-      if (descriptor.getFrameProxy().isBottom()) {
-        return null;
-      }
       return new JavaStackFrame(descriptor, false);
     }
-    JavaStackFrame frame = getSelectedStackFrame(e);
-    if (frame != null) {
-      StackFrameProxyImpl proxy = frame.getStackFrameProxy();
-      if (proxy == null || proxy.isBottom()) return null;
-      return frame;
-    }
-    return null;
+    return getSelectedStackFrame(e);
   }
 
   static StackFrameProxyImpl getStackFrameProxy(AnActionEvent e) {
