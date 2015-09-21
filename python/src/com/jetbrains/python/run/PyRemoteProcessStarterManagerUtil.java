@@ -16,7 +16,6 @@
 package com.jetbrains.python.run;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.process.ProcessHandler;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,24 +27,14 @@ public class PyRemoteProcessStarterManagerUtil {
   }
 
   @NotNull
-  public static <T> T execute(@NotNull PyRemoteSdkAdditionalDataBase pyRemoteSdkAdditionalDataBase,
-                              @NotNull ProcessManagerTask<T> processManagerTask)
+  public static PyRemoteProcessStarterManager getManager(@NotNull PyRemoteSdkAdditionalDataBase pyRemoteSdkAdditionalDataBase)
     throws ExecutionException {
 
     for (PyRemoteProcessStarterManager processManager : PyRemoteProcessStarterManager.EP_NAME.getExtensions()) {
       if (processManager.supports(pyRemoteSdkAdditionalDataBase)) {
-        try {
-          return processManagerTask.execute(processManager);
-        }
-        catch (InterruptedException e) {
-          throw new ExecutionException(e); //TODO: handle exception
-        }
+        return processManager;
       }
     }
     throw new IllegalStateException("Unable to find support for " + pyRemoteSdkAdditionalDataBase + " SDK");
-  }
-
-  public interface ProcessManagerTask<T> {
-    T execute(PyRemoteProcessStarterManager processManager) throws ExecutionException, InterruptedException;
   }
 }

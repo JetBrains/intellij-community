@@ -29,7 +29,6 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
-import com.jetbrains.python.run.PyRemoteProcessStarterManager;
 import com.jetbrains.python.run.PyRemoteProcessStarterManagerUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -131,21 +130,19 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
         do {
           final PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdkData;
           final PyRemotePathMapper pathMapper = manager.setupMappings(null, remoteSdkAdditionalData, null);
-          final boolean finalAskForSudo = askForSudo;
-          processOutput = PyRemoteProcessStarterManagerUtil.execute(remoteSdkAdditionalData,
-                                                                    new PyRemoteProcessStarterManagerUtil.ProcessManagerTask<ProcessOutput>() {
-                                                                      @Override
-                                                                      public ProcessOutput execute(PyRemoteProcessStarterManager processManager)
-                                                                        throws ExecutionException, InterruptedException {
-                                                                        return processManager.executeRemoteProcess(null,
-                                                                                                                   ArrayUtil.toStringArray(
-                                                                                                                     cmdline),
-                                                                                                                   workingDir, manager,
-                                                                                                                   remoteSdkAdditionalData,
-                                                                                                                   pathMapper,
-                                                                                                                   finalAskForSudo);
-                                                                      }
-                                                                    });
+          try {
+            processOutput = PyRemoteProcessStarterManagerUtil.getManager(remoteSdkAdditionalData).executeRemoteProcess(null,
+                                                                                                                       ArrayUtil
+                                                                                                                         .toStringArray(
+                                                                                                                           cmdline),
+                                                                                                                       workingDir, manager,
+                                                                                                                       remoteSdkAdditionalData,
+                                                                                                                       pathMapper,
+                                                                                                                       askForSudo);
+          }
+          catch (InterruptedException e) {
+            throw new ExecutionException(e);
+          }
           if (askForSudo && processOutput.getStderr().contains("sudo: 3 incorrect password attempts")) {
             continue;
           }

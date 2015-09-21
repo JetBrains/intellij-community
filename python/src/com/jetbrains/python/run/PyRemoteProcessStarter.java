@@ -73,13 +73,13 @@ public class PyRemoteProcessStarter {
 
     final PyRemotePathMapper extendedPathMapper = manager.setupMappings(project, pyRemoteSdkAdditionalDataBase, pathMapper);
 
-    return PyRemoteProcessStarterManagerUtil
-      .execute(pyRemoteSdkAdditionalDataBase, new PyRemoteProcessStarterManagerUtil.ProcessManagerTask<ProcessHandler>() {
-        @Override
-        public ProcessHandler execute(PyRemoteProcessStarterManager processManager) throws ExecutionException, InterruptedException {
-          return processManager.startRemoteProcess(project, commandLine, manager, pyRemoteSdkAdditionalDataBase,
-                                                   extendedPathMapper);
-        }
-      });
+    try {
+      return PyRemoteProcessStarterManagerUtil
+        .getManager(pyRemoteSdkAdditionalDataBase).startRemoteProcess(project, commandLine, manager, pyRemoteSdkAdditionalDataBase,
+                                                     extendedPathMapper);
+    }
+    catch (InterruptedException e) {
+      throw new ExecutionException(e);
+    }
   }
 }
