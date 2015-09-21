@@ -15,12 +15,14 @@
  */
 package com.jetbrains.python.psi.types;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author yole
  */
 public interface PyCollectionType extends PyType {
-  @Nullable
-  PyType getElementType(TypeEvalContext context);
+  @NotNull
+  List<PyType> getElementTypes(@NotNull TypeEvalContext context);
 }

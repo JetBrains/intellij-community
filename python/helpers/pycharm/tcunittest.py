@@ -152,7 +152,7 @@ class TeamcityTestResult(TestResult):
     self.messages.testIgnored(self.getTestName(test), message=reason)
 
   def _getSuite(self, test):
-    if hasattr(test, "suite"):
+    try:
       suite = strclass(test.suite)
       suite_location = test.suite.location
       location = test.suite.abs_location
@@ -160,7 +160,7 @@ class TeamcityTestResult(TestResult):
         location = location + ":" + str(test.lineno)
       else:
         location = location + ":" + str(test.test.lineno)
-    else:
+    except AttributeError:
       import inspect
 
       try:

@@ -286,51 +286,47 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
 
     final Ref<ConfigurationException> exceptionRef = Ref.create();
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
-                final ModifiableRootModel model = moduleEditor.apply();
-                if (model != null) {
-                  if (!model.isSdkInherited()) {
-                    // make sure the sdk is set to original SDK stored in the JDK Table
-                    final Sdk modelSdk = model.getSdk();
-                    if (modelSdk != null) {
-                      final Sdk original = modifiedToOriginalMap.get(modelSdk);
-                      if (original != null) {
-                        model.setSdk(original);
-                      }
-                    }
+        try {
+          for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
+            final ModifiableRootModel model = moduleEditor.apply();
+            if (model != null) {
+              if (!model.isSdkInherited()) {
+                // make sure the sdk is set to original SDK stored in the JDK Table
+                final Sdk modelSdk = model.getSdk();
+                if (modelSdk != null) {
+                  final Sdk original = modifiedToOriginalMap.get(modelSdk);
+                  if (original != null) {
+                    model.setSdk(original);
                   }
-                  models.add(model);
                 }
               }
-              myFacetsConfigurator.applyEditors();
-            }
-            catch (ConfigurationException e) {
-              exceptionRef.set(e);
-              return;
-            }
-
-            try {
-              final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
-              ModifiableModelCommitter.multiCommit(rootModels, myModuleModel);
-              myModuleModelCommitted = true;
-              myFacetsConfigurator.commitFacets();
-
-            }
-            finally {
-              ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps(false);
-
-              myFacetsConfigurator = createFacetsConfigurator();
-              myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-              myModuleModelCommitted = false;
+              models.add(model);
             }
           }
-        });
+          myFacetsConfigurator.applyEditors();
+        }
+        catch (ConfigurationException e) {
+          exceptionRef.set(e);
+          return;
+        }
+
+        try {
+          final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
+          ModifiableModelCommitter.multiCommit(rootModels, myModuleModel);
+          myModuleModelCommitted = true;
+          myFacetsConfigurator.commitFacets();
+
+        }
+        finally {
+          ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps(false);
+
+          myFacetsConfigurator = createFacetsConfigurator();
+          myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+          myModuleModelCommitted = false;
+        }
       }
     });
 

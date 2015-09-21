@@ -83,7 +83,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
               methods.add(pyFunction);
             return true;
           }
-        }, false);
+        }, false, null);
 
         d.methodsSize(methods.size());
         int i = 0;

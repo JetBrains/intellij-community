@@ -46,6 +46,6 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
   @NotNull
   @Override
   public List<PsiExpression> getExpressionsAt(@NotNull PsiElement elementAt) {
-    return SyntaxTraverser.psiTraverser().parents(elementAt).filter(PsiExpression.class).toList();
+    return SyntaxTraverser.psiApi().parents(elementAt).filter(PsiExpression.class).toList();
   }
 }

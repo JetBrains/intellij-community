@@ -77,7 +77,7 @@ public class PyAddImportTest extends PyTestCase {
 
   // PY-12018
   public void testNewFromImportFromSameModule() {
-    doAddFromImport("mod", "b", BUILTIN);
+    doAddFromImport("mod", "b", THIRD_PARTY);
   }
 
   // PY-6020

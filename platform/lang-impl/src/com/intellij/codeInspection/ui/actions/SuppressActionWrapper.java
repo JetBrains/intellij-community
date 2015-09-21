@@ -98,6 +98,9 @@ public class SuppressActionWrapper extends ActionGroup {
                            final CommonProblemDescriptor descriptor,
                            final SuppressIntentionAction action,
                            final RefEntity refEntity) {
+    if (action instanceof SuppressIntentionActionFromFix && !(descriptor instanceof ProblemDescriptor)) {
+      LOG.info("local suppression fix for specific problem descriptor:  " + myToolWrapper.getTool().getClass().getName());
+    }
     final PsiModificationTracker tracker = PsiManager.getInstance(myProject).getModificationTracker();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override

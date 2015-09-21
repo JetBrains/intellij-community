@@ -62,6 +62,8 @@ public enum PythonHelper implements HelperPackage {
 
   EPYDOC_FORMATTER("epydoc_formatter.py"),
   REST_FORMATTER("rest_formatter.py"),
+  GOOGLE_FORMATTER("google_formatter.py"),
+  NUMPY_FORMATTER("numpy_formatter.py"),
 
   EXTRA_SYSPATH("extra_syspath.py"),
   SYSPATH("syspath.py"),

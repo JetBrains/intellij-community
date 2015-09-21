@@ -17,6 +17,8 @@ package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.impl.source.xml.XmlAttributeValueImpl;
 import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +31,9 @@ public class XmlAttributeLiteralEscaper extends LiteralTextEscaper<XmlAttributeV
 
   public XmlAttributeLiteralEscaper(XmlAttributeValueImpl host) {
     super(host);
-    myXmlAttribute = (XmlAttribute)host.getParent();
+    PsiElement parent = host.getParent();
+    myXmlAttribute = parent instanceof XmlAttribute ? (XmlAttribute)parent :
+                     XmlElementFactory.getInstance(host.getProject()).createXmlAttribute("a", host.getValue());
   }
 
   @Override

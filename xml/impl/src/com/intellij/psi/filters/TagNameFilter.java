@@ -16,7 +16,6 @@
 package com.intellij.psi.filters;
 
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -27,14 +26,6 @@ import org.jetbrains.annotations.NonNls;
  * To change this template use Options | File Templates.
  */
 public class TagNameFilter extends PlainTextFilter {
-
-  public TagNameFilter(){
-    myValue = ArrayUtil.EMPTY_STRING_ARRAY;
-  }
-
-  public TagNameFilter(@NonNls String value, boolean insensitiveFlag) {
-    super(value, insensitiveFlag);
-  }
 
   public TagNameFilter(@NonNls String value){
     super(value);

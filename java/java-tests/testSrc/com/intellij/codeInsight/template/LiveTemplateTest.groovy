@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.template
+
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.Lookup
@@ -22,6 +23,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.codeInsight.template.impl.*
 import com.intellij.codeInsight.template.macro.*
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -36,6 +38,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
+
 /**
  * @author spleaner
  */
@@ -288,7 +291,7 @@ class Foo {
   public void testToar() throws Throwable {
     configure();
     startTemplate("toar", "other")
-    state.gotoEnd();
+    state.gotoEnd(false);
     checkResult();
   }
 
@@ -495,7 +498,9 @@ class Foo {
     if (name in ["testNavigationActionsDontTerminateTemplate", "testTemplateWithEnd", "testDisappearingVar",
                  "test do replace macro value with empty result",
                  "test do not replace macro value with null result",
-                 "test escape string characters in soutv", "test do not replace macro value with empty result"]) {
+                 "test escape string characters in soutv",
+                 "test escape shouldn't move caret to the end marker",
+                 "test do not replace macro value with empty result"]) {
       runnable.run();
       return;
     }
@@ -953,6 +958,57 @@ class Foo {
     Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
       return calculateResult(params, context)
     }
+  }
+
+  public void "test escape shouldn't move caret to the end marker"() {
+    myFixture.configureByText 'a.java', """
+class Foo {{
+  itar<caret>
+}}
+"""
+    myFixture.type '\ta'
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
+    myFixture.checkResult """
+class Foo {{
+    for (int a<caret> = 0; a < array.length; a++) {
+         = array[a];
+        
+    }
+}}
+"""
+  }
+  
+  public void "test add new line on enter outside editing variable"() {
+    myFixture.configureByText 'a.java', """
+class Foo {{
+  <caret>
+}}
+"""
+    myFixture.type 'soutv\tabc'
+    myFixture.editor.caretModel.moveCaretRelatively(3, 0, false, false, false)
+    myFixture.type '\n'
+    myFixture.checkResult """
+class Foo {{
+    System.out.println("true = " + abc);
+    <caret>
+}}
+"""
+  }
+  
+  public void "test type tab character on tab outside editing variable"() {
+    myFixture.configureByText 'a.java', """
+class Foo {{
+  <caret>
+}}
+"""
+    myFixture.type 'soutv\tabc'
+    myFixture.editor.caretModel.moveCaretRelatively(3, 0, false, false, false)
+    myFixture.type '\t'
+    myFixture.checkResult """
+class Foo {{
+    System.out.println("true = " + abc);    <caret>
+}}
+"""
   }
 
   public void "test multicaret expanding with space"() {

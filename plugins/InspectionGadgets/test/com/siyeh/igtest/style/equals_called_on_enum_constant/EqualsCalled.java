@@ -7,8 +7,9 @@ public class EqualsCalled {
     }
 
     void one() {
-        E.A.equals(E.C);
-        E.B.equals(new Object());
+        E.A.<warning descr="'equals()' called on Enum value">equals</warning>(E.C);
+        E.B.<warning descr="'equals()' called on Enum value">equals</warning>(new Object());
+        E.C.<warning descr="'equals()' called on Enum value">equals</warning><error descr="'equals(java.lang.Object)' in 'java.lang.Enum' cannot be applied to '()'">()</error>;
         final Object A = new Object();
         A.equals(1);
     }

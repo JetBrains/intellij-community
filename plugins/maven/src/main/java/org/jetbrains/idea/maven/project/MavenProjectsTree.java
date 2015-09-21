@@ -903,7 +903,7 @@ public class MavenProjectsTree {
     if (customNonFilteredExtensions.isEmpty()) {
       return Collections.emptySet();
     }
-    return Collections.unmodifiableCollection(customNonFilteredExtensions);
+    return Collections.unmodifiableList(customNonFilteredExtensions);
   }
 
   public int getFilterConfigCrc(ProjectFileIndex fileIndex) {

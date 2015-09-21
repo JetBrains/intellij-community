@@ -71,7 +71,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
                                            boolean exported,
                                            String libName,
                                            String url,
-                                           String srcUrl, ExpandMacroToPathMap macroMap);
+                                           String srcUrl, String nativeRoot, ExpandMacroToPathMap macroMap);
 
   protected abstract String expandEclipsePath2Url(T rootModel, String path);
 
@@ -178,7 +178,12 @@ public abstract class AbstractEclipseClasspathReader<T> {
         }
       }
 
-      addModuleLibrary(rootModel, element, exported, getPresentableName(path, libs), url, srcUrl, macroMap);
+      String nativeRoot = getNativeLibraryRoot(element);
+      if (nativeRoot != null) {
+        nativeRoot = expandEclipsePath2Url(rootModel, nativeRoot);
+      }
+
+      addModuleLibrary(rootModel, element, exported, getPresentableName(path, libs), url, srcUrl, nativeRoot, macroMap);
     }
     else if (kind.equals(EclipseXml.VAR_KIND)) {
       int slash = path.indexOf("/");
@@ -201,7 +206,11 @@ public abstract class AbstractEclipseClasspathReader<T> {
           eclipseModuleManager.registerEclipseSrcVariablePath(srcUrl, srcPathAttr);
         }
       }
-      addModuleLibrary(rootModel, element, exported, libName, url, srcUrl, macroMap);
+      String nativeRoot = getNativeLibraryRoot(element);
+      if (nativeRoot != null) {
+        nativeRoot = expandEclipsePath2Url(rootModel, nativeRoot);
+      }
+      addModuleLibrary(rootModel, element, exported, libName, url, srcUrl, nativeRoot, macroMap);
     }
     else if (kind.equals(EclipseXml.CON_KIND)) {
       if (path.equals(EclipseXml.ECLIPSE_PLATFORM)) {
@@ -240,6 +249,18 @@ public abstract class AbstractEclipseClasspathReader<T> {
       //noinspection SpellCheckingInspection
       throw new ConversionException("Unknown classpathentry/@kind: " + kind);
     }
+  }
+
+  private static String getNativeLibraryRoot(Element element) {
+    final Element attributes = element.getChild(EclipseXml.ATTRIBUTES_TAG);
+    if (attributes != null) {
+      for (Element attributeElement : attributes.getChildren(EclipseXml.ATTRIBUTE_TAG)) {
+        if (EclipseXml.DLL_LINK.equals(attributeElement.getAttributeValue(EclipseXml.NAME_ATTR))) {
+          return attributeElement.getAttributeValue(EclipseXml.VALUE_ATTR);
+        }
+      }
+    }
+    return null;
   }
 
   protected static int srcVarStart(String srcPath) {

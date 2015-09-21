@@ -711,6 +711,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testSkipThrowsDeclaredInLambda() throws Exception {
+    doTest();
+  }
+
   public void testChangedReturnType() throws Exception {
     doTestReturnTypeChanged(PsiType.getJavaLangObject(getPsiManager(), GlobalSearchScope.allScope(getProject())));
   }

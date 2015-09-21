@@ -25,7 +25,9 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.StateStorageBase;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StorageManagerListener;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
@@ -34,14 +36,12 @@ import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -53,20 +53,29 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-public class ClasspathStorage extends StateStorageBase<Boolean> {
+// Boolean - false as not loaded, true as loaded
+public final class ClasspathStorage extends StateStorageBase<Boolean> {
+  private static final Logger LOG = Logger.getInstance(ClasspathStorage.class);
+
   @NonNls public static final String SPECIAL_STORAGE = "special";
 
   private final ClasspathStorageProvider.ClasspathConverter myConverter;
 
-  protected final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
+  private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
 
   public ClasspathStorage(@NotNull final Module module, @NotNull StateStorageManager storageManager) {
-    myPathMacroSubstitutor = storageManager.getMacroSubstitutor();
+    String storageType = module.getOptionValue(JpsProjectLoader.CLASSPATH_ATTRIBUTE);
+    if (storageType == null) {
+      throw new IllegalStateException("Classpath storage requires non-default storage type");
+    }
 
-    ClasspathStorageProvider provider = getProvider(ClassPathStorageUtil.getStorageType(module));
-    assert provider != null;
+    ClasspathStorageProvider provider = getProvider(storageType);
+    if (provider == null) {
+      throw new IllegalStateException("Classpath storage provider not found, please ensure that Eclipse plugin is installed");
+    }
     myConverter = provider.createConverter(module);
-    assert myConverter != null;
+
+    myPathMacroSubstitutor = storageManager.getMacroSubstitutor();
 
     final List<String> paths = myConverter.getFilePaths();
     MessageBusConnection busConnection = module.getMessageBus().connect();
@@ -116,7 +125,7 @@ public class ClasspathStorage extends StateStorageBase<Boolean> {
 
   @Nullable
   @Override
-  protected <S> S deserializeState(@Nullable Element serializedState, @NotNull Class<S> stateClass, @Nullable S mergeInto) {
+  public <S> S deserializeState(@Nullable Element serializedState, @NotNull Class<S> stateClass, @Nullable S mergeInto) {
     if (serializedState == null) {
       return null;
     }
@@ -134,49 +143,50 @@ public class ClasspathStorage extends StateStorageBase<Boolean> {
 
   @Nullable
   @Override
-  protected Element getStateAndArchive(@NotNull Boolean storageData, Object component, @NotNull String componentName) {
+  public Element getSerializedState(@NotNull Boolean storageData, Object component, @NotNull String componentName, boolean archive) {
     if (storageData) {
       return null;
     }
 
     Element element = new Element("component");
+    ModifiableRootModel model = null;
+    AccessToken token = ReadAction.start();
     try {
-      ModifiableRootModel model = null;
-      AccessToken token = ReadAction.start();
+      model = ((ModuleRootManagerImpl)component).getModifiableModel();
+      // IDEA-137969 Eclipse integration: external remove of classpathentry is not synchronized
+      model.clear();
       try {
-        model = ((ModuleRootManagerImpl)component).getModifiableModel();
-        // IDEA-137969 Eclipse integration: external remove of classpathentry is not synchronized
-        model.clear();
         myConverter.readClasspath(model);
-        ((RootModelImpl)model).writeExternal(element);
       }
-      catch (WriteExternalException e) {
-        LOG.error(e);
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      ((RootModelImpl)model).writeExternal(element);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    finally {
+      try {
+        token.finish();
       }
       finally {
-        try {
-          token.finish();
-        }
-        finally {
-          if (model != null) {
-            model.dispose();
-          }
+        if (model != null) {
+          model.dispose();
         }
       }
-
-      if (myPathMacroSubstitutor != null) {
-        myPathMacroSubstitutor.expandPaths(element);
-        myPathMacroSubstitutor.addUnknownMacros("NewModuleRootManager", PathMacrosCollector.getMacroNames(element));
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
     }
 
-    storageDataRef.set(true);
+    if (myPathMacroSubstitutor != null) {
+      myPathMacroSubstitutor.expandPaths(element);
+      myPathMacroSubstitutor.addUnknownMacros("NewModuleRootManager", PathMacrosCollector.getMacroNames(element));
+    }
+
+    getStorageDataRef().set(true);
     return element;
   }
 
+  @NotNull
   @Override
   protected Boolean loadData() {
     return false;
@@ -192,7 +202,7 @@ public class ClasspathStorage extends StateStorageBase<Boolean> {
   public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames) {
     // if some file changed, so, changed
     componentNames.add("NewModuleRootManager");
-    storageDataRef.set(false);
+    getStorageDataRef().set(false);
   }
 
   @Nullable
@@ -210,13 +220,8 @@ public class ClasspathStorage extends StateStorageBase<Boolean> {
   }
 
   @NotNull
-  public static String getModuleDir(@NotNull Module module) {
-    return PathUtil.getParentPath(FileUtilRt.toSystemIndependentName(module.getModuleFilePath()));
-  }
-
-  @NotNull
   public static String getStorageRootFromOptions(@NotNull Module module) {
-    String moduleRoot = getModuleDir(module);
+    String moduleRoot = ModuleUtilCore.getModuleDirPath(module);
     String storageRef = module.getOptionValue(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE);
     if (storageRef == null) {
       return moduleRoot;

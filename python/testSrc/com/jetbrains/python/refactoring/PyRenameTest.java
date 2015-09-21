@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
@@ -198,6 +199,49 @@ public class PyRenameTest extends PyTestCase {
   // PY-11879
   public void testDocstringParams() {
     doTest("bar");
+  }
+
+  // PY-9795
+  public void testGoogleDocStringParam() {
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "bar");
+  }
+
+  // PY-9795
+  public void testGoogleDocStringAttribute() {
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "bar");
+  }
+
+  // PY-9795
+  public void testGoogleDocStringParamType() {
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "Bar");
+  }
+
+  // PY-9795
+  public void testGoogleDocStringReturnType() {
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "Bar");
+  }
+
+  // PY-16761
+  public void testGoogleDocStringPositionalVararg() {
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "bar");
+  }
+
+  // PY-16761
+  public void testGoogleDocStringKeywordVararg() {
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "bar");
+  }
+
+  // PY-16908
+  public void testNumpyDocStringCombinedParam() {
+    renameWithDocStringFormat(DocStringFormat.NUMPY, "bar");
+  }
+
+  private void renameWithDocStringFormat(DocStringFormat format, final String newName) {
+    runWithDocStringFormat(format, new Runnable() {
+      public void run() {
+        doTest(newName);
+      }
+    });
   }
 
   private void doRenameConflictTest(String newName, String expectedConflict) {

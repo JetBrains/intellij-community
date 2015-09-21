@@ -16,18 +16,29 @@
 
 package com.intellij.ide.fileTemplates.actions;
 
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog;
 import com.intellij.ide.util.DirectoryChooserUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.util.EditorHelper;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class CreateFromTemplateActionBase extends AnAction {
 
@@ -48,7 +59,7 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
     Project project = dir.getProject();
 
     FileTemplate selectedTemplate = getTemplate(project, dir);
-    if(selectedTemplate != null){
+    if (selectedTemplate != null){
       AnAction action = getReplacedAction(selectedTemplate);
       if (action != null) {
         action.actionPerformed(e);
@@ -62,9 +73,39 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
         if (createdElement != null) {
           elementCreated(dialog, createdElement);
           view.selectElement(createdElement);
+          if (selectedTemplate.isLiveTemplateEnabled() && createdElement instanceof PsiFile) {
+            startLiveTemplate((PsiFile)createdElement);
+          }
         }
       }
     }
+  }
+
+  public static void startLiveTemplate(PsiFile file) {
+    Project project = file.getProject();
+    final Editor editor = EditorHelper.openInEditor(file);
+    if (editor == null) return;
+
+    final TemplateImpl template = new TemplateImpl("", file.getText(), "");
+    template.setInline(true);
+    int count = template.getSegmentsCount();
+    if (count == 0) return;
+
+    Set<String> variables = new HashSet<String>();
+    for (int i = 0; i < count; i++) {
+      variables.add(template.getSegmentName(i));
+    }
+    variables.removeAll(TemplateImpl.INTERNAL_VARS_SET);
+    for (String variable : variables) {
+      template.addVariable(variable, null, "\"" + variable + "\"", true);
+    }
+    WriteCommandAction.runWriteCommandAction(project, new Runnable() {
+      @Override
+      public void run() {
+        editor.getDocument().setText(template.getTemplateText());
+      }
+    });
+    TemplateManager.getInstance(project).startTemplate(editor, template);
   }
 
   @Nullable
@@ -73,7 +114,9 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
   }
 
   @Nullable
-  protected abstract AnAction getReplacedAction(final FileTemplate selectedTemplate);
+  protected AnAction getReplacedAction(final FileTemplate selectedTemplate) {
+    return null;
+  }
 
   protected abstract FileTemplate getTemplate(final Project project, final PsiDirectory dir);
 

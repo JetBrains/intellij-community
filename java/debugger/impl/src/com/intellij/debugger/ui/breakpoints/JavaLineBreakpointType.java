@@ -138,8 +138,8 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
   public boolean matchesPosition(@NotNull LineBreakpoint<?> breakpoint, @NotNull SourcePosition position) {
     JavaBreakpointProperties properties = breakpoint.getProperties();
-    if (properties == null || properties instanceof JavaLineBreakpointProperties) {
-      if (properties != null && ((JavaLineBreakpointProperties)properties).getLambdaOrdinal() == null) return true;
+    if (properties instanceof JavaLineBreakpointProperties) {
+      if (!(breakpoint instanceof RunToCursorBreakpoint) && ((JavaLineBreakpointProperties)properties).getLambdaOrdinal() == null) return true;
       PsiElement containingMethod = getContainingMethod(breakpoint);
       if (containingMethod == null) return false;
       return DebuggerUtilsEx.inTheMethod(position, containingMethod);
@@ -153,7 +153,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     if (position == null) return null;
 
     JavaBreakpointProperties properties = breakpoint.getProperties();
-    if (properties instanceof JavaLineBreakpointProperties) {
+    if (properties instanceof JavaLineBreakpointProperties && !(breakpoint instanceof RunToCursorBreakpoint)) {
       Integer ordinal = ((JavaLineBreakpointProperties)properties).getLambdaOrdinal();
       if (ordinal > -1) {
         List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(position, true);

@@ -88,7 +88,9 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
             res = ((PySubscriptableType)type).getElementType(indexExpression, context);
           }
           else if (type instanceof PyCollectionType) {
-            res = ((PyCollectionType)type).getElementType(context);
+            // TODO: Select the parameter type that matches T in Iterable[T]
+            final List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes(context);
+            res = elementTypes.isEmpty() ? null : elementTypes.get(0);
           }
         }
       }

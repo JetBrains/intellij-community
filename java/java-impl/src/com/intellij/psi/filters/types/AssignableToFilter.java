@@ -15,15 +15,13 @@
  */
 package com.intellij.psi.filters.types;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.FilterUtil;
-import com.intellij.psi.filters.InitializableFilter;
-import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.infos.CandidateInfo;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,34 +30,11 @@ import java.util.List;
  * Time: 20:53:38
  * To change this template use Options | File Templates.
  */
-public class AssignableToFilter implements InitializableFilter{
-  private PsiType myType = null;
-  private ElementFilter myFilter = null;
+public class AssignableToFilter implements ElementFilter {
+  private final PsiType myType;
 
-  public AssignableToFilter(PsiType type){
+  public AssignableToFilter(@NotNull PsiType type){
     myType = type;
-  }
-
-  public AssignableToFilter(){}
-
-  @Override
-  public void init(Object[] type){
-    myFilter = new OrFilter();
-    final List<ElementFilter> filters = new ArrayList<ElementFilter>();
-    for (final Object o : type) {
-      PsiType currentType = null;
-      if (o instanceof PsiType) {
-        currentType = (PsiType)o;
-      }
-      else if (o instanceof PsiClass) {
-        final PsiClass psiClass = (PsiClass)o;
-        currentType = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory().createType(psiClass);
-      }
-      if (currentType != null) {
-        filters.add(new AssignableToFilter(currentType));
-      }
-    }
-    myFilter = new OrFilter(filters.toArray(new ElementFilter[filters.size()]));
   }
 
   @Override
@@ -69,31 +44,21 @@ public class AssignableToFilter implements InitializableFilter{
 
   @Override
   public boolean isAcceptable(Object element, PsiElement context){
-    if(myType != null){
-      if(element == null) return false;
-      if (element instanceof PsiType) return myType.isAssignableFrom((PsiType) element);
-      PsiSubstitutor substitutor = null;
-      if(element instanceof CandidateInfo){
-        final CandidateInfo info = (CandidateInfo)element;
-        substitutor = info.getSubstitutor();
-        element = info.getElement();
-      }
+    if(element == null) return false;
+    if (element instanceof PsiType) return myType.isAssignableFrom((PsiType) element);
+    PsiSubstitutor substitutor = null;
+    if(element instanceof CandidateInfo){
+      final CandidateInfo info = (CandidateInfo)element;
+      substitutor = info.getSubstitutor();
+      element = info.getElement();
+    }
 
-      PsiType typeByElement = FilterUtil.getTypeByElement((PsiElement)element, context);
-      if(substitutor != null) typeByElement = substitutor.substitute(typeByElement);
-      return typeByElement != null && typeByElement.isAssignableFrom(myType) && !typeByElement.equals(myType);
-    }
-    else if(myFilter != null){
-      if(element == null) return false;
-      return myFilter.isAcceptable(element, context);
-    }
-    else return false;
+    PsiType typeByElement = FilterUtil.getTypeByElement((PsiElement)element, context);
+    if(substitutor != null) typeByElement = substitutor.substitute(typeByElement);
+    return typeByElement != null && typeByElement.isAssignableFrom(myType) && !typeByElement.equals(myType);
   }
 
   public String toString(){
-    if(myType != null)
-      return "assignable-to(" + myType + ")";
-    else if(myFilter != null) return myFilter.toString();
-    return "uninitialized-equals-filter";
+    return "assignable-to(" + myType + ")";
   }
 }

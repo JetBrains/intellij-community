@@ -28,8 +28,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.documentation.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.formatter.PyBlock;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -37,9 +38,11 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
@@ -50,52 +53,39 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 public class AddImportHelper {
   private static final Logger LOG = Logger.getInstance("#" + AddImportHelper.class.getName());
 
-  public static final Comparator<PyImportStatementBase> IMPORT_BY_NAME_COMPARATOR = new Comparator<PyImportStatementBase>() {
+  public static final Comparator<PyImportStatementBase> IMPORT_TYPE_THEN_NAME_COMPARATOR = new Comparator<PyImportStatementBase>() {
     @Override
     public int compare(@NotNull PyImportStatementBase import1, @NotNull PyImportStatementBase import2) {
-      final QualifiedName firstName1 = getImportFirstQualifiedName(import1);
-      final QualifiedName firstName2 = getImportFirstQualifiedName(import2);
-      // Broken imports go last
-      final int comparedByFirstName = compareNullsLast(firstName1, firstName2);
-      // In case of two "from imports" with the same source break tie by the first imported name
-      if (comparedByFirstName != 0 || !(import1 instanceof PyFromImportStatement && import2 instanceof PyFromImportStatement)) {
-        return comparedByFirstName;
-      }
-      // Star imports go first
-      if (((PyFromImportStatement)import1).isStarImport()) {
+      // normal imports go first, then "from" imports
+      if (import1 instanceof PyImportStatement && import2 instanceof PyFromImportStatement) {
         return -1;
       }
-      if (((PyFromImportStatement)import2).isStarImport()) {
+      if (import1 instanceof PyFromImportStatement && import2 instanceof PyImportStatement) {
         return 1;
       }
-      final PyImportElement importedElem1 = ArrayUtil.getFirstElement(import1.getImportElements());
-      final PyImportElement importedElem2 = ArrayUtil.getFirstElement(import2.getImportElements());
-      return compareNullsLast(importedElem1 == null ? null : importedElem1.getImportedQName(),
-                              importedElem2 == null ? null : importedElem2.getImportedQName());
+
+      return ContainerUtil.compareLexicographically(getSortNames(import1), getSortNames(import2));
     }
 
-    private <T> int compareNullsLast(@Nullable Comparable<? super T> comparable, @Nullable T comparedWith) {
-      if (comparable == null) {
-        return comparedWith == null ? 0 : 1;
-      }
-      else if (comparedWith == null) {
-        return -1;
-      }
-      return comparable.compareTo(comparedWith);
-    }
-
-    @Nullable
-    public QualifiedName getImportFirstQualifiedName(@NotNull PyImportStatementBase importStatement) {
-      if (importStatement instanceof PyFromImportStatement) {
-        return ((PyFromImportStatement)importStatement).getImportSourceQName();
-      }
-      else if (importStatement instanceof PyImportStatement) {
-        final PyImportElement importElement = ArrayUtil.getFirstElement(importStatement.getImportElements());
-        if (importElement != null) {
-          return importElement.getImportedQName();
+    @NotNull
+    public List<String> getSortNames(@NotNull PyImportStatementBase importStatement) {
+      final List<String> result = new ArrayList<String>();
+      final PyFromImportStatement fromImport = as(importStatement, PyFromImportStatement.class);
+      if (fromImport != null) {
+        final QualifiedName source = fromImport.getImportSourceQName();
+        // because of that relative imports go to the end of an import block
+        result.add(StringUtil.repeatSymbol('.', fromImport.getRelativeLevel()));
+        result.add(source != null ? source.toString() : "");
+        if (fromImport.isStarImport()) {
+          result.add("*");
         }
       }
-      return null;
+      
+      for (PyImportElement importElement : importStatement.getImportElements()) {
+        final QualifiedName qualifiedName = importElement.getImportedQName();
+        result.add(qualifiedName != null ? qualifiedName.toString() : "");
+      }
+      return result;
     }
   };
 
@@ -194,14 +184,18 @@ public class AddImportHelper {
     while (feeler != null);
     final ImportPriority priorityAbove = importAbove != null ? getImportPriority(importAbove) : null;
     final ImportPriority priorityBelow = importBelow != null ? getImportPriority(importBelow) : null;
-    if (priorityAbove != null && priority.compareTo(priorityAbove) > 0) {
+    if (newImport != null && (priorityAbove == null || priorityAbove.compareTo(priority) < 0)) {
       newImport.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, true);
-      if (priorityBelow == priority) {
+    }
+    if (priorityBelow != null) {
+      // actually not necessary because existing import with higher priority (i.e. lower import group) 
+      // probably should have IMPORT_GROUP_BEGIN flag already, but we add it anyway just for safety
+      if (priorityBelow.compareTo(priority) > 0) {
+        importBelow.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, true);
+      }
+      else if (priorityBelow == priority) {
         importBelow.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, null);
       }
-    }
-    if (priorityBelow != null && priority.compareTo(priorityBelow) < 0) {
-      importBelow.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, true);
     }
     return seeker;
   }
@@ -217,7 +211,7 @@ public class AddImportHelper {
     if (newImport == null) {
       return false;
     }
-    return IMPORT_BY_NAME_COMPARATOR.compare(newImport, existingImport) < 0;
+    return IMPORT_TYPE_THEN_NAME_COMPARATOR.compare(newImport, existingImport) < 0;
   }
 
   @NotNull
@@ -233,12 +227,12 @@ public class AddImportHelper {
     else {
       final PyImportElement firstImportElement = ArrayUtil.getFirstElement(importStatement.getImportElements());
       if (firstImportElement == null) {
-        return ImportPriority.PROJECT;
+        return ImportPriority.THIRD_PARTY;
       }
       resolved = firstImportElement.resolve();
     }
     if (resolved == null) {
-      return ImportPriority.BUILTIN;
+      return ImportPriority.THIRD_PARTY;
     }
 
     final PsiFileSystemItem resolvedFileOrDir;
@@ -255,7 +249,7 @@ public class AddImportHelper {
   public static ImportPriority getImportPriority(@NotNull PsiElement importLocation, @NotNull PsiFileSystemItem toImport) {
     final VirtualFile vFile = toImport.getVirtualFile();
     if (vFile == null) {
-      return ImportPriority.PROJECT;
+      return ImportPriority.THIRD_PARTY;
     }
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(toImport.getProject());
     if (projectRootManager.getFileIndex().isInContent(vFile)) {

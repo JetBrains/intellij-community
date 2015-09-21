@@ -68,6 +68,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   private final ToggleWindowedModeAction myToggleWindowedModeAction;
   private final ToggleSideModeAction myToggleSideModeAction;
   private final ToggleContentUiTypeAction myToggleContentUiTypeAction;
+  private final RemoveStripeButtonAction myHideStripeButtonAction;
 
   private ActionGroup myAdditionalGearActions;
   /**
@@ -97,6 +98,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myToggleDockModeAction = new ToggleDockModeAction();
     myToggleAutoHideModeAction = new TogglePinnedModeAction();
     myToggleContentUiTypeAction = new ToggleContentUiTypeAction();
+    myHideStripeButtonAction = new RemoveStripeButtonAction();
     myToggleToolbarGroup = ToggleToolbarAction.createToggleToolbarGroup(myProject, myToolWindow);
 
     myHeader = new ToolWindowHeader(toolWindow, info, new Producer<ActionGroup>() {
@@ -257,6 +259,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   private void fireContentUiTypeChanges(ToolWindowContentUiType type) {
     myDispatcher.getMulticaster().contentUiTypeChanges(this, type);
+  }
+
+  private void fireVisibleOnPanelChanged(final boolean visibleOnPanel) {
+    myDispatcher.getMulticaster().visibleStripeButtonChanged(this, visibleOnPanel);
   }
 
   private void init() {
@@ -451,6 +457,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       group.add(myToggleWindowedModeAction);
       group.add(myToggleSideModeAction);
     }
+    group.add(myHideStripeButtonAction);
     return group;
   }
 
@@ -630,6 +637,27 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     @Override
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
+    }
+  }
+
+  private final class RemoveStripeButtonAction extends AnAction implements DumbAware {
+    public RemoveStripeButtonAction() {
+      Presentation presentation = getTemplatePresentation();
+      presentation.setText(ActionsBundle.message("action.RemoveStripeButton.text"));
+      presentation.setDescription(ActionsBundle.message("action.RemoveStripeButton.description"));
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(myInfo.isShowStripeButton());
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      fireVisibleOnPanelChanged(false);
+      if (getToolWindow().isActive()) {
+        fireHidden();
+      }
     }
   }
 

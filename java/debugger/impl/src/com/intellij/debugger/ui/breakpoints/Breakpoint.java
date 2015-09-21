@@ -79,10 +79,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     myXBreakpoint = xBreakpoint;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @NotNull
   protected P getProperties() {
     return myXBreakpoint.getProperties();
   }
@@ -513,9 +515,6 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   @Override
   public boolean isCountFilterEnabled() {
-    if (getProperties() == null) {
-      return false;
-    }
     return getProperties().isCOUNT_FILTER_ENABLED();
   }
   public void setCountFilterEnabled(boolean enabled) {
@@ -537,9 +536,6 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   @Override
   public boolean isClassFiltersEnabled() {
-    if (getProperties() == null) {
-      return false;
-    }
     return getProperties().isCLASS_FILTERS_ENABLED();
   }
 
@@ -573,9 +569,6 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   @Override
   public boolean isInstanceFiltersEnabled() {
-    if (getProperties() == null) {
-      return false;
-    }
     return getProperties().isINSTANCE_FILTERS_ENABLED();
   }
 
@@ -647,7 +640,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     myXBreakpoint.setConditionExpression(TextWithImportsImpl.toXExpression(condition));
   }
 
-  protected void addInstanceFilter(long l) {
+  public void addInstanceFilter(long l) {
     getProperties().addInstanceFilter(l);
   }
 

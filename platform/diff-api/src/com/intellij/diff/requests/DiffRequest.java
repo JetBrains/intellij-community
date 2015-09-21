@@ -41,6 +41,9 @@ public abstract class DiffRequest implements UserDataHolder {
   public void onAssigned(boolean isAssigned) {
   }
 
+  /**
+   * @see com.intellij.diff.util.DiffUserDataKeys
+   */
   @Nullable
   @Override
   public <T> T getUserData(@NotNull Key<T> key) {

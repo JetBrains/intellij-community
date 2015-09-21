@@ -121,7 +121,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND);
     SliceAnalysisParams params = createParams(element, dataFlowToThis);
 
-    SliceRootNode rootNode = new SliceRootNode(myProject, new DuplicateMap(), SliceUsage.createRootUsage(element, params));
+    SliceRootNode rootNode = new SliceRootNode(myProject, new DuplicateMap(), JavaSliceUsage.createRootUsage(element, params));
 
     return new SlicePanel(myProject, dataFlowToThis, rootNode, false, toolWindow) {
       @Override

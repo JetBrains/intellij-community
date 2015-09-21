@@ -21,6 +21,7 @@ import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.NavigatableMessageElement;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
@@ -57,12 +58,14 @@ public class ErrorViewTextExporter implements ExporterToTextFile {
     myChangeListener = null;
   }
 
+  @NotNull
   public String getReportText() {
     StringBuffer buffer = new StringBuffer();
     getReportText(buffer, (ErrorTreeElement)myStructure.getRootElement(), myCbShowDetails.isSelected(), 0);
     return buffer.toString();
   }
 
+  @NotNull
   public String getDefaultFilePath() {
     return "";
   }

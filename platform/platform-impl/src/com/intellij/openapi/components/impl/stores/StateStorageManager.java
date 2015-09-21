@@ -32,9 +32,6 @@ public interface StateStorageManager {
   @NotNull
   StateStorage getStateStorage(@NotNull Storage storageSpec);
 
-  @NotNull
-  StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType);
-
   /**
    * Rename file
    * @param path System-independent full old path (/project/bar.iml or collapse $MODULE_FILE$)

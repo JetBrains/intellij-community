@@ -44,8 +44,6 @@ import java.awt.geom.Path2D;
 @SuppressWarnings("GtkPreferredJComboBoxRenderer")
 public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   private final JComboBox myComboBox;
-  // Flag for calculating the display size
-  private boolean myDisplaySizeDirty = true;
 
   // Cached the size that the display needs to render the largest item
   private Dimension myDisplaySizeCache = JBUI.emptySize();
@@ -187,7 +185,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     JBInsets.addTo(display, myPadding);
 
     myDisplaySizeCache.setSize(display.width, display.height);
-    myDisplaySizeDirty = false;
 
     return display;
   }

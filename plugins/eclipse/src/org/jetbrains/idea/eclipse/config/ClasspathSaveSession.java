@@ -65,7 +65,7 @@ final class ClasspathSaveSession implements StateStorage.ExternalizationSession,
   }
 
   @Override
-  public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state) {
+  public void setState(Object component, @NotNull String componentName, @NotNull Object state) {
     try {
       CachedXmlDocumentSet fileSet = EclipseClasspathStorageProvider.getFileCache(module);
 

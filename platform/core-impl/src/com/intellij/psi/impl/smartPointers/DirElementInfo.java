@@ -15,20 +15,72 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * User: cdr
 */
-class DirElementInfo extends FileElementInfo {
+class DirElementInfo extends SmartPointerElementInfo {
+  private final VirtualFile myVirtualFile;
+  private final Project myProject;
+
+
   public DirElementInfo(@NotNull PsiDirectory directory) {
-    super(directory.getProject(), directory.getVirtualFile());
+    myProject = directory.getProject();
+    myVirtualFile = directory.getVirtualFile();
   }
 
   @Override
   public PsiElement restoreElement() {
     return SelfElementInfo.restoreDirectoryFromVirtual(myVirtualFile, myProject);
   }
+
+  @Override
+  public PsiFile restoreFile() {
+    return null;
+  }
+
+  @Override
+  public int elementHashCode() {
+    return myVirtualFile.hashCode();
+  }
+
+  @Override
+  public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
+    if (other instanceof DirElementInfo) {
+      return Comparing.equal(myVirtualFile, ((DirElementInfo)other).myVirtualFile);
+    }
+    return Comparing.equal(restoreElement(), other.restoreElement());
+  }
+
+  @Override
+  public VirtualFile getVirtualFile() {
+    return myVirtualFile;
+  }
+
+  @Override
+  public Segment getRange() {
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public Project getProject() {
+    return myProject;
+  }
+
+  @Nullable
+  @Override
+  public Segment getPsiRange() {
+    return null;
+  }
+
 }

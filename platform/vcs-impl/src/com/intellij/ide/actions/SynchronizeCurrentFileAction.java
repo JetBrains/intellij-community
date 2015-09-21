@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -30,6 +29,9 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.openapi.util.text.StringUtil.escapeMnemonics;
+import static com.intellij.openapi.util.text.StringUtil.firstLast;
 
 public class SynchronizeCurrentFileAction extends AnAction implements DumbAware {
   @Override
@@ -40,14 +42,12 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-
-    String message = getMessage(files);
     e.getPresentation().setEnabledAndVisible(true);
-    e.getPresentation().setText(StringUtil.escapeMnemonics(message));
+    e.getPresentation().setText(getMessage(files));
   }
 
   private static String getMessage(VirtualFile[] files) {
-    return files.length == 1 ? IdeBundle.message("action.synchronize.file", files[0].getName())
+    return files.length == 1 ? IdeBundle.message("action.synchronize.file", escapeMnemonics(firstLast(files[0].getName(), 20)))
                              : IdeBundle.message("action.synchronize.selected.files");
   }
 

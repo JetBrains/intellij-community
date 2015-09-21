@@ -4,7 +4,6 @@ import com.intellij.ProjectTopics
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.ModifiableModuleModel
@@ -30,6 +29,9 @@ import kotlin.properties.Delegates
 class ModuleStoreRenameTest {
   companion object {
     @ClassRule val projectRule = ProjectRule()
+
+    private val Module.storage: FileBasedStorage
+      get() = (stateStore.getStateStorageManager() as StateStorageManagerImpl).getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)).first()
   }
 
   var module: Module by Delegates.notNull()
@@ -83,7 +85,7 @@ class ModuleStoreRenameTest {
   // project structure
   @Test fun `rename module using model`() {
     runInEdtAndWait { module.saveStore() }
-    val storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT) as FileBasedStorage
+    val storage = module.storage
     val oldFile = storage.file
     assertThat(oldFile).isFile()
 
@@ -97,7 +99,7 @@ class ModuleStoreRenameTest {
   // project view
   @Test fun `rename module using rename virtual file`() {
     runInEdtAndWait { module.saveStore() }
-    var storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT) as FileBasedStorage
+    var storage = module.storage
     val oldFile = storage.file
     assertThat(oldFile).isFile()
 
@@ -111,8 +113,7 @@ class ModuleStoreRenameTest {
   // we cannot test external rename yet, because it is not supported - ModuleImpl doesn't support delete and create events (in case of external change we don't get move event, but get "delete old" and "create new")
 
   private fun assertRename(newName: String, oldFile: File) {
-    val storageManager = module.stateStore.getStateStorageManager()
-    val newFile = (storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT) as FileBasedStorage).file
+    val newFile = module.storage.file
     assertThat(newFile.getName()).isEqualTo("$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     assertThat(oldFile)
       .doesNotExist()
@@ -120,14 +121,12 @@ class ModuleStoreRenameTest {
     assertThat(newFile).isFile()
 
     // ensure that macro value updated
-    assertThat(storageManager.expandMacros(StoragePathMacros.MODULE_FILE)).isEqualTo(newFile.systemIndependentPath)
+    assertThat(module.stateStore.getStateStorageManager().expandMacros(StoragePathMacros.MODULE_FILE)).isEqualTo(newFile.systemIndependentPath)
   }
 
   @Test fun `rename module parent virtual dir`() {
     runInEdtAndWait { module.saveStore() }
-    val storageManager = module.stateStore.getStateStorageManager()
-    val storage = storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT) as FileBasedStorage
-
+    val storage = module.storage
     val oldFile = storage.file
     val parentVirtualDir = storage.getVirtualFile()!!.getParent()
     runInEdtAndWait { runWriteAction { parentVirtualDir.rename(null, UUID.randomUUID().toString()) } }

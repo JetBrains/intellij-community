@@ -33,6 +33,7 @@ import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -138,7 +139,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public boolean isShowIdLabel() {
-    return myShowIdLabel;
+    return myShowIdLabel && Registry.is("debugger.showTypes");
   }
 
   public void setShowIdLabel(boolean showIdLabel) {
@@ -273,10 +274,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public void setAncestor(NodeDescriptor oldDescriptor) {
     super.setAncestor(oldDescriptor);
     myIsNew = false;
-    ValueDescriptorImpl other = (ValueDescriptorImpl)oldDescriptor;
-    if (other.myValueReady) {
-      myValue = other.getValue();
-      myValueReady = true;
+    if (!myValueReady) {
+      ValueDescriptorImpl other = (ValueDescriptorImpl)oldDescriptor;
+      if (other.myValueReady) {
+        myValue = other.getValue();
+        myValueReady = true;
+      }
     }
   }
 
@@ -527,8 +530,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   private static boolean isEnumConstant(final ObjectReference objRef) {
-    final Type type = objRef.type();
-    return type instanceof ClassType && ((ClassType)type).isEnum();
+    try {
+      Type type = objRef.type();
+      return type instanceof ClassType && ((ClassType)type).isEnum();
+    } catch (ObjectCollectedException ignored) {}
+    return false;
   }
 
   public boolean canSetValue() {

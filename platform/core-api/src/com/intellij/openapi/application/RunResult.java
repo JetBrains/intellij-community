@@ -40,8 +40,7 @@ public class RunResult<T> extends Result<T> {
     catch (Throwable t) {
       myThrowable = t;
       if (!myActionRunnable.isSilentExecution()) {
-        ExceptionUtil.rethrowUnchecked(t);
-        throw new RuntimeException(myThrowable);
+        ExceptionUtil.rethrowAllAsUnchecked(t);
       }
     }
     finally {
@@ -67,8 +66,7 @@ public class RunResult<T> extends Result<T> {
   @NotNull
   public RunResult<T> throwException() throws RuntimeException, Error {
     if (myThrowable != null) {
-      ExceptionUtil.rethrowUnchecked(myThrowable);
-      throw new RuntimeException(myThrowable);
+      ExceptionUtil.rethrowAllAsUnchecked(myThrowable);
     }
 
     return this;

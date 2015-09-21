@@ -809,7 +809,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         }
         if (HeavyProcessLatch.INSTANCE.isRunning()) {
           if (myAlarm.isEmpty()) {
-            myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
+            // wait for heavy processing to stop, re-schedule daemon but not too soon
+            myAlarm.addRequest(myUpdateRunnable, Math.max(mySettings.AUTOREPARSE_DELAY,100));
           }
           return;
         }

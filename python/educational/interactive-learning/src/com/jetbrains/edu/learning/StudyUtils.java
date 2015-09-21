@@ -5,6 +5,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +27,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
@@ -111,7 +116,7 @@ public class StudyUtils {
     if (project != null) {
       final StudyEditor studyEditor = getSelectedStudyEditor(project);
       if (studyEditor != null) {
-        presentation.setEnabled(true);
+        presentation.setEnabledAndVisible(true);
       }
     }
   }
@@ -210,6 +215,18 @@ public class StudyUtils {
   public static StudyLanguageManager getLanguageManager(@NotNull final Course course) {
     Language language = course.getLanguageById();
     return language == null ? null : StudyLanguageManager.INSTANCE.forLanguage(language);
+  }
+
+  public static boolean isTestsFile(@NotNull Project project, @NotNull final String name) {
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return false;
+    }
+    StudyLanguageManager manager = getLanguageManager(course);
+    if (manager == null) {
+      return false;
+    }
+    return manager.getTestFileName().equals(name);
   }
 
   @Nullable
@@ -321,5 +338,54 @@ public class StudyUtils {
       return null;
     }
     return FileDocumentManager.getInstance().getDocument(patternFile);
+  }
+
+  public static boolean isRenameableOrMoveable(@NotNull final Project project, @NotNull final Course course, @NotNull final PsiElement element) {
+    if (element instanceof PsiFile) {
+      VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
+      if (project.getBaseDir().equals(virtualFile.getParent())) {
+        return false;
+      }
+      TaskFile file = getTaskFile(project, virtualFile);
+      if (file != null) {
+        return false;
+      }
+      String name = virtualFile.getName();
+      return !isTestsFile(project, name) && !EduNames.TASK_HTML.equals(name);
+    }
+    if (element instanceof PsiDirectory) {
+      VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
+      VirtualFile parent = virtualFile.getParent();
+      if (parent == null) {
+        return true;
+      }
+      if (project.getBaseDir().equals(parent)) {
+        return false;
+      }
+      Lesson lesson = course.getLesson(parent.getName());
+      if (lesson != null) {
+        Task task = lesson.getTask(virtualFile.getName());
+        if (task != null) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  public static boolean canRenameOrMove(DataContext dataContext) {
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (element == null || project == null) {
+      return false;
+    }
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return false;
+    }
+    if (!isRenameableOrMoveable(project, course, element)) {
+      return true;
+    }
+    return false;
   }
 }

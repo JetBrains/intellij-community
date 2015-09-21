@@ -1,5 +1,0 @@
-<root>
-  <item name='io.netty.buffer.ByteBuf java.lang.String toString(int, int, java.nio.charset.Charset)'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-</root>

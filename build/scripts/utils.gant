@@ -246,14 +246,6 @@ binding.setVariable("allModules", {
   return project.modules
 })
 
-binding.setVariable("printUnusedModules", {Set<String> usedModules ->
-  allModules().each {JpsModule m ->
-    if (!usedModules.contains(m.name) && hasSourceRoots(m)) {
-      projectBuilder.warning("Module $m.name is not used in project layout")
-    }
-  }
-})
-
 requireProperty("home", guessHome())
 
 String readSnapshotBuild() {
@@ -271,7 +263,7 @@ projectBuilder.buildInfoPrinter = new TeamCityBuildInfoPrinter()
 projectBuilder.compressJars = false
 
 binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
-  if (!artifactPath.startsWith(home)) {
+  if (!FileUtil.startsWith(artifactPath, home)) {
     projectBuilder.error("Artifact path $artifactPath should start with $home")
   }
   def relativePath = artifactPath.substring(home.length())

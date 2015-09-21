@@ -365,7 +365,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
       assert element == end : end + " is not successor of " + this +" in the .getTreeNext() chain";
     }
     if (parent != null){
-      if (this == parent.getFirstChildNode()) {
+      if (getTreePrev() == null) {
         parent.setFirstChildNode(end);
       }
       if (end == null) {

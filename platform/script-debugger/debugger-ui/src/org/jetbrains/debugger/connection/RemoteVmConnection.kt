@@ -72,7 +72,7 @@ public abstract class RemoteVmConnection : VmConnection<Vm>() {
         NettyUtil.connect(createBootstrap(address, result), address, connectionPromise, if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition)
       }
     })
-    connectCancelHandler.set(Runnable {  future.cancel(true) })
+    connectCancelHandler.set(Runnable { future.cancel(true) })
   }
 
   protected open fun connectedAddressToPresentation(address: InetSocketAddress, vm: Vm): String = address.getHostName() + ":" + address.getPort()
@@ -89,7 +89,7 @@ public abstract class RemoteVmConnection : VmConnection<Vm>() {
 
 public fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemToString: (T) -> String): Promise<T> {
   if (targets.size() == 1) {
-    return ResolvedPromise(ContainerUtil.getFirstItem(targets))
+    return ResolvedPromise(ContainerUtil.getFirstItem(targets)!!)
   }
   else if (targets.isEmpty()) {
     return RejectedPromise("No tabs to inspect")

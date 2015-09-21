@@ -45,6 +45,10 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
   private static class CodeUsageGroup extends UsageGroupBase {
     private static final UsageGroup INSTANCE = new CodeUsageGroup();
 
+    private CodeUsageGroup() {
+      super(1);
+    }
+
     @Override
     @NotNull
     public String getText(UsageView view) {
@@ -55,18 +59,14 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
       //noinspection HardCodedStringLiteral
       return "CodeUsages";
     }
-
-    @Override
-    public int compareTo(@NotNull UsageGroup usageGroup) {
-      if (usageGroup instanceof DynamicUsageGroup) {
-        return -1;
-      }
-      return usageGroup == this ? 0 : 1;
-    }
   }
 
   private static class UsageInGeneratedCodeGroup extends UsageGroupBase {
     public static final UsageGroup INSTANCE = new UsageInGeneratedCodeGroup();
+
+    private UsageInGeneratedCodeGroup() {
+      super(2);
+    }
 
     @Override
     @NotNull
@@ -77,20 +77,19 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     public String toString() {
       return "UsagesInGeneratedCode";
     }
-
-    @Override
-    public int compareTo(@NotNull UsageGroup usageGroup) {
-      return usageGroup == this ? 0 : -1;
-    }
   }
 
   private static class NonCodeUsageGroup extends UsageGroupBase {
     public static final UsageGroup INSTANCE = new NonCodeUsageGroup();
 
+    private NonCodeUsageGroup() {
+      super(0);
+    }
+
     @Override
     @NotNull
     public String getText(UsageView view) {
-      return view == null ? UsageViewBundle.message("node.group.code.usages") : view.getPresentation().getNonCodeUsagesString();
+      return view == null ? UsageViewBundle.message("node.non.code.usages") : view.getPresentation().getNonCodeUsagesString();
     }
 
     @Override
@@ -101,12 +100,15 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
       //noinspection HardCodedStringLiteral
       return "NonCodeUsages";
     }
-    public int compareTo(@NotNull UsageGroup usageGroup) { return usageGroup == this ? 0 : -1; }
   }
 
   private static class DynamicUsageGroup extends UsageGroupBase {
     public static final UsageGroup INSTANCE = new DynamicUsageGroup();
     @NonNls private static final String DYNAMIC_CAPTION = "Dynamic usages";
+
+    public DynamicUsageGroup() {
+      super(3);
+    }
 
     @Override
     @NotNull
@@ -124,7 +126,6 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
       //noinspection HardCodedStringLiteral
       return "DynamicUsages";
     }
-    public int compareTo(@NotNull UsageGroup usageGroup) { return usageGroup == this ? 0 : 1; }
   }
 
   @Override

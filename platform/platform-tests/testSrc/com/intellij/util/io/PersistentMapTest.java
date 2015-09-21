@@ -284,7 +284,7 @@ public class PersistentMapTest extends TestCase {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("Perforamnce", 9000, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest("Performance", 9000, new ThrowableRunnable() {
       @Override
       public void run() throws Exception {
         try {
@@ -513,6 +513,7 @@ public class PersistentMapTest extends TestCase {
       clearMap(file, map);
     }
   }
+
   public void test2GLimitWithAppend() throws IOException {
     if (!DO_SLOW_TEST) return;
     File file = FileUtil.createTempFile("persistent", "map");

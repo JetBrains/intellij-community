@@ -71,7 +71,7 @@ public class JavaTestGenerator implements TestGenerator {
                 addSuperClass(targetClass, project, superClassName);
               }
 
-              Editor editor = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
+              Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, targetClass.getContainingFile(), targetClass);
               addTestMethods(editor,
                              targetClass,
                              frameworkDescriptor,

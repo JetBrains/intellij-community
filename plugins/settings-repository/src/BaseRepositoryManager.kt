@@ -219,7 +219,7 @@ class RepositoryVirtualFile(private val path: String) : LightVirtualFile(PathUti
     throw IllegalStateException("You must use setBinaryContent")
   }
 
-  override fun setContent(requestor: Any?, content: CharSequence?, fireEvent: Boolean) {
+  override fun setContent(requestor: Any?, content: CharSequence, fireEvent: Boolean) {
     throw IllegalStateException("You must use setBinaryContent")
   }
 }

@@ -25,8 +25,6 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -119,29 +117,25 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
   @Override
   public void apply() throws ConfigurationException {
     final Ref<ConfigurationException> exceptionRef = Ref.create();
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      public void run() {
-        try {
-          ProjectJdksConfigurable.super.apply();
-          boolean modifiedJdks = false;
-          for (int i = 0; i < myRoot.getChildCount(); i++) {
-            final NamedConfigurable configurable = ((MyNode)myRoot.getChildAt(i)).getConfigurable();
-            if (configurable.isModified()) {
-              configurable.apply();
-              modifiedJdks = true;
-            }
-          }
-
-          if (myProjectJdksModel.isModified() || modifiedJdks) {
-            myProjectJdksModel.apply(ProjectJdksConfigurable.this);
-          }
-          myProjectJdksModel.setProjectSdk(getSelectedJdk());
-        }
-        catch (ConfigurationException e) {
-          exceptionRef.set(e);
+    try {
+      ProjectJdksConfigurable.super.apply();
+      boolean modifiedJdks = false;
+      for (int i = 0; i < myRoot.getChildCount(); i++) {
+        final NamedConfigurable configurable = ((MyNode)myRoot.getChildAt(i)).getConfigurable();
+        if (configurable.isModified()) {
+          configurable.apply();
+          modifiedJdks = true;
         }
       }
-    });
+
+      if (myProjectJdksModel.isModified() || modifiedJdks) {
+        myProjectJdksModel.apply(ProjectJdksConfigurable.this);
+      }
+      myProjectJdksModel.setProjectSdk(getSelectedJdk());
+    }
+    catch (ConfigurationException e) {
+      exceptionRef.set(e);
+    }
     if (!exceptionRef.isNull()) {
       throw exceptionRef.get();
     }

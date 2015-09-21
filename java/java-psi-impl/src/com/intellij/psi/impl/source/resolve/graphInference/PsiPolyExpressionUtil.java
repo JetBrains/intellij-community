@@ -47,7 +47,7 @@ public class PsiPolyExpressionUtil {
       return isPolyExpression(((PsiParenthesizedExpression)expression).getExpression());
     }
     else if (expression instanceof PsiNewExpression) {
-      final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)expression).getClassReference();
+      final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)expression).getClassOrAnonymousClassReference();
       if (classReference != null) {
         final PsiReferenceParameterList parameterList = classReference.getParameterList();
         if (parameterList != null) {

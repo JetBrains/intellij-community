@@ -196,7 +196,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Configu
     mySelectedCharsetForPropertiesFiles.set(encodingManager.getDefaultCharsetForPropertiesFiles(null));
 
     mySelectedIdeCharset.set(EncodingManager.getInstance().getDefaultCharsetName().isEmpty() ? null : EncodingManager.getInstance().getDefaultCharset());
-    mySelectedProjectCharset.set(EncodingProjectManager.getInstance(myProject).getDefaultCharsetName().isEmpty() ? null : EncodingProjectManager.getInstance(myProject).getDefaultCharset());
+    mySelectedProjectCharset.set(encodingManager.getDefaultCharsetName().isEmpty() ? null : encodingManager.getDefaultCharset());
     myPropertiesEncodingAction.update(null);
     myIdeEncodingAction.update(null);
     myProjectEncodingAction.update(null);

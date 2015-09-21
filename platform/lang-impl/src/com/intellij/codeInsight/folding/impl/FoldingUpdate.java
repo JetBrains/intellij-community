@@ -19,6 +19,7 @@ package com.intellij.codeInsight.folding.impl;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -254,17 +255,28 @@ public class FoldingUpdate {
       if (psi != null && foldingBuilder != null) {
         for (FoldingDescriptor descriptor : LanguageFolding.buildFoldingDescriptors(foldingBuilder, psi, document, quick)) {
           TextRange range = descriptor.getRange();
+          ASTNode element = descriptor.getElement();
+          PsiElement psiElement = element.getPsi();
           if (!docRange.contains(range)) {
+            PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
             LOG.error("Folding descriptor " + descriptor +
                       " made by " + foldingBuilder +
-                      " for " +language +
+                      " for " + language +
                       " and called on file " + psi +
-                      " is outside document range: " + docRange,
+                      " is outside document range: " + docRange +
+                      ", document committed: " + psiDocumentManager.isCommitted(document) +
+                      ", element range: " + element.getTextRange() +
+                      ", PSI element: " + psiElement +
+                      ", PSI element range: " + (psiElement == null ? null : psiElement.getTextRange()) +
+                      ", PSI element is valid: " + (psiElement != null && psiElement.isValid()) +
+                      ", PSI file is valid: " + file.isValid() +
+                      ", PSI file range: " + file.getTextRange() +
+                      ", PSI file corresponds to document: " + (file == psiDocumentManager.getCachedPsiFile(document)),
                       ApplicationManager.getApplication().isInternal()
                       ? new Attachment[] {AttachmentFactory.createAttachment(document), new Attachment("psiTree.txt", DebugUtil.psiToString(psi, false, true))}
                       : new Attachment[0]);
           }
-          elementsToFoldMap.putValue(descriptor.getElement().getPsi(), descriptor);
+          elementsToFoldMap.putValue(psiElement, descriptor);
         }
       }
     }

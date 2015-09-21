@@ -19,30 +19,16 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.SafeWriteRequestor
+import com.intellij.reference.SoftReference
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 
 abstract class SaveSessionBase : StateStorage.SaveSession, StateStorage.ExternalizationSession, SafeWriteRequestor {
-  private var serializationFilter: SkipDefaultsSerializationFilter? = null
-
-  @SuppressWarnings("deprecation")
-  override fun setState(component: Any, componentName: String, state: Any) {
+  override final fun setState(component: Any?, componentName: String, state: Any) {
     val element: Element?
     try {
-      if (state is Element) {
-        element = state
-      }
-      else if (state is JDOMExternalizable) {
-        element = Element("temp_element")
-        state.writeExternal(element)
-      }
-      else {
-        if (serializationFilter == null) {
-          serializationFilter = SkipDefaultsSerializationFilter()
-        }
-        element = XmlSerializer.serializeIfNotDefault(state, serializationFilter)
-      }
+      element = serializeState(state)
     }
     catch (e: WriteExternalException) {
       LOG.debug(e)
@@ -53,8 +39,29 @@ abstract class SaveSessionBase : StateStorage.SaveSession, StateStorage.External
       return
     }
 
-    setSerializedState(component, componentName, element)
+    setSerializedState(componentName, element)
   }
 
-  protected abstract fun setSerializedState(component: Any, componentName: String, element: Element?)
+  protected abstract fun setSerializedState(componentName: String, element: Element?)
+}
+
+private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SkipDefaultsSerializationFilter>>()
+
+fun serializeState(state: Any): Element? {
+  if (state is Element) {
+    return state
+  }
+  else if (state is JDOMExternalizable) {
+    val element = Element("temp_element")
+    state.writeExternal(element)
+    return element
+  }
+  else {
+    var serializationFilter = SoftReference.dereference(skipDefaultsSerializationFilter.get())
+    if (serializationFilter == null) {
+      serializationFilter = SkipDefaultsSerializationFilter()
+      skipDefaultsSerializationFilter.set(SoftReference(serializationFilter))
+    }
+    return XmlSerializer.serializeIfNotDefault(state, serializationFilter)
+  }
 }

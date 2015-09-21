@@ -15,6 +15,7 @@
  */
 package com.intellij.unscramble;
 
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -158,5 +159,119 @@ public class ThreadState {
 
   public void setDaemon(boolean daemon) {
     isDaemon = daemon;
+  }
+
+  public static class CompoundThreadState extends ThreadState {
+    private final ThreadState myOriginalState;
+    private int myCounter = 1;
+
+    public CompoundThreadState(ThreadState state) {
+      super(state.myName, state.myState);
+      myOriginalState = state;
+    }
+
+    public boolean add(ThreadState state) {
+      if (myOriginalState.isEDT()) return false;
+      if (!Comparing.equal(state.myState, myOriginalState.myState)) return false;
+      if (state.myEmptyStackTrace != myOriginalState.myEmptyStackTrace) return false;
+      if (state.isDaemon != myOriginalState.isDaemon) return false;
+      if (!Comparing.equal(state.myJavaThreadState, myOriginalState.myJavaThreadState)) return false;
+      if (!Comparing.equal(state.myThreadStateDetail, myOriginalState.myThreadStateDetail)) return false;
+      if (!Comparing.equal(state.myExtraState, myOriginalState.myExtraState)) return false;
+      if (!Comparing.haveEqualElements(state.myThreadsWaitingForMyLock, myOriginalState.myThreadsWaitingForMyLock)) return false;
+      if (!Comparing.haveEqualElements(state.myDeadlockedThreads, myOriginalState.myDeadlockedThreads)) return false;
+      if (!Comparing.equal(getMergeableStackTrace(state.myStackTrace, true), getMergeableStackTrace(myOriginalState.myStackTrace, true))) return false;
+      myCounter++;
+      return true;
+    }
+
+    private static String getMergeableStackTrace(String stackTrace, boolean skipFirstLine) {
+      if (stackTrace == null) return null;
+      StringBuilder builder = new StringBuilder();
+      String[] lines = stackTrace.split("\n");
+      for (int i = 0; i < lines.length; i++) {
+        String line = lines[i];
+        if (i == 0 && skipFirstLine) continue;//first line has unique details
+        line = line.replaceAll("<0x.+>\\s", "<merged>");
+        builder.append(line).append("\n");
+      }
+      return builder.toString();
+    }
+
+    @Override
+    public String getName() {
+      return (myCounter == 1) ? myOriginalState.getName() : myCounter + " similar threads";
+    }
+
+    @Override
+    public String getState() {
+      return myOriginalState.getState();
+    }
+
+    @Override
+    public String getStackTrace() {
+      return myCounter == 1 ? myOriginalState.getStackTrace() : getMergeableStackTrace(myOriginalState.getStackTrace(), false);
+    }
+
+    @Override
+    public Collection<ThreadState> getAwaitingThreads() {
+      return myOriginalState.getAwaitingThreads();
+    }
+
+    @Override
+    public String getJavaThreadState() {
+      return myOriginalState.getJavaThreadState();
+    }
+
+    @Override
+    public String getThreadStateDetail() {
+      return myOriginalState.getThreadStateDetail();
+    }
+
+    @Override
+    public boolean isEmptyStackTrace() {
+      return myOriginalState.isEmptyStackTrace();
+    }
+
+    @Override
+    public String getExtraState() {
+      return myOriginalState.getExtraState();
+    }
+
+    @Override
+    public boolean isAwaitedBy(ThreadState thread) {
+      return myOriginalState.isAwaitedBy(thread);
+    }
+
+    @Override
+    public boolean isDeadlocked() {
+      return myOriginalState.isDeadlocked();
+    }
+
+    @Nullable
+    @Override
+    public ThreadOperation getOperation() {
+      return myOriginalState.getOperation();
+    }
+
+    @Override
+    public boolean isWaiting() {
+      return myOriginalState.isWaiting();
+    }
+
+    @Override
+    public boolean isEDT() {
+      return myOriginalState.isEDT();
+    }
+
+    @Override
+    public boolean isDaemon() {
+      return myOriginalState.isDaemon();
+    }
+
+    @Override
+    public boolean isSleeping() {
+      return myOriginalState.isSleeping();
+    }
   }
 }

@@ -22,7 +22,7 @@ public class MemberLookupHelper {
     this(overloads.get(0), containingClass, shouldImport, true);
   }
 
-  public MemberLookupHelper(PsiMember member, PsiClass containingClass, boolean shouldImport, final boolean mergedOverloads) {
+  public MemberLookupHelper(PsiMember member, @Nullable PsiClass containingClass, boolean shouldImport, final boolean mergedOverloads) {
     myMember = member;
     myContainingClass = containingClass;
     myShouldImport = shouldImport;
@@ -46,11 +46,11 @@ public class MemberLookupHelper {
     return myShouldImport;
   }
 
-  public void renderElement(LookupElementPresentation presentation, @Nullable Boolean qualify, PsiSubstitutor substitutor) {
+  public void renderElement(LookupElementPresentation presentation, boolean showClass, boolean showPackage, PsiSubstitutor substitutor) {
     final String className = myContainingClass == null ? "???" : myContainingClass.getName();
 
     final String memberName = myMember.getName();
-    if (!Boolean.FALSE.equals(qualify) && (!myShouldImport && StringUtil.isNotEmpty(className) || Boolean.TRUE.equals(qualify))) {
+    if (showClass && StringUtil.isNotEmpty(className)) {
       presentation.setItemText(className + "." + memberName);
     } else {
       presentation.setItemText(memberName);
@@ -58,7 +58,7 @@ public class MemberLookupHelper {
 
     final String qname = myContainingClass == null ? "" : myContainingClass.getQualifiedName();
     String pkg = qname == null ? "" : StringUtil.getPackageName(qname);
-    String location = Boolean.FALSE.equals(qualify) || StringUtil.isEmpty(pkg) ? "" : " (" + pkg + ")";
+    String location = showPackage && StringUtil.isNotEmpty(pkg) ? " (" + pkg + ")" : "";
 
     final String params = myMergedOverloads
                           ? "(...)"

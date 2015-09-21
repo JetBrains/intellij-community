@@ -262,6 +262,47 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
+  public fun testPreferBoundedBlocks() {
+    lines {
+      ("A_B_o_o_Y_Z_ _A_B_z_z_Y_Z" - "A_B_o_o_Y_Z_ _A_B_u_u_Y_Z_ _A_B_z_z_Y_Z")
+      default(ins(7, 7, 7))
+      testAll()
+    }
+
+    lines {
+      ("A_B_o_o_ _A_B_z_z" - "A_B_o_o_ _A_B_u_u_ _A_B_z_z")
+      default(ins(5, 5, 5))
+      testAll()
+    }
+
+    lines {
+      ("o_o_Y_Z_ _z_z_Y_Z" - "o_o_Y_Z_ _u_u_Y_Z_ _z_z_Y_Z")
+      default(ins(5, 5, 5))
+      testAll()
+    }
+  }
+
+  public fun testPreferLessBlocks() {
+    lines() {
+      ("X_A_X_Y_" - "X_Y_")
+      default(del(0, 0, 2))
+      testAll()
+    }
+
+    lines() {
+      (" __x___y" - "__y")
+      default(del(0, 0, 3))
+      testAll()
+    }
+
+    lines {
+      ("U======_X======_Y======_z======_X======_Y======_X======_U======_X======_z======" -
+       "U======_Y======_X======_U======_X======")
+      default(del(1, 1, 4), del(9, 5, 1))
+      testAll()
+    }
+  }
+
   public fun testTwoStepCanTrimRegression() {
     lines {
       ("q__7_ 6_ 7" - "_7")

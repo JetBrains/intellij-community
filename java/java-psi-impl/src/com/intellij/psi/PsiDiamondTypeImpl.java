@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -121,7 +122,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   public static DiamondInferenceResult resolveInferredTypes(PsiNewExpression newExpression,
                                                             PsiElement context) {
     final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
-    if (anonymousClass != null) {
+    if (anonymousClass != null && !PsiUtil.isLanguageLevel9OrHigher(newExpression)) {
       final PsiElement resolve = anonymousClass.getBaseClassReference().resolve();
       if (resolve instanceof PsiClass) {
         return PsiDiamondTypeImpl.DiamondInferenceResult.ANONYMOUS_INNER_RESULT;
@@ -133,7 +134,17 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       return DiamondInferenceResult.EXPLICIT_CONSTRUCTOR_TYPE_ARGS;
     }
 
-    return resolveInferredTypesNoCheck(newExpression, context);
+    final DiamondInferenceResult inferenceResult = resolveInferredTypesNoCheck(newExpression, context);
+    if (anonymousClass != null && PsiUtil.isLanguageLevel9OrHigher(newExpression)) {
+      final InferredAnonymTypeVisitor anonymTypeVisitor = new InferredAnonymTypeVisitor(context);
+      for (PsiType type : inferenceResult.getInferredTypes()) {
+        final Boolean accepted = type.accept(anonymTypeVisitor);
+        if (accepted != null && !accepted.booleanValue()) {
+          return PsiDiamondTypeImpl.DiamondInferenceResult.ANONYMOUS_INNER_RESULT;
+        } 
+      }
+    }
+    return inferenceResult;
   }
 
   public static DiamondInferenceResult resolveInferredTypesNoCheck(final PsiNewExpression newExpression, final PsiElement context) {
@@ -456,5 +467,65 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       }
     }
     return false;
+  }
+
+  /**
+   * from JDK-8062373 Allow diamond to be used with anonymous classes
+   * It is a compile-time error if the superclass or superinterface type of the anonymous class, T, or any subexpression of T, has one of the following forms:
+   *  - A type variable (4.4) that was not declared as a type parameter (such as a type variable produced by capture conversion (5.1.10)) 
+   *  - An intersection type (4.9) 
+   *  - A class or interface type, where the class or interface declaration is not accessible from the class or interface in which the expression appears.
+   * 
+   * The term "subexpression" includes type arguments of parameterized types (4.5), bounds of wildcards (4.5.1), and element types of array types (10.1).
+   * It excludes bounds of type variables.
+   */
+  private static class InferredAnonymTypeVisitor extends PsiTypeVisitor<Boolean> {
+    private final PsiElement myExpression;
+
+    public InferredAnonymTypeVisitor(PsiElement expression) {
+      myExpression = expression;
+    }
+
+    @Nullable
+    @Override
+    public Boolean visitType(PsiType type) {
+      return true;
+    }
+
+    @Nullable
+    @Override
+    public Boolean visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+      return false;
+    }
+
+    @Nullable
+    @Override
+    public Boolean visitIntersectionType(PsiIntersectionType intersectionType) {
+      return false;
+    }
+
+    @Nullable
+    @Override
+    public Boolean visitClassType(PsiClassType classType) {
+      final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+      final PsiClass psiClass = resolveResult.getElement();
+      if (psiClass != null) {
+        if (psiClass instanceof PsiTypeParameter && InferenceSession.isFreshVariable((PsiTypeParameter)psiClass)) {
+          return false;
+        }
+        
+        if (!PsiUtil.isAccessible(psiClass, myExpression, null)) {
+          return false;
+        }
+        
+        for (PsiType psiType : resolveResult.getSubstitutor().getSubstitutionMap().values()) {
+          final Boolean accepted = psiType.accept(this);
+          if (accepted != null && !accepted.booleanValue()) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
   }
 }

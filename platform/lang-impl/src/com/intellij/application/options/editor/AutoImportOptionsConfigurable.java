@@ -18,7 +18,11 @@ package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.CompositeConfigurable;
+import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,12 +34,22 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class AutoImportOptionsConfigurable extends CompositeConfigurable<AutoImportOptionsProvider> implements EditorOptionsProvider {
+  private final Project myProject;
   private JPanel myPanel;
   private JPanel myProvidersPanel;
 
+  public AutoImportOptionsConfigurable(Project project) {
+    myProject = project;
+  }
+
   @Override
   protected List<AutoImportOptionsProvider> createConfigurables() {
-    return ConfigurableWrapper.createConfigurables(AutoImportOptionsProviderEP.EP_NAME);
+    return ContainerUtil.mapNotNull(AutoImportOptionsProviderEP.EP_NAME.getExtensions(myProject), new NullableFunction<ConfigurableEP<AutoImportOptionsProvider>, AutoImportOptionsProvider>() {
+      @Override
+      public AutoImportOptionsProvider fun(ConfigurableEP<AutoImportOptionsProvider> ep) {
+        return ConfigurableWrapper.wrapConfigurable(ep);
+      }
+    });
   }
 
   @Override

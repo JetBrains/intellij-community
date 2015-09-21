@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.service.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.importing.ExternalProjectStructureCustomizer;
@@ -30,13 +31,14 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
-import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
@@ -224,19 +226,20 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
           }
         });
         projectStructure.setIgnored(notIgnoredNode == null);
-        ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(myProject) {
+
+        // execute when current dialog is closed
+        ExternalSystemUtil.invokeLater(myProject, ModalityState.NON_MODAL, new Runnable() {
           @Override
-          public void execute() {
-            DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-              public void run() {
-                ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
-                  @Override
-                  public void run() {
-                    ServiceManager.getService(ProjectDataManager.class).importData(projectStructure, myProject, true);
-                  }
-                });
+          public void run() {
+            final ProjectData projectData = projectStructure.getData();
+            String title = ExternalSystemBundle.message(
+              "progress.refresh.text", projectData.getExternalName(), projectData.getOwner().getReadableName());
+            new Task.Backgroundable(myProject, title, true, PerformInBackgroundOption.DEAF) {
+              @Override
+              public void run(@NotNull ProgressIndicator indicator) {
+                ServiceManager.getService(ProjectDataManager.class).importData(projectStructure, myProject, false);
               }
-            });
+            }.queue();
           }
         });
       }

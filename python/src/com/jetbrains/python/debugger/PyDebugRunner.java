@@ -44,6 +44,7 @@ import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
+import com.jetbrains.python.run.DebugAwareConfiguration;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
@@ -77,21 +78,47 @@ public class PyDebugRunner extends GenericProgramRunner {
   }
 
   @Override
-  public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
-    return DefaultDebugExecutor.EXECUTOR_ID.equals(executorId) &&
-           profile instanceof AbstractPythonRunConfiguration &&
-           ((AbstractPythonRunConfiguration)profile).canRunWithCoverage();
+  public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
+    if (!DefaultDebugExecutor.EXECUTOR_ID.equals(executorId)) {
+      // If not debug at all
+      return false;
+    }
+    /**
+     * Any python configuration is debuggable unless it explicitly declares itself as DebugAwareConfiguration and denies it
+     * with canRunUnderDebug == false
+     */
+
+    if (profile instanceof WrappingRunConfiguration) {
+      // If configuration is wrapper -- unwrap it and check
+      return isDebuggable(((WrappingRunConfiguration<?>)profile).getPeer());
+    }
+    return isDebuggable(profile);
+  }
+
+  private static boolean isDebuggable(@NotNull final RunProfile profile) {
+    if (profile instanceof DebugAwareConfiguration) {
+      // if configuration knows whether debug is allowed
+      return ((DebugAwareConfiguration)profile).canRunUnderDebug();
+    }
+    if (profile instanceof AbstractPythonRunConfiguration) {
+      // Any python configuration is debuggable
+      return true;
+    }
+    // No even a python configuration
+    return false;
   }
 
 
-  protected XDebugSession createSession(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) throws ExecutionException {
+  protected XDebugSession createSession(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment)
+    throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     final PythonCommandLineState pyState = (PythonCommandLineState)state;
     final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
     final int serverLocalPort = serverSocket.getLocalPort();
     RunProfile profile = environment.getRunProfile();
-    final ExecutionResult result = pyState.execute(environment.getExecutor(), createCommandLinePatchers(environment.getProject(), pyState, profile, serverLocalPort));
+    final ExecutionResult result =
+      pyState.execute(environment.getExecutor(), createCommandLinePatchers(environment.getProject(), pyState, profile, serverLocalPort));
 
     return XDebuggerManager.getInstance(environment.getProject()).
       startSession(environment, new XDebugProcessStarter() {
@@ -117,7 +144,8 @@ public class PyDebugRunner extends GenericProgramRunner {
   }
 
   @Override
-  protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) throws ExecutionException {
+  protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment)
+    throws ExecutionException {
     XDebugSession session = createSession(state, environment);
     initSession(session, state, environment.getExecutor());
     return session.getRunContentDescriptor();
@@ -207,10 +235,11 @@ public class PyDebugRunner extends GenericProgramRunner {
           parametersList.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS));
         ParamsGroup exeParamsOld = parametersList.removeParamsGroup(exeParamsIndex);
         isModule = false;
-        for (String param: exeParamsOld.getParameters()) {
+        for (String param : exeParamsOld.getParameters()) {
           if (!param.equals("-m")) {
             newExeParams.addParameter(param);
-          } else {
+          }
+          else {
             isModule = true;
           }
         }

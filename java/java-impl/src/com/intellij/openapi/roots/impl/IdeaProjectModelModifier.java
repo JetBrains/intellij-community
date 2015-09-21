@@ -22,10 +22,14 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
@@ -37,7 +41,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class IdeaProjectModelModifier extends ProjectModelModifier {
+public class IdeaProjectModelModifier extends JavaProjectModelModifier {
   private static final Logger LOG = Logger.getInstance(IdeaProjectModelModifier.class);
   private final Project myProject;
 
@@ -89,6 +93,21 @@ public class IdeaProjectModelModifier extends ProjectModelModifier {
   @Override
   public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
     OrderEntryUtil.addLibraryToRoots(from, library);
+    return Promise.DONE;
+  }
+
+  @Override
+  public Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull LanguageLevel level) {
+    final LanguageLevel moduleLevel = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
+    if (moduleLevel != null && JavaSdkUtil.isLanguageLevelAcceptable(myProject, module, level)) {
+      final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+      rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level);
+      rootModel.commit();
+    }
+    else {
+      LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(level);
+      ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(EmptyRunnable.INSTANCE, false, true);
+    }
     return Promise.DONE;
   }
 }

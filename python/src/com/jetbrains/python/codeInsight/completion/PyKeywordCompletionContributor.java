@@ -34,6 +34,8 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.PyUnindentingInsertHandler;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NonNls;
@@ -182,19 +184,26 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static class Py3kFilter implements ElementFilter {
+  private static class LanguageLevelAtLeastFilter implements ElementFilter {
+    @NotNull private final LanguageLevel myLevel;
+
+    public LanguageLevelAtLeastFilter(@NotNull LanguageLevel level) {
+      myLevel = level;
+    }
+
     public boolean isAcceptable(Object element, PsiElement context) {
       if (!(element instanceof PsiElement)) {
         return false;
       }
       final PsiFile containingFile = ((PsiElement)element).getContainingFile();
-      return containingFile instanceof PyFile && ((PyFile)containingFile).getLanguageLevel().isPy3K();
+      return containingFile instanceof PyFile && ((PyFile)containingFile).getLanguageLevel().isAtLeast(myLevel);
     }
 
     public boolean isClassAcceptable(Class hintClass) {
       return true;
     }
   }
+
 
   private static class NotParameterOrDefaultValue implements ElementFilter {
 
@@ -359,7 +368,8 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   ));
   */
 
-  private static final FilterPattern PY3K = new FilterPattern(new Py3kFilter());
+  private static final FilterPattern PY3K = new FilterPattern(new PyKeywordCompletionContributor.LanguageLevelAtLeastFilter(LanguageLevel.PYTHON30));
+  private static final FilterPattern PY35 = new FilterPattern(new LanguageLevelAtLeastFilter(LanguageLevel.PYTHON35));
 
 
   // ======
@@ -477,6 +487,28 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       ,
       new PyKeywordCompletionProvider(PyNames.NONLOCAL)
     );
+
+    extend(CompletionType.BASIC,
+           psiElement()
+             .withLanguage(PythonLanguage.getInstance())
+             .and(PY35)
+             .andNot(AFTER_QUALIFIER)
+             .with(new PatternCondition<PsiElement>("insideAsyncDef") {
+               @Override
+               public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
+                 final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
+                 return owner instanceof PyFunction && ((PyFunction)owner).isAsync();
+               }
+             })
+             .andOr(IN_BEGIN_STMT,
+                    psiElement()
+                      .inside(false, psiElement(PyAssignmentStatement.class), psiElement(PyTargetExpression.class))
+                      .afterLeaf(psiElement().withElementType(PyTokenTypes.EQ)),
+                    psiElement()
+                      .inside(false, psiElement(PyAugAssignmentStatement.class), psiElement(PyTargetExpression.class))
+                      .afterLeaf(psiElement().withElementType(PyTokenTypes.AUG_ASSIGN_OPERATIONS)),
+                    psiElement().inside(true, psiElement(PyParenthesizedExpression.class))),
+           new PyKeywordCompletionProvider(PyNames.AWAIT));
   }
 
   private void addWithinIf() {
@@ -578,8 +610,23 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andNot(AFTER_QUALIFIER)
       .andNot(IN_FUNCTION_HEADER)
       ,
-      new PyKeywordCompletionProvider(TailType.NONE, PyNames.TRUE, PyNames.FALSE, PyNames.NONE)
-    );
+      new PyKeywordCompletionProvider(TailType.NONE, PyNames.TRUE, PyNames.FALSE, PyNames.NONE));
+    extend(CompletionType.BASIC,
+           psiElement()
+             .withLanguage(PythonLanguage.getInstance())
+             .and(PY35)
+             .andNot(IN_COMMENT)
+             .andNot(IN_IMPORT_STMT)
+             .andNot(IN_PARAM_LIST)
+             .andNot(AFTER_QUALIFIER)
+             .andNot(IN_STRING_LITERAL),
+           new PyKeywordCompletionProvider(PyNames.ASYNC));
+    extend(CompletionType.BASIC,
+           psiElement()
+             .withLanguage(PythonLanguage.getInstance())
+             .and(PY35)
+             .afterLeaf(psiElement().withElementType(PyTokenTypes.IDENTIFIER).withText(PyNames.ASYNC)),
+           new PyKeywordCompletionProvider(PyNames.DEF, PyNames.WITH, PyNames.FOR));
   }
 
   private void addAs() {

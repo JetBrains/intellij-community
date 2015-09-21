@@ -178,6 +178,17 @@ public class PyCustomType implements PyClassLikeType {
     return resolveMember(name, location, direction, resolveContext, true);
   }
 
+  @NotNull
+  @Override
+  public final List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
+    final Collection<PyClassLikeType> result = new LinkedHashSet<PyClassLikeType>();
+    for (final PyClassLikeType type : myTypesToMimic) {
+      result.addAll(type.getAncestorTypes(context));
+    }
+
+    return new ArrayList<PyClassLikeType>(result);
+  }
+
   @Override
   public final Object[] getCompletionVariants(final String completionPrefix, final PsiElement location, final ProcessingContext context) {
     final Collection<Object> lookupElements = new ArrayList<Object>();
@@ -238,6 +249,13 @@ public class PyCustomType implements PyClassLikeType {
         return false;
       }
       return myFilter.process(pyElement);
+    }
+  }
+
+  @Override
+  public void visitMembers(@NotNull final Processor<PsiElement> processor, final boolean inherited, @NotNull TypeEvalContext context) {
+    for (final PyClassLikeType type : myTypesToMimic) {
+      type.visitMembers(processor, inherited, context);
     }
   }
 

@@ -199,7 +199,6 @@ public class FindDialog extends DialogWrapper {
     }
     myComboBoxListeners.clear();
     if (myScopePanel != null) myPreviousResultsExpandedState = myScopePanel.isExpanded();
-    rememberResultsPreviewWasOpen();
     super.dispose();
   }
 
@@ -405,6 +404,14 @@ public class FindDialog extends DialogWrapper {
 
       finishPreviousPreviewSearch();
       mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
+      final FindModel findModel = myModel.clone();
+      applyTo(findModel, false);
+
+      ValidationInfo result = getValidationInfo(findModel);
+
+      final ProgressIndicatorBase progressIndicatorWhenSearchStarted = new ProgressIndicatorBase();
+      myResultsPreviewSearchProgress = progressIndicatorWhenSearchStarted;
+
       final DefaultTableModel model = new DefaultTableModel() {
         @Override
         public boolean isCellEditable(int row, int column) {
@@ -414,18 +421,14 @@ public class FindDialog extends DialogWrapper {
 
       model.addColumn("Usages");
 
-      final FindModel modelClone = myModel.clone();
-      applyTo(modelClone, false);
-
-      ValidationInfo result = getValidationInfo(modelClone);
-
-      final ProgressIndicatorBase progressIndicatorWhenSearchStarted = new ProgressIndicatorBase();
-      myResultsPreviewSearchProgress = progressIndicatorWhenSearchStarted;
-
       myResultsPreviewTable.setModel(model);
 
       if (result != null) {
         myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+        myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX, PREVIEW_TITLE);
+        return;
+      } else if (findModel.isRegularExpressions()) {
+        myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.canNotPreviewRegExpSearch"));
         myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX, PREVIEW_TITLE);
         return;
       }
@@ -452,13 +455,13 @@ public class FindDialog extends DialogWrapper {
         @Override
         public void computeInReadAction(@NotNull ProgressIndicator indicator) {
           final UsageViewPresentation presentation =
-            FindInProjectUtil.setupViewPresentation(FindSettings.getInstance().isShowResultsInSeparateView(), modelClone);
+            FindInProjectUtil.setupViewPresentation(FindSettings.getInstance().isShowResultsInSeparateView(), findModel);
           final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
 
           final FindUsagesProcessPresentation processPresentation =
             FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
 
-          FindInProjectUtil.findUsages(modelClone, myProject, new Processor<UsageInfo>() {
+          FindInProjectUtil.findUsages(findModel, myProject, new Processor<UsageInfo>() {
             @Override
             public boolean process(final UsageInfo info) {
               final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
@@ -754,6 +757,7 @@ public class FindDialog extends DialogWrapper {
       myModel.copyFrom(validateModel);
       updateFindSettings();
 
+      rememberResultsPreviewWasOpen();
       super.doOKAction();
       myOkHandler.consume(myModel);
     }
@@ -1212,9 +1216,9 @@ public class FindDialog extends DialogWrapper {
 
 
     ButtonGroup bgScope = new ButtonGroup();
-    bgScope.add(myRbDirectory);
     bgScope.add(myRbProject);
     bgScope.add(myRbModule);
+    bgScope.add(myRbDirectory);
     bgScope.add(myRbCustomScope);
 
     ActionListener validateAll = new ActionListener() {

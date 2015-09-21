@@ -63,7 +63,7 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
   protected PsiFile prepareFile() {
     prepareTestDirectory();
     VirtualFile sourceFile = null;
-    for (String ext : new String[]{".py", ".pyx"}) {
+    for (String ext : new String[]{".py", ".pyx", ".pyi"}) {
       final String fileName = myTestFileName != null ? myTestFileName : getTestName(false) + ext;
       sourceFile = myFixture.findFileInTempDir(fileName);
       if (sourceFile != null) {

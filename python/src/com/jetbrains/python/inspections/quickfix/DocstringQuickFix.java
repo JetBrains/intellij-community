@@ -20,19 +20,16 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.intentions.PyGenerateDocstringIntention;
-import com.jetbrains.python.documentation.PyDocstringGenerator;
-import com.jetbrains.python.documentation.PyDocumentationSettings;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.editor.PythonDocCommentUtil;
+import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,22 +38,30 @@ import org.jetbrains.annotations.Nullable;
  * User : catherine
  */
 public class DocstringQuickFix implements LocalQuickFix {
-  String myMissingText;
-  String myUnexpected;
-  String myPrefix;
+  private final SmartPsiElementPointer<PyNamedParameter> myMissingParam;
+  private final String myUnexpectedParamName;
 
-  public DocstringQuickFix(String missing, String unexpected) {
-    myMissingText = missing;
-    myUnexpected = unexpected;
+  public DocstringQuickFix(@Nullable PyNamedParameter missing, @Nullable  String unexpectedParamName) {
+    if (missing != null) {
+      myMissingParam = SmartPointerManager.getInstance(missing.getProject()).createSmartPsiElementPointer(missing);
+    }
+    else {
+      myMissingParam = null;
+    }
+    myUnexpectedParamName = unexpectedParamName;
   }
 
   @NotNull
   public String getName() {
-    if (myMissingText != null) {
-      return PyBundle.message("QFIX.docstring.add.$0", myMissingText);
+    if (myMissingParam != null) {
+      final PyNamedParameter param = myMissingParam.getElement();
+      if (param == null) {
+        throw new IncorrectOperationException("Parameter was invalidates before quickfix is called");
+      }
+      return PyBundle.message("QFIX.docstring.add.$0", param.getName());
     }
-    else if (myUnexpected != null) {
-      return PyBundle.message("QFIX.docstring.remove.$0", myUnexpected);
+    else if (myUnexpectedParamName != null) {
+      return PyBundle.message("QFIX.docstring.remove.$0", myUnexpectedParamName);
     }
     else {
       return PyBundle.message("QFIX.docstring.insert.stub");
@@ -69,8 +74,8 @@ public class DocstringQuickFix implements LocalQuickFix {
   }
 
   @Nullable
-  private static Editor getEditor(Project project, PsiFile file) {
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+  private static Editor getEditor(@NotNull PsiElement element) {
+    Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
     if (document != null) {
       final EditorFactory instance = EditorFactory.getInstance();
       if (instance == null) return null;
@@ -86,50 +91,29 @@ public class DocstringQuickFix implements LocalQuickFix {
     PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyDocStringOwner.class);
     if (docStringOwner == null) return;
     PyStringLiteralExpression docStringExpression = docStringOwner.getDocStringExpression();
-    if (docStringExpression == null && myMissingText == null && myUnexpected == null) {
-      addEmptyDocstring(project, docStringOwner);
+    if (docStringExpression == null && myMissingParam == null && myUnexpectedParamName == null) {
+      addEmptyDocstring(docStringOwner);
       return;
     }
     if (docStringExpression != null) {
-      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      final Module module = ModuleUtilCore.findModuleForPsiElement(docStringExpression);
-      if (module == null) return;
-      PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
-      if (documentationSettings.isEpydocFormat(docStringExpression.getContainingFile())) {
-        myPrefix = "@";
+      final PyDocstringGenerator generator = PyDocstringGenerator.forDocStringOwner(docStringOwner);
+      if (myMissingParam != null) {
+        final PyNamedParameter param = myMissingParam.getElement();
+        if (param != null) {
+          generator.withParam(param);
+        }
       }
-      else {
-        myPrefix = ":";
+      else if (myUnexpectedParamName != null) {
+        generator.withoutParam(myUnexpectedParamName.trim());
       }
-
-      String replacement = docStringExpression.getText();
-      if (myMissingText != null) {
-        replacement = createMissingReplacement(docStringOwner);
-      }
-      if (myUnexpected != null) {
-        replacement = PythonDocCommentUtil.removeParamFromDocstring(replacement, myPrefix, myUnexpected);
-      }
-      if (!replacement.equals(docStringExpression.getText()) && !StringUtil.isEmptyOrSpaces(replacement)) {
-        PyExpression str = elementGenerator.createDocstring(replacement).getExpression();
-        docStringExpression.replace(str);
-      }
+      generator.buildAndInsert();
     }
   }
 
-  private static void addEmptyDocstring(Project project, PyDocStringOwner docStringOwner) {
-    if (docStringOwner instanceof PyFunction) {
-      PyGenerateDocstringIntention
-        .generateDocstringForFunction(project, getEditor(project, docStringOwner.getContainingFile()), (PyFunction)docStringOwner);
+  private static void addEmptyDocstring(@NotNull PyDocStringOwner docStringOwner) {
+    if (docStringOwner instanceof PyFunction ||
+        docStringOwner instanceof PyClass && ((PyClass)docStringOwner).findInitOrNew(false, null) != null) {
+      PyGenerateDocstringIntention.generateDocstring(docStringOwner, getEditor(docStringOwner));
     }
-    if (docStringOwner instanceof PyClass) {
-      PyFunction init = ((PyClass)docStringOwner).findInitOrNew(false, null);
-      if (init == null) return;
-      PythonDocumentationProvider.insertDocStub(init, ((PyClass)docStringOwner).getStatementList(),
-                                                project, getEditor(project, docStringOwner.getContainingFile()));
-    }
-  }
-
-  private String createMissingReplacement(PyDocStringOwner docStringOwner) {
-    return new PyDocstringGenerator(docStringOwner).withParam("param", myMissingText).docStringAsText();
   }
 }

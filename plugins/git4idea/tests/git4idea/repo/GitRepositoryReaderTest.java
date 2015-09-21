@@ -6,9 +6,9 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitBranch;
@@ -49,7 +49,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
     });
   }
 
-  @SuppressWarnings({"UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters", "JUnitTestCaseWithNonTrivialConstructors"})
   public GitRepositoryReaderTest(@NotNull String name, @NotNull File testDir) {
     myTestCaseDir = testDir;
   }
@@ -57,7 +57,12 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
   @Override
   @Before
   public void setUp() throws Exception {
-    super.setUp();
+    edt(new ThrowableRunnable() {
+      @Override
+      public void run() throws Exception {
+        GitRepositoryReaderTest.super.setUp();
+      }
+    });
     myTempDir = new File(myProjectRoot.getPath(), "test");
     prepareTest(myTestCaseDir);
   }
@@ -65,18 +70,19 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
   @After
   @Override
   public void tearDown() throws Exception {
-    FileUtil.delete(myTempDir);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
+    try {
+      if (myTempDir != null) {
+        FileUtil.delete(myTempDir);
+      }
+    }
+    finally {
+      edt(new ThrowableRunnable() {
+        @Override
+        public void run() throws Throwable {
           GitRepositoryReaderTest.super.tearDown();
         }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+      });
+    }
   }
 
   private void prepareTest(File testDir) throws IOException {

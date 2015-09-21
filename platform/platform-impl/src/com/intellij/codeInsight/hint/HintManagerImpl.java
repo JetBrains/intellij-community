@@ -792,13 +792,13 @@ public class HintManagerImpl extends HintManager implements Disposable {
     hint.addHintListener(new HintListener() {
       @Override
       public void hintHidden(EventObject event) {
+        hint.removeHintListener(this);
         highlighter.dispose();
 
         if (myQuestionHint == hint) {
           myQuestionAction = null;
           myQuestionHint = null;
         }
-        hint.removeHintListener(this);
       }
     });
 

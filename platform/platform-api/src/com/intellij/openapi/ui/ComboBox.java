@@ -177,7 +177,7 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
   public void addNotify() {
     super.addNotify();
 
-    if (SwingUtilities.getAncestorOfClass(JTable.class, this) != null) {
+    if (getParent() instanceof JTable) {
       putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
     }
 

@@ -42,7 +42,8 @@ public class CCFromCourseArchive extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    CCProjectService.setCCActionAvailable(e);
+    e.getPresentation().setEnabledAndVisible(false);
+    //CCProjectService.setCCActionAvailable(e);
   }
 
   @Override

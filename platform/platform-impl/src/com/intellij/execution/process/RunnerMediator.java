@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,9 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 
 /**
+ * Utility class to start a process with a runner mediator (runnerw.exe) injected into a command line,
+ * which adds a capability to terminate process tree gracefully by sending it a Ctrl+Break through stdin.
+ *
  * @author traff
  */
 public class RunnerMediator {
@@ -147,19 +150,14 @@ public class RunnerMediator {
   public static class CustomDestroyProcessHandler extends ColoredProcessHandler {
     private final boolean mySoftKill;
 
-    /**
-     * @deprecated use CustomDestroyProcessHandler(GeneralCommandLine commandLine)
-     * @deprecated remove in IDEA 16
-     */
+    /** @deprecated use CustomDestroyProcessHandler(GeneralCommandLine commandLine) (to remove in IDEA 16) */
     public CustomDestroyProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
-      this(process, commandLine, false);
+      super(process, commandLine.getCommandLineString());
+      mySoftKill = false;
     }
 
-    /**
-     * @deprecated use CustomDestroyProcessHandler(GeneralCommandLine commandLine, boolean softKill)
-     * @deprecated remove in IDEA 16
-     */
-    public CustomDestroyProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine, final boolean softKill) {
+    /** @deprecated use CustomDestroyProcessHandler(GeneralCommandLine commandLine, boolean softKill) (to remove in IDEA 16) */
+    public CustomDestroyProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine, boolean softKill) {
       super(process, commandLine.getCommandLineString());
       mySoftKill = softKill;
     }

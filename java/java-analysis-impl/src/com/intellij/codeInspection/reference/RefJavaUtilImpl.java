@@ -485,17 +485,28 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
   @Override
   public void addTypeReference(PsiElement psiElement, PsiType psiType, RefManager refManager) {
-    RefClass ownerClass = getOwnerClass(refManager, psiElement);
+    addTypeReference(psiElement, psiType, refManager, null);
+  }
 
-    if (ownerClass != null) {
-      psiType = psiType.getDeepComponentType();
-
-      if (psiType instanceof PsiClassType) {
-        PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
-        if (psiClass != null && refManager.belongsToScope(psiClass)) {
-          RefClassImpl refClass = (RefClassImpl)refManager.getReference(psiClass);
-          if (refClass != null) {
-            refClass.addTypeReference(ownerClass);
+  @Override
+  public void addTypeReference(PsiElement psiElement, PsiType psiType, RefManager refManager, @Nullable RefJavaElement refMethod) {
+    if (psiType != null) {
+      final RefClass ownerClass = getOwnerClass(refManager, psiElement);
+      if (ownerClass != null) {
+        psiType = psiType.getDeepComponentType();
+        if (psiType instanceof PsiClassType) {
+          PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
+          if (psiClass != null && refManager.belongsToScope(psiClass)) {
+            RefClassImpl refClass = (RefClassImpl)refManager.getReference(psiClass);
+            if (refClass != null) {
+              refClass.addTypeReference(ownerClass);
+              if (refMethod != null) {
+                refClass.addClassExporter(refMethod);
+              }
+            }
+          }
+          else {
+            ((RefManagerImpl)refManager).fireNodeMarkedReferenced(psiClass, psiElement, false);
           }
         }
       }

@@ -16,7 +16,7 @@ import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
 
-public class RestApiTest {
+class RestApiTest {
   companion object {
     @ClassRule val projectRule = ProjectRule()
   }

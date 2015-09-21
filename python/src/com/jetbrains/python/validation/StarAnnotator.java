@@ -16,7 +16,6 @@
 package com.jetbrains.python.validation;
 
 import com.jetbrains.python.psi.PyStarExpression;
-import com.jetbrains.python.psi.PyTargetExpression;
 
 /**
  * @author yole
@@ -25,8 +24,8 @@ public class StarAnnotator extends PyAnnotator {
   @Override
   public void visitPyStarExpression(PyStarExpression node) {
     super.visitPyStarExpression(node);
-    if (!(node.getExpression() instanceof PyTargetExpression)) {
-      getHolder().createErrorAnnotation(node, "can use starred expression only as assignment target");
+    if (!node.isAssignmentTarget() && !node.isUnpacking()) {
+      getHolder().createErrorAnnotation(node, "Can't use starred expression here");
     }
   }
 }

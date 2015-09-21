@@ -23,22 +23,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.VcsCacheableAnnotationProvider;
-import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
-import com.intellij.openapi.vcs.changes.ChangeProvider;
-import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.history.VcsAnnotationCachedProxy;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.IllegalStateProxy;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThreeState;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
@@ -161,7 +158,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    */
   @Nullable
   protected CheckinEnvironment createCheckinEnvironment() {
-    return IllegalStateProxy.create(CheckinEnvironment.class);
+    return null;
   }
 
   /**
@@ -182,7 +179,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    */
   @Nullable
   protected RollbackEnvironment createRollbackEnvironment() {
-    return IllegalStateProxy.create(RollbackEnvironment.class);
+    return null;
   }
 
   /**
@@ -215,7 +212,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    */
   @Nullable
   protected UpdateEnvironment createUpdateEnvironment() {
-    return IllegalStateProxy.create(UpdateEnvironment.class);
+    return null;
   }
 
   /**
@@ -257,10 +254,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return true;
   }
 
-  public boolean needsLastUnchangedContent() {
-    return false;
-  }
-
   /**
    * This method is called when user invokes "Enable VCS Integration" and selects a particular VCS.
    * By default it sets up a single mapping {@code <Project> -> selected VCS}.
@@ -271,6 +264,21 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     if (vcsManager != null) {
       vcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", getName())));
     }
+  }
+
+  /**
+   * Invoked when a changelist is deleted explicitly by user or implicitly (e.g. after default changelist switch
+   * when the previous one was empty).
+   * @param list change list that's about to be removed
+   * @param explicitly whether it's a result of explicit Delete action, or just after switching the active changelist.
+   * @return UNSURE if the VCS has nothing to say about this changelist.
+   * YES or NO if the changelist has to be removed or not, and no further confirmations are needed about this changelist
+   * (in particular, the VCS can show a confirmation to the user by itself)
+   */
+  @CalledInAwt
+  @NotNull
+  public ThreeState mayRemoveChangeList(@NotNull LocalChangeList list, boolean explicitly) {
+    return ThreeState.UNSURE;
   }
 
   public boolean isTrackingUnchangedContent() {
@@ -575,6 +583,12 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   public void setRollbackEnvironment(RollbackEnvironment rollbackEnvironment) {
     if (myRollbackEnvironment != null) throw new IllegalStateException("Attempt to redefine rollback environment");
     myRollbackEnvironment = rollbackEnvironment;
+  }
+
+  public void setupEnvironments() {
+    setCheckinEnvironment(createCheckinEnvironment());
+    setUpdateEnvironment(createUpdateEnvironment());
+    setRollbackEnvironment(createRollbackEnvironment());
   }
 
   public boolean reportsIgnoredDirectories() {

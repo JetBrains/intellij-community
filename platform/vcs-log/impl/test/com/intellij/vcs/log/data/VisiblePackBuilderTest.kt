@@ -145,7 +145,7 @@ class VisiblePackBuilderTest {
         val metadata = if (it.value.user == null)
           null
         else VcsCommitMetadataImpl(hash, hashMap.getHashes(it.key.getParents()), 1L, root, it.value.subject,
-            it.value.user, it.value.subject, it.value.user, 1L)
+            it.value.user!!, it.value.subject, it.value.user!!, 1L)
         Pair(it.key.getId(), metadata)
       }.toMap()
 

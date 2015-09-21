@@ -68,7 +68,7 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFile
 
   @Override
   public String getName() {
-    return "Save patch to file";
+    return "Save Patch to File";
   }
 
   @Override
@@ -77,7 +77,7 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFile
                     String fileName,
                     TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     final FileSaverDialog dialog = FileChooserFactory.getInstance().createSaveFileDialog(
-      new FileSaverDescriptor("Save patch to", ""), myProject);
+      new FileSaverDescriptor("Save Patch to", ""), myProject);
     final VirtualFile baseDir = myProject.getBaseDir();
     final VirtualFileWrapper save = dialog.save(baseDir, "TheirsChanges.patch");
     if (save != null) {

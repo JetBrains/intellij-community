@@ -31,7 +31,7 @@ public class CompoundRunConfigurationType extends ConfigurationTypeBase {
 
   public CompoundRunConfigurationType() {
     super("CompoundRunConfigurationType",
-          "Compound Run Configuration",
+          "Compound",
           "It runs batch of run configurations at once",
           LayeredIcon.create(AllIcons.Nodes.Folder, AllIcons.Nodes.RunnableMark));
     addFactory(new ConfigurationFactory(this) {
@@ -42,7 +42,17 @@ public class CompoundRunConfigurationType extends ConfigurationTypeBase {
 
       @Override
       public String getName() {
-        return super.getName();
+        return "Compound Run Configuration";
+      }
+
+      @Override
+      public boolean isConfigurationSingletonByDefault() {
+        return true;
+      }
+
+      @Override
+      public boolean canConfigurationBeSingleton() {
+        return false;
       }
     });
   }

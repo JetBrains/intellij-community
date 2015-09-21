@@ -46,7 +46,8 @@ class EmptyFileManager implements FileManager {
 
   @Override
   public PsiFile findFile(@NotNull VirtualFile vFile) {
-    return null;
+    FileViewProvider viewProvider = findViewProvider(vFile);
+    return viewProvider == null ? null : viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
   @Override

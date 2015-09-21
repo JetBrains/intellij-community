@@ -31,7 +31,7 @@ public class LongLineInspectionTest extends LightPlatformCodeInsightFixtureTestC
     doTest("java");
   }
 
-  public void testLongLine() {
+  public void _testLongLine() {
     doTest("java");
   }
 

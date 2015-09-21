@@ -85,7 +85,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
         }
       }
     );
-    final Editor editor1 = CodeInsightUtil.positionCursor(project, myClass.getContainingFile(), myClass);
+    final Editor editor1 = CodeInsightUtil.positionCursorAtLBrace(project, myClass.getContainingFile(), myClass);
     if (editor1 == null) return;
     final Collection<CandidateInfo> toImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(myClass, true);
     if (!toImplement.isEmpty()) {

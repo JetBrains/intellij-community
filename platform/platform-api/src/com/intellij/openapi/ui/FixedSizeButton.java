@@ -23,7 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * This class represents non resizable, nonfocusable button with the
+ * This class represents non-resizable, non-focusable button with the
  * same height and length.
  */
 public class FixedSizeButton extends JButton {
@@ -48,7 +48,7 @@ public class FixedSizeButton extends JButton {
     setMargin(new Insets(0, 0, 0, 0));
     setDefaultCapable(false);
     setFocusable(false);
-    if (((UIUtil.isUnderAquaLookAndFeel())&& size == -1) || UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()) {
+    if (((UIUtil.isUnderAquaLookAndFeel()) && size == -1) || UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()) {
       putClientProperty("JButton.buttonType", "square");
     }
   }
@@ -56,7 +56,7 @@ public class FixedSizeButton extends JButton {
   /**
    * Creates the <code>FixedSizeButton</code> with specified size.
    *
-   * @throws java.lang.IllegalArgumentException
+   * @throws IllegalArgumentException
    *          if <code>size</code> isn't
    *          positive integer number.
    */

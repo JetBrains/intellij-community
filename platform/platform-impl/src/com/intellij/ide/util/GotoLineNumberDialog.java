@@ -158,6 +158,7 @@ public class GotoLineNumberDialog extends DialogWrapper {
       gbConstraints.weightx = 1;
       myOffsetField = new MyTextField();
       panel.add(myOffsetField, gbConstraints);
+      myOffsetField.setText(String.valueOf(myEditor.getCaretModel().getOffset()));
     }
 
     return panel;

@@ -48,6 +48,7 @@ import java.util.regex.Pattern;
 class InProcessGroovyc implements GroovycFlavor {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.InProcessGroovyc");
   private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-(.*))?\\.jar");
+  private static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(.*))?\\.jar");
   private static final ThreadPoolExecutor ourExecutor = ConcurrencyUtil.newSingleThreadExecutor("Groovyc");
   private static SoftReference<Pair<String, ClassLoader>> ourParentLoaderCache;
   private static final UrlClassLoader.CachePool ourLoaderCachePool = UrlClassLoader.createCachePool();
@@ -192,16 +193,22 @@ class InProcessGroovyc implements GroovycFlavor {
       return null;
     }
 
-    String groovyAll = ContainerUtil.find(compilationClassPath, new Condition<String>() {
+    List<String> groovyJars = ContainerUtil.findAll(compilationClassPath, new Condition<String>() {
       @Override
       public boolean value(String s) {
-        return GROOVY_ALL_JAR_PATTERN.matcher(StringUtil.getShortName(s, '/')).matches();
+        String fileName = StringUtil.getShortName(s, '/');
+        return GROOVY_ALL_JAR_PATTERN.matcher(fileName).matches() || GROOVY_JAR_PATTERN.matcher(fileName).matches();
       }
     });
-    if (groovyAll == null) {
+
+    LOG.debug("Groovy jars: " + groovyJars);
+
+    if (groovyJars.size() != 1 || !GROOVY_ALL_JAR_PATTERN.matcher(groovyJars.get(0)).matches()) {
+      // avoid complications caused by caching classes from several groovy versions in classpath
       return null;
     }
 
+    String groovyAll = groovyJars.get(0);
     Pair<String, ClassLoader> pair = SoftReference.dereference(ourParentLoaderCache);
     if (pair != null && pair.first.equals(groovyAll)) {
       return pair.second;

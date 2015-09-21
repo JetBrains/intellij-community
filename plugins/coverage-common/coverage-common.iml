@@ -13,19 +13,7 @@
     <orderEntry type="module" module-name="extensions" />
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="library" exported="" name="asm5" level="project" />
-    <orderEntry type="module-library" exported="">
-      <library name="Coverage">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/coverage-agent.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/instrumenter.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/coverage-util.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/coverage-src.zip!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" exported="" name="Coverage" level="project" />
     <orderEntry type="library" exported="" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="testRunner" />
     <orderEntry type="module" module-name="lang-impl" />

@@ -79,6 +79,8 @@ extends
   @Nullable
   Modifier getModifier();
 
+  boolean isAsync();
+
   /**
    * Flags that mark common alterations of a function: decoration by and wrapping in classmethod() and staticmethod().
    */

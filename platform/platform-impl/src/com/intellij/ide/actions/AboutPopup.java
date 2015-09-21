@@ -28,7 +28,9 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.UI;
@@ -36,6 +38,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -221,13 +224,14 @@ public class AboutPopup {
         labelFont = JBUI.Fonts.create("Tahoma", 12);
       }
 
-      for (int labelSize = JBUI.scale(10); labelSize != JBUI.scale(6); labelSize -= 1) {
+      int startFontSize = Registry.is("ide.new.about") ? 14 : 10;
+      for (int labelSize = JBUI.scale(startFontSize); labelSize != JBUI.scale(6); labelSize -= 1) {
         myLinks.clear();
         g2.setPaint(myColor);
         myImage.paintIcon(this, g2, 0, 0);
 
         g2.setColor(myColor);
-        TextRenderer renderer = new TextRenderer(0, 165, 398, 120, g2);
+        TextRenderer renderer = createTextRenderer(g2);
         UIUtil.setupComposite(g2);
         myFont = labelFont.deriveFont(Font.PLAIN, labelSize);
         myBoldFont = labelFont.deriveFont(Font.BOLD, labelSize + 1);
@@ -255,7 +259,22 @@ public class AboutPopup {
       } else {
         g2.setColor(JBColor.BLACK);
       }
-      g2.drawString("\u00A9 2000\u2013" + Calendar.getInstance().get(Calendar.YEAR) + " JetBrains s.r.o. All rights reserved.", JBUI.scale(30), JBUI.scale(284));
+
+      if (Registry.is("ide.new.about")) {
+        g2.setColor(Gray.x33);
+        g2.setFont(JBUI.Fonts.label(12));
+      }
+      final int copyrightX = Registry.is("ide.new.about") ? JBUI.scale(100) : JBUI.scale(30);
+      final int copyrightY = Registry.is("ide.new.about") ? JBUI.scale(390) : JBUI.scale(284);
+      g2.drawString("\u00A9 2000\u2013" + Calendar.getInstance().get(Calendar.YEAR) + " JetBrains s.r.o. All rights reserved.", copyrightX, copyrightY);
+    }
+
+    @NotNull
+    private TextRenderer createTextRenderer(Graphics2D g) {
+      if (Registry.is("ide.new.about")) {
+        return new TextRenderer(70, 200, 450, 220, g);
+      }
+      return new TextRenderer(0, 165, 398, 120, g);
     }
 
     public String getText() {
@@ -303,7 +322,7 @@ public class AboutPopup {
             myLinks.add(new Link(new Rectangle(x, yBase + y - fontAscent, metrics.stringWidth(s), fontHeight), line.getUrl()));
           }
           else {
-            g2.setColor(appInfo.getAboutForeground());
+            g2.setColor(Registry.is("ide.new.about") ? Gray.x33 : appInfo.getAboutForeground());
           }
           renderString(s, indentX);
           if (!line.isKeepWithNext() && !line.equals(lines.get(lines.size()-1))) {

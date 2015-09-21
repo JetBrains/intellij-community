@@ -102,11 +102,11 @@ public class JavaGotoSuperHandler implements PresentableCodeInsightActionHandler
     final PsiElement containingElement = PsiTreeUtil.getParentOfType(element, PsiFunctionalExpression.class, PsiMember.class);
     if (containingElement instanceof PsiClass) {
       presentation.setText(ActionsBundle.actionText("GotoSuperClass"));
-      presentation.setDescription(ActionsBundle.actionText("GotoSuperClass"));
+      presentation.setDescription(ActionsBundle.actionDescription("GotoSuperClass"));
     }
     else {
       presentation.setText(ActionsBundle.actionText("GotoSuperMethod"));
-      presentation.setDescription(ActionsBundle.actionText("GotoSuperMethod"));
+      presentation.setDescription(ActionsBundle.actionDescription("GotoSuperMethod"));
     }
     
   }

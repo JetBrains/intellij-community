@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -52,15 +53,15 @@ public class ComplementaryFontsRegistry {
 
   static {
     final UISettings settings = UISettings.getInstance();
-    ourOldUseAntialiasing = settings.ANTIALIASING_IN_EDITOR;
+    ourOldUseAntialiasing = !AntialiasingType.OFF.equals(settings.EDITOR_AA_TYPE);
 
     // Reset font info on 'use antialiasing' setting change.
     // Assuming that the listener is notified from the EDT only.
     settings.addUISettingsListener(new UISettingsListener() {
       @Override
       public void uiSettingsChanged(UISettings source) {
-        if (ourOldUseAntialiasing ^ source.ANTIALIASING_IN_EDITOR) {
-          ourOldUseAntialiasing = source.ANTIALIASING_IN_EDITOR;
+        if (ourOldUseAntialiasing ^ !AntialiasingType.OFF.equals(settings.EDITOR_AA_TYPE)) {
+          ourOldUseAntialiasing = !AntialiasingType.OFF.equals(settings.EDITOR_AA_TYPE);
           for (FontInfo fontInfo : ourUsedFonts.values()) {
             fontInfo.reset();
           }

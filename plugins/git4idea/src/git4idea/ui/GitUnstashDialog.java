@@ -54,7 +54,7 @@ import git4idea.repo.GitRepository;
 import git4idea.stash.GitStashUtils;
 import git4idea.util.GitUIUtil;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
-import git4idea.util.UntrackedFilesNotifier;
+import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
 
@@ -376,8 +376,8 @@ public class GitUnstashDialog extends DialogWrapper {
         boolean conflictsResolved = new UnstashConflictResolver(myProject, root, getSelectedStash()).merge();
         LOG.info("loadRoot " + root + ", conflictsResolved: " + conflictsResolved);
       } else if (untrackedFilesDetector.wasMessageDetected()) {
-        UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, root, untrackedFilesDetector.getRelativeFilePaths(),
-                                                                 "unstash", null);
+        GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, root, untrackedFilesDetector.getRelativeFilePaths(),
+                                                                  "unstash", null);
       } else if (localChangesDetector.wasMessageDetected()) {
         LocalChangesWouldBeOverwrittenHelper.showErrorDialog(myProject, root, "unstash", localChangesDetector.getRelativeFilePaths());
       } else if (!res.success()) {

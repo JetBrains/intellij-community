@@ -101,6 +101,11 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
           public boolean isSoft() {
             return true;
           }
+
+          @Override
+          public boolean isAllowDollarInNames() {
+            return true;
+          }
         }.getAllReferences());
         ProgressManager.checkCanceled();
       }

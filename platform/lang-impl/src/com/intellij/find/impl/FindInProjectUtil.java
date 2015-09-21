@@ -470,6 +470,8 @@ public class FindInProjectUtil {
                                                         @NotNull VirtualFile file,
                                                         @NotNull Collection<VirtualFile> outSourceRoots) {
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    // if we already are in the sources, search just in this directory only
+    if (index.isInLibrarySource(file)) return;
     VirtualFile classRoot = index.getClassRootForFile(file);
     if (classRoot == null) return;
     String relativePath = VfsUtilCore.getRelativePath(file, classRoot);
@@ -489,7 +491,7 @@ public class FindInProjectUtil {
     SearchScope customScope = findModel.getCustomScope();
     VirtualFile directory = getDirectory(findModel);
     Module module = findModel.getModuleName() == null ? null : ModuleManager.getInstance(project).findModuleByName(findModel.getModuleName());
-    return findModel.isCustomScope() && customScope != null ? customScope :
+    return findModel.isCustomScope() && customScope != null ? customScope.intersectWith(GlobalSearchScope.allScope(project)) :
            // we don't have to check for myProjectFileIndex.isExcluded(file) here like FindInProjectTask.collectFilesInScope() does
            // because all found usages are guaranteed to be not in excluded dir
            directory != null ? forDirectory(project, findModel.isWithSubdirectories(), directory) :

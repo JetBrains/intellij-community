@@ -154,9 +154,15 @@ public class ExceptionUtil {
 
   public static void rethrowAll(@Nullable Throwable t) throws Exception {
     if (t != null) {
-      if (t instanceof Error) throw (Error)t;
-      if (t instanceof RuntimeException) throw (RuntimeException)t;
+      rethrowUnchecked(t);
       throw (Exception)t;
+    }
+  }
+
+  public static void rethrowAllAsUnchecked(@Nullable Throwable t) {
+    if (t != null) {
+      rethrowUnchecked(t);
+      throw new RuntimeException(t);
     }
   }
 }

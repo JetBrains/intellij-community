@@ -1,6 +1,5 @@
-from sys import argv
 import sys
-
+from sys import argv
 
 class SuperClass(object):
     def __init__(self):

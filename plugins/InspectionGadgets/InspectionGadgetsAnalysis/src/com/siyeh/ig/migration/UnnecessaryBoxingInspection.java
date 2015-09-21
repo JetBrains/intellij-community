@@ -161,6 +161,10 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList == null) {
+        return;
+      }
       final PsiType constructorType = expression.getType();
       if (constructorType == null) {
         return;

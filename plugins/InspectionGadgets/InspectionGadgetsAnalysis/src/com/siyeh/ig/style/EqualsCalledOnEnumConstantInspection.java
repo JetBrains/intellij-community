@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2013 Bas Leijdekkers
+ * Copyright 2008-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,11 +142,13 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
-      final PsiType comparedTypeErasure = TypeConversionUtil.erasure(qualifier.getType());
-      final PsiType comparisonTypeErasure = TypeConversionUtil.erasure(arguments[0].getType());
-      if (comparedTypeErasure == null || comparisonTypeErasure == null ||
-          !TypeConversionUtil.areTypesConvertible(comparedTypeErasure, comparisonTypeErasure)) {
-        return;
+      if (arguments.length > 0) {
+        final PsiType comparedTypeErasure = TypeConversionUtil.erasure(qualifier.getType());
+        final PsiType comparisonTypeErasure = TypeConversionUtil.erasure(arguments[0].getType());
+        if (comparedTypeErasure == null || comparisonTypeErasure == null ||
+            !TypeConversionUtil.areTypesConvertible(comparedTypeErasure, comparisonTypeErasure)) {
+          return;
+        }
       }
       registerMethodCallError(expression, expression);
     }

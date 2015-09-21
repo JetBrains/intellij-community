@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
@@ -76,6 +77,10 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   }
 
   public void testIDEA120498() { doTest(false, false); }
+
+  public void testIgnoreStaticInterfaceMethods() throws Exception {
+    doTest(true, false);
+  }
 
   private void doTest() {
     doTest(false, false);

@@ -16,13 +16,12 @@
 package com.intellij.diff.merge;
 
 import com.intellij.diff.contents.DiffContent;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public abstract class ThreesideMergeRequest extends MergeRequest {
-  /*
+  /**
    * 3 contents: left - middle - right (local - base - server)
    */
   @NotNull

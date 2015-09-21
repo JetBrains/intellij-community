@@ -17,12 +17,14 @@ package com.intellij.openapi.vcs.checkout;
 
 import com.intellij.ide.actions.ImportModuleAction;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -31,14 +33,17 @@ import java.io.File;
  * Proposes to create a new project from the checked out sources.
  */
 public class NewProjectCheckoutListener implements CheckoutListener {
+  private static final Logger LOG = Logger.getInstance(NewProjectCheckoutListener.class);
+
   @Override
   public boolean processCheckedOutDirectory(Project project, File directory) {
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(directory);
+    LOG.assertTrue(file != null, "Can't find " + directory);
     int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.create.project.prompt",
                                                                  ProjectCheckoutListener.getProductNameWithArticle(),
                                                                  directory.getAbsolutePath()),
                                       VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
     if (rc == Messages.YES) {
-      VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(directory);
       AddModuleWizard wizard = createImportWizard(file);
       if (wizard == null) return false;
       if (wizard.showAndGet()) {
@@ -50,7 +55,7 @@ public class NewProjectCheckoutListener implements CheckoutListener {
   }
 
   @Nullable
-  protected AddModuleWizard createImportWizard(VirtualFile file) {
+  protected AddModuleWizard createImportWizard(@NotNull VirtualFile file) {
     return ImportModuleAction.createImportWizard(null, null, file, ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions());
   }
 

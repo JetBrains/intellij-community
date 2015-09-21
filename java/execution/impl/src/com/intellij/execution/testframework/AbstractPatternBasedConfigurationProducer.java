@@ -21,15 +21,18 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.ClassUtil;
 
 import java.util.ArrayList;
@@ -55,18 +58,30 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
   }
 
   public boolean isMultipleElementsSelected(ConfigurationContext context) {
-    if (TestsUIUtil.isMultipleSelectionImpossible(context.getDataContext())) return false;
+    final DataContext dataContext = context.getDataContext();
+    if (TestsUIUtil.isMultipleSelectionImpossible(dataContext)) return false;
     final LinkedHashSet<String> classes = new LinkedHashSet<String>();
-    final PsiElement[] elements = collectPatternElements(context, classes);
-    if (elements != null && collectTestMembers(elements, false).size() > 1) {
-      return true;
+    final PsiElementProcessor.CollectElementsWithLimit<PsiElement> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiElement>(2);
+    final PsiElement[] locationElements = collectLocationElements(classes, dataContext);
+    if (locationElements != null) {
+      collectTestMembers(locationElements, false, false, processor);
     }
-    return false;
+    else {
+      collectContextElements(dataContext, false, false, classes, processor);
+    }
+    return processor.getCollection().size() > 1;
   }
 
   public boolean isConfiguredFromContext(ConfigurationContext context, Set<String> patterns) {
     final LinkedHashSet<String> classes = new LinkedHashSet<String>();
-    collectPatternElements(context, classes);
+    final DataContext dataContext = context.getDataContext();
+    if (TestsUIUtil.isMultipleSelectionImpossible(dataContext)) {
+      return false;
+    }
+    final PsiElement[] locationElements = collectLocationElements(classes, dataContext);
+    if (locationElements == null) {
+      collectContextElements(dataContext, true, false, classes, new PsiElementProcessor.CollectElements<PsiElement>());
+    }
     if (Comparing.equal(classes, patterns)) {
       return true;
     }
@@ -74,43 +89,102 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
   }
 
   public PsiElement checkPatterns(ConfigurationContext context, LinkedHashSet<String> classes) {
-    PsiElement[] elements = collectPatternElements(context, classes);
-    if (elements == null || collectTestMembers(elements, false).size() <= 1) {
+    PsiElement[] result;
+    final DataContext dataContext = context.getDataContext();
+    if (TestsUIUtil.isMultipleSelectionImpossible(dataContext)) {
       return null;
     }
-    return elements[0];
+    final PsiElement[] locationElements = collectLocationElements(classes, dataContext);
+    PsiElementProcessor.CollectElements<PsiElement> processor = new PsiElementProcessor.CollectElements<PsiElement>();
+    if (locationElements != null) {
+      collectTestMembers(locationElements, false, true, processor);
+      result = processor.toArray();
+    }
+    else if (collectContextElements(dataContext, true, true, classes, processor)) {
+      result = processor.toArray();
+    }
+    else {
+      return null;
+    }
+    if (result.length <= 1) {
+      return null;
+    }
+    return result[0];
   }
 
-  public Set<PsiElement> collectTestMembers(PsiElement[] psiElements, boolean checkAbstract) {
-    final Set<PsiElement> foundMembers = new LinkedHashSet<PsiElement>();
+  public void collectTestMembers(PsiElement[] psiElements,
+                                 boolean checkAbstract,
+                                 boolean checkIsTest,
+                                 PsiElementProcessor.CollectElements<PsiElement> collectingProcessor) {
     for (PsiElement psiElement : psiElements) {
       if (psiElement instanceof PsiClassOwner) {
         final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
         for (PsiClass aClass : classes) {
-          if (isTestClass(aClass)) {
-            foundMembers.add(aClass);
+          if ((!checkIsTest && aClass.hasModifierProperty(PsiModifier.PUBLIC) || checkIsTest && isTestClass(aClass)) && 
+              !collectingProcessor.execute(aClass)) {
+            return;
           }
         }
       } else if (psiElement instanceof PsiClass) {
-        if (isTestClass((PsiClass)psiElement)) {
-          foundMembers.add(psiElement);
+        if ((!checkIsTest && ((PsiClass)psiElement).hasModifierProperty(PsiModifier.PUBLIC) || checkIsTest && isTestClass((PsiClass)psiElement)) && 
+            !collectingProcessor.execute(psiElement)) {
+          return;
         }
       } else if (psiElement instanceof PsiMethod) {
-        if (isTestMethod(checkAbstract, psiElement)) {
-          foundMembers.add(psiElement);
+        if (checkIsTest && isTestMethod(checkAbstract, psiElement) && !collectingProcessor.execute(psiElement)) {
+          return;
+        }
+        if (!checkIsTest) {
+          final PsiClass containingClass = ((PsiMethod)psiElement).getContainingClass();
+          if (containingClass != null && containingClass.hasModifierProperty(PsiModifier.PUBLIC) && !collectingProcessor.execute(psiElement)) {
+            return;
+          }
         }
       } else if (psiElement instanceof PsiDirectory) {
         final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)psiElement);
-        if (aPackage != null) {
-          foundMembers.add(aPackage);
+        if (aPackage != null && !collectingProcessor.execute(aPackage)) {
+          return;
         }
       }
     }
-    return foundMembers;
   }
-  
-  private PsiElement[] collectPatternElements(ConfigurationContext context, LinkedHashSet<String> classes) {
-    final DataContext dataContext = context.getDataContext();
+
+  private boolean collectContextElements(DataContext dataContext,
+                                         boolean checkAbstract,
+                                         boolean checkIsTest, 
+                                         LinkedHashSet<String> classes,
+                                         PsiElementProcessor.CollectElements<PsiElement> processor) {
+    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    if (elements != null) {
+      collectTestMembers(elements, checkAbstract, checkIsTest, processor);
+      for (PsiElement psiClass : processor.getCollection()) {
+        classes.add(getQName(psiClass));
+      }
+      return true;
+    }
+    else {
+      final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      if (files != null) {
+        Project project = CommonDataKeys.PROJECT.getData(dataContext);
+        if (project != null) {
+          final PsiManager psiManager = PsiManager.getInstance(project);
+          for (VirtualFile file : files) {
+            final PsiFile psiFile = psiManager.findFile(file);
+            if (psiFile instanceof PsiClassOwner) {
+              collectTestMembers(((PsiClassOwner)psiFile).getClasses(), checkAbstract, checkIsTest, processor);
+              for (PsiElement psiMember : processor.getCollection()) {
+                classes.add(((PsiClass)psiMember).getQualifiedName());
+              }
+            }
+          }
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static PsiElement[] collectLocationElements(LinkedHashSet<String> classes, DataContext dataContext) {
     final Location<?>[] locations = Location.DATA_KEYS.getData(dataContext);
     if (locations != null) {
       List<PsiElement> elements = new ArrayList<PsiElement>();
@@ -120,29 +194,6 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
         elements.add(psiElement);
       }
       return elements.toArray(new PsiElement[elements.size()]);
-    }
-    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-    if (elements != null) {
-      for (PsiElement psiClass : collectTestMembers(elements, true)) {
-        classes.add(getQName(psiClass));
-      }
-      return elements;
-    } else {
-      final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-      if (files != null) {
-        final List<PsiFile> psiFiles = new ArrayList<PsiFile>();
-        final PsiManager psiManager = PsiManager.getInstance(context.getProject());
-        for (VirtualFile file : files) {
-          final PsiFile psiFile = psiManager.findFile(file);
-          if (psiFile instanceof PsiClassOwner) {
-            for (PsiElement psiMember : collectTestMembers(((PsiClassOwner)psiFile).getClasses(), true)) {
-              classes.add(((PsiClass)psiMember).getQualifiedName());
-            }
-            psiFiles.add(psiFile);
-          }
-        }
-        return psiFiles.toArray(new PsiElement[psiFiles.size()]);
-      }
     }
     return null;
   }
@@ -157,7 +208,9 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
     }
     else if (psiMember instanceof PsiMember) {
       final PsiClass containingClass = location instanceof MethodLocation
-                                       ? ((MethodLocation)location).getContainingClass(): ((PsiMember)psiMember).getContainingClass();
+                                       ? ((MethodLocation)location).getContainingClass()
+                                       : location instanceof PsiMemberParameterizedLocation ? ((PsiMemberParameterizedLocation)location).getContainingClass() 
+                                                                                            : ((PsiMember)psiMember).getContainingClass();
       assert containingClass != null;
       return ClassUtil.getJVMClassName(containingClass) + "," + ((PsiMember)psiMember).getName();
     } else if (psiMember instanceof PsiPackage) {

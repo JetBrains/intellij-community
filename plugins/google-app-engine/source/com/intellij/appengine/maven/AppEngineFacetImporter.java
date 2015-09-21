@@ -28,7 +28,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.FacetImporter;
-import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
@@ -93,7 +93,7 @@ public class AppEngineFacetImporter extends FacetImporter<AppEngineFacet, AppEng
   }
 
   @Override
-  protected void reimportFacet(MavenModifiableModelsProvider modelsProvider,
+  protected void reimportFacet(IdeModifiableModelsProvider modelsProvider,
                                Module module,
                                MavenRootModelAdapter rootModel,
                                AppEngineFacet facet,
@@ -108,7 +108,7 @@ public class AppEngineFacetImporter extends FacetImporter<AppEngineFacet, AppEng
       facet.getConfiguration().setSdkHomePath(FileUtil.toSystemIndependentName(mavenProject.getLocalRepository().getPath()) + relativePath);
       AppEngineWebIntegration.getInstance().setupDevServer(facet.getSdk());
       final String artifactName = module.getName() + ":war exploded";
-      final Artifact webArtifact = modelsProvider.getArtifactModel().findArtifact(artifactName);
+      final Artifact webArtifact = modelsProvider.getModifiableArtifactModel().findArtifact(artifactName);
       AppEngineWebIntegration.getInstance().setupRunConfiguration(facet.getSdk(), webArtifact, module.getProject());
     }
   }

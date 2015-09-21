@@ -74,13 +74,17 @@ public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperti
     if (properties == null || !(properties instanceof RepositoryLibraryProperties)) {
       return MavenIcons.MavenLogo;
     }
-    return RepositoryLibraryDescription.findDescription((RepositoryLibraryProperties)properties).getIcon();
+    RepositoryLibraryProperties repositoryLibraryProperties = (RepositoryLibraryProperties)properties;
+    if (repositoryLibraryProperties.getGroupId() == null || repositoryLibraryProperties.getArtifactId() == null) {
+      return MavenIcons.MavenLogo;
+    }
+    return RepositoryLibraryDescription.findDescription(repositoryLibraryProperties).getIcon();
   }
 
   @NotNull
   @Override
   public String getDescription(@NotNull RepositoryLibraryProperties properties) {
     RepositoryLibraryDescription description = RepositoryLibraryDescription.findDescription(properties);
-    return description.getDisplayName() + ":" + properties.getVersion();
+    return description.getDisplayName(properties.getVersion());
   }
 }

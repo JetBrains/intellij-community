@@ -16,12 +16,10 @@
 package com.intellij.openapi.externalSystem.service.task;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.project.ExternalEntityData;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService;
-import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTreeModel;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,25 +30,18 @@ import java.util.Collection;
  * @author Denis Zhdanov
  * @since 5/15/13 1:32 PM
  */
-public abstract class AbstractToolWindowService<T extends ExternalEntityData> implements ProjectDataService<T, Void> {
-  
+public abstract class AbstractToolWindowService<T extends ExternalEntityData> extends AbstractProjectDataService<T, Void> {
+
   @Override
-  public void importData(@NotNull final Collection<DataNode<T>> toImport, @NotNull final Project project, boolean synchronous) {
+  public void importData(@NotNull final Collection<DataNode<T>> toImport,
+                         @Nullable ProjectData projectData,
+                         @NotNull final Project project,
+                         @NotNull IdeModifiableModelsProvider modelsProvider) {
     if (toImport.isEmpty()) {
       return;
     }
-    ExternalSystemApiUtil.executeOnEdt(false, new Runnable() {
-      @Override
-      public void run() {
-        processData(toImport, project);
-      }
-    });
+    processData(toImport, project);
   }
 
-  protected abstract void processData(@NotNull Collection<DataNode<T>> nodes,
-                                      @NotNull Project project);
-
-  @Override
-  public void removeData(@NotNull Collection<? extends Void> toRemove, @NotNull Project project, boolean synchronous) {
-  }
+  protected abstract void processData(@NotNull Collection<DataNode<T>> nodes, @NotNull Project project);
 }

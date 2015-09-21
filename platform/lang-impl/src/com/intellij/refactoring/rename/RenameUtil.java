@@ -58,7 +58,7 @@ public class RenameUtil {
   }
 
   @NotNull
-  public static UsageInfo[] findUsages(final PsiElement element,
+  public static UsageInfo[] findUsages(@NotNull final PsiElement element,
                                        final String newName,
                                        boolean searchInStringsAndComments,
                                        boolean searchForTextOccurrences,

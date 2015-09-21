@@ -15,9 +15,9 @@
  */
 package com.intellij.diff.tools.fragmented
 
+import com.intellij.diff.assertEquals
 import com.intellij.diff.util.Side
 import com.intellij.testFramework.UsefulTestCase
-import kotlin.test.assertEquals
 
 public class LineNumberConvertorCorrectorTest : UsefulTestCase() {
   public fun testUnmodified() {
@@ -179,12 +179,12 @@ public class LineNumberConvertorCorrectorTest : UsefulTestCase() {
     public fun printMatchings() {
       for (i in 0..length * 2 - 1) {
         val value = convertor.convert1(i)
-        if (value != -1) println("L: " + i + " - " + value)
+        if (value != -1) println("L: $i - $value")
       }
 
       for (i in 0..length * 2 - 1) {
         val value = convertor.convert2(i)
-        if (value != -1) println("R: " + i + " - " + value)
+        if (value != -1) println("R: $i - $value")
       }
     }
   }

@@ -17,6 +17,7 @@ package com.intellij.lang.properties.editor;
 
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -97,6 +98,15 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
 
   @Override
   public boolean isValid() {
+    if (myResourceBundle instanceof ResourceBundleImpl && !((ResourceBundleImpl)myResourceBundle).isValid()) {
+      return false;
+    }
+    for (PropertiesFile propertiesFile : myResourceBundle.getPropertiesFiles()) {
+      final VirtualFile virtualFile = propertiesFile.getVirtualFile();
+      if (virtualFile == null || !virtualFile.isValid()) {
+        return false;
+      }
+    }
     return true;
   }
 

@@ -17,6 +17,7 @@ package com.intellij.psi.tree;
 
 import com.intellij.lang.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,9 @@ import org.jetbrains.annotations.Nullable;
  */
 
 public class ILazyParseableElementType extends IElementType {
+
+  public static final Key<Language> LANGUAGE_KEY = Key.create("LANGUAGE_KEY");
+
   public ILazyParseableElementType(@NotNull @NonNls final String debugName) {
     this(debugName, null);
   }
@@ -57,11 +61,12 @@ public class ILazyParseableElementType extends IElementType {
   }
 
   protected ASTNode doParseContents(@NotNull final ASTNode chameleon, @NotNull final PsiElement psi) {
-    final Project project = psi.getProject();
+    Project project = psi.getProject();
     Language languageForParser = getLanguageForParser(psi);
-    final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, null, languageForParser, chameleon.getChars());
-    final PsiParser parser = LanguageParserDefinitions.INSTANCE.forLanguage(languageForParser).createParser(project);
-    return parser.parse(this, builder).getFirstChildNode();
+    PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, null, languageForParser, chameleon.getChars());
+    PsiParser parser = LanguageParserDefinitions.INSTANCE.forLanguage(languageForParser).createParser(project);
+    ASTNode node = parser.parse(this, builder);
+    return node.getFirstChildNode();
   }
 
   protected Language getLanguageForParser(PsiElement psi) {

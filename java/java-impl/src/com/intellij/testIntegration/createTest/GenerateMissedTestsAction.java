@@ -102,8 +102,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
       final TestFramework framework = TestFrameworks.detectFramework(testClass);
       if (framework != null) {
         final Project project = testClass.getProject();
-        PsiElement lBrace = testClass.getLBrace();
-        final Editor editor = CodeInsightUtil.positionCursor(project, testClass.getContainingFile(), lBrace != null ? lBrace : testClass);
+        final Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, testClass.getContainingFile(), testClass);
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(testClass)) return;
         final MissedTestsDialog dialog = new MissedTestsDialog(project, srcClass, testClass, framework);
         if (dialog.showAndGet()) {

@@ -295,6 +295,14 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testIncorporationWithCaptureCalcGlbToGetOneTypeParameterBound() throws Exception {
+    doTest();
+  }
+
+  public void testEnumConstantInference() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

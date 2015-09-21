@@ -77,12 +77,15 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
-    final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-    AnalysisScope analysisScope = new AnalysisScope(file);
-    final VirtualFile virtualFile = file.getVirtualFile();
-    if (file.isPhysical() || virtualFile == null || !virtualFile.isInLocalFileSystem()) {
-      analysisScope = new AnalysisScope(project);
+    final Module module = file != null ? ModuleUtilCore.findModuleForPsiElement(file) : null;
+    AnalysisScope analysisScope = new AnalysisScope(project);
+    if (file != null) {
+      final VirtualFile virtualFile = file.getVirtualFile();
+      if (file.isPhysical() && virtualFile != null && virtualFile.isInLocalFileSystem()) {
+        analysisScope = new AnalysisScope(file);
+      }
     }
+
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(
       AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),

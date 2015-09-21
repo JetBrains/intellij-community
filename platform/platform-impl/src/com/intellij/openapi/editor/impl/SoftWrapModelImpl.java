@@ -602,6 +602,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
   void onBulkDocumentUpdateFinished() {
     myBulkUpdateInProgress = false;
     if (!isSoftWrappingEnabled()) {
+      myDirty = true;
       return;
     }
     recalculate();

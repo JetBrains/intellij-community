@@ -22,13 +22,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * * Forces the ide to retrieve the most up-to-date info about the linked external project and updates project state if necessary
+ * Forces the ide to retrieve the most up-to-date info about the linked external project and updates project state if necessary
  * (e.g. imports missing libraries).
  *
  * @author Vladislav.Soroka
  * @since 9/18/13
  */
-public class RefreshExternalProjectAction extends ExternalSystemNodeAction<AbstractExternalEntityData> implements DumbAware {
+public class RefreshExternalProjectAction extends ExternalSystemNodeAction<AbstractExternalEntityData> {
 
   public RefreshExternalProjectAction() {
     super(AbstractExternalEntityData.class);

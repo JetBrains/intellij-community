@@ -678,12 +678,16 @@ public class PsiUtil {
     return false;
   }
 
-  public static boolean isNewLine(PsiElement element) {
+  public static boolean isWhiteSpaceOrLineFeed(PsiElement element) {
     if (element == null) return false;
     ASTNode node = element.getNode();
     if (node == null) return false;
     IElementType elementType = node.getElementType();
-    return elementType == GroovyTokenTypes.mNLS || elementType == TokenType.WHITE_SPACE && element.getText().contains("\n");
+    return elementType == GroovyTokenTypes.mNLS || elementType == TokenType.WHITE_SPACE;
+  }
+
+  public static boolean isNewLine(PsiElement element) {
+    return isWhiteSpaceOrLineFeed(element) && element.getText().contains("\n");
   }
 
   @Nullable

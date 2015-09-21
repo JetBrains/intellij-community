@@ -48,12 +48,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-/*
+/**
  * This class allows to add custom foldings to hide unchanged regions in diff.
  * EditorSettings#isAutoCodeFoldingEnabled() should be true, to avoid collisions with language-specific foldings
  *    (as it's impossible to create partially overlapped folding regions)
- * @See DiffUtil.setFoldingModelSupport()
  *
+ * @see DiffUtil#setFoldingModelSupport(EditorEx)
  */
 public class FoldingModelSupport {
   public static final String PLACEHOLDER = "     ";

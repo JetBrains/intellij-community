@@ -863,6 +863,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         if (newEditor) {
           clearWindowIfNeeded(window);
 
+          ourOpenFilesSetModificationCount.incrementAndGet();
           getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(FileEditorManagerImpl.this, file);
 
           FileEditor[] newEditors = new FileEditor[newProviders.length];
@@ -870,7 +871,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
             try {
               final FileEditorProvider provider = newProviders[i];
               final FileEditor editor = builders[i] == null ? provider.createEditor(myProject, file) : builders[i].build();
-              LOG.assertTrue(editor.isValid());
+              LOG.assertTrue(editor.isValid(), "Invalid editor created by provider " + 
+                                                (provider == null ? null : provider.getClass().getName()));
               newEditors[i] = editor;
               // Register PropertyChangeListener into editor
               editor.addPropertyChangeListener(myEditorPropertyChangeListener);

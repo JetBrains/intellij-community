@@ -15,6 +15,8 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -29,6 +31,8 @@ class ToggleBreakpointGutterIconAction extends DumbAwareAction {
   ToggleBreakpointGutterIconAction(XBreakpoint<?> breakpoint) {
     super(breakpoint.isEnabled() ? XDebuggerBundle.message("xdebugger.disable.breakpoint.action.text") : XDebuggerBundle.message("xdebugger.enable.breakpoint.action.text"));
     this.myBreakpoint = breakpoint;
+    AnAction action = ActionManager.getInstance().getAction("ToggleBreakpointEnabled");
+    copyShortcutFrom(action);
   }
 
   public void actionPerformed(final AnActionEvent e) {

@@ -18,13 +18,12 @@ package com.intellij.psi.filters;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.util.ArrayUtil;
 
 /**
  * @author yole
  */
-public class PlainTextFilter implements ElementFilter, InitializableFilter {
-  protected String[] myValue;
+public class PlainTextFilter implements ElementFilter {
+  protected final String[] myValue;
   protected boolean myCaseInsensitiveFlag = false;
 
   public PlainTextFilter(final String value, final boolean insensitiveFlag) {
@@ -78,17 +77,6 @@ public class PlainTextFilter implements ElementFilter, InitializableFilter {
     }
     ret += ")";
     return ret;
-  }
-
-  @Override
-  public void init(Object[] fromGetter){
-    try{
-      myValue = new String[fromGetter.length];
-      System.arraycopy(fromGetter, 0, myValue, 0, fromGetter.length);
-    }
-    catch(ClassCastException cce){
-      myValue = ArrayUtil.EMPTY_STRING_ARRAY;
-    }
   }
 
   protected String getTextByElement(Object element){

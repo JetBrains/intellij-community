@@ -26,7 +26,6 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,15 +38,6 @@ public class PyHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
     super(element.getProject(), parentDescriptor, element, isBase);
   }
 
-  @Nullable
-  public PsiElement getPsiElement() {
-    return myElement;
-  }
-
-  public boolean isValid() {
-    return myElement != null && myElement.isValid();
-  }
-
   @Override
   public boolean update() {
     boolean changes = super.update();
@@ -55,7 +45,7 @@ public class PyHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
 
     myHighlightedText = new CompositeAppearance();
 
-    NavigatablePsiElement element = (NavigatablePsiElement)myElement;
+    NavigatablePsiElement element = (NavigatablePsiElement)getPsiElement();
     if (element == null) {
       final String invalidPrefix = IdeBundle.message("node.hierarchy.invalid");
       if (!myHighlightedText.getText().startsWith(invalidPrefix)) {

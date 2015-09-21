@@ -17,7 +17,7 @@ package org.jetbrains.util.concurrency
 
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.concurrency.Obsolescent
-import java.util.ArrayList
+import java.util.*
 
 public class AsyncPromise<T> : Promise<T> {
   companion object {
@@ -116,7 +116,7 @@ public class AsyncPromise<T> : Promise<T> {
     return this
   }
 
-  public fun get(): T {
+  public fun get(): T? {
     @suppress("UNCHECKED_CAST")
     return when (state) {
       Promise.State.FULFILLED -> result as T
@@ -124,13 +124,17 @@ public class AsyncPromise<T> : Promise<T> {
     }
   }
 
-  override fun <SUB_RESULT> then(done: (T) -> SUB_RESULT): Promise<SUB_RESULT> {
+  override fun <SUB_RESULT> then(done: (T) -> SUB_RESULT) = thenImpl<SUB_RESULT>(done, false)
+
+  override fun <SUB_RESULT> thenAsync(done: (T) -> Promise<SUB_RESULT>): Promise<SUB_RESULT> = thenImpl(done, true)
+
+  private fun <SUB_RESULT> thenImpl(done: (T) -> Any?, asyncResult: Boolean): Promise<SUB_RESULT> {
     when (state) {
       Promise.State.PENDING -> {
       }
       Promise.State.FULFILLED -> {
         @suppress("UNCHECKED_CAST")
-        return DonePromise(done(result as T))
+        return if (asyncResult) done(result as T) as Promise<SUB_RESULT> else DonePromise(done(result as T) as SUB_RESULT)
       }
       Promise.State.REJECTED -> return RejectedPromise(result as Throwable)
     }
@@ -143,11 +147,17 @@ public class AsyncPromise<T> : Promise<T> {
         }
         else {
           val subResult = done(it)
-          if (subResult is Promise<*>) {
-            subResult.notify(promise)
+          if (asyncResult) {
+            (subResult as Promise<*>).notify(promise)
+            if (subResult is AsyncPromise<*> && subResult.state == Promise.State.PENDING) {
+              // if promise fulfilled separately from sub result
+              @suppress("UNCHECKED_CAST")
+              promise.notify(subResult as AsyncPromise<SUB_RESULT>)
+            }
           }
           else {
-            promise.setResult(subResult)
+            @suppress("UNCHECKED_CAST")
+            promise.setResult(subResult as SUB_RESULT)
           }
         }
       }
@@ -157,7 +167,7 @@ public class AsyncPromise<T> : Promise<T> {
     return promise
   }
 
-  override fun notify(child: AsyncPromise<T>) {
+  override fun notify(child: AsyncPromise<T>): Promise<T> {
     if (child == this) {
       throw IllegalStateException("Child must no be equals to this")
     }
@@ -168,33 +178,15 @@ public class AsyncPromise<T> : Promise<T> {
       Promise.State.FULFILLED -> {
         @suppress("UNCHECKED_CAST")
         child.setResult(result as T)
-        return
+        return this
       }
       Promise.State.REJECTED -> {
         child.setError(result as Throwable)
-        return
+        return this
       }
     }
 
     addHandlers({ child.catchError { child.setResult(it) } }, { child.setError(it) })
-  }
-
-  override fun processed(fulfilled: AsyncPromise<T>): Promise<T> {
-    when (state) {
-      Promise.State.PENDING -> {
-      }
-      Promise.State.FULFILLED -> {
-        @suppress("UNCHECKED_CAST")
-        fulfilled.setResult(result as T)
-        return this
-      }
-      Promise.State.REJECTED -> {
-        fulfilled.setError(result as Throwable)
-        return this
-      }
-    }
-
-    addHandlers({ fulfilled.catchError { fulfilled.setResult(it) } }, { fulfilled.setError(it) })
     return this
   }
 
@@ -246,7 +238,7 @@ public class AsyncPromise<T> : Promise<T> {
     rejected = null
   }
 
-  override fun processed(processed: (T) -> Unit): Promise<T> {
+  override fun processed(processed: (T?) -> Unit): Promise<T> {
     done(processed)
     rejected { processed(null) }
     return this

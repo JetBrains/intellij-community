@@ -24,21 +24,40 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 
 import javax.swing.*;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public abstract class RepositoryLibraryDescription {
+public class RepositoryLibraryDescription {
   protected static final ExtensionPointName<RepositoryLibraryDescription> EP_NAME
     = ExtensionPointName.create("org.jetbrains.idea.maven.repositoryLibrary");
-  private static final List<MavenRepositoryInfo> defaultRemoteRepositories = Collections.singletonList(new MavenRepositoryInfo(
-    "maven.central",
-    "maven.central",
-    "http://repo1.maven.org/maven2"));
+  protected static final MavenRepositoryInfo mavenCentralRepository = new MavenRepositoryInfo(
+    "central",
+    "Maven Central repository",
+    "http://repo1.maven.org/maven2");
+  protected static final MavenRepositoryInfo jbossCommunityRepository = new MavenRepositoryInfo(
+    "jboss.community",
+    "JBoss Community repository",
+    "http://repository.jboss.org/nexus");
+  private static final List<MavenRepositoryInfo> defaultRemoteRepositories =
+    Arrays.asList(mavenCentralRepository, jbossCommunityRepository);
   private static Map<String, RepositoryLibraryDescription> registeredLibraries;
+  private final String groupId;
+  private final String artifactId;
+  private final String libraryName;
+
+  protected RepositoryLibraryDescription(String groupId, String artifactId, String libraryName) {
+    this.groupId = groupId;
+    this.artifactId = artifactId;
+    this.libraryName = libraryName;
+  }
+
+  public static <C extends RepositoryLibraryDescription> C ofClass(Class<C> clazz) {
+    return EP_NAME.findExtension(clazz);
+  }
 
   @NotNull
-  public static synchronized RepositoryLibraryDescription findDescription(@NotNull final RepositoryLibraryProperties properties) {
+  public static synchronized RepositoryLibraryDescription findDescription(@NotNull final String groupId, @NotNull final String artifactId) {
     if (registeredLibraries == null) {
       registeredLibraries = new HashMap<String, RepositoryLibraryDescription>();
       for (RepositoryLibraryDescription description : EP_NAME.getExtensions()) {
@@ -49,49 +68,38 @@ public abstract class RepositoryLibraryDescription {
         }
       }
     }
-    String id = properties.getGroupId() + ":" + properties.getArtifactId();
+    final String id = groupId + ":" + artifactId;
     RepositoryLibraryDescription description = registeredLibraries.get(id);
     if (description != null) {
       return description;
     }
-    return new RepositoryLibraryDescription() {
-      @NotNull
-      @Override
-      public String getGroupId() {
-        return properties.getGroupId();
-      }
-
-      @NotNull
-      @Override
-      public String getArtifactId() {
-        return properties.getArtifactId();
-      }
-
-      @NotNull
-      @Override
-      public String getDisplayName() {
-        return properties.getGroupId() + ":" + properties.getArtifactId();
-      }
-
-      @NotNull
-      @Override
-      public Icon getIcon() {
-        return MavenIcons.MavenLogo;
-      }
-    };
+    return new RepositoryLibraryDescription(groupId, artifactId, id);
   }
 
   @NotNull
-  public abstract String getGroupId();
+  public static synchronized RepositoryLibraryDescription findDescription(@NotNull final RepositoryLibraryProperties properties) {
+    return findDescription(properties.getGroupId(), properties.getArtifactId());
+  }
 
   @NotNull
-  public abstract String getArtifactId();
+  public String getGroupId() {
+    return groupId;
+  }
 
   @NotNull
-  public abstract String getDisplayName();
+  public String getArtifactId() {
+    return artifactId;
+  }
 
   @NotNull
-  public abstract Icon getIcon();
+  public String getDisplayName() {
+    return libraryName;
+  }
+
+  @NotNull
+  public Icon getIcon() {
+    return MavenIcons.MavenLogo;
+  }
 
   @Nullable
   public DependencyScope getSuggestedScope() {
@@ -99,7 +107,7 @@ public abstract class RepositoryLibraryDescription {
   }
 
   @NotNull
-  List<MavenRepositoryInfo> getRemoteRepositories() {
+  public List<MavenRepositoryInfo> getRemoteRepositories() {
     return defaultRemoteRepositories;
   }
 
@@ -110,6 +118,23 @@ public abstract class RepositoryLibraryDescription {
   }
 
   public RepositoryLibraryProperties createDefaultProperties() {
-    return new RepositoryLibraryProperties(getGroupId(), getArtifactId(), RepositoryUtils.LatestVersionId);
+    return new RepositoryLibraryProperties(getGroupId(), getArtifactId(), RepositoryUtils.ReleaseVersionId);
   }
+
+  public String getDisplayName(String version) {
+    if (version.equals(RepositoryUtils.LatestVersionId)) {
+      version = RepositoryUtils.LatestVersionDisplayName;
+    }
+    if (version.equals(RepositoryUtils.ReleaseVersionId)) {
+      version = RepositoryUtils.ReleaseVersionDisplayName;
+    }
+    return getDisplayName() + ":" + version;
+  }
+
+  public String getMavenCoordinates(String version) {
+    return getGroupId() + ":" + getArtifactId() + ":" + version;
+  }
+
+
+
 }

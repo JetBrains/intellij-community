@@ -157,9 +157,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }
     }
 
-    if (Registry.is("dark.laf.available")) {
-      lafList.add(new DarculaLookAndFeelInfo());
-    }
+    lafList.add(new DarculaLookAndFeelInfo());
 
     myLaFs = lafList.toArray(new UIManager.LookAndFeelInfo[lafList.size()]);
 

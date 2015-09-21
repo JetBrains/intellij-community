@@ -15,17 +15,12 @@
  */
 package com.intellij.openapi.externalSystem.service.project
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.test.AbstractExternalSystemTest
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.roots.JavadocOrderRootType
-import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.ModuleSourceOrderEntry
-import com.intellij.openapi.roots.OrderEntry
-import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.io.FileUtil
 
 import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
@@ -44,12 +39,11 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
 
     applyProjectState([projectNode, projectNode])
 
-    def helper = ServiceManager.getService(ProjectStructureHelper.class)
-    def module = helper.findIdeModule('module', project)
+    def modelsProvider = new IdeModifiableModelsProviderImpl(project);
+    def module = modelsProvider.findIdeModule('module')
     assertNotNull(module)
-    
-    def facade = ServiceManager.getService(PlatformFacade.class)
-    def entries = facade.getOrderEntries(module)
+
+    def entries = modelsProvider.getOrderEntries(module)
     def dependencies = [:].withDefault { 0 }
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry) {
@@ -86,12 +80,10 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
 
     applyProjectState([projectNodeInitial, projectNodeRefreshed])
 
-    def helper = ServiceManager.getService(ProjectStructureHelper.class)
-    def module = helper.findIdeModule('module', project)
+    def modelsProvider = new IdeModifiableModelsProviderImpl(project);
+    def module = modelsProvider.findIdeModule('module')
     assertNotNull(module)
-
-    def facade = ServiceManager.getService(PlatformFacade.class)
-    def entries = facade.getOrderEntries(module)
+    def entries = modelsProvider.getOrderEntries(module)
     def folders = [:].withDefault { 0 }
     for (OrderEntry entry : entries) {
       if (entry instanceof ModuleSourceOrderEntry) {
@@ -128,12 +120,11 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
             lib('lib1', level: 'module', bin: [libBinPath.absolutePath], src: [libSrcPath.absolutePath],  doc: [libDocPath.absolutePath]) } } }
     ])
 
-    def helper = ServiceManager.getService(ProjectStructureHelper.class)
-    def module = helper.findIdeModule('module', project)
+    def modelsProvider = new IdeModifiableModelsProviderImpl(project);
+    def module = modelsProvider.findIdeModule('module')
     assertNotNull(module)
 
-    def facade = ServiceManager.getService(PlatformFacade.class)
-    def entries = facade.getOrderEntries(module)
+    def entries = modelsProvider.getOrderEntries(module)
     def dependencies = [:].withDefault { 0 }
     entries.each { OrderEntry entry ->
       if (entry instanceof LibraryOrderEntry) {

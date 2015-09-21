@@ -25,8 +25,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -226,39 +224,35 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       throw new ConfigurationException("Please, specify project name!");
     }
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            // set the output path first so that handlers of RootsChanged event sent after JDK is set
-            // would see the updated path
-            String canonicalPath = myProjectCompilerOutput.getText();
-            if (canonicalPath != null && canonicalPath.length() > 0) {
-              try {
-                canonicalPath = FileUtil.resolveShortWindowsName(canonicalPath);
-              }
-              catch (IOException e) {
-                //file doesn't exist yet
-              }
-              canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
-              compilerProjectExtension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
-            }
-            else {
-              compilerProjectExtension.setCompilerOutputPointer(null);
-            }
-
-            LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(myProject);
-            extension.setLanguageLevel(myLanguageLevelCombo.getSelectedLevel());
-            extension.setDefault(myLanguageLevelCombo.isDefault());
-            myProjectJdkConfigurable.apply();
-
-            if (myProjectName != null) {
-              ((ProjectEx)myProject).setProjectName(myProjectName.getText().trim());
-              if (myDetailsComponent != null) myDetailsComponent.setText(getBannerSlogan());
-            }
+        // set the output path first so that handlers of RootsChanged event sent after JDK is set
+        // would see the updated path
+        String canonicalPath = myProjectCompilerOutput.getText();
+        if (canonicalPath != null && canonicalPath.length() > 0) {
+          try {
+            canonicalPath = FileUtil.resolveShortWindowsName(canonicalPath);
           }
-        });
+          catch (IOException e) {
+            //file doesn't exist yet
+          }
+          canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
+          compilerProjectExtension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
+        }
+        else {
+          compilerProjectExtension.setCompilerOutputPointer(null);
+        }
+
+        LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(myProject);
+        extension.setLanguageLevel(myLanguageLevelCombo.getSelectedLevel());
+        extension.setDefault(myLanguageLevelCombo.isDefault());
+        myProjectJdkConfigurable.apply();
+
+        if (myProjectName != null) {
+          ((ProjectEx)myProject).setProjectName(myProjectName.getText().trim());
+          if (myDetailsComponent != null) myDetailsComponent.setText(getBannerSlogan());
+        }
       }
     });
   }
@@ -300,7 +294,9 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   @Override
   @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isModified() {
-    if (!LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel().equals(myLanguageLevelCombo.getSelectedLevel())) {
+    LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(myProject);
+    if (!extension.getLanguageLevel().equals(myLanguageLevelCombo.getSelectedLevel()) ||
+         extension.isDefault() != myLanguageLevelCombo.isDefault()) {
       return true;
     }
     final String compilerOutput = getOriginalCompilerOutputUrl();

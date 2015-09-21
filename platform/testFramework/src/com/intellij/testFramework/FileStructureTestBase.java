@@ -31,6 +31,10 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
+    setupStructurePopup();
+  }
+
+  protected void setupStructurePopup() {
     myFixture.configureByFile(getFileName(getFileExtension()));
     myPopupFixture = new FileStructureTestFixture(myFixture.getProject(), myFixture.getEditor(), getFile());
     myPopupFixture.update();

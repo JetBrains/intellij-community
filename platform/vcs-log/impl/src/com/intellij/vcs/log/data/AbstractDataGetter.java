@@ -1,6 +1,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -9,6 +10,7 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogHashMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsShortCommitDetails;
@@ -132,9 +134,15 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
       // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
       // even if it will be loaded within a previous query
-      for (int commitId : hashes) {
+      for (final int commitId : hashes) {
         if (!myCache.isKeyCached(commitId)) {
-          myCache.put(commitId, (T)new LoadingDetails(myHashMap.getHash(commitId), taskNumber, root));
+          myCache.put(commitId, (T)new LoadingDetails(new Computable<Hash>(){
+
+            @Override
+            public Hash compute() {
+              return myHashMap.getHash(commitId);
+            }
+          }, taskNumber, root));
         }
       }
     }

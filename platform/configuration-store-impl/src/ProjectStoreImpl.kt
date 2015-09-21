@@ -54,8 +54,6 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
     assert(!project.isDefault())
   }
 
-  override fun getSubstitutors() = listOf(storageManager.getMacroSubstitutor())
-
   override fun optimizeTestLoading() = project.isOptimiseTestLoadSpeed()
 
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
@@ -102,12 +100,9 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
     storageManager.clearStorages()
   }
 
-  override fun getProjectBaseDir(): VirtualFile? {
-    val path = getProjectBasePath() ?: return null
-    return LocalFileSystem.getInstance().findFileByPath(path)
-  }
+  override fun getProjectBaseDir() = LocalFileSystem.getInstance().findFileByPath(getProjectBasePath())
 
-  override fun getProjectBasePath(): String? {
+  override fun getProjectBasePath(): String {
     val path = PathUtilRt.getParentPath(getProjectFilePath())
     return if (scheme == StorageScheme.DEFAULT) path else PathUtilRt.getParentPath(path)
   }
@@ -159,10 +154,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
 
   override fun getPresentableUrl(): String? {
     if (presentableUrl == null) {
-      val url = if (scheme == StorageScheme.DIRECTORY_BASED) getProjectBasePath() else getProjectFilePath()
-      if (url != null) {
-        presentableUrl = FileUtil.toSystemDependentName(url)
-      }
+      presentableUrl = FileUtil.toSystemDependentName(if (scheme == StorageScheme.DIRECTORY_BASED) getProjectBasePath() else getProjectFilePath())
     }
     return presentableUrl
   }
@@ -186,7 +178,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
     }
   }
 
-  override fun doSave(saveSessions: List<SaveSession>?, readonlyFiles: MutableList<Pair<SaveSession, VirtualFile>>, prevErrors: MutableList<Throwable>?): MutableList<Throwable>? {
+  override fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<Pair<SaveSession, VirtualFile>>, prevErrors: MutableList<Throwable>?): MutableList<Throwable>? {
     var errors = prevErrors
     beforeSave(readonlyFiles)
 

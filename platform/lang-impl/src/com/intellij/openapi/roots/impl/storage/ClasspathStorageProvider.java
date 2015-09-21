@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
@@ -48,8 +47,8 @@ public interface ClasspathStorageProvider {
 
   void moduleRenamed(@NotNull Module module, @NotNull String oldName, @NotNull String newName);
 
-  @Nullable
-  ClasspathConverter createConverter(Module module);
+  @NotNull
+  ClasspathConverter createConverter(@NotNull Module module);
 
   String getContentRoot(@NotNull ModuleRootModel model);
 

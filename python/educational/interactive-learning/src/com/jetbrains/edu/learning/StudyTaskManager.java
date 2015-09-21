@@ -3,12 +3,14 @@ package com.jetbrains.edu.learning;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
+import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.*;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.UserTest;
 import com.jetbrains.edu.oldCourseFormat.OldCourse;
 import org.jdom.Element;
@@ -203,7 +205,13 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
     if (oldCourseElement != null) {
       myOldCourse = XmlSerializer.deserialize(oldCourseElement, OldCourse.class);
       if (myOldCourse != null) {
-        myCourse = EduUtils.transformOldCourse(myOldCourse);
+        myCourse = EduUtils.transformOldCourse(myOldCourse, new Function<Pair<AnswerPlaceholder, StudyStatus>, Void>() {
+          @Override
+          public Void fun(Pair<AnswerPlaceholder, StudyStatus> pair) {
+            setStatus(pair.first, pair.second);
+            return null;
+          }
+        });
         myOldCourse = null;
       }
     }

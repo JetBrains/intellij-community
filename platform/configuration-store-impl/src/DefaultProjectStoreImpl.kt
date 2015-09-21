@@ -63,8 +63,6 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 
     override fun getStateStorage(storageSpec: Storage) = storage
 
-    override fun getStateStorage(fileSpec: String, roamingType: RoamingType) = storage
-
     override fun startExternalization(): StateStorageManager.ExternalizationSession? {
       val externalizationSession = storage.startExternalization()
       return if (externalizationSession == null) null else MyExternalizationSession(externalizationSession)
@@ -76,6 +74,8 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 
     override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
   }
+
+  override fun isUseLoadedStateAsExisting(storage: StateStorage) = false
 
   // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock (currently we store loaded archived state in memory, but later implementation can be changed)
   fun getStateCopy() = storage.loadLocalData()

@@ -54,7 +54,7 @@ public interface Project extends ComponentManager, AreaInstance {
   VirtualFile getBaseDir();
 
   /**
-   * Returns a system-dependent path to a project base directory (see {@linkplain #getBaseDir()}).<br/>
+   * Returns a system-independent path to a project base directory (see {@linkplain #getBaseDir()}).<br/>
    * Returns <code>null</code> for default project.
    *
    * @return a path to a project base directory, or <code>null</code> for default project

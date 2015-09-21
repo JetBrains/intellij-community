@@ -31,6 +31,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -268,6 +269,20 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     });
     Disposer.register(this, myTreeView);
     installSpotlightRemover();
+    mySearch.getTextEditor().addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        myTreeView.select(myFilter.myContext.getCurrentConfigurable()).doWhenDone(new Runnable() {
+          @Override
+          public void run() {
+            JComponent component = myEditor.getPreferredFocusedComponent();
+            if (component != null) {
+              IdeFocusManager.findInstanceByComponent(component).requestFocus(component, true);
+            }
+          }
+        });
+      }
+    });
   }
 
   private void installSpotlightRemover() {

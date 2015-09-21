@@ -104,7 +104,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
   }
 
   public void testEmptyProject() throws Throwable {
-    registerDefaultUntrackedFilesDialogHandler();
+    registerSelectNoneUntrackedFilesDialogHandler();
     registerDefaultShareDialogHandler();
 
     GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);

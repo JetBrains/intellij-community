@@ -16,8 +16,10 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.TransparentPanel;
@@ -47,7 +49,7 @@ public class PresentationModeProgressPanel {
 
   public PresentationModeProgressPanel(InlineProgressIndicator progress) {
     myProgress = progress;
-    final Font font = JBUI.Fonts.label(11);
+    Font font = JBUI.Fonts.label(11);
     myText.setFont(font);
     myText2.setFont(font);
     myText.setIcon(EmptyIcon.create(1, 16));
@@ -66,7 +68,7 @@ public class PresentationModeProgressPanel {
   }
 
   @NotNull
-  public Color getTextForeground() {
+  private static Color getTextForeground() {
     return EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground();
   }
 
@@ -98,13 +100,19 @@ public class PresentationModeProgressPanel {
   }
 
   private void createUIComponents() {
-    myRootPanel = new TransparentPanel(0.5f);
-    final IconButton iconButton = new IconButton(myProgress.getInfo().getCancelTooltipText(),
+    myRootPanel = new TransparentPanel(0.5f) {
+      @Override
+      public boolean isVisible() {
+        UISettings ui = UISettings.getInstance();
+        return ui.PRESENTATION_MODE || !ui.SHOW_STATUS_BAR && Registry.is("ide.show.progress.without.status.bar");
+      }
+    };
+    IconButton iconButton = new IconButton(myProgress.getInfo().getCancelTooltipText(),
                                                  AllIcons.Process.Stop,
                                                  AllIcons.Process.StopHovered);
     myCancelButton = new InplaceButton(iconButton, new ActionListener() {
-      public void actionPerformed(@NotNull final ActionEvent e) {
-        myProgress.cancel();
+      public void actionPerformed(@NotNull ActionEvent e) {
+        myProgress.cancelRequest();
       }
     }).setFillBg(false);
   }

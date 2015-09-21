@@ -28,7 +28,6 @@ import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
@@ -109,6 +108,23 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       final Module originalModule = getConfigurationModule().getModule();
       setMainClass(psiClass);
       restoreOriginalModule(originalModule);
+    }
+  };
+  
+  final RefactoringListeners.Accessor<PsiClass> myCategory = new RefactoringListeners.Accessor<PsiClass>() {
+    @Override
+    public void setName(@NotNull final String qualifiedName) {
+      setCategory(qualifiedName);
+    }
+
+    @Override
+    public PsiClass getPsiElement() {
+      return getConfigurationModule().findClass(myData.getCategory());
+    }
+
+    @Override
+    public void setPsiElement(final PsiClass psiClass) {
+      setCategory(JavaExecutionUtil.getRuntimeQualifiedName(psiClass));
     }
   };
   public boolean ALTERNATIVE_JRE_PATH_ENABLED;
@@ -279,6 +295,12 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   public void setMainClass(final PsiClass testClass) {
     final boolean shouldUpdateName = isGeneratedName();
     setModule(myData.setMainClass(testClass));
+    if (shouldUpdateName) setGeneratedName();
+  }
+
+  public void setCategory(String categoryName) {
+    final boolean shouldUpdateName = isGeneratedName();
+    myData.setCategoryName(categoryName);
     if (shouldUpdateName) setGeneratedName();
   }
 

@@ -494,11 +494,7 @@ class PseudoLambdaReplaceTemplate {
 
     final PsiType psiType = expression.getType();
     if (psiType != null) {
-      PsiNewExpression newArrayExpression = (PsiNewExpression)JavaPsiFacade.getElementFactory(expression.getProject())
-        .createExpressionFromText("new " + psiType.getCanonicalText() + "[]{" + expression.getText() + "}", expression);
-      PsiArrayInitializerExpression initializer = newArrayExpression.getArrayInitializer();
-      LOG.assertTrue(initializer != null);
-      return AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(initializer.getInitializers()[0], true);
+      return AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(expression, psiType);
     }
     return null;
   }

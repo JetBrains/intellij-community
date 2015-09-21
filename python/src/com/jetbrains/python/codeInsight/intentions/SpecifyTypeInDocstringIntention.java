@@ -16,24 +16,23 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
-import com.jetbrains.python.documentation.DocStringFormat;
-import com.jetbrains.python.documentation.PyDocstringGenerator;
-import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: ktisha
@@ -54,13 +53,12 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
-    PyExpression problemElement = getProblemElement(elementAt);
-    PsiReference reference = problemElement == null ? null : problemElement.getReference();
+    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
+    final PyExpression problemElement = getProblemElement(elementAt);
+    final PsiReference reference = problemElement == null ? null : problemElement.getReference();
 
     final PsiElement resolved = reference != null ? reference.resolve() : null;
-    PyParameter parameter = getParameter(problemElement, resolved);
-    String kind = parameter != null ? "type" : "rtype";
+    final PyNamedParameter parameter = getParameter(problemElement, resolved);
 
     final PyCallable callable;
     if (parameter != null) {
@@ -70,35 +68,30 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
       callable = getCallable(elementAt);
     }
     if (callable instanceof PyFunction) {
-      generateDocstring(kind, (PyFunction)callable, problemElement, editor);
+      generateDocstring(parameter, (PyFunction)callable);
     }
   }
 
-  private static void generateDocstring(String kind,
-                                        PyFunction pyFunction,
-                                        PyExpression problemElement, Editor editor) {
-    String name = "rtype".equals(kind) ? "" : StringUtil.notNullize(problemElement.getName());
+  private static void generateDocstring(@Nullable PyNamedParameter param, @NotNull PyFunction pyFunction) {
+    if (!DocStringUtil.ensureNotPlainDocstringFormat(pyFunction)) {
+      return;
+    }
 
-    final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(pyFunction);
-
-    PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
-    if (signature != null) {
-      docstringGenerator.withParamTypedByQualifiedName(kind, name, signature.getArgTypeQualifiedName(name), pyFunction);
+    final PyDocstringGenerator docstringGenerator = PyDocstringGenerator.forDocStringOwner(pyFunction);
+    String type = "object";
+    if (param != null) {
+      final String paramName = StringUtil.notNullize(param.getName());
+      final PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
+      if (signature != null) {
+        type = ObjectUtils.chooseNotNull(signature.getArgTypeQualifiedName(paramName), type);
+      }
+      docstringGenerator.withParamTypedByName(param, type);
     }
     else {
-      docstringGenerator.withParam(kind, name);
+      docstringGenerator.withReturnValue(type);
     }
 
-    final Module module = ModuleManager.getInstance(pyFunction.getProject()).getModules()[0];
-    final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
-    if (documentationSettings.isPlain(pyFunction.getContainingFile())) {
-      final String[] values = {DocStringFormat.EPYTEXT, DocStringFormat.REST};
-      final int i = Messages.showChooseDialog("Docstring format:", "Select Docstring Type", values, DocStringFormat.EPYTEXT, null);
-      if (i < 0) return;
-      final String value = values[i];
-      documentationSettings.setFormat(value);
-    }
-    docstringGenerator.build();
+    docstringGenerator.addFirstEmptyLine().buildAndInsert();
     docstringGenerator.startTemplate();
   }
 
@@ -108,11 +101,15 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
   }
 
   @Override
-  protected boolean isParamTypeDefined(@NotNull final PyParameter parameter) {
-    PyFunction pyFunction = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
+  protected boolean isParamTypeDefined(@NotNull PyParameter parameter) {
+    final PyFunction pyFunction = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
     if (pyFunction != null) {
       final StructuredDocString structuredDocString = pyFunction.getStructuredDocString();
-      return structuredDocString != null && structuredDocString.getParamType(StringUtil.notNullize(parameter.getName())) != null;
+      if (structuredDocString == null) {
+        return false;
+      }
+      final Substring typeSub = structuredDocString.getParamTypeSubstring(StringUtil.notNullize(parameter.getName()));
+      return typeSub != null && !typeSub.isEmpty();
     }
     return false;
   }

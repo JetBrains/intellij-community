@@ -284,7 +284,7 @@ public abstract class InplaceRefactoring {
     boolean hasReferenceOnNameIdentifier = false;
     for (PsiReference ref : refs) {
       if (isReferenceAtCaret(selectedElement, ref)) {
-        builder.replaceElement(ref, PRIMARY_VARIABLE_NAME, createLookupExpression(selectedElement), true);
+        builder.replaceElement(ref.getElement(), getRangeToRename(ref), PRIMARY_VARIABLE_NAME, createLookupExpression(selectedElement), true);
         subrefOnPrimaryElement = true;
         continue;
       }
@@ -660,10 +660,10 @@ public abstract class InplaceRefactoring {
                            int offset) {
     final PsiElement element = reference.getElement();
     if (element == selectedElement && checkRangeContainsOffset(offset, reference.getRangeInElement(), element)) {
-      builder.replaceElement(reference, PRIMARY_VARIABLE_NAME, createLookupExpression(selectedElement), true);
+      builder.replaceElement(reference.getElement(), getRangeToRename(reference), PRIMARY_VARIABLE_NAME, createLookupExpression(selectedElement), true);
     }
     else {
-      builder.replaceElement(reference, OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
+      builder.replaceElement(reference.getElement(), getRangeToRename(reference), OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
     }
   }
 
@@ -678,16 +678,25 @@ public abstract class InplaceRefactoring {
                            final PsiElement selectedElement,
                            final TemplateBuilderImpl builder) {
     if (element == selectedElement) {
-      builder.replaceElement(element, PRIMARY_VARIABLE_NAME, createLookupExpression(myElementToRename), true);
+      builder.replaceElement(element, getRangeToRename(element), PRIMARY_VARIABLE_NAME, createLookupExpression(myElementToRename), true);
     }
     else if (textRange != null) {
       builder.replaceElement(element, textRange, OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
     }
     else {
-      builder.replaceElement(element, OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
+      builder.replaceElement(element, getRangeToRename(element), OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
     }
   }
 
+  @NotNull
+  protected TextRange getRangeToRename(@NotNull PsiElement element) {
+    return new TextRange(0, element.getTextLength());
+  }
+
+  @NotNull
+  protected TextRange getRangeToRename(@NotNull PsiReference reference) {
+    return reference.getRangeInElement();
+  }
 
   public void setElementToRename(PsiNamedElement elementToRename) {
     myElementToRename = elementToRename;

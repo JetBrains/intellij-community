@@ -18,8 +18,7 @@ package com.jetbrains.python;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.jetbrains.python.documentation.DocStringFormat;
-import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -148,19 +147,22 @@ public class PythonInspectionsTest extends PyTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyDocstringParametersInspection() {     //PY-3373
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    documentationSettings.setFormat(DocStringFormat.EPYTEXT);
-    try {
-      doHighlightingTest(PyDocstringInspection.class, LanguageLevel.PYTHON33);
-    }
-    finally {
-      documentationSettings.setFormat(DocStringFormat.PLAIN);
-    }
+  //PY-3373
+  public void testPyDocstringParametersInspection() {     
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
+      public void run() {
+        doHighlightingTest(PyDocstringInspection.class, LanguageLevel.PYTHON33);
+      }
+    });
   }
-
-  public void testPyStatementEffectInspection() {
-    doHighlightingTest(PyStatementEffectInspection.class, LanguageLevel.PYTHON26);
+  
+  // PY-9795
+  public void testGoogleDocstringParametersInspection() {     
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      public void run() {
+        doHighlightingTest(PyDocstringInspection.class, LanguageLevel.PYTHON33);
+      }
+    });
   }
 
   public void testPySimplifyBooleanCheckInspection() {

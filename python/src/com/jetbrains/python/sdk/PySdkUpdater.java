@@ -18,7 +18,6 @@ package com.jetbrains.python.sdk;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +89,7 @@ public abstract class PySdkUpdater {
         return sdk;
       }
       else {
-        return new ProjectJdkImpl(getHomePath(), PythonSdkType.getInstance());
+        throw new PySdkNotFoundException();
       }
     }
 
@@ -143,4 +142,6 @@ public abstract class PySdkUpdater {
   public interface SdkModificationProcessor {
     void process(@NotNull Sdk sdk, @NotNull SdkModificator sdkModificator);
   }
+
+  public class PySdkNotFoundException extends RuntimeException {}
 }

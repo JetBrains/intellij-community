@@ -36,8 +36,8 @@ public interface DiffContent {
   @Nullable
   OpenFileDescriptor getOpenFileDescriptor();
 
-  /*
-   * @See DiffRequest.onAssigned()
+  /**
+   * @see DiffRequest#onAssigned(boolean)
    */
   @CalledInAwt
   void onAssigned(boolean isAssigned);

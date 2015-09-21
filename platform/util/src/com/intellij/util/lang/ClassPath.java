@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Nullable;
-import sun.misc.Resource;
 
 import java.io.*;
 import java.net.URI;
@@ -158,7 +157,7 @@ public class ClassPath {
         initLoaders(url, lastOne, myLoaders.size());
       }
       catch (IOException e) {
-        Logger.getInstance(ClassPath.class).debug("url: " + url, e);
+        Logger.getInstance(ClassPath.class).info("url: " + url, e);
       }
     }
 
@@ -172,11 +171,10 @@ public class ClassPath {
     }
     return result;
   }
-  
+
   /**
-   * Used in 
-   * @see com.intellij.openapi.projectRoots.JdkUtil#isClassPathJarEnabled(java.util.List, java.lang.String)
-   * as condition that UrlClassLoader supports classpath jars. Please modify it accordingly
+   * Used in com.intellij.openapi.projectRoots.JdkUtil#isClassPathJarEnabled(List, String)
+   * as a condition that UrlClassLoader supports classpath jars. Please modify it accordingly.
    */
   private void initLoaders(final URL url, boolean lastOne, int index) throws IOException {
     String path;
@@ -341,12 +339,9 @@ public class ClassPath {
     @Override
     Resource process(Loader loader, String s, ClassPath classPath) {
       if (!classPath.myCache.loaderHasName(s, ClasspathCache.transformName(s), loader)) return null;
-      final Resource resource = loader.getResource(s, myFlag);
-      if (resource != null) {
-        printOrder(loader, s, resource);
-        return resource;
-      }
-      return null;
+      Resource resource = loader.getResource(s, myFlag);
+      if (resource != null) printOrder(loader, s, resource);
+      return resource;
     }
   }
 
@@ -370,21 +365,23 @@ public class ClassPath {
 
     String home = FileUtil.toSystemIndependentName(PathManager.getHomePath());
     try {
-      ourOrderSize += resource.getContentLength();
+      if (resource instanceof MemoryResource) {
+        ourOrderSize += resource.getBytes().length;
+      }
     }
     catch (IOException e) {
       e.printStackTrace(System.out);
     }
 
     if (ourOrder == null) {
-      final File orderFile = new File(PathManager.getBinPath() + File.separator + "order.txt");
+      final File orderFile = new File(PathManager.getBinPath(), "order.txt");
       try {
         if (!FileUtil.ensureCanCreateFile(orderFile)) return;
         ourOrder = new PrintStream(new FileOutputStream(orderFile, true));
         ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+          @Override
           public void run() {
-            ourOrder.close();
-            System.out.println(ourOrderSize);
+            closeOrderStream();
           }
         });
       }
@@ -404,6 +401,11 @@ public class ClassPath {
     }
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private static synchronized void closeOrderStream() {
+    ourOrder.close();
+    System.out.println(ourOrderSize);
+  }
 
   private static final boolean ourLogTiming = Boolean.getBoolean("idea.print.classpath.timing");
   private static long ourTotalTime = 0;
@@ -427,7 +429,7 @@ public class ClassPath {
       System.out.println(path.toString() + ", requests:" + ourTotalRequests + ", time:" + (ourTotalTime / 1000000) + "ms");
     }
   }
-  
+
   public static String[] loadManifestClasspath(File file) {
     try {
       JarInputStream inputStream = new JarInputStream(new FileInputStream(file));
@@ -447,5 +449,4 @@ public class ClassPath {
     catch (Exception ignore) { }
     return null;
   }
-  
 }

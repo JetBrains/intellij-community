@@ -21,6 +21,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -31,6 +32,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
@@ -101,9 +103,7 @@ public class TipUIUtil {
       replaced = replaced.replace("&minorVersion;", minor);
       replaced = replaced.replace("&majorMinorVersion;", major + ("0".equals(minor) ? "" : ("." + minor)));
       replaced = replaced.replace("&settingsPath;", CommonBundle.settingsActionPath());
-      if (UIUtil.isUnderDarcula()) {
-        replaced = replaced.replace("css/tips.css", "css/tips_darcula.css");
-      }
+      replaced = replaced.replaceFirst("<link rel=\"stylesheet\".*tips\\.css\">", ""); // don't reload the styles
       if (browser.getUI() == null) {
         browser.updateUI();
         boolean succeed = browser.getUI() != null;
@@ -112,11 +112,25 @@ public class TipUIUtil {
         if (succeed) LOG.warn(message);
         else LOG.error(message);
       }
+      adjustFontSize(((HTMLEditorKit)browser.getEditorKit()).getStyleSheet());
       browser.read(new StringReader(replaced), url);
     }
     catch (IOException e) {
       setCantReadText(browser, tip);
     }
+  }
+
+  private static final int TIP_FONT_BASE_SIZE = 16;
+  private static final String TIP_HTML_TEXT_TAGS = "h1, p, pre, ul";
+
+  private static void adjustFontSize(StyleSheet styleSheet) {
+    float scale = (float)UISettings.getInstance().FONT_SIZE / UIUtil.getSystemFontData().getSecond();
+    if (scale <= 1) return; // don't bother about decreasing
+
+    // When the primary font is increased we should take care of the visibility of the tips font
+    // which is too small initially. So, a reasonable constant is used as the base for the scale.
+    int size = (int)(TIP_FONT_BASE_SIZE * scale);
+    styleSheet.addRule(TIP_HTML_TEXT_TAGS + " {font-size: " + size + "px;}");
   }
 
   private static void setCantReadText(JEditorPane browser, TipAndTrickBean bean) {

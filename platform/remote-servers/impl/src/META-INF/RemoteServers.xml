@@ -1,4 +1,6 @@
 <idea-plugin>
+  <module value="com.intellij.modules.remoteServers"/>
+
   <extensionPoints>
     <extensionPoint name="remoteServer.type" interface="com.intellij.remoteServer.ServerType"/>
     <extensionPoint name="remoteServer.deploymentSource.type" interface="com.intellij.remoteServer.configuration.deployment.DeploymentSourceType"/>
@@ -6,6 +8,8 @@
 
     <extensionPoint name="remoteServer.util.CloudDeploymentRuntimeProvider"
                     interface="com.intellij.remoteServer.util.CloudDeploymentRuntimeProvider"/>
+    <extensionPoint name="remoteServer.runConfigurationExtension"
+                    interface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtension"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -17,6 +21,8 @@
                         serviceImplementation="com.intellij.remoteServer.agent.impl.RemoteAgentManagerImpl"/>
     <applicationService serviceInterface="com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryManager"
                         serviceImplementation="com.intellij.remoteServer.impl.runtime.clientLibrary.ClientLibraryManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtensionsManager"
+                        serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtensionsManager"/>
     <applicationConfigurable groupId="build"
                              displayName="Clouds"
                              id="RemoteServers"

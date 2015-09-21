@@ -31,12 +31,15 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -64,6 +67,9 @@ public class UnshelveChangesAction extends DumbAwareAction {
       if (sameNamedList != null) {
         list = sameNamedList;
       }
+      else {
+        list = tryToMatchWithExistingChangelist(changeListManager, defaultName);
+      }
     }
     if (list == null) {
       list = changeListManager.getDefaultChangeList();
@@ -78,7 +84,7 @@ public class UnshelveChangesAction extends DumbAwareAction {
 
     final List<ShelvedBinaryFile> finalBinaryFiles = binaryFiles;
     final List<ShelvedChange> finalChanges = changes;
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Unshelve changes", true, BackgroundFromStartOption.getInstance()) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Unshelve Changes", true, BackgroundFromStartOption.getInstance()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (ShelvedChangeList changeList : changeLists) {
@@ -87,6 +93,27 @@ public class UnshelveChangesAction extends DumbAwareAction {
         }
       }
     });
+  }
+
+  @Nullable
+  private static LocalChangeList tryToMatchWithExistingChangelist(@NotNull ChangeListManager changeListManager,
+                                                                  @NotNull final String defaultName) {
+    List<LocalChangeList> matched = ContainerUtil.findAll(changeListManager.getChangeListsCopy(), new Condition<LocalChangeList>() {
+      @Override
+      public boolean value(LocalChangeList list) {
+        return defaultName.contains(list.getName().trim());
+      }
+    });
+    int maxLen = -1;
+    LocalChangeList bestMatch = null;
+    for (LocalChangeList changeList : matched) {
+      int len = changeList.getName().trim().length();
+      if (len > maxLen) {
+        maxLen = len;
+        bestMatch = changeList;
+      }
+    }
+    return bestMatch;
   }
 
   @Override

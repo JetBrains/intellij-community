@@ -144,30 +144,6 @@ public class ScratchFileActions {
     return file.getLanguage();
   }
 
-  @NotNull
-  private static Function<VirtualFile, Language> SCRATCH_LANG(final ScratchFileService service, final Project project) {
-    return new Function<VirtualFile, Language>() {
-      @Override
-      public Language fun(VirtualFile file) {
-        Language lang = service.getScratchesMapping().getMapping(file);
-        if (lang == null) {
-          lang = LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)file.getFileType()).getLanguage(), file, project);
-        }
-        return lang;
-      }
-    };
-  }
-
-  @NotNull
-  private static Condition<VirtualFile> isScratch() {
-    return new Condition<VirtualFile>() {
-      @Override
-      public boolean value(@NotNull VirtualFile file) {
-        return ScratchRootType.getInstance().isScratchFile(file);
-      }
-    };
-  }
-
   public static class LanguageAction extends DumbAwareAction {
     @Override
     public void update(AnActionEvent e) {
@@ -178,25 +154,60 @@ public class ScratchFileActions {
         return;
       }
 
-      ScratchFileService fileService = ScratchFileService.getInstance();
-      Condition<VirtualFile> isScratch = isScratch();
+      Condition<VirtualFile> isScratch = fileFilter(project);
       if (!files.filter(not(isScratch)).isEmpty()) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
       }
-      Set<Language> langs = files.filter(isScratch).transform(SCRATCH_LANG(fileService, project)).filter(notNull()).
+      Set<Language> langs = files.filter(isScratch).transform(fileLanguage(project)).filter(notNull()).
         addAllTo(ContainerUtil.<Language>newLinkedHashSet());
       String langName = langs.size() == 1 ? langs.iterator().next().getDisplayName() : langs.size() + " different";
-      e.getPresentation().setText("Change Language (" + langName + ")...");
+      e.getPresentation().setText(String.format("Change %s (%s)...", getLanguageTerm(), langName));
       e.getPresentation().setEnabledAndVisible(true);
+    }
+
+    @NotNull
+    protected String getLanguageTerm() {
+      return "Language";
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
       Project project = e.getProject();
-      ScratchFileService fileService = ScratchFileService.getInstance();
-      JBIterable<VirtualFile> files = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)).filter(isScratch());
+      JBIterable<VirtualFile> files = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)).
+        filter(fileFilter(project));
       if (project == null || files.isEmpty()) return;
+      actionPerformedImpl(e, project, files);
+    }
+
+    @NotNull
+    protected Condition<VirtualFile> fileFilter(Project project) {
+      return new Condition<VirtualFile>() {
+        @Override
+        public boolean value(@NotNull VirtualFile file) {
+          return ScratchRootType.getInstance().isScratchFile(file);
+        }
+      };
+    }
+
+    @NotNull
+    protected Function<VirtualFile, Language> fileLanguage(final Project project) {
+      return new Function<VirtualFile, Language>() {
+        ScratchFileService fileService = ScratchFileService.getInstance();
+
+        @Override
+        public Language fun(VirtualFile file) {
+          Language lang = fileService.getScratchesMapping().getMapping(file);
+          if (lang == null) {
+            lang = LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)file.getFileType()).getLanguage(), file, project);
+          }
+          return lang;
+        }
+      };
+    }
+
+    protected void actionPerformedImpl(AnActionEvent e, Project project, JBIterable<VirtualFile> files) {
+      ScratchFileService fileService = ScratchFileService.getInstance();
       PerFileMappings<Language> mapping = fileService.getScratchesMapping();
       LRUPopupBuilder.forFileLanguages(project, files, mapping).showInBestPositionFor(e.getDataContext());
     }

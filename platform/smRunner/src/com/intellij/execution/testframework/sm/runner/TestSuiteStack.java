@@ -81,7 +81,7 @@ public class TestSuiteStack {
     final SMTestProxy topSuite = myStack.peek();
     if (suiteName == null) {
       String msg = "Pop error: undefined suite name. Rest of stack: " + getSuitePathPresentation();
-      GeneralToSMTRunnerEventsConvertor.logProblem(LOG, msg, true, myTestFrameworkName);
+      GeneralTestEventsProcessor.logProblem(LOG, msg, true, myTestFrameworkName);
       return null;
     }
 

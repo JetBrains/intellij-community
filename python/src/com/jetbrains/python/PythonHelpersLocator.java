@@ -19,6 +19,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -31,6 +32,7 @@ public class PythonHelpersLocator {
   /**
    * @return the base directory under which various scripts, etc are stored.
    */
+  @NotNull
   public static File getHelpersRoot() {
     @NonNls String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
     if (jarPath.endsWith(".jar")) {
@@ -54,7 +56,7 @@ public class PythonHelpersLocator {
    * @param resourceName a path relative to helper root
    * @return absolute path of the resource
    */
-  public static String getHelperPath(String resourceName) {
+  public static String getHelperPath(@NotNull String resourceName) {
     return getHelperFile(resourceName).getAbsolutePath();
   }
 
@@ -64,7 +66,8 @@ public class PythonHelpersLocator {
    * @param resourceName a path relative to helper root
    * @return a file object pointing to that path; existence is not checked.
    */
-  public static File getHelperFile(String resourceName) {
+  @NotNull
+  public static File getHelperFile(@NotNull String resourceName) {
     return new File(getHelpersRoot(), resourceName);
   }
 

@@ -34,6 +34,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -49,13 +50,19 @@ public class DirectoryIconProvider extends IconProvider implements DumbAware {
         return SourceRootPresentation.getSourceRootIcon(sourceFolder);
       }
       else {
-        if (!Registry.is("ide.hide.excluded.files")) {
-          boolean ignored = ProjectRootManager.getInstance(project).getFileIndex().isExcluded(vFile);
-          if (ignored) {
-            return AllIcons.Modules.ExcludeRoot;
-          }
-        }
-        return PlatformIcons.DIRECTORY_CLOSED_ICON;
+        Icon excludedIcon = getIconIfExcluded(project, vFile);
+        return excludedIcon != null ? excludedIcon : PlatformIcons.DIRECTORY_CLOSED_ICON;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Icon getIconIfExcluded(@NotNull Project project, @NotNull VirtualFile vFile) {
+    if (!Registry.is("ide.hide.excluded.files")) {
+      boolean ignored = ProjectRootManager.getInstance(project).getFileIndex().isExcluded(vFile);
+      if (ignored) {
+        return AllIcons.Modules.ExcludeRoot;
       }
     }
     return null;

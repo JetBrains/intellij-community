@@ -322,31 +322,16 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
         case PACKAGE_FQ:
           String qName = PsiUtil.getQualifiedReferenceText(ref);
           LOG.assertTrue(qName != null, ref.getText());
-
-          JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-          if (kind == ReferenceKind.CLASS_OR_PACKAGE_FQ || kind == ReferenceKind.CLASS_FQ) {
-            final PsiFile file = ref.getContainingFile();
-            if (qName.indexOf('.') > 0 || file instanceof GroovyFile && ((GroovyFile)file).getPackageName().isEmpty()) {
-              PsiClass aClass = facade.findClass(qName, ref.getResolveScope());
-              if (aClass != null) {
-                boolean isAccessible = PsiUtil.isAccessible(ref, aClass);
-                return new GroovyResolveResult[]{new GroovyResolveResultImpl(aClass, isAccessible)};
-              }
-            }
-          }
-
-          if (kind == ReferenceKind.CLASS_OR_PACKAGE_FQ || kind == ReferenceKind.PACKAGE_FQ) {
-            PsiPackage aPackage = facade.findPackage(qName);
-            if (aPackage != null) {
-              return new GroovyResolveResult[]{new GroovyResolveResultImpl(aPackage, true)};
-            }
+          PsiElement element = resolveClassOrPackagePreferInner(ref, kind, qName, JavaPsiFacade.getInstance(manager.getProject()));
+          if (element != null) {
+            boolean accessible = !(element instanceof PsiClass) || PsiUtil.isAccessible(ref, (PsiClass)element);
+            return new GroovyResolveResult[]{new GroovyResolveResultImpl(element, accessible)};
           }
 
           break;
 
         case CLASS: {
-          EnumSet<ClassHint.ResolveKind> kinds = kind == ReferenceKind.CLASS
-                                                 ? ClassHint.RESOLVE_KINDS_CLASS : ClassHint.RESOLVE_KINDS_CLASS_PACKAGE;
+          EnumSet<ClassHint.ResolveKind> kinds = ClassHint.RESOLVE_KINDS_CLASS;
           ResolverProcessor processor = new ClassResolverProcessor(refName, ref, kinds);
           GrCodeReferenceElement qualifier = ref.getQualifier();
           if (qualifier != null) {
@@ -364,13 +349,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
               ResolveUtil.treeWalkUp(placeToStartWalking, processor, false);
               GroovyResolveResult[] candidates = processor.getCandidates();
               if (candidates.length > 0) return candidates;
-            }
-
-            if (kind == ReferenceKind.CLASS_OR_PACKAGE) {
-              PsiPackage pkg = JavaPsiFacade.getInstance(ref.getProject()).findPackage(refName);
-              if (pkg != null) {
-                return new GroovyResolveResult[]{new GroovyResolveResultImpl(pkg, true)};
-              }
             }
           }
 
@@ -442,6 +420,36 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       }
 
       return GroovyResolveResult.EMPTY_ARRAY;
+    }
+
+    @Nullable
+    private static PsiElement resolveClassOrPackagePreferInner(@NotNull GrCodeReferenceElementImpl ref,
+                                                               @NotNull ReferenceKind kind,
+                                                               String qName,
+                                                               JavaPsiFacade facade) {
+      if (kind == ReferenceKind.CLASS_OR_PACKAGE_FQ || kind == ReferenceKind.CLASS_FQ) {
+        final PsiFile file = ref.getContainingFile();
+        boolean qualified = qName.indexOf('.') > 0;
+        if (qualified || file instanceof GroovyFile && ((GroovyFile)file).getPackageName().isEmpty()) {
+          //prefer inner classes, because groovyc does that as well
+          PsiElement container = qualified ? resolveClassOrPackagePreferInner(ref, kind, StringUtil.getPackageName(qName), facade) : null;
+          PsiClass aClass = container instanceof PsiClass && PsiUtil.isAccessible(ref, (PsiClass)container)
+                            ? ((PsiClass)container).findInnerClassByName(StringUtil.getShortName(qName), true)
+                            : null;
+          if (aClass == null) {
+            aClass = facade.findClass(qName, ref.getResolveScope());
+          }
+          if (aClass != null) {
+            return aClass;
+          }
+        }
+      }
+
+      if (kind == ReferenceKind.CLASS_OR_PACKAGE_FQ || kind == ReferenceKind.PACKAGE_FQ) {
+        return facade.findPackage(qName);
+      }
+
+      return null;
     }
 
     private static PsiFile getContainingFileSkippingStubFiles(GrCodeReferenceElementImpl ref) {

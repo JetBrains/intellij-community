@@ -46,6 +46,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -59,6 +60,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
@@ -86,6 +88,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
@@ -190,12 +193,24 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     myTree.setCellRenderer(new NodeRenderer());
 
+    myTree.setTransferHandler(new TransferHandler() {
+      @Override
+      public boolean importData(@NotNull TransferSupport support) {
+        String s = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+        if (s != null && !mySpeedSearch.isPopupActive()) {
+          mySpeedSearch.showPopup(s);
+          return true;
+        }
+        return false;
+      }
+    });
+
     mySpeedSearch = new MyTreeSpeedSearch();
     mySpeedSearch.setComparator(new SpeedSearchComparator(false, true) {
       @NotNull
       @Override
       protected MinusculeMatcher createMatcher(@NotNull String pattern) {
-        return FileStructureDialog.createFileStructureMatcher(pattern);
+        return new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE, " ()");
       }
     });
 

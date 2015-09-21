@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
@@ -46,20 +47,21 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
   @Override
   protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
-    final XSmartStepIntoHandler<?> handler = session.getDebugProcess().getSmartStepIntoHandler();
-    final XSourcePosition position = session.getTopFramePosition();
+    XSmartStepIntoHandler<?> handler = session.getDebugProcess().getSmartStepIntoHandler();
+    XSourcePosition position = session.getTopFramePosition();
     if (position == null || handler == null) return;
 
-    final FileEditor editor = FileEditorManager.getInstance(session.getProject()).getSelectedEditor(position.getFile());
-    if (!(editor instanceof TextEditor)) return;
-
-    final RelativePoint relativePoint = DebuggerUIUtil.calcPopupLocation(((TextEditor)editor).getEditor(), position.getLine());
-    doSmartStepInto(handler, position, session, relativePoint);
+    FileEditor editor = FileEditorManager.getInstance(session.getProject()).getSelectedEditor(position.getFile());
+    if (editor instanceof TextEditor) {
+      doSmartStepInto(handler, position, session, ((TextEditor)editor).getEditor());
+    }
   }
 
   private static <V extends XSmartStepIntoVariant> void doSmartStepInto(final XSmartStepIntoHandler<V> handler,
-                                                             XSourcePosition position, final XDebugSession session, RelativePoint relativePoint) {
-    final List<V> variants = handler.computeSmartStepVariants(position);
+                                                                        XSourcePosition position,
+                                                                        final XDebugSession session,
+                                                                        Editor editor) {
+    List<V> variants = handler.computeSmartStepVariants(position);
     if (variants.isEmpty()) {
       session.stepInto();
       return;
@@ -69,7 +71,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       return;
     }
 
-    JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<V>(handler.getPopupTitle(position), variants) {
+    ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<V>(handler.getPopupTitle(position), variants) {
       @Override
       public Icon getIconFor(V aValue) {
         return aValue.getIcon();
@@ -86,6 +88,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
         session.smartStepInto(handler, selectedValue);
         return FINAL_CHOICE;
       }
-    }).show(relativePoint);
+    });
+    DebuggerUIUtil.showPopupForEditorLine(popup, editor, position.getLine());
   }
 }

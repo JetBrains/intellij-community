@@ -57,9 +57,14 @@ public class BoundedTaskExecutor implements Executor {
     submit(task);
   }
 
-  @NotNull
+
   public Future<?> submit(@NotNull Runnable task) {
-    final RunnableFuture<Void> future = queueTask(new FutureTask<Void>(task, null));
+    return this.<Void>submit(task, null);
+  }
+
+  @NotNull
+  public <T> Future<T> submit(Runnable task, T result) {
+    final RunnableFuture<T> future = queueTask(new FutureTask<T>(task, result));
     if (future == null) {
       throw new RuntimeException("Failed to queue task: " + task);
     }

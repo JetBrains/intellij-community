@@ -28,6 +28,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
@@ -387,6 +388,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           public void run() {
             if (!project.isDisposed()) {
               startupManager.runPostStartupActivities();
+
+              Application application = ApplicationManager.getApplication();
+              if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
+                StorageUtil.checkUnknownMacros(project, true);
+              }
             }
           }
         });
@@ -398,8 +404,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       notifyProjectOpenFailed();
       return false;
     }
-
-    StorageUtil.checkUnknownMacros(project, project);
 
     return true;
   }

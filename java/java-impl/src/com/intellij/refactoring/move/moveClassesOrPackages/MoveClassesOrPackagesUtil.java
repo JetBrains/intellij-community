@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -38,6 +39,7 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.psi.util.FileTypeUtils;
@@ -240,7 +242,15 @@ public class MoveClassesOrPackagesUtil {
         String aClassName = aClass.getName();
         ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());
         newClass = findClassByName((PsiClassOwner)file, aClassName);
-        LOG.assertTrue(newClass != null);
+        LOG.assertTrue(newClass != null, "name: " + aClassName +
+                                         ", file: " + file +
+                                         ", classes: " + StringUtil.join(((PsiClassOwner)file).getClasses(),
+                                                                         new Function<PsiClass, String>() {
+                                                                           @Override
+                                                                           public String fun(PsiClass psiClass) {
+                                                                             return psiClass.getName();
+                                                                           }
+                                                                         }, " "));
       }
     }
     return newClass;

@@ -33,8 +33,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
+import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.SearchScope;
@@ -54,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -119,6 +122,24 @@ public class MarkerType {
       navigateToOverridingMethod(e, method, method != element.getParent());
     }
   });
+  static final MarkerType SIBLING_OVERRIDING_METHOD = new MarkerType("SIBLING_OVERRIDING_METHOD", new NullableFunction<PsiElement, String>() {
+    @Override
+    public String fun(PsiElement element) {
+      PsiElement parent = getParentMethod(element);
+      if (!(parent instanceof PsiMethod)) return null;
+      PsiMethod method = (PsiMethod)parent;
+
+      return calculateOverridingSiblingMethodTooltip(method);
+    }
+  }, new LineMarkerNavigator() {
+    @Override
+    public void browse(MouseEvent e, PsiElement element) {
+      PsiElement parent = getParentMethod(element);
+      if (!(parent instanceof PsiMethod)) return;
+      PsiMethod method = (PsiMethod)parent;
+      navigateToSiblingOverridingMethod(e, method);
+    }
+  });
 
   @Nullable
   private static String calculateOverridingMethodTooltip(@NotNull PsiMethod method, boolean acceptSelf) {
@@ -139,6 +160,22 @@ public class MarkerType {
     }
     return composeText(superMethods, "", DaemonBundle.message(key), IdeActions.ACTION_GOTO_SUPER);
   }
+  @Nullable
+  private static String calculateOverridingSiblingMethodTooltip(@NotNull PsiMethod method) {
+    Pair<PsiMethod, PsiClass> pair =
+      FindSuperElementsHelper.getSiblingInheritedViaSubClass(method, FindSuperElementsHelper.createSubClassCache());
+    if (pair == null) return null;
+    PsiMethod superMethod = pair.getFirst();
+    PsiClass subClass = pair.getSecond();
+    boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+    boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
+
+    String postfix = MessageFormat.format(" via sub-class <a href=\"#javaClass/{0}\">{0}</a>", ClassPresentationUtil.getNameForClass(subClass, true));
+    @NonNls String pattern = DaemonBundle.message(isSuperAbstract && !isAbstract ?
+                                                  "method.implements" :
+                                                  "method.overrides") + postfix;
+    return composeText(new PsiElement[]{superMethod}, "", pattern, IdeActions.ACTION_GOTO_SUPER);
+  }
 
   @NotNull
   private static String composeText(@NotNull PsiElement[] methods, @NotNull String start, @NotNull String pattern, @NotNull String actionId) {
@@ -158,6 +195,14 @@ public class MarkerType {
                                         DaemonBundle.message("navigation.title.super.method", method.getName()),
                                         DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()),
                                         new MethodCellRenderer(showMethodNames));
+  }
+  private static void navigateToSiblingOverridingMethod(MouseEvent e, @NotNull PsiMethod method) {
+    PsiMethod superMethod = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
+    if (superMethod == null) return;
+    PsiElementListNavigator.openTargets(e, new NavigatablePsiElement[]{superMethod},
+                                        DaemonBundle.message("navigation.title.super.method", method.getName()),
+                                        DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()),
+                                        new MethodCellRenderer(false));
   }
 
   @NotNull

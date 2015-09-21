@@ -19,6 +19,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.psi.CommonClassNames;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,28 +44,28 @@ public class BoxingEvaluator implements Evaluator{
     }
 
     if (result instanceof BooleanValue) {
-      return convertToWrapper(context, (BooleanValue)result, "java.lang.Boolean");
+      return convertToWrapper(context, (BooleanValue)result, CommonClassNames.JAVA_LANG_BOOLEAN);
     }
     if (result instanceof ByteValue) {
-      return convertToWrapper(context, (ByteValue)result, "java.lang.Byte");
+      return convertToWrapper(context, (ByteValue)result, CommonClassNames.JAVA_LANG_BYTE);
     }
     if (result instanceof CharValue) {
-      return convertToWrapper(context, (CharValue)result, "java.lang.Character");
+      return convertToWrapper(context, (CharValue)result, CommonClassNames.JAVA_LANG_CHARACTER);
     }
     if (result instanceof ShortValue) {
-      return convertToWrapper(context, (ShortValue)result, "java.lang.Short");
+      return convertToWrapper(context, (ShortValue)result, CommonClassNames.JAVA_LANG_SHORT);
     }
     if (result instanceof IntegerValue) {
-      return convertToWrapper(context, (IntegerValue)result, "java.lang.Integer");
+      return convertToWrapper(context, (IntegerValue)result, CommonClassNames.JAVA_LANG_INTEGER);
     }
     if (result instanceof LongValue) {
-      return convertToWrapper(context, (LongValue)result, "java.lang.Long");
+      return convertToWrapper(context, (LongValue)result, CommonClassNames.JAVA_LANG_LONG);
     }
     if (result instanceof FloatValue) {
-      return convertToWrapper(context, (FloatValue)result, "java.lang.Float");
+      return convertToWrapper(context, (FloatValue)result, CommonClassNames.JAVA_LANG_FLOAT);
     }
     if (result instanceof DoubleValue) {
-      return convertToWrapper(context, (DoubleValue)result, "java.lang.Double");
+      return convertToWrapper(context, (DoubleValue)result, CommonClassNames.JAVA_LANG_DOUBLE);
     }
     throw new EvaluateException("Cannot perform boxing conversion for a value of type " + ((Value)result).type().name());
   }
@@ -82,7 +83,7 @@ public class BoxingEvaluator implements Evaluator{
 
     List<Method> methods = wrapperClass.methodsByName("valueOf", methodSignature);
     if (methods.size() == 0) { // older JDK version
-      methods = wrapperClass.methodsByName("<init>", methodSignature);
+      methods = wrapperClass.methodsByName(JVMNameUtil.CONSTRUCTOR_NAME, methodSignature);
     }
     if (methods.size() == 0) {
       throw new EvaluateException("Cannot construct wrapper object for value of type " + value.type() + ": Unable to find either valueOf() or constructor method");

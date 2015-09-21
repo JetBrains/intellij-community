@@ -46,6 +46,7 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
   private boolean m_inInitializer;
   private int m_inSynchronizedContextCount;
   private final Stack<Integer> contextStack = new Stack<Integer>();
+  private final Stack<Boolean> contextInitializerStack = new Stack<Boolean>();
   private boolean privateMethodUsagesCalculated;
   private final boolean countGettersAndSetters;
 
@@ -60,6 +61,9 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
     if (!classToVisit.equals(aClass)) {
       contextStack.push(m_inSynchronizedContextCount);
       m_inSynchronizedContextCount = 0;
+      
+      contextInitializerStack.push(m_inInitializer);
+      m_inInitializer = false;
     }
     super.visitClass(classToVisit);
   }
@@ -68,6 +72,9 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
   public void visitLambdaExpression(PsiLambdaExpression expression) {
     contextStack.push(m_inSynchronizedContextCount);
     m_inSynchronizedContextCount = 0;
+    
+    contextInitializerStack.push(m_inInitializer);
+    m_inInitializer = false;
     super.visitLambdaExpression(expression);
   }
 
@@ -354,6 +361,7 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
     }
     if (element instanceof PsiClass && !element.equals(aClass) || element instanceof PsiLambdaExpression) {
       m_inSynchronizedContextCount = contextStack.pop();
+      m_inInitializer = contextInitializerStack.pop();
     }
     if (element instanceof PsiCodeBlock && element.getParent() instanceof PsiSynchronizedStatement
         || element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.SYNCHRONIZED)) {

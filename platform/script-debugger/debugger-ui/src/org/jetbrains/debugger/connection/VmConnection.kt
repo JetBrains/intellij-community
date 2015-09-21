@@ -27,7 +27,7 @@ import org.jetbrains.debugger.Vm
 import org.jetbrains.util.concurrency.AsyncPromise
 import org.jetbrains.util.concurrency.Promise
 import org.jetbrains.util.concurrency.ResolvedPromise
-import org.jetbrains.util.concurrency.pending
+import org.jetbrains.util.concurrency.isPending
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.event.HyperlinkListener
@@ -83,7 +83,7 @@ public abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
       return
     }
 
-    if (opened.pending) {
+    if (opened.isPending) {
       opened.setError("closed")
     }
     setState(status, message)
@@ -95,7 +95,7 @@ public abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
   }
 
   public open fun detachAndClose(): Promise<*> {
-    if (opened.pending) {
+    if (opened.isPending) {
       opened.setError("detached and closed")
     }
 

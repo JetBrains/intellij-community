@@ -15,26 +15,12 @@
  */
 package com.intellij.ide.projectWizard;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateSettings;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.templates.TemplateModuleBuilder;
 import com.intellij.projectImport.ProjectFormatPanel;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
@@ -43,9 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.io.File;
 
 /**
  * @author Dmitry Avdeev
@@ -62,21 +46,8 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   private final NamePathComponent myNamePathComponent;
   private final ProjectFormatPanel myFormatPanel;
 
-  private JTextField myModuleName;
-  private TextFieldWithBrowseButton myModuleContentRoot;
-  private TextFieldWithBrowseButton myModuleFileLocation;
-  private JPanel myModulePanel;
-
   private JPanel myPanel;
-
-  private boolean myModuleNameChangedByUser = false;
-  private boolean myModuleNameDocListenerEnabled = true;
-
-  private boolean myContentRootChangedByUser = false;
-  private boolean myContentRootDocListenerEnabled = true;
-
-  private boolean myImlLocationChangedByUser = false;
-  private boolean myImlLocationDocListenerEnabled = true;
+  private ModuleNameLocationComponent myModuleNameLocationComponent;
 
   private final WizardContext myWizardContext;
   @Nullable
@@ -89,26 +60,31 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
     myFormatPanel = new ProjectFormatPanel();
     myNamePathComponent = NamePathComponent.initNamePathComponent(context);
     myNamePathComponent.setShouldBeAbsolute(true);
+    JPanel modulePanel = getModulePanel();
     if (context.isCreatingNewProject()) {
       mySettingsPanel.add(myNamePathComponent, BorderLayout.NORTH);
-      addExpertPanel(myModulePanel);
+      addExpertPanel(modulePanel);
     }
     else {
-      mySettingsPanel.add(myModulePanel, BorderLayout.NORTH);
+      mySettingsPanel.add(modulePanel, BorderLayout.NORTH);
     }
-    bindModuleSettings();
+    myModuleNameLocationComponent.bindModuleSettings(myNamePathComponent);
 
     myExpertDecorator = new HideableDecorator(myExpertPlaceholder, "Mor&e Settings", false);
     myExpertPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
     myExpertDecorator.setContentComponent(myExpertPanel);
 
     if (myWizardContext.isCreatingNewProject()) {
-      addProjectFormat(myModulePanel);
+      addProjectFormat(modulePanel);
     }
   }
 
+  private JPanel getModulePanel() {
+    return myModuleNameLocationComponent.getModulePanel();
+  }
+
   private JTextField getNameComponent() {
-    return myWizardContext.isCreatingNewProject() ? myNamePathComponent.getNameComponent() : myModuleName;
+    return myWizardContext.isCreatingNewProject() ? myNamePathComponent.getNameComponent() : myModuleNameLocationComponent.getModuleNameField();
   }
 
   private void addProjectFormat(JPanel panel) {
@@ -121,16 +97,15 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   }
 
   private void setupPanels() {
-
     ModuleBuilder moduleBuilder = (ModuleBuilder)myWizardContext.getProjectBuilder();
     restorePanel(myNamePathComponent, 4);
-    restorePanel(myModulePanel, myWizardContext.isCreatingNewProject() ? 8 : 6);
+    restorePanel(getModulePanel(), myWizardContext.isCreatingNewProject() ? 8 : 6);
     restorePanel(myExpertPanel, myWizardContext.isCreatingNewProject() ? 1 : 0);
     mySettingsStep = moduleBuilder == null ? null : moduleBuilder.modifySettingsStep(this);
 
     myExpertPlaceholder.setVisible(!(moduleBuilder instanceof TemplateModuleBuilder) && myExpertPanel.getComponentCount() > 0);
     for (int i = 0; i < 6; i++) {
-      myModulePanel.getComponent(i).setVisible(!(moduleBuilder instanceof EmptyModuleBuilder));
+      getModulePanel().getComponent(i).setVisible(!(moduleBuilder instanceof EmptyModuleBuilder));
     }
     mySettingsPanel.revalidate();
     mySettingsPanel.repaint();
@@ -164,9 +139,9 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
       if (!myNamePathComponent.validateNameAndPath(myWizardContext, myFormatPanel.isDefault())) return false;
     }
 
-    if (!validateModulePaths()) return false;
+    if (!myModuleNameLocationComponent.validateModulePaths()) return false;
     if (!myWizardContext.isCreatingNewProject()) {
-      validateExistingModuleName(myWizardContext.getProject());
+      myModuleNameLocationComponent.validateExistingModuleName(myWizardContext.getProject());
     }
 
     if (mySettingsStep != null) {
@@ -194,11 +169,7 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
 
     ModuleBuilder moduleBuilder = (ModuleBuilder)myWizardContext.getProjectBuilder();
     if (moduleBuilder != null) {
-      final String moduleName = getModuleName();
-      moduleBuilder.setName(moduleName);
-      moduleBuilder.setModuleFilePath(
-        FileUtil.toSystemIndependentName(myModuleFileLocation.getText()) + "/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-      moduleBuilder.setContentEntryPath(FileUtil.toSystemIndependentName(getModuleContentRoot()));
+      myModuleNameLocationComponent.updateDataModel(moduleBuilder);
       if (moduleBuilder instanceof TemplateModuleBuilder) {
         myWizardContext.setProjectStorageFormat(StorageScheme.DIRECTORY_BASED);
       }
@@ -221,7 +192,7 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
 
   @Override
   public void addSettingsField(@NotNull String label, @NotNull JComponent field) {
-    JPanel panel = myWizardContext.isCreatingNewProject() ? myNamePathComponent : myModulePanel;
+    JPanel panel = myWizardContext.isCreatingNewProject() ? myNamePathComponent : getModulePanel();
     addField(label, field, panel);
   }
 
@@ -236,7 +207,7 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
 
   @Override
   public void addSettingsComponent(@NotNull JComponent component) {
-    JPanel panel = myWizardContext.isCreatingNewProject() ? myNamePathComponent : myModulePanel;
+    JPanel panel = myWizardContext.isCreatingNewProject() ? myNamePathComponent : getModulePanel();
     panel.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                    GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
@@ -249,206 +220,13 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
 
   @Override
   public void addExpertField(@NotNull String label, @NotNull JComponent field) {
-    JPanel panel = myWizardContext.isCreatingNewProject() ? myModulePanel : myExpertPanel;
+    JPanel panel = myWizardContext.isCreatingNewProject() ? getModulePanel() : myExpertPanel;
     addField(label, field, panel);
-  }
-
-  public void bindModuleSettings() {
-
-    myNamePathComponent.getNameComponent().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        if (!myModuleNameChangedByUser) {
-          setModuleName(myNamePathComponent.getNameValue());
-        }
-      }
-    });
-
-    myModuleContentRoot.addBrowseFolderListener(ProjectBundle.message("project.new.wizard.module.content.root.chooser.title"), ProjectBundle.message("project.new.wizard.module.content.root.chooser.description"),
-                                                myWizardContext.getProject(), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
-
-    myNamePathComponent.getPathComponent().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        if (!myContentRootChangedByUser) {
-          setModuleContentRoot(myNamePathComponent.getPath());
-        }
-      }
-    });
-    myModuleName.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        if (myModuleNameDocListenerEnabled) {
-          myModuleNameChangedByUser = true;
-        }
-        String path = getDefaultBaseDir(myWizardContext);
-        final String moduleName = getModuleName();
-        if (path.length() > 0 && !Comparing.strEqual(moduleName, myNamePathComponent.getNameValue())) {
-          path += "/" + moduleName;
-        }
-        if (!myContentRootChangedByUser) {
-          final boolean f = myModuleNameChangedByUser;
-          myModuleNameChangedByUser = true;
-          setModuleContentRoot(path);
-          myModuleNameChangedByUser = f;
-        }
-        if (!myImlLocationChangedByUser) {
-          setImlFileLocation(path);
-        }
-      }
-    });
-    myModuleContentRoot.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        if (myContentRootDocListenerEnabled) {
-          myContentRootChangedByUser = true;
-        }
-        if (!myImlLocationChangedByUser) {
-          setImlFileLocation(getModuleContentRoot());
-        }
-        if (!myModuleNameChangedByUser) {
-          final String path = FileUtil.toSystemIndependentName(getModuleContentRoot());
-          final int idx = path.lastIndexOf("/");
-
-          boolean f = myContentRootChangedByUser;
-          myContentRootChangedByUser = true;
-
-          boolean i = myImlLocationChangedByUser;
-          myImlLocationChangedByUser = true;
-
-          setModuleName(idx >= 0 ? path.substring(idx + 1) : "");
-
-          myContentRootChangedByUser = f;
-          myImlLocationChangedByUser = i;
-        }
-      }
-    });
-
-    myModuleFileLocation.addBrowseFolderListener(ProjectBundle.message("project.new.wizard.module.file.chooser.title"), ProjectBundle.message("project.new.wizard.module.file.description"),
-                                                 myWizardContext.getProject(), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
-    myModuleFileLocation.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        if (myImlLocationDocListenerEnabled) {
-          myImlLocationChangedByUser = true;
-        }
-      }
-    });
-    myNamePathComponent.getPathComponent().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        if (!myImlLocationChangedByUser) {
-          setImlFileLocation(myNamePathComponent.getPath());
-        }
-      }
-    });
-    if (myWizardContext.isCreatingNewProject()) {
-      setModuleName(myNamePathComponent.getNameValue());
-      setModuleContentRoot(myNamePathComponent.getPath());
-      setImlFileLocation(myNamePathComponent.getPath());
-    } else {
-      final Project project = myWizardContext.getProject();
-      assert project != null;
-      VirtualFile baseDir = project.getBaseDir();
-      if (baseDir != null) { //e.g. was deleted
-        final String baseDirPath = baseDir.getPath();
-        String moduleName = ProjectWizardUtil.findNonExistingFileName(baseDirPath, "untitled", "");
-        String contentRoot = baseDirPath + "/" + moduleName;
-        if (!Comparing.strEqual(project.getName(), myWizardContext.getProjectName()) && !myWizardContext.isCreatingNewProject() && myWizardContext.getProjectName() != null) {
-          moduleName = ProjectWizardUtil.findNonExistingFileName(myWizardContext.getProjectFileDirectory(), myWizardContext.getProjectName(), "");
-          contentRoot = myWizardContext.getProjectFileDirectory();
-        }
-        setModuleName(moduleName);
-        setModuleContentRoot(contentRoot);
-        setImlFileLocation(contentRoot);
-        myModuleName.select(0, moduleName.length());
-      }
-    }
-  }
-
-  private void validateExistingModuleName(Project project) throws ConfigurationException {
-    final String moduleName = getModuleName();
-    final Module module;
-    final ProjectStructureConfigurable fromConfigurable = ProjectStructureConfigurable.getInstance(project);
-    if (fromConfigurable != null) {
-      module = fromConfigurable.getModulesConfig().getModule(moduleName);
-    }
-    else {
-      module = ModuleManager.getInstance(project).findModuleByName(moduleName);
-    }
-    if (module != null) {
-      throw new ConfigurationException("Module \'" + moduleName + "\' already exist in project. Please, specify another name.");
-    }
-  }
-
-  private boolean validateModulePaths() throws ConfigurationException {
-    final String moduleName = getModuleName();
-    final String moduleFileDirectory = myModuleFileLocation.getText();
-    if (moduleFileDirectory.length() == 0) {
-      throw new ConfigurationException("Enter module file location");
-    }
-    if (moduleName.length() == 0) {
-      throw new ConfigurationException("Enter a module name");
-    }
-
-    if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.file"), moduleFileDirectory,
-                                                      myImlLocationChangedByUser)) {
-      return false;
-    }
-    if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.content.root"), myModuleContentRoot.getText(),
-                                                      myContentRootChangedByUser)) {
-      return false;
-    }
-
-    File moduleFile = new File(moduleFileDirectory, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    if (moduleFile.exists()) {
-      int answer = Messages.showYesNoDialog(IdeBundle.message("prompt.overwrite.project.file", moduleFile.getAbsolutePath(),
-                                                              IdeBundle.message("project.new.wizard.module.identification")),
-                                            IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
-      if (answer != Messages.YES) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  protected String getModuleContentRoot() {
-    return myModuleContentRoot.getText();
-  }
-
-  private String getDefaultBaseDir(WizardContext wizardContext) {
-    if (wizardContext.isCreatingNewProject()) {
-      return myNamePathComponent.getPath();
-    } else {
-      final Project project = wizardContext.getProject();
-      assert project != null;
-      final VirtualFile baseDir = project.getBaseDir();
-      if (baseDir != null) {
-        return baseDir.getPath();
-      }
-      return "";
-    }
-  }
-
-  private void setImlFileLocation(final String path) {
-    myImlLocationDocListenerEnabled = false;
-    myModuleFileLocation.setText(FileUtil.toSystemDependentName(path));
-    myImlLocationDocListenerEnabled = true;
-  }
-
-  private void setModuleContentRoot(final String path) {
-    myContentRootDocListenerEnabled = false;
-    myModuleContentRoot.setText(FileUtil.toSystemDependentName(path));
-    myContentRootDocListenerEnabled = true;
-  }
-
-  public void setModuleName(String moduleName) {
-    myModuleNameDocListenerEnabled = false;
-    myModuleName.setText(moduleName);
-    myModuleNameDocListenerEnabled = true;
   }
 
   @NotNull
   public JTextField getModuleNameField() {
     return getNameComponent();
-  }
-
-  protected String getModuleName() {
-    return myModuleName.getText().trim();
   }
 
   @TestOnly
@@ -460,5 +238,17 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   @Override
   public Icon getIcon() {
     return null;
+  }
+
+  private void createUIComponents() {
+    myModuleNameLocationComponent = new ModuleNameLocationComponent(myWizardContext);
+  }
+
+  public void setModuleName(String moduleName) {
+    myModuleNameLocationComponent.setModuleName(moduleName);
+  }
+
+  public void bindModuleSettings() {
+    myModuleNameLocationComponent.bindModuleSettings(myNamePathComponent);
   }
 }

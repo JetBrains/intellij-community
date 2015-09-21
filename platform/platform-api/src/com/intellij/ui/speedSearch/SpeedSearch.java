@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class SpeedSearch {
     }
     else {
       final char ch = e.getKeyChar();
-      if (Character.isLetterOrDigit(ch) || ch == ' ' || ch == '*' || ch == '_' || ch == '-' || ch == '"' || ch == '\'' || ch == '/' || ch == '.') {
+      if (Character.isLetterOrDigit(ch) || ch == ' ' || ch == '*' || ch == '_' || ch == '-' || ch == '"' || ch == '\'' || ch == '/' || ch == '.' || ch == '$') {
         type(Character.toString(ch));
         e.consume();
       }

@@ -16,53 +16,31 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 class AnnotationPresentation implements TextAnnotationPresentation {
-  private final FileAnnotation myFileAnnotation;
-  @Nullable
-  private final AnnotationSourceSwitcher mySwitcher;
-  private final ArrayList<AnAction> myActions;
-  private SwitchAnnotationSourceAction mySwitchAction;
-  private final List<LineNumberListener> myPopupLineNumberListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  @NotNull private final FileAnnotation myFileAnnotation;
+  @NotNull private final UpToDateLineNumberProvider myUpToDateLineNumberProvider;
+  @Nullable private final AnnotationSourceSwitcher mySwitcher;
+  private final ArrayList<AnAction> myActions = new ArrayList<AnAction>();
 
   AnnotationPresentation(@NotNull FileAnnotation fileAnnotation,
-                         @Nullable final AnnotationSourceSwitcher switcher,
-                         final EditorGutterComponentEx gutter,
-                         final AnAction... actions) {
+                         @NotNull UpToDateLineNumberProvider upToDateLineNumberProvider,
+                         @Nullable final AnnotationSourceSwitcher switcher) {
+    myUpToDateLineNumberProvider = upToDateLineNumberProvider;
     myFileAnnotation = fileAnnotation;
     mySwitcher = switcher;
-
-    myActions = new ArrayList<AnAction>();
-    myActions.add(Separator.getInstance());
-    if (actions != null) {
-      final List<AnAction> actionsList = Arrays.asList(actions);
-      if (!actionsList.isEmpty()) {
-        myActions.addAll(actionsList);
-        myActions.add(new Separator());
-      }
-    }
-    if (mySwitcher != null) {
-      mySwitchAction = new SwitchAnnotationSourceAction(mySwitcher, gutter);
-      myActions.add(mySwitchAction);
-    }
-  }
-
-  public void addLineNumberListener(final LineNumberListener listener) {
-    myPopupLineNumberListeners.add(listener);
   }
 
   public EditorFontType getFontType(final int line) {
@@ -77,19 +55,21 @@ class AnnotationPresentation implements TextAnnotationPresentation {
   }
 
   public List<AnAction> getActions(int line) {
-    for (LineNumberListener listener : myPopupLineNumberListeners) {
-      listener.consume(line);
+    int correctedNumber = myUpToDateLineNumberProvider.getLineNumber(line);
+    for (AnAction action : myActions) {
+      UpToDateLineNumberListener upToDateListener = ObjectUtils.tryCast(action, UpToDateLineNumberListener.class);
+      if (upToDateListener != null) upToDateListener.consume(correctedNumber);
+
+      LineNumberListener listener = ObjectUtils.tryCast(action, LineNumberListener.class);
+      if (listener != null) listener.consume(line);
     }
+
     return myActions;
   }
 
   @NotNull
   public List<AnAction> getActions() {
     return myActions;
-  }
-
-  public void addSourceSwitchListener(final Consumer<AnnotationSource> listener) {
-    mySwitchAction.addSourceSwitchListener(listener);
   }
 
   public void addAction(AnAction action) {

@@ -53,21 +53,6 @@ public class MavenProject {
   @NotNull private final VirtualFile myFile;
   @NotNull private volatile State myState = new State();
 
-  private static Map<String, String> COMPILER_LEVEL_TABLE = ContainerUtil.<String,String>immutableMapBuilder()
-    .put("1.1", "1.1")
-    .put("1.2", "1.2")
-    .put("1.3", "1.3")
-    .put("1.4", "1.4")
-    .put("1.5", "1.5")
-    .put("5", "1.5")
-    .put("1.6", "1.6")
-    .put("6", "1.6")
-    .put("1.7", "1.7")
-    .put("7", "1.7")
-    .put("1.8", "1.8")
-    .put("8", "1.8")
-    .build();
-
   public enum ProcMode {BOTH, ONLY, NONE}
 
   @Nullable
@@ -1000,17 +985,12 @@ public class MavenProject {
       result = myState.myProperties.getProperty("maven.compiler." + level);
     }
 
-    return normalizeCompilerLevel(result);
+    return result;
   }
 
   @Nullable
   private Element getCompilerConfig() {
     return getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
-  }
-
-  @Nullable
-  public static String normalizeCompilerLevel(@Nullable String level) {
-    return COMPILER_LEVEL_TABLE.get(level);
   }
 
   @NotNull

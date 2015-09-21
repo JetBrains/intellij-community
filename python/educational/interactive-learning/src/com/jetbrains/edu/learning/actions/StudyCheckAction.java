@@ -43,7 +43,7 @@ import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.run.StudySmartChecker;
@@ -193,7 +193,7 @@ public class StudyCheckAction extends DumbAwareAction {
 
     final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     final StudyStatus statusBeforeCheck = taskManager.getStatus(task);
-    return new com.intellij.openapi.progress.Task.Backgroundable(project, "Checking task", true) {
+    return new com.intellij.openapi.progress.Task.Backgroundable(project, "Checking Task", true) {
       @Override
       public void onSuccess() {
         StudyUtils.updateToolWindows(project);
@@ -225,6 +225,10 @@ public class StudyCheckAction extends DumbAwareAction {
           return;
         }
         final StudyTestRunner.TestsOutput testsOutput = testRunner.getTestsOutput(output);
+        String stderr = output.getStderr();
+        if (!stderr.isEmpty()) {
+          LOG.info("#educational " + stderr);
+        }
         final StudySettings studySettings = StudySettings.getInstance();
 
         final String login = studySettings.getLogin();

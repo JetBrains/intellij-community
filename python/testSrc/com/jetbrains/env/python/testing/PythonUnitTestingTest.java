@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @author traff
  */
-public class PythonUnitTestingTest extends PyEnvTestCase {
+public final class PythonUnitTestingTest extends PyEnvTestCase {
   public void testUTRunner() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test1.py") {
 
@@ -25,6 +25,28 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
                                       @NotNull final String all) {
         Assert.assertEquals(2, runner.getAllTestsCount());
         Assert.assertEquals(2, runner.getPassedTestsCount());
+        runner.assertAllTestsPassed();
+      }
+    });
+  }
+
+  /**
+   * Checks <a href="https://docs.python.org/2/library/unittest.html#load-tests-protocol">Load test protocol</a>
+   */
+  public void testLoadProtocol() throws Exception {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_load_protocol.py") {
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        // "load_protocol" does not exist before 2.7
+        return level.compareTo(LanguageLevel.PYTHON26) > 0;
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        Assert.assertEquals("bad num of passed tests: unittest load protocol failed to find tests?", 3, runner.getPassedTestsCount());
         runner.assertAllTestsPassed();
       }
     });

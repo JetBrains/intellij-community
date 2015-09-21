@@ -349,11 +349,11 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     return false;
   }
 
-  private static boolean ignoreUnusedParameters(PyFunction func, Set<PyFunction> functionsWithInheritors) {
+  private boolean ignoreUnusedParameters(PyFunction func, Set<PyFunction> functionsWithInheritors) {
     if (functionsWithInheritors.contains(func)) {
       return true;
     }
-    if (PySuperMethodsSearch.search(func).findFirst() != null ||
+    if (PySuperMethodsSearch.search(func, myTypeEvalContext).findFirst() != null ||
         PyOverridingMethodsSearch.search(func, true).findFirst() != null) {
       functionsWithInheritors.add(func);
       return true;

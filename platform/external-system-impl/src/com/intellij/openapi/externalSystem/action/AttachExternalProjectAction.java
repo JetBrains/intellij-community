@@ -37,7 +37,7 @@ import com.intellij.projectImport.ProjectImportProvider;
  * @author Denis Zhdanov
  * @since 6/14/13 1:28 PM
  */
-public class AttachExternalProjectAction extends AnAction implements DumbAware {
+public class AttachExternalProjectAction extends AnAction {
 
   public AttachExternalProjectAction() {
     getTemplatePresentation().setText(ExternalSystemBundle.message("action.attach.external.project.text", "external"));

@@ -48,4 +48,18 @@ public class JBDimension extends Dimension {
       height = size.height;
     }
   }
+
+  public JBDimension withWidth(int width) {
+    JBDimension size = new JBDimension(0, 0);
+    size.width = scale(width);
+    size.height = height;
+    return size;
+  }
+
+  public JBDimension withHeight(int height) {
+    JBDimension size = new JBDimension(0, 0);
+    size.width = width;
+    size.height = scale(height);
+    return size;
+  }
 }

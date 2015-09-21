@@ -22,9 +22,8 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaCompletionFeatures;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -36,9 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author Maxim.Medvedev
  */
-public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiClassType>> {
-  private static final Logger LOG = Logger.getInstance(AfterNewClassInsertHandler.class);
-
+public class AfterNewClassInsertHandler implements InsertHandler<LookupElement> {
   private final PsiClassType myClassType;
   private final boolean myTriggerFeature;
 
@@ -48,7 +45,7 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiC
   }
 
   @Override
-  public void handleInsert(final InsertionContext context, LookupItem<PsiClassType> item) {
+  public void handleInsert(final InsertionContext context, LookupElement item) {
     final PsiClassType.ClassResolveResult resolveResult = myClassType.resolveGenerics();
     final PsiClass psiClass = resolveResult.getElement();
     if (psiClass == null || !psiClass.isValid()) {

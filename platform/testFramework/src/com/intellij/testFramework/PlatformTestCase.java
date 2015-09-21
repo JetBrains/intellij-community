@@ -63,7 +63,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DocumentCommitThread;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.indexing.IndexableSetContributor;
@@ -146,7 +146,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   private static final String[] PREFIX_CANDIDATES = {
-    "AppCode", "CLion", "CidrCommon", 
+    "AppCode", "CLion", "CidrCommon",
     "Python", "PyCharmCore", "Ruby", "UltimateLangXml", "Idea", "PlatformLangXml" };
 
   /**
@@ -235,7 +235,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     myProjectManager.openTestProject(myProject);
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
-    myProjectManager.openTestProject(myProject);
     setUpModule();
 
     setUpJdk();
@@ -246,15 +245,14 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
-  protected Project doCreateProject(File projectFile) throws Exception {
+  protected Project doCreateProject(@NotNull File projectFile) throws Exception {
     return createProject(projectFile, getClass().getName() + "." + getName());
   }
 
   @NotNull
   public static Project createProject(File projectFile, String creationPlace) {
     try {
-      Project project =
-        ProjectManagerEx.getInstanceEx().newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
+      Project project = ProjectManagerEx.getInstanceEx().newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
       assert project != null;
 
       project.putUserData(CREATION_PLACE, creationPlace);
@@ -351,13 +349,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
       ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
 
-      ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().cleanupForNextTest();
+      ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
     }
 
     ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
     if (projectManager.isDefaultProjectInitialized()) {
       Project defaultProject = projectManager.getDefaultProject();
-      ((PsiManagerEx)PsiManager.getInstance(defaultProject)).getFileManager().cleanupForNextTest();
+      ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
     }
 
     LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
@@ -877,14 +875,14 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected static void delete(@NotNull final VirtualFile file) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         try {
           file.delete(null);
         }
         catch (IOException e) {
-          fail();
+          throw new RuntimeException(e);
         }
       }
     });
@@ -918,6 +916,17 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }.execute().throwException();
     return copy[0];
+  }
+
+  public static void copyDirContentsTo(@NotNull final VirtualFile vTestRoot, @NotNull final VirtualFile toDir) {
+    new WriteCommandAction.Simple(null) {
+      @Override
+      protected void run() throws Throwable {
+        for (VirtualFile file : vTestRoot.getChildren()) {
+          VfsUtil.copy(this, file, toDir);
+        }
+      }
+    }.execute().throwException();
   }
 
   public static void setFileText(@NotNull final VirtualFile file, @NotNull final String text) throws IOException {

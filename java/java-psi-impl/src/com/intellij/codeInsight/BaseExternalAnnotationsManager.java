@@ -254,7 +254,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     String relativePath = ((PsiJavaFile)containingFile).getPackageName().replace('.', '/') + '/' + ANNOTATIONS_XML;
     for (VirtualFile root : getExternalAnnotationsRoots(virtualFile)) {
       VirtualFile ext = root.findFileByRelativePath(relativePath);
-      if (ext != null) {
+      if (ext != null && ext.isValid()) {
         PsiFile psiFile = myPsiManager.findFile(ext);
         if (psiFile != null) {
           possibleAnnotations.add(psiFile);

@@ -111,13 +111,8 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
     }
   }
 
-  private static PsiTypeLookupItem createNewArrayItem(PsiElement identifierCopy, PsiType type) {
-    PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(TypeConversionUtil.erasure(type), identifierCopy);
-    if (item.getObject() instanceof PsiClass) {
-      JavaCompletionUtil.setShowFQN(item);
-    }
-    item.setInsertHandler(new DefaultInsertHandler()); //braces & shortening
-    return item;
+  private static PsiTypeLookupItem createNewArrayItem(PsiElement context, PsiType type) {
+    return PsiTypeLookupItem.createLookupItem(TypeConversionUtil.erasure(type), context).setShowPackage();
   }
 
   private static List<PsiClassType> extractClassTypes(ExpectedTypeInfo[] infos) {
@@ -179,8 +174,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
         catch (IncorrectOperationException ignore) {}
       }
     }
-    final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(psiType, position);
-    JavaCompletionUtil.setShowFQN(item);
+    final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(psiType, position).setShowPackage();
 
     if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);

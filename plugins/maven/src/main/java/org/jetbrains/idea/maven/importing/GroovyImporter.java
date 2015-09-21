@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.util.PairConsumer;
 import org.jdom.Element;
@@ -26,11 +27,11 @@ public abstract class GroovyImporter extends MavenImporter {
   public void preProcess(Module module,
                          MavenProject mavenProject,
                          MavenProjectChanges changes,
-                         MavenModifiableModelsProvider modifiableModelsProvider) {
+                         IdeModifiableModelsProvider modifiableModelsProvider) {
   }
 
   @Override
-  public void process(MavenModifiableModelsProvider modifiableModelsProvider, Module module, MavenRootModelAdapter rootModel,
+  public void process(IdeModifiableModelsProvider modifiableModelsProvider, Module module, MavenRootModelAdapter rootModel,
                       MavenProjectsTree mavenModel,
                       MavenProject mavenProject,
                       MavenProjectChanges changes,

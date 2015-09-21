@@ -76,4 +76,5 @@ public interface EclipseXml {
   @NonNls String LINKED_RESOURCES = "linkedResources";
   @NonNls String LINK = "link";
   @NonNls String JAVADOC_LOCATION = "javadoc_location";
+  @NonNls String DLL_LINK = "org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY";
 }

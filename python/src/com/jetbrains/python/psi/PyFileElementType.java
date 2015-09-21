@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
-import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
@@ -63,13 +62,12 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   @Override
   public int getStubVersion() {
     // Don't forget to update versions of indexes that use the updated stub-based elements
-    return 50;
+    return 51;
   }
 
   @Nullable
   @Override
-  public ASTNode parseContents(ASTNode chameleon) {
-    final FileElement node = (FileElement)chameleon;
+  public ASTNode parseContents(ASTNode node) {
     final LanguageLevel languageLevel = getLanguageLevel(node.getPsi());
     if (PydevConsoleRunner.isPythonConsole(node)) {
       return parseConsoleCode(node, PydevConsoleRunner.getPythonConsoleData(node));
@@ -101,7 +99,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   }
 
   @Nullable
-  private ASTNode parseConsoleCode(@NotNull FileElement node, PythonConsoleData consoleData) {
+  private ASTNode parseConsoleCode(@NotNull ASTNode node, PythonConsoleData consoleData) {
     final Lexer lexer = createConsoleLexer(node, consoleData);
     final PsiElement psi = node.getPsi();
     if (psi != null) {
@@ -116,7 +114,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   }
 
   @Nullable
-  private Lexer createConsoleLexer(FileElement node, PythonConsoleData consoleData) {
+  private Lexer createConsoleLexer(ASTNode node, PythonConsoleData consoleData) {
     if (consoleData.isIPythonEnabled()) {
       return new PythonConsoleLexer();
     }

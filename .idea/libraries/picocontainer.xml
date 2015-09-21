@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="picocontainer">
     <ANNOTATIONS>
-      <root url="file://$PROJECT_DIR$/lib" />
+      <root url="file://$PROJECT_DIR$/lib/annotations/picocontainer" />
     </ANNOTATIONS>
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/picocontainer.jar!/" />

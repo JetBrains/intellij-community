@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsHistoryCache;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
-import com.intellij.openapi.vcs.impl.VcsEnvironmentsProxyCreator;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
@@ -267,8 +266,10 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract CheckoutProvider.Listener getCompositeCheckoutListener();
 
+  // TODO: To be removed in IDEA 16.
+  @Deprecated
+  @Nullable
   public abstract VcsEventsListenerManager getVcsEventsListenerManager();
-  protected abstract VcsEnvironmentsProxyCreator getProxyCreator();
 
   public abstract VcsHistoryCache getVcsHistoryCache();
   public abstract ContentRevisionCache getContentRevisionCache();

@@ -48,7 +48,7 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
   }
 
   protected void closeOldFile(VirtualFile vFile, EditorWindow window) {
-    window.closeFile(vFile);
+    window.closeFile(vFile, true, false);
   }
 
   @Override

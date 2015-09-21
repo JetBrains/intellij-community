@@ -21,4 +21,5 @@ import com.jetbrains.python.psi.PyFunction;
 public interface PyFunctionStub extends NamedStub<PyFunction> {
   String getDocString();
   String getDeprecationMessage();
+  boolean isAsync();
 }

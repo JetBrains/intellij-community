@@ -22,7 +22,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
-import com.intellij.util.EnvironmentUtil;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
@@ -392,7 +391,7 @@ public class DateFormatUtil {
   }
 
   private static boolean getUnixFormats(DateFormat[] formats) {
-    String localeStr = EnvironmentUtil.getValue("LC_TIME");
+    String localeStr = System.getenv("LC_TIME");
     if (localeStr == null) return false;
 
     localeStr = localeStr.trim();

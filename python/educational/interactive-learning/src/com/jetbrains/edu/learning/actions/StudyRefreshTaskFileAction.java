@@ -13,6 +13,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -25,7 +26,7 @@ import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +67,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     final Editor editor = studyState.getEditor();
     final TaskFile taskFile = studyState.getTaskFile();
     if (!resetTaskFile(editor.getDocument(), project, taskFile, studyState.getVirtualFile().getName())) {
+      Messages.showInfoMessage("The initial text of task file is unavailable", "Failed to Refresh Task File");
       return;
     }
     WolfTheProblemSolver.getInstance(project).clearProblems(studyState.getVirtualFile());
@@ -118,13 +120,13 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
   private static boolean resetDocument(@NotNull final Document document,
                                        @NotNull final TaskFile taskFile,
                                        String fileName) {
-    StudyUtils.deleteGuardedBlocks(document);
-    taskFile.setTrackChanges(false);
-    clearDocument(document);
     final Document patternDocument = StudyUtils.getPatternDocument(taskFile, fileName);
     if (patternDocument == null) {
       return false;
     }
+    StudyUtils.deleteGuardedBlocks(document);
+    taskFile.setTrackChanges(false);
+    clearDocument(document);
     document.setText(patternDocument.getCharsSequence());
     taskFile.setTrackChanges(true);
     return true;

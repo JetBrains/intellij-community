@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -367,7 +368,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertModules("project", "m1", "m2");
 
     myProjectsManager.scheduleImportInTests(myProjectsManager.getProjectsFiles());
-    myProjectsManager.importProjects(new MavenDefaultModifiableModelsProvider(myProject) {
+    myProjectsManager.importProjects(new IdeModifiableModelsProviderImpl(myProject) {
       @Override
       public void commit() {
         ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();

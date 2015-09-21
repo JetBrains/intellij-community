@@ -30,4 +30,5 @@ public interface ModifiableModelsProvider {
 
   LibraryTable.ModifiableModel getLibraryTableModifiableModel();
   LibraryTable.ModifiableModel getLibraryTableModifiableModel(Project project);
+  void disposeLibraryTableModifiableModel(LibraryTable.ModifiableModel model);
 }

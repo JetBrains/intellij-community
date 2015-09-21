@@ -17,9 +17,13 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.Nullable;
@@ -44,23 +48,11 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
 
     presentation.setTailText((String)item.getAttribute(LookupItem.TAIL_TEXT_ATTR), item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null);
 
-    presentation.setTypeText(getTypeText(item, ((BeanPropertyElement)element).getPropertyType()));
+    PsiType type = ((BeanPropertyElement)element).getPropertyType();
+    presentation.setTypeText(type == null ? null : type.getPresentableText());
   }
 
-  @Nullable
-  private static String getTypeText(LookupItem item, @Nullable PsiType returnType) {
-    if (returnType == null) {
-      return null;
-    }
-
-    final PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
-    if (substitutor != null) {
-      return substitutor.substitute(returnType).getPresentableText();
-    }
-    return returnType.getPresentableText();
-  }
-
-  public static boolean isToStrikeout(LookupItem<?> item) {
+  public static boolean isToStrikeout(LookupElement item) {
     final List<PsiMethod> allMethods = JavaCompletionUtil.getAllMethods(item);
     if (allMethods != null){
       for (PsiMethod method : allMethods) {
@@ -73,16 +65,10 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
       }
       return true;
     }
-    else if (item.getObject() instanceof PsiElement) {
-      final PsiElement element = (PsiElement)item.getObject();
-      if (element.isValid()) {
-        return isDeprecated(element);
-      }
-    }
-    return false;
+    return isDeprecated(item.getPsiElement());
   }
 
-  private static boolean isDeprecated(PsiElement element) {
+  private static boolean isDeprecated(@Nullable PsiElement element) {
     return element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated();
   }
 }

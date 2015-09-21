@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.cvsSupport2.checkinProject.AdditionalOptionsPanel">
   <grid id="95e7c" binding="myPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-    <margin top="0" left="0" bottom="0" right="0"/>
+    <margin top="4" left="0" bottom="4" right="0"/>
     <constraints>
       <xy x="69" y="105" width="371" height="128"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="77ceb" layout-manager="GridLayoutManager" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="77ceb" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
@@ -20,30 +20,15 @@
         <children>
           <component id="57727" class="javax.swing.JCheckBox" binding="myTag">
             <constraints>
-              <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="check.box.tag.commited.after.checkin.option"/>
             </properties>
           </component>
-          <component id="a8463" class="javax.swing.JLabel" binding="myErrorLabel">
-            <constraints>
-              <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value=" ###"/>
-            </properties>
-          </component>
-          <hspacer id="8fa3">
-            <constraints>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
-                <preferred-size width="10" height="-1"/>
-              </grid>
-            </constraints>
-          </hspacer>
           <component id="4406f" class="javax.swing.JCheckBox" binding="myOverrideExisting">
             <constraints>
-              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="check.box.tag.commited.after.checkin.override.existings"/>
@@ -51,9 +36,17 @@
           </component>
           <component id="db6f1" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTagName">
             <constraints>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="2" use-parent-layout="false"/>
             </constraints>
             <properties/>
+          </component>
+          <component id="a8463" class="javax.swing.JLabel" binding="myErrorLabel">
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value=" ###"/>
+            </properties>
           </component>
         </children>
       </grid>

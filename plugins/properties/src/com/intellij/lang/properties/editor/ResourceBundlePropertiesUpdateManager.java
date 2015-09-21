@@ -164,7 +164,7 @@ public class ResourceBundlePropertiesUpdateManager {
     if (acyclic) {
       if (isEdgesProperlyDirection[0]) {
         final List<String> sortedNodes = new ArrayList<String>(generator.getNodes());
-        Collections.sort(sortedNodes);
+        Collections.sort(sortedNodes, String.CASE_INSENSITIVE_ORDER);
         return Pair.create(sortedNodes, true);
       } else {
         final List<String> dfsNodes = dfstBuilder.getSortedNodes();

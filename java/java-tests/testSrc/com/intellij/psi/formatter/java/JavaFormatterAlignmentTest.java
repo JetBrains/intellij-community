@@ -48,7 +48,42 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "        .foo();"
     );
   }
+  
+  public void testChainedMethodWithComments() throws Exception {
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    doMethodTest("AAAAA.b()\n" +
+                 ".c() // comment after line\n" +
+                 ".d()\n" +
+                 ".e();",
 
+                 "AAAAA.b()\n" +
+                 "     .c() // comment after line\n" +
+                 "     .d()\n" +
+                 "     .e();");
+  }
+
+  public void testChainedMethodWithBlockComment() {
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    doTextTest("class X {\n" +
+               "    public void test() {\n" +
+               "        AAAAAA.b()\n" +
+               ".c()\n" +
+               ".d()\n" +
+               "          /* simple block comment */\n" +
+               ".e();\n" +
+               "    }\n" +
+               "}",
+               "class X {\n" +
+               "    public void test() {\n" +
+               "        AAAAAA.b()\n" +
+               "              .c()\n" +
+               "              .d()\n" +
+               "          /* simple block comment */\n" +
+               "              .e();\n" +
+               "    }\n" +
+               "}");
+  }
+  
   public void testMultipleMethodAnnotationsCommentedInTheMiddle() throws Exception {
     getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 1;
     getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
@@ -256,7 +291,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
-  
+
   public void testAnnotatedAndNonAnnotatedFieldsInColumnsAlignment() {
     // Inspired by IDEA-60237
 
@@ -281,10 +316,10 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
-  
+
   public void testAlignThrowsKeyword() throws Exception {
     // Inspired by IDEA-63820
-    
+
     getSettings().ALIGN_THROWS_KEYWORD = true;
     doClassTest(
       "public void test()\n" +
@@ -731,6 +766,50 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "    int    x    = 2;\n" +
       "    String name = 3;\n" +
       "}\n"
+    );
+  }
+  
+  public void test_AlignComments_BetweenChainedMethodCalls() {
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    doMethodTest(
+      "ActionBarPullToRefresh.from(getActivity())\n" +
+      "        // Mark the ListView as pullable\n" +
+      "        .theseChildrenArePullable(eventsListView)\n" +
+      "                // Set the OnRefreshListener\n" +
+      "        .listener(this)\n" +
+      "                // Use the AbsListView delegate for StickyListHeadersListView\n" +
+      "        .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())\n" +
+      "                // Finally commit the setup to our PullToRefreshLayout\n" +
+      "        .setup(mPullToRefreshLayout);",
+      "ActionBarPullToRefresh.from(getActivity())\n" +
+      "                      // Mark the ListView as pullable\n" +
+      "                      .theseChildrenArePullable(eventsListView)\n" +
+      "                      // Set the OnRefreshListener\n" +
+      "                      .listener(this)\n" +
+      "                      // Use the AbsListView delegate for StickyListHeadersListView\n" +
+      "                      .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())\n" +
+      "                      // Finally commit the setup to our PullToRefreshLayout\n" +
+      "                      .setup(mPullToRefreshLayout);"
+    );
+  }
+  
+  public void test_AlignComments_2() {
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    doClassTest(
+      "public String returnWithBuilder2() {\n" +
+      "    return MoreObjects\n" +
+      "        .toStringHelper(this)\n" +
+      "        .add(\"value\", value)\n" +
+      "                   // comment\n" +
+      "        .toString();\n" +
+      "  }",
+      "public String returnWithBuilder2() {\n" +
+      "    return MoreObjects\n" +
+      "            .toStringHelper(this)\n" +
+      "            .add(\"value\", value)\n" +
+      "            // comment\n" +
+      "            .toString();\n" +
+      "}"
     );
   }
 }

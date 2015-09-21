@@ -33,7 +33,7 @@ import java.awt.*;
  */
 public class TestStatusLine extends JPanel {
   private static final SimpleTextAttributes IGNORE_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.YELLOW);
-  private static final SimpleTextAttributes ERROR_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.RED);
+  private static final SimpleTextAttributes ERROR_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.RED_TEXT);
 
   protected final JProgressBar myProgressBar = new JBProgressBar();
   protected final SimpleColoredComponent myState = new SimpleColoredComponent();

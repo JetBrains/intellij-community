@@ -123,7 +123,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
     @Override
     public boolean process(Info info) {
       final EditorColorsScheme colorsScheme = getColorsScheme();
-      UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, getPsiFile(), info.myRestrictRange.getStartOffset(),
+      UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, getDocument(), getPsiFile(), info.myRestrictRange.getStartOffset(),
                                                                  info.myRestrictRange.getEndOffset(),
                                                                  info.myInfo, colorsScheme, info.myGroupId, myRanges2markersCache);
 

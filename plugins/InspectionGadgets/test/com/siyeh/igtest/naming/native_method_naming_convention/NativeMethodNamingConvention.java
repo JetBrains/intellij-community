@@ -21,13 +21,13 @@ public class NativeMethodNamingConvention implements Runnable
 
     public native void methodNameEndingIn2();
 
-    public native void <warning descr="'native' method name 'foo' is too short">foo</warning>();
+    public native void <warning descr="'native' method name 'foo' is too short (3 < 4)">foo</warning>();
 
-    public native void <warning descr="'native' method name 'methodNameTooLoooooooooooooooooooooooooooooooooooooooooooooong' is too long">methodNameTooLoooooooooooooooooooooooooooooooooooooooooooooong</warning>();
+    public native void <warning descr="'native' method name 'methodNameTooLoooooooooooooooooooooooooooooooooooooooooooooong' is too long (62 > 32)">methodNameTooLoooooooooooooooooooooooooooooooooooooooooooooong</warning>();
 
     public native void run();
 
     private void a() {}
 
-    public static native void <warning descr="'native' method name 'b' is too short">b</warning>();
+    public static native void <warning descr="'native' method name 'b' is too short (1 < 4)">b</warning>();
 }

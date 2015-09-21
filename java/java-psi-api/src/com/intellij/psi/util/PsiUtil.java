@@ -526,9 +526,7 @@ public final class PsiUtil extends PsiUtilCore {
 
       if (isRaw) {
         final PsiType erasedParamType = TypeConversionUtil.erasure(parmType);
-        final PsiType erasedArgType = TypeConversionUtil.erasure(argType);
-        if (erasedArgType != null &&  erasedParamType != null &&
-            function.isApplicable(erasedParamType, erasedArgType, allowUncheckedConversion, parms.length - 1)) {
+        if (erasedParamType != null && function.isApplicable(erasedParamType, argType, allowUncheckedConversion, parms.length - 1)) {
           return ApplicabilityLevel.FIXED_ARITY;
         }
       }
@@ -570,8 +568,7 @@ public final class PsiUtil extends PsiUtilCore {
       final PsiType substitutedParmType = getParameterType(parameter, languageLevel, substitutorForMethod);
       if (isRaw) {
         final PsiType substErasure = TypeConversionUtil.erasure(substitutedParmType);
-        final PsiType typeErasure = TypeConversionUtil.erasure(type);
-        if (substErasure != null && typeErasure != null && !function.isApplicable(substErasure, typeErasure, allowUncheckedConversion, i)) {
+        if (substErasure != null && !function.isApplicable(substErasure, type, allowUncheckedConversion, i)) {
           return false;
         }
       }

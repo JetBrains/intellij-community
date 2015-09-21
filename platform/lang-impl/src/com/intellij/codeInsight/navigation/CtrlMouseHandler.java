@@ -634,9 +634,10 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
   private void disposeHighlighter() {
     if (myHighlighter != null) {
-      myHighlighter.uninstall();
-      HintManager.getInstance().hideAllHints();
+      HighlightersSet highlighter = myHighlighter;
       myHighlighter = null;
+      highlighter.uninstall();
+      HintManager.getInstance().hideAllHints();
     }
   }
 

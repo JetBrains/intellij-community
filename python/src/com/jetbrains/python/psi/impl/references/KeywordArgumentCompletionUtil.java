@@ -88,7 +88,7 @@ public class KeywordArgumentCompletionUtil {
       // nothing interesting besides self and **kwargs, let's look at superclass (PY-778)
       if (fromStatementCallCollector.isKwArgsTransit()) {
 
-        final PsiElement superMethod = PySuperMethodsSearch.search(def).findFirst();
+        final PsiElement superMethod = PySuperMethodsSearch.search(def, context).findFirst();
         if (superMethod instanceof PyFunction) {
           addKeywordArgumentVariants((PyFunction)superMethod, callExpr, ret, visited);
         }
@@ -202,7 +202,7 @@ public class KeywordArgumentCompletionUtil {
       if (Comparing.equal(myKwArgs.getName(), operandName) &&
           argument instanceof PyStringLiteralExpression) {
         String name = ((PyStringLiteralExpression)argument).getStringValue();
-        if (PyUtil.isPythonIdentifier(name)) {
+        if (PyNames.isIdentifier(name)) {
           myRet.add(PyUtil.createNamedParameterLookup(name, argument.getProject()));
         }
       }

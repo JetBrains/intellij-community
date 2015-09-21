@@ -18,7 +18,6 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.CharTailType;
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
@@ -49,10 +48,8 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   public static final Object TYPE_TEXT_ATTR = Key.create("typeText");
   public static final Object TAIL_TEXT_ATTR = Key.create("tailText");
   public static final Object TAIL_TEXT_SMALL_ATTR = Key.create("tailTextSmall");
-  public static final Key<Object> FORCE_SHOW_SIGNATURE_ATTR = Key.create("forceShowSignature");
 
   public static final Object FORCE_QUALIFY = Key.create("FORCE_QUALIFY");
-  public static final Object SUBSTITUTOR = Key.create("SUBSTITUTOR");
 
   public static final Object CASE_INSENSITIVE = Key.create("CASE_INSENSITIVE");
 
@@ -222,7 +219,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
 
     if (lookupElement instanceof LookupItem) {
       final LookupItem<?> item = (LookupItem)lookupElement;
-      final TailType attr = item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
+      final TailType attr = item.getAttribute(TAIL_TYPE_ATTR);
       if (attr != null) {
         return attr;
       }

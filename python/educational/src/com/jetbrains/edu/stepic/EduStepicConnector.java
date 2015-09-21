@@ -24,13 +24,12 @@ import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.StatusLine;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.*;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -72,9 +71,42 @@ public class EduStepicConnector {
   }
 
   public static boolean login(@NotNull final String user, @NotNull final String password) {
-    if (ourClient == null || ourCookieStore == null)
-      initializeClient();
+    initializeClient();
     return postCredentials(user, password);
+  }
+
+  @Nullable
+  public static AuthorWrapper getCurrentUser() {
+    try {
+      return getFromStepic("stepics/1", AuthorWrapper.class);
+    }
+    catch (IOException e) {
+      LOG.warn("Couldn't get author info");
+    }
+    return null;
+  }
+
+  public static boolean createUser(@NotNull final String user, @NotNull final String password) {
+    final HttpPost userRequest = new HttpPost(stepicApiUrl + "users");
+    initializeClient();
+    setHeaders(userRequest, "application/json");
+    String requestBody = new Gson().toJson(new UserWrapper(user, password));
+    userRequest.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+    try {
+      final CloseableHttpResponse response = ourClient.execute(userRequest);
+      final HttpEntity responseEntity = response.getEntity();
+      final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+      final StatusLine statusLine = response.getStatusLine();
+      if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
+        LOG.error("Failed to create user " + responseString);
+        return false;
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+    return true;
   }
 
   private static void initializeClient() {
@@ -145,11 +177,12 @@ public class EduStepicConnector {
 
     try {
       final CloseableHttpResponse response = ourClient.execute(request);
-      final String s = EntityUtils.toString(response.getEntity());
       saveCSRFToken();
       final StatusLine line = response.getStatusLine();
-      if (line.getStatusCode() != 302) {
-        LOG.error("Failed to login " + EntityUtils.toString(response.getEntity()));
+      if (line.getStatusCode() != HttpStatus.SC_MOVED_TEMPORARILY) {
+        final HttpEntity responseEntity = response.getEntity();
+        final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+        LOG.error("Failed to login " + responseString);
         ourClient = null;
         return false;
       }
@@ -171,8 +204,9 @@ public class EduStepicConnector {
 
     final CloseableHttpResponse response = ourClient.execute(request);
     final StatusLine statusLine = response.getStatusLine();
-    final String responseString = EntityUtils.toString(response.getEntity());
-    if (statusLine.getStatusCode() != 200) {
+    final HttpEntity responseEntity = response.getEntity();
+    final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+    if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
       throw new IOException("Stepic returned non 200 status code " + responseString);
     }
     Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
@@ -315,9 +349,10 @@ public class EduStepicConnector {
 
     try {
       final CloseableHttpResponse attemptResponse = ourClient.execute(attemptRequest);
-      final String attemptResponseString = EntityUtils.toString(attemptResponse.getEntity());
+      final HttpEntity responseEntity = attemptResponse.getEntity();
+      final String attemptResponseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine statusLine = attemptResponse.getStatusLine();
-      if (statusLine.getStatusCode() != 201) {
+      if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
         LOG.error("Failed to make attempt " + attemptResponseString);
       }
       final AttemptWrapper.Attempt attempt = new Gson().fromJson(attemptResponseString, AttemptContainer.class).attempts.get(0);
@@ -341,72 +376,89 @@ public class EduStepicConnector {
     String requestBody = new Gson().toJson(new SubmissionWrapper(attempt.id, passed ? "1" : "0", files));
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
     final CloseableHttpResponse response = ourClient.execute(request);
-    final String responseString = EntityUtils.toString(response.getEntity());
+    final HttpEntity responseEntity = response.getEntity();
+    final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
     final StatusLine line = response.getStatusLine();
-    if (line.getStatusCode() != 201) {
+    if (line.getStatusCode() != HttpStatus.SC_CREATED) {
       LOG.error("Failed to make submission " + responseString);
     }
   }
 
+  public static void postCourseWithProgress(final Project project, @NotNull final Course course) {
+    postCourseWithProgress(project, course, false);
+  }
 
-  public static void postCourse(final Project project, @NotNull final Course course) {
+  public static void postCourseWithProgress(final Project project, @NotNull final Course course, final boolean relogin) {
     ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Modal(project, "Uploading Course", true) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
-        indicator.setText("Uploading course to " + stepicUrl);
-        final HttpPost request = new HttpPost(stepicApiUrl + "courses");
-        if (ourClient == null) {
-          final String login = StudySettings.getInstance().getLogin();
-          if (StringUtil.isEmptyOrSpaces(login)) {
-            final boolean success = showLoginDialog();
-            if (!success) {
-              return;
-            }
-          }
-          else {
-            boolean success = login(login, StudySettings.getInstance().getPassword());
-            if (!success) {
-              if (!showLoginDialog()) {
-                return;
-              }
-            }
-          }
-        }
-
-        setHeaders(request, "application/json");
-        String requestBody = new Gson().toJson(new CourseWrapper(course));
-        request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-
-        try {
-          final CloseableHttpResponse response = ourClient.execute(request);
-          final String responseString = EntityUtils.toString(response.getEntity());
-          final StatusLine line = response.getStatusLine();
-          if (line.getStatusCode() != 201) {
-            LOG.error("Failed to push " + responseString);
-            return;
-          }
-          final CourseInfo postedCourse = new Gson().fromJson(responseString, CoursesContainer.class).courses.get(0);
-
-          final int sectionId = postModule(postedCourse.id, 1, String.valueOf(postedCourse.getName()));
-          int position = 1;
-          for (Lesson lesson : course.getLessons()) {
-            indicator.checkCanceled();
-            final int lessonId = postLesson(project, lesson, indicator);
-            postUnit(lessonId, position, sectionId);
-            position += 1;
-          }
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              postAdditionalFiles(project, postedCourse.id, indicator);
-            }
-          });
-        }
-        catch (IOException e) {
-          LOG.error(e.getMessage());
-        }
+        postCourse(project, course, relogin, indicator);
       }
     });
+  }
+
+  private static void postCourse(final Project project, @NotNull Course course, boolean relogin, @NotNull final ProgressIndicator indicator) {
+    indicator.setText("Uploading course to " + stepicUrl);
+    final HttpPost request = new HttpPost(stepicApiUrl + "courses");
+    if (ourClient == null || !relogin) {
+      if (!login()) return;
+    }
+    final AuthorWrapper user = getCurrentUser();
+    if (user != null) {
+      course.setAuthors(user.users);
+    }
+
+    setHeaders(request, "application/json");
+    String requestBody = new Gson().toJson(new CourseWrapper(course));
+    request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+    try {
+      final CloseableHttpResponse response = ourClient.execute(request);
+      final HttpEntity responseEntity = response.getEntity();
+      final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+      final StatusLine line = response.getStatusLine();
+      if (line.getStatusCode() != HttpStatus.SC_CREATED) {
+        if (!relogin) {
+          login();
+          postCourse(project, course, true, indicator);
+        }
+        LOG.error("Failed to push " + responseString);
+        return;
+      }
+      final CourseInfo postedCourse = new Gson().fromJson(responseString, CoursesContainer.class).courses.get(0);
+
+      final int sectionId = postModule(postedCourse.id, 1, String.valueOf(postedCourse.getName()));
+      int position = 1;
+      for (Lesson lesson : course.getLessons()) {
+        indicator.checkCanceled();
+        final int lessonId = postLesson(project, lesson, indicator);
+        postUnit(lessonId, position, sectionId);
+        position += 1;
+      }
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          postAdditionalFiles(project, postedCourse.id, indicator);
+        }
+      });
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+  }
+
+  private static boolean login() {
+    final String login = StudySettings.getInstance().getLogin();
+    if (StringUtil.isEmptyOrSpaces(login)) {
+      return showLoginDialog();
+    }
+    else {
+      boolean success = login(login, StudySettings.getInstance().getPassword());
+      if (!success) {
+        return showLoginDialog();
+      }
+    }
+    return true;
   }
 
   private static void postAdditionalFiles(@NotNull final Project project, int id, ProgressIndicator indicator) {
@@ -432,7 +484,12 @@ public class EduStepicConnector {
       for (VirtualFile file : files) {
         try {
           if (file != null) {
-            task.addTestsTexts(file.getName(), Base64.encodeBase64URLSafeString(FileUtil.loadBytes(file.getInputStream())));
+            if (EduUtils.isImage(file.getName())) {
+              task.addTestsTexts(file.getName(), Base64.encodeBase64URLSafeString(FileUtil.loadBytes(file.getInputStream())));
+            }
+            else {
+              task.addTestsTexts(file.getName(), FileUtil.loadTextAndClose(file.getInputStream()));
+            }
           }
         }
         catch (IOException e) {
@@ -460,9 +517,10 @@ public class EduStepicConnector {
 
     try {
       final CloseableHttpResponse response = ourClient.execute(request);
-      final String responseString = EntityUtils.toString(response.getEntity());
+      final HttpEntity responseEntity = response.getEntity();
+      final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine line = response.getStatusLine();
-      if (line.getStatusCode() != 201) {
+      if (line.getStatusCode() != HttpStatus.SC_CREATED) {
         LOG.error("Failed to push " + responseString);
       }
     }
@@ -485,9 +543,10 @@ public class EduStepicConnector {
 
     try {
       final CloseableHttpResponse response = ourClient.execute(request);
-      final String responseString = EntityUtils.toString(response.getEntity());
+      final HttpEntity responseEntity = response.getEntity();
+      final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine line = response.getStatusLine();
-      if (line.getStatusCode() != 201) {
+      if (line.getStatusCode() != HttpStatus.SC_CREATED) {
         LOG.error("Failed to push " + responseString);
       }
       final Section postedSection = new Gson().fromJson(responseString, SectionContainer.class).sections.get(0);
@@ -499,10 +558,13 @@ public class EduStepicConnector {
     return -1;
   }
 
-  public static int postLesson(Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
-    final HttpPost request = new HttpPost(stepicApiUrl + "lessons");
+  public static int updateLesson(Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
+    final HttpPut request = new HttpPut(stepicApiUrl + "lessons/" + String.valueOf(lesson.id));
     if (ourClient == null) {
-      showLoginDialog();
+      if (!login()) {
+        LOG.error("Failed to push lesson");
+        return 0;
+      }
     }
 
     setHeaders(request, "application/json");
@@ -511,13 +573,51 @@ public class EduStepicConnector {
 
     try {
       final CloseableHttpResponse response = ourClient.execute(request);
-      final String responseString = EntityUtils.toString(response.getEntity());
+      final HttpEntity responseEntity = response.getEntity();
+      final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine line = response.getStatusLine();
-      if (line.getStatusCode() != 201) {
+      if (line.getStatusCode() != HttpStatus.SC_OK) {
         LOG.error("Failed to push " + responseString);
         return 0;
       }
       final Lesson postedLesson = new Gson().fromJson(responseString, Course.class).getLessons().get(0);
+      for (Integer step : postedLesson.steps) {
+        deleteTask(step);
+      }
+
+      for (Task task : lesson.getTaskList()) {
+        indicator.checkCanceled();
+        postTask(project, task, lesson.id);
+      }
+      return lesson.id;
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+    return -1;
+  }
+
+  public static int postLesson(Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
+    final HttpPost request = new HttpPost(stepicApiUrl + "lessons");
+    if (ourClient == null) {
+      login();
+    }
+
+    setHeaders(request, "application/json");
+    String requestBody = new Gson().toJson(new LessonWrapper(lesson));
+    request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+    try {
+      final CloseableHttpResponse response = ourClient.execute(request);
+      final HttpEntity responseEntity = response.getEntity();
+      final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+      final StatusLine line = response.getStatusLine();
+      if (line.getStatusCode() != HttpStatus.SC_CREATED) {
+        LOG.error("Failed to push " + responseString);
+        return 0;
+      }
+      final Lesson postedLesson = new Gson().fromJson(responseString, Course.class).getLessons().get(0);
+      lesson.id = postedLesson.id;
       for (Task task : lesson.getTaskList()) {
         indicator.checkCanceled();
         postTask(project, task, postedLesson.id);
@@ -528,6 +628,28 @@ public class EduStepicConnector {
       LOG.error(e.getMessage());
     }
     return -1;
+  }
+
+  public static void deleteTask(@NotNull final Integer task) {
+    final HttpDelete request = new HttpDelete(stepicApiUrl + "step-sources/" + task);
+    setHeaders(request, "application/json");
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          final CloseableHttpResponse response = ourClient.execute(request);
+          final StatusLine line = response.getStatusLine();
+          if (line.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
+            final HttpEntity responseEntity = response.getEntity();
+            final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+            LOG.error("Failed to delete task " + responseString);
+          }
+        }
+        catch (IOException e) {
+          LOG.error(e.getMessage());
+        }
+      }
+    });
   }
 
   public static void postTask(final Project project, @NotNull final Task task, final int lessonId) {
@@ -543,8 +665,10 @@ public class EduStepicConnector {
         try {
           final CloseableHttpResponse response = ourClient.execute(request);
           final StatusLine line = response.getStatusLine();
-          if (line.getStatusCode() != 201) {
-            LOG.error("Failed to push " + EntityUtils.toString(response.getEntity()));
+          if (line.getStatusCode() != HttpStatus.SC_CREATED) {
+            final HttpEntity responseEntity = response.getEntity();
+            final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+            LOG.error("Failed to push " + responseString);
           }
         }
         catch (IOException e) {
@@ -607,7 +731,12 @@ public class EduStepicConnector {
         final VirtualFile file = taskDirectory.findChild(taskFile.name);
         try {
           if (file != null) {
-            taskFile.text = Base64.encodeBase64URLSafeString(FileUtil.loadBytes(file.getInputStream()));
+            if (EduUtils.isImage(taskFile.name)) {
+              taskFile.text = Base64.encodeBase64URLSafeString(FileUtil.loadBytes(file.getInputStream()));
+            }
+            else {
+              taskFile.text = FileUtil.loadTextAndClose(file.getInputStream());
+            }
           }
         }
         catch (IOException e) {
@@ -659,6 +788,7 @@ public class EduStepicConnector {
       this.course = new CourseInfo();
       this.course.setName(course.getName());
       this.course.setDescription(course.getDescription());
+      this.course.setAuthors(course.getAuthors());
     }
   }
 
@@ -668,6 +798,8 @@ public class EduStepicConnector {
     public LessonWrapper(Lesson lesson) {
       this.lesson = new Lesson();
       this.lesson.setName(lesson.getName());
+      this.lesson.id = lesson.id;
+      this.lesson.steps = new ArrayList<Integer>();
     }
   }
 
@@ -796,6 +928,28 @@ public class EduStepicConnector {
       }
     }
 
+  }
+
+  static class User {
+    String first_name;
+    String last_name;
+    String email;
+    String password;
+
+    public User(String user, String password) {
+      email = user;
+      this.password = password;
+      this.first_name = user;
+      this.last_name = user;
+    }
+  }
+
+  static class UserWrapper {
+    User user;
+
+    public UserWrapper(String user, String password) {
+      this.user = new User(user, password);
+    }
   }
 
 }

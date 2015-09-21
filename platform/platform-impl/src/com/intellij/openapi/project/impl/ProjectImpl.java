@@ -110,7 +110,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @TestOnly
-  boolean isLight() {
+  public boolean isLight() {
     return myLight;
   }
 

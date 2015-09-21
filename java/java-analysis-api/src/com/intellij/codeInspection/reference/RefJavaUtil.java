@@ -22,6 +22,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,4 +73,5 @@ public abstract class RefJavaUtil {
   public abstract boolean isCallToSuperMethod(PsiExpression expression, PsiMethod method);
 
   public abstract void addTypeReference(PsiElement psiElement, PsiType psiType, RefManager refManager);
+  public abstract void addTypeReference(PsiElement psiElement, PsiType psiType, RefManager refManager, @Nullable RefJavaElement refElement);
 }

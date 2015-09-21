@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,17 +39,8 @@ public class AbstractClassNamingConventionInspectionBase extends ConventionInspe
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final String className = (String)infos[0];
-    if (className.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message("abstract.class.name.convention.problem.descriptor.short");
-    }
-    else if (className.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message("abstract.class.name.convention.problem.descriptor.long");
-    }
-    return InspectionGadgetsBundle.message("abstract.class.name.convention.problem.descriptor.regex.mismatch",
-      getRegex());
+  protected String getElementDescription() {
+    return InspectionGadgetsBundle.message("abstract.class.naming.convention.element.description");
   }
 
   @Override

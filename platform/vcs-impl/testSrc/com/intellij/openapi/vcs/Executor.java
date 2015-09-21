@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -144,7 +145,8 @@ public class Executor {
   public static File mkdir(@NotNull String dirName) {
     File file = child(dirName);
     boolean dirMade = file.mkdir();
-    assert dirMade;
+    LOG.assertTrue(dirMade, "Directory " + dirName + " was not created on [" + file.getPath() + "]. " +
+                            "list of files in the parent dir: " + Arrays.toString(file.getParentFile().listFiles()));
     debug("# mkdir " + dirName);
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     return file;

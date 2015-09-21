@@ -15,7 +15,6 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.text.StringUtil
@@ -33,10 +32,8 @@ import java.util.Arrays
 import java.util.TreeMap
 import java.util.concurrent.atomic.AtomicReferenceArray
 
-class StateMap private constructor(private val names: Array<String>, private val states: AtomicReferenceArray<Any>) {
+class StateMap private constructor(private val names: Array<String>, private val states: AtomicReferenceArray<Any?>) {
   companion object {
-    private val LOG = Logger.getInstance(javaClass<StateMap>())
-
     private val XML_FORMAT = Format.getRawFormat().setTextMode(Format.TextMode.TRIM).setOmitEncoding(true).setOmitDeclaration(true)
 
     val EMPTY = StateMap(emptyArray(), AtomicReferenceArray(0))
@@ -51,7 +48,7 @@ class StateMap private constructor(private val names: Array<String>, private val
         Arrays.sort(names)
       }
 
-      val states = AtomicReferenceArray<Any>(names.size())
+      val states = AtomicReferenceArray<Any?>(names.size())
       for (i in names.indices) {
         states.set(i, map.get(names[i]))
       }
@@ -72,16 +69,16 @@ class StateMap private constructor(private val names: Array<String>, private val
       if (Arrays.equals(newBytes, oldState)) {
         return null
       }
-      else if (LOG.isDebugEnabled() && SystemProperties.getBooleanProperty("idea.log.changed.components", false)) {
+      else if (SystemProperties.getBooleanProperty("idea.log.changed.components", false)) {
         fun stateToString(state: Any) = JDOMUtil.writeParent(state as? Element ?: unarchiveState(state as ByteArray), "\n")
 
         val before = stateToString(oldState)
         val after = stateToString(newState)
         if (before == after) {
-          LOG.debug("Serialization error: serialized are different, but unserialized are equal")
+          LOG.info("Serialization error: serialized are different, but unserialized are equal")
         }
         else {
-          LOG.debug("$key ${StringUtil.repeat("=", 80 - key.length())}\nBefore:\n$before\nAfter:\n$after")
+          LOG.info("$key ${StringUtil.repeat("=", 80 - key.length())}\nBefore:\n$before\nAfter:\n$after")
         }
       }
       return newBytes
@@ -118,11 +115,9 @@ class StateMap private constructor(private val names: Array<String>, private val
     return if (index < 0) null else states.get(index)
   }
 
-  fun getElement(key: String, newLiveStates: Map<String, Element>) = stateToElement(key, get(key), newLiveStates)
+  fun getElement(key: String, newLiveStates: Map<String, Element>? = null) = stateToElement(key, get(key), newLiveStates)
 
   fun isEmpty() = names.isEmpty()
-
-  fun getState(key: String) = get(key) as? Element
 
   fun hasState(key: String) = get(key) is Element
 
@@ -152,13 +147,84 @@ class StateMap private constructor(private val names: Array<String>, private val
     }
   }
 
-  public fun getStateAndArchive(key: String): Element? {
+  fun getState(key: String, archive: Boolean = false): Element? {
     val index = Arrays.binarySearch(names, key)
     if (index < 0) {
       return null
     }
 
     val state = states.get(index) as? Element ?: return null
-    return if (states.compareAndSet(index, state, archiveState(state))) state else getStateAndArchive(key)
+    if (!archive) {
+      return state
+    }
+    return if (states.compareAndSet(index, state, archiveState(state))) state else getState(key, true)
   }
+
+  public fun archive(key: String, state: Element?) {
+    val index = Arrays.binarySearch(names, key)
+    if (index < 0) {
+      return
+    }
+
+    val currentState = states.get(index)
+    LOG.assertTrue(currentState is Element)
+    states.set(index, if (state == null) null else archiveState(state))
+  }
+}
+
+fun setStateAndCloneIfNeed(key: String, newState: Element?, oldStates: StateMap, newLiveStates: MutableMap<String, Element>? = null): MutableMap<String, Any>? {
+  val oldState = oldStates.get(key)
+  if (newState == null || JDOMUtil.isEmpty(newState)) {
+    if (oldState == null) {
+      return null
+    }
+
+    val newStates = oldStates.toMutableMap()
+    newStates.remove(key)
+    return newStates
+  }
+
+  newLiveStates?.put(key, newState)
+
+  var newBytes: ByteArray? = null
+  if (oldState is Element) {
+    if (JDOMUtil.areElementsEqual(oldState as Element?, newState)) {
+      return null
+    }
+  }
+  else if (oldState != null) {
+    newBytes = StateMap.getNewByteIfDiffers(key, newState, oldState as ByteArray)
+    if (newBytes == null) {
+      return null
+    }
+  }
+
+  val newStates = oldStates.toMutableMap()
+  newStates.put(key, newBytes ?: newState)
+  return newStates
+}
+
+// true if updated (not equals to previous state)
+private fun updateState(states: MutableMap<String, Any>, key: String, newState: Element?, newLiveStates: MutableMap<String, Element>? = null): Boolean {
+  if (newState == null || JDOMUtil.isEmpty(newState)) {
+    states.remove(key)
+    return true
+  }
+
+  newLiveStates?.put(key, newState)
+
+  val oldState = states.get(key)
+
+  var newBytes: ByteArray? = null
+  if (oldState is Element) {
+    if (JDOMUtil.areElementsEqual(oldState as Element?, newState)) {
+      return false
+    }
+  }
+  else if (oldState != null) {
+    newBytes = StateMap.getNewByteIfDiffers(key, newState, oldState as ByteArray) ?: return false
+  }
+
+  states.put(key, newBytes ?: newState)
+  return true
 }

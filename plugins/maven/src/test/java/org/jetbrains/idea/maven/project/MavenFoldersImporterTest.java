@@ -23,7 +23,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -140,7 +140,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
       public void run() {
         MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
                                                                   getModule("project"),
-                                                                  new MavenDefaultModifiableModelsProvider(myProject));
+                                                                  new IdeModifiableModelsProviderImpl(myProject));
         adapter.addSourceFolder(sourceDir.getPath(), JavaSourceRootType.SOURCE);
         adapter.getRootModel().commit();
       }
@@ -171,7 +171,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
       public void run() {
         MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
                                                                   getModule("project"),
-                                                                  new MavenDefaultModifiableModelsProvider(myProject));
+                                                                  new IdeModifiableModelsProviderImpl(myProject));
         adapter.useModuleOutput(new File(myProjectRoot.getPath(), "target/my-classes").getPath(),
                                 new File(myProjectRoot.getPath(), "target/my-test-classes").getPath());
         adapter.getRootModel().commit();

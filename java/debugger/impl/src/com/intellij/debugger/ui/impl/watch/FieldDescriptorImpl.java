@@ -23,6 +23,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.project.Project;
@@ -106,6 +107,15 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   @Override
   public String getName() {
     return myField.name();
+  }
+
+  @Override
+  public String calcValueName() {
+    String res = super.calcValueName();
+    if (Boolean.TRUE.equals(getUserData(SHOW_DECLARING_TYPE))) {
+      return NodeRendererSettings.getInstance().getClassRenderer().renderTypeName(myField.declaringType().name()) + "." + res;
+    }
+    return res;
   }
 
   public boolean isOuterLocalVariableValue() {

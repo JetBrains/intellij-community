@@ -297,6 +297,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < elements.size(); i++) {
       PsiElement element = elements.get(i);
+      LOG.assertTrue(element != null);
       final String newName = myAllRenames.get(element);
       final UsageInfo[] usages = RenameUtil.findUsages(element, newName, mySearchInComments, mySearchTextOccurrences, myAllRenames);
       final List<UsageInfo> usagesList = Arrays.asList(usages);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -65,7 +66,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.remote.RemoteSshProcess;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -830,12 +830,12 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return element instanceof PydevConsoleElement || getConsoleCommunication(element) != null;
   }
 
-  public static boolean isPythonConsole(@Nullable FileElement element) {
+  public static boolean isPythonConsole(@Nullable ASTNode element) {
     return getPythonConsoleData(element) != null;
   }
 
   @Nullable
-  public static PythonConsoleData getPythonConsoleData(@Nullable FileElement element) {
+  public static PythonConsoleData getPythonConsoleData(@Nullable ASTNode element) {
     if (element == null || element.getPsi() == null || element.getPsi().getContainingFile() == null) {
       return null;
     }

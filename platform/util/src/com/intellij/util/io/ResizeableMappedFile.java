@@ -98,7 +98,7 @@ public class ResizeableMappedFile implements Forceable {
   private void expand(final long max) {
     long realSize = realSize();
     if (max <= realSize) return;
-    long suggestedSize = realSize + 1;
+    long suggestedSize = Math.max(realSize + 1, 2); // suggestedSize should increase with int multiplication on 1.625 factor
 
     while (max > suggestedSize) {
       long newSuggestedSize = (suggestedSize * 13) >> 3;

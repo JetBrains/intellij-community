@@ -78,10 +78,10 @@ if PYVERSION > [1, 4, 0]:
 
     if report.skipped:
       messages.testIgnored(name)
-    elif report.failed:
-      messages.testFailed(name, details=report.longrepr)
+    elif report.failed: # Duration should be in ms, but report has s
+      messages.testFailed(name, details=report.longrepr, duration=int(report.duration * 1000))
     elif report.when == "call":
-      messages.testFinished(name)
+      messages.testFinished(name, duration=int(report.duration * 1000))
 
   def pytest_sessionfinish(session, exitstatus):
     if current_suite:
