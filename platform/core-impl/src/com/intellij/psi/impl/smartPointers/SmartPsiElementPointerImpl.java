@@ -183,7 +183,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
 
     for(SmartPointerElementInfoFactory factory: Extensions.getExtensions(SmartPointerElementInfoFactory.EP_NAME)) {
-      final SmartPointerElementInfo result = factory.createElementInfo(element);
+      final SmartPointerElementInfo result = factory.createElementInfo(element, containingFile);
       if (result != null) return result;
     }
 
