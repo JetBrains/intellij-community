@@ -68,10 +68,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.remote.RemoteSshProcess;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.PathMapper;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
@@ -91,6 +88,7 @@ import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSdkCredentials;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.run.PythonRunParams;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -123,6 +121,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   public static final String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
   public static final int PORTS_WAITING_TIMEOUT = 20000;
 
+  @NotNull
   private Sdk mySdk;
   private GeneralCommandLine myGeneralCommandLine;
   protected int[] myPorts;
@@ -309,7 +308,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
     assert myPorts != null;
 
-    myGeneralCommandLine = createCommandLine(mySdk, myEnvironmentVariables, myPorts);
+    myGeneralCommandLine = createCommandLine(mySdk, myEnvironmentVariables, getWorkingDir(), myPorts);
 
     try {
       super.initAndRun();
@@ -355,12 +354,12 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
     assert myPorts != null;
 
-    myGeneralCommandLine = createCommandLine(mySdk, myEnvironmentVariables, myPorts);
+    myGeneralCommandLine = createCommandLine(mySdk, myEnvironmentVariables, getWorkingDir(), myPorts);
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), "Connecting to console", false) {
+        ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), "Connecting to Console", false) {
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
             indicator.setText("Connecting to console...");
@@ -394,15 +393,22 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   protected GeneralCommandLine createCommandLine(@NotNull final Sdk sdk,
                                                  @NotNull final Map<String, String> environmentVariables,
-                                                 int[] ports) {
-    return doCreateConsoleCmdLine(ports, PythonHelper.CONSOLE);
+                                                 String workingDir, int[] ports) {
+    return doCreateConsoleCmdLine(sdk, environmentVariables, workingDir, ports, PythonHelper.CONSOLE);
   }
 
   @NotNull
-  protected GeneralCommandLine doCreateConsoleCmdLine(int[] ports, PythonHelper helper) {
+  protected GeneralCommandLine doCreateConsoleCmdLine(Sdk sdk,
+                                                      Map<String, String> environmentVariables,
+                                                      String workingDir,
+                                                      int[] ports,
+                                                      PythonHelper helper) {
     PyConsoleOptions.PyConsoleSettings settings = PyConsoleOptions.getInstance(getProject()).getPythonConsoleSettings();
 
-    GeneralCommandLine cmd = PythonCommandLineState.createPythonCommandLine(getProject(), settings);
+
+    GeneralCommandLine cmd =
+      PythonCommandLineState.createPythonCommandLine(getProject(), new PythonConsoleRunParams(settings, workingDir, sdk,
+                                                                                              environmentVariables));
     cmd.withWorkDirectory(getWorkingDir());
 
     ParamsGroup group = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
@@ -1072,5 +1078,124 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   public static PythonConsoleRunnerFactory factory() {
     return new PydevConsoleRunnerFactory();
+  }
+
+  private static class PythonConsoleRunParams implements PythonRunParams {
+    private final PyConsoleOptions.PyConsoleSettings myConsoleSettings;
+    private String myWorkingDir;
+    private Sdk mySdk;
+    private Map<String, String> myEnvironmentVariables;
+
+    public PythonConsoleRunParams(@NotNull PyConsoleOptions.PyConsoleSettings consoleSettings,
+                                  @NotNull String workingDir,
+                                  @NotNull Sdk sdk,
+                                  @NotNull Map<String, String> envs) {
+      myConsoleSettings = consoleSettings;
+      myWorkingDir = workingDir;
+      mySdk = sdk;
+      myEnvironmentVariables = envs;
+    }
+
+    @Override
+    public String getInterpreterOptions() {
+      return myConsoleSettings.getInterpreterOptions();
+    }
+
+    @Override
+    public void setInterpreterOptions(String interpreterOptions) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getWorkingDirectory() {
+      return myWorkingDir;
+    }
+
+    @Override
+    public void setWorkingDirectory(String workingDirectory) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Nullable
+    @Override
+    public String getSdkHome() {
+      return mySdk.getHomePath();
+    }
+
+    @Override
+    public void setSdkHome(String sdkHome) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setModule(Module module) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getModuleName() {
+      return myConsoleSettings.getModuleName();
+    }
+
+    @Override
+    public boolean isUseModuleSdk() {
+      return myConsoleSettings.isUseModuleSdk();
+    }
+
+    @Override
+    public void setUseModuleSdk(boolean useModuleSdk) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isPassParentEnvs() {
+      return myConsoleSettings.isPassParentEnvs();
+    }
+
+    @Override
+    public void setPassParentEnvs(boolean passParentEnvs) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Map<String, String> getEnvs() {
+      return myEnvironmentVariables;
+    }
+
+    @Override
+    public void setEnvs(Map<String, String> envs) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Nullable
+    @Override
+    public PathMappingSettings getMappingSettings() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setMappingSettings(@Nullable PathMappingSettings mappingSettings) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean shouldAddContentRoots() {
+      return myConsoleSettings.shouldAddContentRoots();
+    }
+
+    @Override
+    public boolean shouldAddSourceRoots() {
+      return myConsoleSettings.shouldAddSourceRoots();
+    }
+
+    @Override
+    public void setAddContentRoots(boolean flag) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setAddSourceRoots(boolean flag) {
+      throw new UnsupportedOperationException();
+    }
   }
 }

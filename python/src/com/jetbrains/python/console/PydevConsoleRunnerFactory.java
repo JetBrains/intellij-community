@@ -61,7 +61,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
       pythonPath = pathMapper.convertToRemote(pythonPath);
     }
 
-    String customStartScript = settingsProvider == null ? "" : settingsProvider.getCustomStartScript();
+    String customStartScript = settingsProvider.getCustomStartScript();
 
     if (customStartScript.trim().length() > 0) {
       customStartScript = "\n" + customStartScript;

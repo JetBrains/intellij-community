@@ -127,8 +127,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     @Override
     protected GeneralCommandLine createCommandLine(@NotNull Sdk sdk,
                                                    @NotNull Map<String, String> environmentVariables,
-                                                   int[] ports) {
-      GeneralCommandLine consoleCmdLine = doCreateConsoleCmdLine(ports, PythonHelper.RUN_IN_CONSOLE);
+                                                   String workingDir, int[] ports) {
+      GeneralCommandLine consoleCmdLine = doCreateConsoleCmdLine(sdk, environmentVariables, workingDir, ports, PythonHelper.RUN_IN_CONSOLE);
 
       final GeneralCommandLine cmd = generateCommandLine(myPatchers);
 

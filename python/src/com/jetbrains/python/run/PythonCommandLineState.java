@@ -207,7 +207,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
   private PyRemotePathMapper createRemotePathMapper() {
     if (myConfig.getMappingSettings() == null) {
       return null;
-    } else {
+    }
+    else {
       return PyRemotePathMapper.fromSettings(myConfig.getMappingSettings(), PyRemotePathMapper.PyPathMappingType.USER_DEFINED);
     }
   }
@@ -371,8 +372,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return Sets.newHashSet(collectPythonPath(module, config.shouldAddContentRoots(), config.shouldAddSourceRoots()));
   }
 
+  @Nullable
   private static Module getModule(Project project, PythonRunParams config) {
-    return ModuleManager.getInstance(project).findModuleByName(config.getModuleName());
+    String name = config.getModuleName();
+    return StringUtil.isEmpty(name) ? null : ModuleManager.getInstance(project).findModuleByName(name);
   }
 
   @NotNull
@@ -478,7 +481,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static String getInterpreterPath(Project project, PythonRunParams config) {
     String sdkHome = config.getSdkHome();
     if (config.isUseModuleSdk() || StringUtil.isEmpty(sdkHome)) {
-      Sdk sdk = PythonSdkType.findPythonSdk(getModule(project, config));
+      Module module = getModule(project, config);
+
+      Sdk sdk = PythonSdkType.findPythonSdk(module);
       if (sdk == null) return null;
       sdkHome = sdk.getHomePath();
     }
