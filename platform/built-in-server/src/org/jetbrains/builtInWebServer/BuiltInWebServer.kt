@@ -44,7 +44,7 @@ import java.io.File
 import java.net.InetAddress
 import java.net.UnknownHostException
 
-public class BuiltInWebServer : HttpRequestHandler() {
+class BuiltInWebServer : HttpRequestHandler() {
   companion object {
     val LOG = Logger.getInstance(BuiltInWebServer::class.java)
 
@@ -67,15 +67,15 @@ public class BuiltInWebServer : HttpRequestHandler() {
       }
 
       var candidateByDirectoryName: Project? = null
-      val project = ProjectManager.getInstance().getOpenProjects().firstOrNull(fun(project: Project): Boolean {
-        if (project.isDisposed()) {
+      val project = ProjectManager.getInstance().openProjects.firstOrNull(fun(project: Project): Boolean {
+        if (project.isDisposed) {
           return false
         }
 
-        val name = project.getName()
+        val name = project.name
         if (isCustomHost) {
           // domain name is case-insensitive
-          if (projectName.equals(project.getName(), ignoreCase = true)) {
+          if (projectName.equals(project.name, ignoreCase = true)) {
             return true
           }
         }
@@ -101,7 +101,7 @@ public class BuiltInWebServer : HttpRequestHandler() {
       if (emptyPath) {
         if (!SystemInfoRt.isFileSystemCaseSensitive) {
           // may be passed path is not correct
-          projectName = project.getName()
+          projectName = project.name
         }
 
         // we must redirect "jsdebug" to "jsdebug/" as nginx does, otherwise browser will treat it as file instead of directory, so, relative path will not work
@@ -110,7 +110,7 @@ public class BuiltInWebServer : HttpRequestHandler() {
       }
 
       val path = FileUtil.toCanonicalPath(decodedPath.substring(offset + 1), '/')
-      for (pathHandler in WebServerPathHandler.EP_NAME.getExtensions()) {
+      for (pathHandler in WebServerPathHandler.EP_NAME.extensions) {
         try {
           if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
             return true
@@ -157,12 +157,12 @@ public class BuiltInWebServer : HttpRequestHandler() {
 }
 
 public fun compareNameAndProjectBasePath(projectName: String, project: Project): Boolean {
-  val basePath = project.getBasePath()
+  val basePath = project.basePath
   return basePath != null && basePath.length() > projectName.length() && basePath.endsWith(projectName) && basePath.charAt(basePath.length() - projectName.length() - 1) == '/'
 }
 
 public fun findIndexFile(basedir: VirtualFile): VirtualFile? {
-  val children = basedir.getChildren()
+  val children = basedir.children
   if (children == null || children.isEmpty()) {
     return null
   }
@@ -171,8 +171,8 @@ public fun findIndexFile(basedir: VirtualFile): VirtualFile? {
     var index: VirtualFile? = null
     val preferredName = indexNamePrefix + "html"
     for (child in children) {
-      if (!child.isDirectory()) {
-        val name = child.getName()
+      if (!child.isDirectory) {
+        val name = child.name
         //noinspection IfStatementWithIdenticalBranches
         if (name == preferredName) {
           return child
@@ -196,11 +196,11 @@ public fun isOwnHostName(host: String): Boolean {
 
   try {
     val address = InetAddress.getByName(host)
-    if (host == address.getHostAddress() || host.equals(address.getCanonicalHostName(), ignoreCase = true)) {
+    if (host == address.hostAddress || host.equals(address.canonicalHostName, ignoreCase = true)) {
       return true
     }
 
-    val localHostName = InetAddress.getLocalHost().getHostName()
+    val localHostName = InetAddress.getLocalHost().hostName
     // WEB-8889
     // develar.local is own host name: develar. equals to "develar.labs.intellij.net" (canonical host name)
     return localHostName.equals(host, ignoreCase = true) || (host.endsWith(".local") && localHostName.regionMatches(0, host, 0, host.length() - ".local".length(), true))
@@ -214,8 +214,8 @@ private class StaticFileHandler : WebServerFileHandler() {
   private var ssiProcessor: SsiProcessor? = null
 
   override fun process(file: VirtualFile, canonicalRequestPath: CharSequence, project: Project, request: FullHttpRequest, channel: Channel, isCustomHost: Boolean): Boolean {
-    if (file.isInLocalFileSystem()) {
-      val nameSequence = file.getNameSequence()
+    if (file.isInLocalFileSystem) {
+      val nameSequence = file.nameSequence
       //noinspection SpellCheckingInspection
       if (StringUtilRt.endsWithIgnoreCase(nameSequence, ".shtml") || StringUtilRt.endsWithIgnoreCase(nameSequence, ".stm") || StringUtilRt.endsWithIgnoreCase(nameSequence, ".shtm")) {
         processSsi(file, canonicalRequestPath, project, request, channel, isCustomHost)
@@ -231,17 +231,17 @@ private class StaticFileHandler : WebServerFileHandler() {
       }
     }
     else {
-      val response = FileResponses.prepareSend(request, channel, file.getTimeStamp(), file.getPath()) ?: return true
+      val response = FileResponses.prepareSend(request, channel, file.timeStamp, file.path) ?: return true
 
       val keepAlive = addKeepAliveIfNeed(response, request)
       if (request.method() !== HttpMethod.HEAD) {
-        HttpUtil.setContentLength(response, file.getLength())
+        HttpUtil.setContentLength(response, file.length)
       }
 
       channel.write(response)
 
       if (request.method() != HttpMethod.HEAD) {
-        channel.write(ChunkedStream(file.getInputStream()))
+        channel.write(ChunkedStream(file.inputStream))
       }
 
       val future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
@@ -267,9 +267,9 @@ private class StaticFileHandler : WebServerFileHandler() {
     val keepAlive: Boolean
     var releaseBuffer = true
     try {
-      val lastModified = ssiProcessor!!.process(SsiExternalResolver(project, request, path, file.getParent()), VfsUtilCore.loadText(file), file.getTimeStamp(), ByteBufUtf8Writer(buffer))
+      val lastModified = ssiProcessor!!.process(SsiExternalResolver(project, request, path, file.parent), VfsUtilCore.loadText(file), file.timeStamp, ByteBufUtf8Writer(buffer))
 
-      val response = FileResponses.prepareSend(request, channel, lastModified, file.getPath()) ?: return
+      val response = FileResponses.prepareSend(request, channel, lastModified, file.path) ?: return
 
       keepAlive = addKeepAliveIfNeed(response, request)
       if (request.method() !== HttpMethod.HEAD) {
@@ -296,5 +296,5 @@ private class StaticFileHandler : WebServerFileHandler() {
   }
 
   // deny access to .htaccess files
-  private fun hasAccess(result: File) = !result.isDirectory() && result.canRead() && !(result.isHidden() || result.getName().startsWith(".ht"))
+  private fun hasAccess(result: File) = !result.isDirectory && result.canRead() && !(result.isHidden || result.name.startsWith(".ht"))
 }
