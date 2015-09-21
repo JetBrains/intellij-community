@@ -2,7 +2,7 @@
 QuerySet is parametrized with model object
 """
 class QuerySet(object):
-    def __init__(self):
+    def __init__(self, model=None, query=None, using=None, hints=None):
         """
         :rtype: QuerySet[T]
         """
