@@ -56,7 +56,7 @@ public class EnvironmentUtil {
       ourEnvGetter = executor.submit(new Callable<Map<String, String>>() {
         @Override
         public Map<String, String> call() throws Exception {
-          return setCharsetVar(getShellEnv());
+          return Collections.unmodifiableMap(setCharsetVar(getShellEnv()));
         }
       });
       executor.shutdown();
@@ -203,7 +203,7 @@ public class EnvironmentUtil {
     }
 
     LOG.info("shell environment loaded (" + newEnv.size() + " vars)");
-    return Collections.unmodifiableMap(newEnv);
+    return newEnv;
   }
 
   private static int waitAndTerminateAfter(@NotNull Process process, int timeoutMillis) {

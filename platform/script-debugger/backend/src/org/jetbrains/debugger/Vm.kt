@@ -29,6 +29,8 @@ public interface Vm {
 
   public val attachStateManager: AttachStateManager
 
+  public val evaluateContext: EvaluateContext?
+
   public fun getScriptManager(): ScriptManager
 
   public fun getBreakpointManager(): BreakpointManager
@@ -39,6 +41,4 @@ public interface Vm {
    * Controls whether VM stops on exceptions
    */
   public fun setBreakOnException(catchMode: ExceptionCatchMode): Promise<*>
-
-  public fun getEvaluateContext(): EvaluateContext?
 }

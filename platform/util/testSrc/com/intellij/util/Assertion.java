@@ -18,8 +18,8 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
 import gnu.trove.Equality;
-import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
+import org.junit.Assert;
 
 import java.io.BufferedReader;
 import java.io.IOException;

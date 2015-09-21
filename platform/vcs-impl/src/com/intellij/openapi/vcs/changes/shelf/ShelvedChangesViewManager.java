@@ -80,7 +80,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.vcsUtil.UIVcsUtil.SPACE_AND_THIN_SPACE;
+import static com.intellij.vcsUtil.UIVcsUtil.spaceAndThinSpace;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
   private final ChangesViewContentManager myContentManager;
@@ -464,7 +464,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION);
         }
         int count = node.getChildCount();
-        String numFilesText = SPACE_AND_THIN_SPACE + count + " " + StringUtil.pluralize("file", 1) + ",";
+        String numFilesText = spaceAndThinSpace() + count + " " + StringUtil.pluralize("file", 1) + ",";
         append(numFilesText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
         
         String date = DateFormatUtil.formatPrettyDateTime(changeListData.DATE);
@@ -504,7 +504,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       if (movedMessage != null) {
         append(movedMessage, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
-      append(SPACE_AND_THIN_SPACE + directory, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      append(spaceAndThinSpace() + directory, SimpleTextAttributes.GRAYED_ATTRIBUTES);
       setIcon(FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon());
     }
   }

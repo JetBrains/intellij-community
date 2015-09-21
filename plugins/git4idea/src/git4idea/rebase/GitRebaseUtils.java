@@ -84,26 +84,31 @@ public class GitRebaseUtils {
     // TODO links to 'rebase', 'resolve conflicts', etc.
     for (GitRepository repository : repositories) {
       Repository.State state = repository.getState();
-      if (state != Repository.State.NORMAL) {
-        String in = GitUtil.mention(repository);
-        String message;
-        switch (state) {
-          case MERGING:
-            message = "There is an unfinished merge process" + in + ".<br/>You should complete the merge before starting a rebase";
-            break;
-          case REBASING:
-            message = "There is an unfinished rebase process" + in + ".<br/>You should complete it before starting another rebase";
-            break;
-          case GRAFTING:
-            message = "There is an unfinished cherry-pick process" + in + ".<br/>You should finish it before starting a rebase.";
-            break;
-          case DETACHED:
-            message = "You are in the detached HEAD state" + in + ".<br/>Rebase is not possible.";
-            break;
-          default:
-            LOG.error("Unknown state [" + state.name() + "]");
-            message = "Rebase is not possible" + in;
-        }
+      String in = GitUtil.mention(repository);
+      String message = null;
+      switch (state) {
+        case NORMAL:
+          if (repository.isFresh()) {
+            message = "Repository" + in + " is empty.";
+          }
+          break;
+        case MERGING:
+          message = "There is an unfinished merge process" + in + ".<br/>You should complete the merge before starting a rebase";
+          break;
+        case REBASING:
+          message = "There is an unfinished rebase process" + in + ".<br/>You should complete it before starting another rebase";
+          break;
+        case GRAFTING:
+          message = "There is an unfinished cherry-pick process" + in + ".<br/>You should finish it before starting a rebase.";
+          break;
+        case DETACHED:
+          message = "You are in the detached HEAD state" + in + ".<br/>Rebase is not possible.";
+          break;
+        default:
+          LOG.error("Unknown state [" + state.name() + "]");
+          message = "Rebase is not possible" + in;
+      }
+      if (message != null) {
         VcsNotifier.getInstance(project).notifyError("Rebase not Allowed", message);
         return false;
       }

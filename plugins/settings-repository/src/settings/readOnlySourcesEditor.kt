@@ -38,7 +38,7 @@ import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
 private val COLUMNS = arrayOf(object : TableModelEditor.EditableColumnInfo<ReadonlySource, Boolean>() {
-  override fun getColumnClass() = javaClass<Boolean>()
+  override fun getColumnClass() = Boolean::class.java
 
   override fun valueOf(item: ReadonlySource) = item.active
 
@@ -58,7 +58,7 @@ private fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
   val itemEditor = object : TableModelEditor.DialogItemEditor<ReadonlySource>() {
     override fun clone(item: ReadonlySource, forInPlaceEditing: Boolean) = ReadonlySource(item.url, item.active)
 
-    override fun getItemClass() = javaClass<ReadonlySource>()
+    override fun getItemClass() = ReadonlySource::class.java
 
     override fun edit(item: ReadonlySource, mutator: Function<ReadonlySource, ReadonlySource>, isAdd: Boolean) {
       val dialogBuilder = DialogBuilder()

@@ -30,6 +30,10 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
     val FILE_SPEC = "${StoragePathMacros.APP_CONFIG}/project.default.xml"
   }
 
+  // see note about default state in project store
+  override val loadPolicy: StateLoadPolicy
+    get() = if (ApplicationManager.getApplication().isUnitTestMode()) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
+
   init {
     service<DefaultProjectExportableAndSaveTrigger>().project = project
   }

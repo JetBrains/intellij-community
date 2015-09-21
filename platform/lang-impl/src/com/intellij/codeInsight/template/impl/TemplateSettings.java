@@ -55,7 +55,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   @NonNls public static final String USER_GROUP_NAME = "user";
   @NonNls private static final String TEMPLATE_SET = "templateSet";
   @NonNls private static final String GROUP = "group";
-  @NonNls private static final String TEMPLATE = "template";
+  @NonNls static final String TEMPLATE = "template";
 
   public static final char SPACE_CHAR = ' ';
   public static final char TAB_CHAR = '\t';
@@ -97,7 +97,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   private final Map<TemplateKey, TemplateImpl> myDefaultTemplates = new LinkedHashMap<TemplateKey, TemplateImpl>();
 
   private int myMaxKeyLength = 0;
-  private final SchemesManager<TemplateGroup, TemplateGroup> mySchemesManager;
+  private final SchemesManager<TemplateGroup, TemplateGroup> mySchemeManager;
 
   private State myState = new State();
 
@@ -184,7 +184,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   private TemplateKey myLastSelectedTemplate;
 
   public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
-    mySchemesManager = schemesManagerFactory.create(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup>() {
+    mySchemeManager = schemesManagerFactory.create(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup>() {
       @Nullable
       @Override
       public TemplateGroup readScheme(@NotNull Element element) throws InvalidDataException {
@@ -241,7 +241,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       }
     });
 
-    for (TemplateGroup group : mySchemesManager.loadSchemes()) {
+    for (TemplateGroup group : mySchemeManager.loadSchemes()) {
       for (TemplateImpl template : group.getElements()) {
         addTemplateImpl(template);
       }
@@ -353,10 +353,10 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
     TemplateImpl templateImpl = (TemplateImpl)template;
     String groupName = templateImpl.getGroupName();
-    TemplateGroup group = mySchemesManager.findSchemeByName(groupName);
+    TemplateGroup group = mySchemeManager.findSchemeByName(groupName);
     if (group == null) {
       group = new TemplateGroup(groupName);
-      mySchemesManager.addScheme(group);
+      mySchemeManager.addScheme(group);
     }
     group.addElement(templateImpl);
   }
@@ -365,11 +365,11 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     TemplateImpl existing = getTemplate(template.getKey(), ((TemplateImpl) template).getGroupName());
     if (existing != null) {
       LOG.info("Template with key " + template.getKey() + " and id " + template.getId() + " already registered");
-      TemplateGroup group = mySchemesManager.findSchemeByName(existing.getGroupName());
+      TemplateGroup group = mySchemeManager.findSchemeByName(existing.getGroupName());
       if (group != null) {
         group.removeElement(existing);
         if (group.isEmpty()) {
-          mySchemesManager.removeScheme(group);
+          mySchemeManager.removeScheme(group);
         }
       }
       myTemplates.remove(template.getKey(), existing);
@@ -398,11 +398,11 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   public void removeTemplate(@NotNull Template template) {
     myTemplates.remove(template.getKey(), (TemplateImpl)template);
 
-    TemplateGroup group = mySchemesManager.findSchemeByName(((TemplateImpl)template).getGroupName());
+    TemplateGroup group = mySchemeManager.findSchemeByName(((TemplateImpl)template).getGroupName());
     if (group != null) {
       group.removeElement((TemplateImpl)template);
       if (group.isEmpty()) {
-        mySchemesManager.removeScheme(group);
+        mySchemeManager.removeScheme(group);
       }
     }
   }
@@ -466,9 +466,9 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @Nullable
-  private TemplateGroup readTemplateFile(@NotNull Element element, @NonNls String defGroupName, boolean isDefault, boolean registerTemplate, @NotNull ClassLoader classLoader) throws InvalidDataException {
+  private TemplateGroup readTemplateFile(@NotNull Element element, @NonNls String defGroupName, boolean isDefault, boolean registerTemplate, @NotNull ClassLoader classLoader) {
     if (!TEMPLATE_SET.equals(element.getName())) {
-      throw new InvalidDataException();
+      throw new AssertionError();
     }
 
     String groupName = element.getAttributeValue(GROUP);
@@ -497,7 +497,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
 
     if (registerTemplate) {
-      TemplateGroup existingScheme = mySchemesManager.findSchemeByName(result.getName());
+      TemplateGroup existingScheme = mySchemeManager.findSchemeByName(result.getName());
       if (existingScheme != null) {
         result = existingScheme;
       }
@@ -514,21 +514,16 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
 
     if (registerTemplate) {
-      TemplateGroup existingScheme = mySchemesManager.findSchemeByName(result.getName());
+      TemplateGroup existingScheme = mySchemeManager.findSchemeByName(result.getName());
       if (existingScheme == null && !result.isEmpty()) {
-        mySchemesManager.addNewScheme(result, false);
+        mySchemeManager.addNewScheme(result, false);
       }
     }
 
     return result.isEmpty() ? null : result;
   }
 
-  public static TemplateImpl readTemplateFromElement(final String groupName,
-                                                      final Element element,
-                                                      @NotNull ClassLoader classLoader) throws InvalidDataException {
-    if (!TEMPLATE.equals(element.getName())) {
-      throw new InvalidDataException();
-    }
+  static TemplateImpl readTemplateFromElement(final String groupName, @NotNull Element element, @NotNull ClassLoader classLoader) {
     String name = element.getAttributeValue(NAME);
     String value = element.getAttributeValue(VALUE);
     String description;
@@ -554,8 +549,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       template.setValue(TemplateImpl.Property.USE_STATIC_IMPORT_IF_POSSIBLE, Boolean.parseBoolean(useStaticImport));
     }
 
-    for (final Object o : element.getChildren(VARIABLE)) {
-      Element e = (Element)o;
+    for (Element e : element.getChildren(VARIABLE)) {
       String variableName = e.getAttributeValue(NAME);
       String expression = e.getAttributeValue(EXPRESSION);
       String defaultValue = e.getAttributeValue(DEFAULT_VALUE);
@@ -636,11 +630,11 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
         }
       }
     }
-    mySchemesManager.setSchemes(schemes);
+    mySchemeManager.setSchemes(schemes);
   }
 
   public List<TemplateGroup> getTemplateGroups() {
-    return mySchemesManager.getAllSchemes();
+    return mySchemeManager.getAllSchemes();
   }
 
   public List<TemplateImpl> collectMatchingCandidates(String key, @Nullable Character shortcutChar, boolean hasArgument) {

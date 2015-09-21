@@ -126,7 +126,7 @@ class GitAbortRebaseProcess {
     }
     else {
       if (myRepositoriesToRollback.isEmpty()) {
-        LOG.error("", new Throwable());
+        LOG.error(new Throwable());
       }
       else {
         String description = "Do you want rollback the successful rebase in " + mention(myRepositoriesToRollback.keySet()) + "?";

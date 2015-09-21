@@ -21,6 +21,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -77,7 +78,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
         }
 
         if ("void".equals(method.returnTypeName())) {
-          forceEarlyReturn(thread.getVirtualMachine().mirrorOf(), thread, debugProcess, null);
+          forceEarlyReturnWithFinally(thread.getVirtualMachine().mirrorOfVoid(), stackFrame, debugProcess, null);
         }
         else {
           //noinspection SSBasedInspection
@@ -92,25 +93,60 @@ public class ForceEarlyReturnAction extends DebuggerAction {
     });
   }
 
-  private static void forceEarlyReturn(Value value,
-                                       ThreadReferenceProxyImpl thread,
-                                       final DebugProcessImpl debugProcess,
-                                       @Nullable final DialogWrapper dialog) {
-    try {
-      thread.forceEarlyReturn(value);
-    }
-    catch (Exception e) {
-      showError(debugProcess.getProject(), DebuggerBundle.message("error.early.return", e.getLocalizedMessage()));
-      return;
-    }
+  private static void forceEarlyReturnWithFinally(final Value value,
+                                                  final JavaStackFrame frame,
+                                                  final DebugProcessImpl debugProcess,
+                                                  @Nullable final DialogWrapper dialog) {
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (dialog != null) {
-          dialog.close(DialogWrapper.OK_EXIT_CODE);
+        if (PopFrameAction.evaluateFinallyBlocks(debugProcess.getProject(),
+                                                 UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")),
+                                                 frame,
+                                                 new XDebuggerEvaluator.XEvaluationCallback() {
+                                                   @Override
+                                                   public void evaluated(@NotNull XValue result) {
+                                                     forceEarlyReturn(value, frame.getDescriptor().getFrameProxy().threadProxy(), debugProcess, dialog);
+                                                   }
+
+                                                   @Override
+                                                   public void errorOccurred(@NotNull String errorMessage) {
+                                                     showError(debugProcess.getProject(),
+                                                               DebuggerBundle.message("error.executing.finally", errorMessage));
+                                                   }
+                                                 })) {
+          return;
         }
-        debugProcess.getSession().stepInto(true, null);
+        forceEarlyReturn(value, frame.getDescriptor().getFrameProxy().threadProxy(), debugProcess, dialog);
+      }
+    });
+  }
+
+  private static void forceEarlyReturn(final Value value,
+                                       final ThreadReferenceProxyImpl thread,
+                                       final DebugProcessImpl debugProcess,
+                                       @Nullable final DialogWrapper dialog) {
+    debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+      @Override
+      protected void action() throws Exception {
+        try {
+          thread.forceEarlyReturn(value);
+        }
+        catch (Exception e) {
+          showError(debugProcess.getProject(), DebuggerBundle.message("error.early.return", e.getLocalizedMessage()));
+          return;
+        }
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (dialog != null) {
+              dialog.close(DialogWrapper.OK_EXIT_CODE);
+            }
+            debugProcess.getSession().stepInto(true, null);
+          }
+        });
       }
     });
   }
@@ -127,10 +163,10 @@ public class ForceEarlyReturnAction extends DebuggerAction {
                            @Override
                            public void evaluated(@NotNull XValue result) {
                              if (result instanceof JavaValue) {
-                               forceEarlyReturn(((JavaValue)result).getDescriptor().getValue(),
-                                                stackFrame.getDescriptor().getFrameProxy().threadProxy(),
-                                                debugProcess,
-                                                dialog);
+                               forceEarlyReturnWithFinally(((JavaValue)result).getDescriptor().getValue(),
+                                                           stackFrame,
+                                                           debugProcess,
+                                                           dialog);
                              }
                            }
 

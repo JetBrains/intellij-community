@@ -38,7 +38,7 @@ class TestManager(val projectRule: ProjectRule, private val tempDirManager: Temp
                                          public val status: Int = 200)
 
   override fun starting(description: Description) {
-    annotation = description.getAnnotation(javaClass<TestDescriptor>())
+    annotation = description.getAnnotation(TestDescriptor::class.java)
     if (annotation == null) {
       return
     }

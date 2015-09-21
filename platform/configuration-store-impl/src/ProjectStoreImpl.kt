@@ -19,6 +19,7 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.highlighter.WorkspaceFileType
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.*
@@ -41,7 +42,7 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.IOException
 import java.io.InputStreamReader
-import java.util.ArrayList
+import java.util.*
 
 open class ProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl(), IProjectStore {
   // protected setter used in upsource
@@ -50,11 +51,20 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
 
   private var presentableUrl: String? = null
 
+  override var loadPolicy = StateLoadPolicy.LOAD
+
   init {
     assert(!project.isDefault())
   }
 
-  override fun optimizeTestLoading() = project.isOptimiseTestLoadSpeed()
+  override final fun isOptimiseTestLoadSpeed() = loadPolicy != StateLoadPolicy.LOAD
+
+  override final fun setOptimiseTestLoadSpeed(value: Boolean) {
+    // we don't load default state in tests as app store does because
+    // 1) we should not do it
+    // 2) it was so before, so, we preserve old behavior (otherwise RunManager will load template run configurations)
+    loadPolicy = if (value) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
+  }
 
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
 
@@ -74,6 +84,11 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
       invokeAndWaitIfNeed {
         VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath))
       }
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        // load state only if there are existing files
+        setOptimiseTestLoadSpeed(!File(filePath).exists())
+      }
     }
     else {
       scheme = StorageScheme.DIRECTORY_BASED
@@ -91,6 +106,11 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
       }
 
       invokeAndWaitIfNeed { VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByPath(projectConfigDir)) }
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        // load state only if there are existing files
+        setOptimiseTestLoadSpeed(!dirStore.exists())
+      }
     }
 
     presentableUrl = null
@@ -130,7 +150,6 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
           }
           catch (ignored: IOException) {
           }
-
         }
       }
 
@@ -184,7 +203,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
 
     super<ComponentStoreImpl>.doSave(saveSessions, readonlyFiles, errors)
 
-    val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(javaClass<UnableToSaveProjectNotification>(), project)
+    val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
     if (readonlyFiles.isEmpty()) {
       for (notification in notifications) {
         notification.expire()
@@ -216,7 +235,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
     }
 
     if (errors != null) {
-      CompoundRuntimeException.doThrow(errors)
+      CompoundRuntimeException.throwIfNotEmpty(errors)
     }
 
     if (!readonlyFiles.isEmpty()) {
@@ -267,7 +286,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
     }
 
     private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles: Array<VirtualFile>) {
-      val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(javaClass<UnableToSaveProjectNotification>(), project)
+      val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
       if (notifications.isEmpty()) {
         Notifications.Bus.notify(UnableToSaveProjectNotification(project, readOnlyFiles), project)
       }

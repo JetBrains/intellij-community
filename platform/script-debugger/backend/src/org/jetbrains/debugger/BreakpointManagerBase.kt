@@ -42,7 +42,7 @@ public abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointM
     override fun equals(b1: T, b2: T) = b1.target.javaClass == b2.target.javaClass && b1.target == b2.target && b1.line == b2.line && b1.column == b2.column && StringUtil.equals(b1.condition, b2.condition)
   })
 
-  protected val dispatcher: EventDispatcher<BreakpointManager.BreakpointListener> = EventDispatcher.create(javaClass<BreakpointManager.BreakpointListener>())
+  protected val dispatcher: EventDispatcher<BreakpointManager.BreakpointListener> = EventDispatcher.create(BreakpointManager.BreakpointListener::class.java)
 
   protected abstract fun createBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean): T
 

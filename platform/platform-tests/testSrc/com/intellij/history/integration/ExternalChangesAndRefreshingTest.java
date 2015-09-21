@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -43,17 +44,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
       // this methods waits for another thread to finish, that leads
       // to deadlock in swing-thread. Therefore we have to run this test
       // outside of swing-thread
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            ExternalChangesAndRefreshingTest.super.setUp();
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        }
-      });
+      EdtTestUtil.runInEdtAndWait((ThrowableRunnable<Throwable>)ExternalChangesAndRefreshingTest.super::setUp);
     }
     else {
       super.setUp();
@@ -66,25 +57,16 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
       // this methods waits for another thread to finish, that leads
       // to deadlock in swing-thread. Therefore we have to run this test
       // outside of swing-thread
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            ExternalChangesAndRefreshingTest.super.tearDown();
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        }
-      });
+      EdtTestUtil.runInEdtAndWait((ThrowableRunnable<Throwable>)ExternalChangesAndRefreshingTest.super::tearDown);
     }
     else {
+      //noinspection SuperTearDownInFinally
       super.tearDown();
     }
   }
 
   @Override
-  protected void runBareRunnable(Runnable r) throws Throwable {
+  protected void runBareRunnable(ThrowableRunnable<Throwable> r) throws Throwable {
     if (getName().equals("testRefreshingAsynchronously")) {
       // this method waits for another thread to finish, that leads
       // to deadlock in swing-thread. Therefore we have to run this test
@@ -118,12 +100,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
 
   public void testRefreshDuringCommand() {
     // shouldn't throw
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        refreshVFS();
-      }
-    }, "", null);
+    CommandProcessor.getInstance().executeCommand(myProject, ExternalChangesAndRefreshingTest::refreshVFS, "", null);
   }
 
   public void testCommandDuringRefresh() throws Exception {
@@ -137,19 +114,11 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     };
 
     // shouldn't throw
-    addFileListenerDuring(l, new Runnable() {
-      @Override
-      public void run() {
-        refreshVFS();
-      }
-    });
+    addFileListenerDuring(l, ExternalChangesAndRefreshingTest::refreshVFS);
   }
 
   private void executeSomeCommand() {
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-      }
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
     }, "", null);
   }
 
@@ -163,7 +132,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
       public void fileCreated(@NotNull VirtualFileEvent e) {
         try {
           if (!e.getFile().getPath().equals(path)) return;
-          content[0] = new String(e.getFile().contentsToByteArray());
+          content[0] = new String(e.getFile().contentsToByteArray(), CharsetToolkit.UTF8_CHARSET);
         }
         catch (IOException ex) {
           throw new RuntimeException(ex);
@@ -171,12 +140,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
       }
     };
 
-    addFileListenerDuring(l, new Runnable() {
-      @Override
-      public void run() {
-        refreshVFS();
-      }
-    });
+    addFileListenerDuring(l, ExternalChangesAndRefreshingTest::refreshVFS);
     assertEquals("content", content[0]);
   }
 
@@ -232,12 +196,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
 
       VirtualFileManager fm = VirtualFileManager.getInstance();
       if (async) {
-        fm.asyncRefresh(new Runnable() {
-          @Override
-          public void run() {
-            s.release();
-          }
-        });
+        fm.asyncRefresh(s::release);
       }
       else {
         try {

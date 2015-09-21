@@ -30,7 +30,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.io.*
 import java.util.concurrent.atomic.AtomicInteger
 
-val LOG: Logger = Logger.getInstance(javaClass<FastCgiService>())
+val LOG: Logger = Logger.getInstance(FastCgiService::class.java)
 
 // todo send FCGI_ABORT_REQUEST if client channel disconnected
 public abstract class FastCgiService(project: Project) : SingleConnectionNetService(project) {
@@ -51,7 +51,7 @@ public abstract class FastCgiService(project: Project) : SingleConnectionNetServ
 
     private fun parseHeaders(response: HttpResponse, buffer: ByteBuf) {
       val builder = StringBuilder()
-      while (buffer.isReadable()) {
+      while (buffer.isReadable) {
         builder.setLength(0)
 
         var key: String? = null
@@ -149,10 +149,10 @@ public abstract class FastCgiService(project: Project) : SingleConnectionNetServ
               fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel!!)
             }
           })
-          .rejected(Consumer {
+          .rejected {
             Promise.logError(LOG, it)
             handleError(fastCgiRequest, notEmptyContent)
-          })
+          }
       }
     }
     catch (e: Throwable) {
@@ -187,7 +187,7 @@ public abstract class FastCgiService(project: Project) : SingleConnectionNetServ
 
   fun responseReceived(id: Int, buffer: ByteBuf?) {
     val channel = requests.remove(id)
-    if (channel == null || !channel.isActive()) {
+    if (channel == null || !channel.isActive) {
       buffer?.release()
       return
     }

@@ -15,10 +15,7 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -43,6 +40,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +51,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.junit.Assert;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 
@@ -65,7 +64,7 @@ public class PsiTestUtil {
     return createTestProjectStructure(project, module, rootPath, filesToDelete, true);
   }
 
-  public static VirtualFile createTestProjectStructure(Project project, Module module, Collection<File> filesToDelete) throws Exception {
+  public static VirtualFile createTestProjectStructure(Project project, Module module, Collection<File> filesToDelete) throws IOException {
     return createTestProjectStructure(project, module, null, filesToDelete, true);
   }
 
@@ -73,7 +72,7 @@ public class PsiTestUtil {
                                                        Module module,
                                                        String rootPath,
                                                        Collection<File> filesToDelete,
-                                                       boolean addProjectRoots) throws Exception {
+                                                       boolean addProjectRoots) throws IOException {
     VirtualFile vDir = createTestProjectStructure(module, rootPath, filesToDelete, addProjectRoots);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     return vDir;
@@ -82,7 +81,7 @@ public class PsiTestUtil {
   public static VirtualFile createTestProjectStructure(Module module,
                                                        String rootPath,
                                                        Collection<File> filesToDelete,
-                                                       boolean addProjectRoots) throws Exception {
+                                                       boolean addProjectRoots) throws IOException {
     return createTestProjectStructure("unitTest", module, rootPath, filesToDelete, addProjectRoots);
   }
 
@@ -90,33 +89,37 @@ public class PsiTestUtil {
                                                        final Module module,
                                                        final String rootPath,
                                                        final Collection<File> filesToDelete,
-                                                       final boolean addProjectRoots) throws Exception {
+                                                       final boolean addProjectRoots) throws IOException {
     File dir = FileUtil.createTempDirectory(tempName, null, false);
     filesToDelete.add(dir);
 
     final VirtualFile vDir =
       LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
-    PlatformTestCase.synchronizeTempDirVfs(vDir);
     assert vDir != null && vDir.isDirectory() : dir;
+    PlatformTestCase.synchronizeTempDirVfs(vDir);
 
-    Project project = module != null ? module.getProject() : null;
-    new WriteCommandAction.Simple(project) {
+    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
-      protected void run() throws Throwable {
-        if (rootPath != null) {
-          VirtualFile vDir1 = LocalFileSystem.getInstance().findFileByPath(rootPath.replace(File.separatorChar, '/'));
-          if (vDir1 == null) {
-            throw new Exception(rootPath + " not found");
+      public void run() throws Throwable {
+        AccessToken token = WriteAction.start();
+        try {
+          if (rootPath != null) {
+            VirtualFile vDir1 = LocalFileSystem.getInstance().findFileByPath(rootPath.replace(File.separatorChar, '/'));
+            if (vDir1 == null) {
+              throw new Exception(rootPath + " not found");
+            }
+            VfsUtil.copyDirectory(null, vDir1, vDir, null);
           }
-          VfsUtil.copyDirectory(null, vDir1, vDir, null);
-        }
 
-        if (addProjectRoots) {
-          addSourceContentToRoots(module, vDir);
+          if (addProjectRoots) {
+            addSourceContentToRoots(module, vDir);
+          }
+        }
+        finally {
+          token.finish();
         }
       }
-    }.execute().throwException();
-
+    });
     return vDir;
   }
 

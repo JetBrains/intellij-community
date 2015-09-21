@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  */
 package com.intellij.uiDesigner;
 
-import com.intellij.openapi.components.NamedComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -27,7 +26,6 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.uiDesigner.lw.LwXmlReader;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +35,8 @@ import java.util.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class Properties implements NamedComponent, JDOMExternalizable{
+@State(name = "gui-designer-properties", defaultStateAsResource = true, storages = {})
+public final class Properties implements PersistentStateComponent<Element> {
   private final HashMap<String,String> myClass2InplaceProperty;
   private final HashMap<String,HashSet<String>> myClass2ExpertProperties;
   private final Map<String, Map<String, IntEnumEditor.Pair[]>> myClass2EnumProperties;
@@ -113,22 +112,17 @@ public final class Properties implements NamedComponent, JDOMExternalizable{
     return null;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public void readExternal(final Element element) {
-    for (final Object classObject : element.getChildren("class")) {
-      final Element classElement = (Element)classObject;
-
+  @Override
+   public void loadState(Element state) {
+    for (Element classElement : state.getChildren("class")) {
       final String className = LwXmlReader.getRequiredString(classElement, "name");
 
       // Read "expert" properties
       final Element expertPropertiesElement = classElement.getChild("expert-properties");
       if (expertPropertiesElement != null) {
-        final HashSet<String> expertProperties = new HashSet<String>();
-
-        for (final Object o : expertPropertiesElement.getChildren("property")) {
-          final Element e = (Element)o;
-          final String name = LwXmlReader.getRequiredString(e, "name");
-          expertProperties.add(name);
+        HashSet<String> expertProperties = new HashSet<String>();
+        for (Element e : expertPropertiesElement.getChildren("property")) {
+          expertProperties.add(LwXmlReader.getRequiredString(e, "name"));
         }
 
         myClass2ExpertProperties.put(className, expertProperties);
@@ -171,12 +165,9 @@ public final class Properties implements NamedComponent, JDOMExternalizable{
     }
   }
 
-  public void writeExternal(final Element element) throws WriteExternalException{
-    throw new WriteExternalException();
-  }
-
-  @NonNls @NotNull
-  public String getComponentName() {
-    return "gui-designer-properties";
+  @Nullable
+  @Override
+  public Element getState() {
+    return null;
   }
 }

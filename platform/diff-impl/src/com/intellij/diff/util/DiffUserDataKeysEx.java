@@ -15,9 +15,12 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.diff.merge.MergeResult;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,4 +56,13 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<JComponent> BOTTOM_PANEL = Key.create("Diff.BottomPanel"); // Could implement Disposable
 
   Key<Boolean> SHOW_READ_ONLY_LOCK = Key.create("Diff.ShowReadOnlyLock");
+
+  //
+  // MergeContext / MergeRequest
+  //
+
+  // (title, message)
+  Key<Couple<String>> MERGE_CANCEL_MESSAGE = Key.create("Diff.MergeCancelMessage");
+  // null -> default
+  Key<Function<MergeResult, String>> MERGE_ACTION_CAPTIONS = Key.create("Diff.MergeActionCaptions");
 }

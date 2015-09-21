@@ -56,7 +56,10 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   @TestOnly
   @NotNull
-  // returns remaining open test projects
+  /**
+   * Without save and "check can close".
+   * Returns remaining open test projects.
+   */
   public abstract Collection<Project> closeTestProject(@NotNull Project project);
 
   // returns true on success

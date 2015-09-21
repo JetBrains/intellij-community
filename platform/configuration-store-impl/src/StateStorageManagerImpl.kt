@@ -36,11 +36,10 @@ import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.io.IOException
-import java.util.LinkedHashMap
+import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import java.util.regex.Pattern
 import kotlin.concurrent.withLock
-import kotlin.reflect.jvm.java
 
 /**
  * If componentManager not specified, storage will not add file tracker (see VirtualFileTracker)
@@ -147,9 +146,9 @@ open class StateStorageManagerImpl(private val rootTagName: String,
    */
   open fun expandNormalizedPath(path: String): String = expandMacros(path)
 
-  fun getOrCreateStorage(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT, storageClass: Class<out StateStorage> = javaClass<StateStorage>(), @SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter> = javaClass<StateSplitterEx>()): StateStorage {
+  fun getOrCreateStorage(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT, storageClass: Class<out StateStorage> = StateStorage::class.java, @SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter> = StateSplitterEx::class.java): StateStorage {
     val collapsedPath = normalizeFileSpec(fileSpec)
-    val key = if (storageClass == javaClass<StateStorage>()) collapsedPath else storageClass.getName()
+    val key = if (storageClass == StateStorage::class.java) collapsedPath else storageClass.getName()
     storageLock.withLock {
       var storage = storages.get(key)
       if (storage == null) {
@@ -184,7 +183,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   // overridden in upsource
   protected open fun createStateStorage(storageClass: Class<out StateStorage>, collapsedPath: String, roamingType: RoamingType, @SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter>): StateStorage {
-    if (storageClass != javaClass<StateStorage>()) {
+    if (storageClass != StateStorage::class.java) {
       val constructor = storageClass.getConstructors()[0]!!
       constructor.setAccessible(true)
       return constructor.newInstance(componentManager!!, this) as StateStorage
@@ -195,7 +194,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
 
     val filePath = expandNormalizedPath(collapsedPath)
-    if (stateSplitter != javaClass<StateSplitter>() && stateSplitter != javaClass<StateSplitterEx>()) {
+    if (stateSplitter != StateSplitter::class.java && stateSplitter != StateSplitterEx::class.java) {
       val storage = MyDirectoryStorage(this, File(filePath), ReflectionUtil.newInstance(stateSplitter))
       virtualFileTracker?.put(filePath, storage)
       return storage

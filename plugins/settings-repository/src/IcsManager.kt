@@ -46,10 +46,10 @@ import kotlin.properties.Delegates
 
 val PLUGIN_NAME: String = "Settings Repository"
 
-val LOG: Logger = Logger.getInstance(javaClass<IcsManager>())
+val LOG: Logger = Logger.getInstance(IcsManager::class.java)
 
 val icsManager by Delegates.lazy {
-  ApplicationLoadListener.EP_NAME.findExtension(javaClass<IcsApplicationLoadListener>()).icsManager
+  ApplicationLoadListener.EP_NAME.findExtension(IcsApplicationLoadListener::class.java).icsManager
 }
 
 class IcsManager(dir: File) {
@@ -91,7 +91,7 @@ class IcsManager(dir: File) {
       ProgressManager.getInstance().run(object : Task.Backgroundable(null, IcsBundle.message("task.commit.title")) {
         override fun run(indicator: ProgressIndicator) {
           try {
-            repositoryManager.commit(indicator)
+            repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
           }
           catch (e: Throwable) {
             LOG.error(e)
