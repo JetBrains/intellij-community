@@ -465,7 +465,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   }
 
   @Override
-  protected void runBareRunnable(Runnable runnable) throws Throwable {
+  protected void runBareRunnable(ThrowableRunnable<Throwable> runnable) throws Throwable {
     runnable.run();
   }
 
@@ -475,6 +475,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
       EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
         @Override
         public void run() throws Throwable {
+          try {
             myRecompiledPaths.clear();
             myData = null;
             myClassesDir = null;
@@ -482,7 +483,10 @@ public abstract class CompilerTestCase extends ModuleTestCase {
             mySourceDir = null;
             myOriginalSourceDir = null;
             CompilerTestUtil.disableExternalCompiler(myProject);
+          }
+          finally {
             CompilerTestCase.super.tearDown();
+          }
         }
       });
     }
