@@ -47,15 +47,16 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
 
   public static ExpandedItemRendererComponentWrapper wrap(@NotNull Component rendererComponent) {
     if (rendererComponent instanceof Accessible) {
-      return new MyAccessibleComponent((Accessible)rendererComponent);
+      return new MyAccessibleComponent(rendererComponent, (Accessible)rendererComponent);
     }
     return new ExpandedItemRendererComponentWrapper(rendererComponent);
   }
 
   private static class MyAccessibleComponent extends ExpandedItemRendererComponentWrapper implements Accessible {
     private Accessible myAccessible;
-    MyAccessibleComponent(Accessible comp) {
-      myAccessible = comp;
+    MyAccessibleComponent(@NotNull Component comp, @NotNull Accessible accessible) {
+      super(comp);
+      myAccessible = accessible;
     }
     @Override
     public AccessibleContext getAccessibleContext() {
