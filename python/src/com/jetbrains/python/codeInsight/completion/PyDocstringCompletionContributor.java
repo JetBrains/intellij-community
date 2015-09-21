@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
@@ -84,7 +85,12 @@ public class PyDocstringCompletionContributor extends CompletionContributor {
       }
       else if (reference instanceof DocStringTypeReference) {
         for (Object variant : ((DocStringTypeReference)reference).collectTypeVariants()) {
-          result.addElement(LookupElementBuilder.create(variant));
+          if (variant instanceof PsiNamedElement) {
+            result.addElement(LookupElementBuilder.createWithIcon((PsiNamedElement)variant));
+          }
+          else {
+            result.addElement(LookupElementBuilder.create(variant));
+          }
         }
       }
     }
