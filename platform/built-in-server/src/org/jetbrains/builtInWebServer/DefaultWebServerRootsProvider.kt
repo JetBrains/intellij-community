@@ -76,14 +76,14 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
     return findInLibraries(project, modules, effectivePath, resolver)
   }
 
-  override fun getRoot(file: VirtualFile, project: Project): PathInfo? {
+  override fun getPathInfo(file: VirtualFile, project: Project): PathInfo? {
     runReadAction {
       val directoryIndex = DirectoryIndex.getInstance(project)
       val info = directoryIndex.getInfoForFile(file)
       // we serve excluded files
       if (!info.isExcluded && !info.isInProject) {
         // javadoc jars is "not under project", but actually is, so, let's check project library table
-        return if (file.fileSystem === JarFileSystem.getInstance()) getInfoForDocJar(file, project) else null
+        return if (file.fileSystem == JarFileSystem.getInstance()) getInfoForDocJar(file, project) else null
       }
 
       var root = info.sourceRoot
@@ -114,25 +114,19 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
         }
       }
 
-      return PathInfo(file, root!!, getModuleNameQualifier(project, module), isLibrary)
+      return PathInfo(null, file, root!!, getModuleNameQualifier(project, module), isLibrary)
     }
   }
 
   private enum class RootProvider {
     SOURCE {
-      override fun getRoots(rootManager: ModuleRootManager): Array<VirtualFile> {
-        return rootManager.sourceRoots
-      }
+      override fun getRoots(rootManager: ModuleRootManager) = rootManager.sourceRoots
     },
     CONTENT {
-      override fun getRoots(rootManager: ModuleRootManager): Array<VirtualFile> {
-        return rootManager.contentRoots
-      }
+      override fun getRoots(rootManager: ModuleRootManager) = rootManager.contentRoots
     },
     EXCLUDED {
-      override fun getRoots(rootManager: ModuleRootManager): Array<VirtualFile> {
-        return rootManager.excludeRoots
-      }
+      override fun getRoots(rootManager: ModuleRootManager) = rootManager.excludeRoots
     };
 
     public abstract fun getRoots(rootManager: ModuleRootManager): Array<VirtualFile>
@@ -212,10 +206,8 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       for (rootType in ORDER_ROOT_TYPES.value) {
         for (root in library.getFiles(rootType)) {
           if (StringUtil.equalsIgnoreCase(root.nameSequence, libraryFileName)) {
-            val file = resolver.resolve(relativePath, root)
-            if (file != null) {
-              return PathInfo(file, root, null, true)
-            }
+            val result = resolver.resolve(relativePath, root, isLibrary = true) ?: continue
+            return result
           }
         }
       }
@@ -232,7 +224,7 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
         override fun process(library: Library): Boolean {
           for (root in library.getFiles(javaDocRootType)) {
             if (VfsUtilCore.isAncestor(root, file, false)) {
-              result = PathInfo(file, root, getModuleNameQualifier(project, module), true)
+              result = PathInfo(null, file, root, getModuleNameQualifier(project, module), true)
               return false
             }
           }
@@ -275,10 +267,8 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
 
     private fun findByRelativePath(path: String, roots: Array<VirtualFile>, resolver: FileResolver, moduleName: String?): PathInfo? {
       for (root in roots) {
-        val file = resolver.resolve(path, root)
-        if (file != null) {
-          return PathInfo(file, root, moduleName, false)
-        }
+        val result = resolver.resolve(path, root, moduleName) ?: continue
+        return result
       }
       return null
     }

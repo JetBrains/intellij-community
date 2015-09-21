@@ -7,20 +7,22 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootAdapter
 import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 /**
  * Implement [WebServerRootsProvider] to add your provider
  */
 class WebServerPathToFileManager(application: Application, private val project: Project) {
-  val pathToFileCache = CacheBuilder.newBuilder().maximumSize(512).expireAfterAccess(10, TimeUnit.MINUTES).build<String, VirtualFile>()
+  val pathToInfoCache = CacheBuilder.newBuilder().maximumSize(512).expireAfterAccess(10, TimeUnit.MINUTES).build<String, PathInfo>()
   // time to expire should be greater than pathToFileCache
-  private val fileToRoot = CacheBuilder.newBuilder().maximumSize(512).expireAfterAccess(11, TimeUnit.MINUTES).build<VirtualFile, PathInfo>()
+  private val virtualFileToPathInfo = CacheBuilder.newBuilder().maximumSize(512).expireAfterAccess(11, TimeUnit.MINUTES).build<VirtualFile, PathInfo>()
 
   init {
     application.messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener.Adapter() {
@@ -50,33 +52,35 @@ class WebServerPathToFileManager(application: Application, private val project: 
   }
 
   private fun clearCache() {
-    pathToFileCache.invalidateAll()
-    fileToRoot.invalidateAll()
+    pathToInfoCache.invalidateAll()
+    virtualFileToPathInfo.invalidateAll()
   }
 
-  @JvmOverloads fun get(path: String, cacheResult: Boolean = true): VirtualFile? {
-    var result: VirtualFile? = pathToFileCache.getIfPresent(path)
-    if (result == null || !result.isValid) {
-      result = findByRelativePath(project, path)
-      if (cacheResult && result != null && result.isValid) {
-        pathToFileCache.put(path, result)
+  @JvmOverloads fun findVirtualFile(path: String, cacheResult: Boolean = true): VirtualFile? {
+    val pathInfo = getPathInfo(path, cacheResult) ?: return null
+    return pathInfo.file ?: return LocalFileSystem.getInstance().findFileByIoFile(pathInfo.ioFile!!)
+  }
+
+  fun getPathInfo(path: String, cacheResult: Boolean = true): PathInfo? {
+    var pathInfo = pathToInfoCache.getIfPresent(path)
+    if (pathInfo == null || !pathInfo.isValid) {
+      pathInfo = doFindByRelativePath(path)
+      if (cacheResult && pathInfo != null && pathInfo.isValid) {
+        pathToInfoCache.put(path, pathInfo)
       }
     }
-    return result
+    return pathInfo
   }
 
-  fun getPath(file: VirtualFile): String? {
-    val pathInfo = getRoot(file)
-    return pathInfo?.path
-  }
+  fun getPath(file: VirtualFile) = getPathInfo(file)?.path
 
-  fun getRoot(child: VirtualFile): PathInfo? {
-    var result: PathInfo? = fileToRoot.getIfPresent(child)
+  private fun getPathInfo(child: VirtualFile): PathInfo? {
+    var result = virtualFileToPathInfo.getIfPresent(child)
     if (result == null) {
-      for (rootsProvider in WebServerRootsProvider.EP_NAME.extensions) {
-        result = rootsProvider.getRoot(child, project)
+      for (infoProvider in WebServerRootsProvider.EP_NAME.extensions) {
+        result = infoProvider.getPathInfo(child, project)
         if (result != null) {
-          fileToRoot.put(child, result)
+          virtualFileToPathInfo.put(child, result)
           break
         }
       }
@@ -84,12 +88,14 @@ class WebServerPathToFileManager(application: Application, private val project: 
     return result
   }
 
-  fun findByRelativePath(project: Project, path: String): VirtualFile? {
+  internal fun doFindByRelativePath(path: String): PathInfo? {
     for (rootsProvider in WebServerRootsProvider.EP_NAME.extensions) {
       val result = rootsProvider.resolve(path, project)
       if (result != null) {
-        fileToRoot.put(result.child, result)
-        return result.child
+        if (result.file != null) {
+          virtualFileToPathInfo.put(result.file, result)
+        }
+        return result
       }
     }
     return null
@@ -99,14 +105,29 @@ class WebServerPathToFileManager(application: Application, private val project: 
 
   companion object {
     private val RELATIVE_PATH_RESOLVER = object : FileResolver {
-      override fun resolve(path: String, parent: VirtualFile): VirtualFile? {
-        return parent.findFileByRelativePath(path)
+      override fun resolve(path: String, root: VirtualFile, moduleName: String?, isLibrary: Boolean): PathInfo? {
+        // WEB-17691 built-in server doesn't serve files it doesn't have in the project tree
+        // temp:// reports isInLocalFileSystem == true, but it is not true
+        if (root.isInLocalFileSystem && root.fileSystem == LocalFileSystem.getInstance()) {
+          val file = File(root.path, path)
+          if (file.exists()) {
+            return PathInfo(file, null, root, moduleName, isLibrary)
+          }
+          else {
+            return null
+          }
+        }
+        else {
+          val file = root.findFileByRelativePath(path) ?: return null
+          return PathInfo(null, file, root, moduleName, isLibrary)
+        }
       }
     }
 
     private val EMPTY_PATH_RESOLVER = object : FileResolver {
-      override fun resolve(path: String, parent: VirtualFile): VirtualFile? {
-        return findIndexFile(parent)
+      override fun resolve(path: String, root: VirtualFile, moduleName: String?, isLibrary: Boolean): PathInfo? {
+        val file = findIndexFile(root) ?: return null
+        return PathInfo(null, file, root, moduleName, isLibrary)
       }
     }
 
@@ -118,5 +139,5 @@ class WebServerPathToFileManager(application: Application, private val project: 
 
 
 interface FileResolver {
-  fun resolve(path: String, parent: VirtualFile): VirtualFile?
+  fun resolve(path: String, root: VirtualFile, moduleName: String? = null, isLibrary: Boolean = false): PathInfo?
 }

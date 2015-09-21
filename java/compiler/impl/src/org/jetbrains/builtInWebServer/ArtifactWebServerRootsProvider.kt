@@ -24,17 +24,16 @@ internal class ArtifactWebServerRootsProvider : PrefixlessWebServerRootsProvider
   override fun resolve(path: String, project: Project, resolver: FileResolver): PathInfo? {
     for (artifact in ArtifactManager.getInstance(project).artifacts) {
       val root = artifact.outputFile ?: continue
-      val file = root.findFileByRelativePath(path) ?: continue
-      return PathInfo(file, root)
+      return resolver.resolve(path, root)
     }
     return null
   }
 
-  override fun getRoot(file: VirtualFile, project: Project): PathInfo? {
+  override fun getPathInfo(file: VirtualFile, project: Project): PathInfo? {
     for (artifact in ArtifactManager.getInstance(project).artifacts) {
       val root = artifact.outputFile ?: continue
       if (VfsUtilCore.isAncestor(root, file, true)) {
-        return PathInfo(file, root)
+        return PathInfo(null, file, root)
       }
     }
     return null

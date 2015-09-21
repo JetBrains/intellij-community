@@ -13,7 +13,7 @@ public abstract class WebServerRootsProvider {
   public abstract PathInfo resolve(@NotNull String path, @NotNull Project project);
 
   @Nullable
-  public abstract PathInfo getRoot(@NotNull VirtualFile file, @NotNull Project project);
+  public abstract PathInfo getPathInfo(@NotNull VirtualFile file, @NotNull Project project);
 
   public boolean isClearCacheOnFileContentChanged(@NotNull VirtualFile file) {
     return false;

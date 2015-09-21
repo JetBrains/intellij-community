@@ -17,7 +17,6 @@ package org.jetbrains.builtInWebServer;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.FullHttpRequest;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +26,7 @@ import java.io.IOException;
 public abstract class WebServerFileHandler {
   static final ExtensionPointName<WebServerFileHandler> EP_NAME = ExtensionPointName.create("org.jetbrains.webServerFileHandler");
 
-  public abstract boolean process(@NotNull VirtualFile file,
+  public abstract boolean process(@NotNull PathInfo pathInfo,
                                   @NotNull CharSequence canonicalRequestPath,
                                   @NotNull Project project,
                                   @NotNull FullHttpRequest request,

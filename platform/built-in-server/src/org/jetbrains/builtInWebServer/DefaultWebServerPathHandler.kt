@@ -16,13 +16,14 @@
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.util.PathUtilRt
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.jetbrains.io.Responses
 
-class DefaultWebServerPathHandler : WebServerPathHandler() {
+private class DefaultWebServerPathHandler : WebServerPathHandler() {
   override fun process(path: String,
                        project: Project,
                        request: FullHttpRequest,
@@ -32,11 +33,11 @@ class DefaultWebServerPathHandler : WebServerPathHandler() {
                        isCustomHost: Boolean): Boolean {
     val channel = context.channel()
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
-    var result: VirtualFile? = pathToFileManager.pathToFileCache.getIfPresent(path)
+    var pathInfo = pathToFileManager.pathToInfoCache.getIfPresent(path)
     var indexUsed = false
-    if (result == null || !result.isValid) {
-      result = pathToFileManager.findByRelativePath(project, path)
-      if (result == null) {
+    if (pathInfo == null || !pathInfo.isValid) {
+      pathInfo = pathToFileManager.doFindByRelativePath(path)
+      if (pathInfo == null) {
         if (path.isEmpty()) {
           Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, "Index file doesn't exist.", request)
           return true
@@ -45,29 +46,37 @@ class DefaultWebServerPathHandler : WebServerPathHandler() {
           return false
         }
       }
-      else if (result.isDirectory) {
-        if (!WebServerPathHandler.endsWithSlash(decodedRawPath)) {
-          WebServerPathHandler.redirectToDirectory(request, channel, if (isCustomHost) path else (projectName + '/' + path))
-          return true
-        }
+      else {
+        var virtualFile = pathInfo.file
+        val isDirectory = if (virtualFile == null) pathInfo.ioFile!!.isDirectory else virtualFile.isDirectory
+        if (isDirectory) {
+          if (!WebServerPathHandler.endsWithSlash(decodedRawPath)) {
+            WebServerPathHandler.redirectToDirectory(request, channel, if (isCustomHost) path else (projectName + '/' + path))
+            return true
+          }
 
-        result = findIndexFile(result)
-        if (result == null) {
-          Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, "Index file doesn't exist.", request)
-          return true
+          if (virtualFile == null) {
+            virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(pathInfo.ioFile!!)
+          }
+
+          virtualFile = if (virtualFile == null) null else findIndexFile(virtualFile)
+          if (virtualFile == null) {
+            Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, "Index file doesn't exist.", request)
+            return true
+          }
+          indexUsed = true
         }
-        indexUsed = true
       }
 
-      pathToFileManager.pathToFileCache.put(path, result)
+      pathToFileManager.pathToInfoCache.put(path, pathInfo)
     }
-    else if (!path.endsWith(result.name)) {
+    else if (!path.endsWith(pathInfo.name)) {
       if (WebServerPathHandler.endsWithSlash(decodedRawPath)) {
         indexUsed = true
       }
       else {
         // FallbackResource feature in action, /login requested, /index.php retrieved, we must not redirect /login to /login/
-        if (path.endsWith(result.parent.name)) {
+        if (path.endsWith(PathUtilRt.getFileName(PathUtilRt.getParentPath(pathInfo.path)))) {
           WebServerPathHandler.redirectToDirectory(request, channel, if (isCustomHost) path else (projectName + '/' + path))
           return true
         }
@@ -81,12 +90,12 @@ class DefaultWebServerPathHandler : WebServerPathHandler() {
     }
     canonicalRequestPath.append(path)
     if (indexUsed) {
-      canonicalRequestPath.append('/').append(result.name)
+      canonicalRequestPath.append('/').append(pathInfo.name)
     }
 
     for (fileHandler in WebServerFileHandler.EP_NAME.extensions) {
       try {
-        if (fileHandler.process(result, canonicalRequestPath, project, request, channel, isCustomHost)) {
+        if (fileHandler.process(pathInfo, canonicalRequestPath, project, request, channel, isCustomHost)) {
           return true
         }
       }

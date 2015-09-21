@@ -1,7 +1,5 @@
 package org.jetbrains.io.fastCgi
 
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtil
@@ -9,7 +7,7 @@ import io.netty.buffer.ByteBufUtilEx
 import io.netty.channel.Channel
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpHeaderNames
-import org.jetbrains.builtInWebServer.WebServerPathToFileManager
+import org.jetbrains.builtInWebServer.PathInfo
 import org.jetbrains.io.Responses
 import java.net.InetSocketAddress
 import java.util.*
@@ -34,11 +32,10 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
     buffer!!.writeZero(5)
   }
 
-  public fun writeFileHeaders(file: VirtualFile, project: Project, canonicalRequestPath: CharSequence) {
-    val root = WebServerPathToFileManager.getInstance(project).getRoot(file)
-    LOG.assertTrue(root != null)
-    addHeader("DOCUMENT_ROOT", root!!.root.path)
-    addHeader("SCRIPT_FILENAME", file.path)
+  public fun writeFileHeaders(pathInfo: PathInfo, canonicalRequestPath: CharSequence) {
+    val root = pathInfo.root
+    addHeader("DOCUMENT_ROOT", root.path)
+    addHeader("SCRIPT_FILENAME", pathInfo.path)
     addHeader("SCRIPT_NAME", canonicalRequestPath)
   }
 
