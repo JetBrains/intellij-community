@@ -56,7 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 public class ProjectRule() : ExternalResource() {
   companion object {
     init {
-      Logger.setFactory(javaClass<TestLoggerFactory>())
+      Logger.setFactory(TestLoggerFactory::class.java)
     }
 
     private var sharedProject: ProjectEx? = null
@@ -181,7 +181,7 @@ annotation public class RunsInEdt
 
 public class EdtRule : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
-    return if (description.getOwnOrClassAnnotation(javaClass<RunsInEdt>()) == null) {
+    return if (description.getOwnOrClassAnnotation(RunsInEdt::class.java) == null) {
       base
     }
     else {
@@ -204,7 +204,7 @@ annotation public class RunsInActiveStoreMode
 
 public class ActiveStoreRule(private val projectRule: ProjectRule) : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
-    return if (description.getOwnOrClassAnnotation(javaClass<RunsInActiveStoreMode>()) == null) {
+    return if (description.getOwnOrClassAnnotation(RunsInActiveStoreMode::class.java) == null) {
       base
     }
     else {

@@ -49,13 +49,10 @@ import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.io.IOException
-import java.util.Arrays
-import java.util.Collections
-import java.util.Comparator
-import java.util.LinkedHashSet
+import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 
-private val LOG = Logger.getInstance(javaClass<ComponentStoreImpl>())
+private val LOG = Logger.getInstance(ComponentStoreImpl::class.java)
 
 /**
  * <b>Note:</b> this class is used in upsource, please notify upsource team in case you change its API.
@@ -211,13 +208,13 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
 
     try {
-      getDefaultState(component, componentName, javaClass<Element>())?.let { component.readExternal(it) }
+      getDefaultState(component, componentName, Element::class.java)?.let { component.readExternal(it) }
     }
     catch (e: Throwable) {
       LOG.error(e)
     }
 
-    val element = storageManager.getOldStorage(component, componentName, StateStorageOperation.READ)?.getState(component, componentName, javaClass<Element>(), null, false) ?: return null
+    val element = storageManager.getOldStorage(component, componentName, StateStorageOperation.READ)?.getState(component, componentName, Element::class.java, null, false) ?: return null
     try {
       component.readExternal(element)
     }

@@ -42,7 +42,7 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.IOException
 import java.io.InputStreamReader
-import java.util.ArrayList
+import java.util.*
 
 open class ProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl(), IProjectStore {
   // protected setter used in upsource
@@ -203,7 +203,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
 
     super<ComponentStoreImpl>.doSave(saveSessions, readonlyFiles, errors)
 
-    val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(javaClass<UnableToSaveProjectNotification>(), project)
+    val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
     if (readonlyFiles.isEmpty()) {
       for (notification in notifications) {
         notification.expire()
@@ -286,7 +286,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
     }
 
     private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles: Array<VirtualFile>) {
-      val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(javaClass<UnableToSaveProjectNotification>(), project)
+      val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
       if (notifications.isEmpty()) {
         Notifications.Bus.notify(UnableToSaveProjectNotification(project, readOnlyFiles), project)
       }

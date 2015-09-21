@@ -29,7 +29,6 @@ import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
-import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.Transient
 import com.intellij.util.xmlb.toByteArray
@@ -200,7 +199,7 @@ class SchemeManagerTest {
   public Test fun `save only if scheme differs from bundled`() {
     val dir = tempDirManager.newDirectory()
     var schemeManager = createSchemeManager(dir)
-    val converter: (Element) -> TestScheme = { XmlSerializer.deserialize(it, javaClass<TestScheme>())!! }
+    val converter: (Element) -> TestScheme = { XmlSerializer.deserialize(it, TestScheme::class.java)!! }
     val bundledPath = "/bundledSchemes/default"
     schemeManager.loadBundledScheme(bundledPath, this, converter)
     var schemes = schemeManager.getAllSchemes()
@@ -382,7 +381,7 @@ public data class TestScheme(@Attribute private var name: String = "", @Attribut
 }
 
 public open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme>() {
-  override fun readScheme(element: Element) = XmlSerializer.deserialize(element, javaClass<TestScheme>())
+  override fun readScheme(element: Element) = XmlSerializer.deserialize(element, TestScheme::class.java)
 
   override fun writeScheme(scheme: TestScheme) = scheme._serialize()
 }

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.settingsRepository.actions
 
 import com.intellij.openapi.components.ServiceManager
@@ -28,7 +43,7 @@ import org.jetbrains.settingsRepository.CommitToIcsDialog
 import org.jetbrains.settingsRepository.IcsBundle
 import org.jetbrains.settingsRepository.ProjectId
 import org.jetbrains.settingsRepository.icsManager
-import java.util.UUID
+import java.util.*
 
 class CommitToIcsAction : CommonCheckinFilesAction() {
   class IcsBeforeCommitDialogHandler : CheckinHandlerFactory() {
@@ -103,7 +118,7 @@ private class ProjectChangeCollectConsumer(private val project: Project) {
 }
 
 private fun getProjectId(project: Project): String? {
-  val projectId = ServiceManager.getService<ProjectId>(project, javaClass<ProjectId>())!!
+  val projectId = ServiceManager.getService<ProjectId>(project, ProjectId::class.java)!!
   if (projectId.uid == null) {
     if (MessageDialogBuilder.yesNo("Settings Server Project Mapping", "Project is not mapped on Settings Server. Would you like to map?").project(project).doNotAsk(object : DialogWrapper.PropertyDoNotAskOption("") {
       override fun setToBeShown(value: Boolean, exitCode: Int) {

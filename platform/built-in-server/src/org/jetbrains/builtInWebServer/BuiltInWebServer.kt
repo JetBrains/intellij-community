@@ -46,7 +46,7 @@ import java.net.UnknownHostException
 
 public class BuiltInWebServer : HttpRequestHandler() {
   companion object {
-    val LOG = Logger.getInstance(javaClass<BuiltInWebServer>())
+    val LOG = Logger.getInstance(BuiltInWebServer::class.java)
 
     private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {
       val decodedPath = URLUtil.unescapePercentSequences(UriUtil.trimParameters(request.uri()))

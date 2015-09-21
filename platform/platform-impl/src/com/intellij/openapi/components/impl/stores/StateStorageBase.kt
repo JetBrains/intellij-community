@@ -20,24 +20,24 @@ import com.intellij.openapi.diagnostic.Logger
 import org.jdom.Element
 import java.util.concurrent.atomic.AtomicReference
 
-public abstract class StateStorageBase<T : Any> : StateStorage {
+abstract class StateStorageBase<T : Any> : StateStorage {
   companion object {
-    private val LOG: Logger = Logger.getInstance(javaClass<StateStorageBase<Any>>())
+    private val LOG: Logger = Logger.getInstance(StateStorageBase::class.java)
   }
 
   private var mySavingDisabled = false
 
   protected val storageDataRef: AtomicReference<T> = AtomicReference()
 
-  override final fun <S> getState(component: Any?, componentName: String, stateClass: Class<S>, mergeInto: S?, reload: Boolean): S? {
+  override final fun <S : Any> getState(component: Any?, componentName: String, stateClass: Class<S>, mergeInto: S?, reload: Boolean): S? {
     return getState(component, componentName, stateClass, true, reload, mergeInto)
   }
 
-  fun <S> getState(component: Any?, componentName: String, stateClass: Class<S>, archive: Boolean = true, reload: Boolean = false, mergeInto: S? = null): S? {
+  fun <S: Any> getState(component: Any?, componentName: String, stateClass: Class<S>, archive: Boolean = true, reload: Boolean = false, mergeInto: S? = null): S? {
     return deserializeState(getSerializedState(getStorageData(reload), component, componentName, archive), stateClass, mergeInto)
   }
 
-  open fun <S> deserializeState(serializedState: Element?, stateClass: Class<S>, mergeInto: S?): S? {
+  open fun <S: Any> deserializeState(serializedState: Element?, stateClass: Class<S>, mergeInto: S?): S? {
     return DefaultStateSerializer.deserializeState(serializedState, stateClass, mergeInto)
   }
 

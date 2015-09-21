@@ -46,10 +46,10 @@ import kotlin.properties.Delegates
 
 val PLUGIN_NAME: String = "Settings Repository"
 
-val LOG: Logger = Logger.getInstance(javaClass<IcsManager>())
+val LOG: Logger = Logger.getInstance(IcsManager::class.java)
 
 val icsManager by Delegates.lazy {
-  ApplicationLoadListener.EP_NAME.findExtension(javaClass<IcsApplicationLoadListener>()).icsManager
+  ApplicationLoadListener.EP_NAME.findExtension(IcsApplicationLoadListener::class.java).icsManager
 }
 
 class IcsManager(dir: File) {

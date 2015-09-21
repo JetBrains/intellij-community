@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
 import com.intellij.util.xmlb.annotations.*
+import com.intellij.util.xmlb.annotations.AbstractCollection
 import gnu.trove.THashMap
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
@@ -31,10 +32,7 @@ import org.jdom.Element
 import org.jdom.JDOMException
 import org.junit.Test
 import java.io.IOException
-import java.util.ArrayList
-import java.util.Arrays
-import java.util.LinkedHashMap
-import java.util.LinkedHashSet
+import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
 public class XmlSerializerTest {
@@ -290,7 +288,7 @@ public class XmlSerializerTest {
 
   @Test fun ParallelDeserialization() {
     val e = Element("root").addContent(Element("name").setText("x"))
-    XmlSerializer.deserialize<BeanWithArray>(e, javaClass<BeanWithArray>())//to initialize XmlSerializerImpl.ourBindings
+    XmlSerializer.deserialize<BeanWithArray>(e, BeanWithArray::class.java)//to initialize XmlSerializerImpl.ourBindings
     val exc = AtomicReference<AssertionFailedError>()
     val threads = Array(5) {
       Thread(Runnable {
@@ -664,7 +662,7 @@ public class XmlSerializerTest {
   @Test fun DeserializeJDOMElementField() {
 
 
-    val bean = XmlSerializer.deserialize<BeanWithJDOMElement>(JDOMUtil.loadDocument("<BeanWithJDOMElement><option name=\"STRING_V\" value=\"bye\"/><actions><action/><action/></actions></BeanWithJDOMElement>").getRootElement(), javaClass<BeanWithJDOMElement>())!!
+    val bean = XmlSerializer.deserialize<BeanWithJDOMElement>(JDOMUtil.loadDocument("<BeanWithJDOMElement><option name=\"STRING_V\" value=\"bye\"/><actions><action/><action/></actions></BeanWithJDOMElement>").getRootElement(), BeanWithJDOMElement::class.java)!!
 
 
     TestCase.assertEquals("bye", bean.STRING_V)
@@ -680,7 +678,7 @@ public class XmlSerializerTest {
 
   @Test fun JDOMElementArrayField() {
     val text = "<BeanWithJDOMElementArray>\n" + "  <option name=\"STRING_V\" value=\"bye\" />\n" + "  <actions>\n" + "    <action />\n" + "    <action />\n" + "  </actions>\n" + "  <actions>\n" + "    <action />\n" + "  </actions>\n" + "</BeanWithJDOMElementArray>"
-    val bean = XmlSerializer.deserialize<BeanWithJDOMElementArray>(JDOMUtil.loadDocument(text).getRootElement(), javaClass<BeanWithJDOMElementArray>())!!
+    val bean = XmlSerializer.deserialize<BeanWithJDOMElementArray>(JDOMUtil.loadDocument(text).getRootElement(), BeanWithJDOMElementArray::class.java)!!
 
 
     TestCase.assertEquals("bye", bean.STRING_V)
@@ -757,7 +755,7 @@ public class XmlSerializerTest {
     val bb = doSerializerTest("<bean>\n" + "  <option name=\"myMap\">\n" + "    <map>\n" + "      <entry value=\"letters\">\n" + "        <key>\n" + "          <set>\n" + "            <option value=\"a\" />\n" + "            <option value=\"b\" />\n" + "            <option value=\"c\" />\n" + "          </set>\n" + "        </key>\n" + "      </entry>\n" + "      <entry value=\"numbers\">\n" + "        <key>\n" + "          <set>\n" + "            <option value=\"1\" />\n" + "            <option value=\"2\" />\n" + "            <option value=\"3\" />\n" + "          </set>\n" + "        </key>\n" + "      </entry>\n" + "    </map>\n" + "  </option>\n" + "</bean>", bean)
 
     for (collection in bb.myMap.keySet()) {
-      assertThat(collection).isInstanceOf(javaClass<Set<Any>>())
+      assertThat(collection).isInstanceOf(Set::class.java)
     }
   }
 
@@ -951,7 +949,7 @@ public class XmlSerializerTest {
 
     val value = Element("value")
     list.writeExternal(value)
-    val o = XmlSerializer.deserialize<Bean4>(Element("state").addContent(Element("option").setAttribute("name", "myList").addContent(value)), javaClass<Bean4>())!!
+    val o = XmlSerializer.deserialize<Bean4>(Element("state").addContent(Element("option").setAttribute("name", "myList").addContent(value)), Bean4::class.java)!!
     assertSerializer(o, "<b>\n" + "  <list>\n" + "    <item value=\"one\" />\n" + "    <item value=\"two\" />\n" + "    <item value=\"three\" />\n" + "  </list>\n" + "</b>", SkipDefaultsSerializationFilter())
   }
 
@@ -980,10 +978,10 @@ public class XmlSerializerTest {
     <h4>Node.js integration</h4>
     ]]>
   </description>
-</bean>""".reader), javaClass<Bean>())!!
+</bean>""".reader), Bean::class.java)!!
     assertThat(bean.description).isEqualToIgnoringWhitespace("<h4>Node.js integration</h4>")
 
-    bean = XmlSerializer.deserialize(JDOMUtil.load("""<bean><description><![CDATA[<h4>Node.js integration</h4>]]></description></bean>""".reader), javaClass<Bean>())!!
+    bean = XmlSerializer.deserialize(JDOMUtil.load("""<bean><description><![CDATA[<h4>Node.js integration</h4>]]></description></bean>""".reader), Bean::class.java)!!
     assertThat(bean.description).isEqualTo("<h4>Node.js integration</h4>")
   }
 
@@ -1022,7 +1020,7 @@ public class XmlSerializerTest {
 
 public fun <T : Any> T.serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)
 
-public inline fun <reified T: Any> Element.deserialize(): T = XmlSerializer.deserialize(this, javaClass<T>())!!
+public inline fun <reified T: Any> Element.deserialize(): T = XmlSerializer.deserialize(this, T::class.java)!!
 
 public fun Element.toByteArray(): ByteArray {
   val out = BufferExposingByteArrayOutputStream(512)

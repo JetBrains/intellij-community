@@ -30,7 +30,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.io.*
 import java.util.concurrent.atomic.AtomicInteger
 
-val LOG: Logger = Logger.getInstance(javaClass<FastCgiService>())
+val LOG: Logger = Logger.getInstance(FastCgiService::class.java)
 
 // todo send FCGI_ABORT_REQUEST if client channel disconnected
 public abstract class FastCgiService(project: Project) : SingleConnectionNetService(project) {

@@ -21,7 +21,7 @@ import java.util.*
 
 public class AsyncPromise<T> : Promise<T> {
   companion object {
-    private val LOG = Logger.getInstance(javaClass<AsyncPromise<Any>>())
+    private val LOG = Logger.getInstance(AsyncPromise::class.java)
 
     public val OBSOLETE_ERROR: RuntimeException = MessageError("Obsolete")
 

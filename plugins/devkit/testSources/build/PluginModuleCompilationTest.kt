@@ -35,7 +35,7 @@ import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 import org.jetbrains.idea.devkit.projectRoots.Sandbox
 import java.io.File
-import java.util.Arrays
+import java.util.*
 
 /**
  * @author nik
@@ -47,17 +47,17 @@ public class PluginModuleCompilationTest : BaseCompilerTestCase() {
     super.setUpJdk()
     runWriteAction {
       val table = ProjectJdkTable.getInstance()
-      pluginSdk = table.createSdk("IDEA plugin SDK", SdkType.findInstance(javaClass<IdeaJdk>()))
-      val modificator = pluginSdk!!.getSdkModificator()
-      modificator.setSdkAdditionalData(Sandbox(getSandboxPath(), getTestProjectJdk(), pluginSdk))
-      val rootPath = FileUtil.toSystemIndependentName(PathManager.getJarPathForClass(javaClass<FileUtilRt>()))
+      pluginSdk = table.createSdk("IDEA plugin SDK", SdkType.findInstance(IdeaJdk::class.java))
+      val modificator = pluginSdk!!.sdkModificator
+      modificator.sdkAdditionalData = Sandbox(getSandboxPath(), testProjectJdk, pluginSdk)
+      val rootPath = FileUtil.toSystemIndependentName(PathManager.getJarPathForClass(FileUtilRt::class.java)!!)
       modificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath), OrderRootType.CLASSES)
       modificator.commitChanges()
       table.addJdk(pluginSdk)
     }
   }
 
-  private fun getSandboxPath() = "${getProjectBasePath()}/sandbox"
+  private fun getSandboxPath() = "$projectBasePath/sandbox"
 
   override fun tearDown() {
     try {
@@ -89,7 +89,7 @@ public class PluginModuleCompilationTest : BaseCompilerTestCase() {
   public fun testRebuildSimpleProject() {
     setupSimplePluginProject()
     val log = rebuild()
-    assertThat(log.getWarnings()).`as`("Rebuild finished with warnings: ${Arrays.toString(log.getWarnings())}").isEmpty()
+    assertThat(log.warnings).`as`("Rebuild finished with warnings: ${Arrays.toString(log.warnings)}").isEmpty()
   }
 
   public fun testPrepareSimpleProjectForDeployment() {
@@ -97,7 +97,7 @@ public class PluginModuleCompilationTest : BaseCompilerTestCase() {
     rebuild()
     prepareForDeployment(module)
 
-    val outputFile = File("${getProjectBasePath()}/pluginProject.jar")
+    val outputFile = File("$projectBasePath/pluginProject.jar")
     assertThat(outputFile).isFile()
     fs()
       .archive("pluginProject.jar")
@@ -111,7 +111,7 @@ public class PluginModuleCompilationTest : BaseCompilerTestCase() {
     rebuild()
     prepareForDeployment(module)
 
-    val outputFile = File("${getProjectBasePath()}/pluginProject.zip")
+    val outputFile = File("$projectBasePath/pluginProject.zip")
     assertThat(outputFile).isFile()
     fs()
       .archive("pluginProject.zip")
@@ -136,15 +136,15 @@ public class PluginModuleCompilationTest : BaseCompilerTestCase() {
 
   private fun copyAndCreateModule(relativePath: String): Module {
     copyToProject(relativePath)
-    val module = loadModule("${getProjectBasePath()}/pluginProject.iml")
+    val module = loadModule("$projectBasePath/pluginProject.iml")
     assertThat(ModuleType.get(module)).isEqualTo(PluginModuleType.getInstance())
     return module
   }
 
   private fun setupPluginProjectWithJpsModule(): Module {
     val module = copyAndCreateModule("plugins/devkit/testData/build/withJpsModule")
-    val jpsModule = loadModule("${getProjectBasePath()}/jps-plugin/jps-plugin.iml")
-    ModuleRootModificationUtil.setModuleSdk(jpsModule, getTestProjectJdk())
+    val jpsModule = loadModule("$projectBasePath/jps-plugin/jps-plugin.iml")
+    ModuleRootModificationUtil.setModuleSdk(jpsModule, testProjectJdk)
     return module
   }
 }

@@ -141,7 +141,7 @@ class ApplicationStoreTest {
     override fun getState() = state.serialize()
 
     override fun loadState(state: Element) {
-      this.state = XmlSerializer.deserialize(state, javaClass<State>())!!
+      this.state = XmlSerializer.deserialize(state, State::class.java)!!
     }
   }
 
