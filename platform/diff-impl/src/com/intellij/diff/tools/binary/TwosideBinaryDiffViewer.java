@@ -77,7 +77,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
       final VirtualFile file1 = ((FileContent)contents.get(0)).getFile();
       final VirtualFile file2 = ((FileContent)contents.get(1)).getFile();
       if (!file1.isValid() || !file2.isValid()) {
-        return applyNotification(DiffNotifications.ERROR);
+        return applyNotification(DiffNotifications.createError());
       }
 
       final boolean equal = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
@@ -98,14 +98,14 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
         }
       });
 
-      return applyNotification(equal ? DiffNotifications.EQUAL_CONTENTS : null);
+      return applyNotification(equal ? DiffNotifications.createEqualContents(): null);
     }
     catch (ProcessCanceledException e) {
       throw e;
     }
     catch (Throwable e) {
       LOG.error(e);
-      return applyNotification(DiffNotifications.ERROR);
+      return applyNotification(DiffNotifications.createError());
     }
   }
 

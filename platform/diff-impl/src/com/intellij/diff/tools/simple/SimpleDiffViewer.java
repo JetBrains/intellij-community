@@ -216,14 +216,14 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       return apply(new CompareData(lineFragments, isEqualContents));
     }
     catch (DiffTooBigException e) {
-      return applyNotification(DiffNotifications.DIFF_TOO_BIG);
+      return applyNotification(DiffNotifications.createDiffTooBig());
     }
     catch (ProcessCanceledException e) {
       throw e;
     }
     catch (Throwable e) {
       LOG.error(e);
-      return applyNotification(DiffNotifications.ERROR);
+      return applyNotification(DiffNotifications.createError());
     }
   }
 
@@ -235,7 +235,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
         clearDiffPresentation();
 
-        if (data.isEqualContent()) myPanel.addNotification(DiffNotifications.EQUAL_CONTENTS);
+        if (data.isEqualContent()) myPanel.addNotification(DiffNotifications.createEqualContents());
 
         if (data.getFragments() != null) {
           for (LineFragment fragment : data.getFragments()) {

@@ -383,7 +383,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
 
         clearDiffPresentation();
-        if (isEqual) myPanel.addNotification(DiffNotifications.EQUAL_CONTENTS);
+        if (isEqual) myPanel.addNotification(DiffNotifications.createEqualContents());
 
         TIntFunction separatorLines = myFoldingModel.getLineNumberConvertor();
         myEditor.getGutterComponentEx().setLineNumberConvertor(mergeConverters(data.getLineConvertor1(), separatorLines),
