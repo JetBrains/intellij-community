@@ -124,7 +124,7 @@ class BuiltInWebServer : HttpRequestHandler() {
     }
   }
 
-  override fun isSupported(request: FullHttpRequest) = super.isSupported(request) || request.method() === HttpMethod.POST
+  override fun isSupported(request: FullHttpRequest) = super.isSupported(request) || request.method() == HttpMethod.POST
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
     var host = request.headers().getAsString(HttpHeaderNames.HOST)
@@ -156,12 +156,12 @@ class BuiltInWebServer : HttpRequestHandler() {
   }
 }
 
-public fun compareNameAndProjectBasePath(projectName: String, project: Project): Boolean {
+fun compareNameAndProjectBasePath(projectName: String, project: Project): Boolean {
   val basePath = project.basePath
   return basePath != null && basePath.length() > projectName.length() && basePath.endsWith(projectName) && basePath.charAt(basePath.length() - projectName.length() - 1) == '/'
 }
 
-public fun findIndexFile(basedir: VirtualFile): VirtualFile? {
+fun findIndexFile(basedir: VirtualFile): VirtualFile? {
   val children = basedir.children
   if (children == null || children.isEmpty()) {
     return null
@@ -189,7 +189,7 @@ public fun findIndexFile(basedir: VirtualFile): VirtualFile? {
   return null
 }
 
-public fun isOwnHostName(host: String): Boolean {
+fun isOwnHostName(host: String): Boolean {
   if (NetUtils.isLocalhost(host)) {
     return true
   }
@@ -222,7 +222,7 @@ private class StaticFileHandler : WebServerFileHandler() {
         return true
       }
 
-      val ioFile = VfsUtilCore.virtualToIoFile(file)
+      val ioFile = File(file.path)
       if (hasAccess(ioFile)) {
         FileResponses.sendFile(request, channel, ioFile)
       }
