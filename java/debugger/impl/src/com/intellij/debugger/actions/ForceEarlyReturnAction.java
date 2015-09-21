@@ -77,7 +77,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
         }
 
         if ("void".equals(method.returnTypeName())) {
-          forceEarlyReturn(thread.getVirtualMachine().mirrorOf(), thread, debugProcess, null);
+          forceEarlyReturn(thread.getVirtualMachine().mirrorOfVoid(), thread, debugProcess, null);
         }
         else {
           //noinspection SSBasedInspection
