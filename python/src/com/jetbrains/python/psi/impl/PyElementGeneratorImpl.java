@@ -329,6 +329,19 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     return createParameter(name, null, null, LanguageLevel.getDefault());
   }
 
+  @NotNull
+  @Override
+  public PyParameterList createParameterList(@NotNull LanguageLevel languageLevel, @NotNull String text) {
+    return createFromText(languageLevel, PyParameterList.class, "def f" + text + ": pass", new int[]{0, 3});
+  }
+
+  @NotNull
+  @Override
+  public PyArgumentList createArgumentList(@NotNull LanguageLevel languageLevel, @NotNull String text) {
+    return createFromText(languageLevel, PyArgumentList.class, "f" + text, new int[]{0, 0, 1});
+  }
+
+
   public PyNamedParameter createParameter(@NotNull String name, @Nullable String defaultValue, @Nullable String annotation,
                                           @NotNull LanguageLevel languageLevel) {
     String parameterText = name;
