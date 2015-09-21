@@ -65,6 +65,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     return (ThreadReference)getObjectReference();
   }
 
+  @NotNull
   @Override
   public VirtualMachineProxyImpl getVirtualMachine() {
     DebuggerManagerThreadImpl.assertIsManagerThread();

@@ -50,7 +50,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   private ThreeState myIsObsolete = ThreeState.UNSURE;
   private Map<LocalVariable, Value> myAllValues;
 
-  public StackFrameProxyImpl(ThreadReferenceProxyImpl threadProxy, @NotNull StackFrame frame, int fromBottomIndex /* 1-based */) {
+  public StackFrameProxyImpl(@NotNull ThreadReferenceProxyImpl threadProxy, @NotNull StackFrame frame, int fromBottomIndex /* 1-based */) {
     super(threadProxy.getVirtualMachine());
     myThreadProxy = threadProxy;
     myFrameFromBottomIndex = fromBottomIndex;
@@ -172,6 +172,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
 //    return false;
 //  }
 
+  @NotNull
   @Override
   public VirtualMachineProxyImpl getVirtualMachine() {
     return (VirtualMachineProxyImpl) myTimer;

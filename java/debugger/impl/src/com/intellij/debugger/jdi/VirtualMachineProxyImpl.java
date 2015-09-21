@@ -87,6 +87,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
   }
 
+  @NotNull
   public VirtualMachine getVirtualMachine() {
     return myVirtualMachine;
   }
