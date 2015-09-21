@@ -872,7 +872,7 @@ public class XmlSerializerTest {
       return "foo"
     }
 
-    public fun setFoo(value: String) {
+    public fun setFoo(@Suppress("UNUSED_PARAMETER") value: String) {
     }
   }
 
@@ -1011,11 +1011,11 @@ public class XmlSerializerTest {
   }
 }
 
-public fun <T : Any> T.serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)
+fun <T : Any> T.serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)
 
-public inline fun <reified T: Any> Element.deserialize(): T = XmlSerializer.deserialize(this, T::class.java)!!
+inline fun <reified T: Any> Element.deserialize(): T = XmlSerializer.deserialize(this, T::class.java)!!
 
-public fun Element.toByteArray(): ByteArray {
+fun Element.toByteArray(): ByteArray {
   val out = BufferExposingByteArrayOutputStream(512)
   JDOMUtil.writeParent(this, out, "\n")
   return out.toByteArray()
