@@ -110,6 +110,10 @@
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="before" relative-to-action="RunToCursor"/>
     </action>
 
+    <action id="Debugger.ForceEarlyReturn" class="com.intellij.debugger.actions.ForceEarlyReturnAction">
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
+    </action>
+
     <action id="Debugger.ShowLibraryFrames" class="com.intellij.debugger.actions.ShowLibraryFramesAction">
       <add-to-group group-id="XDebugger.Frames.TopToolbar"/>
     </action>

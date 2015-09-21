@@ -309,6 +309,17 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     }
   }
 
+  public void forceEarlyReturn(Value value) throws ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    try {
+      getThreadReference().forceEarlyReturn(value);
+    }
+    finally {
+      clearCaches();
+      getVirtualMachineProxy().clearCaches();
+    }
+  }
+
   public boolean isSuspended() throws ObjectCollectedException {
     try {
       DebuggerManagerThreadImpl.assertIsManagerThread();

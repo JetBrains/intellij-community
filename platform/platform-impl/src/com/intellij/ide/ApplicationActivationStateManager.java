@@ -99,7 +99,7 @@ public class ApplicationActivationStateManager {
       // windowEvent could just be showing a popup or another transient window.
       // So let's postpone the application deactivation for a while
       state = State.DEACTIVATING;
-      LOG.info("SET APP DEACTIVATING");
+      LOG.debug("The app is in the deactivating state");
 
       Timer timer = new Timer(Registry.intValue("application.deactivation.timeout"), new ActionListener() {
         public void actionPerformed(ActionEvent evt) {
@@ -107,7 +107,7 @@ public class ApplicationActivationStateManager {
           if (state.equals(State.DEACTIVATING)) {
 
             state = State.DEACTIVATED;
-            LOG.info("SET APP DEACTIVATED");
+            LOG.debug("The app is in the deactivated state");
 
             IdeFrame ideFrame = getIdeFrameFromWindow(windowEvent.getWindow());
             if (ideFrame != null) {
@@ -129,7 +129,7 @@ public class ApplicationActivationStateManager {
     IdeFrame ideFrame = getIdeFrameFromWindow(window);
 
     state = State.ACTIVE;
-    LOG.info("SET APP ACTIVE");
+    LOG.debug("The app is in the active state");
 
     if (ideFrame != null) {
       application.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationActivated(ideFrame);
