@@ -52,7 +52,7 @@ import java.io.IOException
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 
-private val LOG = Logger.getInstance(ComponentStoreImpl::class.java)
+internal val LOG = Logger.getInstance(ComponentStoreImpl::class.java)
 
 /**
  * <b>Note:</b> this class is used in upsource, please notify upsource team in case you change its API.
@@ -79,6 +79,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       settingsSavingComponents.add(component)
     }
 
+    @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
     if (!(component is JDOMExternalizable || component is PersistentStateComponent<*>)) {
       return
     }
@@ -88,10 +89,11 @@ abstract class ComponentStoreImpl : IComponentStore {
       componentNameIfStateExists = if (component is PersistentStateComponent<*>) {
         val stateSpec = StoreUtil.getStateSpec(component)
         doAddComponent(stateSpec.name, component)
-        @suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST")
         initPersistentComponent(stateSpec, component as PersistentStateComponent<Any>, null, false)
       }
       else {
+        @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
         initJdomExternalizable(component as JDOMExternalizable)
       }
     }
@@ -142,7 +144,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 
-  override TestOnly fun saveApplicationComponent(component: Any) {
+  override @TestOnly fun saveApplicationComponent(component: Any) {
     val externalizationSession = storageManager.startExternalization() ?: return
 
     commitComponent(externalizationSession, component, null)
@@ -179,6 +181,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   private fun commitComponent(session: ExternalizationSession, component: Any, componentName: String?) {
+    @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
     if (component is PersistentStateComponent<*>) {
       val state = component.getState()
       if (state != null) {
@@ -199,7 +202,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return errors
   }
 
-  private fun initJdomExternalizable(component: JDOMExternalizable): String? {
+  private fun initJdomExternalizable(@Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE") component: JDOMExternalizable): String? {
     val componentName = ComponentManagerImpl.getComponentName(component)
     doAddComponent(componentName, component)
 
@@ -374,7 +377,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   override final fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
     val stateSpec = StoreUtil.getStateSpecOrError(componentClass)
-    @suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST")
     val component = components.get(stateSpec.name) as PersistentStateComponent<Any>?
     if (component != null) {
       initPersistentComponent(stateSpec, component, emptySet(), true)
@@ -382,7 +385,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   private fun reloadState(componentName: String, changedStorages: Set<StateStorage>): Boolean {
-    @suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST")
     val component = components.get(componentName) as PersistentStateComponent<Any>?
     if (component == null) {
       return false
