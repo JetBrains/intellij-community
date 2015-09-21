@@ -246,8 +246,9 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   @Nullable
   public RunConfiguration createLightConfiguration(@NotNull final ConfigurationContext context) {
     RunConfiguration configuration = myConfigurationFactory.createTemplateConfiguration(context.getProject());
+    final Ref<PsiElement> ref = new Ref<PsiElement>(context.getPsiLocation());
     try {
-      if (!setupConfigurationFromContext((T)configuration, context, new Ref<PsiElement>(context.getPsiLocation()))) {
+      if (!setupConfigurationFromContext((T)configuration, context, ref)) {
         return null;
       }
     }
