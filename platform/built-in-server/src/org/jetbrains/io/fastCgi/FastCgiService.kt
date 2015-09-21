@@ -149,10 +149,10 @@ public abstract class FastCgiService(project: Project) : SingleConnectionNetServ
               fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel!!)
             }
           })
-          .rejected(Consumer {
+          .rejected {
             Promise.logError(LOG, it)
             handleError(fastCgiRequest, notEmptyContent)
-          })
+          }
       }
     }
     catch (e: Throwable) {
