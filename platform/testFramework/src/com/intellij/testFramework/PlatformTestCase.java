@@ -431,7 +431,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     Project project = myProject;
     if (project != null) {
       try {
-        LightPlatformTestCase.doTearDown(getProject(), ourApplication, false);
+        LightPlatformTestCase.doTearDown(project, ourApplication, false);
         disposeProject(result);
       }
       catch (Throwable e) {
