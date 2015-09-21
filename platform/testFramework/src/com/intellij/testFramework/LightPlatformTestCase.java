@@ -95,10 +95,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import com.intellij.util.GCUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -446,30 +443,45 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   protected void tearDown() throws Exception {
     Project project = getProject();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    List<Throwable> errors = checkForSettingsDamage();
+    List<Throwable> errors = new SmartList<Throwable>();
     try {
-      doTearDown(project, ourApplication, true);
+      checkForSettingsDamage(errors);
+      doTearDown(project, ourApplication, true, errors);
+    }
+    catch (Throwable e) {
+      errors.add(e);
+    }
+
+    try {
+      //noinspection SuperTearDownInFinally
+      super.tearDown();
+    }
+    catch (Throwable e) {
+      errors.add(e);
+    }
+
+    try {
+      myThreadTracker.checkLeak();
+      InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
+      ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersAreDisposed();
+    }
+    catch (Throwable e) {
+      errors.add(e);
     }
     finally {
-      try {
-        super.tearDown();
-      }
-      finally {
-        myThreadTracker.checkLeak();
-        InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
-        ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersAreDisposed();
-        CompoundRuntimeException.doThrow(errors);
-      }
+      CompoundRuntimeException.throwIfNotEmpty(errors);
     }
   }
 
-  public static void doTearDown(@NotNull final Project project, @NotNull IdeaTestApplication application, boolean checkForEditors) throws Exception {
+  public static void doTearDown(@NotNull final Project project, @NotNull IdeaTestApplication application, boolean checkForEditors, @NotNull List<Throwable> exceptions) throws Exception {
     PsiDocumentManagerImpl documentManager;
     try {
       ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
       DocumentCommitThread.getInstance().clearQueue();
       CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-      checkAllTimersAreDisposed();
+
+      checkAllTimersAreDisposed(exceptions);
+
       UsefulTestCase.doPostponedFormatting(project);
 
       LookupManager lookupManager = LookupManager.getInstance(project);
@@ -478,9 +490,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
       ((StartupManagerImpl)StartupManager.getInstance(project)).prepareForNextTest();
       InspectionProfileManager.getInstance().deleteProfile(PROFILE);
-      assertNotNull("Application components damaged", ProjectManager.getInstance());
+      if (ProjectManager.getInstance() == null) {
+        exceptions.add(new AssertionError("Application components damaged"));
+      }
 
-      new WriteCommandAction.Simple(project) {
+      ContainerUtil.addIfNotNull(exceptions, new WriteCommandAction.Simple(project) {
         @Override
         protected void run() throws Throwable {
           if (ourSourceRoot != null) {
@@ -506,7 +520,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
             ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
           }
         }
-      }.execute().throwException();
+      }.execute().getThrowable());
 
       assertFalse(PsiManager.getInstance(project).isDisposed());
       if (!ourAssertionsInTestDetected) {
@@ -518,7 +532,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       ((HintManagerImpl)HintManager.getInstance()).cleanup();
       DocumentCommitThread.getInstance().clearQueue();
 
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      EdtTestUtil.runInEdtAndWait(new Runnable() {
         @Override
         public void run() {
           ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
@@ -532,16 +546,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
     finally {
       ProjectManagerEx.getInstanceEx().closeTestProject(project);
+      application.setDataProvider(null);
+      ourTestCase = null;
+      ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
+      CompletionProgressIndicator.cleanupForNextTest();
     }
 
-    application.setDataProvider(null);
-    ourTestCase = null;
-    ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
-
-    CompletionProgressIndicator.cleanupForNextTest();
-
     if (checkForEditors) {
-      checkEditorsReleased();
+      checkEditorsReleased(exceptions);
     }
     documentManager.clearUncommittedDocuments();
     
@@ -566,30 +578,30 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return documentManager;
   }
 
-  public static void checkEditorsReleased() throws Exception {
-    CompositeException result = new CompositeException();
-    final Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
-    if (allEditors.length > 0) {
-      for (Editor editor : allEditors) {
-        try {
-          EditorFactoryImpl.throwNotReleasedError(editor);
-        }
-        catch (Throwable e) {
-          result.add(e);
-        }
-        finally {
-          EditorFactory.getInstance().releaseEditor(editor);
-        }
-      }
+  public static void checkEditorsReleased(@NotNull List<Throwable> exceptions) {
+    Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
+    if (allEditors.length == 0) {
+      return;
+    }
+
+    for (Editor editor : allEditors) {
       try {
-        ((EditorImpl)allEditors[0]).throwDisposalError("Unreleased editors: " + allEditors.length);
+        EditorFactoryImpl.throwNotReleasedError(editor);
       }
       catch (Throwable e) {
-        e.printStackTrace();
-        result.add(e);
+        exceptions.add(e);
+      }
+      finally {
+        EditorFactory.getInstance().releaseEditor(editor);
       }
     }
-    if (!result.isEmpty()) throw result;
+
+    try {
+      ((EditorImpl)allEditors[0]).throwDisposalError("Unreleased editors: " + allEditors.length);
+    }
+    catch (Throwable e) {
+      exceptions.add(e);
+    }
   }
 
   @Override

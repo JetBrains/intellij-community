@@ -79,7 +79,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
         token.finish();
       }
 
-      CompoundRuntimeException.doThrow(errors);
+      CompoundRuntimeException.throwIfNotEmpty(errors);
     }
     finally {
       myModulesToDispose.clear();

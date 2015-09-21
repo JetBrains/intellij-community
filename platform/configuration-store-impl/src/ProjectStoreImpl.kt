@@ -235,7 +235,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
     }
 
     if (errors != null) {
-      CompoundRuntimeException.doThrow(errors)
+      CompoundRuntimeException.throwIfNotEmpty(errors)
     }
 
     if (!readonlyFiles.isEmpty()) {

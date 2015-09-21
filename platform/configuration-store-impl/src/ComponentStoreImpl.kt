@@ -139,7 +139,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     if (externalizationSession != null) {
       errors = doSave(externalizationSession.createSaveSessions(), readonlyFiles, errors)
     }
-    CompoundRuntimeException.doThrow(errors)
+    CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 
   override TestOnly fun saveApplicationComponent(component: Any) {
@@ -166,7 +166,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val token = WriteAction.start()
     try {
       VfsRootAccess.allowRootAccess(file.getAbsolutePath())
-      CompoundRuntimeException.doThrow(doSave(sessions))
+      CompoundRuntimeException.throwIfNotEmpty(doSave(sessions))
     }
     finally {
       try {

@@ -69,8 +69,11 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.IndexedRootsProvider;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -91,6 +94,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -427,23 +431,24 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @Override
   protected void tearDown() throws Exception {
-    CompositeException result = new CompositeException();
+    List<Throwable> exceptions = new SmartList<Throwable>();
     Project project = myProject;
     if (project != null) {
       try {
-        LightPlatformTestCase.doTearDown(project, ourApplication, false);
-        disposeProject(result);
+        LightPlatformTestCase.doTearDown(project, ourApplication, false, exceptions);
       }
       catch (Throwable e) {
-        result.add(e);
+        exceptions.add(e);
       }
+
+      disposeProject(exceptions);
     }
 
     try {
-      result.addAll(checkForSettingsDamage());
+      checkForSettingsDamage(exceptions);
     }
     catch (Throwable e) {
-      result.add(e);
+      exceptions.add(e);
     }
     try {
       if (project != null) {
@@ -451,7 +456,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
         }
         catch (AssertionError e) {
-          result.add(e);
+          exceptions.add(e);
         }
       }
       try {
@@ -461,12 +466,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
       }
       catch (Throwable e) {
-        result.add(e);
+        exceptions.add(e);
       }
 
       if (!myAssertionsInTestDetected) {
         if (IdeaLogger.ourErrorsOccurred != null) {
-          result.add(IdeaLogger.ourErrorsOccurred);
+          exceptions.add(IdeaLogger.ourErrorsOccurred);
         }
       }
 
@@ -474,7 +479,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         super.tearDown();
       }
       catch (Throwable e) {
-        result.add(e);
+        exceptions.add(e);
       }
 
       try {
@@ -483,7 +488,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         }
       }
       catch (AssertionError error) {
-        result.add(error);
+        exceptions.add(error);
       }
       try {
         if (myThreadTracker != null) {
@@ -491,13 +496,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         }
       }
       catch (AssertionError error) {
-        result.add(error);
+        exceptions.add(error);
       }
       try {
-        LightPlatformTestCase.checkEditorsReleased();
+        LightPlatformTestCase.checkEditorsReleased(exceptions);
       }
       catch (Throwable error) {
-        result.add(error);
+        exceptions.add(error);
       }
     }
     finally {
@@ -509,10 +514,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       myThreadTracker = null;
       ourTestCase = null;
     }
-    if (!result.isEmpty()) throw result;
+    CompoundRuntimeException.throwIfNotEmpty(exceptions);
   }
 
-  private void disposeProject(@NotNull CompositeException result) /* throws nothing */ {
+  private void disposeProject(@NotNull List<Throwable> exceptions) {
     try {
       DocumentCommitThread.getInstance().clearQueue();
       // sometimes SwingUtilities maybe confused about EDT at this point
@@ -521,7 +526,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }
     catch (Throwable e) {
-      result.add(e);
+      exceptions.add(e);
     }
 
     Project project = myProject;
@@ -529,35 +534,33 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       return;
     }
 
-    closeAndDisposeProjectAndCheckThatNoOpenProjects(project, result);
+    closeAndDisposeProjectAndCheckThatNoOpenProjects(project, exceptions);
     myProject = null;
   }
 
-  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) throws CompositeException {
-    CompositeException compositeException = new CompositeException();
-    closeAndDisposeProjectAndCheckThatNoOpenProjects(projectToClose, compositeException);
-    if (!compositeException.isEmpty()) {
-      throw compositeException;
-    }
+  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) {
+    List<Throwable> exceptions = new SmartList<Throwable>();
+    closeAndDisposeProjectAndCheckThatNoOpenProjects(projectToClose, exceptions);
+    CompoundRuntimeException.throwIfNotEmpty(exceptions);
   }
 
-  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose, @NotNull CompositeException result) {
+  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose, @NotNull List<Throwable> exceptions) {
     try {
       ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
       if (projectManager instanceof ProjectManagerImpl) {
         for (Project project : projectManager.closeTestProject(projectToClose)) {
-          result.add(new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project)));
+          exceptions.add(new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project)));
           try {
             ((ProjectManagerImpl)projectManager).closeProject(project, false, true, false);
           }
           catch (Throwable e) {
-            result.add(e);
+            exceptions.add(e);
           }
         }
       }
     }
     catch (Throwable e) {
-      result.add(e);
+      exceptions.add(e);
     }
     finally {
       AccessToken token = WriteAction.start();
@@ -565,7 +568,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         Disposer.dispose(projectToClose);
       }
       catch (Throwable e) {
-        result.add(e);
+        exceptions.add(e);
       }
       finally {
         token.finish();
@@ -646,10 +649,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   private void runBareImpl() throws Throwable {
-    final Throwable[] throwables = new Throwable[1];
-    Runnable runnable = new Runnable() {
+    ThrowableRunnable<Throwable> runnable = new ThrowableRunnable<Throwable>() {
       @Override
-      public void run() {
+      public void run() throws Throwable {
         ourTestThread = Thread.currentThread();
         ourTestTime = getTimeRequired();
         try {
@@ -657,31 +659,37 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
             setUp();
           }
           catch (Throwable e) {
-            CompositeException result = new CompositeException(e);
             try {
               tearDown();
             }
-            catch (Throwable th) {
-              result.add(th);
+            catch (Throwable ignored) {
             }
-            throw result;
+
+            throw e;
           }
+
+          Throwable exception = null;
           try {
             myAssertionsInTestDetected = true;
             runTest();
             myAssertionsInTestDetected = false;
           }
           catch (Throwable e) {
-            throwables[0] = e;
-            throw e;
+            exception = e;
           }
           finally {
-            tearDown();
+            try {
+              tearDown();
+            }
+            catch (Throwable e) {
+              if (exception == null) {
+                exception = e;
+              }
+            }
           }
-        }
-        catch (Throwable throwable) {
-          if (throwables[0] == null) {  // report tearDown() problems if only no exceptions thrown from runTest()
-            throwables[0] = throwable;
+
+          if (exception != null) {
+            throw exception;
           }
         }
         finally {
@@ -694,10 +702,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     if (IdeaLogger.ourErrorsOccurred != null) {
       throw IdeaLogger.ourErrorsOccurred;
-    }
-
-    if (throwables[0] != null) {
-      throw throwables[0];
     }
 
     // just to make sure all deferred Runnable's to finish
@@ -730,9 +734,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return true;
   }
 
-  protected void runBareRunnable(Runnable runnable) throws Throwable {
+  protected void runBareRunnable(ThrowableRunnable<Throwable> runnable) throws Throwable {
     if (isRunInEdt()) {
-      SwingUtilities.invokeAndWait(runnable);
+      EdtTestUtil.runInEdtAndWait(runnable);
     }
     else {
       runnable.run();

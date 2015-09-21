@@ -40,7 +40,6 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
-import com.intellij.util.xmlb.annotations.Attribute
 
 val FILE_SPEC = "REMOTE"
 
@@ -390,7 +389,7 @@ public open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme>() {
 fun SchemeManagerImpl<*, *>.save() {
   val errors = SmartList<Throwable>()
   save(errors)
-  CompoundRuntimeException.doThrow(errors)
+  CompoundRuntimeException.throwIfNotEmpty(errors)
 }
 
 public fun <T : Any> T._serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)

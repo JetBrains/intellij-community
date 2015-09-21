@@ -83,7 +83,7 @@ public abstract class SchemeManagerFactoryBase : SchemesManagerFactory(), Settin
       }
     }
 
-    CompoundRuntimeException.doThrow(errors)
+    CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 }
 

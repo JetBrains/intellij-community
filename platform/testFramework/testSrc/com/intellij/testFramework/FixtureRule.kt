@@ -168,7 +168,7 @@ public class RuleChain(vararg val rules: TestRule) : TestRule {
       }
     }
 
-    CompoundRuntimeException.doThrow(errors)
+    CompoundRuntimeException.throwIfNotEmpty(errors)
     return statement
   }
 }
@@ -259,7 +259,7 @@ public class DisposeModulesRule(private val projectRule: ProjectRule) : External
           }
         }
       }
-      CompoundRuntimeException.doThrow(errors)
+      CompoundRuntimeException.throwIfNotEmpty(errors)
     }
   }
 }

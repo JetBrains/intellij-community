@@ -48,7 +48,9 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.util.PathUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,12 +62,14 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
  * Creates new project for each test.
  * @author mike
  */
+@SuppressWarnings("TestOnlyProblems")
 class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixture {
   private Project myProject;
   private final Set<File> myFilesToDelete = new HashSet<File>();
@@ -99,43 +103,48 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   @Override
   public void tearDown() throws Exception {
     final Project project = getProject();
+    final List<Throwable> exceptions = new SmartList<Throwable>();
     try {
-      LightPlatformTestCase.doTearDown(project, myApplication, false);
+      LightPlatformTestCase.doTearDown(project, myApplication, false, exceptions);
 
       for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
         moduleFixtureBuilder.getFixture().tearDown();
       }
 
-      final CompositeException compositeException = new CompositeException();
       EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
         @Override
         public void run() throws Throwable {
-          PlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(project, compositeException);
+          PlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(project, exceptions);
         }
       });
       myProject = null;
 
       for (File fileToDelete : myFilesToDelete) {
         if (!FileUtil.delete(fileToDelete)) {
-          compositeException.add(new IOException("Can't delete " + fileToDelete));
+          exceptions.add(new IOException("Can't delete " + fileToDelete));
         }
       }
+    }
+    catch (Throwable e) {
+      exceptions.add(e);
+    }
 
-      if (!compositeException.isEmpty()) {
-        throw compositeException;
-      }
+    try {
+      super.tearDown();
+    }
+    catch (Throwable e) {
+      exceptions.add(e);
+    }
+
+    try {
+      myEditorListenerTracker.checkListenersLeak();
+      myThreadTracker.checkLeak();
+      LightPlatformTestCase.checkEditorsReleased(exceptions);
+      PlatformTestCase.cleanupApplicationCaches(project);
+      InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
     }
     finally {
-      try {
-        super.tearDown();
-      }
-      finally {
-        myEditorListenerTracker.checkListenersLeak();
-        myThreadTracker.checkLeak();
-        LightPlatformTestCase.checkEditorsReleased();
-        PlatformTestCase.cleanupApplicationCaches(project);
-        InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
-      }
+      CompoundRuntimeException.throwIfNotEmpty(exceptions);
     }
   }
 
