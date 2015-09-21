@@ -433,5 +433,11 @@ public abstract class PyTestCase extends UsefulTestCase {
   protected CodeStyleSettings getCodeStyleSettings() {
     return CodeStyleSettingsManager.getSettings(myFixture.getProject());
   }
+
+  @NotNull
+  protected CommonCodeStyleSettings.IndentOptions getIndentOptions() {
+    //noinspection ConstantConditions
+    return getCommonCodeStyleSettings().getIndentOptions();
+  }
 }
 

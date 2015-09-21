@@ -253,7 +253,7 @@ public class PyEditingTest extends PyTestCase {
 
   // PY-16765
   public void testSectionIndentInsideGoogleDocStringCustomIndent() {
-    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    getIndentOptions().INDENT_SIZE = 2;
     doDocStringTypingTest("\nparam", DocStringFormat.GOOGLE);
   }
 
