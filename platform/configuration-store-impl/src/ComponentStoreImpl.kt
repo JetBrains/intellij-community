@@ -52,7 +52,7 @@ import java.io.IOException
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 
-internal val LOG = Logger.getInstance(ComponentStoreImpl::class.java)
+private val LOG = Logger.getInstance(ComponentStoreImpl::class.java)
 
 /**
  * <b>Note:</b> this class is used in upsource, please notify upsource team in case you change its API.
