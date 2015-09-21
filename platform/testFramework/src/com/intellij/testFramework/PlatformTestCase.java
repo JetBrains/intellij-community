@@ -264,18 +264,25 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @NotNull
   public static Project createProject(@NotNull String path, String creationPlace) {
+    return createProject(path, creationPlace, true);
+  }
+
+  @NotNull
+  public static Project createProject(@NotNull String path, String creationPlace, boolean clearVfs) {
     String fileName = PathUtilRt.getFileName(path);
-    String projectName = FileUtilRt.getNameWithoutExtension(fileName);
-    VirtualFile projectBase = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(fileName.endsWith(
-      ProjectFileType.DOT_DEFAULT_EXTENSION) ? PathUtilRt.getParentPath(path) : path));
-    if (projectBase != null) {
-      // must be leftovers from the previous test run
-      for (VirtualFile file : ((NewVirtualFile)projectBase).iterInDbChildren()) {
-        delete(file);
+    if (clearVfs) {
+      VirtualFile projectBase = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(fileName.endsWith(
+        ProjectFileType.DOT_DEFAULT_EXTENSION) ? PathUtilRt.getParentPath(path) : path));
+      if (projectBase != null) {
+        // must be leftovers from the previous test run
+        for (VirtualFile file : ((NewVirtualFile)projectBase).iterInDbChildren()) {
+          delete(file);
+        }
       }
     }
 
     try {
+      String projectName = FileUtilRt.getNameWithoutExtension(fileName);
       Project project = ProjectManagerEx.getInstanceEx().newProject(projectName, path, false, false);
       assert project != null;
 
