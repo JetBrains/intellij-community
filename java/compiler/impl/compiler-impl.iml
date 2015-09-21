@@ -28,6 +28,7 @@
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="java-analysis-impl" />
     <orderEntry type="module" module-name="built-in-server" />
+    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
   <component name="copyright">
     <Base>

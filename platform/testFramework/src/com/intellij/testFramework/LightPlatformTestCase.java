@@ -283,32 +283,24 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @Override
   protected void setUp() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
-      public void run() {
-        try {
-          LightPlatformTestCase.super.setUp();
-          initApplication();
-          ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
+      public void run() throws Exception {
+        LightPlatformTestCase.super.setUp();
+        initApplication();
+        ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
 
-          ourApplication.setDataProvider(LightPlatformTestCase.this);
-          LightProjectDescriptor descriptor = new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK());
-          doSetup(descriptor, configureLocalInspectionTools(), getTestRootDisposable());
-          InjectedLanguageManagerImpl.pushInjectors(getProject());
+        ourApplication.setDataProvider(LightPlatformTestCase.this);
+        LightProjectDescriptor descriptor = new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK());
+        doSetup(descriptor, configureLocalInspectionTools(), getTestRootDisposable());
+        InjectedLanguageManagerImpl.pushInjectors(getProject());
 
-          storeSettings();
+        storeSettings();
 
-          myThreadTracker = new ThreadTracker();
-          ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
-          VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-          filePointerManager.storePointers();
-        }
-        catch (RuntimeException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+        myThreadTracker = new ThreadTracker();
+        ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
+        VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
+        filePointerManager.storePointers();
       }
     });
   }

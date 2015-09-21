@@ -1004,7 +1004,7 @@ public class ControlFlowUtil {
         if (isLeaf(nextOffset)) {
           exitPoints[offset].add(offset);
         }
-        else {
+        else if (exitPoints[nextOffset] != null) {
           exitPoints[offset].addAll(exitPoints[nextOffset].toArray());
         }
       }

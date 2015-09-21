@@ -46,9 +46,9 @@ import kotlin.properties.Delegates
 
 val PLUGIN_NAME: String = "Settings Repository"
 
-val LOG: Logger = Logger.getInstance(IcsManager::class.java)
+internal val LOG: Logger = Logger.getInstance(IcsManager::class.java)
 
-val icsManager by Delegates.lazy {
+val icsManager by lazy(LazyThreadSafetyMode.NONE) {
   ApplicationLoadListener.EP_NAME.findExtension(IcsApplicationLoadListener::class.java).icsManager
 }
 
@@ -101,15 +101,15 @@ class IcsManager(dir: File) {
     }
   }, settings.commitDelay)
 
-  private volatile var autoCommitEnabled = true
+  private @Volatile var autoCommitEnabled = true
 
-  volatile var repositoryActive = false
+  @Volatile var repositoryActive = false
 
   val autoSyncManager = AutoSyncManager(this)
   private val syncManager = SyncManager(this, autoSyncManager)
 
   private fun scheduleCommit() {
-    if (autoCommitEnabled && !ApplicationManager.getApplication()!!.isUnitTestMode()) {
+    if (autoCommitEnabled && !ApplicationManager.getApplication()!!.isUnitTestMode) {
       commitAlarm.cancelAndRequest()
     }
   }
@@ -160,13 +160,13 @@ class IcsManager(dir: File) {
   fun beforeApplicationLoaded(application: Application) {
     repositoryActive = repositoryManager.isRepositoryExists()
 
-    (application.stateStore.getStateStorageManager() as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
+    (application.stateStore.stateStorageManager as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
 
     autoSyncManager.registerListeners(application)
 
-    application.getMessageBus().connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener.Adapter() {
+    application.messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener.Adapter() {
       override fun beforeProjectLoaded(project: Project) {
-        if (project.isDefault()) {
+        if (project.isDefault) {
           return
         }
 
@@ -223,7 +223,7 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
     private set
 
   override fun beforeApplicationLoaded(application: Application, configPath: String) {
-    if (application.isUnitTestMode()) {
+    if (application.isUnitTestMode) {
       return
     }
 
@@ -263,7 +263,7 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
         Pair("_unknown/\$APP_CONFIG$", "_unknown")
       ))) {
         // schedule push to avoid merge conflicts
-        application.invokeLater(Runnable { icsManager.autoSyncManager.autoSync(force = true) })
+        application.invokeLater({ icsManager.autoSyncManager.autoSync(force = true) })
       }
     }
 

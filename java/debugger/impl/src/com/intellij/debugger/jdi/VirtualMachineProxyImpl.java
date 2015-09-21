@@ -22,6 +22,7 @@ package com.intellij.debugger.jdi;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -276,6 +277,14 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   public EventRequestManager eventRequestManager() {
     return myVirtualMachine.eventRequestManager();
+  }
+
+  /**
+   * @deprecated use {@link #mirrorOfVoid()} instead
+   */
+  @Deprecated
+  public VoidValue mirrorOf() throws EvaluateException {
+    return mirrorOfVoid();
   }
 
   public VoidValue mirrorOfVoid() {

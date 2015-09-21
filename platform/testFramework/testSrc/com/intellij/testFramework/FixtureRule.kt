@@ -72,7 +72,7 @@ public class ProjectRule() : ExternalResource() {
       val buffer = ByteArrayOutputStream()
       java.lang.Throwable(projectPath).printStackTrace(PrintStream(buffer))
 
-      val project = PlatformTestCase.createProject(projectPath, "Light project: $buffer") as ProjectEx
+      val project = PlatformTestCase.createProject(projectPath, "Light project: $buffer", false) as ProjectEx
       Disposer.register(ApplicationManager.getApplication(), Disposable {
         try {
           disposeProject()
