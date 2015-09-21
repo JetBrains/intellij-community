@@ -35,7 +35,7 @@ public class MacIntelliJRadioButtonUI extends DarculaRadioButtonUI {
 
   @Override
   protected void paintIcon(JComponent c, Graphics2D g, Rectangle viewRect, Rectangle iconRect) {
-    Icon icon = MacIntelliJIconCache.getIcon("radio", ((AbstractButton)c).isSelected(), c.hasFocus(), !c.isEnabled());
+    Icon icon = MacIntelliJIconCache.getIcon("radio", ((AbstractButton)c).isSelected(), c.hasFocus(), c.isEnabled());
     icon.paintIcon(c, g, iconRect.x, iconRect.y);
   }
 
