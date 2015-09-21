@@ -33,7 +33,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PairFunction
 import com.intellij.util.PlatformUtils
 import com.intellij.util.Processor
 
@@ -159,7 +158,7 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       }
     }
 
-    private fun findInModuleLibraries(path: String, module: Module, resolver: PairFunction<String, VirtualFile, VirtualFile>): PathInfo? {
+    private fun findInModuleLibraries(path: String, module: Module, resolver: FileResolver): PathInfo? {
       val index = path.indexOf('/')
       if (index <= 0) {
         return null
@@ -170,7 +169,7 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       return result.get()
     }
 
-    private fun findInLibraries(project: Project, modules: Array<Module>, path: String, resolver: PairFunction<String, VirtualFile, VirtualFile>): PathInfo? {
+    private fun findInLibraries(project: Project, modules: Array<Module>, path: String, resolver: FileResolver): PathInfo? {
       val index = path.indexOf('/')
       if (index < 0) {
         return null
@@ -199,7 +198,7 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       return null
     }
 
-    private fun findInModuleLibraries(resolver: PairFunction<String, VirtualFile, VirtualFile>, libraryFileName: String, relativePath: String, result: Ref<PathInfo>, module: Module): Boolean {
+    private fun findInModuleLibraries(resolver: FileResolver, libraryFileName: String, relativePath: String, result: Ref<PathInfo>, module: Module): Boolean {
       ModuleRootManager.getInstance(module).orderEntries().forEachLibrary(object : Processor<Library> {
         override fun process(library: Library): Boolean {
           result.set(findInLibrary(libraryFileName, relativePath, library, resolver))
@@ -209,11 +208,11 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       return !result.isNull
     }
 
-    private fun findInLibrary(libraryFileName: String, relativePath: String, library: Library, resolver: PairFunction<String, VirtualFile, VirtualFile>): PathInfo? {
+    private fun findInLibrary(libraryFileName: String, relativePath: String, library: Library, resolver: FileResolver): PathInfo? {
       for (rootType in ORDER_ROOT_TYPES.value) {
         for (root in library.getFiles(rootType)) {
           if (StringUtil.equalsIgnoreCase(root.nameSequence, libraryFileName)) {
-            val file = resolver.`fun`(relativePath, root)
+            val file = resolver.resolve(relativePath, root)
             if (file != null) {
               return PathInfo(file, root, null, true)
             }
@@ -274,9 +273,9 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       return null
     }
 
-    private fun findByRelativePath(path: String, roots: Array<VirtualFile>, resolver: PairFunction<String, VirtualFile, VirtualFile>, moduleName: String?): PathInfo? {
+    private fun findByRelativePath(path: String, roots: Array<VirtualFile>, resolver: FileResolver, moduleName: String?): PathInfo? {
       for (root in roots) {
-        val file = resolver.`fun`(path, root)
+        val file = resolver.resolve(path, root)
         if (file != null) {
           return PathInfo(file, root, moduleName, false)
         }
@@ -284,7 +283,7 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       return null
     }
 
-    private fun findByRelativePath(project: Project, path: String, modules: Array<Module>, rootProvider: RootProvider, resolver: PairFunction<String, VirtualFile, VirtualFile>): PathInfo? {
+    private fun findByRelativePath(project: Project, path: String, modules: Array<Module>, rootProvider: RootProvider, resolver: FileResolver): PathInfo? {
       for (module in modules) {
         if (!module.isDisposed) {
           val moduleRootManager = ModuleRootManager.getInstance(module)

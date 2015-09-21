@@ -234,7 +234,7 @@ private class StaticFileHandler : WebServerFileHandler() {
       val response = FileResponses.prepareSend(request, channel, file.timeStamp, file.path) ?: return true
 
       val keepAlive = addKeepAliveIfNeed(response, request)
-      if (request.method() !== HttpMethod.HEAD) {
+      if (request.method() != HttpMethod.HEAD) {
         HttpUtil.setContentLength(response, file.length)
       }
 
