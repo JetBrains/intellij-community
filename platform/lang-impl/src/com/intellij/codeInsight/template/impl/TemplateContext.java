@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -27,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class TemplateContext {
@@ -103,16 +101,12 @@ public class TemplateContext {
   }
 
   // used during initialization => no sync
-  void readTemplateContext(Element element) throws InvalidDataException {
-    List options = element.getChildren("option");
-    for (Object e : options) {
-      if (e instanceof Element) {
-        Element option = (Element)e;
-        String name = option.getAttributeValue("name");
-        String value = option.getAttributeValue("value");
-        if (name != null && value != null) {
-          myContextStates.put(name, Boolean.parseBoolean(value));
-        }
+  void readTemplateContext(Element element) {
+    for (Element option : element.getChildren("option")) {
+      String name = option.getAttributeValue("name");
+      String value = option.getAttributeValue("value");
+      if (name != null && value != null) {
+        myContextStates.put(name, Boolean.parseBoolean(value));
       }
     }
   }

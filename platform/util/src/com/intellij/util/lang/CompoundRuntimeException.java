@@ -15,6 +15,9 @@
  */
 package com.intellij.util.lang;
 
+import com.intellij.util.Consumer;
+import com.intellij.util.EmptyConsumer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,31 +30,111 @@ import java.util.List;
  * @author mike
  */
 public class CompoundRuntimeException extends RuntimeException {
-  private final List<Throwable> myThrowables;
+  private final List<Throwable> myExceptions;
 
   public CompoundRuntimeException(@NotNull List<Throwable> throwables) {
-    //noinspection HardCodedStringLiteral
-    super("Several Exceptions occurred", throwables.get(0));
-
-    myThrowables = throwables;
+    myExceptions = throwables;
   }
 
   @Override
-  public void printStackTrace(PrintStream s) {
-    for (Throwable throwable : myThrowables) {
-      throwable.printStackTrace(s);
-    }
+  public String getMessage() {
+    return processAll(new Function<Throwable, String>() {
+      @Override
+      public String fun(Throwable throwable) {
+        return throwable.getMessage();
+      }
+    }, EmptyConsumer.<String>getInstance());
   }
-
 
   @Override
-  public void printStackTrace(PrintWriter s) {
-    for (Throwable throwable : myThrowables) {
-      throwable.printStackTrace(s);
-    }
+  public String getLocalizedMessage() {
+    return processAll(new Function<Throwable, String>() {
+      @Override
+      public String fun(Throwable throwable) {
+        return throwable.getLocalizedMessage();
+      }
+    }, EmptyConsumer.<String>getInstance());
   }
 
-  public static void doThrow(@Nullable List<Throwable> throwables) {
+  @Override
+  public String toString() {
+    return processAll(new Function<Throwable, String>() {
+      @Override
+      public String fun(Throwable throwable) {
+        return throwable.toString();
+      }
+    }, EmptyConsumer.<String>getInstance());
+  }
+
+  @Override
+  public void printStackTrace(final PrintStream s) {
+    processAll(new Function<Throwable, String>() {
+      @Override
+      public String fun(Throwable throwable) {
+        throwable.printStackTrace(s);
+        return "";
+      }
+    }, new Consumer<String>() {
+      @Override
+      public void consume(String str) {
+        s.print(str);
+      }
+    });
+  }
+
+  @Override
+  public void printStackTrace(final PrintWriter s) {
+    processAll(new Function<Throwable, String>() {
+      @Override
+      public String fun(Throwable throwable) {
+        throwable.printStackTrace(s);
+        return "";
+      }
+    }, new Consumer<String>() {
+      @Override
+      public void consume(String str) {
+        s.print(str);
+      }
+    });
+  }
+
+  private String processAll(@NotNull Function<Throwable, String> exceptionProcessor, @NotNull Consumer<String> stringProcessor) {
+    if (myExceptions.size() == 1) {
+      Throwable throwable = myExceptions.get(0);
+      String s = exceptionProcessor.fun(throwable);
+      stringProcessor.consume(s);
+      return s;
+    }
+
+    StringBuilder sb = new StringBuilder();
+    String line = "CompositeException (" + myExceptions.size() + " nested):\n------------------------------\n";
+    stringProcessor.consume(line);
+    sb.append(line);
+
+    for (int i = 0; i < myExceptions.size(); i++) {
+      Throwable exception = myExceptions.get(i);
+
+      line = "[" + i + "]: ";
+      stringProcessor.consume(line);
+      sb.append(line);
+
+      line = exceptionProcessor.fun(exception);
+      if (line == null) {
+        line = "null\n";
+      }
+      else if (!line.endsWith("\n")) line += '\n';
+      stringProcessor.consume(line);
+      sb.append(line);
+    }
+
+    line = "------------------------------\n";
+    stringProcessor.consume(line);
+    sb.append(line);
+
+    return sb.toString();
+  }
+
+  public static void throwIfNotEmpty(@Nullable List<Throwable> throwables) {
     if (ContainerUtil.isEmpty(throwables)) {
       return;
     }

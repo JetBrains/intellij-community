@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -74,6 +74,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       return AllClassesSearch.search(useScope, project).forEach(new Processor<PsiClass>() {
         @Override
         public boolean process(final PsiClass psiClass) {
+          ProgressManager.checkCanceled();
           if (psiClass.isInterface()) {
             return consumer.process(psiClass);
           }
@@ -113,7 +114,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     Map<String, List<PsiClass>> classes = new HashMap<String, List<PsiClass>>();
 
     for (final PsiReferenceList referenceList : candidates) {
-      ProgressIndicatorProvider.checkCanceled();
+      ProgressManager.checkCanceled();
       final PsiClass candidate = (PsiClass)ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
         @Override
         public PsiElement compute() {
@@ -139,6 +140,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     if (!classes.isEmpty()) {
       final VirtualFile jarFile = getJarFile(aClass);
       for (List<PsiClass> sameNamedClasses : classes.values()) {
+        ProgressManager.checkCanceled();
         if (!processSameNamedClasses(consumer, sameNamedClasses, jarFile)) return false;
       }
     }
@@ -155,7 +157,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
                                                                                                    });
 
       for (PsiAnonymousClass candidate : anonymousCandidates) {
-        ProgressIndicatorProvider.checkCanceled();
+        ProgressManager.checkCanceled();
         if (!checkInheritance(p, aClass, candidate, project)) continue;
 
         if (!consumer.process(candidate)) return false;
@@ -176,6 +178,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
           }
         });
         for (final PsiField field : fields) {
+          ProgressManager.checkCanceled();
           if (field instanceof PsiEnumConstant) {
             PsiEnumConstantInitializer initializingClass =
               ApplicationManager.getApplication().runReadAction(new Computable<PsiEnumConstantInitializer>() {
@@ -210,6 +213,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
     if (jarFile != null && sameNamedClasses.size() > 1) {
       for (PsiClass sameNamedClass : sameNamedClasses) {
+        ProgressManager.checkCanceled();
         boolean fromSameJar = Comparing.equal(getJarFile(sameNamedClass), jarFile);
         if (fromSameJar) {
           sameJarClassFound = true;

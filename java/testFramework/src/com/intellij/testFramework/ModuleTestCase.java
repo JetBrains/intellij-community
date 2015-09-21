@@ -16,17 +16,15 @@
 package com.intellij.testFramework;
 
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.ModuleImpl;
-import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,6 +32,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.util.Consumer;
+import com.intellij.util.SmartList;
+import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
 public abstract class ModuleTestCase extends IdeaTestCase {
   protected final Collection<Module> myModulesToDispose = new ArrayList<Module>();
@@ -55,18 +56,30 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          for (Module module : myModulesToDispose) {
+      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+      List<Throwable> errors = null;
+      AccessToken token = WriteAction.start();
+      try {
+        for (Module module : myModulesToDispose) {
+          try {
             String moduleName = module.getName();
             if (moduleManager.findModuleByName(moduleName) != null) {
               moduleManager.disposeModule(module);
             }
           }
+          catch (Throwable e) {
+            if (errors == null) {
+              errors = new SmartList<Throwable>();
+            }
+            errors.add(e);
+          }
         }
-      });
+      }
+      finally {
+        token.finish();
+      }
+
+      CompoundRuntimeException.throwIfNotEmpty(errors);
     }
     finally {
       myModulesToDispose.clear();
@@ -97,53 +110,45 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     return module;
   }
 
-  protected Module loadModule(final File moduleFile) {
-    return loadModule(moduleFile, false);
-  }
+  protected Module loadModule(@NotNull String modulePath) {
+    String normalizedPath = FileUtil.toSystemIndependentName(modulePath);
+    LocalFileSystem.getInstance().refreshAndFindFileByPath(normalizedPath);
 
-  protected Module loadModule(final File moduleFile, final boolean loadComponentStates) {
-    Module module = ApplicationManager.getApplication().runWriteAction(
-      new Computable<Module>() {
-        @Override
-        public Module compute() {
-          ProjectImpl project = (ProjectImpl)myProject;
-          boolean oldOptimiseTestLoadSpeed = project.isOptimiseTestLoadSpeed();
-          if (loadComponentStates) {
-            project.setOptimiseTestLoadSpeed(false);
-          }
-          try {
-            LocalFileSystem.getInstance().refreshIoFiles(Collections.singletonList(moduleFile));
-            return ModuleManager.getInstance(myProject).loadModule(moduleFile.getAbsolutePath());
-          }
-          catch (Exception e) {
-            LOG.error(e);
-            return null;
-          }
-          finally {
-            project.setOptimiseTestLoadSpeed(oldOptimiseTestLoadSpeed);
-          }
-        }
-      }
-    );
+    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    Module module;
+    AccessToken token = WriteAction.start();
+    try {
+      module = moduleManager.loadModule(normalizedPath);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+      return null;
+    }
+    finally {
+      token.finish();
+    }
 
     myModulesToDispose.add(module);
     return module;
   }
 
-  protected Module loadModule(final String modulePath) {
-    return loadModule(new File(modulePath));
+  @Nullable
+  protected Module loadAllModulesUnder(@NotNull VirtualFile rootDir) {
+    return loadAllModulesUnder(rootDir, null);
   }
 
   @Nullable
-  protected Module loadAllModulesUnder(@NotNull VirtualFile rootDir) throws Exception {
+  protected Module loadAllModulesUnder(@NotNull VirtualFile rootDir, @Nullable final Consumer<Module> moduleConsumer) {
     final Ref<Module> result = Ref.create();
 
     VfsUtilCore.visitChildrenRecursively(rootDir, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory() && file.getName().endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
-          ModuleImpl module = (ModuleImpl)loadModule(new File(file.getPath()));
-          readJdomExternalizables(module);
+          ModuleImpl module = (ModuleImpl)loadModule(file.getPath());
+          if (moduleConsumer != null) {
+            moduleConsumer.consume(module);
+          }
           result.setIfNull(module);
         }
         return true;
@@ -151,21 +156,6 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     });
 
     return result.get();
-  }
-
-  protected void readJdomExternalizables(@NotNull Module module) {
-    loadModuleComponentState(module, ModuleRootManager.getInstance(module));
-  }
-
-  protected final void loadModuleComponentState(@NotNull Module module, @NotNull Object component) {
-    ProjectEx project = (ProjectEx)myProject;
-    project.setOptimiseTestLoadSpeed(false);
-    try {
-      ComponentsPackage.getStateStore(module).initComponent(component, false);
-    }
-    finally {
-      project.setOptimiseTestLoadSpeed(true);
-    }
   }
 
   protected Module createModuleFromTestData(final String dirInTestData, final String newModuleFileName, final ModuleType moduleType,

@@ -127,9 +127,7 @@ public class RootsChangedTest extends ModuleTestCase {
   public void testEditLibraryForModuleLoadFromXml() throws IOException {
     final File tempDirectory = createTempDirectory();
     ApplicationManager.getApplication().runWriteAction(() -> {
-      File moduleFile =
-        PathManagerEx.findFileUnderProjectHome("java/java-tests/testData/moduleRootManager/rootsChanged/emptyModule/a.iml", RootsChangedTest.this.getClass());
-      Module a = loadModule(moduleFile, true);
+      Module a = loadModule(PathManagerEx.getHomePath(getClass()) + "/java/java-tests/testData/moduleRootManager/rootsChanged/emptyModule/a.iml");
       assertEventsCount(1);
 
       final Sdk jdk = IdeaTestUtil.getMockJdk17();

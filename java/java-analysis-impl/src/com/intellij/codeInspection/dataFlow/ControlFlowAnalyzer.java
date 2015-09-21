@@ -19,11 +19,11 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
@@ -42,18 +42,20 @@ import static com.intellij.psi.CommonClassNames.*;
 public class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer");
   public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
+  private final PsiElement myCodeFragment;
   private boolean myIgnoreAssertions;
+  private final Project myProject;
 
   private static class CannotAnalyzeException extends RuntimeException { }
 
   private final DfaValueFactory myFactory;
   private ControlFlow myCurrentFlow;
   private Stack<CatchDescriptor> myCatchStack;
-  private DfaValue myRuntimeException;
-  private DfaValue myError;
-  private DfaValue myString;
-  private PsiType myNpe;
-  private PsiType myAssertionError;
+  private final DfaValue myRuntimeException;
+  private final DfaValue myError;
+  private final DfaValue myString;
+  private final PsiType myNpe;
+  private final PsiType myAssertionError;
   private final Stack<PsiElement> myElementStack = new Stack<PsiElement>();
 
   /**
@@ -61,50 +63,45 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    */
   private FactoryMap<PsiTryStatement, DfaVariableValue> myExceptionHolders;
 
-  ControlFlowAnalyzer(final DfaValueFactory valueFactory) {
+  ControlFlowAnalyzer(final DfaValueFactory valueFactory, @NotNull PsiElement codeFragment, boolean ignoreAssertions) {
     myFactory = valueFactory;
-  }
-
-  @Nullable
-  public ControlFlow buildControlFlow(@NotNull PsiElement codeFragment, boolean ignoreAssertions) {
-    if (PsiTreeUtil.findChildOfType(codeFragment, OuterLanguageElement.class) != null) {
-      return null;
-    }
-
+    myCodeFragment = codeFragment;
+    myProject = codeFragment.getProject();
     myIgnoreAssertions = ignoreAssertions;
-    final PsiManager manager = codeFragment.getManager();
     GlobalSearchScope scope = codeFragment.getResolveScope();
-    myRuntimeException = myFactory.createTypeValue(createClassType(manager, scope, JAVA_LANG_RUNTIME_EXCEPTION), Nullness.NOT_NULL);
-    myError = myFactory.createTypeValue(createClassType(manager, scope, JAVA_LANG_ERROR), Nullness.NOT_NULL);
-    myNpe = createClassType(manager, scope, JAVA_LANG_NULL_POINTER_EXCEPTION);
-    myAssertionError = createClassType(manager, scope, JAVA_LANG_ASSERTION_ERROR);
-    myString = myFactory.createTypeValue(createClassType(manager, scope, JAVA_LANG_STRING), Nullness.NOT_NULL);
+    myRuntimeException = myFactory.createTypeValue(createClassType(scope, JAVA_LANG_RUNTIME_EXCEPTION), Nullness.NOT_NULL);
+    myError = myFactory.createTypeValue(createClassType(scope, JAVA_LANG_ERROR), Nullness.NOT_NULL);
+    myNpe = createClassType(scope, JAVA_LANG_NULL_POINTER_EXCEPTION);
+    myAssertionError = createClassType(scope, JAVA_LANG_ASSERTION_ERROR);
+    myString = myFactory.createTypeValue(createClassType(scope, JAVA_LANG_STRING), Nullness.NOT_NULL);
 
     myExceptionHolders = new FactoryMap<PsiTryStatement, DfaVariableValue>() {
       @Nullable
       @Override
       protected DfaVariableValue create(PsiTryStatement key) {
         String text = "java.lang.Object $exception" + myExceptionHolders.size() + "$";
-        PsiParameter mockVar = JavaPsiFacade.getElementFactory(manager.getProject()).createParameterFromText(text, null);
+        PsiParameter mockVar = JavaPsiFacade.getElementFactory(myProject).createParameterFromText(text, null);
         return myFactory.getVarFactory().createVariableValue(mockVar, false);
       }
     };
+  }
 
+  @Nullable
+  public ControlFlow buildControlFlow() {
     myCatchStack = new Stack<CatchDescriptor>();
     myCurrentFlow = new ControlFlow(myFactory);
-
     try {
-      codeFragment.accept(this);
+      myCodeFragment.accept(this);
     }
     catch (CannotAnalyzeException e) {
       return null;
     }
 
-    PsiElement parent = codeFragment.getParent();
-    if (parent instanceof PsiLambdaExpression && codeFragment instanceof PsiExpression) {
-      generateBoxingUnboxingInstructionFor((PsiExpression)codeFragment,
+    PsiElement parent = myCodeFragment.getParent();
+    if (parent instanceof PsiLambdaExpression && myCodeFragment instanceof PsiExpression) {
+      generateBoxingUnboxingInstructionFor((PsiExpression)myCodeFragment,
                                            LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent));
-      addInstruction(new CheckReturnValueInstruction(codeFragment));
+      addInstruction(new CheckReturnValueInstruction(myCodeFragment));
     }
 
     addInstruction(new ReturnInstruction(false, null));
@@ -117,10 +114,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
 
-  private static PsiClassType createClassType(PsiManager manager, GlobalSearchScope scope, String fqn) {
-    PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(fqn, scope);
-    if (aClass != null) return JavaPsiFacade.getElementFactory(manager.getProject()).createType(aClass);
-    return JavaPsiFacade.getElementFactory(manager.getProject()).createTypeByFQClassName(fqn, scope);
+  private PsiClassType createClassType(GlobalSearchScope scope, String fqn) {
+    PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(fqn, scope);
+    if (aClass != null) return JavaPsiFacade.getElementFactory(myProject).createType(aClass);
+    return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(fqn, scope);
   }
 
   private <T extends Instruction> T addInstruction(T i) {
@@ -204,7 +201,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       lExpr.accept(this);
       addInstruction(new DupInstruction());
       rExpr.accept(this);
-      addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, lExpr.getProject()));
+      addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, myProject));
     }
     else {
       generateDefaultAssignmentBinOp(lExpr, rExpr, type);
@@ -234,7 +231,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     generateBoxingUnboxingInstructionFor(lExpr,exprType);
     rExpr.accept(this);
     generateBoxingUnboxingInstructionFor(rExpr, exprType);
-    addInstruction(new BinopInstruction(null, null, lExpr.getProject()));
+    addInstruction(new BinopInstruction(null, null, myProject));
   }
 
   @Override public void visitAssertStatement(PsiAssertStatement statement) {
@@ -672,7 +669,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                 
                 addInstruction(new PushInstruction(myFactory.createValue(caseExpression), caseExpression));
                 caseValue.accept(this);
-                addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, caseExpression.getProject()));
+                addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, myProject));
               }
               else {
                 pushUnknown();
@@ -750,7 +747,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addConditionalRuntimeThrow();
       addInstruction(new DupInstruction());
       addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
-      addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, statement.getProject()));
+      addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, myProject));
       ConditionalGotoInstruction gotoInstruction = new ConditionalGotoInstruction(null, true, null);
       addInstruction(gotoInstruction);
       
@@ -972,7 +969,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       //if $exception$==null => continue normal execution
       addInstruction(new PushInstruction(getExceptionHolder(finallyDescriptor), null));
       addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
-      addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, statement.getProject()));
+      addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, myProject));
       addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), false, null));
       
       // else throw $exception$
@@ -999,7 +996,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       for (PsiType catchType : flattened) {
         addInstruction(new PushInstruction(exceptionHolder, null));
         addInstruction(new PushInstruction(myFactory.createTypeValue(catchType, Nullness.UNKNOWN), null));
-        addInstruction(new BinopInstruction(JavaTokenType.INSTANCEOF_KEYWORD, null, section.getProject()));
+        addInstruction(new BinopInstruction(JavaTokenType.INSTANCEOF_KEYWORD, null, myProject));
         addInstruction(new ConditionalGotoInstruction(ControlFlow.deltaOffset(getStartOffset(catchBlock), -5), false, null));
       }
       
@@ -1179,7 +1176,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiType rType = rExpr.getType();
 
       acceptBinaryRightOperand(op, type, lExpr, lType, rExpr, rType);
-      addInstruction(new BinopInstruction(op, expression.isPhysical() ? expression : null, expression.getProject()));
+      addInstruction(new BinopInstruction(op, expression.isPhysical() ? expression : null, myProject));
 
       lExpr = rExpr;
       lType = rType;
@@ -1256,7 +1253,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       operand.accept(this);
       generateBoxingUnboxingInstructionFor(operand, exprType);
       PsiElement psiAnchor = i == operands.length - 1 && expression.isPhysical() ? expression : null;
-      addInstruction(new BinopInstruction(JavaTokenType.NE, psiAnchor, expression.getProject()));
+      addInstruction(new BinopInstruction(JavaTokenType.NE, psiAnchor, myProject));
     }
   }
 
@@ -1399,7 +1396,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         type = ((PsiClassType)type).rawType();
       }
       addInstruction(new PushInstruction(myFactory.createTypeValue(type, Nullness.UNKNOWN), null));
-      addInstruction(new InstanceofInstruction(expression, expression.getProject(), operand, type));
+      addInstruction(new InstanceofInstruction(expression, myProject, operand, type));
     }
     else {
       pushUnknown();
@@ -1481,7 +1478,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       // if a contract resulted in 'fail', handle it
       addInstruction(new DupInstruction());
       addInstruction(new PushInstruction(myFactory.getConstFactory().getContractFail(), null));
-      addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, expression.getProject()));
+      addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, myProject));
       ConditionalGotoInstruction ifNotFail = new ConditionalGotoInstruction(null, true, null);
       addInstruction(ifNotFail);
       returnCheckingFinally(true, expression);

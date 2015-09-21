@@ -32,11 +32,11 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
-fun createProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit) {
+fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, task: (Project) -> Unit) {
   createOrLoadProject(tempDirManager, task)
 }
 
-fun loadProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, task: (Project) -> Unit) {
+fun loadAndUseProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, task: (Project) -> Unit) {
   createOrLoadProject(tempDirManager, task, projectCreator)
 }
 
@@ -51,20 +51,22 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
     }
 
     val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
-    var project = if (projectCreator == null) projectManager.newProject(null, filePath, true, false, false)!! else projectManager.loadProject(filePath)!!
-    try {
-      projectManager.openTestProject(project)
-      task(project)
-    }
-    finally {
-      projectManager.closeProject(project, false, true, false)
+    var project = if (projectCreator == null) projectManager.newProject(null, filePath, true, false)!! else projectManager.loadProject(filePath)!!
+    project.runInLoadComponentStateMode {
+      try {
+        projectManager.openTestProject(project)
+        task(project)
+      }
+      finally {
+        projectManager.closeProject(project, false, true, false)
+      }
     }
   }
 }
 
 class ProjectStoreTest {
   companion object {
-    ClassRule val projectRule = ProjectRule()
+    @ClassRule val projectRule = ProjectRule()
   }
 
   val tempDirManager = TemporaryDirectory()
@@ -72,7 +74,7 @@ class ProjectStoreTest {
   private val ruleChain = RuleChain(tempDirManager)
   @Rule fun getChain() = ruleChain
 
-  Language("XML")
+  @Language("XML")
   private val iprFileContent =
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
       "<project version=\"4\">\n" +
@@ -81,7 +83,7 @@ class ProjectStoreTest {
       "  </component>\n" +
       "</project>"
 
-  State(name = "AATestComponent", storages = arrayOf(Storage(file = StoragePathMacros.PROJECT_FILE)))
+  @State(name = "AATestComponent", storages = arrayOf(Storage(file = StoragePathMacros.PROJECT_FILE)))
   private class TestComponent : PersistentStateComponent<TestState> {
     private var state: TestState? = null
 
@@ -94,8 +96,8 @@ class ProjectStoreTest {
 
   data class TestState(var value: String = "default")
 
-  public Test fun directoryBasedStorage() {
-    loadProject(tempDirManager, {
+  @Test fun directoryBasedStorage() {
+    loadAndUseProject(tempDirManager, {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
       it.path
     }) { project ->
@@ -112,8 +114,8 @@ class ProjectStoreTest {
     }
   }
 
-  public Test fun fileBasedStorage() {
-    loadProject(tempDirManager, { it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path }) { project ->
+  @Test fun fileBasedStorage() {
+    loadAndUseProject(tempDirManager, { it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path }) { project ->
       test(project)
     }
   }

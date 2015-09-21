@@ -151,7 +151,7 @@ public class PsiPrimitiveType extends PsiType.Stub {
     //[ven]previous call returns null for NULL, VOID
     if (boxedQName == null) return null;
     JavaPsiFacade facade = JavaPsiFacade.getInstance(file.getProject());
-    PsiClass aClass = facade.findClass(boxedQName, context.getResolveScope());
+    PsiClass aClass = facade.findClass(boxedQName, file.getResolveScope());
     if (aClass == null) return null;
 
     PsiElementFactory factory = facade.getElementFactory();

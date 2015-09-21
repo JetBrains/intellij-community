@@ -68,7 +68,7 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
   }
 
   @Nullable
-  public static PluginBuildConfiguration getInstance(Module module) {
+  public static PluginBuildConfiguration getInstance(@NotNull Module module) {
     return ModuleType.is(module, PluginModuleType.getInstance()) ? ModuleServiceManager.getService(module, PluginBuildConfiguration.class) : null;
   }
 

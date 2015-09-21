@@ -32,14 +32,4 @@ public class MockProjectEx  extends MockProject implements ProjectEx {
   @Override
   public void init() {
   }
-
-  @Override
-  public boolean isOptimiseTestLoadSpeed() {
-    return false;
-  }
-
-  @Override
-  public void setOptimiseTestLoadSpeed(final boolean optimiseTestLoadSpeed) {
-    throw new UnsupportedOperationException("Method setOptimiseTestLoadSpeed not implemented in " + getClass());
-  }
 }

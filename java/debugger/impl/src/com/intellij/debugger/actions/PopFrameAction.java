@@ -70,7 +70,7 @@ public class PopFrameAction extends DebuggerAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final JavaStackFrame stackFrame = getStackFrame(e);
-    if(stackFrame == null) {
+    if (stackFrame == null || stackFrame.getStackFrameProxy().isBottom()) {
       return;
     }
     try {
@@ -81,76 +81,29 @@ public class PopFrameAction extends DebuggerAction {
       }
 
       debugProcess.getSession().setSteppingThrough(stackFrame.getStackFrameProxy().threadProxy());
-      if (!DebuggerSettings.EVALUATE_FINALLY_NEVER.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME)) {
-        List<PsiStatement> statements = getFinallyStatements(debuggerContext.getSourcePosition());
-        if (!statements.isEmpty()) {
-          StringBuilder sb = new StringBuilder();
-          for (PsiStatement statement : statements) {
-            sb.append("\n").append(statement.getText());
-          }
-          if (DebuggerSettings.EVALUATE_FINALLY_ALWAYS.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME)) {
-            evaluateAndPop(project, stackFrame, debuggerContext, debugProcess, sb);
-            return;
-          }
-          else {
-            int res = MessageDialogBuilder
-              .yesNoCancel(UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)),
-                           DebuggerBundle.message("warning.finally.block.detected") + sb)
-              .project(project)
-              .icon(Messages.getWarningIcon())
-              .yesText(DebuggerBundle.message("button.execute.finally"))
-              .noText(DebuggerBundle.message("button.drop.anyway"))
-              .cancelText(CommonBundle.message("button.cancel"))
-              .doNotAsk(
-                new DialogWrapper.DoNotAskOption() {
-                  @Override
-                  public boolean isToBeShown() {
-                    return !DebuggerSettings.EVALUATE_FINALLY_ALWAYS.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME) &&
-                           !DebuggerSettings.EVALUATE_FINALLY_NEVER.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME);
-                  }
+      if (evaluateFinallyBlocks(project,
+                                UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)),
+                                stackFrame,
+                                new XDebuggerEvaluator.XEvaluationCallback() {
+                                  @Override
+                                  public void evaluated(@NotNull XValue result) {
+                                    popFrame(debugProcess, debuggerContext, stackFrame);
+                                  }
 
-                  @Override
-                  public void setToBeShown(boolean value, int exitCode) {
-                    if (!value) {
-                      DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME =
-                        exitCode == Messages.YES ? DebuggerSettings.EVALUATE_FINALLY_ALWAYS : DebuggerSettings.EVALUATE_FINALLY_NEVER;
-                    }
-                    else {
-                      DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME = DebuggerSettings.EVALUATE_FINALLY_ASK;
-                    }
-                  }
-
-                  @Override
-                  public boolean canBeHidden() {
-                    return true;
-                  }
-
-                  @Override
-                  public boolean shouldSaveOptionsOnCancel() {
-                    return false;
-                  }
-
-                  @NotNull
-                  @Override
-                  public String getDoNotShowMessage() {
-                    return CommonBundle.message("dialog.options.do.not.show");
-                  }
-                })
-              .show();
-
-            switch (res) {
-              case Messages.CANCEL:
-                return;
-              case Messages.NO:
-                break;
-              case Messages.YES: // evaluate finally
-                evaluateAndPop(project, stackFrame, debuggerContext, debugProcess, sb);
-                return;
-            }
-          }
-        }
-      }
-      debugProcess.getManagerThread().schedule(debugProcess.createPopFrameCommand(debuggerContext, stackFrame.getStackFrameProxy()));
+                                  @Override
+                                  public void errorOccurred(@NotNull final String errorMessage) {
+                                    ApplicationManager.getApplication().invokeLater(new Runnable() {
+                                      @Override
+                                      public void run() {
+                                        Messages
+                                          .showMessageDialog(project, DebuggerBundle.message("error.executing.finally", errorMessage),
+                                                             UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)),
+                                                             Messages.getErrorIcon());
+                                      }
+                                    });
+                                  }
+                                })) return;
+      popFrame(debugProcess, debuggerContext, stackFrame);
     }
     catch (NativeMethodException e2){
       Messages.showMessageDialog(project, DebuggerBundle.message("error.native.method.exception"),
@@ -162,33 +115,96 @@ public class PopFrameAction extends DebuggerAction {
     }
   }
 
-  private static void evaluateAndPop(final Project project,
-                                     final JavaStackFrame stackFrame,
-                                     final DebuggerContextImpl debuggerContext,
-                                     final DebugProcessImpl debugProcess, StringBuilder sb) {
+  static boolean evaluateFinallyBlocks(Project project,
+                                String title,
+                                JavaStackFrame stackFrame,
+                                XDebuggerEvaluator.XEvaluationCallback callback) {
+    if (!DebuggerSettings.EVALUATE_FINALLY_NEVER.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME)) {
+      List<PsiStatement> statements = getFinallyStatements(stackFrame.getDescriptor().getSourcePosition());
+      if (!statements.isEmpty()) {
+        StringBuilder sb = new StringBuilder();
+        for (PsiStatement statement : statements) {
+          sb.append("\n").append(statement.getText());
+        }
+        if (DebuggerSettings.EVALUATE_FINALLY_ALWAYS.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME)) {
+          evaluateAndAct(project, stackFrame, sb, callback);
+          return true;
+        }
+        else {
+          int res = MessageDialogBuilder
+            .yesNoCancel(title,
+                         DebuggerBundle.message("warning.finally.block.detected") + sb)
+            .project(project)
+            .icon(Messages.getWarningIcon())
+            .yesText(DebuggerBundle.message("button.execute.finally"))
+            .noText(DebuggerBundle.message("button.drop.anyway"))
+            .cancelText(CommonBundle.message("button.cancel"))
+            .doNotAsk(
+              new DialogWrapper.DoNotAskOption() {
+                @Override
+                public boolean isToBeShown() {
+                  return !DebuggerSettings.EVALUATE_FINALLY_ALWAYS.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME) &&
+                         !DebuggerSettings.EVALUATE_FINALLY_NEVER.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME);
+                }
+
+                @Override
+                public void setToBeShown(boolean value, int exitCode) {
+                  if (!value) {
+                    DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME =
+                      exitCode == Messages.YES ? DebuggerSettings.EVALUATE_FINALLY_ALWAYS : DebuggerSettings.EVALUATE_FINALLY_NEVER;
+                  }
+                  else {
+                    DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME = DebuggerSettings.EVALUATE_FINALLY_ASK;
+                  }
+                }
+
+                @Override
+                public boolean canBeHidden() {
+                  return true;
+                }
+
+                @Override
+                public boolean shouldSaveOptionsOnCancel() {
+                  return false;
+                }
+
+                @NotNull
+                @Override
+                public String getDoNotShowMessage() {
+                  return CommonBundle.message("dialog.options.do.not.show");
+                }
+              })
+            .show();
+
+          switch (res) {
+            case Messages.CANCEL:
+              return true;
+            case Messages.NO:
+              break;
+            case Messages.YES: // evaluate finally
+              evaluateAndAct(project, stackFrame, sb, callback);
+              return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static void popFrame(DebugProcessImpl debugProcess, DebuggerContextImpl debuggerContext, JavaStackFrame stackFrame) {
+    debugProcess.getManagerThread()
+      .schedule(debugProcess.createPopFrameCommand(debuggerContext, stackFrame.getStackFrameProxy()));
+  }
+
+  private static void evaluateAndAct(Project project,
+                                     JavaStackFrame stackFrame,
+                                     StringBuilder sb,
+                                     XDebuggerEvaluator.XEvaluationCallback callback) {
     XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
     if (evaluator != null) {
       evaluator.evaluate(XExpressionImpl.fromText(sb.toString(), EvaluationMode.CODE_FRAGMENT),
-                         new XDebuggerEvaluator.XEvaluationCallback() {
-                           @Override
-                           public void evaluated(@NotNull XValue result) {
-                             debugProcess.getManagerThread()
-                               .schedule(debugProcess.createPopFrameCommand(debuggerContext, stackFrame.getStackFrameProxy()));
-                           }
-
-                           @Override
-                           public void errorOccurred(@NotNull final String errorMessage) {
-                             ApplicationManager.getApplication().invokeLater(new Runnable() {
-                               @Override
-                               public void run() {
-                                 Messages
-                                   .showMessageDialog(project, DebuggerBundle.message("error.executing.finally", errorMessage),
-                                                      UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)),
-                                                      Messages.getErrorIcon());
-                               }
-                             });
-                           }
-                         }, stackFrame.getSourcePosition());
+                         callback,
+                         stackFrame.getSourcePosition());
     }
     else {
       Messages.showMessageDialog(project, XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"),
@@ -214,21 +230,12 @@ public class PopFrameAction extends DebuggerAction {
     return res;
   }
 
-  private static JavaStackFrame getStackFrame(AnActionEvent e) {
+  static JavaStackFrame getStackFrame(AnActionEvent e) {
     StackFrameDescriptorImpl descriptor = getSelectedStackFrameDescriptor(e);
     if (descriptor != null) {
-      if (descriptor.getFrameProxy().isBottom()) {
-        return null;
-      }
       return new JavaStackFrame(descriptor, false);
     }
-    JavaStackFrame frame = getSelectedStackFrame(e);
-    if (frame != null) {
-      StackFrameProxyImpl proxy = frame.getStackFrameProxy();
-      if (proxy == null || proxy.isBottom()) return null;
-      return frame;
-    }
-    return null;
+    return getSelectedStackFrame(e);
   }
 
   static StackFrameProxyImpl getStackFrameProxy(AnActionEvent e) {

@@ -18,7 +18,6 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Assertion;
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
@@ -65,28 +64,28 @@ public class FilteringIteratorTest extends TestCase {
     MockIterator mockIterator = new MockIterator(list.iterator());
     MockCondition mockCondition = new MockCondition(STRINGS_ONLY);
     Iterator iterator = FilteringIterator.create(mockIterator, mockCondition);
-    Assert.assertTrue(iterator.hasNext());
-    Assert.assertTrue(iterator.hasNext());
-    Assert.assertEquals(2, mockIterator.myHasNextCalls);
-    Assert.assertEquals(2, mockCondition.myValueCalls);
-    Assert.assertEquals("a", iterator.next());
-    Assert.assertEquals(2, mockIterator.myHasNextCalls);
-    Assert.assertEquals(2, mockCondition.myValueCalls);
+    assertTrue(iterator.hasNext());
+    assertTrue(iterator.hasNext());
+    assertEquals(2, mockIterator.myHasNextCalls);
+    assertEquals(2, mockCondition.myValueCalls);
+    assertEquals("a", iterator.next());
+    assertEquals(2, mockIterator.myHasNextCalls);
+    assertEquals(2, mockCondition.myValueCalls);
     iterator.remove();
-    Assert.assertEquals(2, mockIterator.myHasNextCalls);
-    Assert.assertEquals(2, mockCondition.myValueCalls);
-    Assert.assertTrue(iterator.hasNext());
-    Assert.assertTrue(iterator.hasNext());
-    Assert.assertEquals(4, mockIterator.myHasNextCalls);
-    Assert.assertEquals(4, mockCondition.myValueCalls);
-    Assert.assertEquals("b", iterator.next());
-    Assert.assertEquals(4, mockIterator.myHasNextCalls);
-    Assert.assertEquals(4, mockCondition.myValueCalls);
+    assertEquals(2, mockIterator.myHasNextCalls);
+    assertEquals(2, mockCondition.myValueCalls);
+    assertTrue(iterator.hasNext());
+    assertTrue(iterator.hasNext());
+    assertEquals(4, mockIterator.myHasNextCalls);
+    assertEquals(4, mockCondition.myValueCalls);
+    assertEquals("b", iterator.next());
+    assertEquals(4, mockIterator.myHasNextCalls);
+    assertEquals(4, mockCondition.myValueCalls);
 
-    Assert.assertEquals(3, list.size());
+    assertEquals(3, list.size());
   }
 
-  private void checkRemove(Object[] expected, ArrayList collection) {
+  private static void checkRemove(Object[] expected, ArrayList collection) {
     Iterator iterator = FilteringIterator.create(collection.iterator(), STRINGS_ONLY);
     while (iterator.hasNext()) {
       if (iterator.next().equals("x")) iterator.remove();

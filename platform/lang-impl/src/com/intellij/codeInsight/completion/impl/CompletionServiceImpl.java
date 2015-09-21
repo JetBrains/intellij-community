@@ -125,7 +125,8 @@ public class CompletionServiceImpl extends CompletionService{
     @Override
     public void addElement(@NotNull final LookupElement element) {
       if (!element.isValid()) {
-        LOG.error("Invalid lookup element: " + element);
+        LOG.error("Invalid lookup element: " + element + " of " + element.getClass() +
+                  " in " + myParameters.getOriginalFile() + " of " + myParameters.getOriginalFile().getClass());
         return;
       }
 

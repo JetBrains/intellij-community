@@ -19,11 +19,11 @@ import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.concurrency.Obsolescent
 import java.util.*
 
-public class AsyncPromise<T> : Promise<T> {
+class AsyncPromise<T> : Promise<T> {
   companion object {
-    private val LOG = Logger.getInstance(javaClass<AsyncPromise<Any>>())
+    private val LOG = Logger.getInstance(AsyncPromise::class.java)
 
-    public val OBSOLETE_ERROR: RuntimeException = MessageError("Obsolete")
+    val OBSOLETE_ERROR = MessageError("Obsolete")
 
     private fun <T> setHandler(oldConsumer: ((T) -> Unit)?, newConsumer: (T) -> Unit): (T) -> Unit {
       return when (oldConsumer) {
@@ -68,14 +68,14 @@ public class AsyncPromise<T> : Promise<T> {
     }
   }
 
-  private volatile var done: ((T) -> Unit)? = null
-  private volatile var rejected: ((Throwable) -> Unit)? = null
+  private @Volatile var done: ((T) -> Unit)? = null
+  private @Volatile var rejected: ((Throwable) -> Unit)? = null
 
-  override volatile var state = Promise.State.PENDING
+  override @Volatile var state = Promise.State.PENDING
     private set
 
   // result object or error message
-  private volatile var result: Any? = null
+  private @Volatile var result: Any? = null
 
   override fun done(done: (T) -> Unit): Promise<T> {
     if (done.isObsolete()) {
@@ -86,7 +86,7 @@ public class AsyncPromise<T> : Promise<T> {
       Promise.State.PENDING -> {
       }
       Promise.State.FULFILLED -> {
-        @suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST")
         done(result as T)
         return this
       }
@@ -116,8 +116,9 @@ public class AsyncPromise<T> : Promise<T> {
     return this
   }
 
+  @Suppress("BASE_WITH_NULLABLE_UPPER_BOUND")
   public fun get(): T? {
-    @suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST")
     return when (state) {
       Promise.State.FULFILLED -> result as T
       else -> null
@@ -133,7 +134,7 @@ public class AsyncPromise<T> : Promise<T> {
       Promise.State.PENDING -> {
       }
       Promise.State.FULFILLED -> {
-        @suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST")
         return if (asyncResult) done(result as T) as Promise<SUB_RESULT> else DonePromise(done(result as T) as SUB_RESULT)
       }
       Promise.State.REJECTED -> return RejectedPromise(result as Throwable)
@@ -142,7 +143,7 @@ public class AsyncPromise<T> : Promise<T> {
     val promise = AsyncPromise<SUB_RESULT>()
     addHandlers({
       promise.catchError {
-        if (done is Obsolescent && done.isObsolete()) {
+        if (done is Obsolescent && done.isObsolete) {
           promise.setError(OBSOLETE_ERROR)
         }
         else {
@@ -151,12 +152,12 @@ public class AsyncPromise<T> : Promise<T> {
             (subResult as Promise<*>).notify(promise)
             if (subResult is AsyncPromise<*> && subResult.state == Promise.State.PENDING) {
               // if promise fulfilled separately from sub result
-              @suppress("UNCHECKED_CAST")
+              @Suppress("UNCHECKED_CAST")
               promise.notify(subResult as AsyncPromise<SUB_RESULT>)
             }
           }
           else {
-            @suppress("UNCHECKED_CAST")
+            @Suppress("UNCHECKED_CAST")
             promise.setResult(subResult as SUB_RESULT)
           }
         }
@@ -176,7 +177,7 @@ public class AsyncPromise<T> : Promise<T> {
       Promise.State.PENDING -> {
       }
       Promise.State.FULFILLED -> {
-        @suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST")
         child.setResult(result as T)
         return this
       }
@@ -195,7 +196,7 @@ public class AsyncPromise<T> : Promise<T> {
     this.rejected = setHandler(this.rejected, rejected)
   }
 
-  public fun setResult(result: T) {
+  fun setResult(result: T) {
     if (state != Promise.State.PENDING) {
       return
     }
@@ -210,9 +211,9 @@ public class AsyncPromise<T> : Promise<T> {
     }
   }
 
-  public fun setError(error: String): Boolean = setError(MessageError(error))
+  fun setError(error: String): Boolean = setError(MessageError(error))
 
-  public fun setError(error: Throwable): Boolean {
+  fun setError(error: Throwable): Boolean {
     if (state != Promise.State.PENDING) {
       return false
     }
@@ -238,16 +239,16 @@ public class AsyncPromise<T> : Promise<T> {
     rejected = null
   }
 
-  override fun processed(processed: (T?) -> Unit): Promise<T> {
+  override fun processed(@Suppress("BASE_WITH_NULLABLE_UPPER_BOUND") processed: (T?) -> Unit): Promise<T> {
     done(processed)
     rejected { processed(null) }
     return this
   }
 }
 
-fun <T> ((T) -> Unit).isObsolete() = this is Obsolescent && this.isObsolete()
+internal fun <T> ((T) -> Unit).isObsolete() = this is Obsolescent && this.isObsolete
 
-public inline fun AsyncPromise<out Any?>.catchError(task: () -> Unit) {
+inline fun AsyncPromise<out Any?>.catchError(task: () -> Unit) {
   try {
     task()
   }

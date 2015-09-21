@@ -34,12 +34,12 @@ class RejectedPromise<T>(private val error: Throwable) : Promise<T> {
   }
 
   override fun <SUB_RESULT> then(done: (T) -> SUB_RESULT): Promise<SUB_RESULT> {
-    @suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST")
     return this as Promise<SUB_RESULT>
   }
 
   override fun <SUB_RESULT> thenAsync(done: (T) -> Promise<SUB_RESULT>): Promise<SUB_RESULT> {
-    @suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST")
     return this as Promise<SUB_RESULT>
   }
 

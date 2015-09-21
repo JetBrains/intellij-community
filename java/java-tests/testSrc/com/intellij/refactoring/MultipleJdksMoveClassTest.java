@@ -16,36 +16,23 @@
 
 package com.intellij.refactoring;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
-import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.NonNls;
 
-import java.io.File;
 import java.util.Collections;
 
-public class MultipleJdksMoveClassTest extends RefactoringTestCase {
-
+public class MultipleJdksMoveClassTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;
   private Module myJava7Module;
   private Module myJava8Module;

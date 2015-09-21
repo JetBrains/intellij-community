@@ -19,15 +19,17 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
@@ -45,6 +47,7 @@ import java.lang.annotation.ElementType
 import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
 import java.lang.annotation.Target
+import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -53,7 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 public class ProjectRule() : ExternalResource() {
   companion object {
     init {
-      Logger.setFactory(javaClass<TestLoggerFactory>())
+      Logger.setFactory(TestLoggerFactory::class.java)
     }
 
     private var sharedProject: ProjectEx? = null
@@ -63,18 +66,19 @@ public class ProjectRule() : ExternalResource() {
     private fun createLightProject(): ProjectEx {
       (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
 
-      val projectFile = generateTemporaryPath("light_temp_shared_project${ProjectFileType.DOT_DEFAULT_EXTENSION}").toFile()
+      val projectFile = generateTemporaryPath("light_temp_shared_project${ProjectFileType.DOT_DEFAULT_EXTENSION}")
+      val projectPath = projectFile.systemIndependentPath
 
       val buffer = ByteArrayOutputStream()
-      java.lang.Throwable(projectFile.path).printStackTrace(PrintStream(buffer))
+      java.lang.Throwable(projectPath).printStackTrace(PrintStream(buffer))
 
-      val project = PlatformTestCase.createProject(projectFile, "Light project: $buffer") as ProjectEx
+      val project = PlatformTestCase.createProject(projectPath, "Light project: $buffer") as ProjectEx
       Disposer.register(ApplicationManager.getApplication(), Disposable {
         try {
           disposeProject()
         }
         finally {
-          FileUtil.delete(projectFile)
+          Files.deleteIfExists(projectFile)
         }
       })
 
@@ -164,7 +168,7 @@ public class RuleChain(vararg val rules: TestRule) : TestRule {
       }
     }
 
-    CompoundRuntimeException.doThrow(errors)
+    CompoundRuntimeException.throwIfNotEmpty(errors)
     return statement
   }
 }
@@ -177,7 +181,7 @@ annotation public class RunsInEdt
 
 public class EdtRule : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
-    return if (description.getOwnOrClassAnnotation(javaClass<RunsInEdt>()) == null) {
+    return if (description.getOwnOrClassAnnotation(RunsInEdt::class.java) == null) {
       base
     }
     else {
@@ -192,7 +196,7 @@ public class EdtRule : TestRule {
 
 /**
  * Do not optimise test load speed.
- * @see ProjectEx.setOptimiseTestLoadSpeed
+ * @see IProjectStore.setOptimiseTestLoadSpeed
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD, ElementType.TYPE)
@@ -200,27 +204,35 @@ annotation public class RunsInActiveStoreMode
 
 public class ActiveStoreRule(private val projectRule: ProjectRule) : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
-    return if (description.getOwnOrClassAnnotation(javaClass<RunsInActiveStoreMode>()) == null) {
+    return if (description.getOwnOrClassAnnotation(RunsInActiveStoreMode::class.java) == null) {
       base
     }
     else {
       object : Statement() {
         override fun evaluate() {
-          val project = projectRule.project
-          val isModeDisabled = project.isOptimiseTestLoadSpeed()
-          if (isModeDisabled) {
-            project.setOptimiseTestLoadSpeed(false)
-          }
-          try {
-            base.evaluate()
-          }
-          finally {
-            if (isModeDisabled) {
-              project.setOptimiseTestLoadSpeed(true)
-            }
-          }
+          projectRule.project.runInLoadComponentStateMode { base.evaluate() }
         }
       }
+    }
+  }
+}
+
+/**
+ * In test mode component state is not loaded. Project or module store will load component state if project/module file exists.
+ * So must be a strong reason to explicitly use this method.
+ */
+public inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
+  val store = stateStore as IProjectStore
+  val isModeDisabled = store.isOptimiseTestLoadSpeed()
+  if (isModeDisabled) {
+    store.setOptimiseTestLoadSpeed(false)
+  }
+  try {
+    return task()
+  }
+  finally {
+    if (isModeDisabled) {
+      store.setOptimiseTestLoadSpeed(true)
     }
   }
 }
@@ -247,7 +259,7 @@ public class DisposeModulesRule(private val projectRule: ProjectRule) : External
           }
         }
       }
-      CompoundRuntimeException.doThrow(errors)
+      CompoundRuntimeException.throwIfNotEmpty(errors)
     }
   }
 }

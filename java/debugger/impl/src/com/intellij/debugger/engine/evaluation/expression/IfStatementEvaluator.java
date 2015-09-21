@@ -54,7 +54,7 @@ public class IfStatementEvaluator implements Evaluator {
           value = myElseEvaluator.evaluate(context);
           myModifier = myElseEvaluator.getModifier();
         } else {
-          value = context.getDebugProcess().getVirtualMachineProxy().mirrorOf();
+          value = context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid();
           myModifier = null;
         }
       }

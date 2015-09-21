@@ -40,6 +40,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -79,7 +80,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.vcsUtil.UIVcsUtil.SPACE_AND_THIN_SPACE;
+import static com.intellij.vcsUtil.UIVcsUtil.spaceAndThinSpace;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
   private final ChangesViewContentManager myContentManager;
@@ -463,7 +464,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION);
         }
         int count = node.getChildCount();
-        String numFilesText = SPACE_AND_THIN_SPACE + count + ((count == 1) ? " file" : " files") + ",";
+        String numFilesText = spaceAndThinSpace() + count + " " + StringUtil.pluralize("file", 1) + ",";
         append(numFilesText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
         
         String date = DateFormatUtil.formatPrettyDateTime(changeListData.DATE);
@@ -503,7 +504,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       if (movedMessage != null) {
         append(movedMessage, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
-      append(SPACE_AND_THIN_SPACE + directory, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      append(spaceAndThinSpace() + directory, SimpleTextAttributes.GRAYED_ATTRIBUTES);
       setIcon(FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon());
     }
   }

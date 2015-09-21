@@ -21,14 +21,13 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
-import kotlin.platform.platformStatic
 
 abstract class ChangeListRemoveConfirmation() {
   
   abstract fun askIfShouldRemoveChangeLists(ask: List<LocalChangeList>): Boolean
   
   companion object {
-    platformStatic
+    JvmStatic
     fun processLists(project: Project, explicitly: Boolean, allLists: Collection<LocalChangeList>, ask: ChangeListRemoveConfirmation) {
       val confirmationAsked = ContainerUtil.newIdentityTroveSet<LocalChangeList>()
       val doNotRemove = ContainerUtil.newIdentityTroveSet<LocalChangeList>()

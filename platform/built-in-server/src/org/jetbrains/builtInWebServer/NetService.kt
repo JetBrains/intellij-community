@@ -22,7 +22,7 @@ import org.jetbrains.util.concurrency
 import org.jetbrains.util.concurrency.toPromise
 import javax.swing.Icon
 
-val LOG: Logger = Logger.getInstance(javaClass<NetService>())
+val LOG: Logger = Logger.getInstance(NetService::class.java)
 
 public abstract class NetService @jvmOverloads protected constructor(protected val project: Project, private val consoleManager: ConsoleManager = ConsoleManager()) : Disposable {
   protected val processHandler: AsyncValueLoader<OSProcessHandler> = object : AsyncValueLoader<OSProcessHandler>() {

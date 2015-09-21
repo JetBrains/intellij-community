@@ -28,7 +28,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
-import static com.intellij.vcsUtil.UIVcsUtil.SPACE_AND_THIN_SPACE;
+import static com.intellij.vcsUtil.UIVcsUtil.spaceAndThinSpace;
 
 public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode implements TreeLinkMouseListener.HaveTooltip {
   public ChangesBrowserLocallyDeletedNode(LocallyDeletedChange userObject) {
@@ -66,7 +66,7 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode impleme
     if (renderer.isShowFlatten()) {
       final File parentFile = filePath.getIOFile().getParentFile();
       if (parentFile != null) {
-        renderer.append(SPACE_AND_THIN_SPACE + parentFile.getPath(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderer.append(spaceAndThinSpace() + parentFile.getPath(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }
     else if (getCount() != 1 || getDirectoryCount() != 0) {

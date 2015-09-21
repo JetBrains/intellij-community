@@ -90,15 +90,18 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    for (Artifact artifact : getArtifactManager().getArtifacts()) {
-      final String outputPath = artifact.getOutputPath();
-      if (!StringUtil.isEmpty(outputPath)) {
-        FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
+    try {
+      for (Artifact artifact : getArtifactManager().getArtifacts()) {
+        final String outputPath = artifact.getOutputPath();
+        if (!StringUtil.isEmpty(outputPath)) {
+          FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
+        }
       }
+      CompilerTestUtil.disableExternalCompiler(getProject());
     }
-    CompilerTestUtil.disableExternalCompiler(getProject());
-
-    super.tearDown();
+    finally {
+      super.tearDown();
+    }
   }
 
   protected ArtifactManager getArtifactManager() {

@@ -74,7 +74,7 @@ fun loadSettings(settingsFile: File): IcsSettings {
     return IcsSettings()
   }
 
-  val settings = ObjectMapper().readValue(settingsFile, javaClass<IcsSettings>())
+  val settings = ObjectMapper().readValue(settingsFile, IcsSettings::class.java)
   if (settings.commitDelay <= 0) {
     settings.commitDelay = DEFAULT_COMMIT_DELAY
   }

@@ -349,7 +349,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       val fileNameWithoutExtension = fileName.subSequence(0, fileName.length() - extension.length()).toString()
       if (duringLoad) {
         if (filesToDelete.isNotEmpty() && filesToDelete.contains(fileName.toString())) {
-          LOG.warn("Scheme file $fileName is not loaded because marked to delete")
+          LOG.warn("Scheme file \"$fileName\" is not loaded because marked to delete")
           return null
         }
 
@@ -367,7 +367,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
             else {
               // We don't load scheme with duplicated name - if we generate unique name for it, it will be saved then with new name.
               // It is not what all can expect. Such situation in most cases indicates error on previous level, so, we just warn about it.
-              LOG.warn("Scheme file $fileName is not loaded because defines duplicated name ${scheme.getName()}")
+              LOG.warn("Scheme file \"$fileName\" is not loaded because defines duplicated name \"${scheme.getName()}\"")
             }
             return null
           }
@@ -428,13 +428,13 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       @suppress("UNCHECKED_CAST")
       if (scheme is ExternalizableScheme) {
         val state = getState(scheme as E)
-        if (state === BaseSchemeProcessor.State.NON_PERSISTENT) {
+        if (state == BaseSchemeProcessor.State.NON_PERSISTENT) {
           continue
         }
 
         hasSchemes = true
 
-        if (state !== BaseSchemeProcessor.State.UNCHANGED) {
+        if (state != BaseSchemeProcessor.State.UNCHANGED) {
           schemesToSave.add(scheme)
         }
 

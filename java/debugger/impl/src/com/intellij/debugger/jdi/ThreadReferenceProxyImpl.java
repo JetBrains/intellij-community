@@ -65,6 +65,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     return (ThreadReference)getObjectReference();
   }
 
+  @NotNull
   @Override
   public VirtualMachineProxyImpl getVirtualMachine() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -302,6 +303,17 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     }
     catch (IncompatibleThreadStateException e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);
+    }
+    finally {
+      clearCaches();
+      getVirtualMachineProxy().clearCaches();
+    }
+  }
+
+  public void forceEarlyReturn(Value value) throws ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    try {
+      getThreadReference().forceEarlyReturn(value);
     }
     finally {
       clearCaches();

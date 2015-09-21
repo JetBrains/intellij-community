@@ -72,7 +72,7 @@ private fun getRoamingType(components: Collection<ExportableComponent>): Roaming
       return component.getRoamingType()
     }
     else if (component is PersistentStateComponent<*>) {
-      val stateAnnotation = component.javaClass.getAnnotation(javaClass<State>())
+      val stateAnnotation = component.javaClass.getAnnotation(State::class.java)
       if (stateAnnotation != null) {
         val storages = stateAnnotation.storages
         if (!storages.isEmpty()) {

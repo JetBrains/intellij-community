@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile
 
 class PlatformLangProjectStoreClassProvider : ProjectStoreClassProvider {
   override fun getProjectStoreClass(isDefaultProject: Boolean): Class<out IComponentStore> {
-    return if (isDefaultProject) javaClass<DefaultProjectStoreImpl>() else javaClass<ProjectWithModulesStoreImpl>()
+    return if (isDefaultProject) DefaultProjectStoreImpl::class.java else ProjectWithModulesStoreImpl::class.java
   }
 }
 

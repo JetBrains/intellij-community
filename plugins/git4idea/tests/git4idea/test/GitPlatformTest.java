@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.vcs.AbstractVcsTestCase;
@@ -72,7 +73,7 @@ public abstract class GitPlatformTest extends PlatformTestCase {
 
     checkTestRootIsEmpty(myTestRoot);
 
-    edt(new ThrowableRunnable() {
+    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
       public void run() throws Exception {
         GitPlatformTest.super.setUp();
@@ -151,7 +152,7 @@ public abstract class GitPlatformTest extends PlatformTestCase {
     }
     finally {
       try {
-        edt(new ThrowableRunnable() {
+        EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
           @Override
           public void run() throws Exception {
             GitPlatformTest.super.tearDown();

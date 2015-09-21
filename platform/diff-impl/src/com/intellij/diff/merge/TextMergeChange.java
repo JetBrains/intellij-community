@@ -299,7 +299,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   @Nullable
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
-    Icon icon = isOnesideAppliedConflict() ? AllIcons.Diff.ArrowLeftDown : AllIcons.Diff.Arrow;
+    Icon icon = isOnesideAppliedConflict() ? DiffUtil.getArrowDownIcon(side) : DiffUtil.getArrowIcon(side);
     return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), icon, isConflict(), new Runnable() {
       @Override
       public void run() {

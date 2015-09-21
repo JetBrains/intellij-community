@@ -61,7 +61,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     JButton button = new BasicArrowButton(SwingConstants.SOUTH, bg, fg, fg, fg) {
       @Override
       public void paint(Graphics g2) {
-        Icon icon = MacIntelliJIconCache.getIcon("comboRight", false, myComboBox.hasFocus(), !myComboBox.isEnabled());
+        Icon icon = MacIntelliJIconCache.getIcon("comboRight", false, myComboBox.hasFocus(), myComboBox.isEnabled());
         icon.paintIcon(this, g2, 0, 0);
       }
 
@@ -239,18 +239,18 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     int stop = r.x;
     Insets clip = getInsets();
     Graphics gg = g.create(clip.left, r.y, stop - clip.left, DEFAULT_ICON.getIconHeight());
-    boolean disabled = !c.isEnabled();
+    boolean enabled = c.isEnabled();
     boolean hasFocus = c.hasFocus();
-    Icon icon = MacIntelliJIconCache.getIcon("comboLeft", false, hasFocus, disabled);
+    Icon icon = MacIntelliJIconCache.getIcon("comboLeft", false, hasFocus, enabled);
     icon.paintIcon(c,gg,0,0);
     int x = icon.getIconWidth();
-    icon = MacIntelliJIconCache.getIcon("comboMiddle", false, hasFocus, disabled);
+    icon = MacIntelliJIconCache.getIcon("comboMiddle", false, hasFocus, enabled);
     while (x < stop) {
       icon.paintIcon(c, gg, x, 0);
       x+=icon.getIconWidth();
     }
     gg.dispose();
-    icon = MacIntelliJIconCache.getIcon("comboRight", false, hasFocus, disabled);
+    icon = MacIntelliJIconCache.getIcon("comboRight", false, hasFocus, enabled);
     icon.paintIcon(c, g, r.x, r.y);
 
     if ( !comboBox.isEditable() ) {

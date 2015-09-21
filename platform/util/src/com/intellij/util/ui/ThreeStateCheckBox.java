@@ -15,6 +15,8 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.util.SystemInfo;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
@@ -116,7 +118,7 @@ public class ThreeStateCheckBox extends JCheckBox {
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    if (UIUtil.isUnderAquaLookAndFeel()) {
+    if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF())) {
       return;
     }
 

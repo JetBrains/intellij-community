@@ -24,6 +24,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -43,6 +45,10 @@ public class EnvironmentUtil {
 
   private static final int SHELL_ENV_READING_TIMEOUT = 20000;
 
+  private static final String LANG = "LANG";
+  private static final String LC_ALL = "LC_ALL";
+  private static final String LC_CTYPE = "LC_CTYPE";
+
   private static final Future<Map<String, String>> ourEnvGetter;
   static {
     if (SystemInfo.isMac && "unlocked".equals(System.getProperty("__idea.mac.env.lock")) && Registry.is("idea.fix.mac.env")) {
@@ -50,7 +56,7 @@ public class EnvironmentUtil {
       ourEnvGetter = executor.submit(new Callable<Map<String, String>>() {
         @Override
         public Map<String, String> call() throws Exception {
-          return getShellEnv();
+          return Collections.unmodifiableMap(setCharsetVar(getShellEnv()));
         }
       });
       executor.shutdown();
@@ -97,9 +103,13 @@ public class EnvironmentUtil {
    * On Mac OS X things are complicated.<br/>
    * An app launched by a GUI launcher (Finder, Dock, Spotlight etc.) receives a pretty empty and useless environment,
    * since standard Unix ways of setting variables via e.g. ~/.profile do not work. What's more important, there are no
-   * sane alternatives. This causes a lot of user complains about tools working in a terminal not working when launched
+   * sane alternatives. This causes a lot of user complaints about tools working in a terminal not working when launched
    * from the IDE. To ease their pain, the IDE loads a shell environment (see {@link #getShellEnv()} for gory details)
-   * and returns it as the result.
+   * and returns it as the result.<br/>
+   * And one more thing (c): locale variables on OS X are usually set by a terminal app - meaning they are missing
+   * even from a shell environment above. This again causes user complaints about tools being unable to output anything
+   * outside ASCII range when launched from the IDE. Resolved by adding LC_CTYPE variable to the map if it doesn't contain
+   * explicitly set locale variables (LANG/LC_ALL/LC_CTYPE). See {@link #setCharsetVar(Map)} for details.
    *
    * @return unmodifiable map of the process environment.
    */
@@ -193,7 +203,7 @@ public class EnvironmentUtil {
     }
 
     LOG.info("shell environment loaded (" + newEnv.size() + " vars)");
-    return Collections.unmodifiableMap(newEnv);
+    return newEnv;
   }
 
   private static int waitAndTerminateAfter(@NotNull Process process, int timeoutMillis) {
@@ -228,6 +238,22 @@ public class EnvironmentUtil {
       catch (IllegalThreadStateException ignore) { }
     }
     return null;
+  }
+
+  private static Map<String, String> setCharsetVar(@NotNull Map<String, String> env) {
+    if (!isCharsetVarDefined(env)) {
+      Locale locale = Locale.getDefault();
+      Charset charset = CharsetToolkit.getDefaultSystemCharset();
+      String language = locale.getLanguage();
+      String country = locale.getCountry();
+      String value = (language.isEmpty() || country.isEmpty() ? "en_US" : language + '_' + country) + '.' + charset.name();
+      env.put(LC_CTYPE, value);
+    }
+    return env;
+  }
+
+  private static boolean isCharsetVarDefined(@NotNull Map<String, String> env) {
+    return !env.isEmpty() && (env.containsKey(LANG) || env.containsKey(LC_ALL) || env.containsKey(LC_CTYPE));
   }
 
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs) {

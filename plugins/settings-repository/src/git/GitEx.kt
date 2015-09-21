@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -29,7 +44,7 @@ import java.io.File
 import java.io.InputStream
 
 fun wrapIfNeedAndReThrow(e: TransportException) {
-  if (e.getStatus() == TransportException.Status.CANNOT_RESOLVE_REPO) {
+  if (e is org.eclipse.jgit.errors.NoRemoteRepositoryException || e.getStatus() == TransportException.Status.CANNOT_RESOLVE_REPO) {
     throw org.jetbrains.settingsRepository.NoRemoteRepositoryException(e)
   }
 
@@ -47,10 +62,15 @@ fun wrapIfNeedAndReThrow(e: TransportException) {
 }
 
 fun Repository.fetch(remoteConfig: RemoteConfig, credentialsProvider: CredentialsProvider? = null, progressMonitor: ProgressMonitor? = null): FetchResult? {
-  val transport = Transport.open(this, remoteConfig)
   try {
-    transport.setCredentialsProvider(credentialsProvider)
-    return transport.fetch(progressMonitor ?: NullProgressMonitor.INSTANCE, null)
+    val transport = Transport.open(this, remoteConfig)
+    try {
+      transport.setCredentialsProvider(credentialsProvider)
+      return transport.fetch(progressMonitor ?: NullProgressMonitor.INSTANCE, null)
+    }
+    finally {
+      transport.close()
+    }
   }
   catch (e: TransportException) {
     val message = e.getMessage()!!
@@ -62,9 +82,6 @@ fun Repository.fetch(remoteConfig: RemoteConfig, credentialsProvider: Credential
 
     wrapIfNeedAndReThrow(e)
     return null
-  }
-  finally {
-    transport.close()
   }
 }
 

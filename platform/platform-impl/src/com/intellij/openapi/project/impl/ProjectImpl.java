@@ -42,7 +42,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
@@ -70,14 +69,17 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   private ProjectManager myProjectManager;
   private MyProjectManagerListener myProjectManagerListener;
   private final AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
-  public boolean myOptimiseTestLoadSpeed;
   private String myName;
   private String myOldName;
   private final boolean myLight;
 
+  /**
+   * @param projectManager
+   * @param filePath System-independent path
+   * @param projectName
+   */
   protected ProjectImpl(@NotNull ProjectManager projectManager,
                         @NotNull String filePath,
-                        boolean optimiseTestLoadSpeed,
                         @Nullable String projectName) {
     super(ApplicationManager.getApplication(), "Project " + (projectName == null ? filePath : projectName));
 
@@ -89,10 +91,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     getPicoContainer().registerComponentInstance(Project.class, this);
 
     if (!isDefault()) {
-      getStateStore().setPath(FileUtilRt.toSystemIndependentName(filePath));
+      getStateStore().setPath(filePath);
     }
 
-    myOptimiseTestLoadSpeed = optimiseTestLoadSpeed;
     myProjectManager = projectManager;
 
     myName = projectName == null ? getStateStore().getProjectName() : projectName;
@@ -269,16 +270,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Nullable
   public VirtualFile getWorkspaceFile() {
     return isDefault() ? null : getStateStore().getWorkspaceFile();
-  }
-
-  @Override
-  public boolean isOptimiseTestLoadSpeed() {
-    return myOptimiseTestLoadSpeed;
-  }
-
-  @Override
-  public void setOptimiseTestLoadSpeed(final boolean optimiseTestLoadSpeed) {
-    myOptimiseTestLoadSpeed = optimiseTestLoadSpeed;
   }
 
   @Override

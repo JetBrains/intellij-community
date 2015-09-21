@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     });
   }
 
-  static <T> T resolveInReadAction(@NotNull Project p, Computable<T> computable) {
+  static <T> T resolveInReadAction(@NotNull Project p, @NotNull  Computable<T> computable) {
     return ApplicationManager.getApplication().isReadAccessAllowed() ? computable.compute() : DumbService.getInstance(p).runReadActionInSmartMode(computable);
   }
 

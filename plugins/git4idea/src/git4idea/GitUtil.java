@@ -66,6 +66,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 
+import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+
 /**
  * Git utility/helper methods
  */
@@ -992,5 +994,10 @@ public class GitUtil {
         return repository.getPresentableUrl();
       }
     }, "<br/>");
+  }
+
+  @NotNull
+  public static String mention(@NotNull GitRepository repository) {
+    return getRepositoryManager(repository.getProject()).moreThanOneRoot() ? " in " + getShortRepositoryName(repository) : "";
   }
 }

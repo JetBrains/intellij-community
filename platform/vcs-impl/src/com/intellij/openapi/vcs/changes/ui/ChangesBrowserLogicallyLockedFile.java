@@ -20,7 +20,7 @@ import com.intellij.openapi.vcs.changes.LogicalLock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 
-import static com.intellij.vcsUtil.UIVcsUtil.SPACE_AND_THIN_SPACE;
+import static com.intellij.vcsUtil.UIVcsUtil.spaceAndThinSpace;
 
 public class ChangesBrowserLogicallyLockedFile extends ChangesBrowserFileNode {
   private final LogicalLock myLogicalLock;
@@ -33,7 +33,7 @@ public class ChangesBrowserLogicallyLockedFile extends ChangesBrowserFileNode {
   @Override
   public void render(ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
     super.render(renderer, selected, expanded, hasFocus);
-    renderer.append(SPACE_AND_THIN_SPACE + "locked by ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(spaceAndThinSpace() + "locked by ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(myLogicalLock.getOwner(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 }

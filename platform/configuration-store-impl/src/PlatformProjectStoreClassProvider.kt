@@ -20,6 +20,6 @@ import com.intellij.openapi.project.impl.ProjectStoreClassProvider
 
 class PlatformProjectStoreClassProvider : ProjectStoreClassProvider {
   override fun getProjectStoreClass(isDefaultProject: Boolean): Class<out IComponentStore> {
-    return if (isDefaultProject) javaClass<DefaultProjectStoreImpl>() else javaClass<ProjectStoreImpl>()
+    return if (isDefaultProject) DefaultProjectStoreImpl::class.java else ProjectStoreImpl::class.java
   }
 }

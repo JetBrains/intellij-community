@@ -26,6 +26,7 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -79,6 +80,9 @@ public class AutoTestManager {
     }, new Condition<VirtualFile>() {
       @Override
       public boolean value(VirtualFile file) {
+        if (ScratchFileService.getInstance().getRootType(file) != null) {
+          return false;
+        }
         // Vladimir.Krivosheev - I don't know, why AutoTestManager checks it, but old behavior is preserved
         return FileEditorManager.getInstance(myProject).isFileOpen(file);
       }

@@ -2583,7 +2583,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public boolean isShowStripeButton(String id) {
-    checkId(id);
-    return getInfo(id).isShowStripeButton();
+    WindowInfoImpl info = getInfo(id);
+    return info == null || info.isShowStripeButton();
   }
 }
