@@ -36,8 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.FilteredImageSource;
-import java.awt.image.ImageProducer;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -286,19 +284,13 @@ public final class IconLoader {
 
       graphics.dispose();
 
-      Image img = createDisabled(image);
+      Image img = ImageUtil.filter(image, UIUtil.getGrayFilter());
       if (UIUtil.isRetina()) img = RetinaImage.createFrom(img, 2, ImageLoader.ourComponent);
 
       disabledIcon = new JBImageIcon(img);
       ourIcon2DisabledIcon.put(icon, disabledIcon);
     }
     return disabledIcon;
-  }
-
-  private static Image createDisabled(BufferedImage image) {
-    final GrayFilter filter = UIUtil.getGrayFilter();
-    final ImageProducer prod = new FilteredImageSource(image.getSource(), filter);
-    return Toolkit.getDefaultToolkit().createImage(prod);
   }
 
   public static Icon getTransparentIcon(@NotNull final Icon icon) {
