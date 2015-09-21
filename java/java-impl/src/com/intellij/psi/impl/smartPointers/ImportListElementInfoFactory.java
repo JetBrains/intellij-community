@@ -16,17 +16,18 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImportList;
 import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ImportListElementInfoFactory implements SmartPointerElementInfoFactory {
+public class ImportListElementInfoFactory extends SmartPointerElementInfoFactory {
   @Override
   @Nullable
-  public SmartPointerElementInfo createElementInfo(@NotNull final PsiElement element) {
+  public SmartPointerElementInfo createElementInfo(@NotNull final PsiElement element, @NotNull PsiFile containingFile) {
     if (element instanceof PsiImportList) {
-      return new ImportListInfo((PsiJavaFile)element.getContainingFile());
+      return new ImportListInfo((PsiJavaFile)containingFile);
     }
     return null;
   }

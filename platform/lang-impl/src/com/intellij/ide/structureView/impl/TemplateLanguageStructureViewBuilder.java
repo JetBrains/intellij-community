@@ -50,7 +50,7 @@ import java.util.List;
 public abstract class TemplateLanguageStructureViewBuilder implements StructureViewBuilder {
   private final VirtualFile myVirtualFile;
   private final Project myProject;
-  private Language myTemplateDataLanguage;
+  @Nullable private Language myTemplateDataLanguage;
   private StructureViewComposite.StructureViewDescriptor myBaseStructureViewDescriptor;
   private FileEditor myFileEditor;
   private StructureViewComposite myStructureViewComposite;
@@ -59,8 +59,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   protected TemplateLanguageStructureViewBuilder(PsiElement psiElement) {
     myVirtualFile = psiElement.getContainingFile().getVirtualFile();
     myProject = psiElement.getProject();
-
-    myTemplateDataLanguage = getNotNullViewProvider().getTemplateDataLanguage();
+    myTemplateDataLanguage = getTemplateDataLanguage();
   }
 
   private void updateAfterPsiChange() {
@@ -69,15 +68,12 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
     ApplicationManager.getApplication().runReadAction(new Runnable(){
       @Override
       public void run() {
-        if (!myVirtualFile.isValid()) return;
-
-        final TemplateLanguageFileViewProvider provider = getViewProvider();
-        if (provider == null) return;
+        if (!myVirtualFile.isValid() || getViewProvider() == null) return;
 
         StructureViewWrapper structureViewWrapper = StructureViewFactoryEx.getInstanceEx(myProject).getStructureViewWrapper();
         if (structureViewWrapper == null) return;
 
-        Language baseLanguage = provider.getTemplateDataLanguage();
+        Language baseLanguage = getTemplateDataLanguage();
         if (baseLanguage == myTemplateDataLanguage
             && (myBaseStructureViewDescriptor == null || isPsiValid(myBaseStructureViewDescriptor))) {
           updateBaseLanguageView();
@@ -108,18 +104,15 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   }
 
   @Nullable
-  private TemplateLanguageFileViewProvider getViewProvider() {
-    final FileViewProvider provider = PsiManager.getInstance(myProject).findViewProvider(myVirtualFile);
-    return provider instanceof TemplateLanguageFileViewProvider ? (TemplateLanguageFileViewProvider)provider : null;
+  private FileViewProvider getViewProvider() {
+    return PsiManager.getInstance(myProject).findViewProvider(myVirtualFile);
   }
 
-  @NotNull 
-  private TemplateLanguageFileViewProvider getNotNullViewProvider() {
-    final FileViewProvider provider = PsiManager.getInstance(myProject).findViewProvider(myVirtualFile);
-    if (provider == null || !(provider instanceof TemplateLanguageFileViewProvider)) {
-      throw new AssertionError("Not a template view provider for " + myVirtualFile + ": " + provider);
-    }
-    return (TemplateLanguageFileViewProvider)provider;
+  @Nullable
+  private Language getTemplateDataLanguage() {
+    FileViewProvider provider = getViewProvider();
+    return provider instanceof TemplateLanguageFileViewProvider
+           ? ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage() : null;
   }
 
   private void updateBaseLanguageView() {
@@ -165,13 +158,13 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   public StructureView createStructureView(FileEditor fileEditor, @NotNull Project project) {
     myFileEditor = fileEditor;
     List<StructureViewComposite.StructureViewDescriptor> viewDescriptors = new ArrayList<StructureViewComposite.StructureViewDescriptor>();
-    final TemplateLanguageFileViewProvider provider = getNotNullViewProvider();
+    final FileViewProvider provider = getViewProvider();
+    assert provider != null : myVirtualFile;
 
     final StructureViewComposite.StructureViewDescriptor structureViewDescriptor = createMainView(fileEditor, provider.getPsi(provider.getBaseLanguage()));
     if (structureViewDescriptor != null) viewDescriptors.add(structureViewDescriptor);
 
     myBaseLanguageViewDescriptorIndex = -1;
-    final Language dataLanguage = provider.getTemplateDataLanguage();
 
     updateTemplateDataFileView();
     if (myBaseStructureViewDescriptor != null) {
@@ -179,9 +172,12 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
       myBaseLanguageViewDescriptorIndex = viewDescriptors.size() - 1;
     }
 
-    for (final Language language : provider.getLanguages()) {
-      if (language != dataLanguage && language != provider.getBaseLanguage()) {
-        ContainerUtil.addIfNotNull(createBaseLanguageStructureView(fileEditor, language), viewDescriptors);
+    if (provider instanceof TemplateLanguageFileViewProvider) {
+      final Language dataLanguage = ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage();
+      for (final Language language : provider.getLanguages()) {
+        if (language != dataLanguage && language != provider.getBaseLanguage()) {
+          ContainerUtil.addIfNotNull(createBaseLanguageStructureView(fileEditor, language), viewDescriptors);
+        }
       }
     }
 
@@ -210,7 +206,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   private StructureViewComposite.StructureViewDescriptor createBaseLanguageStructureView(final FileEditor fileEditor, final Language language) {
     if (!myVirtualFile.isValid()) return null;
 
-    final TemplateLanguageFileViewProvider viewProvider = getViewProvider();
+    final FileViewProvider viewProvider = getViewProvider();
     if (viewProvider == null) return null;
 
     final PsiFile dataFile = viewProvider.getPsi(language);
@@ -231,8 +227,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   }
 
   private void updateTemplateDataFileView() {
-    final TemplateLanguageFileViewProvider provider = getViewProvider();
-    final Language newDataLanguage = provider == null ? null : provider.getTemplateDataLanguage();
+    final Language newDataLanguage = getTemplateDataLanguage();
 
     if (myBaseStructureViewDescriptor != null) {
       if (myTemplateDataLanguage == newDataLanguage) return;

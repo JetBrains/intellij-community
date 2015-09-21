@@ -36,6 +36,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;

@@ -302,6 +302,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         if (component.isDoubleBuffered()) {
           append(", double-buffered", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
+        componentNode.setText(toString());
         setIcon(new TwoColorsIcon(11, component.getForeground(), component.getBackground()));
       }
 
@@ -366,6 +367,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
     private static class ComponentNode extends DefaultMutableTreeNode  {
       private final Component myComponent;
+      String myText;
 
       private ComponentNode(@NotNull Component component) {
         super(component);
@@ -379,7 +381,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       @Override
       public String toString() {
-        return myComponent.getClass().getName();
+        return myText != null ? myText : myComponent.getClass().getName();
+      }
+
+      public void setText(String value) {
+        myText = value;
       }
 
       @Override
