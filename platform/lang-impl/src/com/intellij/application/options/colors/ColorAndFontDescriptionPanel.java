@@ -23,10 +23,7 @@ import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.ColorPanel;
-import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -152,7 +149,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
       colorPanel.setSelectedColor(color);
     }
     else {
-      colorPanel.setSelectedColor(Color.white);
+      colorPanel.setSelectedColor(JBColor.WHITE);
     }
     colorPanel.setEnabled(isChecked);
   }
