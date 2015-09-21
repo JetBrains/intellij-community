@@ -29,9 +29,7 @@ import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
-import org.jdom.JDOMException
 import org.junit.Test
-import java.io.IOException
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
@@ -196,8 +194,8 @@ public class XmlSerializerTest {
 
 
   public class BeanWithMapWithAnnotations {
-    Property(surroundWithTag = false)
-    MapAnnotation(surroundWithTag = false, entryTagName = "option", keyAttributeName = "name", valueAttributeName = "value")
+    @Property(surroundWithTag = false)
+    @MapAnnotation(surroundWithTag = false, entryTagName = "option", keyAttributeName = "name", valueAttributeName = "value")
     public var VALUES: MutableMap<String, String> = LinkedHashMap()
 
     init {
@@ -235,7 +233,7 @@ public class XmlSerializerTest {
 
 
   public class BeanWithMapWithBeanValue2 {
-    MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
+    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
     public var values: Map<String, BeanWithProperty> = THashMap()
   }
 
@@ -282,7 +280,7 @@ public class XmlSerializerTest {
   }
 
   class BeanWithFieldWithTagAnnotation {
-    Tag("name")
+    @Tag("name")
     public var STRING_V: String = "hello"
   }
 
@@ -381,7 +379,7 @@ public class XmlSerializerTest {
   }
 
   public class BeanWithArrayWithoutTagName {
-    AbstractCollection(surroundWithTag = false)
+    @AbstractCollection(surroundWithTag = false)
     public var V: Array<String> = arrayOf("a")
   }
 
@@ -618,7 +616,7 @@ public class XmlSerializerTest {
 
 
   class BeanWithPropertyFilter {
-    Property(filter = PropertyFilterTest::class)
+    @Property(filter = PropertyFilterTest::class)
     public var STRING_V: String = "hello"
   }
 
@@ -644,7 +642,7 @@ public class XmlSerializerTest {
 
   class BeanWithJDOMElement {
     public var STRING_V: String = "hello"
-    Tag("actions")
+    @Tag("actions")
     public var actions: org.jdom.Element? = null
   }
 
@@ -658,12 +656,8 @@ public class XmlSerializerTest {
     assertSerializer(element, "<BeanWithJDOMElement>\n" + "  <option name=\"STRING_V\" value=\"a\" />\n" + "</BeanWithJDOMElement>", null)
   }
 
-  throws(Exception::class)
   @Test fun DeserializeJDOMElementField() {
-
-
     val bean = XmlSerializer.deserialize<BeanWithJDOMElement>(JDOMUtil.loadDocument("<BeanWithJDOMElement><option name=\"STRING_V\" value=\"bye\"/><actions><action/><action/></actions></BeanWithJDOMElement>").getRootElement(), BeanWithJDOMElement::class.java)!!
-
 
     TestCase.assertEquals("bye", bean.STRING_V)
     TestCase.assertNotNull(bean.actions)
@@ -672,7 +666,7 @@ public class XmlSerializerTest {
 
   class BeanWithJDOMElementArray {
     public var STRING_V: String = "hello"
-    Tag("actions")
+    @Tag("actions")
     public var actions: Array<org.jdom.Element>? = null
   }
 
@@ -699,7 +693,7 @@ public class XmlSerializerTest {
 
   class BeanWithTextAnnotation {
     public var INT_V: Int = 1
-    Text
+    @Text
     public var STRING_V: String = "hello"
 
     public constructor(INT_V: Int, STRING_V: String) {
@@ -873,7 +867,7 @@ public class XmlSerializerTest {
   }
 
   private class BeanWithDefaultAttributeName {
-    Attribute
+    @Attribute
     public fun getFoo(): String {
       return "foo"
     }
@@ -888,17 +882,16 @@ public class XmlSerializerTest {
   }
 
   class Bean2 {
-    Attribute
+    @Attribute
     var ab: String? = null
 
-    Attribute
+    @Attribute
     var module: String? = null
 
-    Attribute
+    @Attribute
     var ac: String? = null
   }
 
-  throws(IOException::class, JDOMException::class)
   @Test fun Ordered() {
     val bean = Bean2()
     bean.module = "module"
@@ -914,11 +907,11 @@ public class XmlSerializerTest {
 
   @Tag("b")
   class Bean3 {
-    @suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
+    @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
     public var list: JDOMExternalizableStringList = JDOMExternalizableStringList()
   }
 
-  Tag("b")
+  @Tag("b")
   class Bean4 {
     @CollectionBean
     val list = SmartList<String>()
@@ -941,7 +934,7 @@ public class XmlSerializerTest {
   }
 
   @Test fun CollectionBeanReadJDOMExternalizableStringList() {
-    @suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
+    @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
     val list = JDOMExternalizableStringList()
     list.add("one")
     list.add("two")
@@ -970,7 +963,7 @@ public class XmlSerializerTest {
 
   @Test fun cdataAfterNewLine() {
     @Tag("bean")
-    @data class Bean(@Tag var description: String? = null)
+    data class Bean(@Tag var description: String? = null)
 
     var bean = XmlSerializer.deserialize(JDOMUtil.load("""<bean>
   <description>
@@ -996,7 +989,7 @@ public class XmlSerializerTest {
       TestCase.assertEquals(serialized, JDOMUtil.writeElement(serializedState))
     }
 
-    private fun <T: Any> doSerializerTest(Language("XML") expectedText: String, bean: T, filter: SerializationFilter? = null): T {
+    private fun <T: Any> doSerializerTest(@Language("XML") expectedText: String, bean: T, filter: SerializationFilter? = null): T {
       val element = assertSerializer(bean, expectedText, filter)
 
       //test deserializer

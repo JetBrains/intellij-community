@@ -40,6 +40,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import com.intellij.util.xmlb.annotations.Attribute
 
 val FILE_SPEC = "REMOTE"
 
@@ -48,26 +49,26 @@ val FILE_SPEC = "REMOTE"
  */
 class SchemeManagerTest {
   companion object {
-    ClassRule val projectRule = ProjectRule()
+    @ClassRule val projectRule = ProjectRule()
   }
 
   private val tempDirManager = TemporaryDirectory()
-  public Rule fun getTemporaryFolder(): TemporaryDirectory = tempDirManager
+  @Rule fun getTemporaryFolder() = tempDirManager
 
   private var localBaseDir: File? = null
   private var remoteBaseDir: File? = null
 
   private fun getTestDataPath() = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/options"
 
-  public Test fun testLoadSchemes() {
+  @Test fun testLoadSchemes() {
     doLoadSaveTest("options1", "1->first;2->second")
   }
 
-  public Test fun testLoadSimpleSchemes() {
+  @Test fun testLoadSimpleSchemes() {
     doLoadSaveTest("options", "1->1")
   }
 
-  public Test fun testDeleteScheme() {
+  @Test fun testDeleteScheme() {
     val manager = createAndLoad("options1")
     manager.removeScheme(TestScheme("first"))
     manager.save()
@@ -75,7 +76,7 @@ class SchemeManagerTest {
     checkSchemes("2->second")
   }
 
-  public Test fun testRenameScheme() {
+  @Test fun testRenameScheme() {
     val manager = createAndLoad("options1")
 
     val scheme = manager.findSchemeByName("first")
@@ -86,7 +87,7 @@ class SchemeManagerTest {
     checkSchemes("2->second;renamed->renamed")
   }
 
-  public Test fun testRenameScheme2() {
+  @Test fun testRenameScheme2() {
     val manager = createAndLoad("options1")
 
     val first = manager.findSchemeByName("first")
@@ -102,7 +103,7 @@ class SchemeManagerTest {
     checkSchemes("1->1;2->2")
   }
 
-  public Test fun testDeleteRenamedScheme() {
+  @Test fun testDeleteRenamedScheme() {
     val manager = createAndLoad("options1")
 
     val firstScheme = manager.findSchemeByName("first")
@@ -122,7 +123,7 @@ class SchemeManagerTest {
     checkSchemes(localBaseDir!!, "", false)
   }
 
-  public Test fun testDeleteAndCreateSchemeWithTheSameName() {
+  @Test fun testDeleteAndCreateSchemeWithTheSameName() {
     val manager = createAndLoad("options1")
     val firstScheme = manager.findSchemeByName("first")
     assertThat(firstScheme).isNotNull()
@@ -133,7 +134,7 @@ class SchemeManagerTest {
     checkSchemes("2->second;first->first")
   }
 
-  public Test fun testGenerateUniqueSchemeName() {
+  @Test fun testGenerateUniqueSchemeName() {
     val manager = createAndLoad("options1")
     val scheme = TestScheme("first")
     manager.addNewScheme(scheme, false)
@@ -145,7 +146,7 @@ class SchemeManagerTest {
     FileUtil.writeToFile(file, _serialize().toByteArray())
   }
 
-  public Test fun `different extensions`() {
+  @Test fun `different extensions`() {
     val dir = tempDirManager.newDirectory()
 
     val scheme = TestScheme("local", "true")
@@ -158,7 +159,7 @@ class SchemeManagerTest {
       override fun getSchemeExtension() = ".icls"
     }, null, dir)
     schemesManager.loadSchemes()
-    assertThat(schemesManager.getAllSchemes()).containsOnly(scheme)
+    assertThat(schemesManager.allSchemes).containsOnly(scheme)
 
     assertThat(File(dir, "1.icls")).isFile()
     assertThat(File(dir, "1.xml")).isFile()
@@ -170,16 +171,16 @@ class SchemeManagerTest {
     assertThat(File(dir, "1.xml")).doesNotExist()
   }
 
-  public Test fun setSchemes() {
+  @Test fun setSchemes() {
     val dir = tempDirManager.newDirectory()
     val schemeManager = createSchemeManager(dir)
     schemeManager.loadSchemes()
-    assertThat(schemeManager.getAllSchemes()).isEmpty()
+    assertThat(schemeManager.allSchemes).isEmpty()
 
     val scheme = TestScheme("s1")
     schemeManager.setSchemes(listOf(scheme))
 
-    val schemes = schemeManager.getAllSchemes()
+    val schemes = schemeManager.allSchemes
     assertThat(schemes).containsOnly(scheme)
 
     assertThat(File(dir, "s1.xml")).doesNotExist()
@@ -196,13 +197,13 @@ class SchemeManagerTest {
     assertThat(dir).doesNotExist()
   }
 
-  public Test fun `save only if scheme differs from bundled`() {
+  @Test fun `save only if scheme differs from bundled`() {
     val dir = tempDirManager.newDirectory()
     var schemeManager = createSchemeManager(dir)
     val converter: (Element) -> TestScheme = { XmlSerializer.deserialize(it, TestScheme::class.java)!! }
     val bundledPath = "/bundledSchemes/default"
     schemeManager.loadBundledScheme(bundledPath, this, converter)
-    var schemes = schemeManager.getAllSchemes()
+    var schemes = schemeManager.allSchemes
     val customScheme = TestScheme("default")
     assertThat(schemes).containsOnly(customScheme)
 
@@ -213,7 +214,7 @@ class SchemeManagerTest {
     schemeManager.setSchemes(listOf(customScheme))
     assertThat(dir).doesNotExist()
 
-    schemes = schemeManager.getAllSchemes()
+    schemes = schemeManager.allSchemes
     assertThat(schemes).containsOnly(customScheme)
 
     customScheme.data = "foo"
@@ -224,11 +225,11 @@ class SchemeManagerTest {
     schemeManager.loadBundledScheme(bundledPath, this, converter)
     schemeManager.loadSchemes()
 
-    schemes = schemeManager.getAllSchemes()
+    schemes = schemeManager.allSchemes
     assertThat(schemes).containsOnly(customScheme)
   }
 
-  public Test fun `don't remove dir if no schemes but at least one non-hidden file exists`() {
+  @Test fun `don't remove dir if no schemes but at least one non-hidden file exists`() {
     val dir = tempDirManager.newDirectory()
     val schemeManager = createSchemeManager(dir)
 
@@ -250,7 +251,7 @@ class SchemeManagerTest {
     assertThat(dir).isDirectory()
   }
 
-  public Test fun `remove empty directory only if some file was deleted`() {
+  @Test fun `remove empty directory only if some file was deleted`() {
     val dir = tempDirManager.newDirectory()
     val schemeManager = createSchemeManager(dir)
     schemeManager.loadSchemes()
@@ -268,16 +269,16 @@ class SchemeManagerTest {
     assertThat(dir).doesNotExist()
   }
 
-  public Test fun rename() {
+  @Test fun rename() {
     val dir = tempDirManager.newDirectory()
     val schemeManager = createSchemeManager(dir)
     schemeManager.loadSchemes()
-    assertThat(schemeManager.getAllSchemes()).isEmpty()
+    assertThat(schemeManager.allSchemes).isEmpty()
 
     val scheme = TestScheme("s1")
     schemeManager.setSchemes(listOf(scheme))
 
-    val schemes = schemeManager.getAllSchemes()
+    val schemes = schemeManager.allSchemes
     assertThat(schemes).containsOnly(scheme)
 
     assertThat(File(dir, "s1.xml")).doesNotExist()
@@ -295,11 +296,11 @@ class SchemeManagerTest {
     assertThat(File(dir, "s2.xml")).isFile()
   }
 
-  public Test fun `path must not contains ROOT_CONFIG macro`() {
+  @Test fun `path must not contains ROOT_CONFIG macro`() {
     assertThatThrownBy({ SchemesManagerFactory.getInstance().create<TestScheme, TestScheme>("\$ROOT_CONFIG$/foo", TestSchemesProcessor()) }).hasMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
   }
 
-  public Test fun `path must be system-independent`() {
+  @Test fun `path must be system-independent`() {
     assertThatThrownBy({SchemesManagerFactory.getInstance().create<TestScheme, TestScheme>("foo\\bar", TestSchemesProcessor())}).hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 
@@ -368,15 +369,15 @@ private fun checkSchemes(baseDir: File, expected: String, ignoreDeleted: Boolean
   }
 }
 
-Tag("scheme")
-public data class TestScheme(@Attribute private var name: String = "", @Attribute public var data: String? = null) : ExternalizableScheme {
+@Tag("scheme")
+data class TestScheme(@field:Attribute private var name: String = "", @field:Attribute var data: String? = null) : ExternalizableScheme {
   override fun getName() = name
 
-  override Transient fun setName(newName: String) {
+  override @Transient fun setName(newName: String) {
     name = newName
   }
 
-  @suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
+  @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
   override fun getExternalInfo() = null
 }
 
