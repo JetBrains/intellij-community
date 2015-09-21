@@ -1,5 +1,4 @@
 def f(param):
     """
-    Args:
-        param
+    Args:<caret>
     """

@@ -274,6 +274,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
 
   protected abstract void updateParamDeclarationWithType(@NotNull Substring nameSubstring, @NotNull String type);
 
+  @NotNull
   protected abstract SectionBasedDocStringBuilder createBuilder();
 
   @Nullable

@@ -419,6 +419,12 @@ public class  PyIntentionTest extends PyTestCase {
     });
   }
 
+  // PY-16765
+  public void testGoogleDocStubCustomIndent() {
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    doDocStubTest(DocStringFormat.GOOGLE);
+  }
+
   // PY-9795
   public void testGoogleDocStubInlineFunctionBody() {
     doDocStubTest(DocStringFormat.GOOGLE);
@@ -565,8 +571,20 @@ public class  PyIntentionTest extends PyTestCase {
     doDocAddMissingParamsTest(DocStringFormat.GOOGLE);
   }
   
+  // PY-16765
+  public void testAddMissingParamsInGoogleDocStringNoParamSectionCustomCodeIndent() {
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    doDocAddMissingParamsTest(DocStringFormat.GOOGLE);
+  }
+  
   // PY-9795
   public void testAddMissingParamsInGoogleDocStringEmptyParamSection() {
+    doDocAddMissingParamsTest(DocStringFormat.GOOGLE);
+  }
+  
+  // PY-16765
+  public void testAddMissingParamsInGoogleDocStringEmptyParamSectionCustomCodeIndent() {
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     doDocAddMissingParamsTest(DocStringFormat.GOOGLE);
   }
 

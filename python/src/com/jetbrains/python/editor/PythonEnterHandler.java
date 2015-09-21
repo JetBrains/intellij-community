@@ -371,7 +371,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
           final TextRange lineRange = TextRange.create(document.getLineStartOffset(lineNum - 1), document.getLineEndOffset(lineNum - 1));
           final Matcher matcher = GoogleCodeStyleDocString.SECTION_HEADER.matcher(document.getText(lineRange));
           if (matcher.matches() && SectionBasedDocString.isValidSectionTitle(matcher.group(1))) {
-            document.insertString(offset, GoogleCodeStyleDocStringBuilder.DEFAULT_SECTION_INDENT);
+            document.insertString(offset, GoogleCodeStyleDocStringBuilder.getDefaultSectionIndent(file.getProject()));
             editor.getCaretModel().moveCaretRelatively(2, 0, false, false, false);
           }
         }

@@ -187,7 +187,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     if (init != null) {
       return AddFieldQuickFix.appendToMethod(init, callback);
     }
-    final PyFunctionBuilder builder = new PyFunctionBuilder(PythonUnitTestUtil.TESTCASE_SETUP_NAME);
+    final PyFunctionBuilder builder = new PyFunctionBuilder(PythonUnitTestUtil.TESTCASE_SETUP_NAME, clazz);
     builder.parameter(PyNames.CANONICAL_SELF);
     PyFunction setUp = builder.buildFunction(clazz.getProject(), LanguageLevel.getDefault());
     final PyStatementList statements = clazz.getStatementList();
