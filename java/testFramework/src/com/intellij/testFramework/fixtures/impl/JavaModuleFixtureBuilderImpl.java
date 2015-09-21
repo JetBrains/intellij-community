@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -39,6 +40,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -116,51 +118,59 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
   protected void initModule(final Module module) {
     super.initModule(module);
 
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    final LibraryTable libraryTable = model.getModuleLibraryTable();
-
-    for (Lib lib : myLibraries) {
-      String libraryName = lib.getName();
-
-      final Library library = libraryTable.createLibrary(libraryName);
-
-      final Library.ModifiableModel libraryModel = library.getModifiableModel();
-
-      for (OrderRootType rootType : OrderRootType.getAllTypes()) {
-        final String[] roots = lib.getRoots(rootType);
-        for (String root : roots) {
-          VirtualFile vRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
-          if (vRoot != null && OrderRootType.CLASSES.equals(rootType) && !vRoot.isDirectory()) {
-            final VirtualFile jar = JarFileSystem.getInstance().refreshAndFindFileByPath(root + "!/");
-            if (jar != null) vRoot = jar;
+    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
+      @Override
+      public void consume(ModifiableRootModel model) {
+        LibraryTable libraryTable = model.getModuleLibraryTable();
+        for (Lib lib : myLibraries) {
+          Library library = libraryTable.createLibrary(lib.getName());
+          Library.ModifiableModel libraryModel = library.getModifiableModel();
+          boolean success = false;
+          try {
+            for (OrderRootType rootType : OrderRootType.getAllTypes()) {
+              for (String root : lib.getRoots(rootType)) {
+                VirtualFile vRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
+                if (vRoot != null && OrderRootType.CLASSES.equals(rootType) && !vRoot.isDirectory()) {
+                  VirtualFile jar = JarFileSystem.getInstance().refreshAndFindFileByPath(root + "!/");
+                  if (jar != null) {
+                    vRoot = jar;
+                  }
+                }
+                if (vRoot != null) {
+                  libraryModel.addRoot(vRoot, rootType);
+                }
+              }
+            }
+            success = true;
           }
-          if (vRoot != null) {
-            libraryModel.addRoot(vRoot, rootType);
+          finally {
+            if (!success) {
+              Disposer.dispose(libraryModel);
+            }
           }
+
+          libraryModel.commit();
+        }
+
+        final Sdk jdk;
+        if (myJdk != null) {
+          VfsRootAccess.allowRootAccessTemporarily(module, myJdk);
+          jdk = JavaSdk.getInstance().createJdk(module.getName() + "_jdk", myJdk, false);
+          ((ProjectJdkImpl)jdk).setVersionString(StringUtil.notNullize(IdeaTestUtil.getMockJdkVersion(myJdk), "java 1.5"));
+        }
+        else {
+          jdk = IdeaTestUtil.getMockJdk17();
+        }
+        model.setSdk(new MockJdkWrapper(CompilerConfigurationImpl.getTestsExternalCompilerHome(), jdk));
+
+        if (myLanguageLevel != null) {
+          model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);
+        }
+        else if (myMockJdkLevel == MockJdkLevel.jdk15) {
+          model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5);
         }
       }
-      libraryModel.commit();
-    }
-
-    final Sdk jdk;
-    if (myJdk != null) {
-      VfsRootAccess.allowRootAccessTemporarily(module, myJdk);
-      jdk = JavaSdk.getInstance().createJdk(module.getName() + "_jdk", myJdk, false);
-      ((ProjectJdkImpl)jdk).setVersionString(StringUtil.notNullize(IdeaTestUtil.getMockJdkVersion(myJdk), "java 1.5"));
-    }
-    else {
-      jdk = IdeaTestUtil.getMockJdk17();
-    }
-    model.setSdk(new MockJdkWrapper(CompilerConfigurationImpl.getTestsExternalCompilerHome(), jdk));
-
-    if (myLanguageLevel != null) {
-      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);
-    }
-    else if (myMockJdkLevel == MockJdkLevel.jdk15) {
-      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5);
-    }
-
-    model.commit();
+    });
 
     for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry) {
