@@ -17,17 +17,19 @@ package org.jetbrains.plugins.groovy.dgm;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Provides members from extension classes referenced in {@code META-INF/services/org.codehaus.groovy.runtime.ExtensionModule}.
@@ -40,34 +42,49 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
                                      @NotNull PsiScopeProcessor processor,
                                      @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
-    Project project = place.getProject();
-    GlobalSearchScope resolveScope = place.getResolveScope();
-    GroovyPsiManager groovyPsiManager = GroovyPsiManager.getInstance(project);
+    final Project project = place.getProject();
 
-    Couple<List<String>> extensions = GroovyExtensionProvider.getInstance(project).collectExtensions(resolveScope);
-
-    List<String> instanceCategories = extensions.getFirst();
-    List<String> staticCategories = extensions.getSecond();
-
-    if (!processCategories(qualifierType, processor, state, project, resolveScope, groovyPsiManager, instanceCategories, false)) return;
-    if (!processCategories(qualifierType, processor, state, project, resolveScope, groovyPsiManager, staticCategories, true)) return;
-  }
-
-  private static boolean processCategories(PsiType qualifierType,
-                                           PsiScopeProcessor processor,
-                                           @NotNull ResolveState state,
-                                           Project project,
-                                           GlobalSearchScope resolveScope,
-                                           GroovyPsiManager groovyPsiManager, List<String> instanceCategories,
-                                           boolean isStatic) {
-    for (String category : instanceCategories) {
-      PsiClass clazz = groovyPsiManager.findClassWithCache(category, resolveScope);
-      if (clazz != null) {
-        if (!GdkMethodHolder.getHolderForClass(clazz, isStatic, resolveScope).processMethods(processor, state, qualifierType, project)) {
-          return false;
+    ConcurrentMap<GlobalSearchScope, List<GdkMethodHolder>> map = CachedValuesManager.getManager(project).getCachedValue(
+      project, new CachedValueProvider<ConcurrentMap<GlobalSearchScope, List<GdkMethodHolder>>>() {
+        @Nullable
+        @Override
+        public Result<ConcurrentMap<GlobalSearchScope, List<GdkMethodHolder>>> compute() {
+          ConcurrentMap<GlobalSearchScope, List<GdkMethodHolder>> value = ContainerUtil.createConcurrentSoftValueMap();
+          return Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
         }
+      });
+
+    GlobalSearchScope scope = place.getResolveScope();
+    List<GdkMethodHolder> gdkMethods = map.get(scope);
+    if (gdkMethods == null) {
+      map.put(scope, gdkMethods = calcGdkMethods(project, scope));
+    }
+
+    for (GdkMethodHolder holder : gdkMethods) {
+      if (!holder.processMethods(processor, state, qualifierType, project)) {
+        return;
       }
     }
-    return true;
+  }
+
+  @NotNull
+  private static List<GdkMethodHolder> calcGdkMethods(Project project, GlobalSearchScope resolveScope) {
+    List<GdkMethodHolder> gdkMethods = ContainerUtil.newArrayList();
+
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    Couple<List<String>> extensions = GroovyExtensionProvider.getInstance(project).collectExtensions(resolveScope);
+    for (String category : extensions.getFirst()) {
+      PsiClass clazz = facade.findClass(category, resolveScope);
+      if (clazz != null) {
+        gdkMethods.add(GdkMethodHolder.getHolderForClass(clazz, false, resolveScope));
+      }
+    }
+    for (String category : extensions.getSecond()) {
+      PsiClass clazz = facade.findClass(category, resolveScope);
+      if (clazz != null) {
+        gdkMethods.add(GdkMethodHolder.getHolderForClass(clazz, true, resolveScope));
+      }
+    }
+    return gdkMethods;
   }
 }
