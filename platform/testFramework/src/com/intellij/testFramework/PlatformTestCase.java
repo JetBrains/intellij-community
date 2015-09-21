@@ -264,8 +264,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @NotNull
   public static Project createProject(@NotNull String path, String creationPlace) {
-    VirtualFile projectBase = LocalFileSystem.getInstance().findFileByIoFile(projectFile.getName().endsWith(
-          ProjectFileType.DOT_DEFAULT_EXTENSION) ? projectFile.getParentFile() : projectFile);
+    String fileName = PathUtilRt.getFileName(path);
+    String projectName = FileUtilRt.getNameWithoutExtension(fileName);
+    VirtualFile projectBase = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(fileName.endsWith(
+      ProjectFileType.DOT_DEFAULT_EXTENSION) ? PathUtilRt.getParentPath(path) : path));
     if (projectBase != null) {
       // must be leftovers from the previous test run
       for (VirtualFile file : ((NewVirtualFile)projectBase).iterInDbChildren()) {
@@ -274,8 +276,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
 
     try {
-      Project project =
-        ProjectManagerEx.getInstanceEx().newProject(FileUtilRt.getNameWithoutExtension(PathUtilRt.getFileName(path)), path, false, false);
+      Project project = ProjectManagerEx.getInstanceEx().newProject(projectName, path, false, false);
       assert project != null;
 
       project.putUserData(CREATION_PLACE, creationPlace);
