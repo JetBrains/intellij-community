@@ -79,7 +79,7 @@ public class GitHandlerUtil {
    */
   public static int doSynchronously(final GitLineHandler handler, final String operationTitle, @NonNls final String operationName) {
     final ProgressManager manager = ProgressManager.getInstance();
-    manager.run(new Task.Modal(handler.project(), operationTitle, false) {
+    manager.run(new Task.Modal(handler.project(), operationTitle, true) {
       public void run(@NotNull final ProgressIndicator indicator) {
         handler.addLineListener(new GitLineHandlerListenerProgress(indicator, handler, operationName, true));
         runInCurrentThread(handler, indicator, true, operationTitle);

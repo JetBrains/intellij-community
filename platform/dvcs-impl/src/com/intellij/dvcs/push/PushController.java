@@ -461,7 +461,7 @@ public class PushController implements Disposable {
   }
 
   public void push(final boolean force) {
-    Task.Backgroundable task = new Task.Backgroundable(myProject, "Pushing...", false) {
+    Task.Backgroundable task = new Task.Backgroundable(myProject, "Pushing...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         myPushSettings.saveExcludedRepoRoots(myExcludedRepositoryRoots);

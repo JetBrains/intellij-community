@@ -54,7 +54,7 @@ public class GitResetAction extends VcsLogOneCommitPerRepoAction<GitRepository> 
     if (dialog.showAndGet()) {
       final GitResetMode selectedMode = dialog.getResetMode();
       settings.setResetMode(selectedMode);
-      new Task.Backgroundable(project, "Git reset", false) {
+      new Task.Backgroundable(project, "Git reset", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           new GitResetOperation(project, commits, selectedMode, indicator).execute();
