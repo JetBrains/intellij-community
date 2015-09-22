@@ -38,6 +38,7 @@ import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
@@ -164,7 +165,16 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   public void projectOpened() {
-    updateChangesContent();
+    StartupManager startupManager = StartupManager.getInstance(myProject);
+    if (startupManager == null) {
+      return;
+    }
+    startupManager.registerPostStartupActivity(new Runnable() {
+      @Override
+      public void run() {
+        updateChangesContent();
+      }
+    });
   }
 
   public void projectClosed() {
