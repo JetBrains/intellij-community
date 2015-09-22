@@ -21,6 +21,9 @@ abstract class WeightFilter extends RGBImageFilter {
   abstract int toRGB(int srcR, int srcG, int srcB);
 
   final int toRGB(int srcR, int srcG, int srcB, double dstR, double dstG, double dstB) {
+    if (Double.isNaN(dstR)) dstR = 0;
+    if (Double.isNaN(dstG)) dstG = 0;
+    if (Double.isNaN(dstB)) dstB = 0;
     if (myWeight != null) {
       dstR = dstR * myWeight + srcR * (1 - myWeight);
       dstG = dstG * myWeight + srcG * (1 - myWeight);
