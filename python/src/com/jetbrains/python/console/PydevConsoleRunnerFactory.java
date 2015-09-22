@@ -54,14 +54,14 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     String[] setupFragment;
 
     PyConsoleOptions.PyConsoleSettings settingsProvider = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
-    Collection<String> pythonPath = PythonCommandLineState.collectPythonPath(module, settingsProvider.addContentRoots(),
-                                                                             settingsProvider.addSourceRoots());
+    Collection<String> pythonPath = PythonCommandLineState.collectPythonPath(module, settingsProvider.shouldAddContentRoots(),
+                                                                             settingsProvider.shouldAddSourceRoots());
 
     if (pathMapper != null) {
       pythonPath = pathMapper.convertToRemote(pythonPath);
     }
 
-    String customStartScript = settingsProvider == null ? "" : settingsProvider.getCustomStartScript();
+    String customStartScript = settingsProvider.getCustomStartScript();
 
     if (customStartScript.trim().length() > 0) {
       customStartScript = "\n" + customStartScript;

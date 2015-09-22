@@ -37,7 +37,7 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugConsoleCommunication;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
@@ -65,6 +65,7 @@ public class PyDebugRunner extends GenericProgramRunner {
   public static final String CLIENT_PARAM = "--client";
   public static final String PORT_PARAM = "--port";
   public static final String FILE_PARAM = "--file";
+  public static final String MODULE_PARAM = "--module";
   public static final String IDE_PROJECT_ROOTS = "IDE_PROJECT_ROOTS";
   @SuppressWarnings("SpellCheckingInspection")
   public static final String GEVENT_SUPPORT = "GEVENT_SUPPORT";
@@ -278,8 +279,9 @@ public class PyDebugRunner extends GenericProgramRunner {
                                           @NotNull ParamsGroup debugParams,
                                           int serverLocalPort,
                                           @NotNull PythonCommandLineState pyState,
-                                          @NotNull GeneralCommandLine generalCommandLine) {
-    debugParams.addParameter(PythonHelpersLocator.getHelperPath(DEBUGGER_MAIN));
+                                          @NotNull GeneralCommandLine cmd) {
+    PythonHelper.DEBUGGER.addToGroup(debugParams, cmd);
+
     if (pyState.isMultiprocessDebug()) {
       //noinspection SpellCheckingInspection
       debugParams.addParameter("--multiproc");
@@ -298,10 +300,10 @@ public class PyDebugRunner extends GenericProgramRunner {
     }
 
     if (PyDebuggerOptionsProvider.getInstance(project).isSupportGeventDebugging()) {
-      generalCommandLine.getEnvironment().put(GEVENT_SUPPORT, "True");
+      cmd.getEnvironment().put(GEVENT_SUPPORT, "True");
     }
 
-    addProjectRootsToEnv(project, generalCommandLine);
+    addProjectRootsToEnv(project, cmd);
 
     final String[] debuggerArgs = new String[]{
       CLIENT_PARAM, "127.0.0.1",

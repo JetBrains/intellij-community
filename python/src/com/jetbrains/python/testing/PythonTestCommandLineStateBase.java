@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
@@ -44,7 +45,6 @@ import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -92,7 +92,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   @Override
-  public GeneralCommandLine generateCommandLine() throws ExecutionException {
+  public GeneralCommandLine generateCommandLine()  {
     GeneralCommandLine cmd = super.generateCommandLine();
 
     setWorkingDirectory(cmd);
@@ -154,24 +154,24 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     return executionResult;
   }
 
-  protected void addBeforeParameters(GeneralCommandLine cmd) throws ExecutionException {}
-  protected void addAfterParameters(GeneralCommandLine cmd) throws ExecutionException {}
+  protected void addBeforeParameters(GeneralCommandLine cmd)  {}
+  protected void addAfterParameters(GeneralCommandLine cmd) {}
 
-  protected void addTestRunnerParameters(GeneralCommandLine cmd) throws ExecutionException {
-    ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
-    assert script_params != null;
-    script_params.addParameter(new File(PythonHelpersLocator.getHelpersRoot(), getRunner()).getAbsolutePath());
+  protected void addTestRunnerParameters(GeneralCommandLine cmd)  {
+    ParamsGroup scriptParams = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
+    assert scriptParams != null;
+    getRunner().addToGroup(scriptParams, cmd);
     addBeforeParameters(cmd);
-    script_params.addParameters(getTestSpecs());
+    scriptParams.addParameters(getTestSpecs());
     addAfterParameters(cmd);
   }
 
   @Override
-  public void addPredefinedEnvironmentVariables(Map<String, String> envs, boolean passParentEnvs) {
-    super.addPredefinedEnvironmentVariables(envs, passParentEnvs);
+  public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
+    super.customizeEnvironmentVars(envs, passParentEnvs);
     envs.put("PYCHARM_HELPERS_DIR", PythonHelpersLocator.getHelperPath("pycharm"));
   }
 
-  protected abstract String getRunner();
+  protected abstract HelperPackage getRunner();
   protected abstract List<String> getTestSpecs();
 }
