@@ -135,13 +135,18 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
       gg.setClip(r.x + 8, r.y, StringUtil.isEmpty(c.getText()) ? label.getIconWidth() : 16, label.getIconHeight());
       label.paintIcon(c, gg, r.x + 8, r.y);
     }
+
+    if (!StringUtil.isEmpty(c.getText())) {
+      Icon clear = MacIntelliJIconCache.getIcon("searchFieldClear");
+      clear.paintIcon(c, g, r.x + r.width - clear.getIconWidth() - 6, r.y);
+    }
   }
 
   @Override
   protected Rectangle getVisibleEditorRect() {
     Rectangle rect = super.getVisibleEditorRect();
     if (isSearchField(myTextField)) {
-      rect.width -= 30;
+      rect.width -= 36;
       rect.x += 19;
       rect.y +=1;
     }
