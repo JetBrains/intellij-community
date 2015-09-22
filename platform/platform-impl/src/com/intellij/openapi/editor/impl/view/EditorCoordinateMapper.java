@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -62,14 +63,20 @@ class EditorCoordinateMapper {
     int line = myDocument.getLineNumber(offset);
     offset = Math.min(offset, myDocument.getLineEndOffset(line));
     int column = 0;
-    CharSequence text = myDocument.getImmutableCharSequence();
-    int tabSize = myView.getTabSize();
-    for (int i = myDocument.getLineStartOffset(line); i < offset; i++) {
-      if (text.charAt(i) == '\t') {
-        column = (column / tabSize + 1) * tabSize;
-      }
-      else {
-        column++;
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      LineLayout lineLayout = myView.getLineLayout(line);
+      column = lineLayout.offsetToLogicalColumn(offset - myDocument.getLineStartOffset(line));
+    }
+    else {
+      CharSequence text = myDocument.getImmutableCharSequence();
+      int tabSize = myView.getTabSize();
+      for (int i = myDocument.getLineStartOffset(line); i < offset; i++) {
+        if (text.charAt(i) == '\t') {
+          column = (column / tabSize + 1) * tabSize;
+        }
+        else {
+          column++;
+        }
       }
     }
     return new LogicalPosition(line, column);
@@ -80,20 +87,26 @@ class EditorCoordinateMapper {
     if (line >= myDocument.getLineCount()) return myDocument.getTextLength();
     
     int lineStartOffset = myDocument.getLineStartOffset(line);
-    int lineEndOffset = myDocument.getLineEndOffset(line);
-    CharSequence text = myDocument.getImmutableCharSequence();
-    int tabSize = myView.getTabSize();
-    int column = 0;
-    for (int i = lineStartOffset; i < lineEndOffset; i++) {
-      if (text.charAt(i) == '\t') {
-        column = (column / tabSize + 1) * tabSize;
-      }
-      else {
-        column++;
-      }
-      if (pos.column < column) return i;
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      LineLayout lineLayout = myView.getLineLayout(line);
+      return lineStartOffset + lineLayout.logicalColumnToOffset(pos.column);
     }
-    return lineEndOffset;
+    else {
+      int lineEndOffset = myDocument.getLineEndOffset(line);
+      CharSequence text = myDocument.getImmutableCharSequence();
+      int tabSize = myView.getTabSize();
+      int column = 0;
+      for (int i = lineStartOffset; i < lineEndOffset; i++) {
+        if (text.charAt(i) == '\t') {
+          column = (column / tabSize + 1) * tabSize;
+        }
+        else {
+          column++;
+        }
+        if (pos.column < column) return i;
+      }
+      return lineEndOffset;
+    }
   }
 
   @NotNull

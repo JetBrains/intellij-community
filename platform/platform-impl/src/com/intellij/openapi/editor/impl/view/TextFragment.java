@@ -78,6 +78,11 @@ class TextFragment implements LineFragment {
   }
 
   @Override
+  public int logicalColumnToOffset(int startColumn, int column) {
+    return column - startColumn;
+  }
+
+  @Override
   public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
     assert startColumn >= 0; 
     assert endColumn <= myCharPositions.length;
@@ -199,6 +204,11 @@ class TextFragment implements LineFragment {
     @Override
     public int offsetToLogicalColumn(int startColumn, int offset) {
       return startColumn + offset;
+    }
+
+    @Override
+    public int logicalColumnToOffset(int startColumn, int column) {
+      return column - startColumn;
     }
 
     @Override
