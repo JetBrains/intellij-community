@@ -13,28 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log;
+package com.intellij.vcs.log.data;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.vcs.log.CommitId;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * Map of {@link Hash} to <b>{@code int}</b>.
- */
-public interface VcsLogHashMap {
+public class CommitIdByStringCondition implements Condition<CommitId> {
+  @NotNull private final String myHashString;
 
-  int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root);
+  public CommitIdByStringCondition(@NotNull String hashString) {
+    myHashString = hashString;
+  }
 
-  @NotNull
-  Hash getHash(int commitIndex);
-
-  /**
-   * Iterates over known commid id to find the first one which satisfies given condition.
-   *
-   * @return
-   */
-  @Nullable
-  CommitId findCommitId(@NotNull Condition<CommitId> condition);
+  @Override
+  public boolean value(CommitId commitId) {
+    return StringUtil.startsWithIgnoreCase(commitId.getHash().asString(), myHashString);
+  }
 }

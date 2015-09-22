@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.mock.MockVirtualFile
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Function
 import com.intellij.vcs.log.*
@@ -231,7 +232,7 @@ class VisiblePackBuilderTest {
 
     override fun getHash(commitIndex: Int) = reverseMap.get(commitIndex)!!
 
-    override fun findHashByString(string: String) = throw UnsupportedOperationException()
+    override fun findCommitId(condition: Condition<CommitId>): CommitId? = throw UnsupportedOperationException()
   }
 }
 

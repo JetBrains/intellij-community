@@ -112,7 +112,7 @@ class VisiblePackBuilder {
     final Set<Integer> indices = ContainerUtil.map2SetNotNull(hashes, new Function<String, Integer>() {
       @Override
       public Integer fun(String partOfHash) {
-        CommitId commitId = myHashMap.findHashByString(partOfHash);
+        CommitId commitId = myHashMap.findCommitId(new CommitIdByStringCondition(partOfHash));
         return commitId != null ? myHashMap.getCommitIndex(commitId.getHash(), commitId.getRoot()) : null;
       }
     });

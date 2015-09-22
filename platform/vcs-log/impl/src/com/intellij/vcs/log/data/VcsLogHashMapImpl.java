@@ -67,7 +67,7 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
 
     @Nullable
     @Override
-    public CommitId findHashByString(@NotNull String string) {
+    public CommitId findCommitId(@NotNull Condition<CommitId> string) {
       return null;
     }
   };
@@ -160,15 +160,20 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
 
   @Override
   @Nullable
-  public CommitId findHashByString(@NotNull String string) {
-    final String pHash = string.toLowerCase();
+  public CommitId findCommitId(@NotNull final Condition<CommitId> condition) {
     try {
-      return findHash(new Condition<Hash>() {
+      final Ref<CommitId> hashRef = Ref.create();
+      myPersistentEnumerator.iterateData(new CommonProcessors.FindProcessor<CommitId>() {
         @Override
-        public boolean value(@NotNull Hash hash) {
-          return hash.toString().toLowerCase().startsWith(pHash);
+        protected boolean accept(CommitId commitId) {
+          boolean matches = condition.value(commitId);
+          if (matches) {
+            hashRef.set(commitId);
+          }
+          return matches;
         }
       });
+      return hashRef.get();
     }
     catch (IOException e) {
       LOG.error(e);
@@ -190,24 +195,8 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
     }
   }
 
-  @Nullable
-  CommitId findHash(@NotNull final Condition<Hash> condition) throws IOException {
-    final Ref<CommitId> hashRef = Ref.create();
-    myPersistentEnumerator.iterateData(new CommonProcessors.FindProcessor<CommitId>() {
-      @Override
-      protected boolean accept(CommitId commitId) {
-        boolean matches = condition.value(commitId.getHash());
-        if (matches) {
-          hashRef.set(commitId);
-        }
-        return matches;
-      }
-    });
-    return hashRef.get();
-  }
-
   private static class MyCommitIdKeyDescriptor implements KeyDescriptor<CommitId> {
-    private final VcsRootsRegistry myRootsRegistry;
+      private final VcsRootsRegistry myRootsRegistry;
 
     public MyCommitIdKeyDescriptor(@NotNull Project project) {
       myRootsRegistry = ServiceManager.getService(project, VcsRootsRegistry.class);

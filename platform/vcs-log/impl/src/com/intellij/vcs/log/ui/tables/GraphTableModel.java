@@ -11,6 +11,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VisiblePack;
@@ -136,7 +137,13 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   public int getRowOfCommitByPartOfHash(@NotNull String partialHash) {
-    CommitId commitId = myDataHolder.getHashMap().findHashByString(partialHash);
+    final CommitIdByStringCondition hashByString = new CommitIdByStringCondition(partialHash);
+    CommitId commitId = myDataHolder.getHashMap().findCommitId(new Condition<CommitId>() {
+      @Override
+      public boolean value(CommitId commitId) {
+        return hashByString.value(commitId) && getRowOfCommit(commitId.getHash(), commitId.getRoot()) != -1;
+      }
+    });
     return commitId != null ? getRowOfCommit(commitId.getHash(), commitId.getRoot()) : -1;
   }
 
