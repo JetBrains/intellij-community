@@ -97,9 +97,7 @@ public class FileUtilRt {
         ourPathToFileMethod = pathClass.getMethod("toFile");
         ourFilesWalkMethod = filesClass.getMethod("walkFileTree", pathClass, visitorClass);
         ourFilesDeleteIfExistsMethod = filesClass.getMethod("deleteIfExists", pathClass);
-        final Class<?> fileVisitResultClass = Class.forName("java.nio.file.FileVisitResult");
-        final Object Result_Continue = fileVisitResultClass.getDeclaredField("CONTINUE").get(null);
-        final Object Result_Terminate = fileVisitResultClass.getDeclaredField("TERMINATE").get(null);
+        final Object Result_Continue = Class.forName("java.nio.file.FileVisitResult").getDeclaredField("CONTINUE").get(null);
         ourDeletionVisitor = Proxy.newProxyInstance(FileUtilRt.class.getClassLoader(), new Class[]{visitorClass}, new InvocationHandler() {
           @Override
           public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -111,7 +109,13 @@ public class FileUtilRt {
               final String methodName = method.getName();
               if ("visitFile".equals(methodName) || "postVisitDirectory".equals(methodName)) {
                 if (!performDelete(args[0])) {
-                  return Result_Terminate;
+                  throw new IOException("Failed to delete " + args[0]) {
+                    // optimization: the stacktrace is not needed: the exception is used to terminate tree walkup and to pass the result
+                    @Override
+                    public synchronized Throwable fillInStackTrace() {
+                      return this;
+                    }
+                  };
                 }
               }
             }
@@ -712,7 +716,7 @@ public class FileUtilRt {
       logger().info(e);
       return false;
     }
-    return !file.exists();
+    return true;
   }
 
   private static boolean deleteRecursively(@NotNull File file) {
