@@ -57,21 +57,21 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
   private val restartApplicationOrReloadProjectTask = Runnable {
     if (isReloadUnblocked() && tryToReloadApplication()) {
       val projectsToReload = THashSet<Project>()
-      for (project in getOpenProjects()) {
-        if (project.isDisposed()) {
+      for (project in openProjects) {
+        if (project.isDisposed) {
           continue
         }
 
         val changes = CHANGED_FILES_KEY.get(project) ?: continue
         CHANGED_FILES_KEY.set(project, null)
-        if (!changes.isEmpty()) {
-          runBatchUpdate(project.getMessageBus()) {
+        if (!changes.isEmpty) {
+          runBatchUpdate(project.messageBus) {
             for ((store, storages) in changes.entrySet()) {
-              if ((store.storageManager as? StateStorageManagerImpl)?.componentManager?.isDisposed() ?: false) {
+              if ((store.storageManager as? StateStorageManagerImpl)?.componentManager?.isDisposed ?: false) {
                 continue
               }
 
-              @suppress("UNCHECKED_CAST")
+              @Suppress("UNCHECKED_CAST")
               if (reloadStore(storages as Set<StateStorage>, store, false) == ReloadComponentStoreStatus.RESTART_AGREED) {
                 projectsToReload.add(project)
               }
@@ -89,14 +89,14 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
   private val changedFilesAlarm = SingleAlarm(restartApplicationOrReloadProjectTask, 300, this)
 
   init {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(StateStorageManager.STORAGE_TOPIC, object : StorageManagerListener() {
+    ApplicationManager.getApplication().messageBus.connect().subscribe(StateStorageManager.STORAGE_TOPIC, object : StorageManagerListener() {
       override fun storageFileChanged(event: VFileEvent, storage: StateStorage, componentManager: ComponentManager) {
         if (event is VFilePropertyChangeEvent) {
           // ignore because doesn't affect content
           return
         }
 
-        if (event.getRequestor() is StateStorage.SaveSession || event.getRequestor() is StateStorage || event.getRequestor() is ProjectManagerImpl) {
+        if (event.requestor is StateStorage.SaveSession || event.requestor is StateStorage || event.requestor is ProjectManagerImpl) {
           return
         }
 
@@ -117,7 +117,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
 
   private fun isReloadUnblocked(): Boolean {
     val count = reloadBlockCount.get()
-    if (LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled) {
       LOG.debug("[RELOAD] myReloadBlockCount = $count")
     }
     return count == 0
@@ -125,7 +125,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
 
   override fun saveChangedProjectFile(file: VirtualFile, project: Project) {
     val storageManager = (project.stateStore as ComponentStoreImpl).storageManager as? StateStorageManagerImpl ?: return
-    storageManager.getCachedFileStorages(listOf(storageManager.collapseMacros(file.getPath()))).firstOrNull()?.let {
+    storageManager.getCachedFileStorages(listOf(storageManager.collapseMacros(file.path))).firstOrNull()?.let {
       // if empty, so, storage is not yet loaded, so, we don't have to reload
       registerChangedStorage(it, project)
     }
@@ -137,8 +137,8 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
 
   override fun unblockReloadingProjectOnExternalChanges() {
     assert(reloadBlockCount.get() > 0)
-    if (reloadBlockCount.decrementAndGet() == 0 && changedFilesAlarm.isEmpty()) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (reloadBlockCount.decrementAndGet() == 0 && changedFilesAlarm.isEmpty) {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
         // todo fix test to handle invokeLater
         changedFilesAlarm.request(true)
       }
@@ -158,13 +158,13 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
   }
 
   private fun registerChangedStorage(storage: StateStorage, componentManager: ComponentManager) {
-    if (LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled) {
       LOG.debug("[RELOAD] Registering project to reload: $storage", Exception())
     }
 
     val project: Project? = when (componentManager) {
       is Project -> componentManager
-      is Module -> componentManager.getProject()
+      is Module -> componentManager.project
       else -> null
     }
 
@@ -196,7 +196,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
   }
 
   private fun tryToReloadApplication(): Boolean {
-    if (ApplicationManager.getApplication().isDisposed()) {
+    if (ApplicationManager.getApplication().isDisposed) {
       return false
     }
 
@@ -268,8 +268,8 @@ fun askToRestart(store: IComponentStore, notReloadableComponents: Collection<Str
 
   message.append("\nWould you like to ")
   if (isApp) {
-    message.append(if (ApplicationManager.getApplication().isRestartCapable()) "restart" else "shutdown").append(' ')
-    message.append(ApplicationNamesInfo.getInstance().getProductName()).append('?')
+    message.append(if (ApplicationManager.getApplication().isRestartCapable) "restart" else "shutdown").append(' ')
+    message.append(ApplicationNamesInfo.getInstance().productName).append('?')
   }
   else {
     message.append("reload project?")

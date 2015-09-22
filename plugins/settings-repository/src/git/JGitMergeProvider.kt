@@ -30,7 +30,7 @@ import org.jetbrains.settingsRepository.RepositoryVirtualFile
 import java.nio.CharBuffer
 import java.util.ArrayList
 
-private fun conflictsToVirtualFiles(map: Map<String, Any>): MutableList<VirtualFile> {
+internal fun conflictsToVirtualFiles(map: Map<String, Any>): MutableList<VirtualFile> {
   val result = ArrayList<VirtualFile>(map.size())
   for (path in map.keySet()) {
     result.add(RepositoryVirtualFile(path))
@@ -52,7 +52,7 @@ class JGitMergeProvider<T>(private val repository: Repository, private val confl
     val bytes = (file as RepositoryVirtualFile).content
     // not null if user accepts some revision (virtual file will be directly modified), otherwise document will be modified
     if (bytes == null) {
-      val chars = FileDocumentManager.getInstance().getCachedDocument(file)!!.getImmutableCharSequence()
+      val chars = FileDocumentManager.getInstance().getCachedDocument(file)!!.immutableCharSequence
       val byteBuffer = CharsetToolkit.UTF8_CHARSET.encode(CharBuffer.wrap(chars))
       addFile(byteBuffer.array(), file, byteBuffer.remaining())
     }
@@ -62,13 +62,13 @@ class JGitMergeProvider<T>(private val repository: Repository, private val confl
   }
 
   private fun addFile(bytes: ByteArray, file: VirtualFile, size: Int = bytes.size()) {
-    repository.writePath(file.getPath(), bytes, size)
+    repository.writePath(file.path, bytes, size)
   }
 
-  override fun isBinary(file: VirtualFile) = file.getFileType().isBinary()
+  override fun isBinary(file: VirtualFile) = file.fileType.isBinary
 
   override fun loadRevisions(file: VirtualFile): MergeData {
-    val path = file.getPath()
+    val path = file.path
     val mergeData = MergeData()
     mergeData.ORIGINAL = getContentOrEmpty(path, 0)
     mergeData.CURRENT = getContentOrEmpty(path, 1)
@@ -83,7 +83,7 @@ class JGitMergeProvider<T>(private val repository: Repository, private val confl
       return arrayOf(StatusColumn(false), StatusColumn(true))
     }
 
-    override fun canMerge(file: VirtualFile) = conflicts.contains(file.getPath())
+    override fun canMerge(file: VirtualFile) = conflicts.contains(file.path)
 
     override fun conflictResolvedForFile(file: VirtualFile, resolution: MergeSession.Resolution) {
       if (resolution == MergeSession.Resolution.Merged) {
@@ -92,7 +92,7 @@ class JGitMergeProvider<T>(private val repository: Repository, private val confl
       else {
         val content = getContent(file, resolution == MergeSession.Resolution.AcceptedTheirs)
         if (content == null) {
-          repository.deletePath(file.getPath())
+          repository.deletePath(file.path)
         }
         else {
           addFile(content, file)
@@ -100,7 +100,7 @@ class JGitMergeProvider<T>(private val repository: Repository, private val confl
       }
     }
 
-    private fun getContent(file: VirtualFile, isTheirs: Boolean) = conflicts.pathToContent(file.getPath(), if (isTheirs) 2 else 1)
+    private fun getContent(file: VirtualFile, isTheirs: Boolean) = conflicts.pathToContent(file.path, if (isTheirs) 2 else 1)
 
     inner class StatusColumn(private val isTheirs: Boolean) : ColumnInfo<VirtualFile, String>(if (isTheirs) "Theirs" else "Yours") {
       override fun valueOf(file: VirtualFile?) = if (getContent(file!!, isTheirs) == null) "Deleted" else "Modified"

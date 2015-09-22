@@ -26,7 +26,7 @@ class MockStreamProvider(private val myBaseDir: File) : StreamProvider {
     val files = File(myBaseDir, fileSpec).listFiles() ?: return emptyList()
     val names = SmartList<String>()
     for (file in files) {
-      names.add(file.getName())
+      names.add(file.name)
     }
     return names
   }

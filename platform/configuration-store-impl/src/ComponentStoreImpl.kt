@@ -52,11 +52,8 @@ import java.io.IOException
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 
-private val LOG = Logger.getInstance(ComponentStoreImpl::class.java)
+internal val LOG = Logger.getInstance(ComponentStoreImpl::class.java)
 
-/**
- * <b>Note:</b> this class is used in upsource, please notify upsource team in case you change its API.
- */
 abstract class ComponentStoreImpl : IComponentStore {
   private val components = Collections.synchronizedMap(THashMap<String, Any>())
   private val settingsSavingComponents = CopyOnWriteArrayList<SettingsSavingComponent>()
@@ -109,7 +106,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     if (componentNameIfStateExists != null && service) {
       val project = this.project
       val app = ApplicationManager.getApplication()
-      if (project != null && !app.isHeadlessEnvironment() && !app.isUnitTestMode() && project.isInitialized()) {
+      if (project != null && !app.isHeadlessEnvironment && !app.isUnitTestMode && project.isInitialized) {
         StorageUtil.notifyUnknownMacros(this, project, componentNameIfStateExists)
       }
     }
@@ -167,12 +164,12 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val token = WriteAction.start()
     try {
-      VfsRootAccess.allowRootAccess(file.getAbsolutePath())
+      VfsRootAccess.allowRootAccess(file.absolutePath)
       CompoundRuntimeException.throwIfNotEmpty(doSave(sessions))
     }
     finally {
       try {
-        VfsRootAccess.disallowRootAccess(file.getAbsolutePath())
+        VfsRootAccess.disallowRootAccess(file.absolutePath)
       }
       finally {
         token.finish()
@@ -183,7 +180,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun commitComponent(session: ExternalizationSession, component: Any, componentName: String?) {
     @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
     if (component is PersistentStateComponent<*>) {
-      val state = component.getState()
+      val state = component.state
       if (state != null) {
         val stateSpec = StoreUtil.getStateSpec(component)
         session.setState(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE), component, componentName ?: stateSpec.name, state)
@@ -243,7 +240,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val name = stateSpec.name
     val stateClass = ComponentSerializationUtil.getStateClass<T>(component.javaClass)
-    if (!stateSpec.defaultStateAsResource && LOG.isDebugEnabled() && getDefaultState(component, name, stateClass) != null) {
+    if (!stateSpec.defaultStateAsResource && LOG.isDebugEnabled && getDefaultState(component, name, stateClass) != null) {
       LOG.error("$name has default state, but not marked to load it")
     }
 
@@ -257,7 +254,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
 
         val storage = storageManager.getStateStorage(storageSpec)
-        var stateGetter = if (isUseLoadedStateAsExisting(storage) && (ApplicationManager.getApplication().isUnitTestMode() || Registry.`is`("use.loaded.state.as.existing", false))) {
+        var stateGetter = if (isUseLoadedStateAsExisting(storage) && (ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("use.loaded.state.as.existing", false))) {
           (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass)
         }
         else {
@@ -419,7 +416,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
     }
 
-    if (componentNames.isEmpty()) {
+    if (componentNames.isEmpty) {
       return emptySet()
     }
 
@@ -457,7 +454,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
       catch (e: ReadOnlyModificationException) {
         LOG.warn(e)
-        readonlyFiles.add(util.Pair.create<SaveSession, VirtualFile>(e.getSession() ?: session, e.getFile()))
+        readonlyFiles.add(util.Pair.create<SaveSession, VirtualFile>(e.session ?: session, e.file))
       }
       catch (e: Exception) {
         if (errors == null) {

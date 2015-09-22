@@ -54,7 +54,7 @@ class StateGetter<S : Any, T : Any>(private val component: PersistentStateCompon
 
     val stateAfterLoad: S?
     try {
-      stateAfterLoad = component.getState()
+      stateAfterLoad = component.state
     }
     catch(e: Throwable) {
       LOG.error("Cannot get state after load", e)

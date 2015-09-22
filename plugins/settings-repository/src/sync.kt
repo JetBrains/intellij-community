@@ -33,6 +33,8 @@ import com.intellij.util.ui.UIUtil
 import gnu.trove.THashSet
 import java.util.*
 
+private val LOG_1 = org.jetbrains.settingsRepository.LOG
+
 class SyncManager(private val icsManager: IcsManager, private val autoSyncManager: AutoSyncManager) {
   @Volatile var writeAndDeleteProhibited = false
     private set
@@ -59,11 +61,11 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
                 // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
               }
               catch (e: ProcessCanceledException) {
-                LOG.warn("Canceled")
+                LOG_1.warn("Canceled")
                 return
               }
               catch (e: Throwable) {
-                LOG.error(e)
+                LOG_1.error(e)
 
                 // "RESET_TO_*" will do "reset hard", so, probably, error will be gone, so, we can continue operation
                 if (syncType == SyncType.MERGE) {
@@ -100,12 +102,12 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
               }
             }
             catch (e: ProcessCanceledException) {
-              LOG.debug("Canceled")
+              LOG_1.debug("Canceled")
               return
             }
             catch (e: Throwable) {
               if (e !is AuthenticationException && e !is NoRemoteRepositoryException && e !is CannotResolveConflictInTestMode) {
-                LOG.error(e)
+                LOG_1.error(e)
               }
               exception = e
               return
@@ -179,7 +181,7 @@ private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateS
       (stateStorage as XmlElementStorage).updatedFromStreamProvider(changedComponentNames, deleted)
     }
     catch (e: Throwable) {
-      LOG.error(e)
+      LOG_1.error(e)
     }
   }
 }

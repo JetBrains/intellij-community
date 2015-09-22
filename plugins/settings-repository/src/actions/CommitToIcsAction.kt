@@ -70,8 +70,8 @@ class CommitToIcsAction : CommonCheckinFilesAction() {
   override fun getActionName(dataContext: VcsContext) = IcsBundle.message("action.CommitToIcs.text")
 
   override fun isApplicableRoot(file: VirtualFile, status: FileStatus, dataContext: VcsContext): Boolean {
-    val project = dataContext.getProject()
-    return project is ProjectEx && (project.stateStore as IProjectStore).getStorageScheme() == StorageScheme.DIRECTORY_BASED && super.isApplicableRoot(file, status, dataContext) && !file.isDirectory() && isProjectConfigFile(file, dataContext.getProject()!!)
+    val project = dataContext.project
+    return project is ProjectEx && (project.stateStore as IProjectStore).storageScheme == StorageScheme.DIRECTORY_BASED && super.isApplicableRoot(file, status, dataContext) && !file.isDirectory && isProjectConfigFile(file, dataContext.project!!)
   }
 
   override fun prepareRootsForCommit(roots: Array<out FilePath>, project: Project) = roots as Array<FilePath>
@@ -82,7 +82,7 @@ class CommitToIcsAction : CommonCheckinFilesAction() {
       return
     }
 
-    val changes = context.getSelectedChanges()
+    val changes = context.selectedChanges
     val collectConsumer = ProjectChangeCollectConsumer(project)
     if (changes != null && changes.isNotEmpty()) {
       for (change in changes) {
@@ -104,7 +104,7 @@ private class ProjectChangeCollectConsumer(private val project: Project) {
   private var projectChanges: MutableList<Change>? = null
 
   fun consume(change: Change) {
-    if (isProjectConfigFile(change.getVirtualFile(), project)) {
+    if (isProjectConfigFile(change.virtualFile, project)) {
       if (projectChanges == null) {
         projectChanges = SmartList<Change>()
       }
@@ -167,7 +167,7 @@ private fun isProjectConfigFile(file: VirtualFile?, project: Project): Boolean {
     return false
   }
 
-  val projectFile = project.getProjectFile()
-  val projectConfigDir = projectFile?.getParent()
+  val projectFile = project.projectFile
+  val projectConfigDir = projectFile?.parent
   return projectConfigDir != null && VfsUtilCore.isAncestor(projectConfigDir, file, true)
 }

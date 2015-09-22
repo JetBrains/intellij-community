@@ -43,7 +43,6 @@ import org.jetbrains.settingsRepository.RepositoryManager.Updater
 import java.io.File
 import java.io.IOException
 import kotlin.concurrent.write
-import kotlin.properties.Delegates
 
 class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<CredentialsStore>, dir: File) : BaseRepositoryManager(dir) {
   val repository: Repository
@@ -52,8 +51,8 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
       if (r == null) {
         r = FileRepositoryBuilder().setWorkTree(dir).build()
         _repository = r
-        if (ApplicationManager.getApplication()?.isUnitTestMode() != true) {
-          ShutDownTracker.getInstance().registerShutdownTask(Runnable { _repository?.close() })
+        if (ApplicationManager.getApplication()?.isUnitTestMode != true) {
+          ShutDownTracker.getInstance().registerShutdownTask { _repository?.close() }
         }
       }
       return r!!
@@ -62,7 +61,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   // we must recreate repository if dir changed because repository stores old state and cannot be reinitialized (so, old instance cannot be reused and we must instantiate new one)
   var _repository: Repository? = null
 
-  val credentialsProvider: CredentialsProvider by Delegates.lazy {
+  val credentialsProvider: CredentialsProvider by lazy {
     JGitCredentialsProvider(credentialsStore, repository)
   }
 
@@ -93,7 +92,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   }
 
   override fun getUpstream(): String? {
-    return StringUtil.nullize(repository.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL))
+    return StringUtil.nullize(repository.config.getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL))
   }
 
   override fun setUpstream(url: String?, branch: String?) {
@@ -103,10 +102,10 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   override fun isRepositoryExists(): Boolean {
     val repo = _repository
     if (repo == null) {
-      return dir.exists() && FileRepositoryBuilder().setWorkTree(dir).setup().getObjectDirectory().exists()
+      return dir.exists() && FileRepositoryBuilder().setWorkTree(dir).setup().objectDirectory.exists()
     }
     else {
-      return repo.getObjectDatabase().exists()
+      return repo.objectDatabase.exists()
     }
   }
 
@@ -124,7 +123,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     lock.write {
       try {
         // will be reset if OVERWRITE_LOCAL, so, we should not fix state in this case
-        return commitIfCan(indicator, if (!fixStateIfCannotCommit || syncType == SyncType.OVERWRITE_LOCAL) repository.getRepositoryState() else repository.fixAndGetState())
+        return commitIfCan(indicator, if (!fixStateIfCannotCommit || syncType == SyncType.OVERWRITE_LOCAL) repository.repositoryState else repository.fixAndGetState())
       }
       catch (e: UnmergedPathsException) {
         if (syncType == SyncType.OVERWRITE_LOCAL) {
@@ -147,7 +146,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
       return commit(repository, indicator)
     }
     else {
-      LOG.warn("Cannot commit, repository in state ${state.getDescription()}")
+      LOG.warn("Cannot commit, repository in state ${state.description}")
       return false
     }
   }
@@ -160,33 +159,33 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   override fun push(indicator: ProgressIndicator?) {
     LOG.debug("Push")
 
-    val refSpecs = SmartList(RemoteConfig(repository.getConfig(), Constants.DEFAULT_REMOTE_NAME).getPushRefSpecs())
+    val refSpecs = SmartList(RemoteConfig(repository.config, Constants.DEFAULT_REMOTE_NAME).pushRefSpecs)
     if (refSpecs.isEmpty()) {
       val head = repository.getRef(Constants.HEAD)
-      if (head != null && head.isSymbolic()) {
-        refSpecs.add(RefSpec(head.getLeaf().getName()))
+      if (head != null && head.isSymbolic) {
+        refSpecs.add(RefSpec(head.leaf.name))
       }
     }
 
     val monitor = indicator.asProgressMonitor()
     for (transport in Transport.openAll(repository, Constants.DEFAULT_REMOTE_NAME, Transport.Operation.PUSH)) {
       for (attempt in 0..1) {
-        transport.setCredentialsProvider(credentialsProvider)
+        transport.credentialsProvider = credentialsProvider
         try {
           val result = transport.push(monitor, transport.findRemoteRefUpdatesFor(refSpecs))
-          if (LOG.isDebugEnabled()) {
+          if (LOG.isDebugEnabled) {
             printMessages(result)
 
-            for (refUpdate in result.getRemoteUpdates()) {
+            for (refUpdate in result.remoteUpdates) {
               LOG.debug(refUpdate.toString())
             }
           }
           break;
         }
         catch (e: TransportException) {
-          if (e.getStatus() == TransportException.Status.NOT_PERMITTED) {
+          if (e.status == TransportException.Status.NOT_PERMITTED) {
             if (attempt == 0) {
-              credentialsProvider.reset(transport.getURI())
+              credentialsProvider.reset(transport.uri)
             }
             else {
               throw AuthenticationException(e)
@@ -229,7 +228,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
 
   override fun resetToMy(indicator: ProgressIndicator, localRepositoryInitializer: (() -> Unit)?) = Reset(this, indicator).reset(false, localRepositoryInitializer)
 
-  override fun canCommit() = repository.getRepositoryState().canCommit()
+  override fun canCommit() = repository.repositoryState.canCommit()
 
   fun renameDirectory(pairs: Map<String, String?>): Boolean {
     var addCommand: AddCommand? = null
@@ -247,15 +246,15 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
         val new = if (newPath == null) dir else File(dir, newPath)
         for (file in files) {
           try {
-            if (file.isHidden()) {
+            if (file.isHidden) {
               FileUtil.delete(file)
             }
             else {
-              file.renameTo(File(new, file.getName()))
+              file.renameTo(File(new, file.name))
               if (addCommand == null) {
                 addCommand = AddCommand(repository)
               }
-              addCommand.addFilepattern(if (newPath == null) file.getName() else "$newPath/${file.getName()}")
+              addCommand.addFilepattern(if (newPath == null) file.name else "$newPath/${file.name}")
             }
           }
           catch (e: Throwable) {
@@ -306,8 +305,8 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
 }
 
 fun printMessages(fetchResult: OperationResult) {
-  if (LOG.isDebugEnabled()) {
-    val messages = fetchResult.getMessages()
+  if (LOG.isDebugEnabled) {
+    val messages = fetchResult.messages
     if (!StringUtil.isEmptyOrSpaces(messages)) {
       LOG.debug(messages)
     }

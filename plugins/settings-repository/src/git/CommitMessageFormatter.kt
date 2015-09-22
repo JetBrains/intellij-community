@@ -38,12 +38,12 @@ class IdeaCommitMessageFormatter : CommitMessageFormatter {
 
   fun StringBuilder.appendCommitOwnerInfo(avoidAppInfoInstantiation: Boolean = false): StringBuilder {
     if (avoidAppInfoInstantiation) {
-      append(ApplicationNamesInfo.getInstance().getProductName())
+      append(ApplicationNamesInfo.getInstance().productName)
     }
     else {
       appendAppName()
     }
-    append(' ').append('<').append(System.getProperty("user.name", "unknown-user")).append('@').append(InetAddress.getLocalHost().getHostName())
+    append(' ').append('<').append(System.getProperty("user.name", "unknown-user")).append('@').append(InetAddress.getLocalHost().hostName)
     append(' ')
     return this
   }
@@ -51,14 +51,14 @@ class IdeaCommitMessageFormatter : CommitMessageFormatter {
   fun StringBuilder.appendAppName() {
     val appInfo = ApplicationInfoEx.getInstanceEx()
     if (appInfo != null) {
-      val build = appInfo.getBuild()
-      append(build.getProductCode()).append('-')
-      if (appInfo.getMajorVersion() != null && !appInfo.isEAP()) {
-        append(appInfo.getFullVersion())
+      val build = appInfo.build
+      append(build.productCode).append('-')
+      if (appInfo.majorVersion != null && !appInfo.isEAP) {
+        append(appInfo.fullVersion)
       }
       else {
         var buildString = build.asStringWithoutProductCode()
-        if (build.getBuildNumber() == Integer.MAX_VALUE) {
+        if (build.buildNumber == Integer.MAX_VALUE) {
           buildString = buildString.replace(".SNAPSHOT", "")
         }
         append(buildString)

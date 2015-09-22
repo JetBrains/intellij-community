@@ -21,8 +21,8 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import java.io.File
 
-open private class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
-  override val project = module.getProject()
+private sealed class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+  override val project = module.project
 
   override val storageManager = ModuleStateStorageManager(pathMacroManager.createTrackingSubstitutor(), module)
 
@@ -33,19 +33,19 @@ open private class ModuleStoreImpl(module: Module, private val pathMacroManager:
   }
 
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
-}
 
-private class TestModuleStore(module: Module, pathMacroManager: PathMacroManager) : ModuleStoreImpl(module, pathMacroManager) {
-  private var moduleComponentLoadPolicy: StateLoadPolicy? = null
+  private class TestModuleStore(module: Module, pathMacroManager: PathMacroManager) : ModuleStoreImpl(module, pathMacroManager) {
+    private var moduleComponentLoadPolicy: StateLoadPolicy? = null
 
-  override fun setPath(path: String) {
-    super.setPath(path)
+    override fun setPath(path: String) {
+      super.setPath(path)
 
-    if (File(path).exists()) {
-      moduleComponentLoadPolicy = StateLoadPolicy.LOAD
+      if (File(path).exists()) {
+        moduleComponentLoadPolicy = StateLoadPolicy.LOAD
+      }
     }
-  }
 
-  override val loadPolicy: StateLoadPolicy
-    get() = moduleComponentLoadPolicy ?: (project.stateStore as ProjectStoreImpl).loadPolicy
+    override val loadPolicy: StateLoadPolicy
+      get() = moduleComponentLoadPolicy ?: (project.stateStore as ProjectStoreImpl).loadPolicy
+  }
 }

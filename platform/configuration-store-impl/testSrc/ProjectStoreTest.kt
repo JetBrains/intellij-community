@@ -104,13 +104,13 @@ class ProjectStoreTest {
       val testComponent = test(project)
 
       // test reload on external change
-      val file = File(project.stateStore.getStateStorageManager().expandMacros(StoragePathMacros.PROJECT_FILE))
+      val file = File(project.stateStore.stateStorageManager.expandMacros(StoragePathMacros.PROJECT_FILE))
       file.writeText(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
 
-      project.getBaseDir().refresh(false, true)
+      project.baseDir.refresh(false, true)
       (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
 
-      assertThat(testComponent.getState()).isEqualTo(TestState("newValue"))
+      assertThat(testComponent.state).isEqualTo(TestState("newValue"))
     }
   }
 
@@ -123,12 +123,12 @@ class ProjectStoreTest {
   private fun test(project: Project): TestComponent {
     val testComponent = TestComponent()
     project.stateStore.initComponent(testComponent, true)
-    assertThat(testComponent.getState()).isEqualTo(TestState("customValue"))
+    assertThat(testComponent.state).isEqualTo(TestState("customValue"))
 
-    testComponent.getState()!!.value = "foo"
+    testComponent.state!!.value = "foo"
     project.saveStore()
 
-    val file = File(project.stateStore.getStateStorageManager().expandMacros(StoragePathMacros.PROJECT_FILE))
+    val file = File(project.stateStore.stateStorageManager.expandMacros(StoragePathMacros.PROJECT_FILE))
     assertThat(file).isFile()
     // test exact string - xml prolog, line separators, indentation and so on must be exactly the same
     // todo get rid of default component states here

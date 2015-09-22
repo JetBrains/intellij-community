@@ -34,14 +34,14 @@ fun commit(repository: Repository, indicator: ProgressIndicator?, commitMessageF
   val changed = diff.diff(indicator?.asProgressMonitor(), ProgressMonitor.UNKNOWN, ProgressMonitor.UNKNOWN, "Commit")
 
   // don't worry about untracked/modified only in the FS files
-  if (!changed || (diff.getAdded().isEmpty() && diff.getChanged().isEmpty() && diff.getRemoved().isEmpty())) {
-    if (diff.getModified().isEmpty()) {
+  if (!changed || (diff.added.isEmpty() && diff.changed.isEmpty() && diff.removed.isEmpty())) {
+    if (diff.modified.isEmpty()) {
       LOG.debug("Nothing to commit")
       return false
     }
 
     var edits: MutableList<PathEdit>? = null
-    for (path in diff.getModified()) {
+    for (path in diff.modified) {
       if (!path.startsWith(PROJECTS_DIR_NAME)) {
         if (edits == null) {
           edits = SmartList()
@@ -54,7 +54,7 @@ fun commit(repository: Repository, indicator: ProgressIndicator?, commitMessageF
     }
   }
 
-  if (LOG.isDebugEnabled()) {
+  if (LOG.isDebugEnabled) {
     LOG.debug(indexDiffToString(diff))
   }
 
@@ -64,9 +64,9 @@ fun commit(repository: Repository, indicator: ProgressIndicator?, commitMessageF
   commitMessageFormatter.prependMessage(builder)
 
   // we use Github (edit via web UI) terms here
-  builder.appendCompactList("Update", diff.getChanged())
-  builder.appendCompactList("Create", diff.getAdded())
-  builder.appendCompactList("Delete", diff.getRemoved())
+  builder.appendCompactList("Update", diff.changed)
+  builder.appendCompactList("Create", diff.added)
+  builder.appendCompactList("Delete", diff.removed)
 
   repository.commit(builder.toString())
   return true
@@ -75,13 +75,13 @@ fun commit(repository: Repository, indicator: ProgressIndicator?, commitMessageF
 private fun indexDiffToString(diff: IndexDiff): String {
   val builder = StringBuilder()
   builder.append("To commit:")
-  builder.addList("Added", diff.getAdded())
-  builder.addList("Changed", diff.getChanged())
-  builder.addList("Deleted", diff.getRemoved())
-  builder.addList("Modified on disk relative to the index", diff.getModified())
-  builder.addList("Untracked files", diff.getUntracked())
-  builder.addList("Untracked folders", diff.getUntrackedFolders())
-  builder.addList("Missing", diff.getMissing())
+  builder.addList("Added", diff.added)
+  builder.addList("Changed", diff.changed)
+  builder.addList("Deleted", diff.removed)
+  builder.addList("Modified on disk relative to the index", diff.modified)
+  builder.addList("Untracked files", diff.untracked)
+  builder.addList("Untracked folders", diff.untrackedFolders)
+  builder.addList("Missing", diff.missing)
   return builder.toString()
 }
 

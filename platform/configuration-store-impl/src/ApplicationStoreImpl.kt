@@ -39,7 +39,7 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
 
   // number of app components require some state, so, we load default state in test mode
   override val loadPolicy: StateLoadPolicy
-    get() = if (application.isUnitTestMode()) StateLoadPolicy.LOAD_ONLY_DEFAULT else StateLoadPolicy.LOAD
+    get() = if (application.isUnitTestMode) StateLoadPolicy.LOAD_ONLY_DEFAULT else StateLoadPolicy.LOAD
 
   override fun setPath(path: String) {
     storageManager.addMacro(ROOT_CONFIG, path)
@@ -74,7 +74,7 @@ class ApplicationStorageManager(private val application: Application, pathMacroM
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
     if (component is NamedJDOMExternalizable) {
-      return "${component.getExternalFileName()}${FileStorageCoreUtil.DEFAULT_EXT}"
+      return "${component.externalFileName}${FileStorageCoreUtil.DEFAULT_EXT}"
     }
     else {
       return DEFAULT_STORAGE_SPEC

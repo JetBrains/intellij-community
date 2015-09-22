@@ -15,29 +15,11 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.PathMacroManager
-import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectStoreClassProvider
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.vfs.VirtualFile
 
 class PlatformLangProjectStoreClassProvider : ProjectStoreClassProvider {
   override fun getProjectStoreClass(isDefaultProject: Boolean): Class<out IComponentStore> {
-    return if (isDefaultProject) DefaultProjectStoreImpl::class.java else ProjectWithModulesStoreImpl::class.java
-  }
-}
-
-class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
-  override fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
-    super.beforeSave(readonlyFiles)
-
-    for (module in (ModuleManager.getInstance(project)?.getModules() ?: Module.EMPTY_ARRAY)) {
-      module.stateStore.save(readonlyFiles)
-    }
+    return if (isDefaultProject) DefaultProjectStoreImpl::class.java else ProjectStoreImpl.ProjectWithModulesStoreImpl::class.java
   }
 }

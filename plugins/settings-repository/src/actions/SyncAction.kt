@@ -22,16 +22,16 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import org.jetbrains.settingsRepository.*
 
-val NOTIFICATION_GROUP = NotificationGroup.balloonGroup(PLUGIN_NAME)
+internal val NOTIFICATION_GROUP = NotificationGroup.balloonGroup(PLUGIN_NAME)
 
-abstract class SyncAction(private val syncType: SyncType) : DumbAwareAction() {
+internal abstract class SyncAction(private val syncType: SyncType) : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val repositoryManager = icsManager.repositoryManager
-    e.getPresentation().setEnabledAndVisible(repositoryManager.isRepositoryExists() && repositoryManager.hasUpstream())
+    e.presentation.isEnabledAndVisible = repositoryManager.isRepositoryExists() && repositoryManager.hasUpstream()
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    syncAndNotify(syncType, event.getProject())
+    syncAndNotify(syncType, event.project)
   }
 }
 
@@ -48,18 +48,18 @@ fun syncAndNotify(syncType: SyncType, project: Project?, notifyIfUpToDate: Boole
   }
 }
 
-class MergeAction : SyncAction(SyncType.MERGE)
-class ResetToTheirsAction : SyncAction(SyncType.OVERWRITE_LOCAL)
-class ResetToMyAction : SyncAction(SyncType.OVERWRITE_REMOTE)
+internal class MergeAction : SyncAction(SyncType.MERGE)
+internal class ResetToTheirsAction : SyncAction(SyncType.OVERWRITE_LOCAL)
+internal class ResetToMyAction : SyncAction(SyncType.OVERWRITE_REMOTE)
 
-class ConfigureIcsAction : DumbAwareAction() {
+internal class ConfigureIcsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     icsManager.runInAutoCommitDisabledMode {
-      IcsSettingsPanel(e.getProject()).show()
+      IcsSettingsPanel(e.project).show()
     }
   }
 
   override fun update(e: AnActionEvent) {
-    e.getPresentation().setIcon(null)
+    e.presentation.icon = null
   }
 }

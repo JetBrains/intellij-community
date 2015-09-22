@@ -38,21 +38,21 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.properties.Delegates
 
-class ApplicationStoreTest {
+internal class ApplicationStoreTest {
   companion object {
-    ClassRule val projectRule = ProjectRule()
+    @ClassRule val projectRule = ProjectRule()
   }
 
   private val tempDirManager = TemporaryDirectory()
-  public Rule fun getTemporaryFolder(): TemporaryDirectory = tempDirManager
+  @Rule fun getTemporaryFolder() = tempDirManager
 
   private val edtRule = EdtRule()
-  public Rule fun _edtRule(): EdtRule = edtRule
+  @Rule fun _edtRule() = edtRule
 
   private var testAppConfig: Path by Delegates.notNull()
   private var componentStore: MyComponentStore by Delegates.notNull()
 
-  public Before fun setUp() {
+  @Before fun setUp() {
     testAppConfig = tempDirManager.newPath(refreshVfs = false)
     componentStore = MyComponentStore(testAppConfig.systemIndependentPath)
   }
@@ -188,7 +188,7 @@ class ApplicationStoreTest {
     runInEdtAndWait { componentStore.save(SmartList()) }
   }
 
-  private fun writeConfig(fileName: String, Language("XML") data: String) = testAppConfig.writeChild(fileName, data)
+  private fun writeConfig(fileName: String, @Language("XML") data: String) = testAppConfig.writeChild(fileName, data)
 
   private class MyStreamProvider : StreamProvider {
     override fun processChildren(path: String, roamingType: RoamingType, filter: (String) -> Boolean, processor: (String, InputStream, Boolean) -> Boolean) {

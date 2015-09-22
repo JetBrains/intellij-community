@@ -45,7 +45,7 @@ private val EDIT_CMP = object : Comparator<PathEdit> {
  * Pass repository to apply
  */
 public class DirCacheEditor(edits: List<PathEdit>, private val repository: Repository, dirCache: DirCache, estimatedNumberOfEntries: Int) : BaseDirCacheEditor(dirCache, estimatedNumberOfEntries) {
-  private val edits = edits.sortBy(EDIT_CMP)
+  private val edits = edits.sortedWith(EDIT_CMP)
 
   override fun commit(): Boolean {
     if (edits.isEmpty()) {
@@ -65,7 +65,7 @@ public class DirCacheEditor(edits: List<PathEdit>, private val repository: Repos
   }
 
   private fun applyEdits() {
-    val maxIndex = cache.getEntryCount()
+    val maxIndex = cache.entryCount
     var lastIndex = 0
     for (edit in edits) {
       var entryIndex = cache.findEntry(edit.path, edit.path.size())
@@ -90,8 +90,8 @@ public class DirCacheEditor(edits: List<PathEdit>, private val repository: Repos
       if (missing) {
         val entry = DirCacheEntry(edit.path)
         edit.apply(entry, repository)
-        if (entry.getRawMode() == 0) {
-          throw IllegalArgumentException(MessageFormat.format(JGitText.get().fileModeNotSetForPath, entry.getPathString()))
+        if (entry.rawMode == 0) {
+          throw IllegalArgumentException(MessageFormat.format(JGitText.get().fileModeNotSetForPath, entry.pathString))
         }
         fastAdd(entry)
       }
@@ -99,12 +99,12 @@ public class DirCacheEditor(edits: List<PathEdit>, private val repository: Repos
         // apply to first entry and remove others
         var firstEntry = cache.getEntry(entryIndex)
         val entry: DirCacheEntry
-        if (firstEntry.isMerged()) {
+        if (firstEntry.isMerged) {
           entry = firstEntry
         }
         else {
           entry = DirCacheEntry(edit.path)
-          entry.setCreationTime(firstEntry.getCreationTime())
+          entry.creationTime = firstEntry.creationTime
         }
         edit.apply(entry, repository)
         fastAdd(entry)
@@ -148,11 +148,11 @@ private fun encodePath(path: String): ByteArray {
 
 class AddFile(private val pathString: String) : PathEditBase(encodePath(pathString)) {
   override fun apply(entry: DirCacheEntry, repository: Repository) {
-    val file = File(repository.getWorkTree(), pathString)
-    entry.setFileMode(FileMode.REGULAR_FILE)
+    val file = File(repository.workTree, pathString)
+    entry.fileMode = FileMode.REGULAR_FILE
     val length = file.length()
     entry.setLength(length)
-    entry.setLastModified(file.lastModified())
+    entry.lastModified = file.lastModified()
 
     val input = FileInputStream(file)
     val inserter = repository.newObjectInserter()
@@ -169,9 +169,9 @@ class AddFile(private val pathString: String) : PathEditBase(encodePath(pathStri
 
 class AddLoadedFile(path: String, private val content: ByteArray, private val size: Int = content.size(), private val lastModified: Long = System.currentTimeMillis()) : PathEditBase(encodePath(path)) {
   override fun apply(entry: DirCacheEntry, repository: Repository) {
-    entry.setFileMode(FileMode.REGULAR_FILE)
-    entry.setLength(size)
-    entry.setLastModified(lastModified)
+    entry.fileMode = FileMode.REGULAR_FILE
+    entry.length = size
+    entry.lastModified = lastModified
 
     val inserter = repository.newObjectInserter()
     try {
@@ -205,7 +205,7 @@ public fun Repository.edit(edits: List<PathEdit>) {
 
   val dirCache = lockDirCache()
   try {
-    DirCacheEditor(edits, this, dirCache, dirCache.getEntryCount() + 4).commit()
+    DirCacheEditor(edits, this, dirCache, dirCache.entryCount + 4).commit()
   }
   finally {
     dirCache.unlock()
@@ -222,10 +222,10 @@ public fun Repository.deleteAllFiles(deletedSet: MutableSet<String>? = null, fro
   val dirCache = lockDirCache()
   try {
     if (deletedSet != null) {
-      for (i in 0..dirCache.getEntryCount() - 1) {
+      for (i in 0..dirCache.entryCount - 1) {
         val entry = dirCache.getEntry(i)
-        if (entry.getFileMode() == FileMode.REGULAR_FILE) {
-          deletedSet.add(entry.getPathString())
+        if (entry.fileMode == FileMode.REGULAR_FILE) {
+          deletedSet.add(entry.pathString)
         }
       }
     }
@@ -236,7 +236,7 @@ public fun Repository.deleteAllFiles(deletedSet: MutableSet<String>? = null, fro
   }
 
   if (fromWorkingTree) {
-    val files = getWorkTree().listFiles { it.getName() != Constants.DOT_GIT }
+    val files = workTree.listFiles { it.name != Constants.DOT_GIT }
     if (files != null) {
       for (file in files) {
         FileUtil.delete(file)
@@ -247,14 +247,14 @@ public fun Repository.deleteAllFiles(deletedSet: MutableSet<String>? = null, fro
 
 public fun Repository.writePath(path: String, bytes: ByteArray, size: Int = bytes.size()) {
   edit(AddLoadedFile(path, bytes, size))
-  FileUtil.writeToFile(File(getWorkTree(), path), bytes, 0, size)
+  FileUtil.writeToFile(File(workTree, path), bytes, 0, size)
 }
 
 public fun Repository.deletePath(path: String, isFile: Boolean = true, fromWorkingTree: Boolean = true) {
   edit((if (isFile) DeleteFile(path) else DeleteDirectory(path)))
 
   if (fromWorkingTree) {
-    val workTree = getWorkTree()
+    val workTree = workTree
     val ioFile = File(workTree, path)
     if (ioFile.exists()) {
       ioFile.removeWithParentsIfEmpty(workTree, isFile)

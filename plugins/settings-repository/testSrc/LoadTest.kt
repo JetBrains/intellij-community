@@ -45,7 +45,7 @@ class LoadTest : IcsTestCase() {
 
     val schemesManager = createSchemeManager(dirPath)
     schemesManager.loadSchemes()
-    assertThat(schemesManager.getAllSchemes()).containsOnly(localScheme)
+    assertThat(schemesManager.allSchemes).containsOnly(localScheme)
   }
 
   @Test fun `load scheme with the same names`() {
@@ -56,7 +56,7 @@ class LoadTest : IcsTestCase() {
 
     val schemesManager = createSchemeManager(dirPath)
     schemesManager.loadSchemes()
-    assertThat(schemesManager.getAllSchemes()).containsOnly(localScheme)
+    assertThat(schemesManager.allSchemes).containsOnly(localScheme)
   }
 
   @Test fun `load scheme from repo and read-only repo`() {
@@ -73,7 +73,7 @@ class LoadTest : IcsTestCase() {
     remoteRepository.useAsReadOnlySource {
       val schemesManager = createSchemeManager(dirPath)
       schemesManager.loadSchemes()
-      assertThat(schemesManager.getAllSchemes()).containsOnly(remoteScheme, localScheme)
+      assertThat(schemesManager.allSchemes).containsOnly(remoteScheme, localScheme)
       assertThat(schemesManager.isMetadataEditable(localScheme)).isTrue()
       assertThat(schemesManager.isMetadataEditable(remoteScheme)).isFalse()
     }
@@ -94,7 +94,7 @@ class LoadTest : IcsTestCase() {
     remoteRepository.useAsReadOnlySource {
       val schemesManager = createSchemeManager(dirPath)
       schemesManager.loadSchemes()
-      assertThat(schemesManager.getAllSchemes()).containsOnly(localScheme)
+      assertThat(schemesManager.allSchemes).containsOnly(localScheme)
       assertThat(schemesManager.isMetadataEditable(localScheme)).isFalse()
     }
   }
@@ -110,8 +110,8 @@ class LoadTest : IcsTestCase() {
   }
 
   fun Repository.createAndRegisterReadOnlySource(): ReadonlySource {
-    val source = ReadonlySource(getWorkTree().getAbsolutePath())
-    assertThat(cloneBare(source.url!!, File(icsManager.readOnlySourcesManager.rootDir, source.path!!)).getObjectDatabase().exists()).isTrue()
+    val source = ReadonlySource(getWorkTree().absolutePath)
+    assertThat(cloneBare(source.url!!, File(icsManager.readOnlySourcesManager.rootDir, source.path!!)).objectDatabase.exists()).isTrue()
     icsManager.readOnlySourcesManager.setSources(listOf(source))
     return source
   }
