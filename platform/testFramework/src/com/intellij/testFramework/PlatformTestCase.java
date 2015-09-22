@@ -54,7 +54,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
@@ -192,7 +191,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFilesToDelete.add(new File(FileUtilRt.getTempDirectory()));
     if (ourTestCase != null) {
       String message = "Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.";
       ourTestCase = null;
@@ -264,22 +262,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @NotNull
   public static Project createProject(@NotNull String path, String creationPlace) {
-    return createProject(path, creationPlace, false);
-  }
-
-  @NotNull
-  public static Project createProject(@NotNull String path, String creationPlace, boolean clearVfs) {
     String fileName = PathUtilRt.getFileName(path);
-    if (clearVfs) {
-      VirtualFile projectBase = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(fileName.endsWith(
-        ProjectFileType.DOT_DEFAULT_EXTENSION) ? PathUtilRt.getParentPath(path) : path));
-      if (projectBase != null) {
-        // must be leftovers from the previous test run
-        for (VirtualFile file : ((NewVirtualFile)projectBase).iterInDbChildren()) {
-          delete(file);
-        }
-      }
-    }
 
     try {
       String projectName = FileUtilRt.getNameWithoutExtension(fileName);
@@ -324,7 +307,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected File getIprFile() throws IOException {
-    File tempFile = FileUtil.createTempFile(getName(), ProjectFileType.DOT_DEFAULT_EXTENSION);
+    File tempFile = FileUtil.createTempFile(getName() + "_", ProjectFileType.DOT_DEFAULT_EXTENSION);
     myFilesToDelete.add(tempFile);
     return tempFile;
   }

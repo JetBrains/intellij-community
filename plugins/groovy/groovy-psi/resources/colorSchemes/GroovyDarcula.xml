@@ -1,29 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list>
-  <option name="GROOVY_KEYWORD">
-    <value>
-      <option name="FOREGROUND" value="cc7832"/>
-    </value>
-  </option>
-  <option name="GString">
-    <value>
-      <option name="FOREGROUND" value="6a8759"/>
-    </value>
-  </option>
   <option name="Groovy method declaration">
     <value/>
-  </option>
-  <option name="Groovydoc comment">
-    <value>
-      <option name="FOREGROUND" value="629755"/>
-      <option name="FONT_TYPE" value="2"/>
-    </value>
-  </option>
-  <option name="Groovydoc tag">
-    <value>
-      <option name="FOREGROUND" value="7cb36f"/>
-      <option name="EFFECT_TYPE" value="1"/>
-    </value>
   </option>
   <option name="Unresolved reference access">
     <value>

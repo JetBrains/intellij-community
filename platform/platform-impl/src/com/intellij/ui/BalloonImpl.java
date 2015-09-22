@@ -1433,8 +1433,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           }
         }
       };
-      ImageProducer prod = new FilteredImageSource(image.getSource(), filter);
-      return Toolkit.getDefaultToolkit().createImage(prod);
+      return ImageUtil.filter(image, filter);
     }
 
     @Override

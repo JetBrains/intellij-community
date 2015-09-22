@@ -126,7 +126,7 @@
     <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkJavaSourceRootAction">
       <add-to-group group-id="MarkRootGroup"/>
     </action>
-    <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction">
+    <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction" icon="AllIcons.Modules.ExcludeRoot">
       <add-to-group group-id="MarkRootGroup"/>
     </action>
     <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction">
