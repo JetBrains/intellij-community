@@ -115,6 +115,57 @@ public class Py3TypeTest extends PyTestCase {
       }
     });
   }
+  
+  // PY-16987
+  public void testNoTypeInGoogleDocstringParamAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      @Override
+      public void run() {
+        doTest("int", "def f(x: int):\n" +
+                      "    \"\"\"\n" +
+                      "    Args:\n" +
+                      "        x: foo\n" +
+                      "    \"\"\"    \n" +
+                      "    expr = x");
+      }
+    });
+  }
+  
+  // PY-16987
+  public void testUnfilledTypeInGoogleDocstringParamAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      @Override
+      public void run() {
+        doTest("Any", "def f(x: int):\n" +
+                      "    \"\"\"\n" +
+                      "    Args:\n" +
+                      "        x (): foo\n" +
+                      "    \"\"\"    \n" +
+                      "    expr = x");
+      }
+    });
+  }
+  
+  // TODO: Same test for Numpy docstrings doesn't pass because typing provider is invoked earlier than NumpyDocStringTypeProvider
+  
+  // PY-16987
+  public void testNoTypeInNumpyDocstringParamAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      @Override
+      public void run() {
+        doTest("int", "def f(x: int):\n" +
+                      "    \"\"\"\n" +
+                      "    Parameters\n" +
+                      "    ----------\n" +
+                      "    x\n" +
+                      "        foo\n" +
+                      "    \"\"\"    \n" +
+                      "    expr = x");
+      }
+    });
+  }
+  
+  
 
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);

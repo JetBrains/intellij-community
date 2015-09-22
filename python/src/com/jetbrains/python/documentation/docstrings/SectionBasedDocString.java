@@ -318,13 +318,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @Nullable
   @Override
   public String getParamType(@Nullable String paramName) {
-    if (paramName != null) {
-      final SectionField field = getFirstFieldForParameter(paramName);
-      if (field != null) {
-        return field.getType();
-      }
-    }
-    return null;
+    final Substring sub = getParamTypeSubstring(paramName);
+    return sub != null ? sub.toString() : null;
   }
 
   @Nullable
@@ -429,8 +424,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @Nullable
   @Override
   public String getReturnType() {
-    final SectionField field = getFirstReturnField();
-    return field != null ? field.getType() : null;
+    final Substring sub = getReturnTypeSubstring();
+    return sub != null ? sub.toString() : null;
   }
 
   @Nullable

@@ -40,12 +40,16 @@ public interface StructuredDocString {
 
   /**
    * @param paramName {@code null} can be used for unnamed parameters descriptors, e.g. in docstring following class attribute
+   * @return {@code null} if specified parameter was omitted in the docstring completely, empty string if there was place for its type, 
+   * but it was unfilled and trimmed type text otherwise.
    */
   @Nullable
   String getParamType(@Nullable String paramName);
 
   /**
    * @param paramName {@code null} can be used for unnamed parameters descriptors, e.g. in docstring following class attribute
+   * @return {@code null} if specified parameter was omitted in the docstring completely, empty substring if there was place for its type, 
+   * but it was unfilled and trimmed type substring otherwise.
    */
   @Nullable
   Substring getParamTypeSubstring(@Nullable String paramName);
@@ -68,9 +72,18 @@ public interface StructuredDocString {
   // getKeywordArgumentTypeString(name)  
   @Nullable
   String getKeywordArgumentDescription(@Nullable String paramName);
+
+  /**
+   * @return {@code null} if return type was omitted in the docstring completely, empty string if there was place for its type,
+   * but it was unfilled and trimmed type text otherwise.
+   */
   @Nullable
   String getReturnType();
-  @Nullable
+
+  /**
+   * @return {@code null} if return type was omitted in the docstring completely, empty substring if there was place for its type,
+   * but it was unfilled and trimmed type substring otherwise.
+   */  @Nullable
   Substring getReturnTypeSubstring();
 
   @Nullable
