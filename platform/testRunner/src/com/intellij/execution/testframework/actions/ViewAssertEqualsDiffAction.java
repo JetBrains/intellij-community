@@ -65,6 +65,7 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     }
     if (currentHyperlink != null) {
       new MyDiffWindow(project, currentHyperlink).show();
+      return true;
     }
     return false;
   }
