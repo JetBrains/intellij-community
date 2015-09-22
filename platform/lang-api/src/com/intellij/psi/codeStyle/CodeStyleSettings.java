@@ -605,6 +605,17 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     return OTHER_INDENT_OPTIONS;
   }
 
+  /**
+   * If the document has an associated PsiFile, returns options for this file. Otherwise attempts to find associated VirtualFile and
+   * return options for corresponding FileType. If none are found, other indent options are returned.
+   *
+   * @param project  The project in which PsiFile should be searched.
+   * @param document The document to search indent options for.
+   * @return Indent options from the indent options providers or file type indent options or <code>OTHER_INDENT_OPTIONS</code>.
+   * @see FileIndentOptionsProvider
+   * @see FileTypeIndentOptionsProvider
+   * @see LanguageCodeStyleSettingsProvider
+   */
   @NotNull
   public IndentOptions getIndentOptionsByDocument(@Nullable Project project, @NotNull Document document) {
     PsiFile file = project != null ? PsiDocumentManager.getInstance(project).getPsiFile(document) : null;
