@@ -19,7 +19,6 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -74,7 +73,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author ven
@@ -320,10 +318,10 @@ public class ResolveUtil {
   private static final Key<PsiType> SERIALIZABLE = Key.create(CommonClassNames.JAVA_IO_SERIALIZABLE);
   private static final Key<PsiType> STRING = Key.create(CommonClassNames.JAVA_LANG_STRING);
 
-  private static void collectSuperTypes(PsiType type, Map<String, PsiType> visited, Project project) {
+  private static void collectSuperTypes(PsiType type, Set<String> visited, Project project) {
     String qName = rawCanonicalText(type);
 
-    if (visited.put(qName, type) != null) {
+    if (!visited.add(qName)) {
       return;
     }
 
@@ -355,13 +353,13 @@ public class ResolveUtil {
     return type;
   }
 
-  public static Map<String, PsiType> getAllSuperTypes(@NotNull PsiType base, final Project project) {
-    final Map<String, Map<String, PsiType>> cache =
-      CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Map<String, Map<String, PsiType>>>() {
+  public static Set<String> getAllSuperTypes(@NotNull PsiType base, final Project project) {
+    final Map<String, Set<String>> cache =
+      CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Map<String, Set<String>>>() {
         @Override
-        public Result<Map<String, Map<String, PsiType>>> compute() {
-          final Map<String, Map<String, PsiType>> result = new ConcurrentHashMap<String, Map<String, PsiType>>();
-          return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
+        public Result<Map<String, Set<String>>> compute() {
+          final Map<String, Set<String>> result = ContainerUtil.newConcurrentMap();
+          return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
         }
       });
 
@@ -380,9 +378,9 @@ public class ResolveUtil {
     else {
       key = base.getCanonicalText();
     }
-    Map<String, PsiType> result = key == null ? null : cache.get(key);
+    Set<String> result = key == null ? null : cache.get(key);
     if (result == null) {
-      result = new HashMap<String, PsiType>();
+      result = ContainerUtil.newHashSet();
       collectSuperTypes(base, result, project);
       if (key != null) {
         cache.put(key, result);
