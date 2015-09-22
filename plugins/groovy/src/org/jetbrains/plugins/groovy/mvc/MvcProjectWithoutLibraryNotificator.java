@@ -27,7 +27,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,11 +81,8 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity, Dum
 
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       for (MvcFramework framework : frameworks) {
-        VirtualFile appRoot = framework.findAppRoot(module);
-        if (appRoot != null && appRoot.findChild("application.properties") != null) {
-           if (!framework.hasFrameworkJar(module)) {
-             return Pair.create(module, framework);
-           }
+        if (framework.hasFrameworkStructure(module) && !framework.hasFrameworkJar(module)) {
+          return Pair.create(module, framework);
         }
       }
     }

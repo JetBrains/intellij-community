@@ -90,6 +90,13 @@ public abstract class MvcFramework {
     return new GroovyLibraryDescription(getSdkHomePropertyName(), getLibraryKind(), getDisplayName());
   }
 
+  public boolean hasFrameworkStructure(@NotNull Module module) {
+    VirtualFile appDir = findAppDirectory(module);
+    if (appDir == null) return false;
+
+    return appDir.findChild("controllers") != null && appDir.findChild("conf") != null;
+  }
+
   public boolean hasFrameworkJar(@NotNull Module module) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false);
     return JavaPsiFacade.getInstance(module.getProject()).findClass(getSomeFrameworkClass(), scope) != null;
@@ -641,5 +648,4 @@ public abstract class MvcFramework {
     }
     return null;
   }
-
 }
