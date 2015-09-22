@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.openapi.roots.ui.configuration.libraries.AddCustomLibraryDialog;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
@@ -100,6 +101,23 @@ public abstract class MvcFramework {
   public boolean hasFrameworkJar(@NotNull Module module) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false);
     return JavaPsiFacade.getInstance(module.getProject()).findClass(getSomeFrameworkClass(), scope) != null;
+  }
+
+  @NotNull
+  public Map<String, Runnable> createConfigureActions(final @NotNull Module module) {
+    return Collections.<String, Runnable>singletonMap("Configure " + getFrameworkName() + " SDK", new Runnable() {
+      @Override
+      public void run() {
+        configureAsLibraryDependency(module);
+      }
+    });
+  }
+
+  protected void configureAsLibraryDependency(@NotNull Module module) {
+    final GroovyLibraryDescription description = createLibraryDescription();
+    final AddCustomLibraryDialog dialog = AddCustomLibraryDialog.createDialog(description, module, null);
+    dialog.setTitle("Change " + getDisplayName() + " SDK version");
+    if (dialog.showAndGet()) module.putUserData(UPGRADE, Boolean.TRUE);
   }
 
   public boolean isCommonPluginsModule(@NotNull Module module) {
