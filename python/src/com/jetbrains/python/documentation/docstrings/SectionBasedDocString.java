@@ -463,7 +463,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     return ContainerUtil.mapNotNull(getExceptionFields(), new Function<SectionField, String>() {
       @Override
       public String fun(SectionField field) {
-        return field.getType();
+        return StringUtil.nullize(field.getType());
       }
     });
   }
@@ -604,9 +604,9 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
       myDescription = description;
     }
 
-    @NotNull
+    @Nullable
     public String getName() {
-      return myNames.isEmpty() ? "" : myNames.get(0).toString();
+      return myNames.isEmpty() ? null : myNames.get(0).toString();
     }
 
     @Nullable
@@ -629,9 +629,9 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
       });
     }
 
-    @NotNull
+    @Nullable
     public String getType() {
-      return myType == null ? "" : myType.toString();
+      return myType == null ? null : myType.toString();
     }
 
     @Nullable
@@ -639,9 +639,9 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
       return myType;
     }
 
-    @NotNull 
+    @Nullable 
     public String getDescription() {
-      return myDescription == null ? "" : PyIndentUtil.removeCommonIndent(myDescription.getValue(), true);
+      return myDescription == null ? null : PyIndentUtil.removeCommonIndent(myDescription.getValue(), true);
     }
 
     @Nullable
