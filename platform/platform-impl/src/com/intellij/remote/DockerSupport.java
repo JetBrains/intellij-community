@@ -38,8 +38,6 @@ public abstract class DockerSupport {
   @NotNull
   public abstract ConnectionInfo getConnectionInfo(@NotNull String machineName) throws DockerMachineException, DockerMachineCommandException;
 
-  public abstract String getDefaultCertificatesFolder();
-
   public static class ConnectionInfo {
     @NotNull private final String myApiUrl;
     @Nullable private final String myCertificatesPath;
