@@ -15,6 +15,7 @@
  */
 package com.intellij.remote;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,14 +23,12 @@ import org.jetbrains.annotations.NotNull;
  * @author Alexander Koshevoy
  */
 public class DockerCredentialsHolder {
-  public static final String DOCKER_REMOTE_API_ADDRESS = "DOCKER_REMOTE_API_ADDRESS";
-  public static final String DOCKER_CERTIFICATES_FOLDER = "DOCKER_CERTIFICATES_FOLDER";
+  public static final String DOCKER_MACHINE_NAME = "DOCKER_MACHINE_NAME";
   public static final String DOCKER_IMAGE_NAME = "DOCKER_IMAGE_NAME";
   public static final String DOCKER_CONTAINER_NAME = "DOCKER_CONTAINER_NAME";
   public static final String DOCKER_REMOTE_PROJECT_PATH = "DOCKER_REMOTE_PROJECT_PATH";
 
-  private String myRemoteAPIAddress;
-  private String myCertificatesFolder;
+  private String myMachineName;
 
   private String myImageName;
 
@@ -40,24 +39,18 @@ public class DockerCredentialsHolder {
   public DockerCredentialsHolder() {
   }
 
-  public DockerCredentialsHolder(String remoteAPIAddress,
-                                 String certificatesFolder,
+  public DockerCredentialsHolder(String machineName,
                                  String imageName,
                                  String containerName,
                                  String remoteProjectPath) {
-    myRemoteAPIAddress = remoteAPIAddress;
-    myCertificatesFolder = certificatesFolder;
+    myMachineName = machineName;
     myImageName = imageName;
     myContainerName = containerName;
     myRemoteProjectPath = remoteProjectPath;
   }
 
-  public String getRemoteApiUrl() {
-    return myRemoteAPIAddress;
-  }
-
-  public String getCertificatesFolder() {
-    return myCertificatesFolder;
+  public String getMachineName() {
+    return myMachineName;
   }
 
   public String getImageName() {
@@ -73,16 +66,18 @@ public class DockerCredentialsHolder {
   }
 
   public void save(@NotNull Element element) {
-    element.setAttribute(DOCKER_REMOTE_API_ADDRESS, myRemoteAPIAddress);
-    element.setAttribute(DOCKER_CERTIFICATES_FOLDER, myCertificatesFolder);
+    if (StringUtil.isNotEmpty(myMachineName)) {
+      element.setAttribute(DOCKER_MACHINE_NAME, myMachineName);
+    }
     element.setAttribute(DOCKER_IMAGE_NAME, myImageName);
-    element.setAttribute(DOCKER_CONTAINER_NAME, myContainerName);
+    if (StringUtil.isNotEmpty(myContainerName)) {
+      element.setAttribute(DOCKER_CONTAINER_NAME, myContainerName);
+    }
     element.setAttribute(DOCKER_REMOTE_PROJECT_PATH, myRemoteProjectPath);
   }
 
   public void load(@NotNull Element element) {
-    myRemoteAPIAddress = element.getAttributeValue(DOCKER_REMOTE_API_ADDRESS);
-    myCertificatesFolder = element.getAttributeValue(DOCKER_CERTIFICATES_FOLDER);
+    myMachineName = element.getAttributeValue(DOCKER_MACHINE_NAME);
     myImageName = element.getAttributeValue(DOCKER_IMAGE_NAME);
     myContainerName = element.getAttributeValue(DOCKER_CONTAINER_NAME);
     myRemoteProjectPath = element.getAttributeValue(DOCKER_REMOTE_PROJECT_PATH);

@@ -16,7 +16,10 @@
 package com.intellij.remote;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Alexander Koshevoy
@@ -27,5 +30,33 @@ public abstract class DockerSupport {
     return ServiceManager.getService(DockerSupport.class);
   }
 
+  public abstract boolean hasDockerMachine();
+
+  @NotNull
+  public abstract List<String> getVMs() throws DockerMachineException, DockerMachineCommandException;
+
+  @NotNull
+  public abstract ConnectionInfo getConnectionInfo(@NotNull String machineName) throws DockerMachineException, DockerMachineCommandException;
+
   public abstract String getDefaultCertificatesFolder();
+
+  public static class ConnectionInfo {
+    @NotNull private final String myApiUrl;
+    @Nullable private final String myCertificatesPath;
+
+    public ConnectionInfo(@NotNull String apiUrl, @Nullable String certificatesPath) {
+      myApiUrl = apiUrl;
+      myCertificatesPath = certificatesPath;
+    }
+
+    @NotNull
+    public String getApiUrl() {
+      return myApiUrl;
+    }
+
+    @Nullable
+    public String getCertificatesPath() {
+      return myCertificatesPath;
+    }
+  }
 }
