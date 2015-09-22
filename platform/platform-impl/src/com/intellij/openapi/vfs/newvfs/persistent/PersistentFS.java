@@ -64,6 +64,12 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract String getName(int id);
 
+  /**
+   * Get the last length recorded for this file. If the file has changed since the length was recorded, this will return the stale length
+   * value.
+   */
+  public abstract long getLastRecordedLength(@NotNull VirtualFile file);
+
   public abstract boolean isHidden(@NotNull VirtualFile file);
 
   @Attributes
