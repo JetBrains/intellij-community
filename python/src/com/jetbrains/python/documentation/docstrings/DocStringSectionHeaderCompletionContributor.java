@@ -42,11 +42,13 @@ public class DocStringSectionHeaderCompletionContributor extends CompletionContr
                final PsiElement stringNode = parameters.getOriginalPosition();
                assert stringNode != null;
                final int offset = parameters.getOffset();
-               if (file.findReferenceAt(offset) != null) {
-                 return;
-               }
                final DocStringFormat format = DocStringUtil.getConfiguredDocStringFormat(file);
                if (!(format == DocStringFormat.GOOGLE || format == DocStringFormat.NUMPY)) {
+                 return;
+               }
+               // Numpy docstring format is ambiguous. Because parameters have the same indentation as section headers,
+               // beginning of section header can be parsed as parameter reference
+               if (format == DocStringFormat.GOOGLE && file.findReferenceAt(offset) != null) {
                  return;
                }
                final Document document = parameters.getEditor().getDocument();
