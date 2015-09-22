@@ -461,25 +461,28 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
     assert data != null;
 
-    GeneralCommandLine commandLine = new GeneralCommandLine(command);
+    GeneralCommandLine commandLine = new GeneralCommandLine();
 
+    commandLine.withParameters(command);
 
     commandLine.getEnvironment().putAll(env);
 
-    commandLine.getParametersList().set(1, PythonRemoteInterpreterManager.toSystemDependent(new File(data.getHelpersPath(),
+    commandLine.getParametersList().set(0, PythonRemoteInterpreterManager.toSystemDependent(new File(data.getHelpersPath(),
                                                                                                      PYDEV_PYDEVCONSOLE_PY)
                                                                                               .getPath(),
                                                                                             PySourcePosition.isWindowsPath(
                                                                                               data.getInterpreterPath())
     ));
+    commandLine.getParametersList().set(1, "0");
     commandLine.getParametersList().set(2, "0");
-    commandLine.getParametersList().set(3, "0");
-
-    myCommandLine = commandLine.getCommandLineString();
 
     try {
       myRemoteCredentials = data.getRemoteSdkCredentials(true);
       PyRemotePathMapper pathMapper = manager.setupMappings(getProject(), data, null);
+
+      commandLine.withExePath(myRemoteCredentials.getFullInterpreterPath());
+
+      myCommandLine = commandLine.getCommandLineString();
 
       RemoteSshProcess remoteProcess =
         manager.createRemoteProcess(getProject(), myRemoteCredentials, pathMapper, commandLine, true);
