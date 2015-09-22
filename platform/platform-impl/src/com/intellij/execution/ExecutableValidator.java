@@ -46,8 +46,9 @@ import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
  */
 public abstract class ExecutableValidator {
 
-  private static final Logger LOG = Logger.getInstance(ExecutableValidator.class);
+  public static final int TIMEOUT_MS = Registry.intValue("vcs.executable.validator.timeout.sec", 60) * 1000;
 
+  private static final Logger LOG = Logger.getInstance(ExecutableValidator.class);
   private static final NotificationGroup ourNotificationGroup = new NotificationGroup("External Executable Critical Failures",
                                                                               STICKY_BALLOON, true);
   @NotNull protected final Project myProject;
@@ -106,7 +107,7 @@ public abstract class ExecutableValidator {
       commandLine.setExePath(executable);
       commandLine.addParameters(processParameters);
       CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
-      ProcessOutput result = handler.runProcess(Registry.intValue("vcs.executable.validator.timeout.sec", 60) * 1000);
+      ProcessOutput result = handler.runProcess(TIMEOUT_MS);
       boolean timeout = result.isTimeout();
       int exitCode = result.getExitCode();
       String stderr = result.getStderr();
