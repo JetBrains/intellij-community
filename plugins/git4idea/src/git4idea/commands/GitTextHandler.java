@@ -21,6 +21,9 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -118,7 +121,18 @@ public abstract class GitTextHandler extends GitHandler {
 
   protected void waitForProcess() {
     if (myHandler != null) {
-      myHandler.waitFor();
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      while (!myHandler.waitFor(50)) {
+        try {
+          if (indicator != null) {
+            indicator.checkCanceled();
+          }
+        }
+        catch (ProcessCanceledException pce) {
+          myHandler.destroyProcess();
+          throw pce;
+        }
+      }
     }
   }
 
