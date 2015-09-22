@@ -29,7 +29,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -43,6 +43,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenedCallback;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -192,16 +193,15 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     }
 
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
-    final Module module = runConfigurators ? runDirectoryProjectConfigurators(baseDir, project) : ModuleManager.getInstance(project).getModules()[0];
+
+    Module module = runConfigurators ? runDirectoryProjectConfigurators(baseDir, project) : ModuleManager.getInstance(project).getModules()[0];
     if (runConfigurators && dummyProject) { // add content root for chosen (single) file
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
         @Override
-        public void run() {
-          ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        public void consume(ModifiableRootModel model) {
           ContentEntry[] entries = model.getContentEntries();
           if (entries.length == 1) model.removeContentEntry(entries[0]); // remove custom content entry created for temp directory
           model.addContentEntry(virtualFile);
-          model.commit();
         }
       });
     }
