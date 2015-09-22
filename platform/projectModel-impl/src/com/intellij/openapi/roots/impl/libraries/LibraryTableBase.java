@@ -235,6 +235,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
     @Override
     public void dispose() {
+      myDispatcher.removeListener(this);
     }
 
     @Override

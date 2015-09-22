@@ -462,6 +462,16 @@ public class PythonCompletionTest extends PyTestCase {
     });
   }
 
+  // PY-16870, PY-16972
+  public void testClassNameInDocstring() {
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
+  }
+
   public void testPep328Completion() {  // PY-3409
     myFixture.copyDirectoryToProject("pep328", "pep328");
     myFixture.configureByFile("pep328/package/subpackage1/moduleX.py");

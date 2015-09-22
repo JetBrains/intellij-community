@@ -196,7 +196,5 @@ test $EC -ne 88 && exit $EC
 if [ -x "$HOME/.@@system_selector@@/restart/restarter.sh" ]; then
   $HOME/.@@system_selector@@/restart/restarter.sh
   "$RM" -f "$HOME/.@@system_selector@@/restart/restarter.sh"
-else
-  echo "No restarter found."
 fi
 exec "$0" "$@"

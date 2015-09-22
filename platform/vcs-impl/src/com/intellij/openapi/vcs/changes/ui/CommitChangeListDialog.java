@@ -55,6 +55,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.OnOffListener;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -119,6 +120,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final String myOkActionText;
   private CommitAction myCommitAction;
   @Nullable private CommitResultHandler myResultHandler;
+
+  private static final float SPLITTER_PROPORTION_OPTION_DEFAULT = 0.5f;
+  private static final float DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT = 0.6f;
+  private static final boolean DETAILS_SHOW_OPTION_DEFAULT = false;
 
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
@@ -496,12 +501,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void showDetailsIfSaved() {
-    String value = PropertiesComponent.getInstance().getValue(DETAILS_SHOW_OPTION);
-    if (value != null) {
-      Boolean asBoolean = Boolean.valueOf(value);
-      if (Boolean.TRUE.equals(asBoolean)) {
-        myDetailsSplitter.initOn();
-      }
+    boolean showDetails = PropertiesComponent.getInstance().getBoolean(DETAILS_SHOW_OPTION, DETAILS_SHOW_OPTION_DEFAULT);
+    if (showDetails) {
+      myDetailsSplitter.initOn();
     }
     SwingUtilities.invokeLater(new Runnable() {
       @Override
@@ -796,12 +798,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myUpdateButtonsRunnable.cancel();
     super.dispose();
     Disposer.dispose(myDiffDetails);
-    PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, String.valueOf(mySplitter.getProportion()));
+    PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, mySplitter.getProportion(), SPLITTER_PROPORTION_OPTION_DEFAULT);
     float usedProportion = myDetailsSplitter.getUsedProportion();
     if (usedProportion > 0) {
-      PropertiesComponent.getInstance().setValue(DETAILS_SPLITTER_PROPORTION_OPTION, String.valueOf(usedProportion));
+      PropertiesComponent.getInstance().setValue(DETAILS_SPLITTER_PROPORTION_OPTION, usedProportion, DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT);
     }
-    PropertiesComponent.getInstance().setValue(DETAILS_SHOW_OPTION, String.valueOf(myDetailsSplitter.isOn()));
+    PropertiesComponent.getInstance().setValue(DETAILS_SHOW_OPTION, myDetailsSplitter.isOn(), DETAILS_SHOW_OPTION_DEFAULT);
   }
 
   @Override
@@ -1063,6 +1065,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                        }) {
       @Override
       protected RefreshablePanel createDetails() {
+        final JPanel panel = JBUI.Panels.simplePanel(myDiffDetails.getComponent());
         return new RefreshablePanel() {
           @Override
           public boolean refreshDataSynch() {
@@ -1079,12 +1082,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
           @Override
           public JPanel getPanel() {
-            return (JPanel)myDiffDetails.getComponent(); // TODO: i don't like this cast.
+            return panel;
           }
 
           @Override
           public void away() {
-
           }
 
           @Override
@@ -1094,24 +1096,15 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
           @Override
           public void dispose() {
-
           }
         };
       }
 
       @Override
       protected float getSplitterInitialProportion() {
-        float value = 0;
-        final String remembered = PropertiesComponent.getInstance().getValue(DETAILS_SPLITTER_PROPORTION_OPTION);
-        if (remembered != null) {
-          try {
-            value = Float.valueOf(remembered);
-          } catch (NumberFormatException e) {
-            //
-          }
-        }
+        float value = PropertiesComponent.getInstance().getFloat(DETAILS_SPLITTER_PROPORTION_OPTION, DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT);
         if (value <= 0.05 || value >= 0.95) {
-          return 0.6f;
+          return DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT;
         }
         return value;
       }
@@ -1121,16 +1114,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void initMainSplitter() {
-    final String s = PropertiesComponent.getInstance().getValue(SPLITTER_PROPORTION_OPTION);
-    if (s != null) {
-      try {
-        mySplitter.setProportion(Float.valueOf(s).floatValue());
-      } catch (NumberFormatException e) {
-        //
-      }
-    } else {
-      mySplitter.setProportion(0.5f);
-    }
+    mySplitter.setProportion(PropertiesComponent.getInstance().getFloat(SPLITTER_PROPORTION_OPTION, SPLITTER_PROPORTION_OPTION_DEFAULT));
   }
 
   public Collection<AbstractVcs> getAffectedVcses() {

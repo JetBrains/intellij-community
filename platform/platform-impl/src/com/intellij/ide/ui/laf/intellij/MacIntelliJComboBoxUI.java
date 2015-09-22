@@ -43,7 +43,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     currentValuePane = new CellRendererPane() {
       @Override
       public void paintComponent(Graphics g, Component c, Container p, int x, int y, int w, int h, boolean shouldValidate) {
-        c.setBackground(myComboBox.isEnabled() ? Gray.xFF : Gray.xF6);
+        c.setBackground(myComboBox.isEnabled() ? Gray.xFF : Gray.xF8);
         super.paintComponent(g, c, p, x, y, w, h, shouldValidate);
       }
     };
@@ -225,7 +225,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
 
   @Override
   public void paintCurrentValueBackground(Graphics g, Rectangle bounds, boolean hasFocus) {
-    g.setColor(myComboBox.isEnabled() ? Gray.xFF : Gray.xF6);
+    g.setColor(myComboBox.isEnabled() ? Gray.xFF : Gray.xF8);
     g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
   }
 
