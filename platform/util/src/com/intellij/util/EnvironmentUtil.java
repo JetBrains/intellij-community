@@ -248,6 +248,7 @@ public class EnvironmentUtil {
       String country = locale.getCountry();
       String value = (language.isEmpty() || country.isEmpty() ? "en_US" : language + '_' + country) + '.' + charset.name();
       env.put(LC_CTYPE, value);
+      LOG.info("LC_CTYPE=" + value);
     }
     return env;
   }
