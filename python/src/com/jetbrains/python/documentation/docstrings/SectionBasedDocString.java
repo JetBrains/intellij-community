@@ -204,8 +204,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   protected Pair<SectionField, Integer> parseGenericField(int lineNum, int sectionIndent) {
-    // We want to let section content has the same indent as section header, in particular for Numpy
-    final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum, Math.max(sectionIndent - 1, 0));
+    final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum, getSectionIndentationThreshold(sectionIndent));
     final Substring firstLine = ContainerUtil.getFirstItem(pair.getFirst());
     final Substring lastLine = ContainerUtil.getLastItem(pair.getFirst());
     if (firstLine != null && lastLine != null) {
@@ -225,7 +224,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   protected boolean isSectionBreak(int lineNum, int curSectionIndent) {
     return lineNum >= getLineCount() || 
            // note that field may have the same indent as its containing section
-           (!isEmpty(lineNum) && getLineIndentSize(lineNum) < curSectionIndent) || 
+           (!isEmpty(lineNum) && getLineIndentSize(lineNum) <= getSectionIndentationThreshold(curSectionIndent)) || 
            isSectionStart(lineNum);
   }
 
@@ -239,6 +238,17 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   protected Pair<List<Substring>, Integer> parseIndentedBlock(int lineNum, int blockIndent) {
     final int blockEnd = consumeIndentedBlock(lineNum, blockIndent);
     return Pair.create(myLines.subList(lineNum, blockEnd), blockEnd);
+  }
+
+  /**
+   * Inside section any indentation that is equal or smaller to returned one signals about section break.
+   * It's safe to return negative value, because it's used only for comparisons.
+   *
+   * @see #isSectionBreak(int, int)
+   * @see #parseGenericField(int, int)
+   */
+  protected int getSectionIndentationThreshold(int sectionIndent) {
+    return sectionIndent;
   }
 
   @Override

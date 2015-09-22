@@ -64,6 +64,12 @@ public class NumpyDocString extends SectionBasedDocString {
   }
 
   @Override
+  protected int getSectionIndentationThreshold(int sectionIndent) {
+    // For Numpy we want to let section content has the same indent as section header
+    return sectionIndent - 1;
+  }
+
+  @Override
   protected Pair<SectionField, Integer> parseSectionField(int lineNum,
                                                           int sectionIndent,
                                                           boolean mayHaveType,
