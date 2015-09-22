@@ -217,7 +217,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
           case 1:
             // Function returns single value
             final String typeName = returns.get(0).getType();
-            if (!typeName.isEmpty()) {
+            if (StringUtil.isNotEmpty(typeName)) {
               final PyType genericType = getPsiFacade(function).parseTypeAnnotation("T", function);
               if (isUfuncType(function, typeName)) return genericType;
               return parseNumpyDocType(function, typeName);
@@ -232,8 +232,8 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
             for (int i = 0; i < returns.size(); i++) {
               SectionField ret = returns.get(i);
               final String memberTypeName = ret.getType();
-              final PyType returnType = !memberTypeName.isEmpty() ? parseNumpyDocType(function, memberTypeName) : null;
-              final boolean isOptional = !memberTypeName.isEmpty() && memberTypeName.contains("optional");
+              final PyType returnType = StringUtil.isNotEmpty(memberTypeName) ? parseNumpyDocType(function, memberTypeName) : null;
+              final boolean isOptional = StringUtil.isNotEmpty(memberTypeName) && memberTypeName.contains("optional");
 
               if (isOptional) {
                 if (i != 0) {
@@ -389,18 +389,18 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   private static PyType getParameterType(@NotNull PyFunction function, @NotNull String parameterName) {
     final NumpyDocString docString = forFunction(function, function);
     if (docString != null) {
-      SectionField parameter = docString.getFirstFieldForParameter(parameterName);
+      String paramType = docString.getParamType(parameterName);
 
       // If parameter name starts with "p_", and we failed to obtain it from the docstring,
       // try to obtain parameter named without such prefix.
-      if (parameter == null && parameterName.startsWith("p_")) {
-        parameter = docString.getFirstFieldForParameter(parameterName.substring(2));
+      if (paramType == null && parameterName.startsWith("p_")) {
+        paramType = docString.getParamType(parameterName.substring(2));
       }
-      if (parameter != null) {
-        if (isUfuncType(function, parameter.getType())) {
+      if (paramType != null) {
+        if (isUfuncType(function, paramType)) {
           return getPsiFacade(function).parseTypeAnnotation("T <= numbers.Number or numpy.core.multiarray.ndarray or collections.Iterable", function);
         }
-        final PyType numpyDocType = parseNumpyDocType(function, parameter.getType());
+        final PyType numpyDocType = parseNumpyDocType(function, paramType);
         if ("size".equals(parameterName)) {
           return getPsiFacade(function).createUnionType(Lists.newArrayList(numpyDocType, PyBuiltinCache.getInstance(function).getIntType()));
         }

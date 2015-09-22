@@ -21,4 +21,7 @@ import com.intellij.remote.RemoteSdkAdditionalData;
  * @author traff
  */
 public interface PyRemoteSdkAdditionalDataBase extends RemoteSdkAdditionalData<PyRemoteSdkCredentials>, PyRemoteSdkSkeletonsPathAware {
+  String getVersionString();
+
+  void setVersionString(String versionString);
 }

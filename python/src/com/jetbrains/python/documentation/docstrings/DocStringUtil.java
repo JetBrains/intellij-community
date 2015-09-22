@@ -58,7 +58,7 @@ public class DocStringUtil {
    * @return structured docstring for one of supported formats or instance of {@link PlainDocString} if none was recognized.
    * @see #parse(String, PsiElement) 
    */
-  @Nullable
+  @NotNull
   public static StructuredDocString parse(@NotNull String text) {
     return parse(text, null);
   }
