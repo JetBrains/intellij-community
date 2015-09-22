@@ -158,10 +158,9 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       }
     }
 
-    boolean runConfigurators = true;
-    final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+    boolean runConfigurators = true, newProject = false;
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project = null;
-    boolean isNew = false;
 
     if (projectDir.exists()) {
       try {
@@ -170,32 +169,25 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
         }
 
         project = projectManager.convertAndLoadProject(baseDir.getPath());
-        if (project == null) {
-          WelcomeFrame.showIfNoProjectOpened();
-          return null;
-        }
 
-        final Module[] modules = ModuleManager.getInstance(project).getModules();
-        if (modules.length > 0) {
-          runConfigurators = false;
-        }
+        runConfigurators = project != null && ModuleManager.getInstance(project).getModules().length > 0;
       }
       catch (Exception e) {
-        // ignore
+        LOG.error(e);
       }
     }
     else {
       //noinspection ResultOfMethodCallIgnored
       projectDir.mkdirs();
-      isNew = true;
-    }
 
-    if (project == null) {
       String projectName = dummyProject ? dummyProjectName : projectDir.getParentFile().getName();
       project = projectManager.newProject(projectName, projectDir.getParent(), true, dummyProject);
+
+      newProject = true;
     }
 
     if (project == null) {
+      WelcomeFrame.showIfNoProjectOpened();
       return null;
     }
 
@@ -214,7 +206,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       });
     }
 
-    if (isNew) {
+    if (newProject) {
       project.save();
     }
 
