@@ -171,7 +171,12 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
         project = projectManager.convertAndLoadProject(baseDir.getPath());
 
-        runConfigurators = project != null && ModuleManager.getInstance(project).getModules().length > 0;
+        if (project != null) {
+          Module[] modules = ModuleManager.getInstance(project).getModules();
+          if (modules.length > 0) {
+            runConfigurators = false;
+          }
+        }
       }
       catch (Exception e) {
         LOG.error(e);
