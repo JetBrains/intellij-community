@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -38,7 +39,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +56,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(myTestRootDisposable);
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override public void before(@NotNull List<? extends VFileEvent> events) { checkFiles(events, true); }
 
@@ -580,12 +580,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     try {
       subFile1.markDirty();
       subFile2.markDirty();
-      RefreshWorker.setCancellingCondition(new Function<VirtualFile, Boolean>() {
-        @Override
-        public Boolean fun(VirtualFile file) {
-          return "sub_file_to_stop_at".equals(file.getName());
-        }
-      });
+      RefreshWorker.setCancellingCondition(file -> "sub_file_to_stop_at".equals(file.getName()));
       topDir.refresh(false, true);
       // should remain dirty after aborted refresh
       assertTrue(subFile1.isDirty());
@@ -666,5 +661,36 @@ public class LocalFileSystemTest extends PlatformTestCase {
 
     assertOrderedEquals(ArrayUtil.EMPTY_STRING_ARRAY, srcDir.list());
     assertOrderedEquals(new String[]{link.getName()}, dstDir.list());
+  }
+
+  public void testFileContentChangeEvents() throws IOException {
+    File file = IoTestUtil.createTestFile("file.txt");
+    long stamp = file.lastModified();
+    VirtualFile vFile = myFS.refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+
+    int[] updated = {0};
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          if (event instanceof VFileContentChangeEvent && vFile.equals(event.getFile())) {
+            updated[0]++;
+            break;
+          }
+        }
+      }
+    });
+
+    FileUtil.writeToFile(file, "content");
+    assertTrue(file.setLastModified(stamp));
+    vFile.refresh(false, false);
+    assertEquals(1, updated[0]);
+
+    FileUtil.writeToFile(file, "more content");
+    assertTrue(file.setLastModified(stamp));
+    vFile.refresh(false, false);
+    assertEquals(2, updated[0]);
   }
 }

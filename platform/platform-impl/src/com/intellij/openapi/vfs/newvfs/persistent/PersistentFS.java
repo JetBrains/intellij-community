@@ -64,6 +64,8 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract String getName(int id);
 
+  public abstract long getLastRecordedLength(@NotNull VirtualFile file);
+
   public abstract boolean isHidden(@NotNull VirtualFile file);
 
   @Attributes

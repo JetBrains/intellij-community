@@ -1112,7 +1112,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
   }
 
-  class FileStructureTree extends JBTreeWithHintProvider implements AlwaysExpandedTree {
+  class FileStructureTree extends JBTreeWithHintProvider implements AlwaysExpandedTree, PlaceProvider<String> {
     private final boolean fast;
 
     public FileStructureTree(Object rootElement, boolean fastExpand) {
@@ -1156,6 +1156,11 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     protected PsiElement getPsiElementForHint(Object selectedValue) {
       //noinspection ConstantConditions
       return getPsi((FilteringTreeStructure.FilteringNode)((DefaultMutableTreeNode)selectedValue).getUserObject());
+    }
+
+    @Override
+    public String getPlace() {
+      return ActionPlaces.STRUCTURE_VIEW_POPUP;
     }
   }
 }

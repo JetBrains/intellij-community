@@ -31,7 +31,7 @@ public class UIVcsUtil {
 
   @NotNull
   public static String spaceAndThinSpace() {
-    return " " + FontUtil.canDisplay(UIUtil.getLabelFont(), '\u2009', "");
+    return " " + FontUtil.canDisplay(UIUtil.getLabelFont(), '\u2009', " ");
   } 
 
   public static JPanel errorPanel(final String text, boolean isError) {

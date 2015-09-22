@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,8 @@ package com.intellij.ui;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.popup.HintUpdateSupply;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeModel;
@@ -30,7 +28,7 @@ import javax.swing.tree.TreeNode;
 /**
  * @author Konstantin Bulenkov
  * @deprecated
- * @see com.intellij.ui.popup.HintUpdateSupply
+ * @see HintUpdateSupply
  */
 public class JBTreeWithHintProvider extends DnDAwareTree {
   {
@@ -56,20 +54,5 @@ public class JBTreeWithHintProvider extends DnDAwareTree {
   @Nullable
   protected PsiElement getPsiElementForHint(final Object selectedValue) {
     return CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(this));
-  }
-
-  @Deprecated
-  public void registerHint(JBPopup hint) {
-    ObjectUtils.assertNotNull(HintUpdateSupply.getSupply(this)).registerHint(hint);
-  }
-
-  @Deprecated
-  public void hideHint() {
-    ObjectUtils.assertNotNull(HintUpdateSupply.getSupply(this)).hideHint();
-  }
-
-  @Deprecated
-  public void updateHint(PsiElement element) {
-    ObjectUtils.assertNotNull(HintUpdateSupply.getSupply(this)).updateHint(element);
   }
 }
