@@ -529,7 +529,8 @@ public class PythonSdkType extends SdkType {
               PyBundle.message("MSG.title.bad.sdk")
             );
           }
-        } catch (PySdkUpdater.PySdkNotFoundException e) {
+        }
+        catch (PySdkUpdater.PySdkNotFoundException e) {
           // sdk was removed from sdk table so no need to setup paths
         }
       }
@@ -802,6 +803,34 @@ public class PythonSdkType extends SdkType {
       return ImmutableMap.of("PATH", root.toString());
     }
     return null;
+  }
+
+  @Nullable
+  @Override
+  public String getVersionString(@NotNull Sdk sdk) {
+    if (isRemote(sdk)) {
+      final PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
+      assert data != null;
+      String versionString = data.getVersionString();
+      if (StringUtil.isEmpty(versionString)) {
+        final PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
+        if (remoteInterpreterManager != null) {
+          try {
+            versionString =
+              remoteInterpreterManager.getInterpreterVersion(null, data);
+          }
+          catch (Exception e) {
+            LOG.warn("Couldn't get interpreter version:" + e.getMessage(), e);
+            versionString = "undefined";
+          }
+        }
+        data.setVersionString(versionString);
+      }
+      return versionString;
+    }
+    else {
+      return getVersionString(sdk.getHomePath());
+    }
   }
 
   @Nullable
