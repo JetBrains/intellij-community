@@ -161,6 +161,8 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     boolean runConfigurators = true;
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project = null;
+    boolean isNew = false;
+
     if (projectDir.exists()) {
       try {
         for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensions()) {
@@ -183,15 +185,14 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       }
     }
     else {
+      //noinspection ResultOfMethodCallIgnored
       projectDir.mkdirs();
+      isNew = true;
     }
-
-    boolean isNew = false;
 
     if (project == null) {
       String projectName = dummyProject ? dummyProjectName : projectDir.getParentFile().getName();
       project = projectManager.newProject(projectName, projectDir.getParent(), true, dummyProject);
-      isNew = true;
     }
 
     if (project == null) {
