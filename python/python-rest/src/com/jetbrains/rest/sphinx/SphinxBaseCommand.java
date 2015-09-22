@@ -31,7 +31,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -139,30 +139,25 @@ public class SphinxBaseCommand {
   }
 
   protected GeneralCommandLine createCommandLine(Module module, List<String> params) throws ExecutionException {
-    GeneralCommandLine cmd = new GeneralCommandLine();
-
     Sdk sdk = PythonSdkType.findPythonSdk(module);
     if (sdk == null) {
       throw new ExecutionException("No sdk specified");
     }
 
     ReSTService service = ReSTService.getInstance(module);
-    cmd.setWorkDirectory(service.getWorkdir().isEmpty()? module.getProject().getBaseDir().getPath(): service.getWorkdir());
-    PythonCommandLineState.createStandardGroupsIn(cmd);
-    ParamsGroup script_params = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
-    assert script_params != null;
 
-    String commandPath = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
-    if (commandPath == null) {
-      throw new ExecutionException("Cannot find sphinx-quickstart.");
-    }
-    final String sdkHomePath = sdk.getHomePath();
-    if (sdkHomePath != null)
-      cmd.setExePath(sdkHomePath);
-    cmd.addParameter(commandPath);
+    String sdkHomePath = sdk.getHomePath();
+
+    final GeneralCommandLine cmd = PythonHelper.LOAD_ENTRY_POINT.newCommandLine(sdkHomePath, Lists.<String>newArrayList());
+
+    cmd.setWorkDirectory(service.getWorkdir().isEmpty()? module.getProject().getBaseDir().getPath(): service.getWorkdir());
+    PythonCommandLineState.createStandardGroups(cmd);
+    ParamsGroup scriptParams = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
+    assert scriptParams != null;
+
     if (params != null) {
       for (String p : params) {
-        script_params.addParameter(p);
+        scriptParams.addParameter(p);
       }
     }
 

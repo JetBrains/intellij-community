@@ -364,4 +364,10 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
     }
   }
+
+  @Override
+  public String getModuleName() {
+    Module module = getModule();
+    return module != null? module.getName() : null;
+  }
 }

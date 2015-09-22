@@ -2,12 +2,11 @@
 
 import os
 import sys
-import imp
 
-helpers_root = os.getenv('PYCHARM_HELPERS_ROOT')
-if helpers_root:
+bundled_coverage_path = os.getenv('BUNDLED_COVERAGE_PATH')
+if bundled_coverage_path:
     sys_path_backup = sys.path
-    sys.path = [p for p in sys.path if p!=helpers_root]
+    sys.path = [p for p in sys.path if p != bundled_coverage_path]
     from coverage.cmdline import main
     sys.path = sys_path_backup
 else:
@@ -31,6 +30,16 @@ if run_cov:
     a_file.write(os.getcwd()+"\n")
     for path in sys.path: a_file.write(path + "\n")
     a_file.close()
+
+argv = []
+for arg in sys.argv:
+    if arg.startswith('-m'):
+        argv.append('-m')
+        argv.append(arg[2:])
+    else:
+        argv.append(arg)
+sys.argv = argv
+
 main()
 if run_cov:
     main(["xml", "-o", coverage_file + ".xml", "--ignore-errors"])

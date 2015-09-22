@@ -208,10 +208,8 @@ public abstract class PythonSdkFlavor {
     PythonEnvUtil.addPathToEnv(envs, key, value);
   }
 
-  @SuppressWarnings({"MethodMayBeStatic"})
-  public void addPredefinedEnvironmentVariables(Map<String, String> envs, @NotNull Project project) {
-    Charset defaultCharset = EncodingProjectManager.getInstance(project).getDefaultCharset();
-    final String encoding = defaultCharset.name();
+  public static void setupEncodingEnvs(Map<String, String> envs, @NotNull Charset charset) {
+    final String encoding = charset.name();
     PythonEnvUtil.setPythonIOEncoding(envs, encoding);
   }
 

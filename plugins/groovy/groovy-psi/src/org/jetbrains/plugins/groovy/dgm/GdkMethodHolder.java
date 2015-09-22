@@ -104,7 +104,7 @@ public class GdkMethodHolder {
       return true;
     }
 
-    for (String superType : ResolveUtil.getAllSuperTypes(qualifierType, project).keySet()) {
+    for (String superType : ResolveUtil.getAllSuperTypes(qualifierType, project)) {
       for (PsiMethod method : map.get(superType)) {
         String info = GdkMethodUtil.generateOriginInfo(method);
         GrGdkMethod gdk = GrGdkMethodImpl.createGdkMethod(method, myStatic, info);

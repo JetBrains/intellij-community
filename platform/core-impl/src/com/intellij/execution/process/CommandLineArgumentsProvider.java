@@ -25,7 +25,10 @@ import java.util.Map;
 
 /**
  * @author Roman.Chernyatchik, oleg
+ * @deprecated Use GeneralCommandLine instead
+ * @deprecated Usages only in Ruby. Move to Ruby module?
  */
+@Deprecated
 public class CommandLineArgumentsProvider {
     /**
    * @return Commands to execute (one command corresponds to one add argument)

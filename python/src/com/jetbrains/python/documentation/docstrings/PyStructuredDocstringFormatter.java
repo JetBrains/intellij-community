@@ -25,7 +25,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.HelperPackage;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.documentation.PyDocumentationBuilder;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -66,24 +67,24 @@ public class PyStructuredDocstringFormatter {
     final String[] lines = PyDocumentationBuilder.removeCommonIndentation(docstring);
     final String preparedDocstring = StringUtil.join(lines, "\n");
 
-    final String formatter;
+    final HelperPackage formatter;
     final StructuredDocString structuredDocString;
     final DocStringFormat format = DocStringUtil.guessDocStringFormat(preparedDocstring, element);
     if (format == DocStringFormat.GOOGLE) {
-      formatter = PythonHelpersLocator.getHelperPath("google_formatter.py");
+      formatter = PythonHelper.GOOGLE_FORMATTER;
       structuredDocString = DocStringUtil.parseDocString(DocStringFormat.GOOGLE, preparedDocstring);
     }
     else if (format == DocStringFormat.NUMPY) {
-      formatter = PythonHelpersLocator.getHelperPath("numpy_formatter.py");
+      formatter = PythonHelper.NUMPY_FORMATTER;
       structuredDocString = DocStringUtil.parseDocString(DocStringFormat.NUMPY, preparedDocstring);
     }
     else if (format == DocStringFormat.EPYTEXT) {
-      formatter = PythonHelpersLocator.getHelperPath("epydoc_formatter.py");
+      formatter = PythonHelper.EPYDOC_FORMATTER;
       structuredDocString = DocStringUtil.parseDocString(DocStringFormat.EPYTEXT, preparedDocstring);
       result.add(formatStructuredDocString(structuredDocString));
     }
     else if (format == DocStringFormat.REST) {
-      formatter = PythonHelpersLocator.getHelperPath("rest_formatter.py");
+      formatter = PythonHelper.REST_FORMATTER;
       structuredDocString = DocStringUtil.parseDocString(DocStringFormat.REST, preparedDocstring);
     }
 
@@ -104,7 +105,7 @@ public class PyStructuredDocstringFormatter {
 
   @Nullable
   private static String runExternalTool(@NotNull final Module module,
-                                        @NotNull final String formatter,
+                                        @NotNull final HelperPackage formatter,
                                         @NotNull final String docstring) {
     final Sdk sdk = PythonSdkType.findPython2Sdk(module);
     if (sdk == null) return null;
@@ -121,7 +122,8 @@ public class PyStructuredDocstringFormatter {
     final Map<String, String> env = new HashMap<String, String>();
     PythonEnvUtil.setPythonDontWriteBytecode(env);
 
-    final ProcessOutput output = PySdkUtil.getProcessOutput(new File(sdkHome).getParent(), new String[]{sdkHome, formatter},
+    final ProcessOutput output = PySdkUtil.getProcessOutput(formatter.newCommandLine(sdkHome, Lists.<String>newArrayList()),
+                                                            new File(sdkHome).getParent(),
                                                             env, 5000, data, true);
     if (output.isTimeout()) {
       LOG.info("timeout when calculating docstring");

@@ -21,6 +21,7 @@ import com.intellij.execution.util.PathMappingsComponent;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
@@ -184,6 +185,12 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     return myModuleComboBox.getSelectedModule();
   }
 
+  @Override
+  public String getModuleName() {
+    Module module = getModule();
+    return module != null? module.getName() : null;
+  }
+
   public void setModule(Module module) {
     myModuleComboBox.setSelectedModule(module);
   }
@@ -273,5 +280,4 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   public void setAddSourceRoots(boolean flag) {
     myAddSourceRootsCheckbox.setSelected(flag);
   }
-
 }
