@@ -128,7 +128,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   @Nullable
-  private static Icon computeIconNow(PsiElement element, @Iconable.IconFlags int flags) {
+  private static Icon computeIconNow(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
     final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
     if (providersIcon != null) {
       return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(element, providersIcon, flags);

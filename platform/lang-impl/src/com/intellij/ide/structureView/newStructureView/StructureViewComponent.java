@@ -130,7 +130,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     };
 
     final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement()));
-    JTree tree = new JBTreeWithHintProvider(model);
+    JTree tree = new MyTree(model);
     tree.setRootVisible(showRootNode);
     tree.setShowsRootHandles(true);
 
@@ -167,6 +167,17 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         return getSelectedPsiElements();
       }
     };
+  }
+  
+  private static class MyTree extends JBTreeWithHintProvider implements PlaceProvider<String> {
+    public MyTree(javax.swing.tree.TreeModel treemodel) {
+      super(treemodel);
+    }
+
+    @Override
+    public String getPlace() {
+      return ActionPlaces.STRUCTURE_VIEW_TOOLBAR;
+    }
   }
 
   public void showToolbar() {

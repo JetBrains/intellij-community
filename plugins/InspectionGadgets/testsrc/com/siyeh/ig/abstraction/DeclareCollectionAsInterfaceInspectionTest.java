@@ -1,7 +1,9 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class DeclareCollectionAsInterfaceInspectionTest extends LightInspectionTestCase {
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
@@ -167,6 +168,13 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     incModificationCount();
     myDispatcher.getMulticaster().uiSettingsChanged(this);
     ApplicationManager.getApplication().getMessageBus().syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this);
+    IconLoader.setFilter(COLOR_BLINDNESS == ColorBlindness.protanopia
+                         ? DaltonizationFilter.protanopia
+                         : COLOR_BLINDNESS == ColorBlindness.deuteranopia
+                           ? DaltonizationFilter.deuteranopia
+                           : COLOR_BLINDNESS == ColorBlindness.tritanopia
+                             ? DaltonizationFilter.tritanopia
+                             : null);
   }
 
   public void removeUISettingsListener(UISettingsListener listener) {
