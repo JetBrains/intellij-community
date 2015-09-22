@@ -65,6 +65,10 @@ class LineLayout {
    
     reorderRunsVisually(myBidiRunsInVisualOrder);
 
+    int logicalColumn = 0;
+    for (BidiRun run : runs) {
+      logicalColumn = run.createIndices(logicalColumn);
+    }
     myWidth = calculateWidth ? calculateWidth() : -1;
   }
 
@@ -215,7 +219,23 @@ class LineLayout {
     if (myWidth < 0) throw new RuntimeException("This LineLayout instance doesn't have precalculated width");
     return myWidth;
   }
-  
+
+  int offsetToLogicalColumn(int offset) {
+    if (offset <= 0) return 0;
+    for (BidiRun run : myBidiRunsInLogicalOrder) {
+      if (offset <= run.endOffset) return run.offsetToLogicalColumn(offset);
+    }
+    return myBidiRunsInLogicalOrder.length == 0 ? 0 : myBidiRunsInLogicalOrder[myBidiRunsInLogicalOrder.length - 1].endLogicalColumn;
+  }
+
+  int logicalColumnToOffset(int logicalColumn) {
+    if (logicalColumn <= 0) return 0;
+    for (BidiRun run : myBidiRunsInLogicalOrder) {
+      if (logicalColumn <= run.endLogicalColumn) return run.logicalColumnToOffset(logicalColumn);
+    }
+    return myBidiRunsInLogicalOrder.length == 0 ? 0 : myBidiRunsInLogicalOrder[myBidiRunsInLogicalOrder.length - 1].endOffset;
+  }
+
   Iterable<VisualFragment> getFragmentsInVisualOrder(final float startX) {
     return new Iterable<VisualFragment>() {
       @Override
@@ -238,12 +258,12 @@ class LineLayout {
     else {
       List<BidiRun> runList = new ArrayList<BidiRun>();
       for (BidiRun run : myBidiRunsInLogicalOrder) {
-        if (run.startOffset < startOffset) {
-          startLogicalColumn = run.getLogicalColumn(startLogicalColumn, Math.min(startOffset, run.endOffset));
-        }
         if (run.endOffset <= startOffset) continue;
         if (run.startOffset >= endOffset) break;
         runList.add(run.subRun(startOffset, endOffset));
+        if (run.startOffset <= startOffset) {
+          startLogicalColumn = run.offsetToLogicalColumn(startOffset);
+        }
       }
       runs = runList.toArray(new BidiRun[runList.size()]);
       reorderRunsVisually(runs);
@@ -304,6 +324,13 @@ class LineLayout {
     private final int endOffset;
     private final List<LineFragment> fragments = new ArrayList<LineFragment>(); // in logical order
 
+    // values cached for performance
+    private static final int INDEX_FREQUENCY = 100;
+    private int startLogicalColumn;
+    private int endLogicalColumn;
+    private int[] offsetIndex; // stores start offsets for each INDEX_FREQUENCY-th fragment, for faster lookup by offset
+    private int[] logicalColumnIndex; // stores start logical column for each INDEX_FREQUENCY-th fragment, for faster offset <-> logical column conversions
+
     private BidiRun(byte level, int startOffset, int endOffset) {
       this.level = level;
       this.startOffset = startOffset;
@@ -324,7 +351,17 @@ class LineLayout {
       int end = Math.min(endOffset, targetEndOffset);
       BidiRun run = new BidiRun(level, start, end);
       int offset = startOffset;
-      for (LineFragment fragment : fragments) {
+      int startFragment = 0;
+      if (offsetIndex != null) {
+        int pos = Arrays.binarySearch(offsetIndex, start);
+        if (pos < 0) pos = - pos - 2;
+        if (pos >= 0) {
+          startFragment = (pos + 1) * INDEX_FREQUENCY;
+          offset = offsetIndex[pos];
+        }
+      }
+      for (int i = startFragment; i < fragments.size(); i++) {
+        LineFragment fragment = fragments.get(i);
         if (end <= offset) break;
         int endOffset = offset + fragment.getLength();
         if (start < endOffset) {
@@ -335,17 +372,81 @@ class LineLayout {
       return run;
     }
 
-    private int getLogicalColumn(int startLogicalColumn, int offset) {
-      assert offset >= startOffset;
-      assert offset <= endOffset;
-      int currentStartOffset = startOffset;
-      for (LineFragment fragment : fragments) {
-        int currentEndOffset = currentStartOffset + fragment.getLength();
-        startLogicalColumn = fragment.offsetToLogicalColumn(startLogicalColumn, Math.min(offset, currentEndOffset) - currentStartOffset);
-        currentStartOffset = currentEndOffset;
-        if (offset <= currentStartOffset) break;
+    private int logicalColumnToOffset(int logicalColumn) {
+      if (logicalColumn <= startLogicalColumn) return startOffset;
+      if (logicalColumn >= endLogicalColumn) return endOffset;
+      int currentOffset = startOffset;
+      int currentLogicalColumn = startLogicalColumn;
+      int startFragment = 0;
+      if (offsetIndex != null) {
+        int pos = Arrays.binarySearch(logicalColumnIndex == null ? offsetIndex : logicalColumnIndex, logicalColumn);
+        if (pos >= 0) return offsetIndex[pos];
+        int beforeInsertPosition = - pos - 2;
+        currentOffset = beforeInsertPosition < 0 ? startOffset : offsetIndex[beforeInsertPosition];
+        currentLogicalColumn = beforeInsertPosition < 0 ? startLogicalColumn : logicalColumnIndex == null ? currentOffset :
+                                                                        logicalColumnIndex[beforeInsertPosition];
+        startFragment = INDEX_FREQUENCY * (beforeInsertPosition + 1);
       }
-      return startLogicalColumn;
+      for (int i = startFragment; i < fragments.size(); i++) {
+        LineFragment fragment = fragments.get(i);
+        int endLogicalColumn = currentLogicalColumn + fragment.getLogicalColumnCount(currentLogicalColumn);
+        if (logicalColumn <= endLogicalColumn) return currentOffset + fragment.logicalColumnToOffset(currentLogicalColumn, logicalColumn);
+        currentOffset += fragment.getLength();
+        currentLogicalColumn = endLogicalColumn;
+      }
+      throw new IllegalStateException();
+    }
+
+    private int offsetToLogicalColumn(int offset) {
+      if (offset <= startOffset) return startLogicalColumn;
+      if (offset >= endOffset) return endLogicalColumn;
+      int currentOffset = startOffset;
+      int currentLogicalColumn = startLogicalColumn;
+      int startFragment = 0;
+      if (offsetIndex != null) {
+        int pos = Arrays.binarySearch(offsetIndex, offset);
+        if (pos >= 0) return logicalColumnIndex == null ? offset : logicalColumnIndex[pos];
+        int beforeInsertPosition = - pos - 2;
+        currentOffset = beforeInsertPosition < 0 ? startOffset : offsetIndex[beforeInsertPosition];
+        currentLogicalColumn = beforeInsertPosition < 0 ? startLogicalColumn : logicalColumnIndex == null ? currentOffset :
+                                                                        logicalColumnIndex[beforeInsertPosition];
+        startFragment = INDEX_FREQUENCY * (beforeInsertPosition + 1);
+      }
+      for (int i = startFragment; i < fragments.size(); i++) {
+        LineFragment fragment = fragments.get(i);
+        int endOffset = currentOffset + fragment.getLength();
+        if (offset <= endOffset) return fragment.offsetToLogicalColumn(currentLogicalColumn, offset - currentOffset);
+        currentOffset = endOffset;
+        currentLogicalColumn += fragment.getLogicalColumnCount(currentLogicalColumn);
+      }
+      throw new IllegalStateException();
+    }
+
+    private int createIndices(int startLogicalColumn) {
+      this.startLogicalColumn = endLogicalColumn = startLogicalColumn;
+      int indexSize = (fragments.size() - 1) / INDEX_FREQUENCY;
+      if (indexSize > 0) {
+        offsetIndex = new int[indexSize];
+      }
+      int i = 0;
+      int offset = startOffset;
+      for (LineFragment fragment : fragments) {
+        if (offsetIndex != null && i > 0 && (i % INDEX_FREQUENCY) == 0) {
+          int pos = i / INDEX_FREQUENCY - 1;
+          offsetIndex[pos] = offset;
+          if (logicalColumnIndex == null && offset != endLogicalColumn) {
+            logicalColumnIndex = new int[indexSize];
+            System.arraycopy(offsetIndex, 0, logicalColumnIndex, 0, pos);
+          }
+          if (logicalColumnIndex != null) {
+            logicalColumnIndex[pos] = endLogicalColumn;
+          }
+        }
+        i++;
+        offset += fragment.getLength();
+        endLogicalColumn += fragment.getLogicalColumnCount(endLogicalColumn);
+      }
+      return endLogicalColumn;
     }
   }
 

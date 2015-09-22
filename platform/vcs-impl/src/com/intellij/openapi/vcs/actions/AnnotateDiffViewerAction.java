@@ -541,20 +541,22 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     @NotNull private final AbstractVcs myVcs;
     private final boolean myShouldCache;
 
-    private VcsException myException;
-    private FileAnnotation myResult;
+    @Nullable private VcsException myException;
+    @Nullable private FileAnnotation myResult;
 
     public FileAnnotationLoader(@NotNull AbstractVcs vcs, boolean cache) {
       myVcs = vcs;
       myShouldCache = cache;
     }
 
+    @Nullable
     public VcsException getException() {
       return myException;
     }
 
+    @Nullable
     public AnnotationData getResult() {
-      return new AnnotationData(myVcs, myResult);
+      return myResult != null ? new AnnotationData(myVcs, myResult) : null;
     }
 
     public boolean shouldCache() {
