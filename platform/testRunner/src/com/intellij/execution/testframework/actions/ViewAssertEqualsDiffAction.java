@@ -55,11 +55,9 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
       DiffHyperlink diffViewerProvider = testProxy.getDiffViewerProvider();
       if (diffViewerProvider != null) {
         final List<DiffHyperlink> providers = collectAvailableProviders(TestTreeView.MODEL_DATA_KEY.getData(context));
-        int index = Math.max(0, providers.indexOf(diffViewerProvider));
-        if (currentHyperlink != null) {
-          index = Math.max(index, providers.indexOf(currentHyperlink));
-        }
-        new MyDiffWindow(project, providers, index).show();
+        int index = currentHyperlink != null ? providers.indexOf(currentHyperlink) : -1;
+        if (index == -1) index = providers.indexOf(diffViewerProvider);
+        new MyDiffWindow(project, providers, Math.max(0, index)).show();
         return true;
       }
     }
