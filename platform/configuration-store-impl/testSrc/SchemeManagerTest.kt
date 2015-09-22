@@ -42,12 +42,12 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
-val FILE_SPEC = "REMOTE"
+internal val FILE_SPEC = "REMOTE"
 
 /**
  * Functionality without stream provider covered, ICS has own test suite
  */
-class SchemeManagerTest {
+internal class SchemeManagerTest {
   companion object {
     @ClassRule val projectRule = ProjectRule()
   }
@@ -362,9 +362,8 @@ private fun checkSchemes(baseDir: File, expected: String, ignoreDeleted: Boolean
   if (files != null) {
     val schemesProcessor = TestSchemesProcessor()
     for (file in files) {
-      val fileName = FileUtil.getNameWithoutExtension(file)
-      val scheme = schemesProcessor.readScheme(JDOMUtil.load(file), true)
-      assertThat(fileToSchemeMap.get(fileName)).isEqualTo(scheme!!.name)
+      val scheme = schemesProcessor.readScheme(JDOMUtil.load(file), true)!!
+      assertThat(fileToSchemeMap.get(FileUtil.getNameWithoutExtension(file))).isEqualTo(scheme.name)
     }
   }
 }
@@ -381,7 +380,7 @@ data class TestScheme(@field:Attribute private var name: String = "", @field:Att
   override fun getExternalInfo() = null
 }
 
-public open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme>() {
+open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme>() {
   override fun readScheme(element: Element) = XmlSerializer.deserialize(element, TestScheme::class.java)
 
   override fun writeScheme(scheme: TestScheme) = scheme._serialize()
@@ -393,4 +392,4 @@ fun SchemeManagerImpl<*, *>.save() {
   CompoundRuntimeException.throwIfNotEmpty(errors)
 }
 
-public fun <T : Any> T._serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)
+fun <T : Any> T._serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)

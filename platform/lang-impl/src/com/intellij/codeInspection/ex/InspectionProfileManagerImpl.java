@@ -30,8 +30,8 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.project.Project;
@@ -83,7 +83,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     myRegistrar = registrar;
     registerProvidedSeverities();
 
-    mySchemeManager = schemesManagerFactory.create(INSPECTION_DIR, new BaseSchemeProcessor<InspectionProfileImpl>() {
+    mySchemeManager = schemesManagerFactory.create(INSPECTION_DIR, new SchemeProcessor<InspectionProfileImpl>() {
       @NotNull
       @Override
       public InspectionProfileImpl readScheme(@NotNull Element element) {

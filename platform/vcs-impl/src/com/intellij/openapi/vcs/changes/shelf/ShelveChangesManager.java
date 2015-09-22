@@ -34,7 +34,7 @@ import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.formove.CustomBinaryPatchApplier;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
-import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -102,7 +102,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     myPathMacroSubstitutor = PathMacroManager.getInstance(myProject).createTrackingSubstitutor();
     myBus = bus;
     mySchemeManager =
-      SchemesManagerFactory.getInstance(project).create(SHELVE_MANAGER_DIR_PATH, new BaseSchemeProcessor<ShelvedChangeList>() {
+      SchemesManagerFactory.getInstance(project).create(SHELVE_MANAGER_DIR_PATH, new SchemeProcessor<ShelvedChangeList>() {
         @Nullable
         @Override
         public ShelvedChangeList readScheme(@NotNull Element element) throws InvalidDataException {
