@@ -124,6 +124,8 @@ public class PythonSdkUpdater implements StartupActivity {
                   try {
                     LOG.info("Performing background update of skeletons for SDK " + sdk.getHomePath());
                     updateSdk(project, null, PySdkUpdater.fromSdkPath(sdk.getHomePath()));
+                  } catch (PySdkUpdater.PySdkNotFoundException e) {
+                    LOG.info("Sdk " + sdk.getName() + " was removed during update process.");
                   }
                   catch (InvalidSdkException e) {
                     if (PythonSdkType.isVagrant(sdk)) {
