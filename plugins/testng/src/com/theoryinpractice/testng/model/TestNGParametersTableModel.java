@@ -30,6 +30,7 @@ import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String, String>>
@@ -84,8 +85,6 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String,
 
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         Map.Entry<String, String> entry = parameterList.get(rowIndex);
-        parameterList.remove(rowIndex);
-
         String key = entry.getKey();
         String value = entry.getValue();
 
@@ -100,7 +99,7 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String,
 
         Map<String, String> map = new HashMap<String, String>();
         map.put(key, value);
-        parameterList.addAll(map.entrySet());
+        parameterList.set(rowIndex, map.entrySet().iterator().next());
         setParameterList(parameterList);
     }
 
