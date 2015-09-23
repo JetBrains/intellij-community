@@ -53,6 +53,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
   private MyComponent myComponent;
 
+  @Override
   public String getDisplayName() {
     return IdeBundle.message("title.appearance");
   }
@@ -88,6 +89,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     }
   };
 
+  @Override
   public JComponent createComponent() {
 
     UISettings settings = UISettings.getInstance();
@@ -128,6 +130,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myInitialTooltipDelaySlider.setMinorTickSpacing(100);
 
     myComponent.myEnableAlphaModeCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         boolean state = myComponent.myEnableAlphaModeCheckBox.isSelected();
         myComponent.myAlphaModeDelayTextField.setEnabled(state);
@@ -149,6 +152,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAlphaModeRatioSlider.setMajorTickSpacing(50);
     myComponent.myAlphaModeRatioSlider.setMinorTickSpacing(10);
     myComponent.myAlphaModeRatioSlider.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         myComponent.myAlphaModeRatioSlider.setToolTipText(myComponent.myAlphaModeRatioSlider.getValue() + "%");
       }
@@ -159,6 +163,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     return myComponent.myPanel;
   }
 
+  @Override
   public void apply() {
     initComponent();
     UISettings settings = UISettings.getInstance();
@@ -250,6 +255,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
         lafManager.setCurrentLookAndFeel(lafInfo);
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (UIUtil.isUnderDarcula()) {
               DarculaInstaller.install();
@@ -319,6 +325,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     return value;
   }
 
+  @Override
   public void reset() {
     initComponent();
     UISettings settings = UISettings.getInstance();
@@ -389,6 +396,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     return "No antialiasing";
   }
 
+  @Override
   public boolean isModified() {
     initComponent();
     UISettings settings = UISettings.getInstance();
@@ -449,10 +457,12 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     return isModified;
   }
 
+  @Override
   public void disposeUIResources() {
     myComponent = null;
   }
 
+  @Override
   public String getHelpTopic() {
     return "preferences.lookFeel";
   }
@@ -497,6 +507,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     public MyComponent() {
       myOverrideLAFFonts.addActionListener( new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           updateCombo();
         }
@@ -521,12 +532,14 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     }
   }
 
+  @Override
   @NotNull
   public String getId() {
     //noinspection ConstantConditions
     return getHelpTopic();
   }
 
+  @Override
   @Nullable
   public Runnable enableSearch(String option) {
     return null;
