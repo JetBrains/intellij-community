@@ -57,7 +57,7 @@ public class ClassEscapesItsScopeInspection extends BaseInspection {
       if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
-      registerError(method, method.getReturnType(), method.getReturnTypeElement());
+      checkForEscaping(method, method.getReturnType(), method.getReturnTypeElement());
     }
 
     @Override
@@ -73,10 +73,10 @@ public class ClassEscapesItsScopeInspection extends BaseInspection {
       if (containingClass.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
-      registerError(field, field.getType(), field.getTypeElement());
+      checkForEscaping(field, field.getType(), field.getTypeElement());
     }
 
-    private void registerError(PsiMember member, PsiType type, PsiTypeElement typeElement) {
+    private void checkForEscaping(PsiMember member, PsiType type, PsiTypeElement typeElement) {
       if (type == null || typeElement == null) {
         return;
       }
@@ -107,10 +107,7 @@ public class ClassEscapesItsScopeInspection extends BaseInspection {
         return false;
       }
       final int containingClassScopeOrder = getScopeOrder(containingClass);
-      if (methodScopeOrder <= classScopeOrder || containingClassScopeOrder <= classScopeOrder) {
-        return false;
-      }
-      return true;
+      return methodScopeOrder > classScopeOrder && containingClassScopeOrder > classScopeOrder;
     }
 
     private static int getScopeOrder(PsiModifierListOwner element) {
