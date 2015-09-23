@@ -105,7 +105,7 @@ public class JavaScratchRunConfigurationExtension extends RunConfigurationExtens
   }
 
   @Nullable
-  private static VirtualFile getScratchVirtualFile(RunConfiguration configuration) {
+  public static VirtualFile getScratchVirtualFile(RunConfiguration configuration) {
     int id = getScratchFileId(configuration);
     if (id < 0) {
       return null;
