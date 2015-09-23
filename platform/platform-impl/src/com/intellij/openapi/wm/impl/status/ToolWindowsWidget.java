@@ -133,7 +133,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
           final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(frame.getProject());
           for (String id : toolWindowManager.getToolWindowIds()) {
             final ToolWindow tw = toolWindowManager.getToolWindow(id);
-            if (tw.isAvailable()) {
+            if (tw.isAvailable() && tw.isShowStripeButton()) {
               model.addElement(tw);
             }
           }
