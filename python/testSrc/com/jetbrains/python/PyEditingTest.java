@@ -251,6 +251,12 @@ public class PyEditingTest extends PyTestCase {
     doDocStringTypingTest("\nparam", DocStringFormat.GOOGLE);
   }
 
+  // PY-16765
+  public void testSectionIndentInsideGoogleDocStringCustomIndent() {
+    getIndentOptions().INDENT_SIZE = 2;
+    doDocStringTypingTest("\nparam", DocStringFormat.GOOGLE);
+  }
+
   public void testEnterInString() {  // PY-1738
     doTestEnter("a = \"some <caret>string\"", "a = \"some \" \\\n" +
                                               "    \"string\"");

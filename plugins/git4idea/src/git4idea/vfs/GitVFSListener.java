@@ -97,7 +97,7 @@ public class GitVFSListener extends VcsVFSListener {
     }
     final HashSet<VirtualFile> retainedFiles = new HashSet<VirtualFile>();
     final ProgressManager progressManager = ProgressManager.getInstance();
-    progressManager.run(new Task.Backgroundable(myProject, GitBundle.getString("vfs.listener.checking.ignored"), false) {
+    progressManager.run(new Task.Backgroundable(myProject, GitBundle.getString("vfs.listener.checking.ignored"), true) {
       @Override
       public void run(@NotNull ProgressIndicator pi) {
         for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {

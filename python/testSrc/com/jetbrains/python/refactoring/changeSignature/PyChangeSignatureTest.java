@@ -94,7 +94,7 @@ public class PyChangeSignatureTest extends PyTestCase {
   }
 
   public void testUpdateDocstring() {
-    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    getIndentOptions().INDENT_SIZE = 2;
     final PyParameterInfo a = new PyParameterInfo(0, "a", null, false);
     final PyParameterInfo d1 = new PyParameterInfo(1, "d", "1", true);
     d1.setName("d1");
@@ -102,7 +102,7 @@ public class PyChangeSignatureTest extends PyTestCase {
   }
 
   public void testFixDocstringRemove() {
-    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    getIndentOptions().INDENT_SIZE = 2;
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false)));
   }
 

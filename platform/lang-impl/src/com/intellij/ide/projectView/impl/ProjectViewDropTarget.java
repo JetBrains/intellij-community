@@ -317,6 +317,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
       
       final Module module = getModule(targetNode);
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       getActionHandler().invoke(myProject, sourceElements, new DataContext() {
         @Override
         @Nullable

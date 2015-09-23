@@ -234,4 +234,14 @@ public class PySmartEnterTest extends PyTestCase {
       }
     });
   }
+
+  // PY-16765
+  public void testGoogleDocStringIndentAfterSectionCustomIndent() {
+    getIndentOptions().INDENT_SIZE = 2;
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      public void run() {
+        doTest();
+      }
+    });
+  }
 }

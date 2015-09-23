@@ -2,6 +2,6 @@ def f(x):
     """
 
     Args:
-      x (object): 
+        x (object): 
     """
     return 42

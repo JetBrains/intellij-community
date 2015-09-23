@@ -210,9 +210,11 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     appendCount(renderer);
   }
 
+  @NotNull
   protected String getCountText() {
     int count = getCount();
     int dirCount = getDirectoryCount();
+    if (dirCount == 0 && count == 0) return "";
     if (dirCount == 0) {
       return spaceAndThinSpace() + VcsBundle.message("changes.nodetitle.changecount", count);
     }
@@ -225,7 +227,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   }
 
   protected void appendCount(final ColoredTreeCellRenderer renderer) {
-    final String countText = getCountText();
+    String countText = getCountText();
     renderer.append(countText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 

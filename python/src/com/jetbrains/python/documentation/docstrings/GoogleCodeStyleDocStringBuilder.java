@@ -15,7 +15,9 @@
  */
 package com.jetbrains.python.documentation.docstrings;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.psi.PyIndentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,12 +25,20 @@ import org.jetbrains.annotations.Nullable;
  * @author Mikhail Golubev
  */
 public class GoogleCodeStyleDocStringBuilder extends SectionBasedDocStringBuilder {
-  public static final String DEFAULT_SECTION_INDENT = "  ";
-  public static final String DEFAULT_CONTINUATION_INDENT = "  ";
+  public static final String DEFAULT_CONTINUATION_INDENT = PyIndentUtil.FOUR_SPACES;
 
-  public GoogleCodeStyleDocStringBuilder() {
-    // Two spaces according to Google Code Style
-    super(DEFAULT_SECTION_INDENT, DEFAULT_CONTINUATION_INDENT);
+  @NotNull
+  public static String getDefaultSectionIndent(@NotNull Project project) {
+    return PyIndentUtil.getIndentFromSettings(project);
+  }
+
+  @NotNull
+  public static GoogleCodeStyleDocStringBuilder forProject(@NotNull Project project) {
+    return new GoogleCodeStyleDocStringBuilder(getDefaultSectionIndent(project)); 
+  }
+
+  public GoogleCodeStyleDocStringBuilder(@NotNull String sectionIndent) {
+    super(sectionIndent, DEFAULT_CONTINUATION_INDENT);
   }
 
   @Override

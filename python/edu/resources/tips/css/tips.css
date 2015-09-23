@@ -11,7 +11,7 @@ h1, p, ul {
     font-family: 'Lucida Console', monospace;
 }
 h1, p, pre, ul {
-    font-size: 10px;
+    /*font-size: 10px;*/
     /*color: #3f3f3f;*/
 }
 p, ul {

@@ -93,7 +93,7 @@ class InstanceFieldsManager extends FieldsManager {
   //TODO: Move to utils?
   @NotNull
   private static PyFunction createInitMethod(@NotNull final PyClass to) {
-    final PyFunctionBuilder functionBuilder = new PyFunctionBuilder(PyNames.INIT);
+    final PyFunctionBuilder functionBuilder = new PyFunctionBuilder(PyNames.INIT, to);
     functionBuilder.parameter(PyNames.CANONICAL_SELF); //TODO: Take param from codestyle?
     final PyFunction function = functionBuilder.buildFunction(to.getProject(), LanguageLevel.forElement(to));
     return PyClassRefactoringUtil.addMethods(to, true, function).get(0);

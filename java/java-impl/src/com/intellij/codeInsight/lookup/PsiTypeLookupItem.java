@@ -73,11 +73,13 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
   @Override
   public PsiType getType() {
     Object object = getObject();
-    PsiType type = object instanceof PsiType ? (PsiType)object : JavaPsiFacade.getElementFactory(((PsiClass) object).getProject()).createType((PsiClass)object);
+    PsiType type = object instanceof PsiType
+                   ? getSubstitutor().substitute((PsiType)object)
+                   : JavaPsiFacade.getElementFactory(((PsiClass) object).getProject()).createType((PsiClass)object, getSubstitutor());
     for (int i = 0; i < getBracketsCount(); i++) {
       type = new PsiArrayType(type);
     }
-    return getSubstitutor().substitute(type);
+    return type;
   }
 
 

@@ -30,6 +30,7 @@ import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -570,14 +571,15 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   @Nullable
+  @Contract("null -> null; !null -> !null")
   public ThreadReferenceProxyImpl getThreadReferenceProxy(@Nullable ThreadReference thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(thread == null) {
+    if (thread == null) {
       return null;
     }
 
     ThreadReferenceProxyImpl proxy = myAllThreads.get(thread);
-    if(proxy == null) {
+    if (proxy == null) {
       proxy = new ThreadReferenceProxyImpl(this, thread);
       myAllThreads.put(thread, proxy);
     }

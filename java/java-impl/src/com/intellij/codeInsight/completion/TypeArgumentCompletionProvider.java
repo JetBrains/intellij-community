@@ -94,7 +94,6 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
     final PsiClass expectedClass = expectedType.getElement();
 
     if (!InheritanceUtil.isInheritorOrSelf(actualClass, expectedClass, true)) return;
-    assert expectedClass != null;
 
     final PsiSubstitutor currentSubstitutor = TypeConversionUtil.getClassSubstitutor(expectedClass, actualClass, PsiSubstitutor.EMPTY);
     assert currentSubstitutor != null;
@@ -206,7 +205,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
       myLookupString = StringUtil.join(myTypeItems, new Function<PsiTypeLookupItem, String>() {
         @Override
         public String fun(PsiTypeLookupItem item) {
-          return item.getLookupString();
+          return item.getType().getPresentableText();
         }
       }, ", ");
     }
@@ -246,7 +245,15 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
 
     @Override
     public void handleInsert(InsertionContext context) {
-      context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
+      context.commitDocument();
+      PsiReferenceParameterList list = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiReferenceParameterList.class, false);
+      PsiTypeElement[] typeElements = list != null ? list.getTypeParameterElements() : PsiTypeElement.EMPTY_ARRAY;
+      if (typeElements.length == 0) {
+        return;
+      }
+      int listEnd = typeElements[typeElements.length - 1].getTextRange().getEndOffset();
+      context.setTailOffset(listEnd);
+      context.getDocument().deleteString(context.getStartOffset(), listEnd);
       for (int i = 0; i < myTypeItems.size(); i++) {
         PsiTypeLookupItem typeItem = myTypeItems.get(i);
         CompletionUtil.emulateInsertion(context, context.getTailOffset(), typeItem);

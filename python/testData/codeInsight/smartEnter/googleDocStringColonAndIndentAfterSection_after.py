@@ -1,5 +1,5 @@
 def func():
     """
     Args:
-      <caret>  
+        <caret>  
     """

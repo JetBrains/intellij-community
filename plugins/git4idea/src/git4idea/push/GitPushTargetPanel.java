@@ -187,7 +187,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     }
 
     final Ref<String> error = Ref.create();
-    ProgressManager.getInstance().run(new Task.Modal(myRepository.getProject(), "Checking URL...", false) {
+    ProgressManager.getInstance().run(new Task.Modal(myRepository.getProject(), "Checking URL...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
@@ -201,7 +201,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   private void addRemoteUnderModal(@NotNull final String remoteName, @NotNull final String remoteUrl) {
-    ProgressManager.getInstance().run(new Task.Modal(myRepository.getProject(), "Adding remote...", false) {
+    ProgressManager.getInstance().run(new Task.Modal(myRepository.getProject(), "Adding remote...", true) {
       private GitCommandResult myResult;
 
       @Override

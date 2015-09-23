@@ -1,5 +1,5 @@
 def f(param):
     """
     Args:
-      param
+        param
     """
