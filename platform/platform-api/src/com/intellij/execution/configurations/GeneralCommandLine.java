@@ -57,7 +57,14 @@ import java.util.*;
  * todo work in progress
  * <p>
  * <strong>Encoding/Charset</strong>.
- * todo work in progress
+ * The {@link #getCharset()} method is used by classes like {@link com.intellij.execution.process.OSProcessHandler OSProcessHandler}
+ * or {@link com.intellij.execution.util.ExecUtil ExecUtil} to decode bytes of a child's output stream. For proper conversion,
+ * the same value should be used on another side of the pipe. Chances are you don't have to mess with the setting -
+ * because a platform-dependent guessing behind {@link Charset#defaultCharset()} is used by default and a child process
+ * may happen to use a similar heuristic.
+ * If the above automagic fails or more control is needed, the charset may be set explicitly. Again, do not forget the other side -
+ * call {@code addParameter("-Dfile.encoding=...")} for Java-based tools, or use {@code withEnvironment("HGENCODING", "...")}
+ * for Mercurial, etc.
  *
  * @see com.intellij.execution.util.ExecUtil
  * @see com.intellij.execution.process.OSProcessHandler
