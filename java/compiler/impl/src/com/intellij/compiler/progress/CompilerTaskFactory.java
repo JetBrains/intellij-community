@@ -7,15 +7,15 @@ import org.jetbrains.annotations.NotNull;
 public interface CompilerTaskFactory {
 
   class SERVICE {
-    public static CompilerTaskFactory getInstance(@NotNull  Project project) {
+    public static CompilerTaskFactory getInstance(@NotNull Project project) {
       return ServiceManager.getService(project, CompilerTaskFactory.class);
     }
   }
 
   @NotNull
   CompilerTaskBase createCompilerTask(String contentName,
-                                  boolean headlessMode,
-                                  boolean forceAsync,
-                                  boolean waitForPreviousSession,
-                                  boolean compilationStartedAutomatically);
+                                      boolean headlessMode,
+                                      boolean forceAsync,
+                                      boolean waitForPreviousSession,
+                                      boolean compilationStartedAutomatically);
 }
