@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,6 +41,17 @@ import java.util.List;
  * @author yole
  */
 public abstract class MarkRootActionBase extends DumbAwareAction {
+  public MarkRootActionBase() {
+  }
+
+  public MarkRootActionBase(@Nullable String text) {
+    super(text);
+  }
+
+  public MarkRootActionBase(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
+    super(text, description, icon);
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
