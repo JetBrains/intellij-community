@@ -120,17 +120,10 @@ public class TipUIUtil {
     }
   }
 
-  private static final int TIP_FONT_BASE_SIZE = 16;
   private static final String TIP_HTML_TEXT_TAGS = "h1, p, pre, ul";
 
   private static void adjustFontSize(StyleSheet styleSheet) {
-    Pair<String, Integer> systemFontData = UIUtil.getSystemFontData();
-    float scale = systemFontData == null ? 0 : (float)UISettings.getInstance().FONT_SIZE / systemFontData.getSecond();
-    if (scale <= 1) return; // don't bother about decreasing
-
-    // When the primary font is increased we should take care of the visibility of the tips font
-    // which is too small initially. So, a reasonable constant is used as the base for the scale.
-    int size = (int)(TIP_FONT_BASE_SIZE * scale);
+    int size = (int)UIUtil.getFontSize(UIUtil.FontSize.MINI);
     styleSheet.addRule(TIP_HTML_TEXT_TAGS + " {font-size: " + size + "px;}");
   }
 
