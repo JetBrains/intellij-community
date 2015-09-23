@@ -32,6 +32,19 @@ public abstract class DockerSupport {
 
   public abstract boolean hasDockerMachine();
 
+  /**
+   * @deprecated should be moved to application settings
+   */
+  @Deprecated
+  @Nullable
+  public abstract String getDockerMachineExecutable();
+
+  /**
+   * @deprecated should be moved to application settings
+   */
+  @Deprecated
+  public abstract void setDockerMachineExecutable(String executable);
+
   @NotNull
   public abstract List<String> getVMs() throws DockerMachineException, DockerMachineCommandException;
 
