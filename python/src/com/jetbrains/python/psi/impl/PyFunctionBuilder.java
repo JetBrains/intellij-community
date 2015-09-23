@@ -74,6 +74,7 @@ public class PyFunctionBuilder {
     return functionBuilder;
   }
 
+  @Deprecated
   public PyFunctionBuilder(@NotNull String name) {
     myName = name;
     myDocStringGenerator = null;
@@ -100,6 +101,7 @@ public class PyFunctionBuilder {
   }
 
   @NotNull
+  @Deprecated
   public PyFunctionBuilder parameterWithType(@NotNull final String name,
                                              @NotNull final String type,
                                              @NotNull final DocStringFormat format) {
