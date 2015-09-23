@@ -72,7 +72,7 @@ public class GitUpdateProcess {
   @NotNull private final Collection<GitRepository> myRepositories;
   private final boolean myCheckRebaseOverMergeProblem;
   private final UpdatedFiles myUpdatedFiles;
-  private final ProgressIndicator myProgressIndicator;
+  @NotNull private final ProgressIndicator myProgressIndicator;
   private final GitMerger myMerger;
 
   private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<VirtualFile, GitBranchPair>();
