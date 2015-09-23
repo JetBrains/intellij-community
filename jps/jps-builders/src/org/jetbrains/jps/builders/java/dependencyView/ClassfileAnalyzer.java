@@ -685,10 +685,15 @@ class ClassfileAnalyzer {
     }
   }
 
-  public Pair<ClassRepr, Set<UsageRepr.Usage>> analyze(final int fileName, final ClassReader cr) {
-    final ClassCrawler visitor = new ClassCrawler(fileName);
+  public Pair<ClassRepr, Set<UsageRepr.Usage>> analyze(int fileName, ClassReader cr) {
+    ClassCrawler visitor = new ClassCrawler(fileName);
 
-    cr.accept(visitor, 0);
+    try {
+      cr.accept(visitor, 0);
+    }
+    catch (RuntimeException e) {
+      throw new RuntimeException("Corrupted .class file: " + myContext.getValue(fileName), e);
+    }
 
     return visitor.getResult();
   }
