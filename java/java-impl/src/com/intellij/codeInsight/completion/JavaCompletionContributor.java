@@ -654,14 +654,19 @@ public class JavaCompletionContributor extends CompletionContributor {
         PsiType type = expectedTypes.size() == 1 ? expectedTypes.iterator().next() : null;
         if (type != null) {
           final PsiType deepComponentType = type.getDeepComponentType();
+          String expectedType = type.getPresentableText();
+          if (expectedType.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) {
+            return null;
+          }
+
           if (deepComponentType instanceof PsiClassType) {
             if (((PsiClassType)deepComponentType).resolve() != null) {
-              return CompletionBundle.message("completion.no.suggestions.of.type", type.getPresentableText()) + suffix;
+              return CompletionBundle.message("completion.no.suggestions.of.type", expectedType) + suffix;
             }
-            return CompletionBundle.message("completion.unknown.type", type.getPresentableText()) + suffix;
+            return CompletionBundle.message("completion.unknown.type", expectedType) + suffix;
           }
           if (!PsiType.NULL.equals(type)) {
-            return CompletionBundle.message("completion.no.suggestions.of.type", type.getPresentableText()) + suffix;
+            return CompletionBundle.message("completion.no.suggestions.of.type", expectedType) + suffix;
           }
         }
       }
