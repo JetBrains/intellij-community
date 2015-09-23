@@ -112,8 +112,10 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
       if rawsource.startswith("param "):
         index = rawsource.index("param ")
         if len(child.children) == 0: continue
-        child.children[0] = Text(rawsource[index + 6:])
-        fields[rawsource[index + 6:]] = n
+        # Strip leading escaped asterisks for vararg parameters in Google code style docstrings
+        trimmed_name = re.sub(r'\\\*', '*', rawsource[index + 6:])
+        child.children[0] = Text(trimmed_name)
+        fields[trimmed_name] = n
       if rawsource == "return":
         fields["return"] = n
 
@@ -123,7 +125,7 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
       rawsource = child.rawsource
       if rawsource.startswith("type "):
         index = rawsource.index("type ")
-        name = rawsource[index + 5:]
+        name = re.sub(r'\\\*', '*', rawsource[index + 5:])
         if fields.has_key(name):
           fields[name].type = n.children[1][0][0]
           node.children.remove(n)
@@ -140,6 +142,13 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
 
   def unknown_departure(self, node):
     """ Ignore unknown nodes """
+
+  def visit_problematic(self, node):
+    """Don't insert hyperlinks to nowhere for e.g. unclosed asterisks."""
+    # Note that children text elements will be visited anyway
+
+  def depart_problematic(self, node):
+    pass
 
   def visit_block_quote(self, node):
     self.body.append(self.emptytag(node, "br"))
