@@ -17,14 +17,11 @@ package git4idea.checkout;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.dvcs.ui.CloneDvcsDialog;
-import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitTask;
-import git4idea.commands.GitTaskResult;
+import git4idea.commands.Git;
 import git4idea.remote.GitRememberedInputs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,21 +30,19 @@ import java.io.File;
 
 public class GitCloneDialog extends CloneDvcsDialog {
 
+  @NotNull private final Git myGit;
+
   public GitCloneDialog(@NotNull Project project) {
     this(project, null);
   }
 
   public GitCloneDialog(@NotNull Project project, @Nullable String defaultUrl) {
     super(project, GitVcs.NAME, GitUtil.DOT_GIT, defaultUrl);
+    myGit = ServiceManager.getService(Git.class);
   }
 
   protected boolean test(@NotNull String url) {
-    final GitLineHandler handler = new GitLineHandler(myProject, new File("."), GitCommand.LS_REMOTE);
-    handler.setUrl(url);
-    handler.addParameters(url, "master");
-    GitTask task = new GitTask(myProject, handler, DvcsBundle.message("clone.testing", url));
-    GitTaskResult result = task.executeModal();
-    return result.isOK();
+    return myGit.lsRemote(myProject, new File("."), url).success();
   }
 
   @NotNull
