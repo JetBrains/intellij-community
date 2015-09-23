@@ -24,6 +24,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.sun.jdi.*;
@@ -111,15 +112,12 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
 
   @NonNls
   public String toString() {
-    //noinspection HardCodedStringLiteral
-    @NonNls String threadRefString;
     try {
-      threadRefString = getThreadReference().toString() ;
+      return name() + ": " + DebuggerUtilsEx.getThreadStatusText(status());
     }
     catch (ObjectCollectedException ignored) {
-      threadRefString = "[thread collected]";
+      return "[thread collected]";
     }
-    return "ThreadReferenceProxyImpl: " + threadRefString + " " + super.toString();
   }
 
   public void resume() {
