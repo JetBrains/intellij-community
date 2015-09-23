@@ -74,17 +74,19 @@ public class GeneralCommandLine implements UserDataHolder {
 
   /**
    * Determines the scope of a parent environment passed to a child process.
-   * {@code NONE} means a child process will receive an empty environment;
-   * {@code SYSTEM} will provide it with the same environment as an IDE;
-   * {@code SHELL} has a {@link EnvironmentUtil#getEnvironmentMap() special meaning} on OS X and equals to SYSTEM on other platforms.
    * <p>
-   * {@code SHELL} is the default value.
+   * {@code NONE} means a child process will receive an empty environment. <br/>
+   * {@code SYSTEM} will provide it with the same environment as an IDE. <br/>
+   * {@code CONSOLE} provides the child with a similar environment as if it was launched from, well, a console.
+   * On OS X, a console environment is simulated (see {@link EnvironmentUtil#getEnvironmentMap()} for reasons it's needed
+   * and details on how it works). On Windows and Unix hosts, this option is no different from {@code SYSTEM}
+   * since there is no drastic distinction in environment between GUI and console apps.
    */
-  public enum ParentEnvironmentType {NONE, SYSTEM, SHELL}
+  public enum ParentEnvironmentType {NONE, SYSTEM, CONSOLE}
 
-  // todo revise usages, then set to ParentEnvironmentType.SHELL and inline
+  // todo revise usages, then set to ParentEnvironmentType.CONSOLE and inline
   private static ParentEnvironmentType defaultParentEnvironmentType =
-    PlatformUtils.isAppCode() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.SHELL;
+    PlatformUtils.isAppCode() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.CONSOLE;
 
   private String myExePath = null;
   private File myWorkDirectory = null;
@@ -205,7 +207,7 @@ public class GeneralCommandLine implements UserDataHolder {
     switch (myParentEnvironmentType) {
       case SYSTEM:
         return System.getenv();
-      case SHELL:
+      case CONSOLE:
         return EnvironmentUtil.getEnvironmentMap();
       default:
         return Collections.emptyMap();

@@ -169,7 +169,7 @@ public class JdkUtil {
 
     final ParametersList vmParametersList = javaParameters.getVMParametersList();
     commandLine.withEnvironment(javaParameters.getEnv());
-    commandLine.withParentEnvironmentType(javaParameters.isPassParentEnvs() ? ParentEnvironmentType.SHELL : ParentEnvironmentType.NONE);
+    commandLine.withParentEnvironmentType(javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
 
     final Class commandLineWrapper;
     if ((commandLineWrapper = getCommandLineWrapperClass()) != null) {

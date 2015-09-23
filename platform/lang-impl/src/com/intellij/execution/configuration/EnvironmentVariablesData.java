@@ -117,7 +117,7 @@ public class EnvironmentVariablesData {
 
   public void configureCommandLine(@NotNull GeneralCommandLine commandLine, boolean shellParentEnvs) {
     if (myPassParentEnvs) {
-      commandLine.withParentEnvironmentType(shellParentEnvs ? GeneralCommandLine.ParentEnvironmentType.SHELL
+      commandLine.withParentEnvironmentType(shellParentEnvs ? GeneralCommandLine.ParentEnvironmentType.CONSOLE
                                                             : GeneralCommandLine.ParentEnvironmentType.SYSTEM);
     }
     else {

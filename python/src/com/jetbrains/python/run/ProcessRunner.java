@@ -138,7 +138,7 @@ public class ProcessRunner {
 
     cmdLine.addParameters(arguments);
 
-    cmdLine.withParentEnvironmentType(passParentEnv ? ParentEnvironmentType.SHELL : ParentEnvironmentType.NONE);
+    cmdLine.withParentEnvironmentType(passParentEnv ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
     cmdLine.withEnvironment(userDefinedEnv);
     //Inline parent env variables occurrences
     EnvironmentUtil.inlineParentOccurrences(cmdLine.getEnvironment());
