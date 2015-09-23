@@ -17,6 +17,8 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,6 +27,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.function.Predicate;
 
 public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase {
   public void testMethodArgument() throws Exception {
@@ -64,6 +67,19 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     final Collection<PsiReference> references = ReferencesSearch.search(field).findAll();
     assertFalse(references.isEmpty());
     assertEquals(1, references.size());
+  }
+
+  public void testClassFromJdk() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    for (int i = 0; i < JavaFunctionalExpressionSearcher.SMART_SEARCH_THRESHOLD + 5; i++) {
+      myFixture.addFileToProject("a" + i + ".java", "class Goo {{ Runnable r = () -> {} }}");
+    }
+
+    PsiClass predicate = JavaPsiFacade.getInstance(getProject()).findClass(Predicate.class.getName(), GlobalSearchScope.allScope(getProject()));
+    assert predicate != null;
+    final PsiFunctionalExpression next = assertOneElement(FunctionalExpressionSearch.search(predicate).findAll());
+    assertEquals("(e) -> true", next.getText());
   }
 
   @Override
