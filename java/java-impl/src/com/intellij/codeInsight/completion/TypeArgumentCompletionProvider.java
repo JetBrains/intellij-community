@@ -205,7 +205,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
       myLookupString = StringUtil.join(myTypeItems, new Function<PsiTypeLookupItem, String>() {
         @Override
         public String fun(PsiTypeLookupItem item) {
-          return item.getLookupString();
+          return item.getType().getPresentableText();
         }
       }, ", ");
     }
