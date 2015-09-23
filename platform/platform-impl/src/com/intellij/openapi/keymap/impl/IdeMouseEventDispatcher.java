@@ -81,17 +81,19 @@ public final class IdeMouseEventDispatcher {
     myActions.clear();
 
     // here we try to find "local" shortcuts
-    if (component instanceof JComponent) {
-      for (AnAction action : ActionUtil.getActions((JComponent)component)) {
-        for (Shortcut shortcut : action.getShortcutSet().getShortcuts()) {
-          if (mouseShortcut.equals(shortcut) && !myActions.contains(action)) {
-            myActions.add(action);
+    for (; component != null; component = component.getParent()) {
+      if (component instanceof JComponent) {
+        for (AnAction action : ActionUtil.getActions((JComponent)component)) {
+          for (Shortcut shortcut : action.getShortcutSet().getShortcuts()) {
+            if (mouseShortcut.equals(shortcut) && !myActions.contains(action)) {
+              myActions.add(action);
+            }
           }
         }
-      }
-      // once we've found a proper local shortcut(s), we exit
-      if (!myActions.isEmpty()) {
-        return;
+        // once we've found a proper local shortcut(s), we exit
+        if (!myActions.isEmpty()) {
+          return;
+        }
       }
     }
 
