@@ -47,16 +47,23 @@ import java.util.*;
  * {@code new GeneralCommandLine("some program", "parameter with space").createProcess()}.
  * <p>
  * Consider the following things when using this class.
- * <p>
- * <strong>Working directory</strong>.
+ *
+ * <h3>Working directory</h3>
  * By default, a current directory of the IDE process is used (usually a "bin/" directory of IDE installation).
  * If a child process may create files in it, this choice is unwelcome. On the other hand, informational commands (e.g. "git --version")
  * are safe. When unsure, set it to something neutral - like user's home or a temp directory.
- * <p>
- * <strong>Parent Environment</strong>.
- * todo work in progress
- * <p>
- * <strong>Encoding/Charset</strong>.
+ *
+ * <h3>Parent Environment</h3>
+ * {@link ParentEnvironmentType Three options here}.
+ * For commands designed from the ground up for typing into a terminal, use {@link ParentEnvironmentType#CONSOLE CONSOLE}
+ * (typical cases: version controls, Node.js and all the stuff around it, Python and Ruby interpreters and utilities, etc).
+ * For GUI apps and CLI tools which aren't primarily intended to be launched by humans, use {@link ParentEnvironmentType#SYSTEM SYSTEM}
+ * (examples: UI builders, browsers, XCode components). For the empty environment, there is {@link ParentEnvironmentType#NONE NONE}.
+ * According to an extensive research conducted by British scientists (tm) on a diverse population of both wild and domesticated tools
+ * (no one was harmed), most of them are either insensitive to an environment or fall into the first category,
+ * thus backing up the choice of CONSOLE as the default value.
+ *
+ * <h3>Encoding/Charset</h3>
  * The {@link #getCharset()} method is used by classes like {@link com.intellij.execution.process.OSProcessHandler OSProcessHandler}
  * or {@link com.intellij.execution.util.ExecUtil ExecUtil} to decode bytes of a child's output stream. For proper conversion,
  * the same value should be used on another side of the pipe. Chances are you don't have to mess with the setting -
