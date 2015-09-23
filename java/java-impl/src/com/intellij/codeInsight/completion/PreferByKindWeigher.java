@@ -150,6 +150,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     superMethodParameters,
     field,
     expectedTypeConstant,
+    expectedTypeArgument,
     getter,
     normal,
     collectionFactory,
@@ -207,6 +208,9 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     Boolean expectedTypeMember = item.getUserData(MembersGetter.EXPECTED_TYPE_MEMBER);
     if (expectedTypeMember != null) {
       return expectedTypeMember ? (object instanceof PsiField ? MyResult.expectedTypeConstant : MyResult.expectedTypeMethod) : MyResult.classNameOrGlobalStatic;
+    }
+    if (item instanceof TypeArgumentCompletionProvider.TypeArgsLookupElement) {
+      return MyResult.expectedTypeArgument;
     }
     final JavaChainLookupElement chain = item.as(JavaChainLookupElement.CLASS_CONDITION_KEY);
     if (chain != null) {

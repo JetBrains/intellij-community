@@ -1324,8 +1324,7 @@ class XInternalError {}
 
   public void testSuggestAllTypeArguments() {
     configure()
-    assert 'String, String' == lookup.items[1].lookupString
-    lookup.currentItem = lookup.items[1]
+    assert 'String, String' == lookup.items[0].lookupString
     type '\n'
     checkResult()
   }

@@ -909,6 +909,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testTypeArgs2() throws Exception {
     doTest();
   }
+  public void testTypeArgsOverwrite() { doTest(); }
 
   public void testIfConditionExpectedType() throws Exception { doTest(); }
 
