@@ -15,76 +15,19 @@
  */
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.util.InvalidDataException;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
 
 /**
  * @author yole
  */
-public abstract class BaseSchemeProcessor<T extends ExternalizableScheme> implements SchemeProcessor<T>, SchemeExtensionProvider {
-  @Override
-  public void initScheme(@NotNull T scheme) {
-  }
-
-  @Override
-  public void onSchemeAdded(@NotNull T scheme) {
-  }
-
-  @Override
-  public void onSchemeDeleted(@NotNull T scheme) {
-  }
-
-  @Override
-  public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
-  }
-
-
-
-  @Nullable
-  public T readScheme(@NotNull Element element) throws InvalidDataException, IOException, JDOMException {
-    return readScheme(new Document((Element)element.detach()));
-  }
-
-  @Nullable
-  /**
-   * @param duringLoad If occurred during {@link SchemesManager#loadSchemes()} call
-   */
-  public T readScheme(@NotNull Element element, boolean duringLoad) throws InvalidDataException, IOException, JDOMException {
-    return readScheme(element);
-  }
-
-  @Override
-  public T readScheme(@NotNull Document schemeContent) throws InvalidDataException, IOException, JDOMException {
-    throw new AbstractMethodError();
-  }
-
-  public enum State {
-    UNCHANGED, NON_PERSISTENT, POSSIBLY_CHANGED
-  }
-
-  @Override
-  public boolean shouldBeSaved(@NotNull T scheme) {
-    return true;
-  }
-
-  @NotNull
-  public State getState(@NotNull T scheme) {
-    return shouldBeSaved(scheme) ? State.POSSIBLY_CHANGED : State.NON_PERSISTENT;
-  }
-
+public abstract class BaseSchemeProcessor<T extends ExternalizableScheme> extends SchemeProcessor<T> implements SchemeExtensionProvider {
   @Override
   public boolean isUpgradeNeeded() {
     return false;
   }
 
-  @NotNull
   @Override
+  @NotNull
   public String getSchemeExtension() {
     return ".xml";
   }

@@ -26,7 +26,7 @@ class XmlElementStorageTest {
     val storage = MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))))
     val state = storage.getState(this, "test", Element::class.java)
     assertThat(state).isNotNull()
-    assertThat(state!!.getName()).isEqualTo("component")
+    assertThat(state!!.name).isEqualTo("component")
     assertThat(state.getChild("foo")).isNotNull()
   }
 

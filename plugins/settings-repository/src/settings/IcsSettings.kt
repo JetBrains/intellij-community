@@ -42,7 +42,7 @@ class MyPrettyPrinter : DefaultPrettyPrinter() {
   }
 
   override fun writeEndObject(jg: JsonGenerator, nrOfEntries: Int) {
-    if (!_objectIndenter.isInline()) {
+    if (!_objectIndenter.isInline) {
       --_nesting
     }
     if (nrOfEntries > 0) {
@@ -52,7 +52,7 @@ class MyPrettyPrinter : DefaultPrettyPrinter() {
   }
 
   override fun writeEndArray(jg: JsonGenerator, nrOfValues: Int) {
-    if (!_arrayIndenter.isInline()) {
+    if (!_arrayIndenter.isInline) {
       --_nesting
     }
     jg.writeRaw(']')
@@ -81,7 +81,7 @@ fun loadSettings(settingsFile: File): IcsSettings {
   return settings
 }
 
-JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
+@JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
 class IcsSettings {
   var shareProjectWorkspace = false
   var commitDelay = DEFAULT_COMMIT_DELAY
@@ -91,10 +91,10 @@ class IcsSettings {
   var autoSync = true
 }
 
-JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
-JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
+@JsonIgnoreProperties(ignoreUnknown = true)
 class ReadonlySource(var url: String? = null, var active: Boolean = true) {
-  JsonIgnore
+  @JsonIgnore
   val path: String?
     get() {
       if (url == null) {

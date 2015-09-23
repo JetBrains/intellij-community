@@ -50,5 +50,5 @@ public fun StreamProvider.write(path: String, content: String) {
 }
 
 public fun StreamProvider.write(path: String, content: BufferExposingByteArrayOutputStream, roamingType: RoamingType = RoamingType.DEFAULT) {
-  write(path, content.getInternalBuffer(), content.size(), roamingType)
+  write(path, content.internalBuffer, content.size(), roamingType)
 }

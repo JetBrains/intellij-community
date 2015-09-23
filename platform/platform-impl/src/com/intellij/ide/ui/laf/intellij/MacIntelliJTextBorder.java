@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
+import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -38,6 +39,9 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
 
   @Override
   public void paintBorder(Component c, Graphics g2d, int x, int y, int width, int height) {
+    if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
+      return;
+    }
     Graphics2D g = (Graphics2D)g2d;
     if (c.hasFocus()) {
       MacIntelliJBorderPainter.paintBorder(c, g, 0, 0, c.getWidth(), c.getHeight());

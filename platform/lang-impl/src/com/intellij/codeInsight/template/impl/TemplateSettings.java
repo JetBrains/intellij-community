@@ -20,7 +20,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.Comparing;
@@ -184,14 +184,12 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   private TemplateKey myLastSelectedTemplate;
 
   public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
-    mySchemeManager = schemesManagerFactory.create(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup>() {
+    mySchemeManager = schemesManagerFactory.create(TEMPLATES_DIR_PATH, new SchemeProcessor<TemplateGroup>() {
       @Nullable
       @Override
-      public TemplateGroup readScheme(@NotNull Element element) throws InvalidDataException {
-        return readTemplateFile(element, element.getAttributeValue("group"), false, false,
-                                getClass().getClassLoader());
+      public TemplateGroup readScheme(@NotNull Element element) {
+        return readTemplateFile(element, element.getAttributeValue("group"), false, false, getClass().getClassLoader());
       }
-
 
       @NotNull
       @Override
@@ -468,7 +466,8 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   @Nullable
   private TemplateGroup readTemplateFile(@NotNull Element element, @NonNls String defGroupName, boolean isDefault, boolean registerTemplate, @NotNull ClassLoader classLoader) {
     if (!TEMPLATE_SET.equals(element.getName())) {
-      throw new AssertionError();
+      LOG.error("Ignore invalid template scheme: " + JDOMUtil.writeElement(element));
+      return null;
     }
 
     String groupName = element.getAttributeValue(GROUP);

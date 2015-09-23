@@ -27,6 +27,8 @@ import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
@@ -44,7 +46,7 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.util.*
 
-open class ProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl(), IProjectStore {
+open internal class ProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl(), IProjectStore {
   // protected setter used in upsource
   // Zelix KlassMaster - ERROR: Could not find method 'getScheme()'
   var scheme = StorageScheme.DEFAULT
@@ -54,7 +56,17 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
   override var loadPolicy = StateLoadPolicy.LOAD
 
   init {
-    assert(!project.isDefault())
+    assert(!project.isDefault)
+  }
+
+  class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
+    override fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
+      super.beforeSave(readonlyFiles)
+
+      for (module in (ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY)) {
+        module.stateStore.save(readonlyFiles)
+      }
+    }
   }
 
   override final fun isOptimiseTestLoadSpeed() = loadPolicy != StateLoadPolicy.LOAD
@@ -85,31 +97,31 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
         VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath))
       }
 
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
         // load state only if there are existing files
-        setOptimiseTestLoadSpeed(!File(filePath).exists())
+        isOptimiseTestLoadSpeed = !File(filePath).exists()
       }
     }
     else {
       scheme = StorageScheme.DIRECTORY_BASED
 
       val file = File(filePath)
-      val dirStore = File(if (file.isDirectory()) file else file.getParentFile(), Project.DIRECTORY_STORE_FOLDER)
+      val dirStore = File(if (file.isDirectory) file else file.parentFile, Project.DIRECTORY_STORE_FOLDER)
       val projectConfigDir = dirStore.systemIndependentPath
       storageManager.addMacro(StoragePathMacros.PROJECT_FILE, "$projectConfigDir/misc.xml")
       storageManager.addMacro(StoragePathMacros.PROJECT_CONFIG_DIR, projectConfigDir)
 
       val workspace = File(dirStore, "workspace.xml")
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspace.systemIndependentPath)
-      if (!workspace.exists() && !file.isDirectory()) {
+      if (!workspace.exists() && !file.isDirectory) {
         useOldWorkspaceContent(filePath, workspace)
       }
 
       invokeAndWaitIfNeed { VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByPath(projectConfigDir)) }
 
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
         // load state only if there are existing files
-        setOptimiseTestLoadSpeed(!dirStore.exists())
+        isOptimiseTestLoadSpeed = !dirStore.exists()
       }
     }
 
@@ -120,24 +132,24 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
     storageManager.clearStorages()
   }
 
-  override fun getProjectBaseDir() = LocalFileSystem.getInstance().findFileByPath(getProjectBasePath())
+  override fun getProjectBaseDir() = LocalFileSystem.getInstance().findFileByPath(projectBasePath)
 
   override fun getProjectBasePath(): String {
-    val path = PathUtilRt.getParentPath(getProjectFilePath())
+    val path = PathUtilRt.getParentPath(projectFilePath)
     return if (scheme == StorageScheme.DEFAULT) path else PathUtilRt.getParentPath(path)
   }
 
   override fun getProjectName(): String {
     if (scheme == StorageScheme.DIRECTORY_BASED) {
-      val baseDir = getProjectBaseDir()
-      assert(baseDir != null) { "scheme=$scheme project file=${getProjectFilePath()}" }
+      val baseDir = projectBaseDir
+      assert(baseDir != null) { "scheme=$scheme project file=${projectFilePath}" }
 
       val ideaDir = baseDir!!.findChild(Project.DIRECTORY_STORE_FOLDER)
-      if (ideaDir != null && ideaDir.isValid()) {
+      if (ideaDir != null && ideaDir.isValid) {
         val nameFile = ideaDir.findChild(ProjectImpl.NAME_FILE)
-        if (nameFile != null && nameFile.isValid()) {
+        if (nameFile != null && nameFile.isValid) {
           try {
-            val `in` = BufferedReader(InputStreamReader(nameFile.getInputStream(), CharsetToolkit.UTF8_CHARSET))
+            val `in` = BufferedReader(InputStreamReader(nameFile.inputStream, CharsetToolkit.UTF8_CHARSET))
             try {
               val name = `in`.readLine()
               if (name != null && !name.isEmpty()) {
@@ -153,13 +165,13 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
         }
       }
 
-      return baseDir.getName().replace(":", "")
+      return baseDir.name.replace(":", "")
     }
     else {
-      var temp = PathUtilRt.getFileName(getProjectFilePath())
+      var temp = PathUtilRt.getFileName(projectFilePath)
       val fileType = FileTypeManager.getInstance().getFileTypeByFileName(temp)
       if (fileType is ProjectFileType) {
-        temp = temp.substring(0, temp.length() - fileType.getDefaultExtension().length() - 1)
+        temp = temp.substring(0, temp.length() - fileType.defaultExtension.length() - 1)
       }
       val i = temp.lastIndexOf(File.separatorChar)
       if (i >= 0) {
@@ -173,7 +185,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
 
   override fun getPresentableUrl(): String? {
     if (presentableUrl == null) {
-      presentableUrl = FileUtil.toSystemDependentName(if (scheme == StorageScheme.DIRECTORY_BASED) getProjectBasePath() else getProjectFilePath())
+      presentableUrl = FileUtil.toSystemDependentName(if (scheme == StorageScheme.DIRECTORY_BASED) projectBasePath else projectFilePath)
     }
     return presentableUrl
   }
@@ -225,7 +237,7 @@ open class ProjectStoreImpl(override val project: ProjectImpl, private val pathM
     }
 
     if (status.hasReadonlyFiles()) {
-      dropUnableToSaveProjectNotification(project, status.getReadonlyFiles())
+      dropUnableToSaveProjectNotification(project, status.readonlyFiles)
       throw IComponentStore.SaveCancelledException()
     }
     val oldList = ArrayList(readonlyFiles)

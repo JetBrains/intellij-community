@@ -46,14 +46,14 @@ abstract class IcsTestCase {
   val tempDirManager = TemporaryDirectory()
   @Rule fun getTemporaryFolder() = tempDirManager
 
-  val icsManager by Delegates.lazy {
+  val icsManager by lazy(LazyThreadSafetyMode.NONE) {
     val icsManager = IcsManager(tempDirManager.newDirectory())
     icsManager.repositoryManager.createRepositoryIfNeed()
     icsManager.repositoryActive = true
     icsManager
   }
 
-  val provider by Delegates.lazy { icsManager.ApplicationLevelProvider() }
+  val provider by lazy(LazyThreadSafetyMode.NONE) { icsManager.ApplicationLevelProvider() }
 }
 
 fun TemporaryDirectory.createRepository(directoryName: String? = null) = git.createRepository(newDirectory(directoryName))

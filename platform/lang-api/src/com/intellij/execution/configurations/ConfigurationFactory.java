@@ -68,9 +68,11 @@ public abstract class ConfigurationFactory {
    * @param project the project in which the run configuration will be used
    * @return the run configuration instance.
    */
-  public abstract RunConfiguration createTemplateConfiguration(Project project);
+  @NotNull
+  public abstract RunConfiguration createTemplateConfiguration(@NotNull Project project);
 
-  public RunConfiguration createTemplateConfiguration(Project project, RunManager runManager) {
+  @NotNull
+  public RunConfiguration createTemplateConfiguration(@NotNull Project project, @NotNull RunManager runManager) {
     return createTemplateConfiguration(project);
   }
 

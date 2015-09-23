@@ -26,25 +26,25 @@ class CredentialsTest {
     return FileCredentialsStore(storeFile!!)
   }
 
-  public After fun tearDown() {
+  public @After fun tearDown() {
     storeFile?.delete()
     storeFile = null
   }
 
-  public Test fun explicitSpecifiedInURL() {
+  public @Test fun explicitSpecifiedInURL() {
     val credentialsStore = createFileStore()
     val username = CredentialItem.Username()
     val password = CredentialItem.Password()
     val uri = URIish("https://develar:bike@github.com/develar/settings-repository.git")
     assertThat(createProvider(credentialsStore).get(uri, username, password)).isTrue()
-    assertThat(username.getValue()).isEqualTo("develar")
-    assertThat(String(password.getValue()!!)).isEqualTo("bike")
+    assertThat(username.value).isEqualTo("develar")
+    assertThat(String(password.value!!)).isEqualTo("bike")
     // ensure that credentials store was not used
-    assertThat(credentialsStore.get(uri.getHost())).isNull()
+    assertThat(credentialsStore.get(uri.host)).isNull()
     assertThat(storeFile?.exists()).isFalse()
   }
 
-  public Test fun gitCredentialHelper() {
+  public @Test fun gitCredentialHelper() {
     // we don't yet setup test environment for this test and use host environment
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
       return
@@ -55,7 +55,7 @@ class CredentialsTest {
     val password = CredentialItem.Password()
     val uri = URIish("https://develar@bitbucket.org/develar/test-ics.git")
     assertThat(createProvider(credentialsStore).get(uri, username, password)).isTrue()
-    assertThat(username.getValue()).isEqualTo("develar")
-    assertThat(String(password.getValue()!!)).isNotEmpty()
+    assertThat(username.value).isEqualTo("develar")
+    assertThat(String(password.value!!)).isNotEmpty()
   }
 }

@@ -22,8 +22,8 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.*;
@@ -56,7 +56,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   public static boolean ourKeymapManagerInitialized = false;
 
   KeymapManagerImpl(@NotNull DefaultKeymap defaultKeymap, @NotNull SchemesManagerFactory factory) {
-    BaseSchemeProcessor<KeymapImpl> schemeProcessor = new BaseSchemeProcessor<KeymapImpl>() {
+    SchemeProcessor<KeymapImpl> schemeProcessor = new SchemeProcessor<KeymapImpl>() {
       @NotNull
       @Override
       public KeymapImpl readScheme(@NotNull Element element) throws InvalidDataException {

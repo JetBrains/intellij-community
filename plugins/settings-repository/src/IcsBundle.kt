@@ -27,8 +27,8 @@ class IcsBundle {
 
     val BUNDLE: String = "messages.IcsBundle"
 
-    JvmStatic
-    fun message(PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any?): String {
+    @JvmStatic
+    fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any?): String {
       return CommonBundle.message(getBundle(), key, *params)
     }
 

@@ -43,17 +43,13 @@ import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
-import java.lang.annotation.ElementType
-import java.lang.annotation.Retention
-import java.lang.annotation.RetentionPolicy
-import java.lang.annotation.Target
 import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Project created on request, so, could be used as a bare (only application).
  */
-public class ProjectRule() : ExternalResource() {
+class ProjectRule() : ExternalResource() {
   companion object {
     init {
       Logger.setFactory(TestLoggerFactory::class.java)
@@ -105,10 +101,10 @@ public class ProjectRule() : ExternalResource() {
     }
   }
 
-  public val projectIfOpened: ProjectEx?
+  val projectIfOpened: ProjectEx?
     get() = if (projectOpened.get()) sharedProject else null
 
-  public val project: ProjectEx
+  val project: ProjectEx
     get() {
       var result = sharedProject
       if (result == null) {
@@ -127,7 +123,7 @@ public class ProjectRule() : ExternalResource() {
       return result!!
     }
 
-  public val module: Module
+  val module: Module
     get() {
       var project = project
       var result = sharedModule
@@ -148,11 +144,11 @@ public class ProjectRule() : ExternalResource() {
     }
 }
 
-public fun runInEdtAndWait(runnable: () -> Unit) {
+fun runInEdtAndWait(runnable: () -> Unit) {
   EdtTestUtil.runInEdtAndWait(runnable)
 }
 
-public class RuleChain(vararg val rules: TestRule) : TestRule {
+class RuleChain(vararg val rules: TestRule) : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
     var statement = base
     var errors: MutableList<Throwable>? = null
@@ -173,13 +169,12 @@ public class RuleChain(vararg val rules: TestRule) : TestRule {
   }
 }
 
-private fun <T : Annotation> Description.getOwnOrClassAnnotation(annotationClass: Class<T>) = getAnnotation(annotationClass) ?: getTestClass()?.getAnnotation(annotationClass)
+private fun <T : Annotation> Description.getOwnOrClassAnnotation(annotationClass: Class<T>) = getAnnotation(annotationClass) ?: testClass?.getAnnotation(annotationClass)
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD, ElementType.TYPE)
-annotation public class RunsInEdt
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
+annotation class RunsInEdt
 
-public class EdtRule : TestRule {
+class EdtRule : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
     return if (description.getOwnOrClassAnnotation(RunsInEdt::class.java) == null) {
       base
@@ -198,11 +193,10 @@ public class EdtRule : TestRule {
  * Do not optimise test load speed.
  * @see IProjectStore.setOptimiseTestLoadSpeed
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD, ElementType.TYPE)
-annotation public class RunsInActiveStoreMode
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
+annotation class RunsInActiveStoreMode
 
-public class ActiveStoreRule(private val projectRule: ProjectRule) : TestRule {
+class ActiveStoreRule(private val projectRule: ProjectRule) : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
     return if (description.getOwnOrClassAnnotation(RunsInActiveStoreMode::class.java) == null) {
       base
@@ -221,30 +215,30 @@ public class ActiveStoreRule(private val projectRule: ProjectRule) : TestRule {
  * In test mode component state is not loaded. Project or module store will load component state if project/module file exists.
  * So must be a strong reason to explicitly use this method.
  */
-public inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
+inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   val store = stateStore as IProjectStore
-  val isModeDisabled = store.isOptimiseTestLoadSpeed()
+  val isModeDisabled = store.isOptimiseTestLoadSpeed
   if (isModeDisabled) {
-    store.setOptimiseTestLoadSpeed(false)
+    store.isOptimiseTestLoadSpeed = false
   }
   try {
     return task()
   }
   finally {
     if (isModeDisabled) {
-      store.setOptimiseTestLoadSpeed(true)
+      store.isOptimiseTestLoadSpeed = true
     }
   }
 }
 
-public class DisposeModulesRule(private val projectRule: ProjectRule) : ExternalResource() {
+class DisposeModulesRule(private val projectRule: ProjectRule) : ExternalResource() {
   override fun after() {
     projectRule.projectIfOpened?.let {
       var errors: MutableList<Throwable>? = null
       val moduleManager = ModuleManager.getInstance(it)
       runInEdtAndWait {
-        for (module in moduleManager.getModules()) {
-          if (module.isDisposed()) {
+        for (module in moduleManager.modules) {
+          if (module.isDisposed) {
             continue
           }
 

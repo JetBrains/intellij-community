@@ -300,7 +300,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     for (i in schemes.indices.reversed()) {
       val scheme = schemes.get(i)
       @Suppress("UNCHECKED_CAST")
-      if (scheme is ExternalizableScheme && getState(scheme as E) != BaseSchemeProcessor.State.NON_PERSISTENT) {
+      if (scheme is ExternalizableScheme && getState(scheme as E) != SchemeProcessor.State.NON_PERSISTENT) {
         if (scheme == currentScheme) {
           currentScheme = null
         }
@@ -336,12 +336,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     try {
       val element = JDOMUtil.load(input)
       @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE", "UNCHECKED_CAST")
-      val scheme = (if (processor is BaseSchemeProcessor<*>) {
-        processor.readScheme(element, duringLoad) as E?
-      }
-      else {
-        processor.readScheme(Document(element.detach() as Element))
-      }) ?: return null
+      val scheme = processor.readScheme(element, duringLoad) ?: return null
 
       val extension = getFileExtension(fileName, false)
       val fileNameWithoutExtension = fileName.subSequence(0, fileName.length() - extension.length()).toString()
@@ -392,7 +387,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       }
       return scheme
     }
-    catch (e: Exception) {
+    catch (e: Throwable) {
       LOG.error("Cannot read scheme $fileName", e)
       return null
     }
@@ -426,13 +421,13 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       @Suppress("UNCHECKED_CAST")
       if (scheme is ExternalizableScheme) {
         val state = getState(scheme as E)
-        if (state == BaseSchemeProcessor.State.NON_PERSISTENT) {
+        if (state == SchemeProcessor.State.NON_PERSISTENT) {
           continue
         }
 
         hasSchemes = true
 
-        if (state != BaseSchemeProcessor.State.UNCHANGED) {
+        if (state != SchemeProcessor.State.UNCHANGED) {
           schemesToSave.add(scheme)
         }
 
@@ -497,15 +492,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     }
   }
 
-  private fun getState(scheme: E): BaseSchemeProcessor.State {
-    return if (processor is BaseSchemeProcessor<*>) {
-      (processor as BaseSchemeProcessor<E>).getState(scheme)
-    }
-    else {
-      @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
-      if (processor.shouldBeSaved(scheme)) BaseSchemeProcessor.State.POSSIBLY_CHANGED else BaseSchemeProcessor.State.NON_PERSISTENT
-    }
-  }
+  private fun getState(scheme: E) = processor.getState(scheme)
 
   private fun saveScheme(scheme: E, nameGenerator: UniqueNameGenerator) {
     var externalInfo: ExternalInfo? = schemeToInfo.get(scheme)

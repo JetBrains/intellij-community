@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
@@ -60,6 +61,10 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
   public GutterIconRenderer.Alignment getCommonIconAlignment(@NotNull List<MergeableLineMarkerInfo> infos) {
     return GutterIconRenderer.Alignment.LEFT;
+  }
+  
+  public String getElementPresentation(PsiElement element) {
+    return element.getText();
   }
 
   public int getCommonUpdatePass(@NotNull List<MergeableLineMarkerInfo> infos) {
@@ -149,9 +154,13 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
                   }
                   PsiElement element = ((LineMarkerInfo)dom).getElement();
                   assert element != null;
-                  String text = StringUtil.first(element.getText(), 100, true).replace('\n', ' ');
+                  final String elementPresentation =
+                    dom instanceof MergeableLineMarkerInfo ? ((MergeableLineMarkerInfo)dom).getElementPresentation(element) : element.getText();
+                  String text = StringUtil.first(elementPresentation, 100, true).replace('\n', ' ');
 
-                  return new JBLabel(text, icon, SwingConstants.LEFT);
+                  final JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);
+                  label.setBorder(IdeBorderFactory.createEmptyBorder(2));
+                  return label;
                 }
 
                 return new JBLabel();

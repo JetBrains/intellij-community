@@ -37,7 +37,7 @@ class DefaultProjectStoreTest {
 
       override fun before() {
         val app = ApplicationManagerEx.getApplicationEx()
-        isDoNotSave = app.isDoNotSave()
+        isDoNotSave = app.isDoNotSave
         app.doNotSave(false)
       }
 
@@ -55,12 +55,12 @@ class DefaultProjectStoreTest {
       private var externalDependenciesManager: ExternalDependenciesManager? = null
 
       override fun before() {
-        externalDependenciesManager = ProjectManager.getInstance().getDefaultProject().service<ExternalDependenciesManager>()
-        externalDependenciesManager!!.setAllDependencies(requiredPlugins)
+        externalDependenciesManager = ProjectManager.getInstance().defaultProject.service<ExternalDependenciesManager>()
+        externalDependenciesManager!!.allDependencies = requiredPlugins
       }
 
       override fun after() {
-        externalDependenciesManager?.setAllDependencies(emptyList())
+        externalDependenciesManager?.allDependencies = emptyList()
       }
     }
   )
@@ -69,10 +69,10 @@ class DefaultProjectStoreTest {
 
   @Test fun `new project from default`() {
     createProjectAndUseInLoadComponentStateMode(tempDirManager) {
-      assertThat(it.service<ExternalDependenciesManager>().getAllDependencies()).isEqualTo(requiredPlugins)
+      assertThat(it.service<ExternalDependenciesManager>().allDependencies).isEqualTo(requiredPlugins)
     }
   }
 }
 
 val IComponentStore.storageManager: StateStorageManager
-  get() = getStateStorageManager()
+  get() = stateStorageManager

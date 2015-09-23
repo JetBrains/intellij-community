@@ -36,6 +36,7 @@ import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
@@ -321,6 +322,15 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
           return "Multiple method overrides";
         }
       };
+    }
+
+    @Override
+    public String getElementPresentation(PsiElement element) {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof PsiFunctionalExpression) {
+        return PsiExpressionTrimRenderer.render((PsiExpression)parent);
+      }
+      return super.getElementPresentation(element);
     }
   }
 }

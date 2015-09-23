@@ -106,12 +106,10 @@
 
     <component>
       <implementation-class>com.intellij.notification.EventLog</implementation-class>
-      <skipForDefaultProject/>
     </component>
 
     <component>
       <implementation-class>com.intellij.notification.impl.MacEventReader</implementation-class>
-      <skipForDefaultProject/>
     </component>
 
     <component>

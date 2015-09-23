@@ -42,12 +42,12 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
-val FILE_SPEC = "REMOTE"
+internal val FILE_SPEC = "REMOTE"
 
 /**
  * Functionality without stream provider covered, ICS has own test suite
  */
-class SchemeManagerTest {
+internal class SchemeManagerTest {
   companion object {
     @ClassRule val projectRule = ProjectRule()
   }
@@ -81,7 +81,7 @@ class SchemeManagerTest {
 
     val scheme = manager.findSchemeByName("first")
     assertThat(scheme).isNotNull()
-    scheme!!.setName("renamed")
+    scheme!!.name = "renamed"
     manager.save()
 
     checkSchemes("2->second;renamed->renamed")
@@ -93,11 +93,11 @@ class SchemeManagerTest {
     val first = manager.findSchemeByName("first")
     assertThat(first).isNotNull()
     assert(first != null)
-    first!!.setName("2")
+    first!!.name = "2"
     val second = manager.findSchemeByName("second")
     assertThat(second).isNotNull()
     assert(second != null)
-    second!!.setName("1")
+    second!!.name = "1"
     manager.save()
 
     checkSchemes("1->1;2->2")
@@ -109,13 +109,13 @@ class SchemeManagerTest {
     val firstScheme = manager.findSchemeByName("first")
     assertThat(firstScheme).isNotNull()
     assert(firstScheme != null)
-    firstScheme!!.setName("first_renamed")
+    firstScheme!!.name = "first_renamed"
     manager.save()
 
     checkSchemes(File(remoteBaseDir, "REMOTE"), "first_renamed->first_renamed;2->second", true)
     checkSchemes(localBaseDir!!, "", false)
 
-    firstScheme.setName("first_renamed2")
+    firstScheme.name = "first_renamed2"
     manager.removeScheme(firstScheme)
     manager.save()
 
@@ -139,7 +139,7 @@ class SchemeManagerTest {
     val scheme = TestScheme("first")
     manager.addNewScheme(scheme, false)
 
-    assertThat("first2").isEqualTo(scheme.getName())
+    assertThat("first2").isEqualTo(scheme.name)
   }
 
   fun TestScheme.save(file: File) {
@@ -288,7 +288,7 @@ class SchemeManagerTest {
 
     assertThat(File(dir, "s1.xml")).isFile()
 
-    scheme.setName("s2")
+    scheme.name = "s2"
 
     schemeManager.save()
 
@@ -362,9 +362,8 @@ private fun checkSchemes(baseDir: File, expected: String, ignoreDeleted: Boolean
   if (files != null) {
     val schemesProcessor = TestSchemesProcessor()
     for (file in files) {
-      val fileName = FileUtil.getNameWithoutExtension(file)
-      val scheme = schemesProcessor.readScheme(JDOMUtil.load(file), true)
-      assertThat(fileToSchemeMap.get(fileName)).isEqualTo(scheme!!.getName())
+      val scheme = schemesProcessor.readScheme(JDOMUtil.load(file), true)!!
+      assertThat(fileToSchemeMap.get(FileUtil.getNameWithoutExtension(file))).isEqualTo(scheme.name)
     }
   }
 }
@@ -381,7 +380,7 @@ data class TestScheme(@field:Attribute private var name: String = "", @field:Att
   override fun getExternalInfo() = null
 }
 
-public open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme>() {
+open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme>() {
   override fun readScheme(element: Element) = XmlSerializer.deserialize(element, TestScheme::class.java)
 
   override fun writeScheme(scheme: TestScheme) = scheme._serialize()
@@ -393,4 +392,4 @@ fun SchemeManagerImpl<*, *>.save() {
   CompoundRuntimeException.throwIfNotEmpty(errors)
 }
 
-public fun <T : Any> T._serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)
+fun <T : Any> T._serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)
