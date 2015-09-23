@@ -40,7 +40,10 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassLikeTypeUtil;
+import com.jetbrains.python.psi.types.PyNoneType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,7 +192,7 @@ public class PyOverrideImplementUtil {
 
   private static PyFunctionBuilder buildOverriddenFunction(PyClass pyClass, PyFunction baseFunction, boolean implement) {
     final boolean overridingNew = PyNames.NEW.equals(baseFunction.getName());
-    PyFunctionBuilder pyFunctionBuilder = new PyFunctionBuilder(baseFunction.getName());
+    PyFunctionBuilder pyFunctionBuilder = new PyFunctionBuilder(baseFunction.getName(), baseFunction);
     final PyDecoratorList decorators = baseFunction.getDecoratorList();
     boolean baseMethodIsStatic = false;
     if (decorators != null) {

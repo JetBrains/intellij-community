@@ -318,6 +318,14 @@
       <loadForDefaultProject/>
     </component>
     <component>
+      <implementation-class>org.jetbrains.idea.maven.utils.library.remote.MavenVersionsRemoteManager</implementation-class>
+      <loadForDefaultProject/>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.utils.library.remote.MavenDependenciesRemoteManager</implementation-class>
+      <loadForDefaultProject/>
+    </component>
+    <component>
       <implementation-class>org.jetbrains.idea.maven.indices.MavenProjectIndicesManager</implementation-class>
     </component>
     <component>

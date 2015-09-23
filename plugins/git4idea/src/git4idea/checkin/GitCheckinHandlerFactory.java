@@ -222,7 +222,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
                                                                  @NotNull final Collection<VirtualFile> roots,
                                                                  final boolean stopWhenFoundFirst) {
       final Map<VirtualFile, Couple<String>> defined = ContainerUtil.newHashMap();
-      ProgressManager.getInstance().run(new Task.Modal(project, "Checking Git user name...", false) {
+      ProgressManager.getInstance().run(new Task.Modal(project, "Checking Git user name...", true) {
         @Override
         public void run(@NotNull ProgressIndicator pi) {
           for (VirtualFile root : roots) {
@@ -251,7 +251,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
                                              @NotNull final Collection<VirtualFile> notDefined,
                                              @NotNull final GitUserNameNotDefinedDialog dialog) {
       final Ref<String> error = Ref.create();
-      ProgressManager.getInstance().run(new Task.Modal(project, "Setting Git User Name...", false) {
+      ProgressManager.getInstance().run(new Task.Modal(project, "Setting Git User Name...", true) {
         @Override
         public void run(@NotNull ProgressIndicator pi) {
           try {

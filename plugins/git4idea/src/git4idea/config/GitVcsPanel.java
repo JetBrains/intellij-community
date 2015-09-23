@@ -21,10 +21,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ListCellRendererWrapper;
@@ -111,10 +114,19 @@ public class GitVcsPanel {
     if (myAppSettings != null) {
       myAppSettings.setPathToGit(executable);
     }
-    final GitVersion version;
+    GitVersion version;
     try {
-      version = GitVersion.identifyVersion(executable);
-    } catch (Exception e) {
+      version = ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<GitVersion, Exception>() {
+        @Override
+        public GitVersion compute() throws Exception {
+          return GitVersion.identifyVersion(executable);
+        }
+      }, "Testing Git Executable...", true, myVcs.getProject());
+    }
+    catch (ProcessCanceledException pce) {
+      return;
+    }
+    catch (Exception e) {
       Messages.showErrorDialog(myRootPanel, e.getMessage(), GitBundle.getString("find.git.error.title"));
       return;
     }

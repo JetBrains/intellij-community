@@ -19,9 +19,6 @@ import com.google.common.base.Predicate;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -33,6 +30,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -57,7 +55,7 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
   }
 
   private static Collection<Library> collectLibraries(final @NotNull Project project, final @NotNull Predicate<Library> predicate) {
-    final com.intellij.util.containers.HashSet<Library> result = new com.intellij.util.containers.HashSet<Library>();
+    final HashSet<Library> result = new HashSet<Library>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {
@@ -101,23 +99,10 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
                        libraryEx.getProperties() instanceof RepositoryLibraryProperties;
               }
             });
-            if (libraries.isEmpty()) return;
-            Task task = new Task.Backgroundable(project, "Maven", false) {
-              public void run(@NotNull ProgressIndicator indicator) {
-                for (Library library : libraries) {
-                  LibraryEx libraryEx = (LibraryEx)library;
-                  RepositoryLibraryProperties properties = (RepositoryLibraryProperties)libraryEx.getProperties();
-
-                  if (isLibraryNeedToBeReloaded(libraryEx, properties)) {
-                    RepositoryUtils.reloadDependencies(
-                      indicator,
-                      project,
-                      libraryEx);
-                  }
-                }
-              }
-            };
-            ProgressManager.getInstance().run(task);
+            for (Library library : libraries) {
+              final LibraryEx libraryEx = (LibraryEx)library;
+              RepositoryUtils.reloadDependencies(project, libraryEx);
+            }
           }
         }, project.getDisposed());
       }

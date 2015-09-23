@@ -214,7 +214,7 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testMultilineQuotedString() { //PY-8064
-    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    getIndentOptions().INDENT_SIZE = 2;
     doTest(PyBundle.message("INTN.quoted.string.double.to.single"));
   }
 
@@ -287,7 +287,7 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeInDocstring() {
-    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    getIndentOptions().INDENT_SIZE = 2;
     doDocParamTypeTest(DocStringFormat.REST);
   }
 
@@ -304,7 +304,7 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeInDocstring5() {
-    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    getIndentOptions().INDENT_SIZE = 2;
     doDocParamTypeTest(DocStringFormat.REST);
   }
 
@@ -335,12 +335,12 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeInDocstring1() {
-    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    getIndentOptions().INDENT_SIZE = 2;
     doDocReturnTypeTest(DocStringFormat.REST);
   }
 
   public void testTypeInDocstring2() {
-    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    getIndentOptions().INDENT_SIZE = 2;
     doDocReturnTypeTest(DocStringFormat.REST);
   }
 
@@ -411,12 +411,18 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testDocStubKeywordOnly() {
-    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    getIndentOptions().INDENT_SIZE = 2;
     runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
       public void run() {
         doDocStubTest(DocStringFormat.REST);
       }
     });
+  }
+
+  // PY-16765
+  public void testGoogleDocStubCustomIndent() {
+    getIndentOptions().INDENT_SIZE = 2;
+    doDocStubTest(DocStringFormat.GOOGLE);
   }
 
   // PY-9795
@@ -565,8 +571,20 @@ public class  PyIntentionTest extends PyTestCase {
     doDocAddMissingParamsTest(DocStringFormat.GOOGLE);
   }
   
+  // PY-16765
+  public void testAddMissingParamsInGoogleDocStringNoParamSectionCustomCodeIndent() {
+    getIndentOptions().INDENT_SIZE = 2;
+    doDocAddMissingParamsTest(DocStringFormat.GOOGLE);
+  }
+  
   // PY-9795
   public void testAddMissingParamsInGoogleDocStringEmptyParamSection() {
+    doDocAddMissingParamsTest(DocStringFormat.GOOGLE);
+  }
+  
+  // PY-16765
+  public void testAddMissingParamsInGoogleDocStringEmptyParamSectionCustomCodeIndent() {
+    getIndentOptions().INDENT_SIZE = 2;
     doDocAddMissingParamsTest(DocStringFormat.GOOGLE);
   }
 

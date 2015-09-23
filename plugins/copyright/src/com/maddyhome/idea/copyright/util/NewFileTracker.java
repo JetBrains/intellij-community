@@ -16,7 +16,6 @@
 
 package com.maddyhome.idea.copyright.util;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +37,12 @@ public class NewFileTracker {
     virtualFileManager.addVirtualFileListener(new VirtualFileAdapter() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
+        if (event.isFromRefresh()) return;
+        newFiles.add(event.getFile());
+      }
+
+      @Override
+      public void fileMoved(@NotNull VirtualFileMoveEvent event) {
         if (event.isFromRefresh()) return;
         newFiles.add(event.getFile());
       }

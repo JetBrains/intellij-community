@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -192,6 +193,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
         }
         catch (VcsException e) {
           exceptionRef.set(e);
+        }
+        catch (ProcessCanceledException pce) {
+          throw pce;
         }
         catch (Throwable t) {
           exceptionRef.set(new VcsException(t));

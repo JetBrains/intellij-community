@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -79,6 +80,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     public Map<String, String> names = ContainerUtil.newLinkedHashMap();
     public List<ProjectGroup> groups = new SmartList<ProjectGroup>();
     public String lastPath;
+    public Map<String, RecentProjectMetaInfo> additionalInfo = ContainerUtil.newLinkedHashMap();
 
     public String lastProjectLocation;
 
@@ -445,6 +447,8 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       myState.lastPath = path;
       removePath(path);
       myState.recentPaths.add(0, path);
+      myState.additionalInfo.remove(path);
+      myState.additionalInfo.put(path, RecentProjectMetaInfo.create());
     }
   }
 
@@ -612,6 +616,26 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     public long getTimestamp() {
       return second;
+    }
+  }
+
+  public static class RecentProjectMetaInfo {
+    public String build;
+    public String productionCode;
+    public boolean eap;
+    public String binFolder;
+    public long projectOpenTimestamp;
+    public long buildTimestamp;
+
+    public static RecentProjectMetaInfo create() {
+      RecentProjectMetaInfo info = new RecentProjectMetaInfo();
+      info.build = ApplicationInfoEx.getInstanceEx().getBuild().asString();
+      info.productionCode = ApplicationInfoEx.getInstanceEx().getBuild().getProductCode();
+      info.eap = ApplicationInfoEx.getInstanceEx().isEAP();
+      info.binFolder = PathManager.getBinPath();
+      info.projectOpenTimestamp = System.currentTimeMillis();
+      info.buildTimestamp = ApplicationInfoEx.getInstanceEx().getBuildDate().getTimeInMillis();
+      return info;
     }
   }
 }

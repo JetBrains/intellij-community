@@ -40,7 +40,7 @@ public class SendStatisticsAction extends AnAction {
       return;
     }
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Sending statistics...", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Sending Statistics", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         StatisticsService service = StatisticsUploadAssistant.getStatisticsService();

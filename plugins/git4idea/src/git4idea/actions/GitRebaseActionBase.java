@@ -65,7 +65,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
     affectedRoots.add(root);
 
     service.configureHandler(h, editor.getHandlerNo());
-    new Task.Backgroundable(project, GitBundle.getString("rebasing.title"), false) {
+    new Task.Backgroundable(project, GitBundle.getString("rebasing.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         AccessToken token = DvcsUtil.workingTreeChangeStarted(project);

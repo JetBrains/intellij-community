@@ -20,7 +20,10 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -295,14 +298,12 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     String docComment = DocStringUtil.getAttributeDocComment(targetExpression);
     if (docComment != null) {
       StructuredDocString structuredDocString = DocStringUtil.parse(docComment, targetExpression);
-      if (structuredDocString != null) {
-        String typeName = structuredDocString.getParamType(null);
-        if (typeName == null) {
-          typeName = structuredDocString.getParamType(targetExpression.getName());
-        }
-        if (typeName != null) {
-          return PyTypeParser.getTypeByName(targetExpression, typeName);
-        }
+      String typeName = structuredDocString.getParamType(null);
+      if (typeName == null) {
+        typeName = structuredDocString.getParamType(targetExpression.getName());
+      }
+      if (typeName != null) {
+        return PyTypeParser.getTypeByName(targetExpression, typeName);
       }
     }
     return null;
@@ -670,11 +671,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   public PyStringLiteralExpression getDocStringExpression() {
     final PsiElement parent = getParent();
     if (parent instanceof PyAssignmentStatement) {
-      final PyAssignmentStatement assignment = (PyAssignmentStatement)parent;
-      PsiElement nextSibling = assignment.getNextSibling();
-      while (nextSibling != null && (nextSibling instanceof PsiWhiteSpace || nextSibling instanceof PsiComment)) {
-        nextSibling = nextSibling.getNextSibling();
-      }
+      final PsiElement nextSibling = PyPsiUtils.getNextNonCommentSibling(parent, true);
       if (nextSibling instanceof PyExpressionStatement) {
         final PyExpression expression = ((PyExpressionStatement)nextSibling).getExpression();
         if (expression instanceof PyStringLiteralExpression) {

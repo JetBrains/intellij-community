@@ -201,7 +201,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   @Nullable
   private static String getCurrentFileRevisionHash(@NotNull final Project project, @NotNull final VirtualFile file) {
     final Ref<GitRevisionNumber> ref = new Ref<GitRevisionNumber>();
-    ProgressManager.getInstance().run(new Task.Modal(project, "Getting last revision", false) {
+    ProgressManager.getInstance().run(new Task.Modal(project, "Getting last revision", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {

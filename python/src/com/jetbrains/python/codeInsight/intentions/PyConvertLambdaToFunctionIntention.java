@@ -87,7 +87,7 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
 
       if (name.isEmpty()) return;
       PyExpression body = lambdaExpression.getBody();
-      PyFunctionBuilder functionBuilder = new PyFunctionBuilder(name);
+      PyFunctionBuilder functionBuilder = new PyFunctionBuilder(name, lambdaExpression);
       for (PyParameter param : lambdaExpression.getParameterList().getParameters()) {
         functionBuilder.parameter(param.getText());
       }

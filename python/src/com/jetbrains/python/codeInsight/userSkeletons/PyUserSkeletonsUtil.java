@@ -85,9 +85,16 @@ public class PyUserSkeletonsUtil {
   }
 
   public static boolean isUnderUserSkeletonsDirectory(@NotNull PsiFile file) {
-    final VirtualFile skeletonsDir = getUserSkeletonsDirectory();
     final VirtualFile virtualFile = file.getVirtualFile();
-    return skeletonsDir != null && virtualFile != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false);
+    if (virtualFile == null) {
+      return false;
+    }
+    return isUnderUserSkeletonsDirectory(virtualFile);
+  }
+
+  public static boolean isUnderUserSkeletonsDirectory(@NotNull final VirtualFile virtualFile) {
+    final VirtualFile skeletonsDir = getUserSkeletonsDirectory();
+    return skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false);
   }
 
   @Nullable

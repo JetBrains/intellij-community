@@ -3408,6 +3408,8 @@
     <option name="synchronize" hit="Synchronize now" />
   </configurable>
   <configurable id="preferences.sourceCode" configurable_name="Code Style">
+    <option name="detect" hit="Detect and use existing file indents for editing" />
+    <option name="indent" hit="Detect and use existing file indents for editing" />
     <option name="" hit="" />
     <option name="code" hit="Code Style" />
     <option name="style" hit="Code Style" />

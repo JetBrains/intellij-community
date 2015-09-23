@@ -131,7 +131,7 @@ public class GitPullDialog extends DialogWrapper {
   @Nullable
   private Collection<String> getRemoteBranches(@NotNull final GitRemote remote) {
     final Ref<GitCommandResult> result = Ref.create();
-    ProgressManager.getInstance().run(new Task.Modal(myProject, GitBundle.getString("pull.getting.remote.branches"), false) {
+    ProgressManager.getInstance().run(new Task.Modal(myProject, GitBundle.getString("pull.getting.remote.branches"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
