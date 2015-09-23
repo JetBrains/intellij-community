@@ -7,8 +7,8 @@ public class Test {
     return null;
   }
 
-  void fo<caret>o() {
-    //noinspection unchecked
+  void foo() {
+    //noinspe<caret>ction unchecked
     List<ArrayList<String>> list = foo(new ArrayList<String>());
   }
 }

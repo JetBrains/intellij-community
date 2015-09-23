@@ -6,8 +6,8 @@ public class Test {
   static <T> void foo(T... t){
   }
 
-  void fo<caret>o() {
-    //noinspection unchecked
+  void foo() {
+    //noinspec<caret>tion unchecked
     foo(new ArrayList<String>());
   }
 }

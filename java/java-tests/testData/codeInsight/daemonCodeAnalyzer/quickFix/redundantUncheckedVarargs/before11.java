@@ -10,7 +10,7 @@ public class SampleSafeVarargs {
     }
 
     @SuppressWarnings({"unchecked"})
-    void foo() {
+    void fo<caret>o() {
         asList(new ArrayList<String>());
         List<Object> l ;
         ArrayList strings = new ArrayList<String>();
