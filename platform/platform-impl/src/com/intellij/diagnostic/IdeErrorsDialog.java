@@ -141,7 +141,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void loadDevelopersAsynchronously() {
-    Task.Backgroundable task = new Task.Backgroundable(null, "Loading developers list", true) {
+    Task.Backgroundable task = new Task.Backgroundable(null, "Loading Developers List", true) {
       private final Collection[] myDevelopers = new Collection[]{Collections.emptyList()};
 
       @Override
