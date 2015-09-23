@@ -179,7 +179,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
         return;
       }
 
-      registerWeakenError(type, variable.getTypeElement(), variable);
+      checkToWeaken(type, variable.getTypeElement(), variable);
     }
 
     @Override
@@ -197,10 +197,10 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
         return;
       }
 
-      registerWeakenError(type, method.getReturnTypeElement(), method);
+      checkToWeaken(type, method.getReturnTypeElement(), method);
     }
 
-    private void registerWeakenError(PsiType type, PsiTypeElement typeElement, PsiElement variable) {
+    private void checkToWeaken(PsiType type, PsiTypeElement typeElement, PsiElement variable) {
       if (typeElement == null) {
         return;
       }
