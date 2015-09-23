@@ -1155,6 +1155,13 @@ class XInternalError {}
     assertFirstStringItems "XInternalError", "XInternalTimerServiceController"
   }
 
+  public void testNonImportedAnnotationClass() {
+    myFixture.addClass("package foo; public @interface XAnotherAnno {}")
+    configure()
+    type('X')
+    assertFirstStringItems "XAnno", "XAnotherAnno"
+  }
+
   public void testMetaAnnotation() {
     myFixture.configureByText "a.java", "@<caret> @interface Anno {}"
     myFixture.complete(CompletionType.BASIC)
