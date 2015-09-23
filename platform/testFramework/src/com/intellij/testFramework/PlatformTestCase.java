@@ -504,8 +504,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       myEditorListenerTracker = null;
       myThreadTracker = null;
       ourTestCase = null;
+
+      CompoundRuntimeException.throwIfNotEmpty(exceptions);
     }
-    CompoundRuntimeException.throwIfNotEmpty(exceptions);
   }
 
   private void disposeProject(@NotNull List<Throwable> exceptions) {
