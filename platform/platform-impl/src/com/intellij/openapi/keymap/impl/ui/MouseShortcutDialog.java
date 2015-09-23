@@ -290,6 +290,11 @@ class MouseShortcutDialog extends DialogWrapper{
       // See bug ID 4109826 on Sun's bug parade.
       //cast is needed in order to compile with mustang
       MouseAdapter adapter = new MouseAdapter() {
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent e) {
+          mouseReleased(e);
+        }
+
         public void mouseReleased(MouseEvent e){
           Component component= SwingUtilities.getDeepestComponentAt(e.getComponent(),e.getX(),e.getY());
           if(component== MyClickPad.this){

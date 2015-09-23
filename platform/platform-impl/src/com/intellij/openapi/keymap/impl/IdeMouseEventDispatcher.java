@@ -146,7 +146,7 @@ public final class IdeMouseEventDispatcher {
     boolean ignore = false;
     if (!(e.getID() == MouseEvent.MOUSE_PRESSED ||
           e.getID() == MouseEvent.MOUSE_RELEASED ||
-          //TODO:e.getID() == MOUSE_WHEEL ||
+          e.getID() == MOUSE_WHEEL && 0 < e.getModifiersEx() ||
           e.getID() == MOUSE_CLICKED)) {
       ignore = true;
     }
@@ -251,7 +251,7 @@ public final class IdeMouseEventDispatcher {
       if (actions.length > 0 && e.isConsumed())
         return true;
     }
-    return button > 3;
+    return e.getButton() > 3;
   }
 
   private static void resetPopupTrigger(final MouseEvent e) {
