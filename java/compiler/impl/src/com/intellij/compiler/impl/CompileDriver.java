@@ -24,6 +24,8 @@ package com.intellij.compiler.impl;
 import com.intellij.CommonBundle;
 import com.intellij.compiler.*;
 import com.intellij.compiler.progress.CompilerTask;
+import com.intellij.compiler.progress.CompilerTaskBase;
+import com.intellij.compiler.progress.CompilerTaskFactory;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.DefaultMessageHandler;
 import com.intellij.notification.Notification;
@@ -126,7 +128,9 @@ public class CompileDriver {
       LOG.debug("isUpToDate operation started");
     }
 
-    final CompilerTask task = new CompilerTask(myProject, "Classes up-to-date check", true, false, false, isCompilationStartedAutomatically(scope));
+    final CompilerTaskBase
+      task = CompilerTaskFactory.SERVICE.getInstance(myProject)
+      .createCompilerTask("Classes up-to-date check", true, false, false, isCompilationStartedAutomatically(scope));
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, true, false);
 
     final Ref<ExitStatus> result = new Ref<ExitStatus>();
@@ -357,7 +361,8 @@ public class CompileDriver {
     final String contentName =
       forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make");
     final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    final CompilerTask compileTask = new CompilerTask(myProject, contentName, isUnitTestMode, true, true, isCompilationStartedAutomatically(scope));
+    final CompilerTaskBase compileTask = CompilerTaskFactory.SERVICE.getInstance(myProject)
+        .createCompilerTask(contentName, isUnitTestMode, true, true, isCompilationStartedAutomatically(scope));
 
     StatusBar.Info.set("", myProject, "Compiler");
     // ensure the project model seen by build process is up-to-date
@@ -588,7 +593,8 @@ public class CompileDriver {
   }
 
   public void executeCompileTask(final CompileTask task, final CompileScope scope, final String contentName, final Runnable onTaskFinished) {
-    final CompilerTask progressManagerTask = new CompilerTask(myProject, contentName, false, false, true, isCompilationStartedAutomatically(scope));
+    final CompilerTaskBase progressManagerTask =
+      CompilerTaskFactory.SERVICE.getInstance(myProject).createCompilerTask(contentName, false, false, true, isCompilationStartedAutomatically(scope));
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, progressManagerTask, scope, false, false);
 
     FileDocumentManager.getInstance().saveAllDocuments();
