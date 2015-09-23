@@ -12,6 +12,7 @@ public interface CompilerTaskFactory {
     }
   }
 
+  @NotNull
   CompilerTaskBase createCompilerTask(String contentName,
                                   boolean headlessMode,
                                   boolean forceAsync,

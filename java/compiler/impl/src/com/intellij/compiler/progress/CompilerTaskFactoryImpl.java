@@ -10,6 +10,7 @@ public class CompilerTaskFactoryImpl implements CompilerTaskFactory {
     myProject = project;
   }
 
+  @NotNull
   @Override
   public CompilerTaskBase createCompilerTask(String contentName,
                                          final boolean headlessMode,
