@@ -21,7 +21,7 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import java.io.File
 
-private sealed class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+private open class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
   override val project = module.project
 
   override val storageManager = ModuleStateStorageManager(pathMacroManager.createTrackingSubstitutor(), module)

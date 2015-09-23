@@ -46,7 +46,7 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.util.*
 
-sealed internal class ProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl(), IProjectStore {
+open internal class ProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl(), IProjectStore {
   // protected setter used in upsource
   // Zelix KlassMaster - ERROR: Could not find method 'getScheme()'
   var scheme = StorageScheme.DEFAULT
