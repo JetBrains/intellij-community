@@ -1005,6 +1005,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   public void fireModuleRenamedByVfsEvent(@NotNull final Module module, @NotNull final String oldName) {
+    Module moduleInMap = myModuleModel.myModules.remove(oldName);
+    LOG.assertTrue(moduleInMap == module);
+    myModuleModel.myModules.put(module.getName(), module);
+
     ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(new Runnable() {
       @Override
       public void run() {
