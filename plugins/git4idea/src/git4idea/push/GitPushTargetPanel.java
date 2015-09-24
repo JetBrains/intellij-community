@@ -31,8 +31,6 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -47,7 +45,6 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
-import git4idea.validators.GitRefNameValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -162,42 +159,10 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   private void showDefineRemoteDialog() {
-    GitDefineRemoteDialog dialog = new GitDefineRemoteDialog(myRepository.getProject());
+    GitDefineRemoteDialog dialog = new GitDefineRemoteDialog(myRepository, myGit);
     if (dialog.showAndGet()) {
-      String name = dialog.getRemoteName();
-      String url = dialog.getRemoteUrl();
-      String error = validateRemoteUnderModal(name, url);
-      if (error != null) {
-        LOG.warn(String.format("Invalid remote. Name: [%s], URL: [%s], error: %s", name, url, error));
-        Messages.showErrorDialog(myRepository.getProject(), error, "Invalid Remote URL");
-      }
-      else {
-        addRemoteUnderModal(name, url);
-      }
+      addRemoteUnderModal(dialog.getRemoteName(), dialog.getRemoteUrl());
     }
-  }
-
-  @Nullable
-  private String validateRemoteUnderModal(final String name, final String url) {
-    if (url.isEmpty()) {
-      return "URL can't be empty";
-    }
-    if (!GitRefNameValidator.getInstance().checkInput(name)) {
-      return "Remote name is invalid";
-    }
-
-    final Ref<String> error = Ref.create();
-    ProgressManager.getInstance().run(new Task.Modal(myRepository.getProject(), "Checking URL...", true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        final GitCommandResult result = myGit.lsRemote(myRepository.getProject(), VfsUtilCore.virtualToIoFile(myRepository.getRoot()), url);
-        if (!result.success()) {
-          error.set("Remote URL is invalid: " + result.getErrorOutputAsHtmlString());
-        }
-      }
-    });
-    return error.get();
   }
 
   private void addRemoteUnderModal(@NotNull final String remoteName, @NotNull final String remoteUrl) {
