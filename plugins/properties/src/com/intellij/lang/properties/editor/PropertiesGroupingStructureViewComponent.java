@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -137,11 +136,6 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
         refillActionGroup();
       }
     }
-  }
-
-  @NonNls
-  public String getHelpID() {
-    return "editing.propertyFile.bundleEditor";
   }
 }
 
