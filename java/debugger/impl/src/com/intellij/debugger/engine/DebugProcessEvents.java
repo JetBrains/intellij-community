@@ -415,6 +415,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if (hint != null) {
       final int nextStepDepth = hint.getNextStepDepth(suspendContext);
       if (nextStepDepth == RequestHint.RESUME) {
+        getSession().resetIgnoreStepFiltersFlag();
         shouldResume = true;
       }
       else if (nextStepDepth != RequestHint.STOP) {
