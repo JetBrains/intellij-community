@@ -406,6 +406,16 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static <T> T[] prepend(final T element, @NotNull final T[] src, @NotNull ArrayFactory<T> factory) {
+    int length = src.length;
+    T[] result = factory.create(length + 1);
+    System.arraycopy(src, 0, result, 1, length);
+    result[0] = element;
+    return result;
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static byte[] prepend(byte element, @NotNull byte[] array) {
     int length = array.length;
     final byte[] result = new byte[length + 1];
