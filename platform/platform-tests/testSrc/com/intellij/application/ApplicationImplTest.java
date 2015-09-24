@@ -15,6 +15,7 @@
  */
 package com.intellij.application;
 
+import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
@@ -105,8 +106,8 @@ public class ApplicationImplTest extends PlatformTestCase {
   }
 
 
-  public void testReadWriteLockPerformance() throws InterruptedException {
-    int iterations = Timings.adjustAccordingToMySpeed(300000, true);
+  public void testRead50Write50LockPerformance() throws InterruptedException {
+    int iterations = Timings.adjustAccordingToMySpeed(400000, true);
     System.out.println("iterations = " + iterations);
     final int readIterations = iterations;
     final int writeIterations = iterations;
@@ -114,8 +115,8 @@ public class ApplicationImplTest extends PlatformTestCase {
     runReadWrites(readIterations, writeIterations, 2000);
   }
 
-  public void testReadLockPerformance() throws InterruptedException {
-    int iterations = Timings.adjustAccordingToMySpeed(300000, true);
+  public void testRead100Write0LockPerformance() throws InterruptedException {
+    int iterations = Timings.adjustAccordingToMySpeed(400000, true);
     System.out.println("iterations = " + iterations);
     final int readIterations = iterations;
     final int writeIterations = 0;
@@ -129,7 +130,7 @@ public class ApplicationImplTest extends PlatformTestCase {
     application.disableEventsUntil(disposable);
 
     try {
-      final int numOfThreads = 10;
+      final int numOfThreads = JobSchedulerImpl.CORES_COUNT;
       PlatformTestUtil.startPerformanceTest("lock performance", expectedMs, () -> {
         final CountDownLatch reads = new CountDownLatch(numOfThreads);
         for (int i = 0; i < numOfThreads; i++) {
@@ -155,7 +156,7 @@ public class ApplicationImplTest extends PlatformTestCase {
           System.out.println("write end");
         }
         reads.await();
-      }).assertTiming();
+      }).cpuBound().assertTiming();
     }
     finally {
       Disposer.dispose(disposable);
