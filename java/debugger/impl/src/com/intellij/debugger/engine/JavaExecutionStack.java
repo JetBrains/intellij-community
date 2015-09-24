@@ -217,4 +217,9 @@ public class JavaExecutionStack extends XExecutionStack {
   public int hashCode() {
     return myThreadProxy.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return getDisplayName();
+  }
 }
