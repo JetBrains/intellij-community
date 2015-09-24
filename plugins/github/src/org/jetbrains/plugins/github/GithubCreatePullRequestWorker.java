@@ -435,7 +435,7 @@ public class GithubCreatePullRequestWorker {
     }
 
     return GithubUtil
-      .computeValueInModal(myProject, "Collecting additional data...", true, new Convertor<ProgressIndicator, Couple<String>>() {
+      .computeValueInModal(myProject, "Collecting last commits...", true, new Convertor<ProgressIndicator, Couple<String>>() {
         @Override
         public Couple<String> convert(ProgressIndicator o) {
           String localBranch = myCurrentBranch;
