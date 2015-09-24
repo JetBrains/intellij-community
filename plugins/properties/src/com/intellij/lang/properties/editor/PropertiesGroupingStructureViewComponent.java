@@ -46,19 +46,31 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
     super.addGroupByActions(result);
     result.add(new ChangeGroupSeparatorAction());
     if (getTreeModel() instanceof ResourceBundleStructureViewModel) {
-      result.add(new ToggleAction(PropertiesBundle.message("show.only.incomplete.action.text"), null, AllIcons.General.Error) {
-        @Override
-        public boolean isSelected(AnActionEvent e) {
-          return ((ResourceBundleStructureViewModel)getTreeModel()).isShowOnlyIncomplete();
-        }
-
-        @Override
-        public void setSelected(AnActionEvent e, boolean state) {
-          ((ResourceBundleStructureViewModel)getTreeModel()).setShowOnlyIncomplete(state);
-          rebuild();
-        }
-      });
+      result.add(createSettingsActionGroup());
     }
+  }
+
+  private ActionGroup createSettingsActionGroup() {
+    DefaultActionGroup actionGroup = new DefaultActionGroup(PropertiesBundle.message("resource.bundle.editor.settings.action.title"), true);
+    final Presentation presentation = actionGroup.getTemplatePresentation();
+    presentation.setIcon(AllIcons.General.ProjectSettings);
+    actionGroup.add(new ResourceBundleEditorKeepEmptyValueToggleAction());
+
+    actionGroup.add(new ToggleAction(PropertiesBundle.message("show.only.incomplete.action.text"), null, AllIcons.General.Error) {
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return ((ResourceBundleStructureViewModel)getTreeModel()).isShowOnlyIncomplete();
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        ((ResourceBundleStructureViewModel)getTreeModel()).setShowOnlyIncomplete(state);
+        final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)getFileEditor();
+        resourceBundleEditor.setKeepEmptyProperties(state);
+      }
+    });
+
+    return actionGroup;
   }
 
   private class ChangeGroupSeparatorAction extends DefaultActionGroup {
