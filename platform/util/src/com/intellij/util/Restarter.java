@@ -27,7 +27,9 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -86,23 +88,27 @@ public class Restarter {
   private static void runCommand(String... beforeRestart) throws IOException {
     if (beforeRestart.length == 0) return;
 
+    File restartDir = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart");
+    if (!FileUtilRt.createDirectory(restartDir)) {
+      throw new IOException("Cannot create dir: " + restartDir);
+    }
+
+    File restarter = new File(restartDir, "restarter.sh");
+    BufferedWriter output = new BufferedWriter(new FileWriter(restarter));
     try {
-      Process process = Runtime.getRuntime().exec(beforeRestart);
-
-      Thread outThread = new Thread(new StreamRedirector(process.getInputStream(), System.out));
-      Thread errThread = new Thread(new StreamRedirector(process.getErrorStream(), System.err));
-      outThread.start();
-      errThread.start();
-
-      try {
-        process.waitFor();
-      }
-      finally {
-        outThread.join();
-        errThread.join();
+      output.write("#!/bin/sh\n");
+      for (int i = 0; i < beforeRestart.length; i++) {
+        output.write(beforeRestart[i]);
+        output.write(i == beforeRestart.length - 1 ? '\n' : ' ');
       }
     }
-    catch (InterruptedException ignore) { }
+    finally {
+      output.close();
+    }
+
+    if (!restarter.setExecutable(true, true)) {
+      throw new IOException("Cannot make file executable: " + restarter);
+    }
   }
 
   private static void restartOnWindows(@NotNull final String... beforeRestart) throws IOException {

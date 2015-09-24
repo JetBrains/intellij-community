@@ -181,4 +181,8 @@ LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JDK/bin/java" \
   "$@"
 EC=$?
 test $EC -ne 88 && exit $EC
+if [ -x "$HOME/.@@system_selector@@/restart/restarter.sh" ]; then
+  $HOME/.@@system_selector@@/restart/restarter.sh
+  "$RM" -f "$HOME/.@@system_selector@@/restart/restarter.sh"
+fi
 exec "$0" "$@"
