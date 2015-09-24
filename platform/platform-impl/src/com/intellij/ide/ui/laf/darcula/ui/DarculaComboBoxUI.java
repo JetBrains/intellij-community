@@ -378,7 +378,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
         g.setColor(getArrowButtonFillColor(getBorderColor()));
         final Shape clip = g.getClip();
         final int offX = xxx + JBUI.scale(5);
-        g.setClip(offX, y, width - offX, height);
+        g.clipRect(offX, y, width - offX, height);
         g.drawRoundRect(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2), R, R);
         g.setClip(clip);
       }
