@@ -665,7 +665,14 @@ public class IncProjectBuilder {
       }
       myTotalTargetsWork = totalAffected;
 
-      if (BuildRunner.PARALLEL_BUILD_ENABLED && MAX_BUILDER_THREADS > 1) {
+      boolean compileInParallel = BuildRunner.PARALLEL_BUILD_ENABLED;
+      if (compileInParallel && MAX_BUILDER_THREADS <= 1) {
+        LOG.info("Switched off parallel compilation because maximum number of builder threads is less than 2. Set '"
+                 + GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION + "' system property to a value greater than 1 to really enable parallel compilation.");
+        compileInParallel = false;
+      }
+
+      if (compileInParallel) {
         new BuildParallelizer(context).buildInParallel();
       }
       else {
