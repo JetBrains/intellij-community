@@ -53,7 +53,7 @@ public final class IconLoader {
   private static float SCALE = JBUI.scale(1f);
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final ConcurrentMap<URL, CachedImageIcon> ourIconsCache = ContainerUtil.newConcurrentMap(100, 0.9f, 2);
+  private static final ConcurrentMap<URL, CachedUrlIcon> ourIconsCache = ContainerUtil.newConcurrentMap(100, 0.9f, 2);
 
   /**
    * This cache contains mapping between icons and disabled icons.
@@ -220,9 +220,9 @@ public final class IconLoader {
     if (url == null) {
       return null;
     }
-    CachedImageIcon icon = ourIconsCache.get(url);
+    CachedUrlIcon icon = ourIconsCache.get(url);
     if (icon == null) {
-      icon = new CachedImageIcon(url);
+      icon = new CachedUrlIcon(url);
       if (useCache) {
         icon = ConcurrencyUtil.cacheOrGet(ourIconsCache, url, icon);
       }
@@ -328,15 +328,15 @@ public final class IconLoader {
     };
   }
 
-  private static final class CachedImageIcon implements ScalableIcon {
+  public static final class CachedUrlIcon implements ScalableIcon {
     private Object myRealIcon;
     @NotNull
     private final URL myUrl;
     private boolean dark;
     private float scale;
-    private HashMap<Float, Icon> scaledIcons;
 
-    public CachedImageIcon(@NotNull URL url) {
+    private HashMap<Float, Icon> scaledIcons;
+    public CachedUrlIcon(@NotNull URL url) {
       myUrl = url;
       dark = USE_DARK_ICONS;
       scale = SCALE;
@@ -374,6 +374,11 @@ public final class IconLoader {
       }
 
       return icon == null ? EMPTY_ICON : icon;
+    }
+
+    @NotNull
+    public URL getUrl() {
+      return myUrl;
     }
 
     @Override
