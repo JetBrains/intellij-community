@@ -32,6 +32,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
+import com.intellij.openapi.project.impl.ProjectStoreClassProvider
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -46,7 +47,7 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.util.*
 
-open internal class ProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl(), IProjectStore {
+private open class ProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl(), IProjectStore {
   // protected setter used in upsource
   // Zelix KlassMaster - ERROR: Could not find method 'getScheme()'
   var scheme = StorageScheme.DEFAULT
@@ -57,16 +58,6 @@ open internal class ProjectStoreImpl(override val project: ProjectImpl, private 
 
   init {
     assert(!project.isDefault)
-  }
-
-  class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
-    override fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
-      super.beforeSave(readonlyFiles)
-
-      for (module in (ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY)) {
-        module.stateStore.save(readonlyFiles)
-      }
-    }
   }
 
   override final fun isOptimiseTestLoadSpeed() = loadPolicy != StateLoadPolicy.LOAD
@@ -142,7 +133,7 @@ open internal class ProjectStoreImpl(override val project: ProjectImpl, private 
   override fun getProjectName(): String {
     if (scheme == StorageScheme.DIRECTORY_BASED) {
       val baseDir = projectBaseDir
-      assert(baseDir != null) { "scheme=$scheme project file=${projectFilePath}" }
+      assert(baseDir != null) { "scheme=$scheme project file=$projectFilePath" }
 
       val ideaDir = baseDir!!.findChild(Project.DIRECTORY_STORE_FOLDER)
       if (ideaDir != null && ideaDir.isValid) {
@@ -213,7 +204,7 @@ open internal class ProjectStoreImpl(override val project: ProjectImpl, private 
     var errors = prevErrors
     beforeSave(readonlyFiles)
 
-    super<ComponentStoreImpl>.doSave(saveSessions, readonlyFiles, errors)
+    super.doSave(saveSessions, readonlyFiles, errors)
 
     val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
     if (readonlyFiles.isEmpty()) {
@@ -264,7 +255,7 @@ open internal class ProjectStoreImpl(override val project: ProjectImpl, private 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
     // if we create project from default, component state written not to own storage file, but to project file,
     // we don't have time to fix it properly, so, ancient hack restored.
-    val result = super<ComponentStoreImpl>.getStorageSpecs(component, stateSpec, operation)
+    val result = super.getStorageSpecs(component, stateSpec, operation)
     // don't add fake storage if project file storage already listed, otherwise data will be deleted on write (because of "deprecated")
     for (storage in result) {
       if (storage.file == StoragePathMacros.PROJECT_FILE) {
@@ -313,7 +304,7 @@ open internal class ProjectStoreImpl(override val project: ProjectImpl, private 
   override fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation) = selectDefaultStorages(storages, operation, scheme)
 }
 
-fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation, scheme: StorageScheme): Array<Storage> {
+internal fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation, scheme: StorageScheme): Array<Storage> {
   if (operation === StateStorageOperation.READ) {
     val result = SmartList<Storage>()
     for (i in storages.indices.reversed()) {
@@ -351,5 +342,27 @@ fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOpera
   }
   else {
     return emptyArray()
+  }
+}
+
+private class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
+  override fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
+    super.beforeSave(readonlyFiles)
+
+    for (module in (ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY)) {
+      module.stateStore.save(readonlyFiles)
+    }
+  }
+}
+
+private class PlatformLangProjectStoreClassProvider : ProjectStoreClassProvider {
+  override fun getProjectStoreClass(isDefaultProject: Boolean): Class<out IComponentStore> {
+    return if (isDefaultProject) DefaultProjectStoreImpl::class.java else ProjectWithModulesStoreImpl::class.java
+  }
+}
+
+private class PlatformProjectStoreClassProvider : ProjectStoreClassProvider {
+  override fun getProjectStoreClass(isDefaultProject: Boolean): Class<out IComponentStore> {
+    return if (isDefaultProject) DefaultProjectStoreImpl::class.java else ProjectStoreImpl::class.java
   }
 }

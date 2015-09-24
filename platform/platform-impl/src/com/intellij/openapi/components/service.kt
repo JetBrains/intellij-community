@@ -24,7 +24,10 @@ inline fun <reified T : Any> service(): T = ServiceManager.getService(T::class.j
 inline fun <reified T : Any> Project.service(): T = ServiceManager.getService(this, T::class.java)
 
 val ComponentManager.stateStore: IComponentStore
-  get() = if (this is Project) getPicoContainer().getComponentInstance(IComponentStore::class.java) as IComponentStore else getPicoContainer().getComponentInstance(IComponentStore::class.java.getName()) as IComponentStore
+  get() {
+    val key: Any = if (this is Project) IComponentStore::class.java else IComponentStore::class.java.name
+    return picoContainer.getComponentInstance(key) as IComponentStore
+  }
 
 @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
-fun <T> ComponentManager.getComponents(baseClass: Class<T>): List<T> = (this as ComponentManagerEx).getComponentInstancesOfType(baseClass)
+fun <T> ComponentManager.getComponents(baseClass: Class<T>) = (this as ComponentManagerEx).getComponentInstancesOfType(baseClass)

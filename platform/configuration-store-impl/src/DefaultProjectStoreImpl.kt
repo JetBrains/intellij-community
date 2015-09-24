@@ -24,7 +24,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import java.io.File
 
-class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+internal class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
   companion object {
     val FILE_SPEC = "${StoragePathMacros.APP_CONFIG}/project.default.xml"
   }

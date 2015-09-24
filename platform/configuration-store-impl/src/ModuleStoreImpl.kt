@@ -46,6 +46,6 @@ private open class ModuleStoreImpl(module: Module, private val pathMacroManager:
     }
 
     override val loadPolicy: StateLoadPolicy
-      get() = moduleComponentLoadPolicy ?: (project.stateStore as ProjectStoreImpl).loadPolicy
+      get() = moduleComponentLoadPolicy ?: (project.stateStore as ComponentStoreImpl).loadPolicy
   }
 }
