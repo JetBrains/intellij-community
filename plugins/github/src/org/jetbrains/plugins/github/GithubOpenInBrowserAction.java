@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -193,6 +194,11 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
         catch (VcsException e) {
           LOG.warn(e);
         }
+      }
+
+      @Override
+      public void onCancel() {
+        throw new ProcessCanceledException();
       }
     });
     if (ref.isNull()) return null;

@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -453,6 +454,9 @@ public class GithubCreatePullRequestWorker {
             }
             return getSimpleDefaultDescriptionMessage(branch);
           }
+          catch (ProcessCanceledException e) {
+            return getSimpleDefaultDescriptionMessage(branch);
+          }
           catch (VcsException e) {
             GithubNotifications.showWarning(myProject, "Can't collect additional data", e);
             return getSimpleDefaultDescriptionMessage(branch);
@@ -609,13 +613,17 @@ public class GithubCreatePullRequestWorker {
   @Nullable
   public ForkInfo showTargetDialog() {
     if (myAvailableForks == null) {
-      myAvailableForks = GithubUtil
-        .computeValueInModal(myProject, myCurrentBranch, new Convertor<ProgressIndicator, List<GithubFullPath>>() {
-          @Override
-          public List<GithubFullPath> convert(ProgressIndicator indicator) {
-            return getAvailableForks(indicator);
-          }
-        });
+      try {
+        myAvailableForks = GithubUtil
+          .computeValueInModal(myProject, myCurrentBranch, new Convertor<ProgressIndicator, List<GithubFullPath>>() {
+            @Override
+            public List<GithubFullPath> convert(ProgressIndicator indicator) {
+              return getAvailableForks(indicator);
+            }
+          });
+      }
+      catch (ProcessCanceledException ignore) {
+      }
     }
 
     Convertor<String, ForkInfo> getForkPath = new Convertor<String, ForkInfo>() {
