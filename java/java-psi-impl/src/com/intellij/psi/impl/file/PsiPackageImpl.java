@@ -317,12 +317,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
     final Condition<String> nameCondition = processor.getHint(JavaCompletionHints.NAME_FILTER);
 
-    NameHint nameHint = processor.getHint(NameHint.KEY);
-    final String hintName = nameHint == null ? null : nameHint.getName(state);
+    NameHint providedNameHint = processor.getHint(NameHint.KEY);
+    final String providedName = providedNameHint == null ? null : providedNameHint.getName(state);
 
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
-      if (hintName != null) {
-        final PsiClass[] classes = findClassByShortName(hintName, scope);
+      if (providedName != null) {
+        final PsiClass[] classes = findClassByShortName(providedName, scope);
         if (!processClasses(processor, state, classes, Conditions.<String>alwaysTrue())) return false;
       }
       else {
@@ -331,8 +331,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       }
     }
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.PACKAGE)) {
-      if (hintName != null) {
-        PsiPackage aPackage = findSubPackageByName(hintName);
+      if (providedName != null) {
+        PsiPackage aPackage = findSubPackageByName(providedName);
         if (aPackage != null) {
           if (!processor.execute(aPackage, state)) return false;
         }
