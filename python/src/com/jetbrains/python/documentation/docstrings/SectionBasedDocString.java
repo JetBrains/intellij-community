@@ -299,9 +299,10 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     return mySummary != null ? mySummary.concatTrimmedLines("\n") : "";
   }
 
+  @NotNull
   @Override
   public String getDescription() {
-    return null;
+    return "";
   }
 
   @NotNull

@@ -123,6 +123,7 @@ public class SphinxDocString extends TagBasedDocString {
     return paramName == null ? getTagValue("type") : getTagValue("type", paramName);
   }
 
+  @NotNull
   @Override
   public String getDescription() {
     return myDescription.replaceAll("\n", "<br/>");

@@ -50,6 +50,7 @@ public class EpydocString extends TagBasedDocString {
     super(docstringText, "@");
   }
 
+  @NotNull
   @Override
   public String getDescription() {
     final String html = inlineMarkupToHTML(myDescription);

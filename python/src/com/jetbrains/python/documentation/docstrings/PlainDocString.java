@@ -57,6 +57,7 @@ public class PlainDocString extends DocStringLineParser implements StructuredDoc
     return mySummary;
   }
 
+  @NotNull
   @Override
   public String getDescription() {
     return myDescription;

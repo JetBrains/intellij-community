@@ -27,6 +27,7 @@ import java.util.List;
 public interface StructuredDocString {
 
   String getSummary();
+  @NotNull
   String getDescription(); // for formatter
 
   @NotNull
