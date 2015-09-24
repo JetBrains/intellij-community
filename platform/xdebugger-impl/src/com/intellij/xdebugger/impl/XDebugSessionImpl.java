@@ -814,6 +814,10 @@ public class XDebugSessionImpl implements XDebugSession {
     });
   }
 
+  public void unsetPaused() {
+    myPaused.set(false);
+  }
+
   @Override
   public void positionReached(@NotNull final XSuspendContext suspendContext) {
     enableBreakpoints();

@@ -22,6 +22,7 @@ import com.intellij.util.concurrency.Semaphore;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -160,6 +161,8 @@ public class TransferToEDTQueue<T> {
     }
   }
 
+  @TestOnly
+  @NotNull
   public Collection<T> dump() {
     synchronized (myQueue) {
       return myQueue.toList();
@@ -169,11 +172,9 @@ public class TransferToEDTQueue<T> {
   // process all queue in current thread
   public void drain() {
     int processed = 0;
-    long start = System.currentTimeMillis();
     while (processNext()) {
       processed++;
     }
-    long finish = System.currentTimeMillis();
   }
 
   // blocks until all elements in the queue are processed

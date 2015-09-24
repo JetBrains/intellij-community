@@ -15,13 +15,22 @@
  */
 package git4idea.push;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
 import git4idea.repo.GitRemote;
+import git4idea.repo.GitRepository;
+import git4idea.validators.GitRefNameValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,11 +39,18 @@ import java.awt.*;
 
 class GitDefineRemoteDialog extends DialogWrapper {
 
+  private static final Logger LOG = Logger.getInstance(GitDefineRemoteDialog.class);
+
+  @NotNull private final GitRepository myRepository;
+  @NotNull private final Git myGit;
+
   @NotNull private final JTextField myRemoteName;
   @NotNull private final JTextField myRemoteUrl;
 
-  GitDefineRemoteDialog(@NotNull Project project) {
-    super(project);
+  GitDefineRemoteDialog(@NotNull GitRepository repository, @NotNull Git git) {
+    super(repository.getProject());
+    myRepository = repository;
+    myGit = git;
     myRemoteName = new JTextField(GitRemote.ORIGIN_NAME, 20);
     myRemoteUrl = new JTextField(20);
     setTitle("Define Remote");
@@ -71,4 +87,42 @@ class GitDefineRemoteDialog extends DialogWrapper {
   public JComponent getPreferredFocusedComponent() {
     return myRemoteUrl;
   }
+
+  @Override
+  protected void doOKAction() {
+    try {
+      String name = getRemoteName();
+      String url = getRemoteUrl();
+      String error = validateRemoteUnderModal(name, url);
+      if (error != null) {
+        LOG.warn(String.format("Invalid remote. Name: [%s], URL: [%s], error: %s", name, url, error));
+        Messages.showErrorDialog(myRepository.getProject(), error, "Invalid Remote URL");
+      }
+      else {
+        super.doOKAction();
+      }
+    }
+    catch (ProcessCanceledException pce) {
+      // let the dialog stay open
+    }
+  }
+
+  @Nullable
+  private String validateRemoteUnderModal(final String name, final String url) {
+    if (url.isEmpty()) {
+      return "URL can't be empty";
+    }
+    if (!GitRefNameValidator.getInstance().checkInput(name)) {
+      return "Remote name is invalid";
+    }
+
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<String, ProcessCanceledException>() {
+      @Override
+      public String compute() throws ProcessCanceledException {
+        final GitCommandResult result = myGit.lsRemote(myRepository.getProject(), VfsUtilCore.virtualToIoFile(myRepository.getRoot()), url);
+        return !result.success() ? "Remote URL is invalid: " + result.getErrorOutputAsHtmlString() : null;
+      }
+    }, "Checking URL...", true, myRepository.getProject());
+  }
+
 }

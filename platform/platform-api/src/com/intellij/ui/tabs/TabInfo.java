@@ -108,7 +108,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
 
   public TabInfo setText(String text) {
     List<SimpleTextAttributes> attributes = myText.getAttributes();
-    TextAttributes textAttributes = attributes.isEmpty() ? null : attributes.get(0).toTextAttributes();
+    TextAttributes textAttributes = attributes.size() == 1 ? attributes.get(0).toTextAttributes() : null;
     TextAttributes defaultAttributes = getDefaultAttributes().toTextAttributes();
     if (!myText.toString().equals(text) || !Comparing.equal(textAttributes, defaultAttributes)) {
       clearText(false);
