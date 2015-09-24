@@ -156,7 +156,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void scheduleCacheUpdate(@NotNull final DumbModeTask task, boolean forceDumbMode) {
-    final Throwable trace = new Throwable(); // please report exceptions here to peter
+    final Throwable trace = ourForcedTrace != null ? ourForcedTrace : new Throwable(); // please report exceptions here to peter
     if (LOG.isDebugEnabled()) LOG.debug("Scheduling task " + task, trace);
     final Application application = ApplicationManager.getApplication();
 
@@ -205,7 +205,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           if (permission == null) {
             LOG.error("Dumb mode not permitted in modal environment; see DumbService.allowStartingDumbModeInside documentation." +
                       "\n Current modality: " + modality +
-                      "\n all permissions: " + ourPermissionService.getPermissions(), ourForcedTrace != null ? ourForcedTrace : trace);
+                      "\n all permissions: " + ourPermissionService.getPermissions(), trace);
+          }
+          else if (permission == DumbModePermission.MAY_START_MODAL) {
+            LOG.info("Starting modal dumb mode, caused by the following trace", trace);
           }
 
           // always change dumb status inside write action.
