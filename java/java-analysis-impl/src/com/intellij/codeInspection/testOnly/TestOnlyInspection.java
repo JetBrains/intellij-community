@@ -69,6 +69,7 @@ public class TestOnlyInspection extends BaseJavaBatchLocalInspectionTool {
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         if (reference.getParent() instanceof PsiNewExpression 
+            || reference.getParent() instanceof PsiAnonymousClass
             || PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class) != null) {
           return;
         }
