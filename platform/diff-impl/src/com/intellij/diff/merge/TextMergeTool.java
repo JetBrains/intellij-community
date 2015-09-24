@@ -167,7 +167,7 @@ public class TextMergeTool implements MergeTool {
       components.closeHandler = new BooleanGetter() {
         @Override
         public boolean get() {
-          return MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext);
+          return MergeUtil.showExitWithoutApplyingChangesDialog(TextMergeViewer.this, myMergeRequest, myMergeContext);
         }
       };
 
@@ -313,7 +313,7 @@ public class TextMergeTool implements MergeTool {
               }
             }
             if (result == MergeResult.CANCEL &&
-                !MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext)) {
+                !MergeUtil.showExitWithoutApplyingChangesDialog(TextMergeViewer.this, myMergeRequest, myMergeContext)) {
               return;
             }
             destroyChangedBlocks();

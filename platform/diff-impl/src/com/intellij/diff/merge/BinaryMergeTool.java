@@ -114,7 +114,7 @@ public class BinaryMergeTool implements MergeTool {
       components.closeHandler = new BooleanGetter() {
         @Override
         public boolean get() {
-          return MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext);
+          return MergeUtil.showExitWithoutApplyingChangesDialog(BinaryMergeViewer.this, myMergeRequest, myMergeContext);
         }
       };
 
@@ -131,7 +131,7 @@ public class BinaryMergeTool implements MergeTool {
         @Override
         public void actionPerformed(ActionEvent e) {
           if (result == MergeResult.CANCEL &&
-              !MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext)) {
+              !MergeUtil.showExitWithoutApplyingChangesDialog(BinaryMergeViewer.this, myMergeRequest, myMergeContext)) {
             return;
           }
           myMergeContext.finishMerge(result);
