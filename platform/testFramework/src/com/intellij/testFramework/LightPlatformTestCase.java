@@ -72,7 +72,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
@@ -731,10 +730,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       ApplicationManager.getApplication().assertWriteAccessAllowed();
 
       if (!ourProject.isDisposed()) {
-        VirtualFile projectFile = ourProject.getProjectFile();
-        File ioFile = projectFile == null ? null : VfsUtilCore.virtualToIoFile(projectFile);
+        File ioFile = new File(ourProject.getProjectFilePath());
         Disposer.dispose(ourProject);
-        if (ioFile != null) {
+        if (ioFile.exists()) {
           File dir = ioFile.getParentFile();
           if (dir.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
             FileUtil.delete(dir);

@@ -42,6 +42,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
@@ -218,19 +219,30 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @Override
-  @NotNull
+  @Nullable
   public String getProjectFilePath() {
-    return isDefault() ? "" : getStateStore().getProjectFilePath();
+    return isDefault() ? null : getStateStore().getProjectFilePath();
   }
 
   @Override
   public VirtualFile getProjectFile() {
-    return isDefault() ? null : getStateStore().getProjectFile();
+    if (isDefault()) {
+      return null;
+    }
+    else {
+      return LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectFilePath());
+    }
   }
 
   @Override
   public VirtualFile getBaseDir() {
-    return isDefault() ? null : getStateStore().getProjectBaseDir();
+    String path = isDefault() ? null : getStateStore().getProjectBasePath();
+    if (path == null) {
+      return null;
+    }
+    else {
+      return LocalFileSystem.getInstance().findFileByPath(path);
+    }
   }
 
   @Nullable
@@ -269,7 +281,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   @Nullable
   public VirtualFile getWorkspaceFile() {
-    return isDefault() ? null : getStateStore().getWorkspaceFile();
+    String workspaceFilePath = isDefault() ? null : getStateStore().getWorkspaceFilePath();
+    return workspaceFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(workspaceFilePath);
   }
 
   @Override
@@ -299,10 +312,11 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   private boolean isToSaveProjectName() {
     if (!isDefault()) {
-      final IProjectStore stateStore = getStateStore();
+      IProjectStore stateStore = getStateStore();
       if (stateStore.getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
-        final VirtualFile baseDir = stateStore.getProjectBaseDir();
-        if (baseDir != null && baseDir.isValid()) {
+        String basePath = stateStore.getProjectBasePath();
+        File baseDir = basePath == null ? null : new File(basePath);
+        if (baseDir != null && baseDir.exists()) {
           return myOldName != null && !myOldName.equals(getName());
         }
       }
@@ -325,13 +339,12 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     try {
       if (isToSaveProjectName()) {
         try {
-          VirtualFile baseDir = getStateStore().getProjectBaseDir();
-          if (baseDir != null && baseDir.isValid()) {
-            VirtualFile ideaDir = baseDir.findChild(DIRECTORY_STORE_FOLDER);
-            if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
-              File nameFile = new File(ideaDir.getPath(), NAME_FILE);
-
-              FileUtil.writeToFile(nameFile, getName());
+          String basePath = getStateStore().getProjectBasePath();
+          File baseDir = basePath == null ? null : new File(basePath);
+          if (baseDir != null && baseDir.exists()) {
+            File ideaDir = new File(baseDir, DIRECTORY_STORE_FOLDER);
+            if (ideaDir.exists() && ideaDir.isDirectory()) {
+              FileUtil.writeToFile(new File(ideaDir, NAME_FILE), getName());
               myOldName = null;
 
               RecentProjectsManager.getInstance().clearNameCache();

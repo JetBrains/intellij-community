@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 public interface IProjectStore extends IComponentStore {
   @Nullable
-  VirtualFile getProjectBaseDir();
-
-  @Nullable
   /**
    * System-independent path.
    */
@@ -48,9 +45,6 @@ public interface IProjectStore extends IComponentStore {
    * System-independent path.
    */
   String getProjectFilePath();
-
-  @Nullable
-  VirtualFile getWorkspaceFile();
 
   @Nullable
   /**

@@ -37,36 +37,47 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.systemIndependentPath
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.ReadonlyStatusHandler
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
-import java.io.BufferedReader
 import java.io.File
 import java.io.IOException
-import java.io.InputStreamReader
 import java.util.*
 
-private open class ProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl(), IProjectStore {
+abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreImpl(), IProjectStore {
   // protected setter used in upsource
   // Zelix KlassMaster - ERROR: Could not find method 'getScheme()'
   var scheme = StorageScheme.DEFAULT
 
-  private var presentableUrl: String? = null
-
-  override var loadPolicy = StateLoadPolicy.LOAD
-
-  init {
-    assert(!project.isDefault)
-  }
+  override final var loadPolicy = StateLoadPolicy.LOAD
 
   override final fun isOptimiseTestLoadSpeed() = loadPolicy != StateLoadPolicy.LOAD
+
+  override final fun getStorageScheme() = scheme
+
+  override abstract val storageManager: StateStorageManagerImpl
 
   override final fun setOptimiseTestLoadSpeed(value: Boolean) {
     // we don't load default state in tests as app store does because
     // 1) we should not do it
     // 2) it was so before, so, we preserve old behavior (otherwise RunManager will load template run configurations)
     loadPolicy = if (value) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
+  }
+
+  override fun getProjectFilePath() = storageManager.expandMacro(StoragePathMacros.PROJECT_FILE)
+
+  override final fun getWorkspaceFilePath() = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
+}
+
+private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {
+  private var presentableUrl: String? = null
+
+  init {
+    assert(!project.isDefault)
   }
 
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
@@ -123,8 +134,6 @@ private open class ProjectStoreImpl(override val project: ProjectImpl, private v
     storageManager.clearStorages()
   }
 
-  override fun getProjectBaseDir() = LocalFileSystem.getInstance().findFileByPath(projectBasePath)
-
   override fun getProjectBasePath(): String {
     val path = PathUtilRt.getParentPath(projectFilePath)
     return if (scheme == StorageScheme.DEFAULT) path else PathUtilRt.getParentPath(path)
@@ -132,31 +141,23 @@ private open class ProjectStoreImpl(override val project: ProjectImpl, private v
 
   override fun getProjectName(): String {
     if (scheme == StorageScheme.DIRECTORY_BASED) {
-      val baseDir = projectBaseDir
-      assert(baseDir != null) { "scheme=$scheme project file=$projectFilePath" }
+      val baseDir = projectBasePath
+      val nameFile = File(File(projectBasePath, Project.DIRECTORY_STORE_FOLDER), ProjectImpl.NAME_FILE)
+      if (nameFile.exists()) {
+        try {
+          val name = nameFile.inputStream().reader().useLines() {
+            it.firstOrNull { !it.isEmpty() }?.trim()
+          }
 
-      val ideaDir = baseDir!!.findChild(Project.DIRECTORY_STORE_FOLDER)
-      if (ideaDir != null && ideaDir.isValid) {
-        val nameFile = ideaDir.findChild(ProjectImpl.NAME_FILE)
-        if (nameFile != null && nameFile.isValid) {
-          try {
-            val `in` = BufferedReader(InputStreamReader(nameFile.inputStream, CharsetToolkit.UTF8_CHARSET))
-            try {
-              val name = `in`.readLine()
-              if (name != null && !name.isEmpty()) {
-                return name.trim()
-              }
-            }
-            finally {
-              `in`.close()
-            }
+          if (name != null) {
+            return name
           }
-          catch (ignored: IOException) {
-          }
+        }
+        catch (ignored: IOException) {
         }
       }
 
-      return baseDir.name.replace(":", "")
+      return PathUtilRt.getFileName(baseDir).replace(":", "")
     }
     else {
       var temp = PathUtilRt.getFileName(projectFilePath)
@@ -172,8 +173,6 @@ private open class ProjectStoreImpl(override val project: ProjectImpl, private v
     }
   }
 
-  override fun getStorageScheme() = scheme
-
   override fun getPresentableUrl(): String? {
     if (presentableUrl == null) {
       presentableUrl = FileUtil.toSystemDependentName(if (scheme == StorageScheme.DIRECTORY_BASED) projectBasePath else projectFilePath)
@@ -183,13 +182,7 @@ private open class ProjectStoreImpl(override val project: ProjectImpl, private v
 
   override fun getProjectFile() = getProjectFileStorage().getVirtualFile()
 
-  override fun getProjectFilePath() = storageManager.expandMacro(StoragePathMacros.PROJECT_FILE)
-
   private fun getProjectFileStorage() = storageManager.getOrCreateStorage(StoragePathMacros.PROJECT_FILE) as FileBasedStorage
-
-  override fun getWorkspaceFile() = (storageManager.getOrCreateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED) as FileBasedStorage?)?.getVirtualFile()
-
-  override fun getWorkspaceFilePath() = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
 
   override fun loadProjectFromTemplate(defaultProject: Project) {
     defaultProject.save()

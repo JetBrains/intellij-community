@@ -252,6 +252,10 @@ public class StartupManagerImpl extends StartupManagerEx {
   private void checkFsSanity() {
     try {
       String path = myProject.getProjectFilePath();
+      if (path == null) {
+        return;
+      }
+
       boolean actual = FileUtil.isFileSystemCaseSensitive(path);
       LOG.info(path + " case-sensitivity: " + actual);
       if (actual != SystemInfo.isFileSystemCaseSensitive) {
