@@ -53,7 +53,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
   /**
    * State corresponding to the most recent file is the last
    */
-  private final List<HistoryEntry> myEntriesList = Collections.synchronizedList(new ArrayList<HistoryEntry>());
+  private final List<HistoryEntry> myEntriesList = new ArrayList<HistoryEntry>();
 
   /**
    * Invoked by reflection
@@ -81,7 +81,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
             //noinspection unchecked
             for (final Element e : (Iterable<Element>)children) {
               try {
-                myEntriesList.add(new HistoryEntry(myProject, e));
+                addEntry(new HistoryEntry(EditorHistoryManager.this.myProject, e));
               }
               catch (InvalidDataException e1) {
                 // OK here
@@ -98,6 +98,14 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
         }
       }
     );
+  }
+
+  private synchronized void addEntry(HistoryEntry entry) {
+    myEntriesList.add(entry);
+  }
+
+  private synchronized void removeEntry(HistoryEntry entry) {
+    myEntriesList.remove(entry);
   }
 
   @Override
@@ -145,8 +153,8 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
 
     final HistoryEntry entry = getEntry(file);
     if(entry != null){
-      myEntriesList.remove(entry);
-      myEntriesList.add(entry);
+      removeEntry(entry);
+      addEntry(entry);
     }
     else {
       final FileEditorState[] states=new FileEditorState[editors.length];
@@ -157,7 +165,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
         providers[i] = provider;
         states[i] = editors[i].getState(FileEditorStateLevel.FULL);
       }
-      myEntriesList.add(new HistoryEntry(file, providers, states, providers[selectedProviderIndex]));
+      addEntry(new HistoryEntry(file, providers, states, providers[selectedProviderIndex]));
       trimToSize();
     }
   }
@@ -222,8 +230,8 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
       LOG.assertTrue(entry.mySelectedProvider != null);
 
       if(changeEntryOrderOnly){
-        myEntriesList.remove(entry);
-        myEntriesList.add(entry);
+        removeEntry(entry);
+        addEntry(entry);
       }
     }
   }
@@ -231,7 +239,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
   /**
    * Removes all entries that correspond to invalid files
    */
-  private void validateEntries(){
+  private synchronized void validateEntries(){
     for(int i=myEntriesList.size()-1; i>=0; i--){
       final HistoryEntry entry = myEntriesList.get(i);
       if(!entry.myFile.isValid()){
@@ -243,7 +251,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
   /**
    * @return array of valid files that are in the history, oldest first. May contain duplicates.
    */
-  public VirtualFile[] getFiles(){
+  public synchronized VirtualFile[] getFiles(){
     validateEntries();
     final VirtualFile[] result = new VirtualFile[myEntriesList.size()];
     for(int i=myEntriesList.size()-1; i>=0 ;i--){
@@ -265,7 +273,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     return result;
   }
 
-  public boolean hasBeenOpen(@NotNull VirtualFile f) {
+  public synchronized boolean hasBeenOpen(@NotNull VirtualFile f) {
     for (HistoryEntry each : myEntriesList) {
       if (Comparing.equal(each.myFile, f)) return true;
     }
@@ -276,13 +284,13 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
    * Removes specified <code>file</code> from history. The method does
    * nothing if <code>file</code> is not in the history.
    *
-   * @exception java.lang.IllegalArgumentException if <code>file</code>
+   * @exception IllegalArgumentException if <code>file</code>
    * is <code>null</code>
    */
-  public void removeFile(@NotNull final VirtualFile file){
+  public synchronized void removeFile(@NotNull final VirtualFile file){
     final HistoryEntry entry = getEntry(file);
     if(entry != null){
-      myEntriesList.remove(entry);
+      removeEntry(entry);
     }
   }
 
@@ -301,7 +309,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     return entry != null ? entry.mySelectedProvider : null;
   }
 
-  private HistoryEntry getEntry(@NotNull VirtualFile file){
+  private synchronized HistoryEntry getEntry(@NotNull VirtualFile file){
     validateEntries();
     for (int i = myEntriesList.size() - 1; i >= 0; i--) {
       final HistoryEntry entry = myEntriesList.get(i);
@@ -316,7 +324,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
    * If total number of files in history more then <code>UISettings.RECENT_FILES_LIMIT</code>
    * then removes the oldest ones to fit the history to new size.
    */
-  private void trimToSize(){
+  private synchronized void trimToSize(){
     final int limit = UISettings.getInstance().RECENT_FILES_LIMIT + 1;
     while(myEntriesList.size()>limit){
       myEntriesList.remove(0);
@@ -332,7 +340,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
   }
 
   @Override
-  public void writeExternal(final Element element){
+  public synchronized void writeExternal(final Element element){
     // update history before saving
     final VirtualFile[] openFiles = FileEditorManager.getInstance(myProject).getOpenFiles();
     for (int i = openFiles.length - 1; i >= 0; i--) {
