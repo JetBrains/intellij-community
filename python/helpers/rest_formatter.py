@@ -2,7 +2,7 @@ import sys
 import re
 from docutils.core import publish_string
 from docutils import nodes
-from docutils.nodes import Text
+from docutils.nodes import Text, field_body, field_name
 from docutils.writers.html4css1 import HTMLTranslator
 from epydoc.markup import DocstringLinker
 from epydoc.markup.restructuredtext import ParsedRstDocstring, _EpydocHTMLTranslator, \
@@ -83,6 +83,13 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
         # iterate through attributes one at a time because some
         # versions of docutils don't case-normalize attributes.
         for attr_dict in attr_dicts:
+            # For some reason additional classes in bullet list make it render poorly.
+            # Such lists are used to render multiple return values in Numpy docstrings by Napoleon.
+            if tagname == 'ul' and isinstance(node.parent, field_body):
+                attr_dict.pop('class', None)
+                attr_dict.pop('classes', None)
+                continue
+
             for (key, val) in attr_dict.items():
                 # Prefix all CSS classes with "rst-"; and prefix all
                 # names with "rst-" to avoid conflicts.
@@ -93,8 +100,10 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
                 elif key.lower() == 'href':
                     if attr_dict[key][:1] == '#':
                         attr_dict[key] = '#rst-%s' % attr_dict[key][1:]
-                    else:
-                        pass
+
+        if tagname == 'th' and isinstance(node, field_name):
+            attributes['valign'] = 'top'
+
         # For headings, use class="heading"
         if re.match(r'^h\d+$', tagname):
             attributes['class'] = ' '.join([attributes.get('class', ''), 'heading']).strip()
