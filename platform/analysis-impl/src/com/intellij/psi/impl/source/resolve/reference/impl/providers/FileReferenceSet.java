@@ -266,7 +266,7 @@ public class FileReferenceSet {
     if (curSep >= 0 && decoded.length() == wsHead + sepLen + wsTail) {
       // add extra reference for the only & leading "/"
       TextRange r = TextRange.create(startInElement, offset(curSep + Math.max(0, sepLen - 1), escaper, valueRange) + 1);
-      referencesList.add(createFileReference(r, 0, decoded.subSequence(curSep, curSep + sepLen).toString()));
+      referencesList.add(createFileReference(r, index ++, decoded.subSequence(curSep, curSep + sepLen).toString()));
     }
     curSep = curSep == wsHead ? curSep + sepLen : wsHead; // reset offsets & start again for simplicity
     sepLen = 0;
