@@ -32,8 +32,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.history.GitHistoryUtils;
@@ -181,21 +179,6 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     }
 
     return builder.toString();
-  }
-
-  @Nullable
-  private static String getCurrentBranchNameOnRemote(@NotNull GitRepository repository) {
-    GitLocalBranch currentBranch = repository.getCurrentBranch();
-    if (currentBranch == null) {
-      return null;
-    }
-
-    GitRemoteBranch tracked = currentBranch.findTrackedBranch(repository);
-    if (tracked == null) {
-      return null;
-    }
-
-    return tracked.getNameForRemoteOperations();
   }
 
   @Nullable

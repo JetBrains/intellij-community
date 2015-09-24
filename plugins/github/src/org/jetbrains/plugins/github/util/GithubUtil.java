@@ -104,34 +104,6 @@ public class GithubUtil {
     }
   }
 
-  public static void runTask(@NotNull Project project,
-                             @NotNull GithubAuthDataHolder authHolder,
-                             @NotNull final ProgressIndicator indicator,
-                             @NotNull ThrowableConsumer<GithubConnection, IOException> task) throws IOException {
-    GithubAuthData auth = authHolder.getAuthData();
-    try {
-      final GithubConnection connection = new GithubConnection(auth, true);
-      ScheduledFuture<?> future = null;
-
-      try {
-        future = addCancellationListener(indicator, connection);
-        task.consume(connection);
-      }
-      finally {
-        connection.close();
-        if (future != null) future.cancel(true);
-      }
-    }
-    catch (GithubTwoFactorAuthenticationException e) {
-      getTwoFactorAuthData(project, authHolder, indicator, auth);
-      runTask(project, authHolder, indicator, task);
-    }
-    catch (GithubAuthenticationException e) {
-      getValidAuthData(project, authHolder, indicator, auth);
-      runTask(project, authHolder, indicator, task);
-    }
-  }
-
   public static <T> T runTaskWithBasicAuthForHost(@NotNull Project project,
                                                   @NotNull GithubAuthDataHolder authHolder,
                                                   @NotNull final ProgressIndicator indicator,
@@ -423,12 +395,6 @@ public class GithubUtil {
 
   public static void computeValueInModal(@NotNull Project project,
                                          @NotNull String caption,
-                                         @NotNull final Consumer<ProgressIndicator> task) {
-    computeValueInModal(project, caption, true, task);
-  }
-
-  public static void computeValueInModal(@NotNull Project project,
-                                         @NotNull String caption,
                                          boolean canBeCancelled,
                                          @NotNull final Consumer<ProgressIndicator> task) {
     final Ref<Throwable> exceptionRef = new Ref<Throwable>();
@@ -458,34 +424,6 @@ public class GithubUtil {
       future = addCancellationListener(indicator, thread);
 
       return task.compute();
-    }
-    finally {
-      if (future != null) future.cancel(true);
-      Thread.interrupted();
-    }
-  }
-
-  public static <T> T runInterruptable(@NotNull final ProgressIndicator indicator, @NotNull Computable<T> task) {
-    ScheduledFuture<?> future = null;
-    try {
-      final Thread thread = Thread.currentThread();
-      future = addCancellationListener(indicator, thread);
-
-      return task.compute();
-    }
-    finally {
-      if (future != null) future.cancel(true);
-      Thread.interrupted();
-    }
-  }
-
-  public static void runInterruptable(@NotNull final ProgressIndicator indicator, @NotNull Runnable task) {
-    ScheduledFuture<?> future = null;
-    try {
-      final Thread thread = Thread.currentThread();
-      future = addCancellationListener(indicator, thread);
-
-      task.run();
     }
     finally {
       if (future != null) future.cancel(true);
@@ -537,18 +475,6 @@ public class GithubUtil {
           }
         }
         return gitRemote.getFirstUrl();
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static GitRemote findGithubRemote(@NotNull GitRepository gitRepository, @NotNull GithubFullPath path) {
-    for (GitRemote remote : gitRepository.getRemotes()) {
-      for (String url : remote.getUrls()) {
-        if (path.equals(GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url))) {
-          return remote;
-        }
       }
     }
     return null;
