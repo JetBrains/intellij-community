@@ -15,7 +15,10 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,8 +26,11 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -34,9 +40,15 @@ import java.util.concurrent.Future;
  */
 public class PersistenceStressTest extends TestCase {
 
+  public static final Condition<Future<Boolean>> CONDITION = new Condition<Future<Boolean>>() {
+    @Override
+    public boolean value(Future<Boolean> future) {
+      return !future.isDone();
+    }
+  };
   private ExecutorService myThreadPool;
-  private PersistentHashMap<String, Record> myMap;
-  private PersistentHashMap<String, Record> myMap1;
+  private final List<PersistentHashMap<String, Record>> myMaps = new ArrayList<PersistentHashMap<String, Record>>();
+  private final List<String> myKeys = new ArrayList<String>();
 
   public static class Record {
     public final int magnitude;
@@ -50,26 +62,30 @@ public class PersistenceStressTest extends TestCase {
 
 
   public void testReadWrite() throws Exception {
-
-    myThreadPool = Executors.newFixedThreadPool(5);
-
-    Future<Boolean> future = submit(myMap);
-    Future<Boolean> submit = submit(myMap1);
-    while (!future.isDone() || !submit.isDone()) { Thread.sleep(100);}
-    assertTrue(future.get());
-    assertTrue(submit.get());
+    List<Future<Boolean>> futures = new ArrayList<Future<Boolean>>();
+    for (PersistentHashMap<String, Record> myMap : myMaps) {
+      Future<Boolean> submit = submit(myMap);
+      futures.add(submit);
+    }
+    while (ContainerUtil.find(futures, CONDITION) != null) {
+      Thread.sleep(100);
+//      System.out.println("Waiting... ");
+    }
   }
 
   @NotNull
   protected Future<Boolean> submit(final PersistentHashMap<String, Record> map) {
-    return myThreadPool.submit(() -> {
-      try {
-        doTask(map);
-        return true;
-      }
-      catch (IOException e) {
-        e.printStackTrace();
-        return false;
+    return myThreadPool.submit(new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        try {
+          doTask(map);
+          return true;
+        }
+        catch (IOException e) {
+          e.printStackTrace();
+          return false;
+        }
       }
     });
   }
@@ -77,22 +93,20 @@ public class PersistenceStressTest extends TestCase {
   protected void doTask(PersistentHashMap<String, Record> map) throws IOException {
     Random random = new Random();
     for (int i = 0; i < 10000; i++) {
-      if (random.nextInt(10) == 1) {
-        map.force();
+      if (random.nextInt(100) == 1) {
+//        map.force();
         continue;
       }
-      byte[] bytes = new byte[10];
-      random.nextBytes(bytes);
-      String key = random.nextBoolean() ? "a" : "b";
+      String key = myKeys.get(random.nextInt(myKeys.size()));
       if (random.nextBoolean()) {
-        for (int j = 0; j < 10; j++) {
+//        for (int j = 0; j < 10; j++) {
           map.put(key, new Record(random.nextInt(), new Date()));
-        }
+//        }
       }
       else {
-        for (int j = 0; j < 10; j++) {
-          map.get(random.nextBoolean() ? key : "");
-        }
+//        for (int j = 0; j < 10; j++) {
+          map.get(key);
+//        }
       }
     }
   }
@@ -100,8 +114,27 @@ public class PersistenceStressTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myMap = createMap(FileUtil.createTempFile("persistent", "map"));
-    myMap1 = createMap(FileUtil.createTempFile("persistent", "map1"));
+    Random random = new Random();
+    for (int i = 0; i < 1000; i++) {
+      byte[] bytes = new byte[1000];
+      random.nextBytes(bytes);
+      String key = new String(bytes, CharsetToolkit.UTF8_CHARSET);
+      myKeys.add(key);
+    }
+    for (int i = 0; i < 10; i++) {
+      PersistentHashMap<String, Record> map = createMap(FileUtil.createTempFile("persistent", "map" + i));
+      myMaps.add(map);
+    }
+    myThreadPool = Executors.newFixedThreadPool(myMaps.size());
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    super.tearDown();
+    for (PersistentHashMap<String, Record> map : myMaps) {
+      map.close();
+    }
+    myThreadPool.shutdown();
   }
 
   @NotNull
@@ -118,13 +151,5 @@ public class PersistenceStressTest extends TestCase {
         return new Record(in.readInt(), new Date(in.readLong()));
       }
     });
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    super.tearDown();
-    myMap.close();
-    myMap1.close();
-    myThreadPool.shutdown();
   }
 }
