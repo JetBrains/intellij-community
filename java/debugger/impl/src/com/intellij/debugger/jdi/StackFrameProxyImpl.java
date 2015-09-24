@@ -193,6 +193,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     throw new EvaluateException(error.getMessage(), error);
   }
 
+  @NotNull
   @Override
   public ThreadReferenceProxyImpl threadProxy() {
     return myThreadProxy;

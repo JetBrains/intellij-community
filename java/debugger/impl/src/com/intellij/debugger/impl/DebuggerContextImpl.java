@@ -151,7 +151,6 @@ public final class DebuggerContextImpl implements DebuggerContext {
                                                           ThreadReferenceProxyImpl threadProxy,
                                                           StackFrameProxyImpl frameProxy) {
     LOG.assertTrue(frameProxy == null || threadProxy == null || threadProxy == frameProxy.threadProxy());
-    LOG.assertTrue(session == null || session.getProcess() != null);
     return new DebuggerContextImpl(session, session != null ? session.getProcess() : null, context, threadProxy, frameProxy, null, null, context == null);
   }
 
