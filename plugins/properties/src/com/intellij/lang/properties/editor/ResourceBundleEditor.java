@@ -118,6 +118,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private VirtualFileListener myVfsListener;
   private Editor              mySelectedEditor;
   private String              myPropertyToSelectWhenVisible;
+  private boolean myKeepEmptyProperties;
 
   public ResourceBundleEditor(@NotNull ResourceBundle resourceBundle) {
     myProject = resourceBundle.getProject();
@@ -136,6 +137,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
     myResourceBundle = resourceBundle;
     myPropertiesInsertDeleteManager = new ResourceBundlePropertiesUpdateManager(resourceBundle);
+    myKeepEmptyProperties = ResourceBundleEditorKeepEmptyValueToggleAction.keepEmptyProperties();
 
     myPropertiesAnchorizer = new PropertiesAnchorizer(myResourceBundle.getProject());
     myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this, myPropertiesAnchorizer);
@@ -361,7 +363,14 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           @Override
           public void run() {
             try {
-              myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, currentValue, propertiesFile);
+              if (currentValue.isEmpty() &&
+                  myKeepEmptyProperties &&
+                  !PsiManager.getInstance(myProject).areElementsEquivalent(propertiesFile.getContainingFile(),
+                                                                           myResourceBundle.getDefaultPropertiesFile().getContainingFile())) {
+                myPropertiesInsertDeleteManager.deletePropertyIfExist(currentSelectedProperty, propertiesFile);
+              } else {
+                myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, currentValue, propertiesFile);
+              }
             }
             catch (final IncorrectOperationException e) {
               LOG.error(e);
@@ -844,6 +853,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     myEditors.clear();
   }
 
+  public void setKeepEmptyProperties(boolean keepEmptyProperties) {
+    myKeepEmptyProperties = keepEmptyProperties;
+  }
+
   public static class ResourceBundleEditorState implements FileEditorState {
     private final String myPropertyName;
 
@@ -884,7 +897,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     settings.setRightMarginShown(true);
     settings.setRightMargin(60);
     settings.setVirtualSpace(false);
-
     editor.setHighlighter(new LexerEditorHighlighter(new PropertiesValueHighlighter(), scheme));
     editor.setVerticalScrollbarVisible(true);
     editor.setContextMenuGroupId(null); // disabling default context menu

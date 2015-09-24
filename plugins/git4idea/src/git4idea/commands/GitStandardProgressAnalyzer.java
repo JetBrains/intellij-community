@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
 import gnu.trove.TObjectDoubleHashMap;
 import gnu.trove.TObjectDoubleProcedure;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,10 +32,10 @@ import java.util.regex.Pattern;
 public class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
 
   // progress of each operation is stored here. this is an overhead since operations go one by one,
-  // but it looks simpler than storing current operation, checking that ther was no skipped, etc.
+  // but it looks simpler than storing current operation, checking that there was no skipped, etc.
   private TObjectDoubleHashMap<Operation> myOperationsProgress = new TObjectDoubleHashMap<Operation>(4);
 
-  public static GitLineHandlerListener createListener(final ProgressIndicator indicator) {
+  public static GitLineHandlerListener createListener(@NotNull final ProgressIndicator indicator) {
     final GitStandardProgressAnalyzer progressAnalyzer = new GitStandardProgressAnalyzer();
     return new GitLineHandlerAdapter() {
       @Override

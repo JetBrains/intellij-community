@@ -16,16 +16,14 @@
 package git4idea.commands;
 
 /**
- * GitProgressAnalyzer is used by {@link GitTask} to update progress indicator with the current operation progress.
- * To use it in GitTask call {@link GitTask#setProgressAnalyzer(GitProgressAnalyzer)}.
- * There is {@link GitStandardProgressAnalyzer} which should be suitable for most git tasks.
- * @author Kirill Likhodedov
+ * Use to update the progress indicator with the current operation progress.
+ * See {@link GitStandardProgressAnalyzer} which should be suitable for most git tasks.
  */
 public interface GitProgressAnalyzer {
   /**
    * Analyzes the git process output line and returns the value of the progress indicator.
    * @param output git process output line (e.g. "Receiving objects: 67%).
-   * @return completed fraction of the progress or -1 if the line doesn't mean anything to the analyzer.
+   * @return completed fraction of the progress, or -1 if the line doesn't mean anything to the analyzer.
    */
   double analyzeProgress(String output);
 }

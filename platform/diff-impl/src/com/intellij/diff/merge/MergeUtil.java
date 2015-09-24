@@ -16,12 +16,14 @@
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.merge.MergeTool.MergeViewer;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -102,10 +104,22 @@ public class MergeUtil {
     }
   }
 
-  public static boolean showExitWithoutApplyingChangesDialog(@NotNull JComponent component, @NotNull MergeRequest request, @NotNull MergeContext context) {
+  public static boolean showExitWithoutApplyingChangesDialog(@NotNull MergeViewer viewer,
+                                                             @NotNull MergeRequest request,
+                                                             @NotNull MergeContext context) {
+    Condition<MergeViewer> customHandler = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_CANCEL_HANDLER);
+    if (customHandler != null) {
+      return customHandler.value(viewer);
+    }
+
+    return showExitWithoutApplyingChangesDialog(viewer.getComponent(), request, context);
+  }
+
+  public static boolean showExitWithoutApplyingChangesDialog(@NotNull JComponent component,
+                                                             @NotNull MergeRequest request,
+                                                             @NotNull MergeContext context) {
     String message = DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message");
     String title = DiffBundle.message("cancel.visual.merge.dialog.title");
-
     Couple<String> customMessage = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_CANCEL_MESSAGE);
     if (customMessage != null) {
       title = customMessage.first;

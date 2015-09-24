@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -95,7 +96,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (module == null) return;
     if (!PsiUtil.isIdeaProject(module.getProject())) return;
 
-    if (ideaPlugin.getPluginId() == null) return;
+    String pluginId = ideaPlugin.getPluginId();
+    if (pluginId == null || pluginId.equals(PluginManagerCore.CORE_PLUGIN_ID)) return;
 
     final Vendor vendor = ContainerUtil.getFirstItem(ideaPlugin.getVendors());
     if (vendor == null) {

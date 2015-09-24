@@ -71,13 +71,16 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,6 +92,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
@@ -189,7 +193,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
     };
 
-    myTree = new FileStructureTree(myTreeStructure.getRootElement(), Registry.is("fast.tree.expand.in.structure.view"));
+    myTree = new FileStructureTree(myTreeStructure.getRootElement(), false);
 
     myTree.setCellRenderer(new NodeRenderer());
 
@@ -202,6 +206,32 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
           return true;
         }
         return false;
+      }
+
+      @Nullable
+      @Override
+      protected Transferable createTransferable(JComponent component) {
+        Set<PsiElement> selection = ContainerUtil.newLinkedHashSet(getPsiElementsFromSelection());
+        if (selection.isEmpty()) return null;
+        List<PsiElement> result = ContainerUtil.newArrayListWithCapacity(selection.size());
+        for (PsiElement e : selection) {
+          if (!selection.contains(e.getParent())) {
+            result.add(e);
+          }
+        }
+        String text = StringUtil.join(result, new Function<PsiElement, String>() {
+          @Override
+          public String fun(PsiElement e) {
+            return e.getText();
+          }
+        }, "\n");
+        String htmlText = "<body>\n" + text + "\n</body>";
+        return new TextTransferable(XmlStringUtil.wrapInHtml(htmlText), text);
+      }
+
+      @Override
+      public int getSourceActions(JComponent component) {
+        return COPY;
       }
     });
 
@@ -637,14 +667,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
           return getPsi((FilteringTreeStructure.FilteringNode)node);
         }
         if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-          Set<Object> nodes = myAbstractTreeBuilder.getSelectedElements();
-          if (nodes.isEmpty()) return PsiElement.EMPTY_ARRAY;
-          ArrayList<PsiElement> result = new ArrayList<PsiElement>();
-          for (Object o : nodes) {
-            if (!(o instanceof FilteringTreeStructure.FilteringNode)) continue;
-            ContainerUtil.addIfNotNull(result, getPsi((FilteringTreeStructure.FilteringNode)o));
-          }
-          return ContainerUtil.toArray(result, PsiElement.ARRAY_FACTORY);
+          return ContainerUtil.toArray(getPsiElementsFromSelection(), PsiElement.ARRAY_FACTORY);
         }
         if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
           return myPopup;
@@ -664,6 +687,18 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     });
 
     return panel;
+  }
+
+  @NotNull
+  private List<PsiElement> getPsiElementsFromSelection() {
+    Set<Object> nodes = myAbstractTreeBuilder.getSelectedElements();
+    if (nodes.isEmpty()) return Collections.emptyList();
+    List<PsiElement> result = ContainerUtil.newArrayListWithCapacity(nodes.size());
+    for (Object o : nodes) {
+      if (!(o instanceof FilteringTreeStructure.FilteringNode)) continue;
+      ContainerUtil.addIfNotNull(result, getPsi((FilteringTreeStructure.FilteringNode)o));
+    }
+    return result;
   }
 
   @NotNull

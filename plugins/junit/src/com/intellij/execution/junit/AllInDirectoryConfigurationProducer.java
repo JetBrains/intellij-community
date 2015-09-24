@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,54 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.junit;
 
-import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.junit2.info.LocationUtil;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
-
-
-public class AllInDirectoryConfigurationProducer extends JUnitConfigurationProducer {
-
-  protected AllInDirectoryConfigurationProducer(ConfigurationType configurationType) {
-    super(configurationType);
-  }
-
-  public AllInDirectoryConfigurationProducer() {
-  }
-
-  @Override
-  protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
-    final Project project = configuration.getProject();
-    final PsiElement element = context.getPsiLocation();
-    if (!(element instanceof PsiDirectory)) return false;
-    final PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(element);
-    if (aPackage == null) return false;
-    final VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
-    final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
-    if (module == null) return false;
-    if (!ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(virtualFile)) return false;
-    int testRootCount = ModuleRootManager.getInstance(module).getSourceRoots(JavaSourceRootType.TEST_SOURCE).size();
-    if (testRootCount < 2) return false;
-    if (!LocationUtil.isJarAttached(context.getLocation(), aPackage, JUnitUtil.TESTCASE_CLASS)) return false;
-    setupConfigurationModule(context, configuration);
-    final JUnitConfiguration.Data data = configuration.getPersistentData();
-    data.setDirName(virtualFile.getPath());
-    data.TEST_OBJECT = JUnitConfiguration.TEST_DIRECTORY;
-    configuration.setGeneratedName();
-    return true;
+public class AllInDirectoryConfigurationProducer extends AbstractAllInDirectoryConfigurationProducer {
+  protected AllInDirectoryConfigurationProducer() {
+    super(JUnitConfigurationType.getInstance());
   }
 }

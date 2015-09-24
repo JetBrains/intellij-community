@@ -127,13 +127,15 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
     gg.dispose();
     right.paintIcon(c, g, stop, r.y);
 
-    Icon label = MacIntelliJIconCache.getIcon("searchFieldLabel");
-    if (StringUtil.isEmpty(c.getText()) && !c.hasFocus()) {
+    boolean withHistoryPopup = isSearchFieldWithHistoryPopup(c);
+    Icon label = MacIntelliJIconCache.getIcon(withHistoryPopup ? "searchFieldWithHistory" : "searchFieldLabel");
+    if (StringUtil.isEmpty(c.getText()) && !c.hasFocus() && !withHistoryPopup) {
       label.paintIcon(c, g, r.x + (r.width - label.getIconWidth())/ 2, r.y);
     } else {
       gg = g.create(0, 0, c.getWidth(), c.getHeight());
-      gg.setClip(r.x + 8, r.y, StringUtil.isEmpty(c.getText()) ? label.getIconWidth() : 16, label.getIconHeight());
-      label.paintIcon(c, gg, r.x + 8, r.y);
+      int offset = withHistoryPopup ? 5 : 8;
+      gg.setClip(r.x + offset, r.y, StringUtil.isEmpty(c.getText()) ? label.getIconWidth() : 16, label.getIconHeight());
+      label.paintIcon(c, gg, r.x + offset, r.y);
     }
 
     if (!StringUtil.isEmpty(c.getText())) {
@@ -145,7 +147,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   @Override
   protected Rectangle getVisibleEditorRect() {
     Rectangle rect = super.getVisibleEditorRect();
-    if (isSearchField(myTextField)) {
+    if (rect != null && isSearchField(myTextField)) {
       rect.width -= 36;
       rect.x += 19;
       rect.y +=1;

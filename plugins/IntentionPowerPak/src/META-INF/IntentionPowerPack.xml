@@ -129,6 +129,12 @@
     </intentionAction>
 
     <intentionAction>
+      <className>com.siyeh.ipp.conditional.ReplaceConditionalWithBooleanExpressionIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.conditional.operator</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.siyeh.ipp.conditional.ReplaceConditionalWithIfIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.conditional.operator</categoryKey>

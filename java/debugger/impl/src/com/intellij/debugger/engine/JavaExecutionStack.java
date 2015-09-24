@@ -48,14 +48,11 @@ public class JavaExecutionStack extends XExecutionStack {
     super(calcRepresentation(threadProxy), calcIcon(threadProxy, current));
     myThreadProxy = threadProxy;
     myDebugProcess = debugProcess;
-    if (current) {
-      initTopFrame();
-    }
   }
 
   private static Icon calcIcon(ThreadReferenceProxyImpl threadProxy, boolean current) {
     if (current) {
-      return AllIcons.Debugger.ThreadCurrent;
+      return threadProxy.isSuspended() ? AllIcons.Debugger.ThreadCurrent : AllIcons.Debugger.ThreadRunning;
     }
     else if (threadProxy.isAtBreakpoint()) {
       return AllIcons.Debugger.ThreadAtBreakpoint;
@@ -216,5 +213,10 @@ public class JavaExecutionStack extends XExecutionStack {
   @Override
   public int hashCode() {
     return myThreadProxy.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return getDisplayName();
   }
 }

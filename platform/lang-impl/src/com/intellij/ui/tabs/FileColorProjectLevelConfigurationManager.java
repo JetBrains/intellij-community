@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,10 @@ import org.jetbrains.annotations.NotNull;
     @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/fileColors.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
-public class FileColorSharedConfigurationManager implements PersistentStateComponent<Element> {
+public class FileColorProjectLevelConfigurationManager implements PersistentStateComponent<Element> {
   private final Project myProject;
 
-  public FileColorSharedConfigurationManager(@NotNull final Project project) {
+  public FileColorProjectLevelConfigurationManager(@NotNull final Project project) {
     myProject = project;
   }
 

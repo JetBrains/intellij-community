@@ -28,6 +28,8 @@ import com.intellij.ide.actions.GotoFileAction;
 import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
+import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
+import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -1256,10 +1258,17 @@ public abstract class ChooseByNameBase {
     private MyTextField() {
       super(40);
       if (!UIUtil.isUnderGTKLookAndFeel()) {
-        if (!(getUI() instanceof DarculaTextFieldUI)) {
-          setUI(DarculaTextFieldUI.createUI(this));
+        if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+          if (!(getUI() instanceof MacIntelliJTextFieldUI)) {
+            setUI(MacIntelliJTextFieldUI.createUI(this));
+          }
+          setBorder(new MacIntelliJTextBorder());
+        } else {
+          if (!(getUI() instanceof DarculaTextFieldUI)) {
+            setUI(DarculaTextFieldUI.createUI(this));
+          }
+          setBorder(new DarculaTextBorder());
         }
-        setBorder(new DarculaTextBorder());
       }
       enableEvents(AWTEvent.KEY_EVENT_MASK);
       myCompletionKeyStroke = getShortcut(IdeActions.ACTION_CODE_COMPLETION);

@@ -221,7 +221,7 @@
     </extensionPoint>
 
     <extensionPoint name="expressionConverter" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.refactoring.introduceParameter.ExpressionConverter"/>
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.ExpressionConverter"/>
     </extensionPoint>
 
     <extensionPoint name="refactoring.pullUpHelperFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">

@@ -40,6 +40,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import static java.util.Collections.unmodifiableMap;
+
 public class EnvironmentUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.EnvironmentUtil");
 
@@ -56,7 +58,7 @@ public class EnvironmentUtil {
       ourEnvGetter = executor.submit(new Callable<Map<String, String>>() {
         @Override
         public Map<String, String> call() throws Exception {
-          return Collections.unmodifiableMap(setCharsetVar(getShellEnv()));
+          return unmodifiableMap(setCharsetVar(getShellEnv()));
         }
       });
       executor.shutdown();
@@ -82,7 +84,7 @@ public class EnvironmentUtil {
 
   private static Map<String, String> getSystemEnv() {
     if (SystemInfo.isWindows) {
-      return Collections.unmodifiableMap(new THashMap<String, String>(System.getenv(), CaseInsensitiveStringHashingStrategy.INSTANCE));
+      return unmodifiableMap(new THashMap<String, String>(System.getenv(), CaseInsensitiveStringHashingStrategy.INSTANCE));
     }
     else {
       return System.getenv();

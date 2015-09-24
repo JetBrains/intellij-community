@@ -18,17 +18,18 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.basic.BasicArrowButton;
-import javax.swing.plaf.basic.BasicComboBoxEditor;
-import javax.swing.plaf.basic.BasicComboBoxUI;
+import javax.swing.plaf.basic.*;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
  * @author Konstantin Bulenkov
@@ -219,6 +220,65 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
           editor.setBounds(cvb);
         }
 
+      }
+    };
+  }
+
+  @Override
+  protected ComboPopup createPopup() {
+    return new BasicComboPopup(myComboBox) {
+      @Override
+      protected void configurePopup() {
+        super.configurePopup();
+        setBorderPainted(false);
+        setBorder(JBUI.Borders.empty());
+        setBackground(Gray.xFF);
+      }
+
+      @Override
+      protected void configureList() {
+        super.configureList();
+        wrapRenderer();
+      }
+
+      @Override
+      protected PropertyChangeListener createPropertyChangeListener() {
+        final PropertyChangeListener listener = super.createPropertyChangeListener();
+        return new PropertyChangeListener() {
+          @Override
+          public void propertyChange(PropertyChangeEvent evt) {
+            listener.propertyChange(evt);
+            if ("renderer".equals(evt.getPropertyName())) {
+              wrapRenderer();
+            }
+          }
+        };
+      }
+
+      class ComboBoxRendererWraper implements ListCellRenderer {
+        private final ListCellRenderer myRenderer;
+
+        public ComboBoxRendererWraper(ListCellRenderer renderer) {
+          myRenderer = renderer;
+        }
+
+        BorderLayoutPanel myPanel = JBUI.Panels.simplePanel().withBorder(JBUI.Borders.empty(0, 8));
+
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          Component c = myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          myPanel.removeAll();
+          myPanel.add(c);
+          myPanel.setBackground(c.getBackground());
+          return myPanel;
+        }
+      }
+
+      private void wrapRenderer() {
+        ListCellRenderer renderer = list.getCellRenderer();
+        if (!(renderer instanceof ComboBoxRendererWraper)) {
+          list.setCellRenderer(new ComboBoxRendererWraper(renderer));
+        }
       }
     };
   }

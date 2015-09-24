@@ -291,7 +291,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     commandLine.getEnvironment().clear();
     commandLine.getEnvironment().putAll(env);
-    commandLine.withParentEnvironmentType(myConfig.isPassParentEnvs() ? ParentEnvironmentType.SHELL : ParentEnvironmentType.NONE);
+    commandLine.withParentEnvironmentType(myConfig.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
 
     buildPythonPath(project, commandLine, myConfig);
   }

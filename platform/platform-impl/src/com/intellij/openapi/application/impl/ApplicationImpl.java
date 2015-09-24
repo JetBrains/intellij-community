@@ -67,7 +67,6 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
-import jsr166e.StampedLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -84,13 +83,18 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
   private final ModalityState MODALITY_STATE_NONE = ModalityState.NON_MODAL;
 
-  private final StampedLock myLock = new StampedLock();
+  // about writer preference: the way the j.u.c.l.ReentrantReadWriteLock.NonfairSync is implemented, the
+  // writer thread will be always at the queue head and therefore, j.u.c.l.ReentrantReadWriteLock.NonfairSync.readerShouldBlock()
+  // will return true if the write action is pending, exactly as we need
+  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock(false);
 
   private final ModalityInvokator myInvokator = new ModalityInvokatorImpl();
 
@@ -123,13 +127,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
   private static final int IS_EDT_FLAG = 1<<30; // we don't mess with sign bit since we want to do arithmetic
+  private static final int IS_READ_LOCK_ACQUIRED_FLAG = 1<<29;
 
   private static class Status {
     // higher three bits are for IS_* flags
     // lower bits are for edtSafe counter
     private int flags;
-    // StampedLock' acquired sequence or zero if not locked
-    private long stamp;
   }
 
   private static final ThreadLocal<Status> status = new ThreadLocal<Status>(){
@@ -142,6 +145,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   };
   private static Status getStatus() {
     return status.get();
+  }
+  private static void setReadLockAcquired(Status status, boolean acquired) {
+    status.flags = BitUtil.set(status.flags, IS_READ_LOCK_ACQUIRED_FLAG, acquired);
   }
 
   private static final ModalityState ANY = new ModalityState() {
@@ -314,7 +320,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private static boolean holdsReadLock(Status status) {
-    return status.stamp != 0;
+    return BitUtil.isSet(status.flags, IS_READ_LOCK_ACQUIRED_FLAG);
   }
 
   @NotNull
@@ -975,7 +981,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private void startRead(Status status) {
     assertNoPsiLock();
     try {
-      status.stamp = myLock.readLockInterruptibly();
+      myLock.readLock().lockInterruptibly();
+      setReadLockAcquired(status, true);
     }
     catch (InterruptedException e) {
       throw new RuntimeInterruptedException(e);
@@ -983,8 +990,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private void endRead(Status status) {
-    myLock.unlockRead(status.stamp);
-    status.stamp = 0;
+    setReadLockAcquired(status, false);
+    myLock.readLock().unlock();
   }
 
   @Override
@@ -1067,7 +1074,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private static boolean isReadAccessAllowed(Status status) {
-    return BitUtil.isSet(status.flags, IS_EDT_FLAG) || status.stamp != 0;
+    return (status.flags & (IS_EDT_FLAG | IS_READ_LOCK_ACQUIRED_FLAG)) != 0;
   }
 
   @Override
@@ -1148,7 +1155,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     if (mustAcquire) {
       assertNoPsiLock();
-      if ((status.stamp = myLock.tryReadLock()) == 0) return false;
+      try {
+        // timed version of tryLock() respects fairness unlike the no-args method
+        if (!myLock.readLock().tryLock(0, TimeUnit.MILLISECONDS)) return false;
+        setReadLockAcquired(status, true);
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeInterruptedException(e);
+      }
     }
 
     try {
@@ -1195,8 +1209,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private final TIntArrayList writePauses = new TIntArrayList();
   private void startWrite(@Nullable Class clazz) {
-    Status status = getStatus();
-    assertIsDispatchThread(status, "Write access is allowed from event dispatch thread only");
+    assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
     boolean writeActionPending = myWriteActionPending;
     myWriteActionPending = true;
     long start = System.currentTimeMillis();
@@ -1205,26 +1218,26 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       fireBeforeWriteActionStart(clazz);
 
       try {
-        if (!myLock.isWriteLocked()) {
+        if (!isWriteAccessAllowed()) {
           assertNoPsiLock();
-          if ((status.stamp = myLock.tryWriteLock()) == 0) {
-            final AtomicBoolean lockAcquired = new AtomicBoolean(false);
-            if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
-              executeOnPooledThread(new Runnable() {
-                @Override
-                public void run() {
-                  while (!lockAcquired.get()) {
-                    TimeoutUtil.sleep(ourDumpThreadsOnLongWriteActionWaiting);
-                    if (!lockAcquired.get()) {
-                      PerformanceWatcher.getInstance().dumpThreads("waiting", true);
-                    }
+        }
+        if (!myLock.writeLock().tryLock()) {
+          final AtomicBoolean lockAcquired = new AtomicBoolean(false);
+          if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
+            executeOnPooledThread(new Runnable() {
+              @Override
+              public void run() {
+                while (!lockAcquired.get()) {
+                  TimeoutUtil.sleep(ourDumpThreadsOnLongWriteActionWaiting);
+                  if (!lockAcquired.get()) {
+                    PerformanceWatcher.getInstance().dumpThreads("waiting", true);
                   }
                 }
-              });
-            }
-            status.stamp = myLock.writeLockInterruptibly();
-            lockAcquired.set(true);
+              }
+            });
           }
+          myLock.writeLock().lockInterruptibly();
+          lockAcquired.set(true);
         }
       }
       catch (InterruptedException e) {
@@ -1245,15 +1258,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private void endWrite(@Nullable Class clazz) {
     try {
+      myWriteActionsStack.pop();
       fireWriteActionFinished(clazz);
     }
     finally {
-      myWriteActionsStack.pop();
-      if (myWriteActionsStack.isEmpty()) {
-        Status status = getStatus();
-        myLock.unlockWrite(status.stamp);
-        status.stamp = 0;
-      }
+      myLock.writeLock().unlock();
     }
   }
 
@@ -1354,7 +1363,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isWriteAccessAllowed() {
-    return isDispatchThread() && myLock.isWriteLocked();
+    return myLock.isWriteLockedByCurrentThread();
   }
 
   // cheaper version of isWriteAccessAllowed(). must be called from EDT
