@@ -112,36 +112,40 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         return;
       }
       final PsiExpression unboxedExpression = arguments[0];
-      final PsiType unboxedType = unboxedExpression.getType();
-      if (unboxedType == null) {
+      final String replacementText = getUnboxedExpressionText(unboxedExpression, boxedType);
+      if (replacementText == null) {
         return;
       }
-      final String cast = getCastString(unboxedType, boxedType);
-      if (cast == null) {
-        return;
-      }
-      final int precedence = ParenthesesUtils.getPrecedence(unboxedExpression);
-      if (!cast.isEmpty() && precedence > ParenthesesUtils.TYPE_CAST_PRECEDENCE) {
-        PsiReplacementUtil.replaceExpression(expression, cast + '(' + unboxedExpression.getText() + ')');
-      }
-      else {
-        PsiReplacementUtil.replaceExpression(expression, cast + unboxedExpression.getText());
-      }
+      PsiReplacementUtil.replaceExpression(expression, replacementText);
     }
 
     @Nullable
-    private static String getCastString(@NotNull PsiType fromType, @NotNull PsiType toType) {
-      final String toTypeText = toType.getCanonicalText();
-      final String fromTypeText = fromType.getCanonicalText();
-      final String unboxedType = boxedPrimitiveMap.get(toTypeText);
+    private static String getUnboxedExpressionText(@NotNull PsiExpression unboxedExpression, @NotNull PsiType boxedType) {
+      final PsiType expressionType = unboxedExpression.getType();
+      if (expressionType == null) {
+        return null;
+      }
+      final PsiType unboxedType = PsiPrimitiveType.getUnboxedType(boxedType);
       if (unboxedType == null) {
         return null;
       }
-      if (fromTypeText.equals(unboxedType)) {
-        return "";
+      final String text = unboxedExpression.getText();
+      if (expressionType.equals(unboxedType)) {
+        return text;
+      }
+      if (unboxedExpression instanceof PsiLiteralExpression) {
+        if (unboxedType.equals(PsiType.LONG) && expressionType.equals(PsiType.INT)) {
+          return text + 'L';
+        }
+        else if (unboxedType.equals(PsiType.FLOAT) && expressionType.equals(PsiType.INT)) {
+          return text + 'f';
+        }
+      }
+      if (ParenthesesUtils.getPrecedence(unboxedExpression) > ParenthesesUtils.TYPE_CAST_PRECEDENCE) {
+        return '(' + unboxedType.getCanonicalText() + ")(" + text + ')';
       }
       else {
-        return '(' + unboxedType + ')';
+        return '(' + unboxedType.getCanonicalText() + ')' + text;
       }
     }
   }
