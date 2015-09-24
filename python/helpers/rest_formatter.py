@@ -1,8 +1,9 @@
-import sys
 import re
-from docutils.core import publish_string
+import sys
+
 from docutils import nodes
-from docutils.nodes import Text, field_body, field_name
+from docutils.core import publish_string
+from docutils.nodes import Text, field_body, field_name, rubric
 from docutils.writers.html4css1 import HTMLTranslator
 from epydoc.markup import DocstringLinker
 from epydoc.markup.restructuredtext import ParsedRstDocstring, _EpydocHTMLTranslator, \
@@ -104,10 +105,13 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
         if tagname == 'th' and isinstance(node, field_name):
             attributes['valign'] = 'top'
 
+        # Render rubric start as HTML header
+        if tagname == 'p' and isinstance(node, rubric):
+            tagname = 'h1'
+
         # For headings, use class="heading"
         if re.match(r'^h\d+$', tagname):
             attributes['class'] = ' '.join([attributes.get('class', ''), 'heading']).strip()
-
         return HTMLTranslator.starttag(self, node, tagname, suffix, **attributes)
 
     def visit_field_list(self, node):
