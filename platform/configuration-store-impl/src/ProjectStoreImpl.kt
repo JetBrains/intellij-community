@@ -36,7 +36,6 @@ import com.intellij.openapi.project.impl.ProjectStoreClassProvider
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VfsUtil
@@ -71,20 +70,27 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
   override fun getProjectFilePath() = storageManager.expandMacro(StoragePathMacros.PROJECT_FILE)
 
   override final fun getWorkspaceFilePath() = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
-}
 
-private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {
-  private var presentableUrl: String? = null
-
-  init {
-    assert(!project.isDefault)
+  override final fun clearStorages() {
+    storageManager.clearStorages()
   }
 
-  override final fun getPathMacroManagerForDefaults() = pathMacroManager
+  override final fun loadProjectFromTemplate(defaultProject: Project) {
+    defaultProject.save()
 
-  override val storageManager = ProjectStateStorageManager(pathMacroManager.createTrackingSubstitutor(), project)
+    val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy()
+    if (element != null) {
+      (storageManager.getOrCreateStorage(StoragePathMacros.PROJECT_FILE) as XmlElementStorage).setDefaultState(element)
+    }
+  }
 
-  override fun setPath(filePath: String) {
+  override final fun getProjectBasePath(): String {
+    val path = PathUtilRt.getParentPath(projectFilePath)
+    return if (scheme == StorageScheme.DEFAULT) path else PathUtilRt.getParentPath(path)
+  }
+
+  // used in upsource
+  protected fun setPath(filePath: String, refreshVfs: Boolean, useOldWorkspaceContentIfExists: Boolean) {
     val storageManager = storageManager
     val fs = LocalFileSystem.getInstance()
     if (FileUtilRt.extensionEquals(filePath, ProjectFileType.DEFAULT_EXTENSION)) {
@@ -95,8 +101,10 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       val workspacePath = composeWsPath(filePath)
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspacePath)
 
-      invokeAndWaitIfNeed {
-        VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath))
+      if (refreshVfs) {
+        invokeAndWaitIfNeed {
+          VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath))
+        }
       }
 
       if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -108,35 +116,44 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       scheme = StorageScheme.DIRECTORY_BASED
 
       val file = File(filePath)
-      val dirStore = File(if (file.isDirectory) file else file.parentFile, Project.DIRECTORY_STORE_FOLDER)
-      val projectConfigDir = dirStore.systemIndependentPath
-      storageManager.addMacro(StoragePathMacros.PROJECT_FILE, "$projectConfigDir/misc.xml")
-      storageManager.addMacro(StoragePathMacros.PROJECT_CONFIG_DIR, projectConfigDir)
+      // if useOldWorkspaceContentIfExists false, so, file path is expected to be correct (we must avoid file io operations)
+      val isDir = !useOldWorkspaceContentIfExists || file.isDirectory
+      val configDir = "${(if (isDir) filePath else PathUtilRt.getParentPath(filePath))}/${Project.DIRECTORY_STORE_FOLDER}"
+      storageManager.addMacro(StoragePathMacros.PROJECT_CONFIG_DIR, configDir)
+      storageManager.addMacro(StoragePathMacros.PROJECT_FILE, "$configDir/misc.xml")
+      storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, "$configDir/workspace.xml")
 
-      val workspace = File(dirStore, "workspace.xml")
-      storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspace.systemIndependentPath)
-      if (!workspace.exists() && !file.isDirectory) {
-        useOldWorkspaceContent(filePath, workspace)
+
+      if (!isDir) {
+        val workspace = File(workspaceFilePath)
+        if (!workspace.exists()) {
+          useOldWorkspaceContent(filePath, workspace)
+        }
       }
-
-      invokeAndWaitIfNeed { VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByPath(projectConfigDir)) }
 
       if (ApplicationManager.getApplication().isUnitTestMode) {
         // load state only if there are existing files
-        isOptimiseTestLoadSpeed = !dirStore.exists()
+        isOptimiseTestLoadSpeed = !file.exists()
+      }
+
+      if (refreshVfs) {
+        invokeAndWaitIfNeed { VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByPath(configDir)) }
       }
     }
+  }
+}
 
-    presentableUrl = null
+private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {
+  init {
+    assert(!project.isDefault)
   }
 
-  override fun clearStorages() {
-    storageManager.clearStorages()
-  }
+  override final fun getPathMacroManagerForDefaults() = pathMacroManager
 
-  override fun getProjectBasePath(): String {
-    val path = PathUtilRt.getParentPath(projectFilePath)
-    return if (scheme == StorageScheme.DEFAULT) path else PathUtilRt.getParentPath(path)
+  override val storageManager = ProjectStateStorageManager(pathMacroManager.createTrackingSubstitutor(), project)
+
+  override fun setPath(filePath: String) {
+    setPath(filePath, true, true)
   }
 
   override fun getProjectName(): String {
@@ -170,26 +187,6 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
         temp = temp.substring(i + 1, temp.length() - i + 1)
       }
       return temp
-    }
-  }
-
-  override fun getPresentableUrl(): String? {
-    if (presentableUrl == null) {
-      presentableUrl = FileUtil.toSystemDependentName(if (scheme == StorageScheme.DIRECTORY_BASED) projectBasePath else projectFilePath)
-    }
-    return presentableUrl
-  }
-
-  override fun getProjectFile() = getProjectFileStorage().getVirtualFile()
-
-  private fun getProjectFileStorage() = storageManager.getOrCreateStorage(StoragePathMacros.PROJECT_FILE) as FileBasedStorage
-
-  override fun loadProjectFromTemplate(defaultProject: Project) {
-    defaultProject.save()
-
-    val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy()
-    if (element != null) {
-      getProjectFileStorage().setDefaultState(element)
     }
   }
 
@@ -260,26 +257,6 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
 
   companion object {
     private val DEFAULT_STORAGE_ANNOTATION = DefaultStorageAnnotation()
-
-    private fun composeWsPath(filePath: String): String {
-      val lastDot = filePath.lastIndexOf('.')
-      val filePathWithoutExt = if (lastDot > 0) filePath.substring(0, lastDot) else filePath
-      return "$filePathWithoutExt${WorkspaceFileType.DOT_DEFAULT_EXTENSION}"
-    }
-
-    private fun useOldWorkspaceContent(filePath: String, ws: File) {
-      val oldWs = File(composeWsPath(filePath))
-      if (!oldWs.exists()) {
-        return
-      }
-
-      try {
-        FileUtil.copyContent(oldWs, ws)
-      }
-      catch (e: IOException) {
-        LOG.error(e)
-      }
-    }
 
     private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles: Array<VirtualFile>) {
       val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
@@ -357,5 +334,21 @@ private class PlatformLangProjectStoreClassProvider : ProjectStoreClassProvider 
 private class PlatformProjectStoreClassProvider : ProjectStoreClassProvider {
   override fun getProjectStoreClass(isDefaultProject: Boolean): Class<out IComponentStore> {
     return if (isDefaultProject) DefaultProjectStoreImpl::class.java else ProjectStoreImpl::class.java
+  }
+}
+
+private fun composeWsPath(filePath: String) = "${FileUtilRt.getNameWithoutExtension(filePath)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}"
+
+private fun useOldWorkspaceContent(filePath: String, ws: File) {
+  val oldWs = File(composeWsPath(filePath))
+  if (!oldWs.exists()) {
+    return
+  }
+
+  try {
+    FileUtil.copyContent(oldWs, ws)
+  }
+  catch (e: IOException) {
+    LOG.error(e)
   }
 }

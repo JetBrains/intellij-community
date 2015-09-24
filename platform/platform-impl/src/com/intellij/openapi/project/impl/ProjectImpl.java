@@ -264,7 +264,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       // not yet initialized
       return null;
     }
-    return getStateStore().getPresentableUrl();
+
+    IProjectStore store = getStateStore();
+    String path = store.getStorageScheme() == StorageScheme.DIRECTORY_BASED ? store.getProjectBasePath() : store.getProjectFilePath();
+    return path == null ? null : FileUtil.toSystemDependentName(path);
   }
 
   @NotNull
