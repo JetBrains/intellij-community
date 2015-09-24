@@ -193,7 +193,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
     };
 
-    myTree = new FileStructureTree(myTreeStructure.getRootElement(), Registry.is("fast.tree.expand.in.structure.view"));
+    myTree = new FileStructureTree(myTreeStructure.getRootElement(), false);
 
     myTree.setCellRenderer(new NodeRenderer());
 
