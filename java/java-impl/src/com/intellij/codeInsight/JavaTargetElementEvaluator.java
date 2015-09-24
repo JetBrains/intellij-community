@@ -25,6 +25,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -318,7 +319,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
           @Nullable
           @Override
           public Result<SearchScope> compute() {
-            final List<PsiClass> classesToSearch = new ArrayList<PsiClass>();
+            final List<PsiClass> classesToSearch = ContainerUtil.newArrayList(memberClass);
             classesToSearch.addAll(ClassInheritorsSearch.search(memberClass[0], true).findAll());
 
             final Set<PsiClass> supers = new HashSet<PsiClass>();
