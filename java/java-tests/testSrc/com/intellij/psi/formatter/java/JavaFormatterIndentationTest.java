@@ -572,9 +572,9 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "                   this is a c-style comment\n" +
       "                 */\n" +
       "           // This is a line comment",
-      "            /*\n" +
-      "               this is a c-style comment\n" +
-      "             */\n" +
+      "/*\n" +
+      "   this is a c-style comment\n" +
+      " */\n" +
       "// This is a line comment"
     );
   }

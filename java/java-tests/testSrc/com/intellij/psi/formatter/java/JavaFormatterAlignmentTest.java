@@ -78,7 +78,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
                "        AAAAAA.b()\n" +
                "              .c()\n" +
                "              .d()\n" +
-               "          /* simple block comment */\n" +
+               "              /* simple block comment */\n" +
                "              .e();\n" +
                "    }\n" +
                "}");
