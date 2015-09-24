@@ -40,6 +40,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.StampedLock;
 
 public class ApplicationImplTest extends PlatformTestCase {
   @Override
@@ -159,6 +160,292 @@ public class ApplicationImplTest extends PlatformTestCase {
     finally {
       Disposer.dispose(disposable);
     }
+  }
+
+
+  public void _testStampLockReadWritePreference() throws Throwable {
+    // take read lock1.
+    // try to take write lock - must wait (because of taken read lock)
+    // try to take read lock2 - must wait (because of write preference - write lock is pending)
+    // release read lock1 - write lock must be taken first
+    // release write - read lock2 must be taken
+
+    StampedLock lock = new StampedLock();
+    AtomicBoolean holdRead1 = new AtomicBoolean(true);
+    AtomicBoolean holdWrite = new AtomicBoolean(true);
+    AtomicBoolean read1Acquired = new AtomicBoolean(false);
+    AtomicBoolean read1Released = new AtomicBoolean(false);
+    AtomicBoolean read2Acquired = new AtomicBoolean(false);
+    AtomicBoolean read2Released = new AtomicBoolean(false);
+    AtomicBoolean writeAcquired = new AtomicBoolean(false);
+    AtomicBoolean writeReleased = new AtomicBoolean(false);
+    Thread readAction1 = new Thread(() -> {
+      try {
+        assertFalse(ApplicationManager.getApplication().isDispatchThread());
+        long stamp = lock.readLock();
+        try {
+          System.out.println("read lock1 acquired");
+          read1Acquired.set(true);
+          while (holdRead1.get());
+        }
+        finally {
+          lock.unlockRead(stamp);
+          read1Released.set(true);
+          System.out.println("read lock1 released");
+        }
+      }
+      catch (Exception e) {
+        exception = e;
+        throw e;
+      }
+    }, "read lock1");
+    readAction1.start();
+
+    while (!read1Acquired.get());
+    AtomicBoolean aboutToAcquireWrite = new AtomicBoolean();
+    // readActions2 should try to acquire read action when write action is pending
+    Thread readActions2 = new Thread(() -> {
+      try {
+        assertFalse(ApplicationManager.getApplication().isDispatchThread());
+        while (!aboutToAcquireWrite.get());
+        TimeoutUtil.sleep(2000); // make sure it called writelock
+        long stamp = lock.readLock();
+        try {
+          System.out.println("read lock2 acquired");
+          read2Acquired.set(true);
+        }
+        finally {
+          lock.unlockRead(stamp);
+          read2Released.set(true);
+          System.out.println("read lock2 released");
+        }
+      }
+      catch (Exception e) {
+        exception = e;
+        throw e;
+      }
+    }, "read lock2");
+    readActions2.start();
+
+    Thread checkThread = new Thread(()->{
+      try {
+        assertFalse(ApplicationManager.getApplication().isDispatchThread());
+        while (!aboutToAcquireWrite.get());
+        while (!read1Acquired.get());
+        TimeoutUtil.sleep(2000); // make sure it called writelock
+
+        long timeout = System.currentTimeMillis() + 10000;
+        while (System.currentTimeMillis() < timeout) {
+          assertTrue(aboutToAcquireWrite.get());
+          assertTrue(read1Acquired.get());
+          assertFalse(read1Released.get());
+          assertFalse(read2Acquired.get());
+          assertFalse(read2Released.get());
+          assertFalse(writeAcquired.get());
+          assertFalse(writeReleased.get());
+
+          assertEquals(0, lock.tryReadLock());
+          assertEquals(0, lock.tryWriteLock());
+        }
+
+        holdRead1.set(false);
+        while (!writeAcquired.get());
+
+        timeout = System.currentTimeMillis() + 10000;
+        while (System.currentTimeMillis() < timeout) {
+          assertTrue(aboutToAcquireWrite.get());
+          assertTrue(read1Acquired.get());
+          assertTrue(read1Released.get());
+          assertFalse(read2Acquired.get());
+          assertFalse(read2Released.get());
+          assertTrue(writeAcquired.get());
+          assertFalse(writeReleased.get());
+
+          assertEquals(0, lock.tryReadLock());
+        }
+
+        holdWrite.set(false);
+
+        while (!read2Acquired.get());
+        TimeoutUtil.sleep(1000); // wait for immediate release of read lock2
+
+        timeout = System.currentTimeMillis() + 10000;
+        while (System.currentTimeMillis() < timeout) {
+          assertTrue(aboutToAcquireWrite.get());
+          assertTrue(read1Acquired.get());
+          assertTrue(read1Released.get());
+          assertTrue(read2Acquired.get());
+          assertTrue(read2Released.get());
+          assertTrue(writeAcquired.get());
+          assertTrue(writeReleased.get());
+        }
+      }
+      catch (Exception e) {
+        exception = e;
+        throw e;
+      }
+    }, "check");
+    checkThread.start();
+
+    aboutToAcquireWrite.set(true);
+    long stamp = lock.writeLock();
+    try {
+      System.out.println("write lock acquired");
+      writeAcquired.set(true);
+      while (holdWrite.get() && exception == null);
+    }
+    finally {
+      lock.unlockWrite(stamp);
+      writeReleased.set(true);
+      System.out.println("write lock released");
+    }
+
+    readAction1.join();
+    readActions2.join();
+    checkThread.join();
+    if (exception != null) throw exception;
+  }
+
+  public void testAppLockReadWritePreference() throws Throwable {
+    // take read lock1.
+    // try to take write lock - must wait (because of taken read lock)
+    // try to take read lock2 - must wait (because of write preference - write lock is pending)
+    // release read lock1 - write lock must be taken first
+    // release write - read lock2 must be taken
+
+    ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
+    AtomicBoolean holdRead1 = new AtomicBoolean(true);
+    AtomicBoolean holdWrite = new AtomicBoolean(true);
+    AtomicBoolean read1Acquired = new AtomicBoolean(false);
+    AtomicBoolean read1Released = new AtomicBoolean(false);
+    AtomicBoolean read2Acquired = new AtomicBoolean(false);
+    AtomicBoolean read2Released = new AtomicBoolean(false);
+    AtomicBoolean writeAcquired = new AtomicBoolean(false);
+    AtomicBoolean writeReleased = new AtomicBoolean(false);
+    Thread readAction1 = new Thread(() -> {
+      try {
+        assertFalse(ApplicationManager.getApplication().isDispatchThread());
+        AccessToken stamp = application.acquireReadActionLock();
+        try {
+          System.out.println("read lock1 acquired");
+          read1Acquired.set(true);
+          while (holdRead1.get());
+        }
+        finally {
+          stamp.finish();
+          read1Released.set(true);
+          System.out.println("read lock1 released");
+        }
+      }
+      catch (Exception e) {
+        exception = e;
+        throw e;
+      }
+    }, "read lock1");
+    readAction1.start();
+
+    while (!read1Acquired.get());
+    AtomicBoolean aboutToAcquireWrite = new AtomicBoolean();
+    // readActions2 should try to acquire read action when write action is pending
+    Thread readActions2 = new Thread(() -> {
+      try {
+        assertFalse(ApplicationManager.getApplication().isDispatchThread());
+        while (!aboutToAcquireWrite.get());
+        TimeoutUtil.sleep(2000); // make sure it called writelock
+        AccessToken stamp = application.acquireReadActionLock();
+        try {
+          System.out.println("read lock2 acquired");
+          read2Acquired.set(true);
+        }
+        finally {
+          stamp.finish();
+          read2Released.set(true);
+          System.out.println("read lock2 released");
+        }
+      }
+      catch (Exception e) {
+        exception = e;
+        throw e;
+      }
+    }, "read lock2");
+    readActions2.start();
+
+    Thread checkThread = new Thread(()->{
+      try {
+        assertFalse(ApplicationManager.getApplication().isDispatchThread());
+        while (!aboutToAcquireWrite.get());
+        while (!read1Acquired.get());
+        TimeoutUtil.sleep(2000); // make sure it called writelock
+
+        long timeout = System.currentTimeMillis() + 10000;
+        while (System.currentTimeMillis() < timeout) {
+          assertTrue(aboutToAcquireWrite.get());
+          assertTrue(read1Acquired.get());
+          assertFalse(read1Released.get());
+          assertFalse(read2Acquired.get());
+          assertFalse(read2Released.get());
+          assertFalse(writeAcquired.get());
+          assertFalse(writeReleased.get());
+
+          assertFalse(application.tryRunReadAction(EmptyRunnable.getInstance()));
+        }
+
+        holdRead1.set(false);
+        while (!writeAcquired.get());
+
+        timeout = System.currentTimeMillis() + 10000;
+        while (System.currentTimeMillis() < timeout) {
+          assertTrue(aboutToAcquireWrite.get());
+          assertTrue(read1Acquired.get());
+          assertTrue(read1Released.get());
+          assertFalse(read2Acquired.get());
+          assertFalse(read2Released.get());
+          assertTrue(writeAcquired.get());
+          assertFalse(writeReleased.get());
+
+          assertFalse(application.tryRunReadAction(EmptyRunnable.getInstance()));
+        }
+
+        holdWrite.set(false);
+
+        while (!read2Acquired.get());
+        TimeoutUtil.sleep(1000); // wait for immediate release of read lock2
+
+        timeout = System.currentTimeMillis() + 10000;
+        while (System.currentTimeMillis() < timeout) {
+          assertTrue(aboutToAcquireWrite.get());
+          assertTrue(read1Acquired.get());
+          assertTrue(read1Released.get());
+          assertTrue(read2Acquired.get());
+          assertTrue(read2Released.get());
+          assertTrue(writeAcquired.get());
+          assertTrue(writeReleased.get());
+        }
+      }
+      catch (Exception e) {
+        exception = e;
+        throw e;
+      }
+    }, "check");
+    checkThread.start();
+
+    aboutToAcquireWrite.set(true);
+    AccessToken stamp = application.acquireWriteActionLock(getClass());
+    try {
+      System.out.println("write lock acquired");
+      writeAcquired.set(true);
+      while (holdWrite.get() && exception == null);
+    }
+    finally {
+      stamp.finish();
+      writeReleased.set(true);
+      System.out.println("write lock released");
+    }
+
+    readAction1.join();
+    readActions2.join();
+    checkThread.join();
+    if (exception != null) throw exception;
   }
 
   private volatile boolean tryingToStartWriteAction;
