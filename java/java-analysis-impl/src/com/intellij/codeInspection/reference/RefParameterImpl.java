@@ -102,6 +102,15 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     return myIndex;
   }
 
+  @Override
+  public void buildReferences() {
+    final RefJavaUtil refUtil = RefJavaUtil.getInstance();
+    final PsiParameter parameter = getElement();
+    if (parameter != null) {
+      refUtil.addReferences(parameter, this, parameter.getModifierList());
+    }
+  }
+
   public void updateTemplateValue(PsiExpression expression) {
     if (myActualValueTemplate == null) return;
 
