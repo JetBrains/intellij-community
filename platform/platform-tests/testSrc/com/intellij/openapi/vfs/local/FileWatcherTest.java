@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Alarm;
-import com.intellij.util.Function;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -42,6 +41,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 
@@ -57,24 +58,6 @@ public class FileWatcherTest extends PlatformTestCase {
   private MessageBusConnection myConnection;
   private volatile boolean myAccept = false;
   private Alarm myAlarm;
-  private final Runnable myNotifier = new Runnable() {
-    @Override
-    public void run() {
-      LOG.debug("-- (event, expected=" + myAccept + ")");
-      if (!myAccept) return;
-      myAlarm.cancelAllRequests();
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          myAccept = false;
-          LOG.debug("** waiting finished");
-          synchronized (myWaiter) {
-            myWaiter.notifyAll();
-          }
-        }
-      }, INTER_RESPONSE_DELAY);
-    }
-  };
   private final Object myWaiter = new Object();
   private int myTimeout = NATIVE_PROCESS_DELAY;
   private final List<VFileEvent> myEvents = ContainerUtil.newArrayList();
@@ -92,7 +75,18 @@ public class FileWatcherTest extends PlatformTestCase {
     myWatcher = ((LocalFileSystemImpl)myFileSystem).getFileWatcher();
     assertNotNull(myWatcher);
     assertFalse(myWatcher.isOperational());
-    myWatcher.startup(myNotifier);
+    myWatcher.startup(() -> {
+      LOG.debug("-- (event, expected=" + myAccept + ")");
+      if (!myAccept) return;
+      myAlarm.cancelAllRequests();
+      myAlarm.addRequest(() -> {
+        myAccept = false;
+        LOG.debug("** waiting finished");
+        synchronized (myWaiter) {
+          myWaiter.notifyAll();
+        }
+      }, INTER_RESPONSE_DELAY);
+    });
     assertTrue(myWatcher.isOperational());
 
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getProject());
@@ -103,7 +97,7 @@ public class FileWatcherTest extends PlatformTestCase {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         synchronized (myEvents) {
-          myEvents.addAll(events);
+          events.stream().filter(VFileEvent::isFromRefresh).forEach(myEvents::add);
         }
       }
     });
@@ -113,7 +107,7 @@ public class FileWatcherTest extends PlatformTestCase {
     myAcceptedDirectories.clear();
     myAcceptedDirectories.add(getTempDirectory().getAbsolutePath());
 
-    LOG = NativeFileWatcherImpl.getLog();
+    LOG = Logger.getInstance(NativeFileWatcherImpl.class);
     LOG.debug("================== setting up " + getName() + " ==================");
   }
 
@@ -122,6 +116,8 @@ public class FileWatcherTest extends PlatformTestCase {
     LOG.debug("================== tearing down " + getName() + " ==================");
 
     try {
+      myAccept = false;
+      myAlarm.cancelAllRequests();
       myConnection.disconnect();
       myWatcher.shutdown();
       assertFalse(myWatcher.isOperational());
@@ -730,7 +726,6 @@ public class FileWatcherTest extends PlatformTestCase {
 
   public void testDisplacementByIsomorphicTree() throws Exception {
     if (SystemInfo.isMac) {
-      assertTrue("Kaboom", new GregorianCalendar(2015, Calendar.SEPTEMBER, 1).getTimeInMillis() > new Date().getTime());
       System.out.println("** skipped");
       return;
     }
@@ -770,20 +765,15 @@ public class FileWatcherTest extends PlatformTestCase {
     refresh(f1);
     refresh(f2);
 
-    final Ref<LocalFileSystem.WatchRequest> request = Ref.create(watch(dir1));
+    Ref<LocalFileSystem.WatchRequest> request = Ref.create(watch(dir1));
     try {
       myAccept = true;
       FileUtil.writeToFile(f1, "data");
       FileUtil.writeToFile(f2, "data");
       assertEvent(VFileContentChangeEvent.class, f1.getPath());
 
-      final String newRoot = dir2.getPath();
-      getEvents("events to replace watch root", new Runnable() {
-        @Override
-        public void run() {
-          request.set(myFileSystem.replaceWatchedRoot(request.get(), newRoot, true));
-        }
-      });
+      String newRoot = dir2.getPath();
+      getEvents("events to replace watch root", () -> request.set(myFileSystem.replaceWatchedRoot(request.get(), newRoot, true)));
 
       myAccept = true;
       FileUtil.writeToFile(f1, "more data");
@@ -801,26 +791,16 @@ public class FileWatcherTest extends PlatformTestCase {
   }
 
   @NotNull
-  private LocalFileSystem.WatchRequest watch(final File watchFile, final boolean recursive) {
-    final Ref<LocalFileSystem.WatchRequest> request = Ref.create();
-    getEvents("events to add watch " + watchFile, new Runnable() {
-      @Override
-      public void run() {
-        request.set(myFileSystem.addRootToWatch(watchFile.getPath(), recursive));
-      }
-    });
+  private LocalFileSystem.WatchRequest watch(File watchFile, boolean recursive) {
+    Ref<LocalFileSystem.WatchRequest> request = Ref.create();
+    getEvents("events to add watch " + watchFile, () -> request.set(myFileSystem.addRootToWatch(watchFile.getPath(), recursive)));
     assertFalse(request.isNull());
     assertFalse(myWatcher.isSettingRoots());
     return request.get();
   }
 
-  private void unwatch(final LocalFileSystem.WatchRequest... requests) {
-    getEvents("events to stop watching", new Runnable() {
-      @Override
-      public void run() {
-        myFileSystem.removeWatchedRoots(Arrays.asList(requests));
-      }
-    });
+  private void unwatch(LocalFileSystem.WatchRequest... requests) {
+    getEvents("events to stop watching", () -> myFileSystem.removeWatchedRoots(Arrays.asList(requests)));
   }
 
   private VirtualFile refresh(File file) {
@@ -905,12 +885,7 @@ public class FileWatcherTest extends PlatformTestCase {
     List<VFileEvent> events = getEvents(type.getSimpleName(), null);
     assertEquals(events.toString(), paths.length, events.size());
 
-    Set<String> pathSet = ContainerUtil.map2Set(paths, new Function<String, String>() {
-      @Override
-      public String fun(final String path) {
-        return FileUtil.toSystemIndependentName(path);
-      }
-    });
+    Set<String> pathSet = Stream.of(paths).map(FileUtil::toSystemIndependentName).collect(Collectors.toSet());
 
     for (VFileEvent event : events) {
       assertTrue(event.toString(), type.isInstance(event));

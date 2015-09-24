@@ -25,7 +25,7 @@
     </layout>
   </appender>
 
-  <category name="#com.intellij.openapi.vfs.impl.local.FileWatcher">
+  <category name="#com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl">
     <priority value="DEBUG"/>
     <appender-ref ref="CONSOLE-ALL"/>
   </category>
