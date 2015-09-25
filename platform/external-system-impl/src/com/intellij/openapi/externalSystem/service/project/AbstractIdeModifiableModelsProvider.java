@@ -416,7 +416,9 @@ public abstract class AbstractIdeModifiableModelsProvider implements IdeModifiab
       Disposer.dispose(each);
     }
 
-    myModifiableModuleModel.dispose();
+    if(myModifiableModuleModel != null) {
+      myModifiableModuleModel.dispose();
+    }
     if (myModifiableArtifactModel != null) {
       myModifiableArtifactModel.dispose();
     }
