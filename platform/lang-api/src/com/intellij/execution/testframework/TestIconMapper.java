@@ -37,6 +37,7 @@ public final class TestIconMapper implements PoolOfTestIcons {
       case IGNORED_INDEX -> IGNORED_ICON;
       case FAILED_INDEX -> FAILED_ICON;
       case ERROR_INDEX -> ERROR_ICON;
+      default -> null;  // Android Studio: added by Change Idd800a96
     };
   }
 

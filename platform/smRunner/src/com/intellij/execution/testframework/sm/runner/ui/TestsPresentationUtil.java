@@ -271,6 +271,7 @@ public final class TestsPresentationUtil {
       }
       case SKIPPED_INDEX -> hasErrors ? SKIPPED_E_ICON : SKIPPED_ICON;
       case TERMINATED_INDEX -> hasErrors ? TERMINATED_E_ICON : TERMINATED_ICON;
+      default -> null;  // Android Studio: added by Change Idd800a96
     };
   }
 

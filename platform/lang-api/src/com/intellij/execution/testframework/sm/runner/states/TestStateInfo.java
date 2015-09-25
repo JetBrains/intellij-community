@@ -62,8 +62,12 @@ public interface TestStateInfo {
     SKIPPED_INDEX(0, 1, ExecutionBundle.message("sm.test.runner.magnitude.skipped.failed.title")),
     COMPLETE_INDEX(1, 3, ExecutionBundle.message("sm.test.runner.magnitude.completed.failed.title")),
     NOT_RUN_INDEX(2, 0, ExecutionBundle.message("sm.test.runner.magnitude.not.run.failed.title")),
+    SCHEDULED_INDEX(3, 8, "Scheduled..."),  // Android Studio: used in com.google.gct.testing.results
     RUNNING_INDEX(3, 7, ExecutionBundle.message("sm.test.runner.magnitude.running.failed.title")),
     TERMINATED_INDEX(4, 6, ExecutionBundle.message("sm.test.runner.magnitude.terminated.failed.title")),
+    TIMEOUT_INDEX(4, 6, "Timed out"),  // Android Studio: used in com.google.gct.testing.results
+    INFRASTRUCTURE_FAILURE_INDEX(4, 6, "Infrastructure failure"),  // Android Studio: used in com.google.gct.testing.results
+    TRIGGERING_ERROR_INDEX(4, 6, "Triggering error"),  // Android Studio: used in com.google.gct.testing.results
     IGNORED_INDEX(5, 2, ExecutionBundle.message("sm.test.runner.magnitude.ignored.failed.title")),
     FAILED_INDEX(6, 4, ExecutionBundle.message("sm.test.runner.magnitude.assertion.failed.title")),
     ERROR_INDEX(8, 5, ExecutionBundle.message("sm.test.runner.magnitude.testerror.title")),
