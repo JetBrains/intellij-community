@@ -21,7 +21,9 @@ import com.intellij.openapi.actionSystem.RegistryToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,7 +36,19 @@ public class ShowTypesAction extends RegistryToggleAction {
 
   @Override
   public void doWhenDone(AnActionEvent e) {
-    XDebuggerUtilImpl.rebuildAllSessionsViews(e.getProject());
+    Project project = e.getProject();
+    if (project != null) {
+      if (e.getData(XDebugSessionTab.TAB_KEY) == null) {
+        XDebuggerTree tree = XDebuggerTree.getTree(e);
+        if (tree != null) {
+          tree.rebuildAndRestore(XDebuggerTreeState.saveState(tree));
+        }
+      }
+      XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+      if (session != null) {
+        session.rebuildViews();
+      }
+    }
   }
 
   @Override
