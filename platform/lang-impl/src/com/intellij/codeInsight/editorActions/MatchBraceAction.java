@@ -55,7 +55,7 @@ public class MatchBraceAction extends EditorAction {
 
       HighlighterIterator iterator = highlighter.createIterator(offset);
 
-      if (iterator.atEnd() || BraceMatchingUtil.isRBraceToken(iterator, text, fileType)) {
+      if (iterator.atEnd()) {
         offset--;
       }
       else if (!BraceMatchingUtil.isLBraceToken(iterator, text, fileType)) {
