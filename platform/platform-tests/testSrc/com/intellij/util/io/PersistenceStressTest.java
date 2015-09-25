@@ -49,6 +49,7 @@ public class PersistenceStressTest extends TestCase {
   private ExecutorService myThreadPool;
   private final List<PersistentHashMap<String, Record>> myMaps = new ArrayList<PersistentHashMap<String, Record>>();
   private final List<String> myKeys = new ArrayList<String>();
+  private PersistentStringEnumerator myEnumerator;
 
   public static class Record {
     public final int magnitude;
@@ -61,9 +62,10 @@ public class PersistenceStressTest extends TestCase {
   }
 
   public void testReadWrite() throws Exception {
+
     List<Future<Boolean>> futures = new ArrayList<Future<Boolean>>();
-    for (PersistentHashMap<String, Record> myMap : myMaps) {
-      Future<Boolean> submit = submit(myMap);
+    for (PersistentHashMap<String, Record> map : myMaps) {
+      Future<Boolean> submit = submit(map);
       futures.add(submit);
     }
     myThreadPool.submit(new Runnable() {
@@ -112,6 +114,7 @@ public class PersistenceStressTest extends TestCase {
         continue;
       }
       String key = myKeys.get(random.nextInt(myKeys.size()));
+      myEnumerator.enumerate(key);
       if (random.nextBoolean()) {
 //        for (int j = 0; j < 10; j++) {
           map.put(key, new Record(random.nextInt(), new Date()));
@@ -139,6 +142,9 @@ public class PersistenceStressTest extends TestCase {
       PersistentHashMap<String, Record> map = createMap(FileUtil.createTempFile("persistent", "map" + i));
       myMaps.add(map);
     }
+    PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
+    myEnumerator = new PersistentStringEnumerator(FileUtil.createTempFile("persistent", "enum"), storageLockContext);
+
     myThreadPool = Executors.newFixedThreadPool(myMaps.size() + 1);
   }
 
@@ -148,6 +154,7 @@ public class PersistenceStressTest extends TestCase {
     for (PersistentHashMap<String, Record> map : myMaps) {
       map.close();
     }
+    myEnumerator.close();
     myThreadPool.shutdown();
   }
 
