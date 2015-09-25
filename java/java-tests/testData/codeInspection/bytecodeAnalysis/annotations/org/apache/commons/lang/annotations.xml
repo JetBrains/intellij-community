@@ -1153,7 +1153,7 @@
   </item>
   <item name="org.apache.commons.lang.BooleanUtils boolean isNotFalse(java.lang.Boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
+      <val val="value=&quot;null-&gt;true&quot;,pure=true"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.BooleanUtils boolean isNotTrue(java.lang.Boolean) 0">
@@ -1161,7 +1161,7 @@
   </item>
   <item name="org.apache.commons.lang.BooleanUtils boolean isNotTrue(java.lang.Boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
+      <val val="value=&quot;null-&gt;true&quot;,pure=true"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.BooleanUtils boolean isTrue(java.lang.Boolean) 0">
@@ -2612,12 +2612,17 @@
   <item name="org.apache.commons.lang.StringUtils boolean isNotBlank(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
+  <item name="org.apache.commons.lang.StringUtils boolean isNotBlank(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.StringUtils boolean isNotEmpty(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.Nullable"/>
   </item>
   <item name="org.apache.commons.lang.StringUtils boolean isNotEmpty(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
+      <val val="value=&quot;null-&gt;false&quot;,pure=true"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils boolean isNumeric(java.lang.String) 0">
