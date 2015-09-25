@@ -24,6 +24,7 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
@@ -36,7 +37,6 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.checkin.BeforeCheckinDialogHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import org.jetbrains.settingsRepository.CommitToIcsDialog
@@ -166,8 +166,5 @@ private fun isProjectConfigFile(file: VirtualFile?, project: Project): Boolean {
   if (file == null) {
     return false
   }
-
-  val projectFile = project.projectFile
-  val projectConfigDir = projectFile?.parent
-  return projectConfigDir != null && VfsUtilCore.isAncestor(projectConfigDir, file, true)
+  return FileUtil.isAncestor(project.basePath!!, file.path, true)
 }

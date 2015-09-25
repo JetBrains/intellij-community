@@ -138,7 +138,7 @@ public class JavaStackFrame extends XStackFrame {
       xFrame.computeChildren(node);
       return;
     }
-    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext()) {
+    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext(), myDescriptor.getFrameProxy().threadProxy()) {
       @Override
       public Priority getPriority() {
         return Priority.NORMAL;

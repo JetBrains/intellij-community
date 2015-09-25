@@ -36,10 +36,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * User: anna
@@ -137,6 +134,8 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   @Override
   public synchronized void loadState(Element state) {
+    final Set<String> profileKeys = new HashSet<String>();
+    profileKeys.addAll(myProfiles.keySet());
     myProfiles.clear();
     XmlSerializer.deserializeInto(this, state);
     for (Element o : state.getChildren(PROFILE)) {
@@ -149,7 +148,11 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
         LOG.error(e);
       }
       profile.setProjectLevel(true);
-      myProfiles.put(profile.getName(), profile);
+      if (profileKeys.contains(profile.getName())) {
+        updateProfile(profile);
+      } else {
+        myProfiles.put(profile.getName(), profile);
+      }
     }
     if (state.getChild("version") == null || !Comparing.strEqual(state.getChild("version").getAttributeValue("value"), VERSION)) {
       boolean toConvert = true;

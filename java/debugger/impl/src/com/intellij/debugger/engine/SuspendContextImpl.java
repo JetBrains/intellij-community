@@ -26,7 +26,6 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.HashSet;
-import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
@@ -229,15 +228,18 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   @Nullable
   @Override
-  public XExecutionStack getActiveExecutionStack() {
+  public JavaExecutionStack getActiveExecutionStack() {
     return myActiveExecutionStack;
   }
 
-  public void initExecutionStacks(ThreadReferenceProxyImpl newThread) {
+  public void initExecutionStacks(ThreadReferenceProxyImpl activeThread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    myThread = newThread;
-    if (newThread != null) {
-      myActiveExecutionStack = new JavaExecutionStack(newThread, myDebugProcess, true);
+    if (myThread == null) {
+      myThread = activeThread;
+    }
+    if (activeThread != null) {
+      myActiveExecutionStack = new JavaExecutionStack(activeThread, myDebugProcess, myThread == activeThread);
+      myActiveExecutionStack.initTopFrame();
     }
   }
 

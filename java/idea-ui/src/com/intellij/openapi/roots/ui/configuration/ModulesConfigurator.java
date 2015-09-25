@@ -55,6 +55,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -486,7 +487,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     List<ModifiableRootModel> modifiableRootModels = new ArrayList<ModifiableRootModel>();
     for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
       final ModifiableRootModel modifiableRootModel = moduleEditor.getModifiableRootModelProxy();
-      modifiableRootModels.add(modifiableRootModel);
+      ContainerUtil.addIfNotNull(modifiableRootModels, modifiableRootModel);
     }
 
     // destroyProcess editor

@@ -77,12 +77,9 @@ public interface Project extends ComponentManager, AreaInstance {
   VirtualFile getProjectFile();
 
   /**
-   * Returns a system-dependent path to project descriptor file (see {@linkplain #getProjectFile()}).<br/>
-   * Returns empty string (<code>""</code>) for default project.
-   *
-   * @return project descriptor file, or empty string for default project
+   * @return a system-independent path to project file (see {@linkplain #getProjectFile()}) or <code>null</code> for default project.
    */
-  @NotNull
+  @Nullable
   @NonNls
   String getProjectFilePath();
 

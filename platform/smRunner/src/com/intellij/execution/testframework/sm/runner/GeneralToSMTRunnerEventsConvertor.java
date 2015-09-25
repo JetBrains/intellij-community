@@ -332,6 +332,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         if (mySuite != null) {
           mySuite.setFinished();
           myCurrentChildren.clear();
+          myGetChildren = true;
 
           //fire events
           fireOnSuiteFinished(mySuite);
@@ -520,6 +521,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     // current suite shouldn't be null otherwise test runner isn't correct
     // or may be we are in debug mode
     logProblem("Current suite is undefined. Root suite will be used.");
+    myGetChildren = true;
     return myTestsRootNode;
 
   }

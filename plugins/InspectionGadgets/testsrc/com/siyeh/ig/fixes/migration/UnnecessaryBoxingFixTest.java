@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,36 @@ public class UnnecessaryBoxingFixTest extends IGQuickFixesTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new UnnecessaryBoxingInspection());
+  }
+
+  public void testLiteral1() {
+    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+                     "Long l = new/**/ Long(1);",
+                     "Long l = 1L;");
+  }
+
+  public void testLiteral2() {
+    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+                 "Float l = new/**/ Float(1);",
+                 "Float l = 1f;");
+  }
+
+  public void testLiteral3() {
+    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+                 "Float l = new/**/ Float(1.0);",
+                 "Float l = 1.0f;");
+  }
+
+  public void testLiteral4() {
+    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+                 "Float l = new/**/ Float(1d);",
+                 "Float l = (float) 1d;");
+  }
+
+  public void testLiteral5() {
+    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+                 "Double l = new/**/ Double(1);",
+                 "Double l = 1d;");
   }
 
   public void testCast() {

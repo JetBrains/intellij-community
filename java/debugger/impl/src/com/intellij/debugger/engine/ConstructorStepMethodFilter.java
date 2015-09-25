@@ -22,7 +22,11 @@ import com.intellij.util.Range;
  * @author egor
  */
 public class ConstructorStepMethodFilter extends BasicStepMethodFilter {
+  public ConstructorStepMethodFilter(JVMName classJvmName, Range<Integer> callingExpressionLines) {
+    super(classJvmName, JVMNameUtil.CONSTRUCTOR_NAME, null, callingExpressionLines);
+  }
+
   public ConstructorStepMethodFilter(PsiClass psiClass, Range<Integer> callingExpressionLines) {
-    super(JVMNameUtil.getJVMQualifiedName(psiClass), JVMNameUtil.CONSTRUCTOR_NAME, null, callingExpressionLines);
+    this(JVMNameUtil.getJVMQualifiedName(psiClass), callingExpressionLines);
   }
 }

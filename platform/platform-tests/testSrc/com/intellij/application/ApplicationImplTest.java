@@ -15,6 +15,7 @@
  */
 package com.intellij.application;
 
+import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
@@ -52,6 +53,7 @@ public class ApplicationImplTest extends PlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     exception = null;
+    timeOut = System.currentTimeMillis() + 2*60*1000;
   }
 
   private volatile Throwable exception;
@@ -105,8 +107,8 @@ public class ApplicationImplTest extends PlatformTestCase {
   }
 
 
-  public void testReadWriteLockPerformance() throws InterruptedException {
-    int iterations = Timings.adjustAccordingToMySpeed(300000, true);
+  public void testRead50Write50LockPerformance() throws InterruptedException {
+    int iterations = Timings.adjustAccordingToMySpeed(400000, true);
     System.out.println("iterations = " + iterations);
     final int readIterations = iterations;
     final int writeIterations = iterations;
@@ -114,8 +116,8 @@ public class ApplicationImplTest extends PlatformTestCase {
     runReadWrites(readIterations, writeIterations, 2000);
   }
 
-  public void testReadLockPerformance() throws InterruptedException {
-    int iterations = Timings.adjustAccordingToMySpeed(300000, true);
+  public void testRead100Write0LockPerformance() throws InterruptedException {
+    int iterations = Timings.adjustAccordingToMySpeed(400000, true);
     System.out.println("iterations = " + iterations);
     final int readIterations = iterations;
     final int writeIterations = 0;
@@ -129,7 +131,7 @@ public class ApplicationImplTest extends PlatformTestCase {
     application.disableEventsUntil(disposable);
 
     try {
-      final int numOfThreads = 10;
+      final int numOfThreads = JobSchedulerImpl.CORES_COUNT;
       PlatformTestUtil.startPerformanceTest("lock performance", expectedMs, () -> {
         final CountDownLatch reads = new CountDownLatch(numOfThreads);
         for (int i = 0; i < numOfThreads; i++) {
@@ -155,7 +157,7 @@ public class ApplicationImplTest extends PlatformTestCase {
           System.out.println("write end");
         }
         reads.await();
-      }).assertTiming();
+      }).cpuBound().assertTiming();
     }
     finally {
       Disposer.dispose(disposable);
@@ -186,7 +188,7 @@ public class ApplicationImplTest extends PlatformTestCase {
         try {
           System.out.println("read lock1 acquired");
           read1Acquired.set(true);
-          while (holdRead1.get());
+          while (holdRead1.get() && ok());
         }
         finally {
           lock.unlockRead(stamp);
@@ -194,20 +196,20 @@ public class ApplicationImplTest extends PlatformTestCase {
           System.out.println("read lock1 released");
         }
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         exception = e;
-        throw e;
+        throw new RuntimeException(e);
       }
     }, "read lock1");
     readAction1.start();
 
-    while (!read1Acquired.get());
+    while (!read1Acquired.get() && ok());
     AtomicBoolean aboutToAcquireWrite = new AtomicBoolean();
     // readActions2 should try to acquire read action when write action is pending
     Thread readActions2 = new Thread(() -> {
       try {
         assertFalse(ApplicationManager.getApplication().isDispatchThread());
-        while (!aboutToAcquireWrite.get());
+        while (!aboutToAcquireWrite.get() && ok());
         TimeoutUtil.sleep(2000); // make sure it called writelock
         long stamp = lock.readLock();
         try {
@@ -220,9 +222,9 @@ public class ApplicationImplTest extends PlatformTestCase {
           System.out.println("read lock2 released");
         }
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         exception = e;
-        throw e;
+        throw new RuntimeException(e);
       }
     }, "read lock2");
     readActions2.start();
@@ -230,12 +232,12 @@ public class ApplicationImplTest extends PlatformTestCase {
     Thread checkThread = new Thread(()->{
       try {
         assertFalse(ApplicationManager.getApplication().isDispatchThread());
-        while (!aboutToAcquireWrite.get());
-        while (!read1Acquired.get());
+        while (!aboutToAcquireWrite.get() && ok());
+        while (!read1Acquired.get() && ok());
         TimeoutUtil.sleep(2000); // make sure it called writelock
 
         long timeout = System.currentTimeMillis() + 10000;
-        while (System.currentTimeMillis() < timeout) {
+        while (System.currentTimeMillis() < timeout && ok()) {
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
           assertFalse(read1Released.get());
@@ -249,10 +251,10 @@ public class ApplicationImplTest extends PlatformTestCase {
         }
 
         holdRead1.set(false);
-        while (!writeAcquired.get());
+        while (!writeAcquired.get() && ok());
 
         timeout = System.currentTimeMillis() + 10000;
-        while (System.currentTimeMillis() < timeout) {
+        while (System.currentTimeMillis() < timeout && ok()) {
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
           assertTrue(read1Released.get());
@@ -266,11 +268,11 @@ public class ApplicationImplTest extends PlatformTestCase {
 
         holdWrite.set(false);
 
-        while (!read2Acquired.get());
+        while (!read2Acquired.get() && ok());
         TimeoutUtil.sleep(1000); // wait for immediate release of read lock2
 
         timeout = System.currentTimeMillis() + 10000;
-        while (System.currentTimeMillis() < timeout) {
+        while (System.currentTimeMillis() < timeout && ok()) {
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
           assertTrue(read1Released.get());
@@ -280,9 +282,9 @@ public class ApplicationImplTest extends PlatformTestCase {
           assertTrue(writeReleased.get());
         }
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         exception = e;
-        throw e;
+        throw new RuntimeException(e);
       }
     }, "check");
     checkThread.start();
@@ -292,7 +294,7 @@ public class ApplicationImplTest extends PlatformTestCase {
     try {
       System.out.println("write lock acquired");
       writeAcquired.set(true);
-      while (holdWrite.get() && exception == null);
+      while (holdWrite.get() && ok());
     }
     finally {
       lock.unlockWrite(stamp);
@@ -304,6 +306,12 @@ public class ApplicationImplTest extends PlatformTestCase {
     readActions2.join();
     checkThread.join();
     if (exception != null) throw exception;
+  }
+
+  private static long timeOut;
+  private boolean ok() throws Throwable {
+    if (exception != null) throw exception;
+    return System.currentTimeMillis() < timeOut;
   }
 
   public void testAppLockReadWritePreference() throws Throwable {
@@ -329,7 +337,7 @@ public class ApplicationImplTest extends PlatformTestCase {
         try {
           System.out.println("read lock1 acquired");
           read1Acquired.set(true);
-          while (holdRead1.get());
+          while (holdRead1.get() && ok());
         }
         finally {
           stamp.finish();
@@ -337,20 +345,20 @@ public class ApplicationImplTest extends PlatformTestCase {
           System.out.println("read lock1 released");
         }
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         exception = e;
-        throw e;
+        throw new RuntimeException(e);
       }
     }, "read lock1");
     readAction1.start();
 
-    while (!read1Acquired.get());
+    while (!read1Acquired.get() && ok());
     AtomicBoolean aboutToAcquireWrite = new AtomicBoolean();
     // readActions2 should try to acquire read action when write action is pending
     Thread readActions2 = new Thread(() -> {
       try {
         assertFalse(ApplicationManager.getApplication().isDispatchThread());
-        while (!aboutToAcquireWrite.get());
+        while (!aboutToAcquireWrite.get() && ok());
         TimeoutUtil.sleep(2000); // make sure it called writelock
         AccessToken stamp = application.acquireReadActionLock();
         try {
@@ -363,9 +371,9 @@ public class ApplicationImplTest extends PlatformTestCase {
           System.out.println("read lock2 released");
         }
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         exception = e;
-        throw e;
+        throw new RuntimeException(e);
       }
     }, "read lock2");
     readActions2.start();
@@ -373,12 +381,12 @@ public class ApplicationImplTest extends PlatformTestCase {
     Thread checkThread = new Thread(()->{
       try {
         assertFalse(ApplicationManager.getApplication().isDispatchThread());
-        while (!aboutToAcquireWrite.get());
-        while (!read1Acquired.get());
+        while (!aboutToAcquireWrite.get() && ok());
+        while (!read1Acquired.get() && ok());
         TimeoutUtil.sleep(2000); // make sure it called writelock
 
         long timeout = System.currentTimeMillis() + 10000;
-        while (System.currentTimeMillis() < timeout) {
+        while (System.currentTimeMillis() < timeout && ok()) {
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
           assertFalse(read1Released.get());
@@ -391,10 +399,10 @@ public class ApplicationImplTest extends PlatformTestCase {
         }
 
         holdRead1.set(false);
-        while (!writeAcquired.get());
+        while (!writeAcquired.get() && ok());
 
         timeout = System.currentTimeMillis() + 10000;
-        while (System.currentTimeMillis() < timeout) {
+        while (System.currentTimeMillis() < timeout && ok()) {
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
           assertTrue(read1Released.get());
@@ -408,11 +416,11 @@ public class ApplicationImplTest extends PlatformTestCase {
 
         holdWrite.set(false);
 
-        while (!read2Acquired.get());
+        while (!read2Acquired.get() && ok());
         TimeoutUtil.sleep(1000); // wait for immediate release of read lock2
 
         timeout = System.currentTimeMillis() + 10000;
-        while (System.currentTimeMillis() < timeout) {
+        while (System.currentTimeMillis() < timeout && ok()) {
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
           assertTrue(read1Released.get());
@@ -422,9 +430,9 @@ public class ApplicationImplTest extends PlatformTestCase {
           assertTrue(writeReleased.get());
         }
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         exception = e;
-        throw e;
+        throw new RuntimeException(e);
       }
     }, "check");
     checkThread.start();
@@ -434,7 +442,7 @@ public class ApplicationImplTest extends PlatformTestCase {
     try {
       System.out.println("write lock acquired");
       writeAcquired.set(true);
-      while (holdWrite.get() && exception == null);
+      while (holdWrite.get()  && ok());
     }
     finally {
       stamp.finish();
@@ -461,10 +469,10 @@ public class ApplicationImplTest extends PlatformTestCase {
     final StringBuffer LOG = new StringBuffer();
     new Thread(() -> {
       try {
-        ApplicationManager.getApplication().runReadAction(() -> {
+        ApplicationManager.getApplication().runReadAction((ThrowableComputable<Object, Throwable>)() -> {
           LOG.append("inside read action\n");
           readStarted = true;
-          while (!tryingToStartWriteAction);
+          while (!tryingToStartWriteAction && ok());
           TimeoutUtil.sleep(100);
 
           for (int i = 0; i < anotherReadActionStarted.length; i++) {
@@ -489,7 +497,7 @@ public class ApplicationImplTest extends PlatformTestCase {
           }
 
           for (AtomicBoolean threadStarted : anotherThreadStarted) {
-            while (!threadStarted.get()) ;
+            while (!threadStarted.get() && ok()) ;
           }
           // now the other threads try to get read lock. we should not let them
           for (int i=0; i<10; i++) {
@@ -499,6 +507,7 @@ public class ApplicationImplTest extends PlatformTestCase {
             TimeoutUtil.sleep(20);
           }
           LOG.append("\nfinished read action");
+          return null;
         });
       }
       catch (Throwable e) {
@@ -507,7 +516,7 @@ public class ApplicationImplTest extends PlatformTestCase {
     }, "read").start();
 
 
-    while (!readStarted);
+    while (!readStarted && ok());
     tryingToStartWriteAction = true;
     LOG.append("\nwrite about to start");
     ApplicationManager.getApplication().runWriteAction(() -> {

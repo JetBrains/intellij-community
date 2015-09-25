@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
@@ -28,15 +29,15 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.impl.SystemDock;
+import com.intellij.openapi.wm.impl.welcomeScreen.NewRecentProjectPanel;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ImageLoader;
@@ -402,6 +403,33 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     }
 
     if (addClearListItem) {
+      AnAction manageAction = new DumbAwareAction("Manage projects...") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          Disposable disposable = new Disposable() {
+            @Override
+            public void dispose() {
+            }
+          };
+          NewRecentProjectPanel panel = new NewRecentProjectPanel(disposable);
+          JList list = UIUtil.findComponentOfType(panel, JList.class);
+          JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)
+            .setTitle("Recent Projects")
+            .setFocusable(true)
+
+            .setMovable(true)
+            .createPopup();
+          Disposer.register(disposable, popup);
+          popup.showCenteredInCurrentWindow(e.getProject());
+          //IdeFocusManager.getGlobalInstance().requestFocus(list, true);
+        }
+      };
+
+      if (Registry.is("ide.manage.recent.project.action.available")) {
+        actions.add(0, manageAction);
+        actions.add(1, Separator.getInstance());
+      }
+
       AnAction clearListAction = new DumbAwareAction(IdeBundle.message("action.clear.list")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {

@@ -72,9 +72,9 @@ public class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public String getProjectFilePath() {
-    return "";
+    return null;
   }
 
   @Override

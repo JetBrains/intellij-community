@@ -19,9 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -131,15 +129,17 @@ public class GitPullDialog extends DialogWrapper {
   @Nullable
   private Collection<String> getRemoteBranches(@NotNull final GitRemote remote) {
     final Ref<GitCommandResult> result = Ref.create();
-    ProgressManager.getInstance().run(new Task.Modal(myProject, GitBundle.getString("pull.getting.remote.branches"), true) {
+    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
+      public void run() {
         result.set(myGit.lsRemote(GitPullDialog.this.myProject, gitRoot(), remote, "--heads"));
       }
-    });
+    }, GitBundle.getString("pull.getting.remote.branches"), true, myProject);
 
-    if (!result.isNull() && result.get().success()) {
+    if (!completed) {
+      return null;
+    }
+    else if (!result.isNull() && result.get().success()) {
       try {
         return parseRemoteBranches(remote, result.get().getOutput());
       }

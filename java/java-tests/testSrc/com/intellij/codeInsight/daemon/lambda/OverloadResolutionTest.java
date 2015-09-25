@@ -146,6 +146,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIgnoreCandidatesWithLowerApplicabilityLevel() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }

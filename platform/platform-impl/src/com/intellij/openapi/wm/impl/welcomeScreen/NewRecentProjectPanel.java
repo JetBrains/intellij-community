@@ -16,12 +16,12 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
-import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -44,8 +44,8 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class NewRecentProjectPanel extends RecentProjectPanel {
-  public NewRecentProjectPanel(WelcomeScreen screen) {
-    super(screen);
+  public NewRecentProjectPanel(Disposable parentDisposable) {
+    super(parentDisposable);
     setBorder(null);
     setBackground(FlatWelcomeFrame.getProjectsBackground());
     JScrollPane scrollPane = UIUtil.findComponentOfType(this, JScrollPane.class);

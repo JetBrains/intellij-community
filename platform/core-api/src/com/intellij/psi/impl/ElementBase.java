@@ -86,9 +86,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (!(this instanceof PsiElement)) return null;
 
     try {
-      Icon icon = computeIcon(flags);
-      LastComputedIcon.put(this, icon, flags);
-      return icon;
+      return computeIcon(flags);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -108,18 +106,17 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (!psiElement.isValid()) return null;
 
     if (Registry.is("psi.deferIconLoading")) {
-      Icon baseIcon = LastComputedIcon.get(psiElement, flags);
-      if (baseIcon == null) {
-        TIntObjectHashMap<Icon> cache = getUserData(BASE_ICONS);
-        if (cache == null) {
-          cache = putUserDataIfAbsent(BASE_ICONS, new TIntObjectHashMap<Icon>());
+      TIntObjectHashMap<Icon> cache = getUserData(BASE_ICONS);
+      if (cache == null) {
+        cache = putUserDataIfAbsent(BASE_ICONS, new TIntObjectHashMap<Icon>());
+      }
+      Icon baseIcon;
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (cache) {
+        if (!cache.containsKey(flags)) {
+          cache.put(flags, computeBaseIcon(flags));
         }
-        synchronized (cache) {
-          if (!cache.containsKey(flags)) {
-            cache.put(flags, computeBaseIcon(flags));
-          }
-          baseIcon = cache.get(flags);
-        }
+        baseIcon = cache.get(flags);
       }
       return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, flags), ICON_COMPUTE);
     }

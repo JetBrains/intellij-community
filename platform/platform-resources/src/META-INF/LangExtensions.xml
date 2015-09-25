@@ -725,27 +725,6 @@
 
     <liveTemplateContext id="OTHER" implementation="com.intellij.codeInsight.template.EverywhereContextType" order="last"/>
 
-    <!-- Graph API -->
-    <applicationService serviceInterface="com.intellij.openapi.graph.GraphManager"
-                        serviceImplementation="com.intellij.openapi.graph.impl.GraphManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.graph.builder.util.NodeFactory"
-                        serviceImplementation="com.intellij.openapi.graph.impl.builder.NodeFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.graph.builder.util.CustomGraphActionsFactory"
-                        serviceImplementation="com.intellij.openapi.graph.impl.builder.util.CustomGraphActionsFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.graph.GraphPeerFactory"
-                        serviceImplementation="com.intellij.openapi.graph.impl.GraphPeerFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.graph.GraphSvgExporter"
-                        serviceImplementation="com.intellij.openapi.graph.impl.GraphSvgExporterImpl"/>
-
-    <projectService serviceInterface="com.intellij.openapi.graph.builder.GraphBuilderFactory"
-                    serviceImplementation="com.intellij.openapi.graph.impl.builder.GraphBuilderFactoryImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.graph.builder.dnd.ProjectViewDnDHelper"
-                    serviceImplementation="com.intellij.openapi.graph.impl.builder.dnd.ProjectViewDnDHelperImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.graph.settings.GraphSettingsProvider"
-                    serviceImplementation="com.intellij.openapi.graph.impl.builder.GraphSettingsProviderImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.graph.impl.builder.GraphEditModeFactory"
-                    serviceImplementation="com.intellij.openapi.graph.impl.builder.GraphEditModeFactoryImpl"/>
-
     <dynamicContextProvider implementation="com.intellij.openapi.paths.GenericDynamicContextProvider"/>
 
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GeneralCodeStyleSettingsProvider"/>

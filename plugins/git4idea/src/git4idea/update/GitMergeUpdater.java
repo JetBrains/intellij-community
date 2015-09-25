@@ -17,6 +17,7 @@ package git4idea.update;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -47,8 +48,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
+import static java.util.Arrays.asList;
 
 /**
  * Handles <code>git pull</code> via merge.
@@ -72,47 +74,32 @@ public class GitMergeUpdater extends GitUpdater {
   protected GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
     final GitMerger merger = new GitMerger(myProject);
-    final GitLineHandler mergeHandler = new GitLineHandler(myProject, myRoot, GitCommand.MERGE);
-    mergeHandler.addParameters("--no-stat", "-v");
-    mergeHandler.addParameters(myTrackedBranches.get(myRoot).getDest().getName());
 
-    final MergeLineListener mergeLineListener = new MergeLineListener();
-    mergeHandler.addLineListener(mergeLineListener);
+    MergeLineListener mergeLineListener = new MergeLineListener();
     GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(myRoot);
-    mergeHandler.addLineListener(untrackedFilesDetector);
 
-    String progressTitle = makeProgressTitle("Merging");
-    final GitTask mergeTask = new GitTask(myProject, mergeHandler, progressTitle);
-    mergeTask.setProgressIndicator(myProgressIndicator);
-    mergeTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
-    final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
-    final AtomicBoolean failure = new AtomicBoolean();
-    mergeTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
-      @Override protected void onSuccess() {
-        updateResult.set(GitUpdateResult.SUCCESS);
-      }
-
-      @Override protected void onCancel() {
-        cancel();
-        updateResult.set(GitUpdateResult.CANCEL);
-      }
-
-      @Override protected void onFailure() {
-        failure.set(true);
-      }
-    });
-
-    if (failure.get()) {
-      updateResult.set(handleMergeFailure(mergeLineListener, untrackedFilesDetector, merger, mergeHandler));
+    String originalText = myProgressIndicator.getText();
+    myProgressIndicator.setText("Merging" + GitUtil.mention(myRepository) + "...");
+    try {
+      GitCommandResult result = myGit.merge(myRepository, assertNotNull(myTrackedBranches.get(myRoot).getDest()).getName(),
+                                            asList("--no-stat", "-v"), mergeLineListener, untrackedFilesDetector,
+                                            GitStandardProgressAnalyzer.createListener(myProgressIndicator));
+      myProgressIndicator.setText(originalText);
+      return result.success()
+             ? GitUpdateResult.SUCCESS
+             : handleMergeFailure(mergeLineListener, untrackedFilesDetector, merger, result.getErrorOutputAsJoinedString());
     }
-    return updateResult.get();
+    catch (ProcessCanceledException pce) {
+      cancel();
+      return GitUpdateResult.CANCEL;
+    }
   }
 
   @NotNull
   private GitUpdateResult handleMergeFailure(MergeLineListener mergeLineListener,
                                              GitMessageWithFilesDetector untrackedFilesWouldBeOverwrittenByMergeDetector,
                                              final GitMerger merger,
-                                             GitLineHandler mergeHandler) {
+                                             String errorMessage) {
     final MergeError error = mergeLineListener.getMergeError();
     LOG.info("merge error: " + error);
     if (error == MergeError.CONFLICT) {
@@ -147,9 +134,8 @@ public class GitMergeUpdater extends GitUpdater {
       return GitUpdateResult.ERROR;
     }
     else {
-      String errors = GitUIUtil.stringifyErrors(mergeHandler.errors());
-      LOG.info("Unknown error: " + errors);
-      GitUIUtil.notifyImportantError(myProject, "Error merging", errors);
+      LOG.info("Unknown error: " + errorMessage);
+      GitUIUtil.notifyImportantError(myProject, "Error merging", errorMessage);
       return GitUpdateResult.ERROR;
     }
   }

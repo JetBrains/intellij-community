@@ -2,7 +2,7 @@
     <name>TestNG-J</name>
     <description>TestNG Integration</description>
     <version>8.0</version>
-    <vendor>Theory In Practice</vendor>
+    <vendor>Theory In Practice, JetBrains</vendor>
     <depends>com.intellij.java-i18n</depends>
     <extensions defaultExtensionNs="com.intellij">
         <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
