@@ -126,7 +126,9 @@ public class UnifiedDiffWriter {
     writer.write(prefix + " ");
     writer.write(revisionPath);
     writer.write("\t");
-    writer.write(revisionName);
+    if (!StringUtil.isEmptyOrSpaces(revisionName)) {
+      writer.write(revisionName);
+    }
     writer.write(lineSeparator);
   }
 
