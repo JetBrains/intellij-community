@@ -182,7 +182,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
     return result;
   }
 
-  protected static class RootsSelection {
+  public static class RootsSelection {
     public static final RootsSelection EMPTY = new RootsSelection();
 
     public List<SourceFolder> mySelectedRoots = new ArrayList<SourceFolder>();
