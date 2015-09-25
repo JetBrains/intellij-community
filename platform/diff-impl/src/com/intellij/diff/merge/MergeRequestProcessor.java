@@ -67,9 +67,10 @@ public abstract class MergeRequestProcessor implements Disposable {
   @NotNull private final Wrapper myToolbarStatusPanel;
 
   @NotNull private final MergeRequest myRequest;
-  @NotNull private final MergeTool.MergeViewer myViewer;
 
+  @NotNull private MergeTool.MergeViewer myViewer;
   @Nullable private BooleanGetter myCloseHandler;
+  @Nullable private BottomActions myBottomActions;
   private boolean myConflictResolved = false;
 
   public MergeRequestProcessor(@Nullable Project project, @NotNull MergeRequest request) {
@@ -115,24 +116,40 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   @CalledInAwt
   public void init() {
-    myContentPanel.setContent(myViewer.getComponent());
     setTitle(myRequest.getTitle());
+    initViewer();
+  }
+
+  @CalledInAwt
+  private void initViewer() {
+    myContentPanel.setContent(myViewer.getComponent());
 
     MergeTool.ToolbarComponents toolbarComponents = myViewer.init();
 
     buildToolbar(toolbarComponents.toolbarActions);
     myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
     myCloseHandler = toolbarComponents.closeHandler;
+
+    myBottomActions = new BottomActions();
+    myBottomActions.applyLeft = myViewer.getResolveAction(MergeResult.LEFT);
+    myBottomActions.applyRight = myViewer.getResolveAction(MergeResult.RIGHT);
+    myBottomActions.resolveAction = myViewer.getResolveAction(MergeResult.RESOLVED);
+    myBottomActions.cancelAction = myViewer.getResolveAction(MergeResult.CANCEL);
+
+    rebuildBottomActions();
   }
 
-  @NotNull
-  public BottomActions getBottomActions() {
-    BottomActions actions = new BottomActions();
-    actions.applyLeft = myViewer.getResolveAction(MergeResult.LEFT);
-    actions.applyRight = myViewer.getResolveAction(MergeResult.RIGHT);
-    actions.resolveAction = myViewer.getResolveAction(MergeResult.RESOLVED);
-    actions.cancelAction = myViewer.getResolveAction(MergeResult.CANCEL);
-    return actions;
+  @CalledInAwt
+  private void destroyViewer() {
+    Disposer.dispose(myViewer);
+
+    myMainPanel.putClientProperty(AnAction.ourClientProperty, null);
+
+    myContentPanel.setContent(null);
+    myToolbarPanel.setContent(null);
+    myToolbarStatusPanel.setContent(null);
+    myCloseHandler = null;
+    myBottomActions = null;
   }
 
   @NotNull
@@ -197,11 +214,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
         onDispose();
 
-        Disposer.dispose(myViewer);
-
-        myToolbarStatusPanel.setContent(null);
-        myToolbarPanel.setContent(null);
-        myContentPanel.setContent(null);
+        destroyViewer();
       }
     });
   }
@@ -218,6 +231,36 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
   }
 
+  @CalledInAwt
+  private void reopenWithTool(@NotNull MergeTool tool) {
+    if (myConflictResolved) {
+      LOG.warn("Can't reopen with " + tool + " - conflict already resolved");
+      return;
+    }
+
+    if (!tool.canShow(myContext, myRequest)) {
+      LOG.warn("Can't reopen with " + tool + " - " + myRequest);
+      return;
+    }
+
+    MergeTool.MergeViewer newViewer;
+    try {
+      newViewer = tool.createComponent(myContext, myRequest);
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      return;
+    }
+
+    boolean wasFocused = isFocused();
+
+    destroyViewer();
+    myViewer = newViewer;
+    initViewer();
+
+    if (wasFocused) requestFocusInternal();
+  }
+
   //
   // Abstract
   //
@@ -229,6 +272,8 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   protected void setWindowTitle(@NotNull String title) {
   }
+
+  protected abstract void rebuildBottomActions();
 
   public abstract void closeDialog();
 
@@ -269,6 +314,11 @@ public abstract class MergeRequestProcessor implements Disposable {
   @CalledInAwt
   public boolean checkCloseAction() {
     return myConflictResolved || myCloseHandler == null || myCloseHandler.get();
+  }
+
+  @NotNull
+  public BottomActions getBottomActions() {
+    return myBottomActions != null ? myBottomActions : new BottomActions();
   }
 
   @Nullable
@@ -405,7 +455,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
   }
 
-  private class MyDiffContext extends MergeContext {
+  private class MyDiffContext extends MergeContextEx {
     @Nullable
     @Override
     public Project getProject() {
@@ -426,6 +476,12 @@ public abstract class MergeRequestProcessor implements Disposable {
     public void finishMerge(@NotNull MergeResult result) {
       applyRequestResult(result);
       MergeRequestProcessor.this.closeDialog();
+    }
+
+    @Override
+    @CalledInAwt
+    public void reopenWithTool(@NotNull MergeTool tool) {
+      MergeRequestProcessor.this.reopenWithTool(tool);
     }
   }
 
