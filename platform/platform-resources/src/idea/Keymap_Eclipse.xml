@@ -59,7 +59,6 @@
     </action>
     <action id="EditorCodeBlockEnd">
       <keyboard-shortcut first-keystroke="control CLOSE_BRACKET" />
-      <keyboard-shortcut first-keystroke="shift control P" />
     </action>
     <action id="EditorDeleteToLineEnd">
       <keyboard-shortcut first-keystroke="shift control DELETE" />
@@ -359,5 +358,8 @@
     <action id="MoveLineDown" />
     <action id="MoveLineUp" />
     <action id="context.clear"/>
+    <action id="EditorMatchBrace">
+      <keyboard-shortcut first-keystroke="shift control P" />
+    </action>
   </keymap>
 </component>
