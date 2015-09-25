@@ -23,7 +23,6 @@ import com.intellij.testFramework.file
 import com.intellij.testFramework.writeChild
 import com.intellij.util.PathUtilRt
 import org.assertj.core.api.Assertions.assertThat
-import org.eclipse.jgit.api.Git
 import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.jgit.dirCache.writePath
 import org.jetbrains.settingsRepository.CannotResolveConflictInTestMode
@@ -350,24 +349,6 @@ internal class GitTest : GitTestCase() {
       assertThat(localConfigPath).doesNotExist()
     }
     fs.compare()
-  }
-
-  private fun createRemoteRepository(branchName: String? = null, initialCommit: Boolean = true) {
-    val repository = tempDirManager.createRepository("upstream")
-    if (initialCommit) {
-      repository
-        .add(SAMPLE_FILE_NAME, SAMPLE_FILE_CONTENT)
-        .commit("")
-    }
-    if (branchName != null) {
-      if (!initialCommit) {
-        // jgit cannot checkout&create branch if no HEAD (no commits in our empty repository), so we create initial empty commit
-        repository.commit("")
-      }
-      Git(repository).checkout().setCreateBranch(true).setName(branchName).call()
-    }
-
-    remoteRepository = repository
   }
 
   private fun doSyncWithUninitializedUpstream(syncType: SyncType) {

@@ -103,7 +103,9 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
                 }
                 SyncType.OVERWRITE_REMOTE -> {
                   updateResult = repositoryManager.resetToMy(indicator, localRepositoryInitializer)
-                  repositoryManager.push(indicator)
+                  if (repositoryManager.getAheadCommitsCount() > 0) {
+                    repositoryManager.push(indicator)
+                  }
                 }
               }
             }

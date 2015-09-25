@@ -4,20 +4,31 @@ import com.intellij.testFramework.file
 import org.jetbrains.settingsRepository.SyncType
 import org.junit.Test
 
+// empty means "no files, no HEAD, no commits"
 internal class OverwriteRemote : GitTestCase() {
   @Test fun `first merge`() {
     createLocalAndRemoteRepositories()
-    addAndCommit("local.xml")
+    val localFile = addAndCommit("local.xml")
 
     sync(SyncType.OVERWRITE_REMOTE)
     restoreRemoteAfterPush()
     fs
-      .file("local.xml", """<file path="local.xml" />""")
+      .file(localFile.name, localFile.data)
       .compare()
   }
 
-  @Test fun `empty local repo (no files, no HEAD, no local commits)`() {
+  @Test fun `empty local repo`() {
     createLocalAndRemoteRepositories()
+
+    sync(SyncType.OVERWRITE_REMOTE)
+    restoreRemoteAfterPush()
+    fs.compare()
+  }
+
+  @Test fun `empty local and remote repositories`() {
+    createRemoteRepository(initialCommit = false)
+    configureLocalRepository()
+
     sync(SyncType.OVERWRITE_REMOTE)
     restoreRemoteAfterPush()
     fs.compare()

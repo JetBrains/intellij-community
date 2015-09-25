@@ -50,6 +50,8 @@ internal abstract class GitTestCase : IcsTestCase() {
     }
   }
 
+  data class FileInfo(val name: String, val data: ByteArray)
+
   protected fun addAndCommit(path: String): FileInfo {
     val data = """<file path="$path" />""".toByteArray()
     provider.write(path, data)
@@ -57,7 +59,7 @@ internal abstract class GitTestCase : IcsTestCase() {
     return FileInfo(path, data)
   }
 
-  private fun createRemoteRepository(branchName: String? = null, initialCommit: Boolean = false) {
+  protected fun createRemoteRepository(branchName: String? = null, initialCommit: Boolean = false) {
     val repository = tempDirManager.createRepository("upstream")
     if (initialCommit) {
       repository
@@ -93,10 +95,14 @@ internal abstract class GitTestCase : IcsTestCase() {
 
   protected fun createLocalAndRemoteRepositories(remoteBranchName: String? = null, initialCommit: Boolean = false) {
     createRemoteRepository(remoteBranchName, true)
-    repositoryManager.setUpstream(remoteRepository.getWorkTree().absolutePath, remoteBranchName)
+    configureLocalRepository(remoteBranchName)
     if (initialCommit) {
       addAndCommit("local.xml")
     }
+  }
+
+  protected fun configureLocalRepository(remoteBranchName: String? = null) {
+    repositoryManager.setUpstream(remoteRepository.getWorkTree().absolutePath, remoteBranchName)
   }
 
   protected fun FileSystem.compare(): FileSystem {

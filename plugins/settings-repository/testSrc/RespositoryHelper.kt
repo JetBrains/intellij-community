@@ -30,8 +30,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.properties.Delegates
 
-data class FileInfo(val name: String, val data: ByteArray)
-
 class InMemoryFsRule : ExternalResource() {
   private var _fs: FileSystem? = null
 
