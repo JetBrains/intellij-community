@@ -256,6 +256,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
           trigger.prepare();
           for (PatchApplier applier : group) {
             refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
+            if (refStatus.get() == ApplyPatchStatus.ABORT) break;
           }
         }
       }, VcsBundle.message("patch.apply.command"), null);
@@ -396,6 +397,8 @@ public class PatchApplier<BinaryType extends FilePatch> {
     try {
       status = applyList(textPatches, context, status, commitContext);
 
+      if (status == ApplyPatchStatus.ABORT) return status;
+
       if (myCustomForBinaries == null) {
         status = applyList(verifier.getBinaryPatches(), context, status, commitContext);
       } else {
@@ -431,6 +434,8 @@ public class PatchApplier<BinaryType extends FilePatch> {
     for (Pair<VirtualFile, T> patch : patches) {
       ApplyPatchStatus patchStatus = ApplyPatchAction.applyOnly(myProject, patch.getSecond(), context, patch.getFirst(), commiContext,
                                                                 myReverseConflict, myLeftConflictPanelTitle, myRightConflictPanelTitle);
+
+      if (patchStatus == ApplyPatchStatus.ABORT) return patchStatus;
       myVerifier.doMoveIfNeeded(patch.getFirst());
 
       status = ApplyPatchStatus.and(status, patchStatus);
