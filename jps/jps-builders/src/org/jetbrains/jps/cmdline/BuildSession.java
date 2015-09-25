@@ -253,7 +253,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         else {
           // apply events to already loaded state
           try {
-            applyFSEvent(pd, myInitialFSDelta);
+            applyFSEvent(pd, myInitialFSDelta, false);
           }
           catch (Throwable e) {
             LOG.error(e);
@@ -269,7 +269,7 @@ final class BuildSession implements Runnable, CanceledStatus {
           try {
             try {
               fsState.load(fsStateStream, pd.getModel(), pd.getBuildRootIndex());
-              applyFSEvent(pd, myInitialFSDelta);
+              applyFSEvent(pd, myInitialFSDelta, false);
               TimingLog.LOG.debug("FS Delta loaded");
             }
             finally {
@@ -349,7 +349,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       @Override
       public void run() {
         try {
-          applyFSEvent(myProjectDescriptor, event);
+          applyFSEvent(myProjectDescriptor, event, true);
           myLastEventOrdinal += 1;
         }
         catch (IOException e) {
@@ -378,7 +378,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private static void applyFSEvent(ProjectDescriptor pd, @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) throws IOException {
+  private static void applyFSEvent(ProjectDescriptor pd, @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event, final boolean saveEventStamp) throws IOException {
     if (event == null) {
       return;
     }
@@ -425,7 +425,7 @@ final class BuildSession implements Runnable, CanceledStatus {
                 pd.getFSCache().clear();
                 cacheCleared = true;
               }
-              pd.fsState.markDirty(null, file, descriptor, timestamps);
+              pd.fsState.markDirty(null, file, descriptor, timestamps, saveEventStamp);
             }
             else {
               if (LOG.isDebugEnabled()) {
