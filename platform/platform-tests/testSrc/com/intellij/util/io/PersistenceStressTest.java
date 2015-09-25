@@ -60,13 +60,27 @@ public class PersistenceStressTest extends TestCase {
     }
   }
 
-
   public void testReadWrite() throws Exception {
     List<Future<Boolean>> futures = new ArrayList<Future<Boolean>>();
     for (PersistentHashMap<String, Record> myMap : myMaps) {
       Future<Boolean> submit = submit(myMap);
       futures.add(submit);
     }
+    myThreadPool.submit(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          while (ContainerUtil.find(futures, CONDITION) != null) {
+            Thread.sleep(100);
+            for (PersistentHashMap<String, Record> map : myMaps) {
+              map.dropMemoryCaches();
+            }
+          }
+        }
+        catch (InterruptedException ignore) {
+        }
+      }
+    });
     while (ContainerUtil.find(futures, CONDITION) != null) {
       Thread.sleep(100);
 //      System.out.println("Waiting... ");
@@ -92,9 +106,9 @@ public class PersistenceStressTest extends TestCase {
 
   protected void doTask(PersistentHashMap<String, Record> map) throws IOException {
     Random random = new Random();
-    for (int i = 0; i < 10000; i++) {
-      if (random.nextInt(100) == 1) {
-//        map.force();
+    for (int i = 0; i < 100000; i++) {
+      if (random.nextInt(1000) == 1) {
+        map.force();
         continue;
       }
       String key = myKeys.get(random.nextInt(myKeys.size()));
@@ -125,7 +139,7 @@ public class PersistenceStressTest extends TestCase {
       PersistentHashMap<String, Record> map = createMap(FileUtil.createTempFile("persistent", "map" + i));
       myMaps.add(map);
     }
-    myThreadPool = Executors.newFixedThreadPool(myMaps.size());
+    myThreadPool = Executors.newFixedThreadPool(myMaps.size() + 1);
   }
 
   @Override
