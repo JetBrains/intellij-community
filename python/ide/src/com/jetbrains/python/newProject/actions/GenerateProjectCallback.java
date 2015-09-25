@@ -22,9 +22,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Computable;
@@ -37,10 +37,7 @@ import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
-import com.jetbrains.python.sdk.PyDetectedSdk;
-import com.jetbrains.python.sdk.PySdkService;
-import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,8 +64,14 @@ public class GenerateProjectCallback implements NullableConsumer<ProjectSettings
         }
       });
       PySdkService.getInstance().solidifySdk(sdk);
-      sdk = SdkConfigurationUtil.setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, PythonSdkType.getInstance(), true, null,
-                                          null);
+      sdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
+      if (sdk != null) {
+        final SdkModificator modificator = sdk.getSdkModificator();
+        PythonSdkType.setupSdkPaths(sdk, project, null, modificator);
+        modificator.commitChanges();
+        PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
+      }
+
       model.addSdk(sdk);
       settingsStep.setSdk(sdk);
       try {
