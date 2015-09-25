@@ -36,6 +36,8 @@ public class EncodingEnvironmentUtil {
   private static final String LANG = "LANG";
 
   /**
+   * @deprecated GeneralCommandLine now contains the variable by default
+   *
    * Sets default encoding on Mac if it's undefined. <br/>
    * On Mac default character encoding is defined by several environment variables: LC_ALL, LC_CTYPE and LANG.
    * See <a href='http://www.gnu.org/software/gettext/manual/html_node/Locale-Environment-Variables.html'>details</a>.
@@ -59,6 +61,8 @@ public class EncodingEnvironmentUtil {
   }
 
   /**
+   * @deprecated use {@link EnvironmentUtil#getEnvironmentMap()}
+   *
    * Sets default encoding on Mac if it's undefined. <br/>
    */
   public static void setLocaleEnvironmentIfMac(@NotNull Map<String, String> env, @NotNull Charset charset) {
