@@ -56,8 +56,8 @@ public class MergeWindow {
       }
 
       @Override
-      protected void rebuildBottomActions() {
-        myWrapper.rebuildBottomActions();
+      protected void rebuildSouthPanel() {
+        myWrapper.rebuildSouthPanel();
       }
     };
 
@@ -101,6 +101,7 @@ public class MergeWindow {
     @Nullable
     @Override
     protected JComponent createSouthPanel() {
+      rebuildSouthPanel();
       return mySouthPanel;
     }
 
@@ -163,7 +164,7 @@ public class MergeWindow {
       super.doCancelAction();
     }
 
-    public void rebuildBottomActions() {
+    public void rebuildSouthPanel() {
       mySouthPanel.setContent(super.createSouthPanel());
     }
   }

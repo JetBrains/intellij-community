@@ -108,6 +108,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
 
     myViewer = viewer;
+    updateBottomActions();
   }
 
   //
@@ -129,14 +130,6 @@ public abstract class MergeRequestProcessor implements Disposable {
     buildToolbar(toolbarComponents.toolbarActions);
     myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
     myCloseHandler = toolbarComponents.closeHandler;
-
-    myBottomActions = new BottomActions();
-    myBottomActions.applyLeft = myViewer.getResolveAction(MergeResult.LEFT);
-    myBottomActions.applyRight = myViewer.getResolveAction(MergeResult.RIGHT);
-    myBottomActions.resolveAction = myViewer.getResolveAction(MergeResult.RESOLVED);
-    myBottomActions.cancelAction = myViewer.getResolveAction(MergeResult.CANCEL);
-
-    rebuildBottomActions();
   }
 
   @CalledInAwt
@@ -150,6 +143,14 @@ public abstract class MergeRequestProcessor implements Disposable {
     myToolbarStatusPanel.setContent(null);
     myCloseHandler = null;
     myBottomActions = null;
+  }
+
+  private void updateBottomActions() {
+    myBottomActions = new BottomActions();
+    myBottomActions.applyLeft = myViewer.getResolveAction(MergeResult.LEFT);
+    myBottomActions.applyRight = myViewer.getResolveAction(MergeResult.RIGHT);
+    myBottomActions.resolveAction = myViewer.getResolveAction(MergeResult.RESOLVED);
+    myBottomActions.cancelAction = myViewer.getResolveAction(MergeResult.CANCEL);
   }
 
   @NotNull
@@ -256,6 +257,8 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     destroyViewer();
     myViewer = newViewer;
+    updateBottomActions();
+    rebuildSouthPanel();
     initViewer();
 
     if (wasFocused) requestFocusInternal();
@@ -273,7 +276,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   protected void setWindowTitle(@NotNull String title) {
   }
 
-  protected abstract void rebuildBottomActions();
+  protected abstract void rebuildSouthPanel();
 
   public abstract void closeDialog();
 
