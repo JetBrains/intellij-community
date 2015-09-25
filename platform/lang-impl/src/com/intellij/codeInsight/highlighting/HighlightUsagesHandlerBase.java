@@ -124,4 +124,12 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
   public List<TextRange> getWriteUsages() {
     return myWriteUsages;
   }
+
+  /**
+   * In case of egoistic handler IdentifierHighlighterPass applies information only from this particular handler.
+   * Otherwise additional information would be collected from reference search as well. 
+   */
+  public boolean selfish() {
+    return true;
+  }
 }
