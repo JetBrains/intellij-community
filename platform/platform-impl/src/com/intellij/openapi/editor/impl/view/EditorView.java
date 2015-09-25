@@ -65,6 +65,7 @@ public class EditorView implements TextDrawingCallback, Disposable {
   private int myLineHeight; // guarded by myLock
   private int myDescent; // guarded by myLock
   private int myCharHeight; // guarded by myLock
+  private int myMaxCharWidth; // guarded by myLock
   private int myTabSize; // guarded by myLock
   
   private final Object myLock = new Object();
@@ -94,6 +95,10 @@ public class EditorView implements TextDrawingCallback, Disposable {
 
   EditorSizeManager getSizeManager() {
     return mySizeManager;
+  }
+  
+  TextLayoutCache getTextLayoutCache() {
+    return myTextLayoutCache;
   }
   
   EditorPainter getPainter() {
@@ -256,6 +261,7 @@ public class EditorView implements TextDrawingCallback, Disposable {
       myLineHeight = -1;
       myDescent = -1;
       myCharHeight = -1;
+      myMaxCharWidth = -1;
       myTabSize = -1;
     }
     reset();
@@ -301,7 +307,7 @@ public class EditorView implements TextDrawingCallback, Disposable {
       }
     } 
     int line = myDocument.getLineNumber(offset);
-    LineLayout layout = getLineLayout(line);
+    LineLayout layout = myTextLayoutCache.getLineLayout(line);
     return layout.isRtlLocation(offset - myDocument.getLineStartOffset(line), logicalPosition.leansForward);
   }
 
@@ -321,21 +327,16 @@ public class EditorView implements TextDrawingCallback, Disposable {
     int textLength = myDocument.getTextLength();
     if (textLength == 0 || offset < 0 || offset > textLength) return -1;
     int line = myDocument.getLineNumber(offset);
-    LineLayout layout = getLineLayout(line);
+    LineLayout layout = myTextLayoutCache.getLineLayout(line);
     int lineStartOffset = myDocument.getLineStartOffset(line);
     int relativeOffset = layout.findNearestDirectionBoundary(offset - lineStartOffset, lookForward);
     return relativeOffset < 0 ? -1 : lineStartOffset + relativeOffset;
   }
 
-  @NotNull
-  LineLayout getLineLayout(int line) {
-    return myTextLayoutCache.getLineLayout(line);
-  }
-
   int getPlainSpaceWidth() {
     if (myPlainSpaceWidth < 0) {
-      FontMetrics fontMetrics = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
-      int width = FontLayoutService.getInstance().charWidth(fontMetrics, ' ');
+      FontMetrics fm = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
+      int width = FontLayoutService.getInstance().charWidth(fm, ' ');
       myPlainSpaceWidth = width > 0 ? width : 1;
     }
     return myPlainSpaceWidth;
@@ -345,8 +346,8 @@ public class EditorView implements TextDrawingCallback, Disposable {
     synchronized (myLock) {
       if (myLineHeight < 0) {
         EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
-        FontMetrics fontMetrics = myEditor.getContentComponent().getFontMetrics(colorsScheme.getFont(EditorFontType.PLAIN));
-        int fontMetricsHeight = FontLayoutService.getInstance().getHeight(fontMetrics);
+        FontMetrics fm = myEditor.getContentComponent().getFontMetrics(colorsScheme.getFont(EditorFontType.PLAIN));
+        int fontMetricsHeight = FontLayoutService.getInstance().getHeight(fm);
         myLineHeight = (int)(fontMetricsHeight * (myEditor.isOneLineMode() ? 1 : colorsScheme.getLineSpacing()));
         if (myLineHeight <= 0) {
           myLineHeight = fontMetricsHeight;
@@ -368,18 +369,29 @@ public class EditorView implements TextDrawingCallback, Disposable {
   public int getCharHeight() {
     synchronized (myLock) {
       if (myCharHeight < 0) {
-        FontMetrics fontMetrics = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
-        myCharHeight = FontLayoutService.getInstance().charWidth(fontMetrics, 'a');
+        FontMetrics fm = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
+        myCharHeight = FontLayoutService.getInstance().charWidth(fm, 'a');
       }
       return myCharHeight;
+    }
+  }
+
+  int getMaxCharWidth() {
+    synchronized (myLock) {
+      if (myMaxCharWidth < 0) {
+        // assuming that bold italic 'W' gives a good approximation of font's widest character
+        FontMetrics fm = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.BOLD_ITALIC));
+        myMaxCharWidth = FontLayoutService.getInstance().charWidth(fm, 'W'); 
+      }
+      return myMaxCharWidth;
     }
   }
 
   public int getDescent() {
     synchronized (myLock) {
       if (myDescent < 0) {
-        FontMetrics fontMetrics = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
-        myDescent = FontLayoutService.getInstance().getDescent(fontMetrics);
+        FontMetrics fm = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
+        myDescent = FontLayoutService.getInstance().getDescent(fm);
       }
       return myDescent;
     }

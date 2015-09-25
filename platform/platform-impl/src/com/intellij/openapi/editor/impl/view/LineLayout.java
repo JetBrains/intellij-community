@@ -42,6 +42,13 @@ class LineLayout {
   private final float myWidth;
 
   /**
+   * Creates a dummy layout used for editor size estimations
+   */
+  LineLayout(EditorView view, int lineLength) {
+    this(createDummyFragment(view, lineLength), false);
+  }
+  
+  /**
    * Creates a layout for a fragment of text from editor.
    */
   LineLayout(@NotNull EditorView view, 
@@ -114,6 +121,12 @@ class LineLayout {
       assert !run.fragments.isEmpty();
     }
     return runs;
+  }
+
+  private static List<BidiRun> createDummyFragment(@NotNull EditorView view, int lineLength) {
+    BidiRun run = new BidiRun((byte)0, 0, lineLength);
+    run.fragments.add(new DummyLineFragment(lineLength, view.getMaxCharWidth()));
+    return Collections.singletonList(run);
   }
   
   private static List<BidiRun> createRuns(EditorImpl editor, char[] text, int startOffsetInEditor) {
@@ -634,6 +647,79 @@ class LineLayout {
 
     private int getRelativeOffset(int offset) {
       return isRtl ? startOffset - offset : offset - startOffset;
+    }
+  }
+
+  public static class DummyLineFragment implements LineFragment {
+    private final int myLength;
+    private final float myCharWidth;
+  
+    public DummyLineFragment(int length, float charWidth) {
+      myLength = length;
+      myCharWidth = charWidth;
+    }
+  
+    @Override
+    public int getLength() {
+      return myLength;
+    }
+  
+    @Override
+    public int getLogicalColumnCount(int startColumn) {
+      return myLength;
+    }
+  
+    @Override
+    public int getVisualColumnCount(float startX) {
+      return myLength;
+    }
+  
+    @Override
+    public int offsetToLogicalColumn(int startColumn, int offset) {
+      return startColumn + offset;
+    }
+  
+    @Override
+    public int logicalColumnToOffset(int startColumn, int column) {
+      return column - startColumn;
+    }
+  
+    @Override
+    public int logicalToVisualColumn(float startX, int startColumn, int column) {
+      return column;
+    }
+  
+    @Override
+    public int visualToLogicalColumn(float startX, int startColumn, int column) {
+      return column;
+    }
+  
+    @Override
+    public float visualColumnToX(float startX, int column) {
+      return column * myCharWidth;
+    }
+  
+    @Override
+    public int[] xToVisualColumn(float startX, float x) {
+      float relX = x - startX;
+      int column = Math.max(0, Math.min(myLength, Math.round(relX / myCharWidth)));
+      return new int[] {column, relX <= column * myCharWidth ? 0 : 1};
+    }
+  
+    @Override
+    public float offsetToX(float startX, int startOffset, int offset) {
+      return offset * myCharWidth;
+    }
+  
+    @Override
+    public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
+      throw new UnsupportedOperationException();
+    }
+  
+    @NotNull
+    @Override
+    public LineFragment subFragment(int startOffset, int endOffset) {
+      return new DummyLineFragment(endOffset - startOffset, myCharWidth);
     }
   }
 }

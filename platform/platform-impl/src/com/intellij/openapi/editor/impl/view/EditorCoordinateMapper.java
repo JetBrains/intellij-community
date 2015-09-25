@@ -64,7 +64,7 @@ class EditorCoordinateMapper {
     offset = Math.min(offset, myDocument.getLineEndOffset(line));
     int column = 0;
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      LineLayout lineLayout = myView.getLineLayout(line);
+      LineLayout lineLayout = myView.getTextLayoutCache().getLineLayout(line);
       column = lineLayout.offsetToLogicalColumn(offset - myDocument.getLineStartOffset(line));
     }
     else {
@@ -88,7 +88,7 @@ class EditorCoordinateMapper {
     
     int lineStartOffset = myDocument.getLineStartOffset(line);
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      LineLayout lineLayout = myView.getLineLayout(line);
+      LineLayout lineLayout = myView.getTextLayoutCache().getLineLayout(line);
       return lineStartOffset + lineLayout.logicalColumnToOffset(pos.column);
     }
     else {
