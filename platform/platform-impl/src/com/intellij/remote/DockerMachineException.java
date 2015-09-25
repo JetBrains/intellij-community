@@ -19,6 +19,10 @@ package com.intellij.remote;
  * @author Alexander Koshevoy
  */
 public class DockerMachineException extends RuntimeException {
+  public DockerMachineException(String message) {
+    super(message);
+  }
+
   public DockerMachineException(String message, Throwable cause) {
     super(message, cause);
   }

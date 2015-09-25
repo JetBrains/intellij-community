@@ -15,11 +15,26 @@
  */
 package com.intellij.remote;
 
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Alexander Koshevoy
  */
 public class DockerMachineCommandException extends RuntimeException {
-  public DockerMachineCommandException(int exitCode) {
-    super("Docker Machine exited with non-zero code " + exitCode);
+  public DockerMachineCommandException(int exitCode, @Nullable String stderr) {
+    super(buildErrorMessage(exitCode, stderr));
+  }
+
+  @NotNull
+  private static String buildErrorMessage(int exitCode, String stderr) {
+    StringBuilder sb = new StringBuilder()
+      .append("Docker Machine exited with error code ")
+      .append(exitCode);
+    if (StringUtil.isNotEmpty(stderr)) {
+      sb.append(": ").append(stderr);
+    }
+    return sb.toString();
   }
 }
