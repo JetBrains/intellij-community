@@ -460,7 +460,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       public void run() {
         final PsiMethod psiMethod = (PsiMethod)getElement();
         LOG.assertTrue(psiMethod != null);
-        result[0] = PsiFormatUtil.getExternalName(psiMethod);
+        result[0] = PsiFormatUtil.getExternalName(psiMethod, true, Integer.MAX_VALUE);
       }
     };
 
