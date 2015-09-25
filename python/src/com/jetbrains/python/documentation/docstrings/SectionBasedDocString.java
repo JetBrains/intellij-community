@@ -60,7 +60,6 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
                 .put("arguments", PARAMETERS_SECTION)
                 .put("args", PARAMETERS_SECTION)
                 .put("parameters", PARAMETERS_SECTION)
-                .put("params", PARAMETERS_SECTION)
                 .put("keyword args", KEYWORD_ARGUMENTS_SECTION)
                 .put("keyword arguments", KEYWORD_ARGUMENTS_SECTION)
                 .put("other parameters", OTHER_PARAMETERS_SECTION)

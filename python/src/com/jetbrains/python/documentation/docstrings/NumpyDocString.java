@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.documentation.docstrings;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NonNls;
@@ -34,7 +35,21 @@ public class NumpyDocString extends SectionBasedDocString {
   private static final Pattern NAME_SEPARATOR = Pattern.compile("[ \t]*,[ \t]*");
   public static final Pattern SECTION_HEADER = Pattern.compile("^[ \t]*[-=]{2,}[ \t]*$", Pattern.MULTILINE);
 
+  public static final List<String> PREFERRED_SECTION_HEADERS = ImmutableList.of("Parameters",
+                                                                                "Other Parameters",
+                                                                                "Returns",
+                                                                                "Yields",
+                                                                                "Raises",
+                                                                                "Attributes",
+                                                                                "See Also",
+                                                                                "Methods",
+                                                                                "References",
+                                                                                "Examples",
+                                                                                "Notes",
+                                                                                "Warnings"); 
+
   private Substring mySignature;
+
   public NumpyDocString(@NotNull Substring text) {
     super(text);
   }
