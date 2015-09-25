@@ -18,15 +18,18 @@ package com.intellij.formatting.templateLanguages;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Alexey Chmutov
@@ -35,18 +38,17 @@ import java.util.List;
  */
 public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithParent {
   private final Block myOriginal;
-  private final Indent myIndent;
   @Nullable private final Language myLanguage;
   private List<Block> myBlocks;
   private List<TemplateLanguageBlock> myTlBlocks;
   private BlockWithParent myParent;
   private DataLanguageBlockWrapper myRightHandWrapper;
   private Spacing mySpacing;
+  private Map<Pair<Block, Block>, Spacing> myChildDataBorderSpacings;
 
-  private DataLanguageBlockWrapper(@NotNull final Block original, @Nullable final Indent indent) {
+  private DataLanguageBlockWrapper(@NotNull final Block original) {
     assert !(original instanceof DataLanguageBlockWrapper) && !(original instanceof TemplateLanguageBlock);
     myOriginal = original;
-    myIndent = indent;
 
     final ASTNode node = getNode();
     Language language = null;
@@ -70,8 +72,25 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
   public List<Block> getSubBlocks() {
     if (myBlocks == null) {
       myBlocks = buildBlocks();
+      initSpacings();
     }
     return myBlocks;
+  }
+
+  private void initSpacings() {
+    for (int i = 1; i < myBlocks.size(); i++) {
+      Block block1 = myBlocks.get(i - 1);
+      Block block2 = myBlocks.get(i);
+      if (block1 instanceof TemplateLanguageBlock) {
+        Spacing spacing = ((TemplateLanguageBlock)block1).getRightNeighborSpacing(block2, this, i - 1);
+        if (spacing != null) {
+          if (myChildDataBorderSpacings == null) {
+            myChildDataBorderSpacings = ContainerUtil.newTroveMap();
+          }
+          myChildDataBorderSpacings.put(Pair.create(block1, block2), spacing);
+        }
+      }
+    }
   }
 
   @Nullable
@@ -133,6 +152,9 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
     if (child1 instanceof DataLanguageBlockWrapper && child2 instanceof DataLanguageBlockWrapper) {
       return myOriginal.getSpacing(((DataLanguageBlockWrapper)child1).myOriginal, ((DataLanguageBlockWrapper)child2).myOriginal);
     }
+    if (child1 instanceof TemplateLanguageBlock && myChildDataBorderSpacings != null) {
+      return myChildDataBorderSpacings.get(Pair.create(child1, child2));
+    }
     return null;
   }
 
@@ -168,7 +190,7 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
   @Nullable
   public static DataLanguageBlockWrapper create(@NotNull final Block original, @Nullable final Indent indent) {
     final boolean doesntNeedWrapper = original instanceof ASTBlock && ((ASTBlock)original).getNode() instanceof OuterLanguageElement;
-    return doesntNeedWrapper ? null : new DataLanguageBlockWrapper(original, indent);
+    return doesntNeedWrapper ? null : new DataLanguageBlockWrapper(original);
   }
 
   @Override
