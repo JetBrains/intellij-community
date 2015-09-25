@@ -374,6 +374,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       if (!(conflict instanceof MethodCandidateInfo)) continue;
       final PsiMethod method = ((MethodCandidateInfo)conflict).getElement();
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        if (conflict.getCurrentFileResolveScope() instanceof PsiImportStaticStatement) continue;
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && containingClass.isInterface()) {
           if (qualifierClass == null) {
