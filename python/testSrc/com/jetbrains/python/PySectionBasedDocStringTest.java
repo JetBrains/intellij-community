@@ -378,6 +378,16 @@ public class PySectionBasedDocStringTest extends PyTestCase {
                  "second line", firstExample.getDescription());
   }
 
+  // PY-17002
+  public void testGoogleNoClosingParenthesisAfterParamType() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertSize(1, docString.getSections());
+    final List<SectionField> params = docString.getSections().get(0).getFields();
+    assertSize(2, params);
+    assertEquals("Foo", params.get(0).getType());
+    assertEquals("Bar", params.get(1).getType());
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/docstrings";

@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
  */
 public class GoogleCodeStyleDocString extends SectionBasedDocString {
   public static final Pattern SECTION_HEADER = Pattern.compile("^[ \t]*([\\w \t]+):[ \t]*$", Pattern.MULTILINE);
-  private static final Pattern FIELD_NAME_AND_TYPE = Pattern.compile("^[ \t]*(.+?)[ \t]*\\([ \t]*(.*?)[ \t]*\\)[ \t]*$", Pattern.MULTILINE);
+  private static final Pattern FIELD_NAME_AND_TYPE = Pattern.compile("^[ \t]*(.+?)[ \t]*\\([ \t]*(.*?)[ \t]*\\)?[ \t]*$", Pattern.MULTILINE);
 
   public GoogleCodeStyleDocString(@NotNull Substring text) {
     super(text);
