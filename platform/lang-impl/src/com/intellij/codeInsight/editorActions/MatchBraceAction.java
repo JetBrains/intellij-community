@@ -75,11 +75,13 @@ public class MatchBraceAction extends EditorAction {
       }
 
       if (BraceMatchingUtil.matchBrace(text, fileType, iterator, true)) {
+        caret.removeSelection();
         caret.moveToOffset(iterator.getEnd());
         return;
       }
       iterator = highlighter.createIterator(offset);
       if (BraceMatchingUtil.matchBrace(text, fileType, iterator, false)) {
+        caret.removeSelection();
         caret.moveToOffset(iterator.getStart());
       }
     }
