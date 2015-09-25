@@ -21,7 +21,6 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -153,7 +152,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
 
   private Set<GroovyResolveResult> filterCorrectParameterCount(Set<GroovyResolveResult> candidates) {
     if (myArgumentTypes == null) return candidates;
-    Set<GroovyResolveResult> result = new HashSet<GroovyResolveResult>();
+    Set<GroovyResolveResult> result = ContainerUtil.newLinkedHashSet();
     for (GroovyResolveResult candidate : candidates) {
       final PsiElement element = candidate.getElement();
       if (element instanceof PsiMethod && ((PsiMethod)element).getParameterList().getParametersCount() == myArgumentTypes.length) {
