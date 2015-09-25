@@ -190,5 +190,10 @@ public class IteratorsTest extends TestCase {
     assertEquals(all.size(), count);
   }
 
-
+  public void testToStringDoesntExhaustIterator() {
+    final ChainIterable<String> initial = new ChainIterable<String>();
+    initial.addItem("foo");
+    assertEquals("foo", initial.toString());;
+    assertEquals("foo", initial.toString());
+  }
 }

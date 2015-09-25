@@ -40,22 +40,21 @@ abstract class ChainIterationMixin<T, TPayload> {
   // returns either null or a non-exhausted iterator.
   @Nullable
   public Iterator<T> getCurrent() {
-    while ((myCurrent == null || !myCurrent.hasNext()) && myLink.hasPayload()) { // fix myCurrent
+    while ((myCurrent == null || !myCurrent.hasNext()) && (myLink != null && myLink.myPayload != null)) { // fix myCurrent
       if (myCurrent == null) {
         myCurrent = toIterator(myLink.myPayload);
         assert myCurrent != null;
       }
       else {
-        myLink.moveOn();
+        myLink= myLink.myNext;
         myCurrent = null;
       }
     }
     return myCurrent;
-  }
+  } 
 
   public boolean hasNext() {
-    Iterator<T> current = getCurrent();
-    return (current != null);
+    return getCurrent() != null;
   }
 
   public T next() {
