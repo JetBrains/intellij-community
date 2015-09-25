@@ -1134,7 +1134,7 @@ public class AbstractPopup implements JBPopup {
   private Window updateMaskAndAlpha(Window window) {
     if (window == null) return null;
 
-    if (window.isDisplayable() && window.isShowing()) return window;
+    if (!window.isDisplayable() || !window.isShowing()) return window;
 
     final WindowManagerEx wndManager = getWndManager();
     if (wndManager == null) return window;

@@ -331,6 +331,8 @@ public class GeneralCommandLine implements UserDataHolder {
   public Process createProcess() throws ExecutionException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Executing [" + getCommandLineString() + "]");
+      LOG.debug("  environment: " + myEnvParams + " (+" + myParentEnvironmentType + ")");
+      LOG.debug("  charset: " + myCharset);
     }
 
     List<String> commands;

@@ -20,7 +20,7 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.process.DefaultJavaProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -209,8 +209,7 @@ public class GrabDependencies implements IntentionAction {
       lines.put(grabText, JdkUtil.setupJVMCommandLine(exePath, javaParameters, true));
     }
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Processing @Grab annotations") {
-
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Processing @Grab Annotations") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         int jarCount = 0;
@@ -276,7 +275,7 @@ public class GrabDependencies implements IntentionAction {
     return false;
   }
 
-  private static class GrapeProcessHandler extends DefaultJavaProcessHandler {
+  private static class GrapeProcessHandler extends OSProcessHandler {
     private final StringBuilder myStdOut = new StringBuilder();
     private final StringBuilder myStdErr = new StringBuilder();
     private final Module myModule;

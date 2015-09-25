@@ -34,6 +34,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private final Document myDocument;
   private ArrayList<LineLayout> myLines = new ArrayList<LineLayout>();
   private int myDocumentChangeOldEndLine;
+  private boolean myQuickLayoutsEnabled;
 
   TextLayoutCache(EditorView view) {
     myView = view;
@@ -92,12 +93,23 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     if (result == null) {
       int lineStart = myDocument.getLineStartOffset(line);
       int lineEnd = myDocument.getLineEndOffset(line);
-      result = new LineLayout(myView, lineStart, lineEnd, myView.getFontRenderContext());
-      myLines.set(line, result);
+      if (myQuickLayoutsEnabled) {
+        result = new LineLayout(myView, lineEnd - lineStart);
+        myView.getSizeManager().quickLineLayoutCreated();
+      }
+      else {
+        result = new LineLayout(myView, lineStart, lineEnd, myView.getFontRenderContext());
+        myLines.set(line, result);
+        myView.getSizeManager().lineLayoutCreated(line);
+      }
     }
     return result;
   }
-
+  
+  void enableQuickLayouts(boolean enabled) {
+    myQuickLayoutsEnabled = enabled;
+  }
+  
   private void checkDisposed() {
     if (myLines == null) throw new IllegalStateException("Editor is already disposed");
   }

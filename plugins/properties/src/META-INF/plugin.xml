@@ -107,6 +107,13 @@
 
     <codeStyleSettingsProvider implementation="com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettingsProvider"/>
 
+    <projectConfigurable groupId="tools"
+                         groupWeight="10"
+                         provider="com.intellij.lang.properties.ResourceBundleEditorConfigurable$Provider"
+                         id="resource.bundle.editor.highlighting.settings"
+                         displayName="Resource Bundle Editor"/>
+    <projectService serviceImplementation="com.intellij.lang.properties.editor.IgnoredPropertiesFilesSuffixesManager"/>
+
     <internalFileTemplate name="XML Properties File.xml"/>
     <refactoring.copyHandler implementation="com.intellij.lang.properties.editor.PropertiesCopyHandler"/>
   </extensions>

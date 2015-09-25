@@ -1,6 +1,6 @@
 !define MANUFACTURER "JetBrains"
-!define MUI_PRODUCT  "PyCharm Educational Edition"
-!define PRODUCT_FULL_NAME "JetBrains PyCharm Educational Edition"
+!define MUI_PRODUCT  "PyCharm Edu"
+!define PRODUCT_FULL_NAME "JetBrains PyCharm Edu"
 !define PRODUCT_EXE_FILE "pycharm.exe"
 !define PRODUCT_ICON_FILE "PC_instCom.ico"
 !define PRODUCT_UNINST_ICON_FILE "PC_uninstCom.ico"

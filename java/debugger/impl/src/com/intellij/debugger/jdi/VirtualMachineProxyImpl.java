@@ -26,6 +26,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
@@ -698,19 +699,19 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
 
   private abstract static class Capability {
-    private Boolean myValue = null;
+    private ThreeState myValue = ThreeState.UNSURE;
 
     public final boolean isAvailable() {
-      if (myValue == null) {
+      if (myValue == ThreeState.UNSURE) {
         try {
-          myValue = Boolean.valueOf(calcValue());
+          myValue = ThreeState.fromBoolean(calcValue());
         }
         catch (VMDisconnectedException e) {
           LOG.info(e);
-          myValue = Boolean.FALSE;
+          myValue = ThreeState.NO;
         }
       }
-      return myValue.booleanValue();
+      return myValue.toBoolean();
     }
 
     protected abstract boolean calcValue();

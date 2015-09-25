@@ -95,6 +95,11 @@ public class PyDocstringGenerator {
     return new PyDocstringGenerator(owner, docStringText, DocStringUtil.getConfiguredDocStringFormat(owner), indentation, owner);
   }
   
+  /**
+   * @param settingsAnchor any PSI element, presumably in the same file/module where generated function is going to be inserted.
+   *                       It's needed to detect configured docstring format and Python indentation size and, as result, 
+   *                       generate properly formatted docstring. 
+   */
   @NotNull
   public static PyDocstringGenerator create(@NotNull DocStringFormat format, @NotNull String indentation, @NotNull PsiElement settingsAnchor) {
     return new PyDocstringGenerator(null, null, format, indentation, settingsAnchor);
@@ -109,6 +114,11 @@ public class PyDocstringGenerator {
                                     docString);
   }
 
+  /**
+   * @param settingsAnchor any PSI element, presumably in the same file/module where generated function is going to be inserted.
+   *                       It's needed to detect configured docstring format and Python indentation size and, as result, 
+   *                       generate properly formatted docstring. 
+   */
   @NotNull
   public static PyDocstringGenerator update(@NotNull DocStringFormat format,
                                             @NotNull String indentation,

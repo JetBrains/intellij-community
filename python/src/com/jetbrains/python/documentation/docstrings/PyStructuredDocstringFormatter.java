@@ -130,8 +130,7 @@ public class PyStructuredDocstringFormatter {
       return null;
     }
     else if (output.getExitCode() != 0) {
-      final String error = "error when calculating docstring: " + output.getStderr();
-      LOG.info(error);
+      LOG.info("error when calculating docstring: " + output.getStderr());
       return null;
     }
     return output.getStdout();

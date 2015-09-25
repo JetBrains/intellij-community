@@ -82,6 +82,10 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
     doTest(true, false);
   }
 
+  public void testAcceptStaticInterfaceMethodsImportedViaStaticImports() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false, false);
   }

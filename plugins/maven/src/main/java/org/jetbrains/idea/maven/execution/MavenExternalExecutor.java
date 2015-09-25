@@ -19,8 +19,8 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -51,7 +51,7 @@ public class MavenExternalExecutor extends MavenExecutor {
     super(parameters, RunnerBundle.message("external.executor.caption"), console);
 
     try {
-      myJavaParameters = MavenExternalParameters.createJavaParameters(project, myParameters, coreSettings, runnerSettings);
+      myJavaParameters = MavenExternalParameters.createJavaParameters(project, myParameters, coreSettings, runnerSettings, null);
     }
     catch (ExecutionException e) {
       myParameterCreationError = e;
@@ -67,7 +67,8 @@ public class MavenExternalExecutor extends MavenExecutor {
       }
 
       myProcessHandler =
-        new DefaultJavaProcessHandler(myJavaParameters) {
+        new OSProcessHandler(CommandLineBuilder.createFromJavaParameters(myJavaParameters)) {
+          @Override
           public void notifyTextAvailable(String text, Key outputType) {
             // todo move this logic to ConsoleAdapter class
             if (!myConsole.isSuppressed(text)) {

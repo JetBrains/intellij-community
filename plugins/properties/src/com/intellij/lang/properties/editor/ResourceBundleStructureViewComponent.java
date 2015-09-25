@@ -83,6 +83,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     final DefaultActionGroup propertiesPopupGroup = new DefaultActionGroup();
     propertiesPopupGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_STRUCTURE_VIEW_POPUP));
     propertiesPopupGroup.add(Separator.getInstance(), Constraints.FIRST);
+    propertiesPopupGroup.add(new IgnoreIncompletePropertyPropertiesFilesAction(), Constraints.FIRST);
     propertiesPopupGroup.add(new NewPropertyAction(true), Constraints.FIRST);
     PopupHandler.installPopupHandler(getTree(), propertiesPopupGroup, IdeActions.GROUP_STRUCTURE_VIEW_POPUP, ActionManager.getInstance());
   }

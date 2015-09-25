@@ -473,7 +473,7 @@ public class JavaFxPsiUtil {
     });
   }
 
-  public static String isClassAcceptable(@Nullable XmlTag parentTag, final PsiClass aClass) {
+  public static String isClassAcceptable(@Nullable XmlTag parentTag, @Nullable final PsiClass aClass) {
     if (parentTag == null) {
       return null;
     }

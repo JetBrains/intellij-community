@@ -40,7 +40,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
   private static final ClassDataIndexer INDEXER = new ClassDataIndexer();
   private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
 
-  private static final int ourInternalVersion = 4;
+  private static final int ourInternalVersion = 5;
   private static final boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.bytecode.contract.inference", true);
 
   @NotNull
@@ -145,7 +145,8 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
             DataInputOutputUtil.writeINT(out, ids.length);
             for (HKey hKey : ids) {
               out.write(hKey.key);
-              DataInputOutputUtil.writeINT(out, hKey.dirKey);
+              int rawDirKey = hKey.negated ? -hKey.dirKey : hKey.dirKey;
+              DataInputOutputUtil.writeINT(out, rawDirKey);
               out.writeBoolean(hKey.stable);
             }
           }
@@ -180,7 +181,8 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
               for (int bi = 0; bi < bytes.length; bi++) {
                 bytes[bi] = in.readByte();
               }
-              ids[j] = new HKey(bytes, DataInputOutputUtil.readINT(in), in.readBoolean());
+              int rawDirKey = DataInputOutputUtil.readINT(in);
+              ids[j] = new HKey(bytes, Math.abs(rawDirKey), in.readBoolean(), rawDirKey < 0);
             }
             components[i] = new HComponent(value, ids);
           }

@@ -80,6 +80,11 @@ public class PyFunctionBuilder {
     myDocStringGenerator = null;
   }
 
+  /**
+   * @param settingsAnchor any PSI element, presumably in the same file/module where generated function is going to be inserted.
+   *                       It's needed to detect configured docstring format and Python indentation size and, as result, 
+   *                       generate properly formatted docstring. 
+   */
   public PyFunctionBuilder(@NotNull String name, @NotNull PsiElement settingsAnchor) {
     myName = name;
     myDocStringGenerator = PyDocstringGenerator.create(DocStringUtil.getConfiguredDocStringFormat(settingsAnchor), 

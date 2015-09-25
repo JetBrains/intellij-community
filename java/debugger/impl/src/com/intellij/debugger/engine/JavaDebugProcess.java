@@ -58,6 +58,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import com.sun.jdi.event.Event;
+import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
@@ -186,7 +187,9 @@ public class JavaDebugProcess extends XDebugProcess {
 
   private void unsetPausedIfNeeded(DebuggerContextImpl context) {
     SuspendContextImpl suspendContext = context.getSuspendContext();
-    if (suspendContext != null && context.getThreadProxy() != suspendContext.getThread()) {
+    if (suspendContext != null
+        && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD
+        && context.getThreadProxy() != suspendContext.getThread()) {
       ((XDebugSessionImpl)getSession()).unsetPaused();
     }
   }

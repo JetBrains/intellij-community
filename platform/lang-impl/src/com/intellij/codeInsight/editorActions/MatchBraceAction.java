@@ -55,7 +55,7 @@ public class MatchBraceAction extends EditorAction {
 
       HighlighterIterator iterator = highlighter.createIterator(offset);
 
-      if (iterator.atEnd() || BraceMatchingUtil.isRBraceToken(iterator, text, fileType)) {
+      if (iterator.atEnd()) {
         offset--;
       }
       else if (!BraceMatchingUtil.isLBraceToken(iterator, text, fileType)) {
@@ -75,11 +75,13 @@ public class MatchBraceAction extends EditorAction {
       }
 
       if (BraceMatchingUtil.matchBrace(text, fileType, iterator, true)) {
+        caret.removeSelection();
         caret.moveToOffset(iterator.getEnd());
         return;
       }
       iterator = highlighter.createIterator(offset);
       if (BraceMatchingUtil.matchBrace(text, fileType, iterator, false)) {
+        caret.removeSelection();
         caret.moveToOffset(iterator.getStart());
       }
     }

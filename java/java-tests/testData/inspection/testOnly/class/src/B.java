@@ -18,5 +18,7 @@ public class B {
         System.out.println(a.field);
         System.out.println(A.staticField);
         System.out.println(staticImportedField);
+        
+        A b = new A() { };
     }
 }

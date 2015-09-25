@@ -1,8 +1,9 @@
-import sys
 import re
-from docutils.core import publish_string
+import sys
+
 from docutils import nodes
-from docutils.nodes import Text
+from docutils.core import publish_string
+from docutils.nodes import Text, field_body, field_name, rubric
 from docutils.writers.html4css1 import HTMLTranslator
 from epydoc.markup import DocstringLinker
 from epydoc.markup.restructuredtext import ParsedRstDocstring, _EpydocHTMLTranslator, \
@@ -83,6 +84,13 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
         # iterate through attributes one at a time because some
         # versions of docutils don't case-normalize attributes.
         for attr_dict in attr_dicts:
+            # For some reason additional classes in bullet list make it render poorly.
+            # Such lists are used to render multiple return values in Numpy docstrings by Napoleon.
+            if tagname == 'ul' and isinstance(node.parent, field_body):
+                attr_dict.pop('class', None)
+                attr_dict.pop('classes', None)
+                continue
+
             for (key, val) in attr_dict.items():
                 # Prefix all CSS classes with "rst-"; and prefix all
                 # names with "rst-" to avoid conflicts.
@@ -93,12 +101,17 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
                 elif key.lower() == 'href':
                     if attr_dict[key][:1] == '#':
                         attr_dict[key] = '#rst-%s' % attr_dict[key][1:]
-                    else:
-                        pass
+
+        if tagname == 'th' and isinstance(node, field_name):
+            attributes['valign'] = 'top'
+
+        # Render rubric start as HTML header
+        if tagname == 'p' and isinstance(node, rubric):
+            tagname = 'h1'
+
         # For headings, use class="heading"
         if re.match(r'^h\d+$', tagname):
             attributes['class'] = ' '.join([attributes.get('class', ''), 'heading']).strip()
-
         return HTMLTranslator.starttag(self, node, tagname, suffix, **attributes)
 
     def visit_field_list(self, node):
@@ -197,34 +210,28 @@ def parse_docstring(docstring, errors, **options):
 
 
 def main(text=None):
-    try:
-        src = sys.stdin.read() if text is None else text
+    src = sys.stdin.read() if text is None else text
 
-        errors = []
+    errors = []
 
-        class EmptyLinker(DocstringLinker):
-            def translate_indexterm(self, indexterm):
-                return ""
+    class EmptyLinker(DocstringLinker):
+        def translate_indexterm(self, indexterm):
+            return ""
 
-            def translate_identifier_xref(self, identifier, label=None):
-                return identifier
+        def translate_identifier_xref(self, identifier, label=None):
+            return identifier
 
-        docstring = parse_docstring(src, errors)
-        html = docstring.to_html(EmptyLinker())
+    docstring = parse_docstring(src, errors)
+    html = docstring.to_html(EmptyLinker())
 
-        if errors and not html:
-            sys.stderr.write("Error parsing docstring:\n")
-            for error in errors:
-                sys.stderr.write(str(error) + "\n")
-            sys.exit(1)
-
-        sys.stdout.write(html)
-        sys.stdout.flush()
-    except:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        sys.stderr.write("Error calculating docstring: " + str(exc_value))
+    if errors and not html:
+        sys.stderr.write("Error parsing docstring:\n")
+        for error in errors:
+            sys.stderr.write(str(error) + "\n")
         sys.exit(1)
 
+    sys.stdout.write(html)
+    sys.stdout.flush()
 
 if __name__ == '__main__':
     main()
