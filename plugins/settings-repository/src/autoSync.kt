@@ -34,7 +34,7 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import java.util.concurrent.Future
 
-class AutoSyncManager(private val icsManager: IcsManager) {
+internal class AutoSyncManager(private val icsManager: IcsManager) {
   private @Volatile var autoSyncFuture: Future<*>? = null
 
   fun waitAutoSync(indicator: ProgressIndicator) {

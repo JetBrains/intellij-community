@@ -23,8 +23,8 @@ import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.settingsRepository.IcsManager
 import org.jetbrains.settingsRepository.git
 import org.junit.Rule
+import java.nio.file.FileSystem
 import java.nio.file.Path
-import kotlin.properties.Delegates
 
 fun Repository.add(path: String, data: String) = add(path, data.toByteArray())
 
@@ -45,6 +45,12 @@ val SAMPLE_FILE_CONTENT = """<application>
 abstract class IcsTestCase {
   val tempDirManager = TemporaryDirectory()
   @Rule fun getTemporaryFolder() = tempDirManager
+
+  private val fsRule = InMemoryFsRule()
+  @Rule fun _inMemoryFsRule() = fsRule
+
+  val fs: FileSystem
+    get() = fsRule.fs
 
   val icsManager by lazy(LazyThreadSafetyMode.NONE) {
     val icsManager = IcsManager(tempDirManager.newDirectory())

@@ -169,9 +169,9 @@
                         serviceImplementation="com.intellij.execution.process.impl.OSProcessManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.options.SchemesManagerFactory"
-                        serviceImplementation="com.intellij.configurationStore.ApplicationSchemeManagerFactory"/>
+                        serviceImplementation="com.intellij.configurationStore.SchemeManagerFactoryBase$ApplicationSchemeManagerFactory"/>
     <projectService serviceInterface="com.intellij.openapi.options.SchemesManagerFactory"
-                    serviceImplementation="com.intellij.configurationStore.ProjectSchemeManagerFactory"/>
+                    serviceImplementation="com.intellij.configurationStore.SchemeManagerFactoryBase$ProjectSchemeManagerFactory"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.TextAttributesKey$TextAttributeKeyDefaultsProvider"

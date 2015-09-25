@@ -15,31 +15,58 @@
  */
 package org.jetbrains.settingsRepository.test
 
-import com.intellij.mock.MockVirtualFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightVirtualFile
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
 import com.intellij.testFramework.isFile
 import gnu.trove.THashSet
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Constants
+import org.junit.rules.ExternalResource
+import org.junit.runner.Description
+import org.junit.runners.model.Statement
+import java.net.URLEncoder
+import java.nio.file.FileSystem
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.properties.Delegates
 
 data class FileInfo(val name: String, val data: ByteArray)
 
-fun fs() = MockVirtualFileSystem()
+class InMemoryFsRule : ExternalResource() {
+  private var _fs: FileSystem? = null
+
+  private var sanitizedName: String by Delegates.notNull()
+
+  override fun apply(base: Statement, description: Description): Statement {
+    sanitizedName = URLEncoder.encode(description.methodName, Charsets.UTF_8.name())
+    return super.apply(base, description)
+  }
+
+  val fs: FileSystem
+    get() {
+      var r = _fs
+      if (r == null) {
+        r = MemoryFileSystemBuilder
+          .newLinux()
+          .setCurrentWorkingDirectory("/")
+          .build(sanitizedName)
+        _fs = r
+      }
+      return r!!
+    }
+
+  override fun after() {
+    _fs?.close()
+    _fs = null
+  }
+}
 
 private fun getChildrenStream(path: Path, excludes: Array<out String>? = null) = Files.list(path)
   .filter { !it.endsWith(Constants.DOT_GIT) && (excludes == null || !excludes.contains(it.fileName.toString())) }
   .sorted()
 
-internal fun compareFiles(path1: Path, path2: Path, path3: VirtualFile? = null, vararg localExcludes: String) {
+fun compareFiles(path1: Path, path2: Path, vararg localExcludes: String) {
   assertThat(path1).isDirectory()
   assertThat(path2).isDirectory()
-  if (path3 != null) {
-    assertThat(path3.isDirectory).isTrue()
-  }
 
   val notFound = THashSet<Path>()
   for (path in getChildrenStream(path1, localExcludes)) {
@@ -47,21 +74,15 @@ internal fun compareFiles(path1: Path, path2: Path, path3: VirtualFile? = null, 
   }
 
   for (child2 in getChildrenStream(path2)) {
-    val fileName = child2.fileName
-    val child1 = path1.resolve(fileName)
-    val child3 = path3?.findChild(fileName.toString())
+    val child1 = path1.resolve(child2.fileName.toString())
     if (child1.isFile()) {
       assertThat(child2).hasSameContentAs(child1)
-      if (child3 != null) {
-        assertThat(child3.isDirectory).isFalse()
-        assertThat(child1).hasContent(if (child3 is LightVirtualFile) child3.content.toString() else VfsUtilCore.loadText(child3))
-      }
     }
     else {
-      compareFiles(child1, child2, child3, *localExcludes)
+      compareFiles(child1, child2, *localExcludes)
     }
     notFound.remove(child1)
   }
 
-  assertThat(notFound).isEmpty()
+  assertThat(notFound).`as`("Path '$path1' contains other files than '$path2'").isEmpty()
 }

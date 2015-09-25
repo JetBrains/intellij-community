@@ -67,7 +67,7 @@ internal class ApplicationStoreTest {
     component.foo = "newValue"
     componentStore.save(SmartList())
 
-    assertThat(streamProvider.data.get(RoamingType.DEFAULT)!!.get("new.xml")).isEqualTo("<application>\n" + "  <component name=\"A\" foo=\"newValue\" />\n" + "</application>")
+    assertThat(streamProvider.data.get(RoamingType.DEFAULT)!!.get("new.xml")).isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
   }
 
   @Test fun `load from stream provider`() {
@@ -83,7 +83,7 @@ internal class ApplicationStoreTest {
     componentStore.initComponent(component, false)
     assertThat(component.foo).isEqualTo("newValue")
 
-    assertThat(Paths.get(componentStore.storageManager.expandNormalizedPath(fileSpec))).isRegularFile()
+    assertThat(Paths.get(componentStore.storageManager.expandMacros(fileSpec))).isRegularFile()
   }
 
   @Test fun `remove deprecated storage on write`() {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.configurationStore.ROOT_CONFIG
 import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.ide.actions.ExportSettingsAction
 import com.intellij.openapi.application.ApplicationManager
@@ -23,14 +24,14 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import java.io.File
 
-fun copyLocalConfig() {
-  val storageManager = ApplicationManager.getApplication()!!.stateStore.stateStorageManager as StateStorageManagerImpl
+fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager.getApplication()!!.stateStore.stateStorageManager as StateStorageManagerImpl) {
   val streamProvider = storageManager.streamProvider!! as IcsManager.IcsStreamProvider
 
-  val fileToComponents = ExportSettingsAction.getExportableComponentsMap(true, false)
+  val fileToComponents = ExportSettingsAction.getExportableComponentsMap(true, false, storageManager)
   for (file in fileToComponents.keySet()) {
     val absolutePath = FileUtilRt.toSystemIndependentName(file.absolutePath)
     var fileSpec = storageManager.collapseMacros(absolutePath)
+    LOG.assertTrue(!fileSpec.contains(ROOT_CONFIG))
     if (fileSpec.equals(absolutePath)) {
       // we have not experienced such problem yet, but we are just aware
       val canonicalPath = FileUtilRt.toSystemIndependentName(file.canonicalPath)

@@ -27,7 +27,7 @@ import org.junit.ClassRule
 import org.junit.Test
 import kotlin.properties.Delegates
 
-class StorageManagerTest {
+internal class StorageManagerTest {
   companion object {
     val MACRO = "\$MACRO1$"
 
@@ -36,27 +36,27 @@ class StorageManagerTest {
 
   private var storageManager: StateStorageManagerImpl by Delegates.notNull()
 
-  public @Before fun setUp() {
+  @Before fun setUp() {
     storageManager = StateStorageManagerImpl("foo")
     storageManager.addMacro(MACRO, "/temp/m1")
   }
 
-  public @Test fun createFileStateStorageMacroSubstituted() {
+  @Test fun createFileStateStorageMacroSubstituted() {
     assertThat(storageManager.getOrCreateStorage("$MACRO/test.xml")).isNotNull()
   }
 
-  public @Test fun `collapse macro`() {
+  @Test fun `collapse macro`() {
     assertThat(storageManager.collapseMacros("/temp/m1/foo")).isEqualTo("$MACRO/foo")
-    assertThat(storageManager.collapseMacros("\\temp\\m1\\foo")).isEqualTo("\\temp\\m1\\foo")
+    assertThat(storageManager.collapseMacros("\\temp\\m1\\foo")).isEqualTo("/temp/m1/foo")
   }
 
-  public @Test fun `add system-dependent macro`() {
+  @Test fun `add system-dependent macro`() {
     val key = "\$INVALID$"
     val expansion = "\\temp"
     assertThatThrownBy({storageManager.addMacro(key, expansion) }).hasMessage("Macro $key set to system-dependent expansion $expansion")
   }
 
-  public @Test fun `create storage assertion thrown when unknown macro`() {
+  @Test fun `create storage assertion thrown when unknown macro`() {
     try {
       storageManager.getOrCreateStorage("\$UNKNOWN_MACRO$/test.xml")
       TestCase.fail("Exception expected")
@@ -66,7 +66,7 @@ class StorageManagerTest {
     }
   }
 
-  public @Test fun `create file storage macro substituted when expansion has$`() {
+  @Test fun `create file storage macro substituted when expansion has$`() {
     storageManager.addMacro("\$DOLLAR_MACRO$", "/temp/d$")
     assertThat(storageManager.getOrCreateStorage("\$DOLLAR_MACRO$/test.xml")).isNotNull()
   }
