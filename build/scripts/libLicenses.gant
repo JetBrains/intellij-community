@@ -305,6 +305,7 @@ libraryLicense(name: "docutils", attachedTo: "python-helpers", version: "0.8", l
 libraryLicense(name: "epydoc", attachedTo: "python-helpers", version: "3.0.1", license: "MIT", url: "http://epydoc.sourceforge.net/")
 libraryLicense(name: "pockets", attachedTo: "python-helpers", version: "0.2.4", license: "BSD", url: "http://pockets.readthedocs.org/")
 libraryLicense(name: "sphinxcontrib-napoleon", attachedTo: "python-helpers", version: "0.3.11", license: "BSD", url: "http://sphinxcontrib-napoleon.readthedocs.org/")
+libraryLicense(name: "assertJ", version: "3", license: "Apache 2.0", url: "https://github.com/joel-costigliola/assertj-core")
 
 jetbrainsLibrary("Coverage")
 jetbrainsLibrary("CoverageReport")

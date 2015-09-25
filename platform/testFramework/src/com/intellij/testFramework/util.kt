@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.testFramework
 
 import com.intellij.openapi.components.ComponentManager
 import org.picocontainer.MutablePicoContainer
 
-public fun <T> ComponentManager.registerServiceInstance(interfaceClass: Class<T>, instance: T) {
-  val picoContainer = getPicoContainer() as MutablePicoContainer
-  val key = interfaceClass.getName()
+fun <T> ComponentManager.registerServiceInstance(interfaceClass: Class<T>, instance: T) {
+  val picoContainer = picoContainer as MutablePicoContainer
+  val key = interfaceClass.name
   picoContainer.unregisterComponent(key)
   picoContainer.registerComponentInstance(key, instance)
 }
