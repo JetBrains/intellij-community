@@ -348,15 +348,20 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     fireProjectOpened(project);
-    DumbService.getInstance(project).queueTask(new DumbModeTask() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
       @Override
-      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-        waitForFileWatcher(indicator);
-      }
+      public void run() {
+        DumbService.getInstance(project).queueTask(new DumbModeTask() {
+          @Override
+          public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+            waitForFileWatcher(indicator);
+          }
 
-      @Override
-      public String toString() {
-        return "wait for file watcher";
+          @Override
+          public String toString() {
+            return "wait for file watcher";
+          }
+        });
       }
     });
 
