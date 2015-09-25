@@ -43,7 +43,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     int w = c.getWidth();
     int h = c.getHeight();
     if (isHelpButton(c)) {
-      Icon icon = MacIntelliJIconCache.getIcon("helpButton", false, c.hasFocus(), false);
+      Icon icon = MacIntelliJIconCache.getIcon("helpButton", false, c.hasFocus());
       int x = (w - icon.getIconWidth()) / 2;
       int y = (h - icon.getIconHeight()) / 2;
       icon.paintIcon(c, g, x, y);
@@ -114,7 +114,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     boolean combo = button.getClientProperty("styleCombo") == Boolean.TRUE;
     String comboPrefix = combo ? "Combo" : "";
     String iconName = "button" + comboPrefix + suffix;
-    return MacIntelliJIconCache.getIcon(iconName, isDefault, isFocused && !combo, false);
+    return MacIntelliJIconCache.getIcon(iconName, isDefault, isFocused && !combo);
   }
 
   private String layout(AbstractButton b, FontMetrics fm,

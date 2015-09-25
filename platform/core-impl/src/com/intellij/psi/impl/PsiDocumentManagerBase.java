@@ -578,6 +578,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return getLastCommittedDocument(document).getModificationStamp();
   }
 
+  @Override
+  @Nullable
+  public Document getLastCommittedDocument(@NotNull PsiFile file) {
+    Document document = getDocument(file);
+    return document == null ? null : getLastCommittedDocument(document);
+  }
+
   @NotNull
   public DocumentEx getLastCommittedDocument(@NotNull Document document) {
     if (document instanceof FrozenDocument) return (DocumentEx)document;

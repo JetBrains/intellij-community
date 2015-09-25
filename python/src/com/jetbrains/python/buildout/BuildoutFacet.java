@@ -36,6 +36,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.jetbrains.python.HelperPackage;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.buildout.config.BuildoutCfgLanguage;
 import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFile;
@@ -287,13 +289,13 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
     Map<String, String> env = commandLine.getEnvironment();
     ParametersList params = commandLine.getParametersList();
     // alter execution script
-    ParamsGroup script_params = params.getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
-    assert script_params != null;
-    if (script_params.getParameters().size() > 0) {
-      String normal_script = script_params.getParameters().get(0); // expect DjangoUtil.MANAGE_FILE
-      String engulfer_path = PythonHelpersLocator.getHelperPath("pycharm/buildout_engulfer.py");
+    ParamsGroup scriptParams = params.getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
+    assert scriptParams != null;
+    if (scriptParams.getParameters().size() > 0) {
+      String normalScript = scriptParams.getParameters().get(0); // expect DjangoUtil.MANAGE_FILE
+      HelperPackage engulfer = PythonHelper.BUILDOUT_ENGULFER;
       env.put("PYCHARM_ENGULF_SCRIPT", getConfiguration().getScriptName());
-      script_params.getParametersList().replaceOrPrepend(normal_script, engulfer_path);
+      scriptParams.getParametersList().replaceOrPrepend(normalScript, engulfer.asParamString());
     }
     // add pycharm helpers to pythonpath so that fixGetpass is importable
 

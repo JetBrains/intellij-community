@@ -4,6 +4,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -23,11 +24,12 @@ public abstract class AbstractRunConfiguration extends ModuleBasedConfiguration<
     super(new RunConfigurationModule(project), factory);
   }
 
+  @NotNull
   public Map<String, String> getEnvs() {
     return myEnvs;
   }
 
-  public void setEnvs(final Map<String, String> envs) {
+  public void setEnvs(@NotNull final Map<String, String> envs) {
     myEnvs.clear();
     myEnvs.putAll(envs);
   }

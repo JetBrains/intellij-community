@@ -37,11 +37,11 @@ public abstract class SchemeManagerFactoryBase : SchemesManagerFactory(), Settin
   abstract val componentManager: ComponentManager
 
   override final fun <T : Scheme, E : ExternalizableScheme> createSchemesManager(directoryName: String, processor: SchemeProcessor<E>, roamingType: RoamingType): SchemesManager<T, E> {
-    val storageManager = (componentManager.stateStore).getStateStorageManager()
+    val storageManager = (componentManager.stateStore).stateStorageManager
 
     val path = checkPath(directoryName)
     val manager = SchemeManagerImpl<T, E>(path, processor, (storageManager as? StateStorageManagerImpl)?.streamProvider, pathToFile(path, storageManager), roamingType, componentManager)
-    @suppress("CAST_NEVER_SUCCEEDS")
+    @Suppress("CAST_NEVER_SUCCEEDS")
     managers.add(manager as SchemeManagerImpl<Scheme, ExternalizableScheme>)
     return manager
   }
@@ -49,7 +49,7 @@ public abstract class SchemeManagerFactoryBase : SchemesManagerFactory(), Settin
   open fun checkPath(originalPath: String): String {
     fun error(message: String) {
       // as error because it is not a new requirement
-      if (ApplicationManager.getApplication().isUnitTestMode()) throw AssertionError(message) else LOG.error(message)
+      if (ApplicationManager.getApplication().isUnitTestMode) throw AssertionError(message) else LOG.error(message)
     }
 
     when {
@@ -67,7 +67,7 @@ public abstract class SchemeManagerFactoryBase : SchemesManagerFactory(), Settin
         processor(manager)
       }
       catch (e: Throwable) {
-        LOG.error("Cannot reload settings for ${manager.javaClass.getName()}", e)
+        LOG.error("Cannot reload settings for ${manager.javaClass.name}", e)
       }
     }
   }
@@ -83,7 +83,7 @@ public abstract class SchemeManagerFactoryBase : SchemesManagerFactory(), Settin
       }
     }
 
-    CompoundRuntimeException.doThrow(errors)
+    CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 }
 
@@ -96,7 +96,7 @@ private class ApplicationSchemeManagerFactory : SchemeManagerFactoryBase() {
     if (path.startsWith(ROOT_CONFIG)) {
       path = path.substring(ROOT_CONFIG.length() + 1)
       val message = "Path must not contains ROOT_CONFIG macro, corrected: $path"
-      if (ApplicationManager.getApplication().isUnitTestMode()) throw AssertionError(message) else LOG.warn(message)
+      if (ApplicationManager.getApplication().isUnitTestMode) throw AssertionError(message) else LOG.warn(message)
     }
     return path
   }
@@ -107,5 +107,5 @@ private class ApplicationSchemeManagerFactory : SchemeManagerFactoryBase() {
 private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
   override val componentManager = project
 
-  override fun pathToFile(path: String, storageManager: StateStorageManager) = File(project.getBasePath(), if (ProjectUtil.isDirectoryBased(project)) "${Project.DIRECTORY_STORE_FOLDER}/$path" else ".$path")
+  override fun pathToFile(path: String, storageManager: StateStorageManager) = File(project.basePath, if (ProjectUtil.isDirectoryBased(project)) "${Project.DIRECTORY_STORE_FOLDER}/$path" else ".$path")
 }

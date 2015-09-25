@@ -74,7 +74,9 @@ public class LeakHunter {
         cached = fields.isEmpty() ? EMPTY_FIELD_ARRAY : fields.toArray(new Field[fields.size()]);
       }
       catch (IncompatibleClassChangeError e) {
-        throw new RuntimeException("Failed to get fields of " + aClass, e);
+        //this exception may be thrown because there are two different versions of org.objectweb.asm.tree.ClassNode from different plugins
+        //I don't see any sane way to fix it until we load all the plugins by the same classloader in tests
+        cached = EMPTY_FIELD_ARRAY;
       }
       catch (SecurityException e) {
         cached = EMPTY_FIELD_ARRAY;

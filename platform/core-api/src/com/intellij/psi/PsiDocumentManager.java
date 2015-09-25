@@ -126,6 +126,17 @@ public abstract class PsiDocumentManager {
   public abstract long getLastCommittedStamp(@NotNull Document document);
 
   /**
+   * Returns the document for specified PsiFile intended to be used when working with committed PSI, e.g. outside dispatch thread.
+   * @param file the file for which the document is requested.
+   * @return an immutable document corresponding to the current PSI state. For committed documents, the contents and timestamp are equal to
+   * the ones of {@link #getDocument(PsiFile)}. For uncommitted documents, the text is {@link #getLastCommittedText(Document)} and
+   * the modification stamp is {@link #getLastCommittedStamp(Document)}.
+   * @since 143.* builds
+   */
+  @Nullable
+  public abstract Document getLastCommittedDocument(@NotNull PsiFile file);
+
+  /**
    * Returns the list of documents which have been modified but not committed.
    *
    * @return the list of uncommitted documents.

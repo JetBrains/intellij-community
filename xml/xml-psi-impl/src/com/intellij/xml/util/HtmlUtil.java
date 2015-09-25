@@ -502,7 +502,7 @@ public class HtmlUtil {
     XmlElementDescriptor descriptor = context.getDescriptor();
     if (descriptor != null) {
       XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
-      XmlFile descriptorFile = nsDescriptor.getDescriptorFile();
+      XmlFile descriptorFile = nsDescriptor != null ? nsDescriptor.getDescriptorFile() : null;
       String descriptorPath = descriptorFile != null ? descriptorFile.getVirtualFile().getPath() : null;
       return Comparing.equal(Html5SchemaProvider.getHtml5SchemaLocation(), descriptorPath) ||
              Comparing.equal(Html5SchemaProvider.getXhtml5SchemaLocation(), descriptorPath);

@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
@@ -76,6 +77,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     final VirtualFile baseDir = project.getBaseDir();
     final List<Lesson> lessons = course.getLessons();
 
+    final Map<TaskFile, TaskFile> savedTaskFiles = new HashMap<TaskFile, TaskFile>();
     for (Lesson lesson : lessons) {
       final VirtualFile lessonDir = baseDir.findChild(EduNames.LESSON + String.valueOf(lesson.getIndex()));
       if (lessonDir == null) continue;
@@ -86,8 +88,10 @@ public class CCCreateCourseArchive extends DumbAwareAction {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
             public void run() {
-              TaskFile taskFile = new TaskFile();
-              TaskFile.copy(entry.getValue(), taskFile);
+              TaskFile taskFileCopy = new TaskFile();
+              TaskFile taskFile = entry.getValue();
+              TaskFile.copy(taskFile, taskFileCopy);
+              savedTaskFiles.put(taskFile, taskFileCopy);
               EduUtils.createStudentFileFromAnswer(project, taskDir, taskDir, entry.getKey(), taskFile);
             }
           });
@@ -98,6 +102,13 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
     packCourse(baseDir, course);
     synchronize(project);
+    resetTaskFiles(savedTaskFiles);
+  }
+
+  private static void resetTaskFiles(Map<TaskFile, TaskFile> savedTaskFiles) {
+    for (Map.Entry<TaskFile, TaskFile> entry : savedTaskFiles.entrySet()) {
+      entry.getKey().setAnswerPlaceholders(entry.getValue().getAnswerPlaceholders());
+    }
   }
 
   private static void synchronize(@NotNull final Project project) {

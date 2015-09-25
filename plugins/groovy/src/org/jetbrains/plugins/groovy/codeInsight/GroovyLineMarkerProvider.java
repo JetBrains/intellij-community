@@ -116,7 +116,7 @@ public class GroovyLineMarkerProvider implements LineMarkerProvider {
       }
       if (isMember && !(element1 instanceof PsiAnonymousClass || element1.getParent() instanceof PsiAnonymousClass)) {
         PsiFile file = element1.getContainingFile();
-        Document document = file == null ? null : PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+        Document document = file == null ? null : PsiDocumentManager.getInstance(file.getProject()).getLastCommittedDocument(file);
         boolean drawSeparator = false;
         if (document != null) {
           CharSequence documentChars = document.getCharsSequence();

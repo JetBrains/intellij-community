@@ -587,6 +587,10 @@
                      implementationClass="com.siyeh.ig.cloneable.UseOfCloneInspection"/>
 
     <!--group.names.control.flow.issues-->
+    <localInspection groupPath="Java" language="JAVA" shortName="BooleanExpressionMayBeConditional" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="boolean.expression.may.be.conditional.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.controlflow.BooleanExpressionMayBeConditionalInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="BreakStatement" bundle="com.siyeh.InspectionGadgetsBundle" key="break.statement.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.BreakStatementInspection"/>
@@ -2028,7 +2032,7 @@
                      key="string.buffer.to.string.in.concatenation.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.performance.StringBufferToStringInConcatenationInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="StringContatenationInLoop" shortName="StringConcatenationInLoops"
+    <localInspection groupPath="Java" language="JAVA" suppressId="StringConcatenationInLoop" alternativeId="StringContatenationInLoop" shortName="StringConcatenationInLoops"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="string.concatenation.in.loops.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.StringConcatenationInLoopsInspection"/>

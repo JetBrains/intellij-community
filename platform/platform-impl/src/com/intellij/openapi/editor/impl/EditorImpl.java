@@ -1996,6 +1996,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void validateSize() {
+    if (myUseNewRendering && isReleased) return;
+    
     Dimension dim = getPreferredSize();
 
     if (!dim.equals(myPreferredSize) && !myDocument.isInBulkUpdate()) {
@@ -3791,7 +3793,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public Dimension getPreferredSize() {
-    if (myUseNewRendering) return myView.getPreferredSize();
+    if (myUseNewRendering) return isReleased ? new Dimension() : myView.getPreferredSize();
     if (ourIsUnitTestMode && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
       return new Dimension(1, 1);
     }

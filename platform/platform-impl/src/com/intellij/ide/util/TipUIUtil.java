@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,16 +120,10 @@ public class TipUIUtil {
     }
   }
 
-  private static final int TIP_FONT_BASE_SIZE = 16;
   private static final String TIP_HTML_TEXT_TAGS = "h1, p, pre, ul";
 
   private static void adjustFontSize(StyleSheet styleSheet) {
-    float scale = (float)UISettings.getInstance().FONT_SIZE / UIUtil.getSystemFontData().getSecond();
-    if (scale <= 1) return; // don't bother about decreasing
-
-    // When the primary font is increased we should take care of the visibility of the tips font
-    // which is too small initially. So, a reasonable constant is used as the base for the scale.
-    int size = (int)(TIP_FONT_BASE_SIZE * scale);
+    int size = (int)UIUtil.getFontSize(UIUtil.FontSize.MINI);
     styleSheet.addRule(TIP_HTML_TEXT_TAGS + " {font-size: " + size + "px;}");
   }
 

@@ -29,7 +29,7 @@ public class JavaFormatterMultilineMethodCallParamsTest extends AbstractJavaForm
     );
   }
 
-  public void IGNORED_testChainedMethodInsideCall_WithRParenOnNewLine() {
+  public void testChainedMethodInsideCall_WithRParenOnNewLine() {
     doMethodTest(
       "call(new StringBuilder()\n" +
       ".append(\"aaa\")\n" +
@@ -39,6 +39,31 @@ public class JavaFormatterMultilineMethodCallParamsTest extends AbstractJavaForm
       "        .append(\"aaa\")\n" +
       "        .append(\"bbbb\")\n" +
       ");"
+    );
+  }
+  
+  public void testLambdas() {
+    doTextTest(
+      "public class Main {\n" +
+      "    public static void main(String... args) throws Exception {\n" +
+      "        RatpackServer.start(server -> server\n" +
+      "                        .handlers(chain -> chain\n" +
+      "                                        .get(ctx -> ctx.render(\"Hello World!\"))\n" +
+      "                                        .get(\":name\", ctx -> ctx.render(\"Hello \" + ctx.getPathTokens().get(\"name\") + \"!\"))\n" +
+      "                        )\n" +
+      "        );\n" +
+      "    }\n" +
+      "}",
+      "public class Main {\n" +
+      "    public static void main(String... args) throws Exception {\n" +
+      "        RatpackServer.start(server -> server\n" +
+      "                .handlers(chain -> chain\n" +
+      "                        .get(ctx -> ctx.render(\"Hello World!\"))\n" +
+      "                        .get(\":name\", ctx -> ctx.render(\"Hello \" + ctx.getPathTokens().get(\"name\") + \"!\"))\n" +
+      "                )\n" +
+      "        );\n" +
+      "    }\n" +
+      "}"
     );
   }
 

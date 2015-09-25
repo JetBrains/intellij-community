@@ -323,13 +323,13 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-1445
   public void testConvertSingleQuotedDocstring() {
-    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    getIndentOptions().INDENT_SIZE = 2;
     doInspectionTest(PySingleQuotedDocstringInspection.class, PyBundle.message("QFIX.convert.single.quoted.docstring"), true, true);
   }
 
   // PY-8926
   public void testConvertSingleQuotedDocstringEscape() {
-    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    getIndentOptions().INDENT_SIZE = 2;
     doInspectionTest(PySingleQuotedDocstringInspection.class, PyBundle.message("QFIX.convert.single.quoted.docstring"), true, true);
   }
 
@@ -438,7 +438,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-3394
   public void testDocstringParams() {
-    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    getIndentOptions().INDENT_SIZE = 2;
     runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
       public void run() {
         doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "b"), true, true);
@@ -447,7 +447,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testDocstringParams1() {
-    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    getIndentOptions().INDENT_SIZE = 2;
     runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
       public void run() {
         doInspectionTest(PyDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true);

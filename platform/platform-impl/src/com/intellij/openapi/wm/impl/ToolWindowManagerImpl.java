@@ -20,6 +20,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -2576,6 +2577,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       return;
     }
     info.setShowStripeButton(visibleOnPanel);
+    UsageTrigger.trigger("StripeButton[" + id + "]." + (visibleOnPanel ? "shown" : "hidden"));
 
     final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
     appendApplyWindowInfoCmd(info, commandList);
@@ -2583,7 +2585,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public boolean isShowStripeButton(String id) {
-    checkId(id);
-    return getInfo(id).isShowStripeButton();
+    WindowInfoImpl info = getInfo(id);
+    return info == null || info.isShowStripeButton();
   }
 }

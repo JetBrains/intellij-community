@@ -164,6 +164,8 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       }
     });
 
+    CustomShortcutSet shortcutSet = new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+    
     new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -185,7 +187,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
           }
         }
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("alt ENTER"), popup.getTextField());
+    }.registerCustomShortcutSet(shortcutSet, popup.getTextField());
 
     return popup;
   }

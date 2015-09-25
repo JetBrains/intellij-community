@@ -20,9 +20,7 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.Consumer
 import com.intellij.xdebugger.XDebugProcess
-import org.jetbrains.debugger.connection.VmConnection
 
 public class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val handler: ProcessHandler) : ProcessHandler(), KillableProcess {
   init {
@@ -42,7 +40,7 @@ public class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, priv
   }
 
   companion object {
-    private val LOG: Logger = Logger.getInstance(javaClass<ProcessHandlerWrapper>())
+    private val LOG: Logger = Logger.getInstance(ProcessHandlerWrapper::class.java)
   }
 
   override fun isSilentlyDestroyOnClose() = handler.isSilentlyDestroyOnClose()

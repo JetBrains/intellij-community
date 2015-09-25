@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,12 +34,6 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean m_ignoreUnlessAssigned = true;
-
-  @Override
-  @NotNull
-  public String getID() {
-    return "StringContatenationInLoop";
-  }
 
   @Override
   @NotNull
@@ -97,6 +91,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         return;
       }
       final PsiJavaToken sign = expression.getTokenBeforeOperand(operands[1]);
+      assert sign != null;
       registerError(sign);
     }
 

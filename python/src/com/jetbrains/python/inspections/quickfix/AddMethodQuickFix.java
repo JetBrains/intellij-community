@@ -84,7 +84,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
       sure(FileModificationService.getInstance().preparePsiElementForWrite(clsStmtList));
       // try to at least match parameter count
       // TODO: get parameter style from code style
-      PyFunctionBuilder builder = new PyFunctionBuilder(myIdentifier);
+      PyFunctionBuilder builder = new PyFunctionBuilder(myIdentifier, cls);
       PsiElement pe = problemElement.getParent();
       String decoratorName = null; // set to non-null to add a decorator
       PyExpression[] args = new PyExpression[0];

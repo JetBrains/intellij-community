@@ -82,7 +82,7 @@ class AnchorElementInfo extends SelfElementInfo {
     if (anchor == null) return null;
 
     TextRange range = anchor.getTextRange();
-    if (range.getStartOffset() != psiRange.getStartOffset() || range.getEndOffset() != psiRange.getEndOffset()) return null;
+    if (range == null || range.getStartOffset() != psiRange.getStartOffset() || range.getEndOffset() != psiRange.getEndOffset()) return null;
 
     return restoreFromAnchor(anchor);
   }

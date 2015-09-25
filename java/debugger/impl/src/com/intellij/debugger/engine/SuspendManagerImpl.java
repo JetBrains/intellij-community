@@ -115,13 +115,6 @@ public class SuspendManagerImpl implements SuspendManager {
     return suspendContext;
   }
 
-  public SuspendContextImpl createDummyContext(@MagicConstant(flagsFromClass = EventRequest.class) int suspendPolicy) {
-    return new SuspendContextImpl(myDebugProcess, suspendPolicy, 0, null) {
-      @Override
-      protected void resumeImpl() {}
-    };
-  }
-
   @Override
   public SuspendContextImpl pushSuspendContext(final EventSet set) {
     SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, set.suspendPolicy(), set.size(), set) {
@@ -281,7 +274,7 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   @Override
-  public void resumeThread(SuspendContextImpl context, ThreadReferenceProxyImpl thread) {
+  public void resumeThread(SuspendContextImpl context, @NotNull ThreadReferenceProxyImpl thread) {
     //LOG.assertTrue(thread != context.getThread(), "Use resume() instead of resuming breakpoint thread");
     LOG.assertTrue(!context.isExplicitlyResumed(thread));
 
@@ -360,7 +353,7 @@ public class SuspendManagerImpl implements SuspendManager {
     processVote(suspendContext);
   }
 
-  LinkedList<SuspendContextImpl> getPausedContexts() {
+  public List<SuspendContextImpl> getPausedContexts() {
     return myPausedContexts;
   }
 }

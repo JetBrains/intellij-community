@@ -6,6 +6,7 @@
   <description><![CDATA[
       Plugin allows you to create new course for PyCharm <Edu></Edu>.
     ]]></description>
+  <vendor>JetBrains</vendor>
 
   <change-notes><![CDATA[
     ]]>

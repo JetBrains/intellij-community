@@ -186,13 +186,30 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     FileElement treeElement = createFileElement(viewProvider.getContents());
     treeElement.setPsi(this);
 
-    final StubTree stub = derefStub();
-    List<Pair<StubBasedPsiElementBase, CompositeElement>> bindings = calcStubAstBindings(treeElement, cachedDocument, stub);
+    while (true) {
+      StubTree stub = derefStub();
+      List<Pair<StubBasedPsiElementBase, CompositeElement>> bindings = calcStubAstBindings(treeElement, cachedDocument, stub);
 
+      FileElement savedTree = ensureTreeElement(viewProvider, treeElement, stub, bindings);
+      if (savedTree != null) {
+        return savedTree;
+      }
+    }
+  }
+
+  @Nullable
+  private FileElement ensureTreeElement(@NotNull FileViewProvider viewProvider,
+                                        @NotNull FileElement treeElement,
+                                        @Nullable StubTree stub,
+                                        @NotNull List<Pair<StubBasedPsiElementBase, CompositeElement>> bindings) {
     synchronized (PsiLock.LOCK) {
       FileElement existing = derefTreeElement();
       if (existing != null) {
         return existing;
+      }
+
+      if (stub != derefStub()) {
+        return null; // stub has been just loaded by another thread, it needs to be bound to AST
       }
 
       if (stub != null) {

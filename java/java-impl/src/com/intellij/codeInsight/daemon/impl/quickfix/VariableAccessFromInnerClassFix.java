@@ -162,6 +162,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   }
 
   private void makeArray(PsiVariable variable) throws IncorrectOperationException {
+    variable.normalizeDeclaration();
     PsiType type = variable.getType();
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(myContext.getProject()).getElementFactory();

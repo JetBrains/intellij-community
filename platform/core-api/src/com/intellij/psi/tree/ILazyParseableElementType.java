@@ -48,19 +48,36 @@ public class ILazyParseableElementType extends IElementType {
   }
 
   /**
+   * Parses the contents of the specified chameleon node and returns PsiBuilder.
+   * In future this method should deprecate all other parsing methods: parseContents(), doParseContents(), etc.
+   * It provides more flexible and CPU/memory efficient access to parser algorithms for all needs:
+   * editing, indexing and analysis.
+   * <p/>
+   *
+   * The parseContent() implementation in terms of parseLight() is just the following:
+   * {@code}parseLight().getTreeBuilt().getFirstChildNode(){@code}
+   *
+   * @param chameleon the node to parse.
+   * @return the parsed contents of the node in the form PsiBuilder.
+   */
+  public PsiBuilder parseLight(ASTNode chameleon) {
+    throw new UnsupportedOperationException(String.valueOf(chameleon));
+  }
+
+  /**
    * Parses the contents of the specified chameleon node and returns the AST tree
    * representing the parsed contents.
    *
    * @param chameleon the node to parse.
    * @return the parsed contents of the node.
    */
-  public ASTNode parseContents(final ASTNode chameleon) {
-    final PsiElement parentElement = chameleon.getTreeParent().getPsi();
-    assert parentElement != null : "Bad chameleon: " + chameleon;
+  public ASTNode parseContents(ASTNode chameleon) {
+    PsiElement parentElement = chameleon.getTreeParent().getPsi();
+    assert parentElement != null : "parent psi is null: " + chameleon;
     return doParseContents(chameleon, parentElement);
   }
 
-  protected ASTNode doParseContents(@NotNull final ASTNode chameleon, @NotNull final PsiElement psi) {
+  protected ASTNode doParseContents(@NotNull ASTNode chameleon, @NotNull PsiElement psi) {
     Project project = psi.getProject();
     Language languageForParser = getLanguageForParser(psi);
     PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, null, languageForParser, chameleon.getChars());

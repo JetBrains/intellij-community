@@ -40,6 +40,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -106,7 +107,7 @@ public class JavaDebugProcess extends XDebugProcess {
             || event == DebuggerSession.Event.REFRESH
                && myJavaSession.isPaused()) {
           final SuspendContextImpl newSuspendContext = newContext.getSuspendContext();
-          if (newSuspendContext != null && newSuspendContext != getSession().getSuspendContext()) {
+          if (newSuspendContext != null && shouldApplyContext(newContext)) {
             process.getManagerThread().schedule(new SuspendContextCommandImpl(newSuspendContext) {
               @Override
               public void contextAction() throws Exception {
@@ -119,10 +120,12 @@ public class JavaDebugProcess extends XDebugProcess {
                   XBreakpoint xBreakpoint = breakpoint.getXBreakpoint();
                   if (xBreakpoint != null) {
                     ((XDebugSessionImpl)getSession()).breakpointReachedNoProcessing(xBreakpoint, newSuspendContext);
+                    unsetPausedIfNeeded(newContext);
                     return;
                   }
                 }
                 getSession().positionReached(newSuspendContext);
+                unsetPausedIfNeeded(newContext);
               }
             });
           }
@@ -179,6 +182,21 @@ public class JavaDebugProcess extends XDebugProcess {
         }
       }
     });
+  }
+
+  private void unsetPausedIfNeeded(DebuggerContextImpl context) {
+    SuspendContextImpl suspendContext = context.getSuspendContext();
+    if (suspendContext != null && context.getThreadProxy() != suspendContext.getThread()) {
+      ((XDebugSessionImpl)getSession()).unsetPaused();
+    }
+  }
+
+  private boolean shouldApplyContext(DebuggerContextImpl context) {
+    SuspendContextImpl suspendContext = context.getSuspendContext();
+    SuspendContextImpl currentContext = (SuspendContextImpl)getSession().getSuspendContext();
+    if (suspendContext != null && !suspendContext.equals(currentContext)) return true;
+    JavaExecutionStack currentExecutionStack = currentContext != null ? currentContext.getActiveExecutionStack() : null;
+    return currentExecutionStack == null || !Comparing.equal(context.getThreadProxy(), currentExecutionStack.getThreadProxy());
   }
 
   public void saveNodeHistory() {

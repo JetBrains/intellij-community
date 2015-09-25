@@ -30,6 +30,7 @@ import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,6 +89,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
   }
 
+  @NotNull
   public VirtualMachine getVirtualMachine() {
     return myVirtualMachine;
   }
@@ -278,7 +280,15 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.eventRequestManager();
   }
 
+  /**
+   * @deprecated use {@link #mirrorOfVoid()} instead
+   */
+  @Deprecated
   public VoidValue mirrorOf() throws EvaluateException {
+    return mirrorOfVoid();
+  }
+
+  public VoidValue mirrorOfVoid() {
     return myVirtualMachine.mirrorOfVoid();
   }
 
@@ -461,6 +471,15 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myPopFrames.isAvailable();
   }
 
+  private final Capability myForceEarlyReturn = new Capability() {
+    protected boolean calcValue() {
+      return myVirtualMachine.canForceEarlyReturn();
+    }
+  };
+  public boolean canForceEarlyReturn() {
+    return myForceEarlyReturn.isAvailable();
+  }
+
   private final Capability myCanGetInstanceInfo = new Capability() {
     protected boolean calcValue() {
       if (!myVersionHigher_15) {
@@ -552,14 +571,15 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   @Nullable
+  @Contract("null -> null; !null -> !null")
   public ThreadReferenceProxyImpl getThreadReferenceProxy(@Nullable ThreadReference thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(thread == null) {
+    if (thread == null) {
       return null;
     }
 
     ThreadReferenceProxyImpl proxy = myAllThreads.get(thread);
-    if(proxy == null) {
+    if (proxy == null) {
       proxy = new ThreadReferenceProxyImpl(this, thread);
       myAllThreads.put(thread, proxy);
     }

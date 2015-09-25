@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -169,5 +170,9 @@ public class ShelvedChangeList implements JDOMExternalizable, ExternalizableSche
   @Override
   public void setName(@NotNull String newName) {
     mySchemeName = newName;
+  }
+
+  public boolean checkValid() {
+    return new File(PATH).exists();
   }
 }

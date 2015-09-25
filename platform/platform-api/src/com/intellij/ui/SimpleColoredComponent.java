@@ -1033,7 +1033,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private class MyAccessibleContext extends JComponent.AccessibleJComponent {
     @Override
     public String getAccessibleName() {
-      return StringUtil.join(myFragments, " ");
+      return SimpleColoredComponent.this.toString();
     }
   }
 

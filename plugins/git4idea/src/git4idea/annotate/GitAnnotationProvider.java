@@ -17,6 +17,7 @@ package git4idea.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -86,6 +87,9 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
           VcsRevisionNumber revisionNumber = revision != null ? revision.getRevisionNumber() : null;
           final GitFileAnnotation result = annotate(realFilePath, revisionNumber, revisions, file);
           annotation[0] = result;
+        }
+        catch (ProcessCanceledException pce) {
+          throw pce;
         }
         catch (Exception e) {
           exception[0] = e;

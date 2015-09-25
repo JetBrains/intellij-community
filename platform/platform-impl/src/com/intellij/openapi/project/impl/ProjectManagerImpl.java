@@ -43,6 +43,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
@@ -142,15 +143,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static final int MAX_LEAKY_PROJECTS = 42;
   @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
 
-  @Override
   @Nullable
-  public Project newProject(final String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
-    return newProject(projectName, filePath, useDefaultProjectSettings, isDummy, ApplicationManager.getApplication().isUnitTestMode());
-  }
-
-  @Nullable
-  public Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy,
-                            boolean optimiseTestLoadSpeed) {
+  public Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     filePath = toCanonicalName(filePath);
 
     //noinspection ConstantConditions
@@ -184,7 +178,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         }
       }
     }
-    ProjectImpl project = createProject(projectName, filePath, false, optimiseTestLoadSpeed);
+    ProjectImpl project = createProject(projectName, filePath, false);
     try {
       initProject(project, useDefaultProjectSettings ? getDefaultProject() : null);
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
@@ -241,12 +235,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
   }
 
-  private ProjectImpl createProject(@Nullable String projectName,
-                                    @NotNull String filePath,
-                                    boolean isDefault,
-                                    boolean isOptimiseTestLoadSpeed) {
-    return isDefault ? new DefaultProject(this, "", isOptimiseTestLoadSpeed)
-                     : new ProjectImpl(this, new File(filePath).getAbsolutePath(), isOptimiseTestLoadSpeed, projectName);
+  private ProjectImpl createProject(@Nullable String projectName, @NotNull String filePath, boolean isDefault) {
+    if (isDefault) {
+      return new DefaultProject(this, "");
+    }
+    else {
+      return new ProjectImpl(this, FileUtilRt.toSystemIndependentName(filePath), projectName);
+    }
   }
 
   private static void scheduleDispose(@NotNull final ProjectImpl project) {
@@ -273,7 +268,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Nullable
   public Project loadProject(@NotNull String filePath) throws IOException {
     try {
-      ProjectImpl project = createProject(null, filePath, false, false);
+      ProjectImpl project = createProject(null, new File(filePath).getAbsolutePath(), false);
       initProject(project, null);
       return project;
     }
@@ -309,7 +304,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         @Override
         public void run() {
           try {
-            myDefaultProject = createProject(null, "", true, ApplicationManager.getApplication().isUnitTestMode());
+            myDefaultProject = createProject(null, "", true);
             initProject(myDefaultProject, null);
           }
           catch (Throwable t) {
@@ -519,7 +514,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
    */
   @Nullable
   private Project loadProjectWithProgress(@NotNull final String filePath) {
-    final ProjectImpl project = createProject(null, toCanonicalName(filePath), false, false);
+    final ProjectImpl project = createProject(null, toCanonicalName(filePath), false);
     try {
       myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Object, RuntimeException>() {
         @Override
@@ -555,8 +550,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @TestOnly
   public Collection<Project> closeTestProject(@NotNull final Project project) {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    closeProject(project);
-    return Arrays.asList(getOpenProjects());
+    closeProject(project, false, false, false);
+    Project[] projects = getOpenProjects();
+    return projects.length == 0 ? Collections.<Project>emptyList() : Arrays.asList(projects);
   }
 
   @Override

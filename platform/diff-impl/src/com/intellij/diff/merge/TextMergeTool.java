@@ -167,7 +167,7 @@ public class TextMergeTool implements MergeTool {
       components.closeHandler = new BooleanGetter() {
         @Override
         public boolean get() {
-          return MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext);
+          return MergeUtil.showExitWithoutApplyingChangesDialog(TextMergeViewer.this, myMergeRequest, myMergeContext);
         }
       };
 
@@ -313,7 +313,7 @@ public class TextMergeTool implements MergeTool {
               }
             }
             if (result == MergeResult.CANCEL &&
-                !MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext)) {
+                !MergeUtil.showExitWithoutApplyingChangesDialog(TextMergeViewer.this, myMergeRequest, myMergeContext)) {
               return;
             }
             destroyChangedBlocks();
@@ -417,7 +417,7 @@ public class TextMergeTool implements MergeTool {
           return apply(mergeFragments, outputModificationStamp);
         }
         catch (DiffTooBigException e) {
-          return applyNotification(DiffNotifications.DIFF_TOO_BIG);
+          return applyNotification(DiffNotifications.createDiffTooBig());
         }
         catch (ProcessCanceledException e) {
           throw e;

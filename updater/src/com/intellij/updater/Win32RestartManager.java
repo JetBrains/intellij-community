@@ -21,6 +21,9 @@ import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 
+import java.util.Arrays;
+import java.util.List;
+
 public interface Win32RestartManager extends Library {
 
   Win32RestartManager INSTANCE = (Win32RestartManager) Native.loadLibrary("Rstrtmgr", Win32RestartManager.class);
@@ -30,11 +33,21 @@ public interface Win32RestartManager extends Library {
   int CCH_RM_MAX_SVC_NAME = 63;
 
   class RmUniqueProcess extends Structure {
+    private static final List __FIELDS = Arrays.asList("dwProcessId", "ProcessStartTime");
+
     public int dwProcessId;
     public WinBase.FILETIME ProcessStartTime;
+
+    @Override
+    protected List getFieldOrder() {
+      return __FIELDS;
+    }
   }
 
   class RmProcessInfo extends Structure {
+    private static final List __FIELDS = Arrays.asList(
+      "Process", "strAppName", "strServiceShortName", "ApplicationType", "AppStatus", "TSSessionId", "bRestartable");
+
     public RmUniqueProcess Process;
     public char[] strAppName = new char[CCH_RM_MAX_APP_NAME + 1];
     public char[] strServiceShortName = new char[CCH_RM_MAX_SVC_NAME + 1];
@@ -42,6 +55,11 @@ public interface Win32RestartManager extends Library {
     public WinDef.LONG AppStatus;
     public int TSSessionId;
     public boolean bRestartable;
+
+    @Override
+    protected List getFieldOrder() {
+      return __FIELDS;
+    }
   }
 
   int RmGetList(int dwSessionHandle,

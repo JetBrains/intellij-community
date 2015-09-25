@@ -32,6 +32,7 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -239,6 +240,20 @@ public class DiffUtil {
   @NotNull
   public static LogicalPosition getCaretPosition(@Nullable Editor editor) {
     return editor != null ? editor.getCaretModel().getLogicalPosition() : new LogicalPosition(0, 0);
+  }
+
+  //
+  // Icons
+  //
+
+  @NotNull
+  public static Icon getArrowIcon(@NotNull Side sourceSide) {
+    return sourceSide.select(AllIcons.Diff.ArrowRight, AllIcons.Diff.Arrow);
+  }
+
+  @NotNull
+  public static Icon getArrowDownIcon(@NotNull Side sourceSide) {
+    return sourceSide.select(AllIcons.Diff.ArrowRightDown, AllIcons.Diff.ArrowLeftDown);
   }
 
   //
@@ -916,25 +931,13 @@ public class DiffUtil {
     return false;
   }
 
-  public static <T> T getUserData(@Nullable DiffRequest request, @Nullable DiffContext context, @NotNull Key<T> key) {
-    if (request != null) {
-      T data = request.getUserData(key);
+  public static <T> T getUserData(@Nullable UserDataHolder first, @Nullable UserDataHolder second, @NotNull Key<T> key) {
+    if (first != null) {
+      T data = first.getUserData(key);
       if (data != null) return data;
     }
-    if (context != null) {
-      T data = context.getUserData(key);
-      if (data != null) return data;
-    }
-    return null;
-  }
-
-  public static <T> T getUserData(@Nullable DiffContext context, @Nullable DiffRequest request, @NotNull Key<T> key) {
-    if (context != null) {
-      T data = context.getUserData(key);
-      if (data != null) return data;
-    }
-    if (request != null) {
-      T data = request.getUserData(key);
+    if (second != null) {
+      T data = second.getUserData(key);
       if (data != null) return data;
     }
     return null;

@@ -65,4 +65,5 @@ public class UnusedLibraryInspectionTest extends InspectionTestCase {
   public void testSimple() throws Exception { doTest(); }
   public void testUsedJunit() throws Exception { doTest(); }
   public void testUsedJunitFromField() throws Exception { doTest(); }
+  public void testUsedInParameterAnnotation() throws Exception { doTest(); }
 }

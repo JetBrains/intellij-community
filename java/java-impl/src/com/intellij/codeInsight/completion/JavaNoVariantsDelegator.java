@@ -34,7 +34,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 /**
@@ -60,7 +59,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
       }
     };
     result.runRemainingContributors(parameters, tracker);
-    final boolean empty = tracker.containsOnlyPackages || suggestMetaAnnotations(parameters);
+    final boolean empty = tracker.containsOnlyPackages || suggestAllAnnotations(parameters);
 
     if (!empty && parameters.getInvocationCount() == 0) {
       result.restartCompletionWhenNothingMatches();
@@ -79,10 +78,8 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     }
   }
 
-  private static boolean suggestMetaAnnotations(CompletionParameters parameters) {
-    PsiElement position = parameters.getPosition();
-    return psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class, PsiModifierList.class, PsiClass.class).accepts( position) &&
-           psiElement().withSuperParent(4, psiClass().isAnnotationType()).accepts(position);
+  private static boolean suggestAllAnnotations(CompletionParameters parameters) {
+    return psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).accepts(parameters.getPosition());
   }
 
   private static void delegate(CompletionParameters parameters, final CompletionResultSet result, final InheritorsHolder inheritorsHolder) {
@@ -91,7 +88,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
       suggestCollectionUtilities(parameters, result, position);
 
       if (parameters.getInvocationCount() <= 1 &&
-          (JavaCompletionContributor.mayStartClassName(result) || suggestMetaAnnotations(parameters)) &&
+          (JavaCompletionContributor.mayStartClassName(result) || suggestAllAnnotations(parameters)) &&
           JavaCompletionContributor.isClassNamePossible(parameters)) {
         suggestNonImportedClasses(parameters, result, inheritorsHolder);
         return;

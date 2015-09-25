@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,22 @@ package com.intellij.vcsUtil;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.FontUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author irengrig
- *         Date: 7/1/11
- *         Time: 2:49 PM
- */
 public class UIVcsUtil {
   private UIVcsUtil() {
   }
+
+  @NotNull
+  public static String spaceAndThinSpace() {
+    return " " + FontUtil.canDisplay(UIUtil.getLabelFont(), '\u2009', " ");
+  } 
 
   public static JPanel errorPanel(final String text, boolean isError) {
     final JLabel label = new JLabel(XmlStringUtil.wrapInHtml(escapeXmlAndAddBr(text)));

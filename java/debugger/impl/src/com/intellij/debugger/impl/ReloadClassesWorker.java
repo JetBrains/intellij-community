@@ -176,7 +176,7 @@ class ReloadClassesWorker {
     SuspendContextImpl suspendContext = context.getSuspendContext();
     if (suspendContext != null) {
       XExecutionStack stack = suspendContext.getActiveExecutionStack();
-      if (stack instanceof JavaExecutionStack) {
+      if (stack != null) {
         ((JavaExecutionStack)stack).initTopFrame();
       }
     }

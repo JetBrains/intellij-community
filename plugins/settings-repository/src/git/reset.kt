@@ -25,12 +25,12 @@ import org.jetbrains.settingsRepository.UpdateResult
 class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(manager, indicator) {
   fun reset(toTheirs: Boolean, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult {
     val message = if (toTheirs) "Overwrite local to ${manager.getUpstream()}" else "Overwrite remote ${manager.getUpstream()} to local"
-    if (LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled) {
       LOG.debug(message)
     }
 
     val resetResult = repository.resetHard()
-    val result = MutableUpdateResult(resetResult.getUpdated().keySet(), resetResult.getRemoved())
+    val result = MutableUpdateResult(resetResult.updated.keySet(), resetResult.removed)
 
     indicator?.checkCanceled()
 
@@ -42,10 +42,10 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
     if (localRepositoryInitializer == null) {
       if (firstMergeResult == null) {
         // nothing to merge, so, we merge latest origin commit
-        val fetchRefSpecs = remoteConfig.getFetchRefSpecs()
+        val fetchRefSpecs = remoteConfig.fetchRefSpecs
         assert(fetchRefSpecs.size() == 1)
 
-        val latestUpstreamCommit = repository.getRef(fetchRefSpecs[0].getDestination()!!)
+        val latestUpstreamCommit = repository.getRef(fetchRefSpecs[0].destination!!)
         if (latestUpstreamCommit == null) {
           if (toTheirs) {
             repository.deleteAllFiles(result.deleted)
@@ -59,7 +59,7 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
         }
 
         val mergeResult = merge(latestUpstreamCommit, mergeStrategy, true, forceMerge = true, commitMessage = commitMessage)
-        if (!mergeResult.mergeStatus.isSuccessful()) {
+        if (!mergeResult.mergeStatus.isSuccessful) {
           throw IllegalStateException(mergeResult.toString())
         }
         result.add(mergeResult.result)

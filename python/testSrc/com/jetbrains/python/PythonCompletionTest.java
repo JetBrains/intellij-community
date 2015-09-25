@@ -416,6 +416,18 @@ public class PythonCompletionTest extends PyTestCase {
     });
   }
 
+  // PY-16991
+  public void testSecondSectionNameInGoogleDocstring() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        final List<String> variants = doTestByFile();
+        assertNotNull(variants);
+        assertContainsElements(variants, "Return", "Returns");
+      }
+    });
+  }
+
   // PY-16877
   public void testTwoWordsSectionNameInGoogleDocstring() throws Exception {
     runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
@@ -458,6 +470,16 @@ public class PythonCompletionTest extends PyTestCase {
         final List<String> variants = doTestByFile();
         assertNotNull(variants);
         assertSameElements(variants, "param2");
+      }
+    });
+  }
+
+  // PY-16870, PY-16972
+  public void testClassNameInDocstring() {
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
       }
     });
   }

@@ -21,7 +21,6 @@ import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +35,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   private boolean myDestroyRecursively = true;
 
   public OSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    this(commandLine.createProcess(), commandLine.getCommandLineString(), CharsetToolkit.UTF8_CHARSET);
+    this(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
     setHasPty(commandLine instanceof PtyCommandLine);
   }
 

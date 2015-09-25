@@ -18,17 +18,18 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.basic.BasicArrowButton;
-import javax.swing.plaf.basic.BasicComboBoxEditor;
-import javax.swing.plaf.basic.BasicComboBoxUI;
+import javax.swing.plaf.basic.*;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
  * @author Konstantin Bulenkov
@@ -43,7 +44,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     currentValuePane = new CellRendererPane() {
       @Override
       public void paintComponent(Graphics g, Component c, Container p, int x, int y, int w, int h, boolean shouldValidate) {
-        c.setBackground(myComboBox.isEnabled() ? Gray.xFF : Gray.xF6);
+        c.setBackground(myComboBox.isEnabled() ? Gray.xFF : Gray.xF8);
         super.paintComponent(g, c, p, x, y, w, h, shouldValidate);
       }
     };
@@ -61,7 +62,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     JButton button = new BasicArrowButton(SwingConstants.SOUTH, bg, fg, fg, fg) {
       @Override
       public void paint(Graphics g2) {
-        Icon icon = MacIntelliJIconCache.getIcon("comboRight", false, myComboBox.hasFocus(), !myComboBox.isEnabled());
+        Icon icon = MacIntelliJIconCache.getIcon("comboRight", false, myComboBox.hasFocus(), myComboBox.isEnabled());
         icon.paintIcon(this, g2, 0, 0);
       }
 
@@ -224,8 +225,67 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
   }
 
   @Override
+  protected ComboPopup createPopup() {
+    return new BasicComboPopup(myComboBox) {
+      @Override
+      protected void configurePopup() {
+        super.configurePopup();
+        setBorderPainted(false);
+        setBorder(JBUI.Borders.empty());
+        setBackground(Gray.xFF);
+      }
+
+      @Override
+      protected void configureList() {
+        super.configureList();
+        wrapRenderer();
+      }
+
+      @Override
+      protected PropertyChangeListener createPropertyChangeListener() {
+        final PropertyChangeListener listener = super.createPropertyChangeListener();
+        return new PropertyChangeListener() {
+          @Override
+          public void propertyChange(PropertyChangeEvent evt) {
+            listener.propertyChange(evt);
+            if ("renderer".equals(evt.getPropertyName())) {
+              wrapRenderer();
+            }
+          }
+        };
+      }
+
+      class ComboBoxRendererWraper implements ListCellRenderer {
+        private final ListCellRenderer myRenderer;
+
+        public ComboBoxRendererWraper(ListCellRenderer renderer) {
+          myRenderer = renderer;
+        }
+
+        BorderLayoutPanel myPanel = JBUI.Panels.simplePanel().withBorder(JBUI.Borders.empty(0, 8));
+
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          Component c = myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          myPanel.removeAll();
+          myPanel.add(c);
+          myPanel.setBackground(c.getBackground());
+          return myPanel;
+        }
+      }
+
+      private void wrapRenderer() {
+        ListCellRenderer renderer = list.getCellRenderer();
+        if (!(renderer instanceof ComboBoxRendererWraper)) {
+          list.setCellRenderer(new ComboBoxRendererWraper(renderer));
+        }
+      }
+    };
+  }
+
+  @Override
   public void paintCurrentValueBackground(Graphics g, Rectangle bounds, boolean hasFocus) {
-    g.setColor(myComboBox.isEnabled() ? Gray.xFF : Gray.xF6);
+    g.setColor(myComboBox.isEnabled() ? Gray.xFF : Gray.xF8);
     g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
   }
 
@@ -239,18 +299,18 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     int stop = r.x;
     Insets clip = getInsets();
     Graphics gg = g.create(clip.left, r.y, stop - clip.left, DEFAULT_ICON.getIconHeight());
-    boolean disabled = !c.isEnabled();
+    boolean enabled = c.isEnabled();
     boolean hasFocus = c.hasFocus();
-    Icon icon = MacIntelliJIconCache.getIcon("comboLeft", false, hasFocus, disabled);
+    Icon icon = MacIntelliJIconCache.getIcon("comboLeft", false, hasFocus, enabled);
     icon.paintIcon(c,gg,0,0);
     int x = icon.getIconWidth();
-    icon = MacIntelliJIconCache.getIcon("comboMiddle", false, hasFocus, disabled);
+    icon = MacIntelliJIconCache.getIcon("comboMiddle", false, hasFocus, enabled);
     while (x < stop) {
       icon.paintIcon(c, gg, x, 0);
       x+=icon.getIconWidth();
     }
     gg.dispose();
-    icon = MacIntelliJIconCache.getIcon("comboRight", false, hasFocus, disabled);
+    icon = MacIntelliJIconCache.getIcon("comboRight", false, hasFocus, enabled);
     icon.paintIcon(c, g, r.x, r.y);
 
     if ( !comboBox.isEditable() ) {

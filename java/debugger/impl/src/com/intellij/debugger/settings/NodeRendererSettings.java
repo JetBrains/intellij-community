@@ -34,13 +34,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.InternalIterator;
-import com.sun.jdi.*;
+import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -90,11 +88,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       new MapEntryLabelRenderer()/*createLabelRenderer(null, "\" \" + getKey() + \" -> \" + getValue()", null)*/,
       createEnumerationChildrenRenderer(new String[][]{{"key", "getKey()"}, {"value", "getValue()"}})
     ),
-    createCompoundReferenceRenderer(
-      "List", CommonClassNames.JAVA_UTIL_LIST,
-      createLabelRenderer(" size = ", "size()", null),
-      new ListChildrenRenderer()
-    ),
+    new ListObjectRenderer(this),
     createCompoundReferenceRenderer(
       "Collection", "java.util.Collection",
       createLabelRenderer(" size = ", "size()", null),
@@ -494,33 +488,25 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
   }
 
-  private static class ListChildrenRenderer extends ExpressionChildrenRenderer {
-    private static final ArrayRenderer ourChildrenRenderer = new ArrayRenderer() {
-      @Override
-      public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) {
-        try {
-          ArrayElementDescriptorImpl descriptor = (ArrayElementDescriptorImpl)node.getDescriptor();
-          PsiElementFactory elementFactory = JavaPsiFacade.getInstance(node.getProject()).getElementFactory();
-          return elementFactory.createExpressionFromText("get(" + descriptor.getIndex() + ")", null);
-        }
-        catch (IncorrectOperationException e) {
-          // fallback to original
-          return super.getChildValueExpression(node, context);
-        }
-      }
-    };
-
-    public ListChildrenRenderer() {
-      setChildrenExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "toArray()", "", StdFileTypes.JAVA));
-      setChildrenExpandable(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "!isEmpty()", "", StdFileTypes.JAVA));
+  private static class ListObjectRenderer extends CompoundReferenceRenderer {
+    public ListObjectRenderer(NodeRendererSettings rendererSettings) {
+      super(rendererSettings,
+            "List",
+            createLabelRenderer(" size = ", "size()", null),
+            createExpressionChildrenRenderer("toArray()", "!isEmpty()"));
+      setClassName(CommonClassNames.JAVA_UTIL_LIST);
     }
 
     @Override
-    public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
-      if (getLastChildrenRenderer(builder.getParentDescriptor()) == null) {
-        setPreferableChildrenRenderer(builder.getParentDescriptor(), ourChildrenRenderer);
+    public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
+      LOG.assertTrue(node.getDescriptor() instanceof ArrayElementDescriptorImpl);
+      try {
+        return getChildValueExpression("this.get(" + ((ArrayElementDescriptorImpl)node.getDescriptor()).getIndex() + ")", node, context);
       }
-      super.buildChildren(value, builder, evaluationContext);
+      catch (IncorrectOperationException e) {
+        // fallback to original
+        return super.getChildValueExpression(node, context);
+      }
     }
   }
 

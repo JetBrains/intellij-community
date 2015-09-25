@@ -137,7 +137,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
 
   @Override
   public boolean isListenerDisabled(RunConfigurationBase configuration, Object listener, RunnerSettings runnerSettings) {
-    return !(listener instanceof TestDiscoveryListener) || runnerSettings != null || !isApplicableFor(configuration);
+    return listener instanceof TestDiscoveryListener && (runnerSettings != null || !isApplicableFor(configuration));
   }
 
   @Override

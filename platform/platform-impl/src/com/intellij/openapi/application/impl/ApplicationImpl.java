@@ -65,8 +65,8 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TLongArrayList;
-import gnu.trove.TLongProcedure;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -78,6 +78,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -542,10 +543,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     Disposer.dispose(myLastDisposable); // dispose it last
 
     if (LOG.isDebugEnabled()) {
-      final long[] sum = {0};
-      writePauses.forEach(new TLongProcedure() {
+      final int[] sum = {0};
+      writePauses.forEach(new TIntProcedure() {
         @Override
-        public boolean execute(long value) {
+        public boolean execute(int value) {
           sum[0] += value;
           return true;
         }
@@ -554,8 +555,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                 "\nTotal write actions: " + writePauses.size() +
                 "\nTotal write pauses : " + sum[0] + "ms"+
                 "\nAverage write pause: " + sum[0] / writePauses.size() + "ms" +
-                "\nMedian  write pause: " + ArrayUtil.averageAmongMedians(writePauses.toNativeArray(), 3) + "ms" +
-                ""
+                "\nMedian  write pause: " + ArrayUtil.averageAmongMedians(writePauses.toNativeArray(), 3) + "ms"
       );
     }
   }
@@ -1207,7 +1207,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myWriteActionPending;
   }
 
-  private final TLongArrayList writePauses = new TLongArrayList();
+  private final TIntArrayList writePauses = new TIntArrayList();
   private void startWrite(@Nullable Class clazz) {
     assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
     boolean writeActionPending = myWriteActionPending;
@@ -1251,7 +1251,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myWriteActionsStack.push(clazz);
     if (LOG.isDebugEnabled()) {
       long end = System.currentTimeMillis();
-      writePauses.add(end - start);
+      writePauses.add((int)(end - start));
     }
     fireWriteActionStarted(clazz);
   }
@@ -1493,5 +1493,17 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
            (isInternal() ? " (Internal)" : "") +
            (isHeadlessEnvironment() ? " (Headless)" : "") +
            (isCommandLine() ? " (Command line)" : "");
+  }
+
+  @TestOnly
+  public void disableEventsUntil(@NotNull Disposable disposable) {
+    final List<ApplicationListener> listeners = new ArrayList<ApplicationListener>(myDispatcher.getListeners());
+    myDispatcher.getListeners().removeAll(listeners);
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myDispatcher.getListeners().addAll(listeners);
+      }
+    });
   }
 }

@@ -210,7 +210,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         finally {
           DebugUtil.finishPsiModification();
         }
-        if (!throwables.isEmpty()) CompoundRuntimeException.doThrow(throwables);
+        if (!throwables.isEmpty()) CompoundRuntimeException.throwIfNotEmpty(throwables);
       }
     }
   }

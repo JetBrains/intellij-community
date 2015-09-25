@@ -226,7 +226,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     final Document document = getPsiDocumentManager().getDocument(file);
 
     File temp = createTempDirectory();
-    final Project alienProject = createProject(new File(temp, "alien.ipr"), DebugUtil.currentStackTrace());
+    final Project alienProject = createProject(temp + "/alien.ipr", DebugUtil.currentStackTrace());
     boolean succ2 = ProjectManagerEx.getInstanceEx().openProject(alienProject);
     assertTrue(succ2);
     UIUtil.dispatchAllInvocationEvents(); // startup activities
@@ -368,7 +368,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     final Document document = getPsiDocumentManager().getDocument(file);
 
     File temp = createTempDirectory();
-    final Project alienProject = createProject(new File(temp, "alien.ipr"), DebugUtil.currentStackTrace());
+    final Project alienProject = createProject(temp + "/alien.ipr", DebugUtil.currentStackTrace());
     boolean succ2 = ProjectManagerEx.getInstanceEx().openProject(alienProject);
     assertTrue(succ2);
     UIUtil.dispatchAllInvocationEvents(); // startup activities

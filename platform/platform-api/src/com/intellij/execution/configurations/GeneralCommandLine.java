@@ -43,9 +43,35 @@ import java.util.*;
  * OS-independent way of executing external processes with complex parameters.
  * <p>
  * Main idea of the class is to accept parameters "as-is", just as they should look to an external process, and quote/escape them
- * as required by the underlying platform.
+ * as required by the underlying platform - so to run some program with a "parameter with space" all that's needed is
+ * {@code new GeneralCommandLine("some program", "parameter with space").createProcess()}.
  * <p>
- * Consider setting working directory (if relevant), and take a look at {@link GeneralCommandLine.ParentEnvironmentType}.
+ * Consider the following things when using this class.
+ *
+ * <h3>Working directory</h3>
+ * By default, a current directory of the IDE process is used (usually a "bin/" directory of IDE installation).
+ * If a child process may create files in it, this choice is unwelcome. On the other hand, informational commands (e.g. "git --version")
+ * are safe. When unsure, set it to something neutral - like user's home or a temp directory.
+ *
+ * <h3>Parent Environment</h3>
+ * {@link ParentEnvironmentType Three options here}.
+ * For commands designed from the ground up for typing into a terminal, use {@link ParentEnvironmentType#CONSOLE CONSOLE}
+ * (typical cases: version controls, Node.js and all the stuff around it, Python and Ruby interpreters and utilities, etc).
+ * For GUI apps and CLI tools which aren't primarily intended to be launched by humans, use {@link ParentEnvironmentType#SYSTEM SYSTEM}
+ * (examples: UI builders, browsers, XCode components). For the empty environment, there is {@link ParentEnvironmentType#NONE NONE}.
+ * According to an extensive research conducted by British scientists (tm) on a diverse population of both wild and domesticated tools
+ * (no one was harmed), most of them are either insensitive to an environment or fall into the first category,
+ * thus backing up the choice of CONSOLE as the default value.
+ *
+ * <h3>Encoding/Charset</h3>
+ * The {@link #getCharset()} method is used by classes like {@link com.intellij.execution.process.OSProcessHandler OSProcessHandler}
+ * or {@link com.intellij.execution.util.ExecUtil ExecUtil} to decode bytes of a child's output stream. For proper conversion,
+ * the same value should be used on another side of the pipe. Chances are you don't have to mess with the setting -
+ * because a platform-dependent guessing behind {@link Charset#defaultCharset()} is used by default and a child process
+ * may happen to use a similar heuristic.
+ * If the above automagic fails or more control is needed, the charset may be set explicitly. Again, do not forget the other side -
+ * call {@code addParameter("-Dfile.encoding=...")} for Java-based tools, or use {@code withEnvironment("HGENCODING", "...")}
+ * for Mercurial, etc.
  *
  * @see com.intellij.execution.util.ExecUtil
  * @see com.intellij.execution.process.OSProcessHandler
@@ -55,17 +81,19 @@ public class GeneralCommandLine implements UserDataHolder {
 
   /**
    * Determines the scope of a parent environment passed to a child process.
-   * {@code NONE} means a child process will receive an empty environment;
-   * {@code SYSTEM} will provide it with the same environment as an IDE;
-   * {@code SHELL} has a {@link EnvironmentUtil#getEnvironmentMap() special meaning} on OS X and equals to SYSTEM on other platforms.
    * <p>
-   * {@code SHELL} is the default value.
+   * {@code NONE} means a child process will receive an empty environment. <br/>
+   * {@code SYSTEM} will provide it with the same environment as an IDE. <br/>
+   * {@code CONSOLE} provides the child with a similar environment as if it was launched from, well, a console.
+   * On OS X, a console environment is simulated (see {@link EnvironmentUtil#getEnvironmentMap()} for reasons it's needed
+   * and details on how it works). On Windows and Unix hosts, this option is no different from {@code SYSTEM}
+   * since there is no drastic distinction in environment between GUI and console apps.
    */
-  public enum ParentEnvironmentType {NONE, SYSTEM, SHELL}
+  public enum ParentEnvironmentType {NONE, SYSTEM, CONSOLE}
 
-  // todo revise usages, then set to ParentEnvironmentType.SHELL and inline
+  // todo revise usages, then set to ParentEnvironmentType.CONSOLE and inline
   private static ParentEnvironmentType defaultParentEnvironmentType =
-    PlatformUtils.isAppCode() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.SHELL;
+    PlatformUtils.isAppCode() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.CONSOLE;
 
   private String myExePath = null;
   private File myWorkDirectory = null;
@@ -186,7 +214,7 @@ public class GeneralCommandLine implements UserDataHolder {
     switch (myParentEnvironmentType) {
       case SYSTEM:
         return System.getenv();
-      case SHELL:
+      case CONSOLE:
         return EnvironmentUtil.getEnvironmentMap();
       default:
         return Collections.emptyMap();

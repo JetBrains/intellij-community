@@ -33,6 +33,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class EnterBetweenXmlTagsHandler extends EnterHandlerDelegateAdapter {
@@ -41,7 +42,8 @@ public class EnterBetweenXmlTagsHandler extends EnterHandlerDelegateAdapter {
                                 @NotNull final DataContext dataContext, final EditorActionHandler originalHandler) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     
-    if (file instanceof XmlFile && isBetweenXmlTags(project, editor, file, caretOffset.get().intValue())) {
+    if ((file instanceof XmlFile || HtmlUtil.supportsXmlTypedHandlers(file)) &&
+        isBetweenXmlTags(project, editor, file, caretOffset.get().intValue())) {
       editor.getDocument().insertString(caretOffset.get(), "\n");
       if (project != null) {
         CodeStyleManager.getInstance(project).adjustLineIndent(editor.getDocument(), caretOffset.get() + 1);

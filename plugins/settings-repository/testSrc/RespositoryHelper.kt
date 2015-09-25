@@ -31,14 +31,14 @@ data class FileInfo(val name: String, val data: ByteArray)
 fun fs() = MockVirtualFileSystem()
 
 private fun getChildrenStream(path: Path, excludes: Array<out String>? = null) = Files.list(path)
-  .filter { !it.endsWith(Constants.DOT_GIT) && (excludes == null || !excludes.contains(it.getFileName().toString())) }
+  .filter { !it.endsWith(Constants.DOT_GIT) && (excludes == null || !excludes.contains(it.fileName.toString())) }
   .sorted()
 
-private fun compareFiles(path1: Path, path2: Path, path3: VirtualFile? = null, vararg localExcludes: String) {
+internal fun compareFiles(path1: Path, path2: Path, path3: VirtualFile? = null, vararg localExcludes: String) {
   assertThat(path1).isDirectory()
   assertThat(path2).isDirectory()
   if (path3 != null) {
-    assertThat(path3.isDirectory()).isTrue()
+    assertThat(path3.isDirectory).isTrue()
   }
 
   val notFound = THashSet<Path>()
@@ -47,14 +47,14 @@ private fun compareFiles(path1: Path, path2: Path, path3: VirtualFile? = null, v
   }
 
   for (child2 in getChildrenStream(path2)) {
-    val fileName = child2.getFileName()
+    val fileName = child2.fileName
     val child1 = path1.resolve(fileName)
     val child3 = path3?.findChild(fileName.toString())
     if (child1.isFile()) {
       assertThat(child2).hasSameContentAs(child1)
       if (child3 != null) {
-        assertThat(child3.isDirectory()).isFalse()
-        assertThat(child1).hasContent(if (child3 is LightVirtualFile) child3.getContent().toString() else VfsUtilCore.loadText(child3))
+        assertThat(child3.isDirectory).isFalse()
+        assertThat(child1).hasContent(if (child3 is LightVirtualFile) child3.content.toString() else VfsUtilCore.loadText(child3))
       }
     }
     else {

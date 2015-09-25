@@ -79,7 +79,7 @@ public class GitHandlerUtil {
    */
   public static int doSynchronously(final GitLineHandler handler, final String operationTitle, @NonNls final String operationName) {
     final ProgressManager manager = ProgressManager.getInstance();
-    manager.run(new Task.Modal(handler.project(), operationTitle, false) {
+    manager.run(new Task.Modal(handler.project(), operationTitle, true) {
       public void run(@NotNull final ProgressIndicator indicator) {
         handler.addLineListener(new GitLineHandlerListenerProgress(indicator, handler, operationName, true));
         runInCurrentThread(handler, indicator, true, operationTitle);
@@ -251,19 +251,19 @@ public class GitHandlerUtil {
     /**
      * a progress manager to use
      */
-    private final ProgressIndicator myProgressIndicator;
+    @Nullable private final ProgressIndicator myProgressIndicator;
 
     /**
      * A constructor
      *
-     * @param manager       the project manager
+     * @param indicator       the project manager
      * @param handler       a handler instance
      * @param operationName an operation name
      * @param showErrors    if true, the errors are shown when process is terminated
      */
-    public GitLineHandlerListenerProgress(final ProgressIndicator manager, GitHandler handler, String operationName, boolean showErrors) {
+    public GitLineHandlerListenerProgress(@Nullable ProgressIndicator indicator, GitHandler handler, String operationName, boolean showErrors) {
       super(handler, operationName, showErrors);    //To change body of overridden methods use File | Settings | File Templates.
-      myProgressIndicator = manager;
+      myProgressIndicator = indicator;
     }
 
     /**

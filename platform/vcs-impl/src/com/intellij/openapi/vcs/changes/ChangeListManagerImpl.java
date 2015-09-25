@@ -168,28 +168,31 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         final LocalChangeList oldList = (LocalChangeList)oldDefaultList;
         if (oldDefaultList == null || oldList.hasDefaultName() || oldDefaultList.equals(newDefaultList)) return;
 
-        if (!ApplicationManager.getApplication().isUnitTestMode() &&
-            oldDefaultList.getChanges().isEmpty() &&
-            !oldList.isReadOnly()) {
-
-          invokeAfterUpdate(new Runnable() {
-            @Override
-            public void run() {
-              if (getChangeList(oldList.getId()) == null) {
-                return; // removed already  
-              }
-              
-              if (myModalNotificationsBlocked && 
-                  config.REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
-                myListsToBeDeleted.add(oldList);
-              } else {
-                deleteEmptyChangeLists(Collections.singletonList(oldList));
-              }
-            }
-          }, InvokeAfterUpdateMode.SILENT, null, null);
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          scheduleAutomaticChangeListDeletionIfEmpty(oldList, config);
         }
       }
     });
+  }
+
+  private void scheduleAutomaticChangeListDeletionIfEmpty(final LocalChangeList oldList, final VcsConfiguration config) {
+    if (oldList.isReadOnly() || !oldList.getChanges().isEmpty()) return;
+    
+    invokeAfterUpdate(new Runnable() {
+      @Override
+      public void run() {
+        if (getChangeList(oldList.getId()) == null) {
+          return; // removed already  
+        }
+        
+        if (myModalNotificationsBlocked &&
+            config.REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+          myListsToBeDeleted.add(oldList);
+        } else {
+          deleteEmptyChangeLists(Collections.singletonList(oldList));
+        }
+      }
+    }, InvokeAfterUpdateMode.SILENT, null, null);
   }
 
   private void deleteEmptyChangeLists(@NotNull Collection<LocalChangeList> lists) {
@@ -1021,8 +1024,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
               }
               for (String listName : map.keySet()) {
                 final LocalChangeList byName = myWorker.getCopyByName(listName);
-                if (byName != null && byName.getChanges().isEmpty() && !byName.isDefault() && !byName.isReadOnly()) {
-                  myWorker.removeChangeList(listName);
+                if (byName != null && !byName.isDefault()) {
+                  scheduleAutomaticChangeListDeletionIfEmpty(byName, myConfig);
                 }
               }
             }

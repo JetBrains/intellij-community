@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Bas Leijdekkers
+ * Copyright 2007-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -263,7 +263,11 @@ public class NonNlsUtils {
     if (method == null) {
       return false;
     }
-    method = (PsiMethod)method.getNavigationElement();
+    final PsiElement navigationElement = method.getNavigationElement();
+    if (!(navigationElement instanceof PsiMethod)) {
+      return false;
+    }
+    method = (PsiMethod)navigationElement;
     final PsiCodeBlock body = method.getBody();
     if (body == null) {
       return false;

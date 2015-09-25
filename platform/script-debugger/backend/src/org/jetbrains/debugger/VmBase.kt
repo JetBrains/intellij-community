@@ -15,20 +15,13 @@
  */
 package org.jetbrains.debugger
 
-import org.jetbrains.util.concurrency.Promise
+import kotlin.properties.Delegates
 
 public abstract class VmBase protected constructor(override val debugListener: DebugEventListener) : Vm, AttachStateManager {
-  private var evaluateContext: EvaluateContext? = null
+  override val evaluateContext: EvaluateContext? by Delegates.lazy { computeEvaluateContext() }
 
   override val attachStateManager: AttachStateManager
     get() = this
-
-  override synchronized fun getEvaluateContext(): EvaluateContext? {
-    if (evaluateContext == null) {
-      evaluateContext = computeEvaluateContext()
-    }
-    return evaluateContext
-  }
 
   protected open fun computeEvaluateContext(): EvaluateContext? = null
 }

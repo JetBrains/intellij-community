@@ -632,7 +632,10 @@ public class CompileDriver {
     }
     finally {
       progressIndicator.popState();
-      WindowManager.getInstance().getStatusBar(myProject).setInfo("");
+      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+      if (statusBar != null) {
+        statusBar.setInfo("");
+      }
       if (progressIndicator instanceof CompilerTask) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {

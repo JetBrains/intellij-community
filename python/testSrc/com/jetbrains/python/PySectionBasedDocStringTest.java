@@ -363,6 +363,21 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     assertEquals(firstField.getDescription(), "description");
   }
 
+  // PY-16991
+  public void testGoogleMandatoryIndentationInsideSection() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertSize(3, docString.getSections());
+    assertEmpty(docString.getSections().get(0).getFields());
+    assertSize(1, docString.getSections().get(1).getFields());
+    final Section thirdSection = docString.getSections().get(2);
+    assertSize(1, thirdSection.getFields());
+    final SectionField firstExample = thirdSection.getFields().get(0);
+    assertEmpty(firstExample.getName());
+    assertEmpty(firstExample.getType());
+    assertEquals("first line\n" +
+                 "second line", firstExample.getDescription());
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/docstrings";

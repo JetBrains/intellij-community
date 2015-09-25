@@ -124,6 +124,15 @@ public class FileReferenceSet {
     return "/";
   }
 
+  protected int findSeparatorLength(@NotNull CharSequence sequence, int atOffset) {
+    return StringUtil.startsWith(sequence, atOffset, getSeparatorString()) ?
+           getSeparatorString().length() : 0;
+  }
+
+  protected int findSeparatorOffset(@NotNull CharSequence sequence, int startingFrom) {
+    return StringUtil.indexOf(sequence, getSeparatorString(), startingFrom);
+  }
+
   /**
    * This should be removed. Please use {@link FileReference#getContexts()} instead.
    */
@@ -216,17 +225,12 @@ public class FileReferenceSet {
   }
 
   protected void reparse() {
-    String str = myPathStringNonTrimmed;
-
-    final List<FileReference> referencesList = reparse(str, myStartInElement);
-
+    List<FileReference> referencesList = reparse(myPathStringNonTrimmed, myStartInElement);
     myReferences = referencesList.toArray(new FileReference[referencesList.size()]);
   }
 
   protected List<FileReference> reparse(String str, int startInElement) {
-    String separatorString = getSeparatorString(); // separator's length can be more then 1 char
-    int sepLen = separatorString.length();
-    int currentSlash = -sepLen;
+    int wsHead = 0;
     int wsTail = 0;
 
     LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper;
@@ -239,7 +243,7 @@ public class FileReferenceSet {
       StringBuilder sb = new StringBuilder();
       escaper.decode(valueRange, sb);
       decoded = sb;
-      currentSlash += startInElement - valueRange.getStartOffset();
+      wsHead += Math.max(0, startInElement - valueRange.getStartOffset());
     }
     else {
       escaper = null;
@@ -248,36 +252,38 @@ public class FileReferenceSet {
     }
     List<FileReference> referencesList = ContainerUtil.newArrayList();
 
-    // skip head white spaces
-    for (int i = currentSlash + sepLen; i < decoded.length() && Character.isWhitespace(decoded.charAt(i)); i++) {
-      currentSlash++;
+    for (int i = wsHead; i < decoded.length() && Character.isWhitespace(decoded.charAt(i)); i++) {
+      wsHead++;     // skip head white spaces
     }
-    // skip tail white spaces
     for (int i = decoded.length() - 1; i >= 0 && Character.isWhitespace(decoded.charAt(i)); i--) {
-      wsTail++;
+      wsTail++;     // skip tail white spaces
     }
 
-    if (currentSlash + 2 * sepLen < decoded.length() &&
-        StringUtil.equals(decoded.subSequence(currentSlash + sepLen, currentSlash + 2 * sepLen), separatorString)) {
-      currentSlash += sepLen;
-    }
     int index = 0;
+    int curSep = findSeparatorOffset(decoded, wsHead);
+    int sepLen = curSep >= wsHead ? findSeparatorLength(decoded, curSep) : 0;
 
-    if (decoded.equals(separatorString)) {
-      TextRange r = new TextRange(startInElement, offset(sepLen, escaper, valueRange) + 1);
-      referencesList.add(createFileReference(r, index++, separatorString));
+    if (curSep >= 0 && decoded.length() == wsHead + sepLen + wsTail) {
+      // add extra reference for the only & leading "/"
+      TextRange r = TextRange.create(startInElement, offset(curSep + Math.max(0, sepLen - 1), escaper, valueRange) + 1);
+      referencesList.add(createFileReference(r, index ++, decoded.subSequence(curSep, curSep + sepLen).toString()));
     }
-
-    while (true) {
-      int nextSlash = StringUtil.indexOf(decoded, separatorString, currentSlash + sepLen);
-      String subReferenceText = decoded.subSequence(currentSlash + sepLen, nextSlash > 0 ? nextSlash : decoded.length()).toString();
-      int end = nextSlash > 0 ? nextSlash : Math.max(currentSlash + sepLen, decoded.length() - 1 - wsTail);
-      TextRange r = new TextRange(offset(currentSlash + sepLen, escaper, valueRange),
-                                  offset(end, escaper, valueRange) + (nextSlash > 0 ? 0 : 1));
-      referencesList.add(createFileReference(r, index++, subReferenceText));
-      if ((currentSlash = nextSlash) < 0) {
-        break;
-      }
+    curSep = curSep == wsHead ? curSep + sepLen : wsHead; // reset offsets & start again for simplicity
+    sepLen = 0;
+    while (curSep >= 0) {
+      int nextSep = findSeparatorOffset(decoded, curSep + sepLen);
+      int start = curSep + sepLen;
+      int endTrimmed = nextSep > 0 ? nextSep : Math.max(start, decoded.length() - wsTail);
+      int endInclusive = nextSep > 0 ? nextSep : Math.max(start, decoded.length() - 1 - wsTail);
+      // todo move ${placeholder} support (the str usage below) to a reference implementation
+      // todo reference-set should be bound to exact range & text in a file, consider: ${slash}path${slash}file&amp;.txt
+      String refText = index == 0 && nextSep < 0 && !StringUtil.contains(decoded, str) ? str :
+                                decoded.subSequence(start, endTrimmed).toString();
+      TextRange r = new TextRange(offset(start, escaper, valueRange),
+                                  offset(endInclusive, escaper, valueRange) + (nextSep < 0 && refText.length() > 0 ? 1 : 0));
+      referencesList.add(createFileReference(r, index++, refText));
+      curSep = nextSep;
+      sepLen = curSep > 0 ? findSeparatorLength(decoded, curSep) : 0;
     }
 
     return referencesList;

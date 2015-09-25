@@ -100,9 +100,9 @@ public class MockProject extends MockComponentManager implements Project {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public String getProjectFilePath() {
-    return "";
+    return null;
   }
 
   @Override

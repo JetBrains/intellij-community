@@ -15,16 +15,24 @@
  */
 package com.intellij.debugger.ui.tree.render;
 
+import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NotNull;
 
 public class CompoundReferenceRenderer extends CompoundNodeRenderer{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer");
 
   public CompoundReferenceRenderer(final NodeRendererSettings rendererSettings, String name, ValueLabelRenderer labelRenderer, ChildrenRenderer childrenRenderer) {
     super(rendererSettings, name, labelRenderer, childrenRenderer);
@@ -108,5 +116,17 @@ public class CompoundReferenceRenderer extends CompoundNodeRenderer{
 
   public @NotNull String getClassName() {
     return myProperties.getClassName();
+  }
+
+  protected final PsiElement getContext(Project project, DebuggerContext context) {
+    DebugProcess process = context.getDebugProcess();
+    GlobalSearchScope scope = process != null ? process.getSearchScope() : GlobalSearchScope.allScope(project);
+    return DebuggerUtils.findClass(getClassName(), project, scope);
+  }
+
+  protected final PsiElement getChildValueExpression(String text, DebuggerTreeNode node, DebuggerContext context) {
+    Project project = node.getProject();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    return elementFactory.createExpressionFromText(text, getContext(project, context));
   }
 }

@@ -230,9 +230,12 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   private boolean findRenamedVariables(final List<UsageInfo> variableUsages) {
-    for (final AutomaticRenamer automaticVariableRenamer : myRenamers) {
+    for (Iterator<AutomaticRenamer> iterator = myRenamers.iterator(); iterator.hasNext(); ) {
+      AutomaticRenamer automaticVariableRenamer = iterator.next();
       if (!automaticVariableRenamer.hasAnythingToRename()) continue;
-      if (!showAutomaticRenamingDialog(automaticVariableRenamer)) return false;
+      if (!showAutomaticRenamingDialog(automaticVariableRenamer)) {
+        iterator.remove();
+      }
     }
 
     final Runnable runnable = new Runnable() {

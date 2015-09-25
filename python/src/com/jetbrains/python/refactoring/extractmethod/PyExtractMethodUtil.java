@@ -455,7 +455,7 @@ public class PyExtractMethodUtil {
       }
     }
     // Change signature according to pass settings and
-    final PyFunctionBuilder builder = new PyFunctionBuilder("foo");
+    final PyFunctionBuilder builder = new PyFunctionBuilder("foo", generatedMethod);
     if (isClassMethod) {
       builder.parameter("cls");
     }
@@ -517,7 +517,7 @@ public class PyExtractMethodUtil {
                                                          @NotNull final AbstractVariableData[] variableData,
                                                          @NotNull final PsiElement expression,
                                                          @Nullable final PyUtil.MethodFlags flags, boolean isAsync) {
-    final PyFunctionBuilder builder = new PyFunctionBuilder(methodName);
+    final PyFunctionBuilder builder = new PyFunctionBuilder(methodName, expression);
     addDecorators(builder, flags);
     addFakeParameters(builder, variableData);
     if (isAsync) {
@@ -543,7 +543,7 @@ public class PyExtractMethodUtil {
                                                        boolean isAsync) {
     assert !elementsRange.isEmpty() : "Empty statements list was selected!";
 
-    final PyFunctionBuilder builder = new PyFunctionBuilder(methodName);
+    final PyFunctionBuilder builder = new PyFunctionBuilder(methodName, elementsRange.get(0));
     if (isAsync) {
       builder.makeAsync();
     }

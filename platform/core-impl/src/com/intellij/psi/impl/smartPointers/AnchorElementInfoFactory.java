@@ -29,11 +29,10 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory {
+public class AnchorElementInfoFactory extends SmartPointerElementInfoFactory {
   @Override
   @Nullable
-  public SmartPointerElementInfo createElementInfo(@NotNull PsiElement element) {
-    PsiFile containingFile = element.getContainingFile();
+  public SmartPointerElementInfo createElementInfo(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
     if (element instanceof StubBasedPsiElement && containingFile instanceof PsiFileWithStubSupport) {
       PsiFileWithStubSupport stubFile = (PsiFileWithStubSupport)containingFile;
       StubTree stubTree = stubFile.getStubTree();

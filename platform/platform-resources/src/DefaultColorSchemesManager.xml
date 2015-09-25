@@ -1705,12 +1705,6 @@
           <option name="EFFECT_TYPE" value="1" />
         </value>
       </option>
-      <option name="Invalid string escape">
-        <value>
-          <option name="EFFECT_COLOR" value="ff0000" />
-          <option name="EFFECT_TYPE" value="2" />
-        </value>
-      </option>
       <option name="JAVA_COMMA">
         <value>
           <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
@@ -1799,11 +1793,6 @@
       <option name="METHOD_DECLARATION_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="ffc66d" deuteranopia="d9af6c" protanopia="d9af6c"/>
-        </value>
-      </option>
-      <option name="Map key">
-        <value>
-          <option name="FOREGROUND" value="d0d0ff" />
         </value>
       </option>
       <option name="NOT_USED_ELEMENT_ATTRIBUTES">
@@ -2118,14 +2107,6 @@
           <option name="FOREGROUND" value="4e807d" />
         </value>
       </option>
-      <option name="Static field">
-        <value>
-          <option name="FOREGROUND" value="d0d0ff" />
-          <option name="FONT_TYPE" value="3" />
-          <option name="EFFECT_COLOR" value="ffffff" />
-          <option name="EFFECT_TYPE" value="1" />
-        </value>
-      </option>
       <option name="Static method access">
         <value>
           <option name="FOREGROUND" value="9876aa" deuteranopia="828eba" protanopia="828eba"/>
@@ -2191,11 +2172,6 @@
           <option name="ERROR_STRIPE_COLOR" value="266109" />
         </value>
       </option>
-      <option name="Type parameter">
-        <value>
-          <option name="FOREGROUND" value="507874" />
-        </value>
-      </option>
       <option name="UNMATCHED_BRACE_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="d1243b" deuteranopia="bd693c" protanopia="bd693c"/>
@@ -2221,11 +2197,6 @@
       <option name="VELOCITY_SCRIPTING_BACKGROUND">
         <value>
           <option name="BACKGROUND" value="303030" />
-        </value>
-      </option>
-      <option name="Valid string escape">
-        <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="WARNING_ATTRIBUTES">
@@ -2299,54 +2270,6 @@
         <value>
           <option name="FOREGROUND" value="d0d0ff" />
           <option name="FONT_TYPE" value="1" />
-        </value>
-      </option>
-      <option name="YAML_COMMENT">
-        <value>
-          <option name="FOREGROUND" value="bc9458" />
-          <option name="FONT_TYPE" value="2" />
-        </value>
-      </option>
-      <option name="YAML_SCALAR_DSTRING">
-        <value>
-          <option name="FOREGROUND" value="a5c261" />
-        </value>
-      </option>
-      <option name="YAML_SCALAR_KEY">
-        <value>
-          <option name="FOREGROUND" value="e8bf6a" />
-        </value>
-      </option>
-      <option name="YAML_SCALAR_LIST">
-        <value>
-          <option name="FOREGROUND" value="a5c261" />
-        </value>
-      </option>
-      <option name="YAML_SCALAR_STRING">
-        <value>
-          <option name="FOREGROUND" value="a5c261" />
-        </value>
-      </option>
-      <option name="YAML_SCALAR_VALUE">
-        <value>
-          <option name="FOREGROUND" value="a5c261" />
-        </value>
-      </option>
-      <option name="YAML_SCALAR_VALUE4">
-        <value>
-          <option name="FOREGROUND" value="e8d3d3" />
-        </value>
-      </option>
-      <option name="YAML_SIGN">
-        <value>
-          <option name="FOREGROUND" value="a5c261" />
-          <option name="EFFECT_TYPE" value="2" />
-        </value>
-      </option>
-      <option name="YAML_TEXT">
-        <value>
-          <option name="FOREGROUND" value="a5c261" />
-          <option name="EFFECT_TYPE" value="2" />
         </value>
       </option>
       <option name="osmorc.attributeName">

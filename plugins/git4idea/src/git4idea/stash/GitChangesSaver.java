@@ -123,7 +123,7 @@ public abstract class GitChangesSaver {
   /**
    * @return true if there were local changes to save.
    */
-  protected abstract boolean wereChangesSaved();
+  public abstract boolean wereChangesSaved();
 
   /**
    * @return name of the save capability provider - stash or shelf.
@@ -131,9 +131,15 @@ public abstract class GitChangesSaver {
   public abstract String getSaverName();
 
   /**
+   * @return the name of the saving operation: stash or shelve.
+   */
+  @NotNull
+  public abstract String getOperationName();
+
+  /**
    * Show the saved local changes in the proper viewer.
    */
-  protected abstract void showSavedChanges();
+  public abstract void showSavedChanges();
 
   /**
    * The right panel title of the merge conflict dialog: changes that came from update.

@@ -19,9 +19,9 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExternalizable, NamedComponent {
+public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.ApplicationInfoImpl");
 
   private String myCodeName = null;
@@ -186,6 +186,19 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private static final String ESSENTIAL_PLUGIN = "essential-plugin";
 
   private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
+
+  ApplicationInfoImpl() {
+    try {
+      Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class, IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION);
+      loadState(doc.getRootElement());
+    }
+    catch (FileNotFoundException e) {
+      LOG.error("Resource is not in classpath or wrong platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY), e);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
 
   @Override
   public Calendar getBuildDate() {
@@ -536,22 +549,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   public static ApplicationInfoEx getShadowInstance() {
     if (ourShadowInstance == null) {
       ourShadowInstance = new ApplicationInfoImpl();
-      try {
-        Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class, IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION);
-        ourShadowInstance.readExternal(doc.getRootElement());
-      }
-      catch (FileNotFoundException e) {
-        LOG.error("Resource is not in classpath or wrong platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY), e);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
     }
     return ourShadowInstance;
   }
 
-  @Override
-  public void readExternal(Element parentNode) throws InvalidDataException {
+  private void loadState(Element parentNode) {
     Element versionElement = parentNode.getChild(ELEMENT_VERSION);
     if (versionElement != null) {
       myMajorVersion = versionElement.getAttributeValue(ATTRIBUTE_MAJOR);
@@ -846,11 +848,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    throw new WriteExternalException();
-  }
-
-  @Override
   public List<PluginChooserPage> getPluginChooserPages() {
     return myPluginChooserPages;
   }
@@ -858,12 +855,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @Override
   public boolean isEssentialPlugin(@NotNull String pluginId) {
     return PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId) || ArrayUtil.contains(pluginId, myEssentialPluginsIds);
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return ApplicationNamesInfo.getComponentName();
   }
 
   private static class UpdateUrlsImpl implements UpdateUrls {

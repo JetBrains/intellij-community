@@ -1,5 +1,5 @@
 def f():
     """
     Raises:
-      <caret>
+        <caret>
     """

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search.searches;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -31,13 +32,13 @@ public class ReferenceDescriptor {
     public ReferenceDescriptor fun(PsiReference psiReference) {
       final PsiElement element = psiReference.getElement();
       final PsiFile file = element.getContainingFile();
-      return new ReferenceDescriptor(file, element.getTextRange().getStartOffset() + psiReference.getRangeInElement().getStartOffset());
+      return new ReferenceDescriptor(file.getViewProvider().getVirtualFile(), element.getTextRange().getStartOffset() + psiReference.getRangeInElement().getStartOffset());
     }
   };
-  private final PsiFile file;
+  private final VirtualFile file;
   private final int offset;
 
-  private ReferenceDescriptor(@NotNull PsiFile file, int offset) {
+  private ReferenceDescriptor(@NotNull VirtualFile file, int offset) {
     this.file = file;
     this.offset = offset;
   }

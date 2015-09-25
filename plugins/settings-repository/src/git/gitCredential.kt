@@ -27,7 +27,7 @@ private var canUseGitExe = true
 
 // https://www.kernel.org/pub/software/scm/git/docs/git-credential.html
 fun getCredentialsUsingGit(uri: URIish, repository: Repository): Credentials? {
-  if (!canUseGitExe || repository.getConfig().getSubsections("credential").isEmpty()) {
+  if (!canUseGitExe || repository.config.getSubsections("credential").isEmpty()) {
     return null
   }
 
@@ -41,13 +41,13 @@ fun getCredentialsUsingGit(uri: URIish, repository: Repository): Credentials? {
     return null
   }
 
-  val writer = process.getOutputStream().writer()
+  val writer = process.outputStream.writer()
   writer.write("url=")
   writer.write(uri.toPrivateString())
   writer.write("\n\n")
   writer.close();
 
-  val reader = process.getInputStream().reader().buffered()
+  val reader = process.inputStream.reader().buffered()
   var username: String? = null
   var password: String? = null
   while (true) {
@@ -67,7 +67,7 @@ fun getCredentialsUsingGit(uri: URIish, repository: Repository): Credentials? {
   }
   reader.close()
 
-  val errorText = process.getErrorStream().reader().readText()
+  val errorText = process.errorStream.reader().readText()
   if (!StringUtil.isEmpty(errorText)) {
     LOG.warn(errorText)
   }

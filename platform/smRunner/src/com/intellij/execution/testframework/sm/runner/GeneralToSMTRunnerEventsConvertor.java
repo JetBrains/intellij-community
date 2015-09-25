@@ -40,6 +40,8 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   private final Map<String, SMTestProxy> myRunningTestsFullNameToProxy = new HashMap<String, SMTestProxy>();
   private final Set<AbstractTestProxy> myFailedTestsSet = new HashSet<AbstractTestProxy>();
   private final TestSuiteStack mySuitesStack;
+  private final Set<SMTestProxy> myCurrentChildren = new LinkedHashSet<SMTestProxy>();
+  private boolean myGetChildren = true;
   private final SMTestProxy.SMRootTestProxy myTestsRootNode;
 
   private boolean myIsTestingFinished;
@@ -231,6 +233,15 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
           }
 
           parentSuite.addChild(testProxy);
+
+          if (myTreeBuildBeforeStart && myGetChildren) {
+            for (SMTestProxy proxy : parentSuite.getChildren()) {
+              if (!proxy.isFinal()) {
+                myCurrentChildren.add(proxy);
+              }
+            }
+            myGetChildren = false;
+          }
         }
 
         // adds to running tests map
@@ -264,6 +275,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
           parentSuite.addChild(newSuite);
         }
 
+        myGetChildren = true;
         mySuitesStack.pushSuite(newSuite);
 
         //Progress started
@@ -277,7 +289,8 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   private SMTestProxy findChildByName(SMTestProxy parentSuite, String fullName) {
     if (myTreeBuildBeforeStart) {
-      for (SMTestProxy proxy : parentSuite.getChildren()) {
+      final Collection<? extends SMTestProxy> children = myGetChildren ? parentSuite.getChildren() : myCurrentChildren;
+      for (SMTestProxy proxy : children) {
         if (fullName.equals(proxy.getName()) && !proxy.isFinal()) {
           return proxy;
         }
@@ -303,6 +316,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         testProxy.setDuration(duration);
         testProxy.setFinished();
         myRunningTestsFullNameToProxy.remove(fullTestName);
+        myCurrentChildren.remove(testProxy);
 
         //fire events
         fireOnTestFinished(testProxy);
@@ -317,6 +331,8 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         final SMTestProxy mySuite = mySuitesStack.popSuite(suiteName);
         if (mySuite != null) {
           mySuite.setFinished();
+          myCurrentChildren.clear();
+          myGetChildren = true;
 
           //fire events
           fireOnSuiteFinished(mySuite);
@@ -505,6 +521,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     // current suite shouldn't be null otherwise test runner isn't correct
     // or may be we are in debug mode
     logProblem("Current suite is undefined. Root suite will be used.");
+    myGetChildren = true;
     return myTestsRootNode;
 
   }

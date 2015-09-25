@@ -122,7 +122,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
 
     final Project project = resourceBundle.getProject();
     if (properties.size() != propertiesFileMapping.size() &&
-        Messages.YES == Messages.showYesNoDialog(project,
+        Messages.NO == Messages.showYesNoDialog(project,
                                                  "Source and target resource bundles properties files are not matched correctly. Copy properties anyway?",
                                                  "Resource Bundles Are not Matched", null)) {
       return;

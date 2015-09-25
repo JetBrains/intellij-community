@@ -90,20 +90,20 @@ class GitTest : IcsTestCase() {
     return FileInfo(path, data)
   }
 
-  Test fun add() {
+  @Test fun add() {
     provider.write(SAMPLE_FILE_NAME, SAMPLE_FILE_CONTENT)
 
     val diff = repository.computeIndexDiff()
     assertThat(diff.diff()).isTrue()
-    assertThat(diff.getAdded()).containsOnly(SAMPLE_FILE_NAME)
-    assertThat(diff.getChanged()).isEmpty()
-    assertThat(diff.getRemoved()).isEmpty()
-    assertThat(diff.getModified()).isEmpty()
-    assertThat(diff.getUntracked()).isEmpty()
-    assertThat(diff.getUntrackedFolders()).isEmpty()
+    assertThat(diff.added).containsOnly(SAMPLE_FILE_NAME)
+    assertThat(diff.changed).isEmpty()
+    assertThat(diff.removed).isEmpty()
+    assertThat(diff.modified).isEmpty()
+    assertThat(diff.untracked).isEmpty()
+    assertThat(diff.untrackedFolders).isEmpty()
   }
 
-  Test fun addSeveral() {
+  @Test fun addSeveral() {
     val addedFile = "foo.xml"
     val addedFile2 = "bar.xml"
     provider.write(addedFile, "foo")
@@ -111,15 +111,15 @@ class GitTest : IcsTestCase() {
 
     val diff = repository.computeIndexDiff()
     assertThat(diff.diff()).isTrue()
-    assertThat(diff.getAdded()).containsOnly(addedFile, addedFile2)
-    assertThat(diff.getChanged()).isEmpty()
-    assertThat(diff.getRemoved()).isEmpty()
-    assertThat(diff.getModified()).isEmpty()
-    assertThat(diff.getUntracked()).isEmpty()
-    assertThat(diff.getUntrackedFolders()).isEmpty()
+    assertThat(diff.added).containsOnly(addedFile, addedFile2)
+    assertThat(diff.changed).isEmpty()
+    assertThat(diff.removed).isEmpty()
+    assertThat(diff.modified).isEmpty()
+    assertThat(diff.untracked).isEmpty()
+    assertThat(diff.untrackedFolders).isEmpty()
   }
 
-  Test fun delete() {
+  @Test fun delete() {
     fun delete(directory: Boolean) {
       val dir = "dir"
       val fullFileSpec = "$dir/file.xml"
@@ -128,30 +128,30 @@ class GitTest : IcsTestCase() {
 
       val diff = repository.computeIndexDiff()
       assertThat(diff.diff()).isFalse()
-      assertThat(diff.getAdded()).isEmpty()
-      assertThat(diff.getChanged()).isEmpty()
-      assertThat(diff.getRemoved()).isEmpty()
-      assertThat(diff.getModified()).isEmpty()
-      assertThat(diff.getUntracked()).isEmpty()
-      assertThat(diff.getUntrackedFolders()).isEmpty()
+      assertThat(diff.added).isEmpty()
+      assertThat(diff.changed).isEmpty()
+      assertThat(diff.removed).isEmpty()
+      assertThat(diff.modified).isEmpty()
+      assertThat(diff.untracked).isEmpty()
+      assertThat(diff.untrackedFolders).isEmpty()
     }
 
     delete(false)
     delete(true)
   }
 
-  Test fun `set upstream`() {
+  @Test fun `set upstream`() {
     val url = "https://github.com/user/repo.git"
     repositoryManager.setUpstream(url)
     assertThat(repositoryManager.getUpstream()).isEqualTo(url)
   }
 
-  Test
+  @Test
   public fun pullToRepositoryWithoutCommits() {
     doPullToRepositoryWithoutCommits(null)
   }
 
-  Test fun pullToRepositoryWithoutCommitsAndCustomRemoteBranchName() {
+  @Test fun pullToRepositoryWithoutCommitsAndCustomRemoteBranchName() {
     doPullToRepositoryWithoutCommits("customRemoteBranchName")
   }
 
@@ -161,11 +161,11 @@ class GitTest : IcsTestCase() {
     compareFiles(repository.workTree, remoteRepository.workTree)
   }
 
-  Test fun pullToRepositoryWithCommits() {
+  @Test fun pullToRepositoryWithCommits() {
     doPullToRepositoryWithCommits(null)
   }
 
-  Test fun pullToRepositoryWithCommitsAndCustomRemoteBranchName() {
+  @Test fun pullToRepositoryWithCommitsAndCustomRemoteBranchName() {
     doPullToRepositoryWithCommits("customRemoteBranchName")
   }
 
@@ -180,7 +180,7 @@ class GitTest : IcsTestCase() {
 
   private fun createLocalRepository(remoteBranchName: String? = null) {
     createRemoteRepository(remoteBranchName)
-    repositoryManager.setUpstream(remoteRepository.getWorkTree().getAbsolutePath(), remoteBranchName)
+    repositoryManager.setUpstream(remoteRepository.getWorkTree().absolutePath, remoteBranchName)
   }
 
   private fun createLocalRepositoryAndCommit(remoteBranchName: String? = null): FileInfo {
@@ -189,17 +189,17 @@ class GitTest : IcsTestCase() {
   }
 
   private fun MockVirtualFileSystem.compare() {
-    compareFiles(repository.workTree, remoteRepository.workTree, getRoot())
+    compareFiles(repository.workTree, remoteRepository.workTree, root)
   }
 
   // never was merged. we reset using "merge with strategy "theirs", so, we must test - what's happen if it is not first merge? - see next test
-  Test fun resetToTheirsIfFirstMerge() {
+  @Test fun resetToTheirsIfFirstMerge() {
     createLocalRepositoryAndCommit(null)
     sync(SyncType.OVERWRITE_LOCAL)
     fs().file(SAMPLE_FILE_NAME, SAMPLE_FILE_CONTENT).compare()
   }
 
-  Test fun resetToTheirsISecondMergeIsNull() {
+  @Test fun resetToTheirsISecondMergeIsNull() {
     createLocalRepositoryAndCommit(null)
     sync(SyncType.MERGE)
 
@@ -228,14 +228,14 @@ class GitTest : IcsTestCase() {
     testRemote()
   }
 
-  Test fun resetToMyIfFirstMerge() {
+  @Test fun resetToMyIfFirstMerge() {
     createLocalRepositoryAndCommit()
     sync(SyncType.OVERWRITE_REMOTE)
     restoreRemoteAfterPush()
     fs().file("local.xml", """<file path="local.xml" />""").compare()
   }
 
-  Test fun `reset to my, second merge is null`() {
+  @Test fun `reset to my, second merge is null`() {
     createLocalRepositoryAndCommit()
     sync(SyncType.MERGE)
 
@@ -260,7 +260,7 @@ class GitTest : IcsTestCase() {
     fs.compare()
   }
 
-  Test fun `merge - resolve conflicts to my`() {
+  @Test fun `merge - resolve conflicts to my`() {
     createLocalRepository()
 
     val data = AM.MARKER_ACCEPT_MY
@@ -272,7 +272,7 @@ class GitTest : IcsTestCase() {
     fs().file(SAMPLE_FILE_NAME, data.toString(StandardCharsets.UTF_8)).compare()
   }
 
-  Test fun `merge - theirs file deleted, my modified, accept theirs`() {
+  @Test fun `merge - theirs file deleted, my modified, accept theirs`() {
     createLocalRepository()
 
     sync(SyncType.MERGE)
@@ -289,7 +289,7 @@ class GitTest : IcsTestCase() {
     fs().compare()
   }
 
-  Test fun `merge - my file deleted, theirs modified, accept my`() {
+  @Test fun `merge - my file deleted, theirs modified, accept my`() {
     createLocalRepository()
 
     sync(SyncType.MERGE)
@@ -306,7 +306,7 @@ class GitTest : IcsTestCase() {
     fs().compare()
   }
 
-  Test fun `commit if unmerged`() {
+  @Test fun `commit if unmerged`() {
     createLocalRepository()
 
     val data = "<foo />"
@@ -331,19 +331,19 @@ class GitTest : IcsTestCase() {
   }
 
   // remote is uninitialized (empty - initial commit is not done)
-  Test fun `merge with uninitialized upstream`() {
+  @Test fun `merge with uninitialized upstream`() {
     doSyncWithUninitializedUpstream(SyncType.MERGE)
   }
 
-  Test fun `reset to my, uninitialized upstream`() {
+  @Test fun `reset to my, uninitialized upstream`() {
     doSyncWithUninitializedUpstream(SyncType.OVERWRITE_REMOTE)
   }
 
-  Test fun `reset to theirs, uninitialized upstream`() {
+  @Test fun `reset to theirs, uninitialized upstream`() {
     doSyncWithUninitializedUpstream(SyncType.OVERWRITE_LOCAL)
   }
 
-  Test fun gitignore() {
+  @Test fun gitignore() {
     createLocalRepository()
 
     provider.write(".gitignore", "*.html")
@@ -356,12 +356,12 @@ class GitTest : IcsTestCase() {
 
     val diff = repository.computeIndexDiff()
     assertThat(diff.diff()).isFalse()
-    assertThat(diff.getAdded()).isEmpty()
-    assertThat(diff.getChanged()).isEmpty()
-    assertThat(diff.getRemoved()).isEmpty()
-    assertThat(diff.getModified()).isEmpty()
-    assertThat(diff.getUntracked()).isEmpty()
-    assertThat(diff.getUntrackedFolders()).isEmpty()
+    assertThat(diff.added).isEmpty()
+    assertThat(diff.changed).isEmpty()
+    assertThat(diff.removed).isEmpty()
+    assertThat(diff.modified).isEmpty()
+    assertThat(diff.untracked).isEmpty()
+    assertThat(diff.untrackedFolders).isEmpty()
 
     for (path in filePaths) {
       assertThat(provider.read(path)).isNull()
@@ -388,7 +388,7 @@ class GitTest : IcsTestCase() {
 
   private fun doSyncWithUninitializedUpstream(syncType: SyncType) {
     createRemoteRepository(initialCommit = false)
-    repositoryManager.setUpstream(remoteRepository.getWorkTree().getAbsolutePath())
+    repositoryManager.setUpstream(remoteRepository.getWorkTree().absolutePath)
 
     val path = "local.xml"
     val data = "<application />"

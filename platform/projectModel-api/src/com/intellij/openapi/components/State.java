@@ -24,6 +24,9 @@ import java.lang.annotation.RetentionPolicy;
 public @interface State {
   String name();
 
+  /**
+   * Could be specified as empty list if you need to load only default state ({@link #defaultStateAsResource()} must be true in this case)
+   */
   Storage[] storages();
 
   boolean reloadable() default true;

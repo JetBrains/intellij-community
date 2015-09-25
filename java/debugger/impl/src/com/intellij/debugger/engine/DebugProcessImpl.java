@@ -147,12 +147,20 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final Disposable myDisposable = Disposer.newDisposable();
   private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myDisposable);
 
+  private final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, myDisposable);
+
   protected DebugProcessImpl(Project project) {
     myProject = project;
     myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
     myRequestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(mySettingsListener);
     loadRenderers();
+    myDebugProcessDispatcher.addListener(new DebugProcessAdapter() {
+      @Override
+      public void paused(SuspendContext suspendContext) {
+        myThreadBlockedMonitor.stopWatching(suspendContext.getThread());
+      }
+    });
   }
 
   private void loadRenderers() {
@@ -739,6 +747,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return myRequestManager;
   }
 
+  @NotNull
   @Override
   public VirtualMachineProxyImpl getVirtualMachineProxy() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -1637,9 +1646,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     @Override
     protected void resumeAction() {
       SuspendContextImpl context = getSuspendContext();
+      if (context != null && context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD) {
+        myThreadBlockedMonitor.startWatching(myContextThread);
+      }
       if (context != null
           && Registry.is("debugger.step.resumes.one.thread")
-          && context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
+          && context.getSuspendPolicy() == EventRequest.SUSPEND_ALL
+          && myContextThread != null) {
         getSuspendManager().resumeThread(context, myContextThread);
       }
       else {
@@ -1649,7 +1662,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public abstract class ResumeCommand extends SuspendContextCommandImpl {
-    protected final ThreadReferenceProxyImpl myContextThread;
+    @Nullable protected final ThreadReferenceProxyImpl myContextThread;
 
     public ResumeCommand(SuspendContextImpl suspendContext) {
       super(suspendContext);
@@ -1710,7 +1723,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private class ResumeThreadCommand extends SuspendContextCommandImpl {
     private final ThreadReferenceProxyImpl myThread;
 
-    public ResumeThreadCommand(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl thread) {
+    public ResumeThreadCommand(SuspendContextImpl suspendContext, @NotNull ThreadReferenceProxyImpl thread) {
       super(suspendContext);
       myThread = thread;
     }
@@ -2096,7 +2109,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return new FreezeThreadCommand(thread);
   }
 
-  public SuspendContextCommandImpl createResumeThreadCommand(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl thread) {
+  public SuspendContextCommandImpl createResumeThreadCommand(SuspendContextImpl suspendContext, @NotNull ThreadReferenceProxyImpl thread) {
     return new ResumeThreadCommand(suspendContext, thread);
   }
 

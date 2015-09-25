@@ -28,8 +28,7 @@ import org.jdom.Element
 import org.jdom.output.Format
 import java.io.ByteArrayInputStream
 import java.io.OutputStreamWriter
-import java.util.Arrays
-import java.util.TreeMap
+import java.util.*
 import java.util.concurrent.atomic.AtomicReferenceArray
 
 class StateMap private constructor(private val names: Array<String>, private val states: AtomicReferenceArray<Any?>) {
@@ -88,10 +87,10 @@ class StateMap private constructor(private val names: Array<String>, private val
       val byteOut = BufferExposingByteArrayOutputStream()
       OutputStreamWriter(SnappyOutputStream(byteOut), CharsetToolkit.UTF8_CHARSET).use {
         val xmlOutputter = JDOMUtil.MyXMLOutputter()
-        xmlOutputter.setFormat(XML_FORMAT)
+        xmlOutputter.format = XML_FORMAT
         xmlOutputter.output(state, it)
       }
-      return ArrayUtil.realloc(byteOut.getInternalBuffer(), byteOut.size())
+      return ArrayUtil.realloc(byteOut.internalBuffer, byteOut.size())
     }
 
     private fun unarchiveState(state: ByteArray) = JDOMUtil.load(SnappyInputStream(ByteArrayInputStream(state)))
@@ -205,7 +204,7 @@ fun setStateAndCloneIfNeed(key: String, newState: Element?, oldStates: StateMap,
 }
 
 // true if updated (not equals to previous state)
-private fun updateState(states: MutableMap<String, Any>, key: String, newState: Element?, newLiveStates: MutableMap<String, Element>? = null): Boolean {
+internal fun updateState(states: MutableMap<String, Any>, key: String, newState: Element?, newLiveStates: MutableMap<String, Element>? = null): Boolean {
   if (newState == null || JDOMUtil.isEmpty(newState)) {
     states.remove(key)
     return true

@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,12 +63,12 @@ public class Executor {
 
   private static String ourCurrentDir;
 
-  private static void cdAbs(String absolutePath) {
+  private static void cdAbs(@NotNull String absolutePath) {
     ourCurrentDir = absolutePath;
     debug("# cd " + shortenPath(absolutePath));
   }
 
-  private static void cdRel(String relativePath) {
+  private static void cdRel(@NotNull String relativePath) {
     cdAbs(ourCurrentDir + "/" + relativePath);
   }
 
@@ -75,7 +76,7 @@ public class Executor {
     cdAbs(dir.getAbsolutePath());
   }
 
-  public static void cd(String relativeOrAbsolutePath) {
+  public static void cd(@NotNull String relativeOrAbsolutePath) {
     if (relativeOrAbsolutePath.startsWith("/") || relativeOrAbsolutePath.charAt(1) == ':') {
       cdAbs(relativeOrAbsolutePath);
     }
@@ -84,7 +85,7 @@ public class Executor {
     }
   }
 
-  public static void cd(VirtualFile dir) {
+  public static void cd(@NotNull VirtualFile dir) {
     cd(dir.getPath());
   }
 
@@ -110,13 +111,13 @@ public class Executor {
   }
 
   @NotNull
-  public static File touch(String fileName, String content) {
+  public static File touch(@NotNull String fileName, @NotNull String content) {
     File filePath = touch(fileName);
     echo(fileName, content);
     return filePath;
   }
 
-  public static void echo(String fileName, String content) {
+  public static void echo(@NotNull String fileName, @NotNull String content) {
     try {
       FileUtil.writeToFile(child(fileName), content.getBytes(), true);
     }
@@ -152,7 +153,8 @@ public class Executor {
     return file;
   }
 
-  public static String cat(String fileName) {
+  @NotNull
+  public static String cat(@NotNull String fileName) {
     try {
       String content = FileUtil.loadFile(child(fileName));
       debug("# cat " + fileName);
@@ -163,7 +165,7 @@ public class Executor {
     }
   }
 
-  public static void cp(String fileName, File destinationDir) {
+  public static void cp(@NotNull String fileName, @NotNull File destinationDir) {
     try {
       FileUtil.copy(child(fileName), new File(destinationDir, fileName));
     }
@@ -172,8 +174,10 @@ public class Executor {
     }
   }
 
-  protected static String run(@NotNull File workingDir, @NotNull List<String> params,
-                              boolean ignoreNonZeroExitCode) throws ExecutionException {
+  @NotNull
+  protected static String run(@NotNull File workingDir, @NotNull List<String> params, boolean ignoreNonZeroExitCode)
+    throws ExecutionException
+  {
     final ProcessBuilder builder = new ProcessBuilder().command(params);
     builder.directory(workingDir);
     builder.redirectErrorStream(true);
@@ -207,7 +211,8 @@ public class Executor {
     return stdout;
   }
 
-  public static List<String> splitCommandInParameters(String command) {
+  @NotNull
+  public static List<String> splitCommandInParameters(@NotNull String command) {
     List<String> split = new ArrayList<String>();
 
     boolean insideParam = false;
@@ -248,7 +253,11 @@ public class Executor {
     return split;
   }
 
-  protected static String findExecutable(String programName, String unixExec, String winExec, Collection<String> envs) {
+  @NotNull
+  protected static String findExecutable(@NotNull String programName,
+                                         @NotNull String unixExec,
+                                         @NotNull String winExec,
+                                         @NotNull Collection<String> envs) {
     String exec = findEnvValue(programName, envs);
     if (exec != null) {
       return exec;
@@ -265,7 +274,8 @@ public class Executor {
                                                                                " executable." : ""));
   }
 
-  public static String findEnvValue(String programNameForLog, Collection<String> envs) {
+  @Nullable
+  public static String findEnvValue(@NotNull String programNameForLog, @NotNull Collection<String> envs) {
     for (String env : envs) {
       String val = System.getenv(env);
       if (val != null && new File(val).canExecute()) {
@@ -276,13 +286,14 @@ public class Executor {
     return null;
   }
 
-  public static void debug(String msg) {
+  public static void debug(@NotNull String msg) {
     if (!StringUtil.isEmptyOrSpaces(msg)) {
       LOG.info(msg);
     }
   }
 
-  private static String shortenPath(String path) {
+  @NotNull
+  private static String shortenPath(@NotNull String path) {
     String[] split = path.split("/");
     if (split.length > 3) {
       // split[0] is empty, because the path starts from /
@@ -291,7 +302,8 @@ public class Executor {
     return path;
   }
 
-  private static File child(String fileName) {
+  @NotNull
+  protected static File child(@NotNull String fileName) {
     assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command.";
     return new File(ourCurrentDir, fileName);
   }

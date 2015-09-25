@@ -31,18 +31,18 @@ class IcsConfigurableUi : ConfigurableUi<IcsSettings> {
   private val readOnlyEditor = createReadOnlySourcesEditor()
 
   init {
-    panel.readOnlySourcesPanel.add(readOnlyEditor.getComponent(), BorderLayout.CENTER)
+    panel.readOnlySourcesPanel.add(readOnlyEditor.component, BorderLayout.CENTER)
   }
 
   override fun reset(settings: IcsSettings) {
-    panel.autoSyncCheckBox.setSelected(settings.autoSync)
+    panel.autoSyncCheckBox.isSelected = settings.autoSync
     readOnlyEditor.reset(settings)
   }
 
-  override fun isModified(settings: IcsSettings) = panel.autoSyncCheckBox.isSelected() != settings.autoSync || readOnlyEditor.isModified(settings)
+  override fun isModified(settings: IcsSettings) = panel.autoSyncCheckBox.isSelected != settings.autoSync || readOnlyEditor.isModified(settings)
 
   override fun apply(settings: IcsSettings) {
-    settings.autoSync = panel.autoSyncCheckBox.isSelected()
+    settings.autoSync = panel.autoSyncCheckBox.isSelected
     readOnlyEditor.apply(settings)
     saveSettings(settings, icsManager.settingsFile)
   }

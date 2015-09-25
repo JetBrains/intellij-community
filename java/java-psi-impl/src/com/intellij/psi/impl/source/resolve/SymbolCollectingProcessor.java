@@ -26,6 +26,7 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public class SymbolCollectingProcessor extends BaseScopeProcessor implements ElementClassHint {
   private final MostlySingularMultiMap<String, ResultWithContext> myResult = new MostlySingularMultiMap<String, ResultWithContext>();
   private PsiElement myCurrentFileContext = null;
+  private PsiAnchor myCurrentContextAnchor = null;
 
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
@@ -47,6 +49,7 @@ public class SymbolCollectingProcessor extends BaseScopeProcessor implements Ele
   public void handleEvent(@NotNull PsiScopeProcessor.Event event, Object associated) {
     if (event == JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT) {
       myCurrentFileContext = (PsiElement)associated;
+      myCurrentContextAnchor = null;
     }
   }
 
@@ -56,7 +59,11 @@ public class SymbolCollectingProcessor extends BaseScopeProcessor implements Ele
       PsiNamedElement named = (PsiNamedElement)element;
       String name = named.getName();
       if (name != null) {
-        myResult.add(name, new ResultWithContext(named, myCurrentFileContext));
+        PsiAnchor context = myCurrentContextAnchor;
+        if (context == null && myCurrentFileContext != null) {
+          myCurrentContextAnchor = context = PsiAnchor.create(myCurrentFileContext);
+        }
+        myResult.add(name, new ResultWithContext(named, context));
       }
     }
     return true;
@@ -75,9 +82,9 @@ public class SymbolCollectingProcessor extends BaseScopeProcessor implements Ele
     private final PsiAnchor myElement;
     private final PsiAnchor myFileContext;
 
-    public ResultWithContext(@NotNull PsiNamedElement element, PsiElement fileContext) {
+    public ResultWithContext(@NotNull PsiNamedElement element, @Nullable PsiAnchor fileContext) {
       myElement = PsiAnchor.create(element);
-      myFileContext = fileContext == null ? null : PsiAnchor.create(fileContext);
+      myFileContext = fileContext;
     }
 
     @NotNull

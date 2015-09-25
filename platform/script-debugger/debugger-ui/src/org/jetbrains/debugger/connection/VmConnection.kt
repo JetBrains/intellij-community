@@ -34,8 +34,8 @@ import javax.swing.event.HyperlinkListener
 
 public abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
   private val state = AtomicReference(ConnectionState(ConnectionStatus.NOT_CONNECTED))
-  private val dispatcher = EventDispatcher.create(javaClass<DebugEventListener>())
-  private val connectionDispatcher = EventDispatcher.create(javaClass<SocketConnectionListener>())
+  private val dispatcher = EventDispatcher.create(DebugEventListener::class.java)
+  private val connectionDispatcher = EventDispatcher.create(SocketConnectionListener::class.java)
 
   public volatile var vm: T? = null
     protected set

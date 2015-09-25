@@ -76,7 +76,7 @@ class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private 
 
   override fun channelInactive(context: ChannelHandlerContext) {
     try {
-      if (!dataBuffers.isEmpty()) {
+      if (!dataBuffers.isEmpty) {
         dataBuffers.forEachEntry(object : TIntObjectProcedure<ByteBuf> {
           override fun execute(a: Int, buffer: ByteBuf): Boolean {
             try {
@@ -92,7 +92,7 @@ class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private 
       }
     }
     finally {
-      super<Decoder>.channelInactive(context)
+      super.channelInactive(context)
     }
   }
 
@@ -136,8 +136,10 @@ class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private 
             data.writerIndex(data.writerIndex() + data.readableBytes())
           }
           else {
+            // must be computed here before we set data to new composite buffer
+            val newLength = data.readableBytes() + sliced.readableBytes()
             data = context.alloc().compositeBuffer(Decoder.DEFAULT_MAX_COMPOSITE_BUFFER_COMPONENTS).addComponents(data, sliced)
-            data.writerIndex(data.writerIndex() + data.readableBytes() + sliced.readableBytes())
+            data.writerIndex(data.writerIndex() + newLength)
           }
           dataBuffers.put(id, data)
         }
@@ -153,7 +155,7 @@ class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private 
         }
       }
 
-      else -> LOG.error("Unknown type " + type)
+      else -> LOG.error("Unknown type $type")
     }
     return null
   }

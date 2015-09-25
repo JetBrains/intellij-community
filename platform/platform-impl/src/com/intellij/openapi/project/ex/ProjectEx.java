@@ -27,9 +27,5 @@ public interface ProjectEx extends Project {
 
   void init();
 
-  boolean isOptimiseTestLoadSpeed();
-
-  void setOptimiseTestLoadSpeed(boolean optimiseTestLoadSpeed);
-
   void setProjectName(@NotNull String name);
 }

@@ -34,10 +34,11 @@ public class PlainDocString extends DocStringLineParser implements StructuredDoc
 
   public PlainDocString(@NotNull Substring content) {
     super(content);
-    if (!isEmpty(0) && isEmptyOrDoesNotExist(1)) {
-      mySummary = getLine(0).trim().toString();
-      final int next = consumeEmptyLines(1);
-      if (next != 1) {
+    final int firstNonEmpty = consumeEmptyLines(0);
+    if (firstNonEmpty < getLineCount() && isEmptyOrDoesNotExist(firstNonEmpty + 1)) {
+      mySummary = getLine(firstNonEmpty).trim().toString();
+      final int next = consumeEmptyLines(firstNonEmpty + 1);
+      if (next < getLineCount()) {
         final String remaining = getLine(next).union(getLine(getLineCount() - 1)).toString();
         myDescription = PyIndentUtil.removeCommonIndent(remaining, false);
       }

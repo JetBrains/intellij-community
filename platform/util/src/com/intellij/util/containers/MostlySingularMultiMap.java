@@ -181,6 +181,37 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
   }
   private static final MostlySingularMultiMap EMPTY = new EmptyMap();
 
+  public void addAll(MostlySingularMultiMap<K, V> other) {
+    if (other instanceof EmptyMap) return;
+
+    for (Map.Entry<K, Object> entry : other.myMap.entrySet()) {
+      K key = entry.getKey();
+      Object value = entry.getValue();
+      Object o = myMap.get(key);
+
+      if (o == null) {
+        myMap.put(key, value);
+      }
+
+      else if (o instanceof Object[]) {
+        if (value instanceof Object[]) {
+          myMap.put(key, ArrayUtil.mergeArrays(((Object[])o), ((Object[])value), ArrayUtil.OBJECT_ARRAY_FACTORY));
+        }
+        else {
+          myMap.put(key, ArrayUtil.append(((Object[])o), value, ArrayUtil.OBJECT_ARRAY_FACTORY));
+        }
+      }
+      else {
+        if (value instanceof Object[]) {
+          myMap.put(key, ArrayUtil.prepend(o, ((Object[])value), ArrayUtil.OBJECT_ARRAY_FACTORY));
+        }
+        else {
+          myMap.put(key, new Object[] {o, value});
+        }
+      }
+    }
+  }
+
   private static class EmptyMap extends MostlySingularMultiMap {
     @Override
     public void add(@NotNull Object key, @NotNull Object value) {

@@ -43,13 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-
-/*
-execution-impl -> lang-impl(scratches are here)
-compiler-impl  -> lang-impl
-
-java-impl ->execution-impl, compiler-impl
- */
 public class JavaScratchRunConfigurationExtension extends RunConfigurationExtension{
 
   private static final Key<Integer> SCRATCH_FILE_ID = Key.create("_scratch_file_id_");
@@ -112,7 +105,7 @@ public class JavaScratchRunConfigurationExtension extends RunConfigurationExtens
   }
 
   @Nullable
-  private static VirtualFile getScratchVirtualFile(RunConfiguration configuration) {
+  public static VirtualFile getScratchVirtualFile(RunConfiguration configuration) {
     int id = getScratchFileId(configuration);
     if (id < 0) {
       return null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,10 @@ import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -78,6 +80,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.vcsUtil.UIVcsUtil.spaceAndThinSpace;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
   private final ChangesViewContentManager myContentManager;
@@ -161,7 +165,16 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   public void projectOpened() {
-    updateChangesContent();
+    StartupManager startupManager = StartupManager.getInstance(myProject);
+    if (startupManager == null) {
+      return;
+    }
+    startupManager.registerPostStartupActivity(new Runnable() {
+      @Override
+      public void run() {
+        updateChangesContent();
+      }
+    });
   }
 
   public void projectClosed() {
@@ -450,7 +463,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       myIssueLinkRenderer = new IssueLinkRenderer(project, this);
     }
 
-    public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
       Object nodeValue = node.getUserObject();
       if (nodeValue instanceof ShelvedChangeList) {
@@ -460,12 +473,12 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         } else {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION);
         }
-        final int count = node.getChildCount();
-        final String numFilesText = " (" + count + ((count == 1) ? " file) " : " files) ");
-        append(numFilesText, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+        int count = node.getChildCount();
+        String numFilesText = spaceAndThinSpace() + count + " " + StringUtil.pluralize("file", 1) + ",";
+        append(numFilesText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
         
-        final String date = DateFormatUtil.formatPrettyDateTime(changeListData.DATE);
-        append(" (" + date + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        String date = DateFormatUtil.formatPrettyDateTime(changeListData.DATE);
+        append(" " + date, SimpleTextAttributes.GRAYED_ATTRIBUTES);
         setIcon(StdFileTypes.PATCH.getIcon());
       }
       else if (nodeValue instanceof ShelvedChange) {
@@ -501,7 +514,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       if (movedMessage != null) {
         append(movedMessage, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
-      append(" ("+ directory + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      append(spaceAndThinSpace() + directory, SimpleTextAttributes.GRAYED_ATTRIBUTES);
       setIcon(FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon());
     }
   }

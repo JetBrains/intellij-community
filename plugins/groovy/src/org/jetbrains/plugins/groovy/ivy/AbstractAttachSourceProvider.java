@@ -140,7 +140,7 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
     @Override
     public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
       final ActionCallback callback = new ActionCallback();
-      Task task = new Task.Backgroundable(myProject, "Downloading sources...", true) {
+      Task task = new Task.Backgroundable(myProject, "Downloading Sources", true) {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
           final byte[] bytes;

@@ -15,11 +15,11 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -53,6 +53,13 @@ import static com.intellij.util.containers.ContainerUtilRt.newHashSet;
 
 public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, FunctionalExpressionSearch.SearchParameters> {
   private static final Logger LOG = Logger.getInstance("#" + JavaFunctionalExpressionSearcher.class.getName());
+  /**
+   * The least number of candidate files with functional expressions that directly scanning them becomes expensive
+   * and more advanced ways of searching become necessary: e.g. first searching for methods where the functional interface class is used
+   * and then for their usages,
+    */
+  @VisibleForTesting
+  public static final int SMART_SEARCH_THRESHOLD = 5;
 
   @Override
   public void processQuery(@NotNull FunctionalExpressionSearch.SearchParameters queryParameters,
@@ -71,7 +78,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       final Set<Module> highLevelModules = getJava8Modules(project);
       if (highLevelModules.isEmpty()) return;
 
-      useScope = new JavaSourceFilterScope(new ModulesScope(highLevelModules, project).intersectWith(convertToGlobalScope(project, queryParameters.getEffectiveSearchScope())));
+      useScope = convertToGlobalScope(project, queryParameters.getEffectiveSearchScope());
 
       final MethodSignature functionalInterfaceMethod = LambdaUtil.getFunction(aClass);
       LOG.assertTrue(functionalInterfaceMethod != null);
@@ -81,8 +88,8 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     }
 
     //collect all files with '::' and '->' in useScope
-    Set<VirtualFile> candidateFiles = getFilesWithFunctionalExpressionsScope(project, useScope);
-    if (candidateFiles.size() < 5) {
+    Set<VirtualFile> candidateFiles = getFilesWithFunctionalExpressionsScope(project, new JavaSourceFilterScope(useScope));
+    if (candidateFiles.size() < SMART_SEARCH_THRESHOLD) {
       searchInFiles(aClass, consumer, candidateFiles, expectedFunExprParamsCount);
       return;
     }
