@@ -69,6 +69,10 @@ public abstract class InspectionRVContentProvider {
 
   public abstract boolean checkReportedProblems(@NotNull GlobalInspectionContextImpl context, @NotNull InspectionToolWrapper toolWrapper);
 
+  public Iterable<? extends ScopeToolState> getTools(Tools tools) {
+    return tools.getTools();
+  }
+
   public boolean hasQuickFixes(InspectionTree tree) {
     final TreePath[] treePaths = tree.getSelectionPaths();
     if (treePaths == null) return false;
