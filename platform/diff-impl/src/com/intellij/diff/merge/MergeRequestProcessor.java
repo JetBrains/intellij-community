@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -80,19 +81,15 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     myAvailableTools = DiffManagerEx.getInstance().getMergeTools();
 
-    myPanel = new JPanel(new BorderLayout());
     myMainPanel = new MyPanel();
     myContentPanel = new Wrapper();
     myToolbarPanel = new Wrapper();
     myToolbarPanel.setFocusable(true);
     myToolbarStatusPanel = new Wrapper();
 
-    myPanel.add(myMainPanel, BorderLayout.CENTER);
+    myPanel = JBUI.Panels.simplePanel(myMainPanel);
 
-    JPanel topPanel = new JPanel(new BorderLayout());
-    topPanel.add(myToolbarPanel, BorderLayout.CENTER);
-    topPanel.add(myToolbarStatusPanel, BorderLayout.EAST);
-
+    JPanel topPanel = JBUI.Panels.simplePanel(myToolbarPanel).addToRight(myToolbarStatusPanel);
 
     myMainPanel.add(topPanel, BorderLayout.NORTH);
     myMainPanel.add(myContentPanel, BorderLayout.CENTER);
@@ -102,13 +99,13 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     MergeTool.MergeViewer viewer;
     try {
-      MergeTool tool = getFittedTool();
-      viewer = tool.createComponent(myContext, myRequest);
+      viewer = getFittedTool().createComponent(myContext, myRequest);
     }
     catch (Throwable e) {
       LOG.error(e);
       viewer = ErrorMergeTool.INSTANCE.createComponent(myContext, myRequest);
     }
+
     myViewer = viewer;
   }
 
@@ -116,6 +113,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   // Update
   //
 
+  @CalledInAwt
   public void init() {
     myContentPanel.setContent(myViewer.getComponent());
     setTitle(myRequest.getTitle());
