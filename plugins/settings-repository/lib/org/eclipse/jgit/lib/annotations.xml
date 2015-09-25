@@ -89,6 +89,9 @@
   <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.ObjectReader newObjectReader()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.Ref getRef(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.jgit.lib.Repository org.eclipse.jgit.lib.Ref peel(org.eclipse.jgit.lib.Ref)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

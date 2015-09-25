@@ -36,7 +36,9 @@ val Path.systemIndependentPath: String
 val Path.parentSystemIndependentPath: String
   get() = parent!!.toString().replace(File.separatorChar, '/')
 
-fun Path.readText() = Files.readAllBytes(this).toString(Charsets.UTF_8)
+fun Path.readBytes() = Files.readAllBytes(this)
+
+fun Path.readText() = readBytes().toString(Charsets.UTF_8)
 
 fun VirtualFile.writeChild(relativePath: String, data: String) = VfsTestUtil.createFile(this, relativePath, data)
 

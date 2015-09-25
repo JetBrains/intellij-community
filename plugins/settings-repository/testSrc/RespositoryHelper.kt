@@ -87,5 +87,7 @@ fun compareFiles(path1: Path, path2: Path, vararg localExcludes: String) {
     notFound.remove(child1)
   }
 
-  assertThat(notFound).`as`("Path '$path1' contains other files than '$path2'").isEmpty()
+  if (notFound.isNotEmpty()) {
+    throw AssertionError("Path '$path2' must contain ${notFound.joinToString { "'${it.toString().substring(1)}'"  }}.")
+  }
 }

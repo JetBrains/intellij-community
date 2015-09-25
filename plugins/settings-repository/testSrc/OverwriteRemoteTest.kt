@@ -1,33 +1,48 @@
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.testFramework.file
+import com.intellij.testFramework.isDirectory
+import com.intellij.testFramework.readBytes
 import org.jetbrains.settingsRepository.SyncType
 import org.junit.Test
+import java.nio.file.Files
 
 // empty means "no files, no HEAD, no commits"
 internal class OverwriteRemote : GitTestCase() {
-  @Test fun `first merge`() {
-    createLocalAndRemoteRepositories()
-    val localFile = addAndCommit("local.xml")
+  @Test fun `not empty local and not empty remote`() {
+    addLocalToFs()
+    doTest(true)
+  }
 
-    sync(SyncType.OVERWRITE_REMOTE)
-    restoreRemoteAfterPush()
+  @Test fun `not empty local and empty remote`() {
+    addLocalToFs()
+    doTest(false)
+  }
+
+  private fun addLocalToFs() {
     fs
-      .file(localFile.name, localFile.data)
-      .compare()
+      .file("local.xml", """<file path="local.xml" />""")
   }
 
-  @Test fun `empty local repo`() {
-    createLocalAndRemoteRepositories()
-
-    sync(SyncType.OVERWRITE_REMOTE)
-    restoreRemoteAfterPush()
-    fs.compare()
+  @Test fun `empty local`() {
+    doTest(false)
   }
 
-  @Test fun `empty local and remote repositories`() {
-    createRemoteRepository(initialCommit = false)
+  @Test fun `empty local and empty remote`() {
+    doTest(true)
+  }
+
+  private fun doTest(initialRemoteCommit: Boolean) {
+    createRemoteRepository(initialCommit = initialRemoteCommit)
     configureLocalRepository()
+
+    val root = fs.getPath("/")
+    if (root.isDirectory()) {
+      for (path in Files.newDirectoryStream(root)) {
+        provider.write(path.toString().substring(1), path.readBytes())
+      }
+      repositoryManager.commit()
+    }
 
     sync(SyncType.OVERWRITE_REMOTE)
     restoreRemoteAfterPush()
@@ -35,8 +50,7 @@ internal class OverwriteRemote : GitTestCase() {
   }
 
   @Test fun `second merge is null`() {
-    createLocalAndRemoteRepositories()
-    addAndCommit("local.xml")
+    createLocalAndRemoteRepositories(initialCommit = true)
 
     sync(SyncType.MERGE)
 

@@ -26,8 +26,8 @@ import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.internal.JGitText
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.revwalk.RevSort
 import org.eclipse.jgit.revwalk.RevWalk
-import org.eclipse.jgit.revwalk.RevWalkUtils
 import org.eclipse.jgit.revwalk.filter.RevFilter
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.CredentialsProvider
@@ -328,18 +328,32 @@ public fun Repository.getAheadCommitsCount(): Int {
   val config = config
   val shortBranchName = Repository.shortenRefName(config.getRemoteBranchFullName())
   val trackingBranch = BranchConfig(config, shortBranchName).trackingBranch ?: return -1
-  val tracking = getRef(trackingBranch) ?: return -1
   val local = getRef("${Constants.R_HEADS}$shortBranchName") ?: return -1
   val walk = RevWalk(this)
   val localCommit = walk.parseCommit(local.objectId)
-  val trackingCommit = walk.parseCommit(tracking.objectId)
+
+  val trackingCommit = getRef(trackingBranch)?.let { walk.parseCommit(it.objectId) }
 
   walk.revFilter = RevFilter.MERGE_BASE
-  walk.markStart(localCommit)
-  walk.markStart(trackingCommit)
-  val mergeBase = walk.next()
+  if (trackingCommit == null) {
+    walk.markStart(localCommit)
+    walk.sort(RevSort.REVERSE)
+  }
+  else {
+    walk.markStart(localCommit)
+    walk.markStart(trackingCommit)
+    val mergeBase = walk.next()
+    walk.reset()
 
-  walk.reset()
+    walk.markStart(localCommit)
+    walk.markUninteresting(mergeBase)
+  }
+
   walk.revFilter = RevFilter.ALL
-  return RevWalkUtils.count(walk, localCommit, mergeBase)
+
+  var num = 0
+  for (c in walk) {
+    num++
+  }
+  return num
 }
