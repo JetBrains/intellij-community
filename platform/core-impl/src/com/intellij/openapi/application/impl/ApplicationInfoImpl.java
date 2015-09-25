@@ -65,6 +65,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myProgressTailIconName = null;
   private Icon myProgressTailIcon = null;
 
+  private int myProgressHeight = 2;
+  private int myProgressX = 1;
   private int myProgressY = 350;
   private String mySplashImageUrl = null;
   private String myAboutImageUrl = null;
@@ -133,6 +135,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_ABOUT_FOREGROUND_COLOR = "foreground";
   private static final String ATTRIBUTE_ABOUT_COPYRIGHT_FOREGROUND_COLOR = "copyrightForeground";
   private static final String ATTRIBUTE_ABOUT_LINK_COLOR = "linkColor";
+  private static final String ATTRIBUTE_PROGRESS_HEIGHT = "progressHeight";
+  private static final String ATTRIBUTE_PROGRESS_X = "progressX";
   private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
   private static final String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
   private static final String ELEMENT_ABOUT = "about";
@@ -329,8 +333,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myCopyrightForeground;
   }
 
+  public int getProgressHeight() {
+    return myProgressHeight;
+  }
+
   public int getProgressY() {
     return myProgressY;
+  }
+
+  public int getProgressX() {
+    return myProgressX;
   }
 
   @Nullable
@@ -616,6 +628,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_TAIL_ICON);
       if (v != null) {
         myProgressTailIconName = v;
+      }
+
+      v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_HEIGHT);
+      if (v != null) {
+        myProgressHeight = Integer.parseInt(v);
+      }
+
+      v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_X);
+      if (v != null) {
+        myProgressX = Integer.parseInt(v);
       }
 
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_Y);
