@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * Iterable that splices other iterables and iterates over them sequentially.
@@ -41,6 +42,7 @@ public class ChainIterable<T> extends ChainedListBase<Iterable<T>> implements It
   }
 
 
+  @Override
   public ChainIterable<T> add(@NotNull Iterable<T> another) {
     return (ChainIterable<T>)super.add(another);
   }
@@ -59,7 +61,7 @@ public class ChainIterable<T> extends ChainedListBase<Iterable<T>> implements It
    * Convenience: add an item wrapping it into a SingleIterable behind the scenes.
    */
   public ChainIterable<T> addItem(@NotNull T item) {
-    return (ChainIterable<T>)super.add(Collections.<T>singleton(item));
+    return add(Collections.singleton(item));
   }
 
   /**
@@ -70,50 +72,60 @@ public class ChainIterable<T> extends ChainedListBase<Iterable<T>> implements It
     return (myPayload == null);
   }
 
+  @Override
   public Iterator<T> iterator() {
-
-
-    class IterMixedIn extends ChainIterationMixin<T, Iterable<T>> {
-      IterMixedIn(ChainedListBase<Iterable<T>> link) {
-        super(link);
-      }
-
-      @Override
-      public Iterator<T> toIterator(Iterable<T> first) {
-        return first.iterator();
-      }
-    }
-    final IterMixedIn mixin = new IterMixedIn(this);
-
-
-    class Iter extends ChainedListBase<Iterable<T>> implements Iterator<T> {
-
-      Iter(ChainedListBase<Iterable<T>> piggybacked) {
-        super(piggybacked.myPayload);
-        myNext = piggybacked.myNext;
-      }
-
-      public boolean hasNext() {
-        return mixin.hasNext();
-      }
-
-      public void remove() {
-        throw new UnsupportedOperationException(); // we don't remove things
-      }
-
-      public T next() {
-        //noinspection RedundantCast
-        return (T)mixin.next();
-      }
-
-    }
-
-    return new Iter(this);
-
+    return new ChainIterator<T>(this);
   }
 
   @Override
   public String toString() {
     return FP.fold(new FP.StringCollector<T>(), this, new StringBuilder()).toString();
+  }
+
+  private static class ChainIterator<T> implements Iterator<T> {
+  
+    private ChainedListBase<Iterable<T>> myLink; // link of the chain we're currently at
+    private Iterator<T> myCurrent;
+  
+    public ChainIterator(@Nullable ChainedListBase<Iterable<T>> initial) {
+      myLink = initial;
+    }
+  
+    // returns either null or a non-exhausted iterator.
+    @Nullable
+    private Iterator<T> getCurrent() {
+      while ((myCurrent == null || !myCurrent.hasNext()) && (myLink != null && myLink.myPayload != null)) { // fix myCurrent
+        if (myCurrent == null) {
+          myCurrent = myLink.myPayload.iterator();
+          assert myCurrent != null;
+        }
+        else {
+          myLink= myLink.myNext;
+          myCurrent = null;
+        }
+      }
+      return myCurrent;
+    }
+  
+    @Override
+    public boolean hasNext() {
+      return getCurrent() != null;
+    }
+  
+    @Override
+    public T next() {
+      final Iterator<T> current = getCurrent();
+      if (current != null) {
+        return current.next();
+      }
+      else {
+        throw new NoSuchElementException();
+      }
+    }
+  
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("Cannot remove from ChainIterator");
+    }
   }
 }
