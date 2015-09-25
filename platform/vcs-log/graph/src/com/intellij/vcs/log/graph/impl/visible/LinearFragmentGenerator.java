@@ -16,7 +16,6 @@
 
 package com.intellij.vcs.log.graph.impl.visible;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -93,14 +92,12 @@ public class LinearFragmentGenerator {
 
   @Nullable
   public GraphFragment getDownFragment(int upperVisibleNodeIndex) {
-    Pair<Integer, Integer> fragment = getFragment(upperVisibleNodeIndex, downNodesFun, upNodesFun, myPinnedNodes);
-    return fragment == null ? null : new GraphFragment(fragment.first, fragment.second);
+    return getFragment(upperVisibleNodeIndex, downNodesFun, upNodesFun, myPinnedNodes, true);
   }
 
   @Nullable
   public GraphFragment getUpFragment(int lowerNodeIndex) {
-    Pair<Integer, Integer> fragment = getFragment(lowerNodeIndex, upNodesFun, downNodesFun, myPinnedNodes);
-    return fragment == null ? null : new GraphFragment(fragment.second, fragment.first);
+    return getFragment(lowerNodeIndex, upNodesFun, downNodesFun, myPinnedNodes, false);
   }
 
   @Nullable
@@ -148,10 +145,10 @@ public class LinearFragmentGenerator {
   }
 
   @Nullable
-  private static Pair<Integer, Integer> getFragment(int startNode,
-                                                    Function<Integer, List<Integer>> getNextNodes,
-                                                    Function<Integer, List<Integer>> getPrevNodes,
-                                                    Set<Integer> thisNodeCantBeInMiddle) {
+  private static GraphFragment getFragment(int startNode,
+                                           Function<Integer, List<Integer>> getNextNodes,
+                                           Function<Integer, List<Integer>> getPrevNodes,
+                                           Set<Integer> thisNodeCantBeInMiddle, boolean isDown) {
     Set<Integer> blackNodes = new HashSet<Integer>();
     blackNodes.add(startNode);
 
@@ -184,7 +181,7 @@ public class LinearFragmentGenerator {
     }
 
     if (endNode != -1) {
-      return Pair.create(startNode, endNode);
+      return isDown ? GraphFragment.create(startNode, endNode) : GraphFragment.create(endNode, startNode);
     }
     else {
       return null;
@@ -198,6 +195,10 @@ public class LinearFragmentGenerator {
     public GraphFragment(int upNodeIndex, int downNodeIndex) {
       this.upNodeIndex = upNodeIndex;
       this.downNodeIndex = downNodeIndex;
+    }
+
+    public static GraphFragment create(int startNode, int endNode) {
+      return new GraphFragment(startNode, endNode);
     }
   }
 }
