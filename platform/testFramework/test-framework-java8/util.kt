@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testFramework
 
 import com.intellij.openapi.components.ComponentManager
 import org.picocontainer.MutablePicoContainer

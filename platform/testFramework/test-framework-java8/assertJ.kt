@@ -19,7 +19,7 @@ import org.assertj.core.internal.ComparatorBasedComparisonStrategy
 import org.assertj.core.internal.Iterables
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Comparator
+import java.util.*
 
 fun AbstractPathAssert<*>.hasChildren(vararg names: String) {
   paths.assertIsDirectory(info, actual)
