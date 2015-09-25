@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -356,8 +356,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
         GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(exePath, params, false);
 
-        OSProcessHandler processHandler =
-          new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
+        OSProcessHandler processHandler = new OSProcessHandler(commandLine);
 
         processHandler.setShouldDestroyProcessRecursively(false);
 
