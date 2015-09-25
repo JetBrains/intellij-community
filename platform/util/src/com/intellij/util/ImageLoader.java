@@ -68,37 +68,44 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling) {
-    for (Pair<String, Integer> each : getFileNames(url.toString())) {
+    final float scaleFactor = allowFloatScaling ? JBUI.scale(1f) : JBUI.scale(1f) > 1.5f ? 2f : 1f;
+    assert scaleFactor >= 1.0f : "By design, only scale factors >= 1.0 are supported";
+
+    // We can't check all 3rd party plugins and convince the authors to add @2x icons.
+    // (scaleFactor > 1.0) != isRetina() => we should scale images manually.
+    // Note we never scale images on Retina displays because scaling is handled by the system.
+    final boolean scaleImages = (scaleFactor > 1.0f) && !UIUtil.isRetina();
+
+    // For any scale factor > 1.0, always prefer retina images, because downscaling
+    // retina images provides a better result than upscaling non-retina images.
+    final boolean loadRetinaImages = UIUtil.isRetina() || scaleImages;
+
+    for (Pair<String, Integer> each : getFileNames(url.toString(), UIUtil.isUnderDarcula(), loadRetinaImages)) {
       try {
         Image image = loadFromStream(URLUtil.openStream(new URL(each.first)), each.second);
-        float scale = allowFloatScaling ? JBUI.scale(1f) : JBUI.scale(1f) > 1.5f ? 2f : 1f;
-        //we can't check all 3rd party plugins and convince the authors to add @2x icons.
-        // isHiDPI() != isRetina() => we should scale images manually
-        if (image != null && JBUI.isHiDPI() && !each.first.contains("@2x")) {
-          image = upscale(image, scale);
-        } else if (image != null && JBUI.scale(1f) >= 1.5f && JBUI.scale(1f) < 2.0f && each.first.contains("@2x")) {
-          image = downscale(image, scale);
+        if (image != null && scaleImages) {
+          if (each.first.contains("@2x"))
+            image = scaleImage(image, scaleFactor / 2.0f);  // divide by 2.0 as Retina images are 2x the resolution.
+          else
+            image = scaleImage(image, scaleFactor);
         }
         return image;
       }
       catch (IOException ignore) {
+        // Image file may not exist, try next one
       }
     }
     return null;
   }
 
   @NotNull
-  private static Image upscale(Image image, float scale) {
+  private static Image scaleImage(Image image, float scale) {
     int width = (int)(scale * image.getWidth(null));
     int height = (int)(scale * image.getHeight(null));
-    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
-  }
-
-  @NotNull
-  private static Image downscale(Image image, float scale) {
-    int width = (int)(image.getWidth(null)  / 2f * scale);
-    int height = (int)(image.getHeight(null)/ 2f * scale);
-    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
+    // Using "QUALITY" instead of "ULTRA_QUALITY" results in images that are less blurry
+    // because ultra quality performs a few more passes when scaling, which introduces blurriness
+    // when the scaling factor is relatively small (i.e. <= 3.0f) -- which is the case here.
+    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, width, height);
   }
 
   @Nullable
