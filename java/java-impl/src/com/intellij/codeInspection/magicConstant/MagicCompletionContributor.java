@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -82,6 +83,21 @@ public class MagicCompletionContributor extends CompletionContributor {
     return allowedValues;
   }
 
+  @Nullable
+  private static PsiModifierListOwner resolveExpression(@Nullable PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expression instanceof PsiMethodCallExpression) {
+      return ((PsiMethodCallExpression)expression).resolveMethod();
+    }
+    if (expression instanceof PsiReferenceExpression) {
+      PsiElement resolved = ((PsiReferenceExpression)expression).resolve();
+      if (resolved instanceof PsiModifierListOwner) {
+        return (PsiModifierListOwner)resolved;
+      }
+    }
+    return null;
+  }
+
   @NotNull
   public static List<Pair<PsiModifierListOwner, PsiType>> getMembersWithAllowedValues(@NotNull PsiElement pos) {
     List<Pair<PsiModifierListOwner, PsiType>> result = ContainerUtil.newArrayList();
@@ -116,21 +132,22 @@ public class MagicCompletionContributor extends CompletionContributor {
       PsiBinaryExpression exp = PsiTreeUtil.getParentOfType(pos, PsiBinaryExpression.class);
       if (exp != null && (exp.getOperationTokenType() == JavaTokenType.EQEQ || exp.getOperationTokenType() == JavaTokenType.NE)) {
         PsiExpression l = exp.getLOperand();
-        PsiElement resolved;
-        if (l instanceof PsiReferenceExpression && (resolved = ((PsiReferenceExpression)l).resolve()) instanceof PsiModifierListOwner) {
-          result.add(Pair.create((PsiModifierListOwner)resolved, l.getType()));
+        PsiModifierListOwner resolved = resolveExpression(l);
+        if (resolved != null) {
+          result.add(Pair.create(resolved, l.getType()));
         }
         PsiExpression r = exp.getROperand();
-        if (result.isEmpty() && r instanceof PsiReferenceExpression && (resolved = ((PsiReferenceExpression)r).resolve()) instanceof PsiModifierListOwner) {
-          result.add(Pair.create((PsiModifierListOwner)resolved, r.getType()));
+        resolved = resolveExpression(r);
+        if (r != null && resolved != null) {
+          result.add(Pair.create(resolved, r.getType()));
         }
       }
     }
     else if (IN_ASSIGNMENT.accepts(pos)) {
       PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(pos, PsiAssignmentExpression.class);
-      PsiElement resolved;
       PsiExpression l = assignment == null ? null : assignment.getLExpression();
-      if (assignment != null && PsiTreeUtil.isAncestor(assignment.getRExpression(), pos, false) && l instanceof PsiReferenceExpression && (resolved = ((PsiReferenceExpression)l).resolve()) instanceof PsiModifierListOwner) {
+      PsiElement resolved = resolveExpression(l);
+      if (resolved != null && PsiTreeUtil.isAncestor(assignment.getRExpression(), pos, false)) {
         result.add(Pair.create((PsiModifierListOwner)resolved, l.getType()));
       }
     }
