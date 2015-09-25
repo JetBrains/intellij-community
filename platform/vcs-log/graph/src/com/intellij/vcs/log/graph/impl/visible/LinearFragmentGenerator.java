@@ -23,6 +23,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
+import com.intellij.vcs.log.graph.utils.NormalEdge;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,11 +70,11 @@ public class LinearFragmentGenerator {
       downNodeIndex = upNodeIndex;
     }
     else {
-      Pair<Integer, Integer> graphEdge = LinearGraphUtils.asNormalEdge(((GraphEdge)element));
+      NormalEdge graphEdge = LinearGraphUtils.asNormalEdge(((GraphEdge)element));
       if (graphEdge == null) return null;
 
-      upNodeIndex = graphEdge.first;
-      downNodeIndex = graphEdge.second;
+      upNodeIndex = graphEdge.up;
+      downNodeIndex = graphEdge.down;
     }
 
     for (int i = 0; i < MAX_SEARCH_SIZE; i++) {
