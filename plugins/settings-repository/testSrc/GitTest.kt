@@ -18,33 +18,23 @@ package org.jetbrains.settingsRepository.test
 import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.write
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.merge.MergeSession
-import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.file
 import com.intellij.testFramework.writeChild
 import com.intellij.util.PathUtilRt
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.lib.Repository
 import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.jgit.dirCache.writePath
 import org.jetbrains.settingsRepository.CannotResolveConflictInTestMode
 import org.jetbrains.settingsRepository.SyncType
 import org.jetbrains.settingsRepository.conflictResolver
 import org.jetbrains.settingsRepository.copyLocalConfig
-import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.commit
 import org.jetbrains.settingsRepository.git.computeIndexDiff
-import org.jetbrains.settingsRepository.git.resetHard
-import org.junit.ClassRule
 import org.junit.Test
-import java.io.File
 import java.nio.charset.StandardCharsets
-import java.nio.file.FileSystem
 import java.util.*
-import kotlin.properties.Delegates
 
 // kotlin bug, cannot be val (.NoSuchMethodError: org.jetbrains.settingsRepository.SettingsRepositoryPackage.getMARKER_ACCEPT_MY()[B)
 internal object AM {
@@ -52,19 +42,7 @@ internal object AM {
   val MARKER_ACCEPT_THEIRS: ByteArray = "__accept theirs__".toByteArray()
 }
 
-internal class GitTest : IcsTestCase() {
-  companion object {
-    @ClassRule val projectRule = ProjectRule()
-  }
-
-  private val repositoryManager: GitRepositoryManager
-    get() = icsManager.repositoryManager as GitRepositoryManager
-
-  private val repository: Repository
-    get() = repositoryManager.repository
-
-  var remoteRepository: Repository by Delegates.notNull()
-
+internal class GitTest : GitTestCase() {
   init {
     conflictResolver = { files, mergeProvider ->
       val mergeSession = mergeProvider.createMergeSession(files)
@@ -85,13 +63,6 @@ internal class GitTest : IcsTestCase() {
         }
       }
     }
-  }
-
-  private fun addAndCommit(path: String): FileInfo {
-    val data = """<file path="$path" />""".toByteArray()
-    provider.write(path, data)
-    repositoryManager.commit()
-    return FileInfo(path, data)
   }
 
   @Test fun add() {
@@ -160,7 +131,7 @@ internal class GitTest : IcsTestCase() {
   }
 
   private fun doPullToRepositoryWithoutCommits(remoteBranchName: String?) {
-    createLocalRepository(remoteBranchName)
+    createLocalAndRemoteRepositories(remoteBranchName)
     repositoryManager.pull()
     compareFiles(repository.workTree, remoteRepository.workTree)
   }
@@ -174,42 +145,28 @@ internal class GitTest : IcsTestCase() {
   }
 
   private fun doPullToRepositoryWithCommits(remoteBranchName: String?) {
-    val file = createLocalRepositoryAndCommit(remoteBranchName)
+    createLocalAndRemoteRepositories(remoteBranchName)
+    val file = addAndCommit("local.xml")
 
     repositoryManager.commit()
     repositoryManager.pull()
-    assertThat(FileUtil.loadFile(File(repository.getWorkTree(), file.name))).isEqualTo(String(file.data, CharsetToolkit.UTF8_CHARSET))
+    assertThat(repository.workTree.resolve(file.name)).hasBinaryContent(file.data)
     compareFiles(repository.workTree, remoteRepository.workTree, PathUtilRt.getFileName(file.name))
-  }
-
-  private fun createLocalRepository(remoteBranchName: String? = null) {
-    createRemoteRepository(remoteBranchName)
-    repositoryManager.setUpstream(remoteRepository.getWorkTree().absolutePath, remoteBranchName)
-  }
-
-  private fun createLocalRepositoryAndCommit(remoteBranchName: String? = null): FileInfo {
-    createLocalRepository(remoteBranchName)
-    return addAndCommit("local.xml")
-  }
-
-  private fun FileSystem.compare(): FileSystem {
-    val root = getPath("/")!!
-    compareFiles(root, repository.workTree)
-    compareFiles(root, remoteRepository.workTree)
-    return this
   }
 
   // never was merged. we reset using "merge with strategy "theirs", so, we must test - what's happen if it is not first merge? - see next test
   @Test fun resetToTheirsIfFirstMerge() {
-    createLocalRepositoryAndCommit(null)
+    createLocalAndRemoteRepositories(initialCommit = true)
+
     sync(SyncType.OVERWRITE_LOCAL)
     fs
       .file(SAMPLE_FILE_NAME, SAMPLE_FILE_CONTENT)
       .compare()
   }
 
-  @Test fun resetToTheirsISecondMergeIsNull() {
-    createLocalRepositoryAndCommit(null)
+  @Test fun `overwrite local: second merge is null`() {
+    createLocalAndRemoteRepositories(initialCommit = true)
+
     sync(SyncType.MERGE)
 
     restoreRemoteAfterPush()
@@ -235,42 +192,8 @@ internal class GitTest : IcsTestCase() {
     testRemote()
   }
 
-  @Test fun resetToMyIfFirstMerge() {
-    createLocalRepositoryAndCommit()
-    sync(SyncType.OVERWRITE_REMOTE)
-    restoreRemoteAfterPush()
-    fs.file("local.xml", """<file path="local.xml" />""").compare()
-  }
-
-  @Test fun `reset to my, second merge is null`() {
-    createLocalRepositoryAndCommit()
-    sync(SyncType.MERGE)
-
-    restoreRemoteAfterPush()
-
-    val fs = fs
-      .file("local.xml", """<file path="local.xml" />""")
-      .file(SAMPLE_FILE_NAME, SAMPLE_FILE_CONTENT)
-      .compare()
-
-    val localToFilePath = "_mac/local2.xml"
-    addAndCommit(localToFilePath)
-    sync(SyncType.OVERWRITE_REMOTE)
-    restoreRemoteAfterPush()
-
-    fs.file(localToFilePath, """<file path="$localToFilePath" />""")
-    fs.compare()
-
-    // test: merge to remote after such reset
-    sync(SyncType.MERGE)
-
-    restoreRemoteAfterPush()
-
-    fs.compare()
-  }
-
   @Test fun `merge - resolve conflicts to my`() {
-    createLocalRepository()
+    createLocalAndRemoteRepositories()
 
     val data = AM.MARKER_ACCEPT_MY
     provider.write(SAMPLE_FILE_NAME, data)
@@ -282,7 +205,7 @@ internal class GitTest : IcsTestCase() {
   }
 
   @Test fun `merge - theirs file deleted, my modified, accept theirs`() {
-    createLocalRepository()
+    createLocalAndRemoteRepositories()
 
     sync(SyncType.MERGE)
 
@@ -299,7 +222,7 @@ internal class GitTest : IcsTestCase() {
   }
 
   @Test fun `merge - my file deleted, theirs modified, accept my`() {
-    createLocalRepository()
+    createLocalAndRemoteRepositories()
 
     sync(SyncType.MERGE)
 
@@ -316,7 +239,7 @@ internal class GitTest : IcsTestCase() {
   }
 
   @Test fun `commit if unmerged`() {
-    createLocalRepository()
+    createLocalAndRemoteRepositories()
 
     val data = "<foo />"
     provider.write(SAMPLE_FILE_NAME, data)
@@ -344,16 +267,16 @@ internal class GitTest : IcsTestCase() {
     doSyncWithUninitializedUpstream(SyncType.MERGE)
   }
 
-  @Test fun `reset to my, uninitialized upstream`() {
+  @Test fun `overwrite remote: uninitialized upstream`() {
     doSyncWithUninitializedUpstream(SyncType.OVERWRITE_REMOTE)
   }
 
-  @Test fun `reset to theirs, uninitialized upstream`() {
+  @Test fun `overwrite local - uninitialized upstream`() {
     doSyncWithUninitializedUpstream(SyncType.OVERWRITE_LOCAL)
   }
 
   @Test fun gitignore() {
-    createLocalRepository()
+    createLocalAndRemoteRepositories()
 
     provider.write(".gitignore", "*.html")
     sync(SyncType.MERGE)
@@ -378,18 +301,25 @@ internal class GitTest : IcsTestCase() {
   }
 
   @Test fun `initial copy to repository: no local files`() {
+    createRemoteRepository(initialCommit = false)
     // check error during findRemoteRefUpdatesFor (no master ref)
     testInitialCopy(false)
   }
 
   @Test fun `initial copy to repository: some local files`() {
+    createRemoteRepository(initialCommit = false)
     // check error during findRemoteRefUpdatesFor (no master ref)
     testInitialCopy(true)
   }
 
-  private fun testInitialCopy(addLocalFiles: Boolean) {
-    createRemoteRepository(initialCommit = false)
+  @Test fun `initial copy to repository: remote files removed`() {
+    createRemoteRepository(initialCommit = true)
 
+    // check error during findRemoteRefUpdatesFor (no master ref)
+    testInitialCopy(true, SyncType.OVERWRITE_REMOTE)
+  }
+
+  private fun testInitialCopy(addLocalFiles: Boolean, syncType: SyncType = SyncType.MERGE) {
     repositoryManager.createRepositoryIfNeed()
     repositoryManager.setUpstream(remoteRepository.getWorkTree().absolutePath)
 
@@ -408,7 +338,7 @@ internal class GitTest : IcsTestCase() {
     store.setPath(localConfigPath.toString())
     store.storageManager.streamProvider = provider
 
-    icsManager.sync(SyncType.MERGE, projectRule.project, { copyLocalConfig(store.storageManager) })
+    icsManager.sync(syncType, GitTestCase.projectRule.project, { copyLocalConfig(store.storageManager) })
 
     if (addLocalFiles) {
       assertThat(localConfigPath).isDirectory()
@@ -455,21 +385,5 @@ internal class GitTest : IcsTestCase() {
     }
     restoreRemoteAfterPush();
     fs.compare()
-  }
-
-  private fun restoreRemoteAfterPush() {
-    /** we must not push to non-bare repository - but we do it in test (our sync merge equals to "pull&push"),
-    "
-    By default, updating the current branch in a non-bare repository
-    is denied, because it will make the index and work tree inconsistent
-    with what you pushed, and will require 'git reset --hard' to match the work tree to HEAD.
-    "
-    so, we do "git reset --hard"
-     */
-    remoteRepository.resetHard()
-  }
-
-  private fun sync(syncType: SyncType) {
-    icsManager.sync(syncType)
   }
 }

@@ -16,6 +16,7 @@
 package org.jetbrains.settingsRepository.test
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
+import com.intellij.testFramework.exists
 import com.intellij.testFramework.isFile
 import gnu.trove.THashSet
 import org.assertj.core.api.Assertions.assertThat
@@ -74,9 +75,13 @@ fun compareFiles(path1: Path, path2: Path, vararg localExcludes: String) {
   }
 
   for (child2 in getChildrenStream(path2)) {
-    val child1 = path1.resolve(child2.fileName.toString())
+    val childName = child2.fileName.toString()
+    val child1 = path1.resolve(childName)
     if (child1.isFile()) {
       assertThat(child2).hasSameContentAs(child1)
+    }
+    else if (!child1.exists()) {
+      throw AssertionError("Path '$path2' must not contain '$childName'")
     }
     else {
       compareFiles(child1, child2, *localExcludes)
