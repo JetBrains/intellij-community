@@ -57,7 +57,10 @@ public class FormMoveProvider extends MoveHandlerDelegate {
     for(int i=0; i<forms.length; i++) {
       classesToMove [i] = forms [i].getClassToBind();
       if (classesToMove[i] != null) {
-        filesOrDirs.add(classesToMove[i].getContainingFile());
+        final PsiFile containingFile = classesToMove[i].getContainingFile();
+        if (containingFile != null) {
+          filesOrDirs.add(containingFile);
+        }
       }
       filesToMove [i] = forms [i].getFormFiles() [0];
       if (filesToMove[i] != null) {
