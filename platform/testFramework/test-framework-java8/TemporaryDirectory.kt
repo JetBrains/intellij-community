@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
+import com.intellij.util.lang.CompoundRuntimeException
 import org.junit.rules.ExternalResource
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -41,9 +42,16 @@ class TemporaryDirectory : ExternalResource() {
   }
 
   override fun after() {
+    val errors = SmartList<Throwable>()
     for (path in paths) {
-      path.deleteRecursively()
+      try {
+        path.deleteRecursively()
+      }
+      catch (e: Throwable) {
+        errors.add(e)
+      }
     }
+    CompoundRuntimeException.throwIfNotEmpty(errors)
     paths.clear()
   }
 
