@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
     Graphics2D g = (Graphics2D)graphics;
     final JTextComponent c = getComponent();
     final Container parent = c.getParent();
-    if (parent != null) {
+    if (c.isOpaque() && parent != null) {
       g.setColor(parent.getBackground());
       g.fillRect(0, 0, c.getWidth(), c.getHeight());
     }
