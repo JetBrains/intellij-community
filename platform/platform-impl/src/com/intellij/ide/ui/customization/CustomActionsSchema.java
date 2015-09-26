@@ -21,7 +21,10 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
@@ -380,44 +383,6 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
       frame.updateView();
     }
   }
-
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return IdeBundle.message("title.custom.actions.schemas");
-  }
-
-  @Override
-  public String getExternalFileName() {
-    return "customization";
-  }
-
-  private static class Pair {
-      String first;
-      String second;
-
-      public Pair(final String first, final String second) {
-        this.first = first;
-        this.second = second;
-      }
-
-
-
-      public int hashCode() {
-        return first.hashCode();
-      }
-
-      public boolean equals(Object obj) {
-        return obj instanceof Pair && first.equals(((Pair)obj).first);
-      }
-    }
 
   private static class Pair {
     String first;
