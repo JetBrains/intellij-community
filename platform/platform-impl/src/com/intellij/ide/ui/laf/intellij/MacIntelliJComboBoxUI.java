@@ -102,6 +102,14 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
               setBorder(JBUI.Borders.empty(1, 0));
             }
 
+            @Override
+            public Color getBackground() {
+              if (!isEnabled()) {
+                return Gray.xF8;
+              }
+              return super.getBackground();
+            }
+
             public void setText(String s) {
               if (getText().equals(s)) {
                 return;
