@@ -160,16 +160,11 @@ public class VcsHistoryUtil {
                                                  @NotNull final FilePath filePath,
                                                  @NotNull final VcsFileRevision older,
                                                  @NotNull final VcsFileRevision newer) {
-    new Task.Backgroundable(project, "Loading revisions to compare") {
+    new Task.Backgroundable(project, "Comparing Revisions...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-
         try {
-          String leftTitle = older.getRevisionNumber().asString() +
-                             (older instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
-          String rightTitle = newer.getRevisionNumber().asString() +
-                              (newer instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
-          showDiff(project, filePath, older, newer, leftTitle, rightTitle);
+          showDiff(project, filePath, older, newer, makeTitle(older), makeTitle(newer));
         }
         catch (final VcsException e) {
           LOG.info(e);
@@ -183,6 +178,12 @@ public class VcsHistoryUtil {
         catch (IOException e) {
           LOG.info(e);
         }
+      }
+
+      @NotNull
+      private String makeTitle(@NotNull VcsFileRevision revision) {
+        return revision.getRevisionNumber().asString() +
+               (revision instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
       }
     }.queue();
   }
