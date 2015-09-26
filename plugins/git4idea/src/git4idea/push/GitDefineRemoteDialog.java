@@ -95,7 +95,7 @@ class GitDefineRemoteDialog extends DialogWrapper {
     String error = validateRemoteUnderModal(name, url);
     if (error != null) {
       LOG.warn(String.format("Invalid remote. Name: [%s], URL: [%s], error: %s", name, url, error));
-      Messages.showErrorDialog(myRepository.getProject(), error, "Invalid Remote URL");
+      Messages.showErrorDialog(myRepository.getProject(), error, "Invalid Remote");
     }
     else {
       super.doOKAction();
@@ -108,14 +108,14 @@ class GitDefineRemoteDialog extends DialogWrapper {
       return "URL can't be empty";
     }
     if (!GitRefNameValidator.getInstance().checkInput(name)) {
-      return "Remote name is invalid";
+      return "Remote name contains illegal characters";
     }
 
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<String, ProcessCanceledException>() {
       @Override
       public String compute() throws ProcessCanceledException {
         final GitCommandResult result = myGit.lsRemote(myRepository.getProject(), VfsUtilCore.virtualToIoFile(myRepository.getRoot()), url);
-        return !result.success() ? "Remote URL is invalid: " + result.getErrorOutputAsHtmlString() : null;
+        return !result.success() ? "Remote URL test failed: " + result.getErrorOutputAsHtmlString() : null;
       }
     }, "Checking URL...", true, myRepository.getProject());
   }
