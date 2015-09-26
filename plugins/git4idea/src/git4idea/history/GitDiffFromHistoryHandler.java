@@ -310,7 +310,7 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      doShowDiff(myFilePath, myParentRevision, myRevision, false);
+      doShowDiff(myFilePath, myParentRevision, myRevision);
     }
 
   }

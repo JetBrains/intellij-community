@@ -48,12 +48,6 @@ public interface StateStorageManager {
   @NotNull
   String expandMacros(@NotNull String path);
 
-  @NotNull
-  /**
-   * @param path System-independent path.
-   */
-  String collapseMacros(@NotNull String path);
-
   interface ExternalizationSession {
     void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state);
 

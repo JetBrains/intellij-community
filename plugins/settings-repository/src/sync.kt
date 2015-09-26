@@ -83,13 +83,19 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
               when (syncType) {
                 SyncType.MERGE -> {
                   updateResult = repositoryManager.pull(indicator)
+                  var doPush = true
                   if (localRepositoryInitializer != null) {
                     // must be performed only after initial pull, so, local changes will be relative to remote files
                     localRepositoryInitializer()
-                    repositoryManager.commit(indicator)
-                    updateResult = updateResult.concat(repositoryManager.pull(indicator))
+                    if (!repositoryManager.commit(indicator, syncType) || repositoryManager.getAheadCommitsCount() == 0) {
+                      // avoid error during findRemoteRefUpdatesFor on push - if localRepositoryInitializer specified and nothing to commit (failed or just no files to commit (empty local configuration - no files)),
+                      // so, nothing to push
+                      doPush = false
+                    }
                   }
-                  repositoryManager.push(indicator)
+                  if (doPush) {
+                    repositoryManager.push(indicator)
+                  }
                 }
                 SyncType.OVERWRITE_LOCAL -> {
                   // we don't push - probably, repository will be modified/removed (user can do something, like undo) before any other next push activities (so, we don't want to disturb remote)
@@ -97,7 +103,9 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
                 }
                 SyncType.OVERWRITE_REMOTE -> {
                   updateResult = repositoryManager.resetToMy(indicator, localRepositoryInitializer)
-                  repositoryManager.push(indicator)
+                  if (repositoryManager.getAheadCommitsCount() > 0) {
+                    repositoryManager.push(indicator)
+                  }
                 }
               }
             }

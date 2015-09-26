@@ -161,7 +161,14 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  public static MultiMap<File, ExportableComponent> getExportableComponentsMap(final boolean onlyExisting, final boolean computePresentableNames) {
+  public static MultiMap<File, ExportableComponent> getExportableComponentsMap(boolean onlyExisting, boolean computePresentableNames) {
+    ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
+    StateStorageManager storageManager = ComponentsPackage.getStateStore(application).getStateStorageManager();
+    return getExportableComponentsMap(onlyExisting, computePresentableNames, storageManager);
+  }
+
+  @NotNull
+  public static MultiMap<File, ExportableComponent> getExportableComponentsMap(final boolean onlyExisting, final boolean computePresentableNames, final @NotNull StateStorageManager storageManager) {
     @SuppressWarnings("deprecation")
     List<ExportableApplicationComponent> components1 = ComponentsPackage.getComponents(ApplicationManager.getApplication(), ExportableApplicationComponent.class);
     List<ExportableComponent> components2 = ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent.class);
@@ -180,9 +187,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
       }
     }
 
-    ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    final StateStorageManager storageManager = ComponentsPackage.getStateStore(application).getStateStorageManager();
-    ServiceManagerImpl.processAllImplementationClasses(application, new PairProcessor<Class<?>, PluginDescriptor>() {
+    ServiceManagerImpl.processAllImplementationClasses((ApplicationImpl)ApplicationManager.getApplication(), new PairProcessor<Class<?>, PluginDescriptor>() {
       @Override
       public boolean process(@NotNull Class<?> aClass, @Nullable PluginDescriptor pluginDescriptor) {
         State stateAnnotation = StoreUtil.getStateSpec(aClass);

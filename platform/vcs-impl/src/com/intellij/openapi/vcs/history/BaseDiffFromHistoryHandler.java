@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -34,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public abstract class BaseDiffFromHistoryHandler<T extends VcsFileRevision> implements DiffFromHistoryHandler {
 
   private static final Logger LOG = Logger.getInstance(BaseDiffFromHistoryHandler.class);
@@ -52,58 +48,52 @@ public abstract class BaseDiffFromHistoryHandler<T extends VcsFileRevision> impl
                              @NotNull Project project, @NotNull FilePath filePath,
                              @NotNull VcsFileRevision previousRevision,
                              @NotNull VcsFileRevision revision) {
-    doShowDiff(filePath, previousRevision, revision, false);
+    doShowDiff(filePath, previousRevision, revision);
   }
 
   @Override
   public void showDiffForTwo(@NotNull Project project,
                              @NotNull FilePath filePath,
-                             @NotNull VcsFileRevision revision1,
-                             @NotNull VcsFileRevision revision2) {
-    doShowDiff(filePath, revision1, revision2, true);
+                             @NotNull VcsFileRevision older,
+                             @NotNull VcsFileRevision newer) {
+    doShowDiff(filePath, older, newer);
   }
 
   @SuppressWarnings("unchecked")
   protected void doShowDiff(@NotNull FilePath filePath,
-                            @NotNull VcsFileRevision revision1,
-                            @NotNull VcsFileRevision revision2,
-                            boolean autoSort) {
+                            @NotNull VcsFileRevision older,
+                            @NotNull VcsFileRevision newer) {
     if (!filePath.isDirectory()) {
-      VcsHistoryUtil.showDifferencesInBackground(myProject, filePath, revision1, revision2, autoSort);
+      VcsHistoryUtil.showDifferencesInBackground(myProject, filePath, older, newer);
     }
-    else if (revision1.equals(VcsFileRevision.NULL)) {
-      T right = (T)revision2;
+    else if (older.equals(VcsFileRevision.NULL)) {
+      T right = (T)newer;
       showAffectedChanges(filePath, right);
     }
-    else if (revision2 instanceof CurrentRevision) {
-      T left = (T)revision1;
+    else if (newer instanceof CurrentRevision) {
+      T left = (T)older;
       showChangesBetweenRevisions(filePath, left, null);
     }
     else {
-      T left = (T)revision1;
-      T right = (T)revision2;
-      if (autoSort) {
-        Couple<VcsFileRevision> pair = VcsHistoryUtil.sortRevisions(revision1, revision2);
-        left = (T)pair.first;
-        right = (T)pair.second;
-      }
+      T left = (T)older;
+      T right = (T)newer;
       showChangesBetweenRevisions(filePath, left, right);
     }
   }
 
-  protected void showChangesBetweenRevisions(@NotNull final FilePath path, @NotNull final T rev1, @Nullable final T rev2) {
+  protected void showChangesBetweenRevisions(@NotNull final FilePath path, @NotNull final T older, @Nullable final T newer) {
     new CollectChangesTask("Comparing revisions...") {
 
       @NotNull
       @Override
       public List<Change> getChanges() throws VcsException {
-        return getChangesBetweenRevisions(path, rev1, rev2);
+        return getChangesBetweenRevisions(path, older, newer);
       }
 
       @NotNull
       @Override
       public String getDialogTitle() {
-        return getChangesBetweenRevisionsDialogTitle(path, rev1, rev2);
+        return getChangesBetweenRevisionsDialogTitle(path, older, newer);
       }
     }.queue();
   }

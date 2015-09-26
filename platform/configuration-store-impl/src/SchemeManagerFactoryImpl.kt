@@ -29,9 +29,9 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.CompoundRuntimeException
 import java.io.File
 
-val ROOT_CONFIG: String = "\$ROOT_CONFIG$"
+val ROOT_CONFIG = "\$ROOT_CONFIG$"
 
-public abstract class SchemeManagerFactoryBase : SchemesManagerFactory(), SettingsSavingComponent {
+sealed class SchemeManagerFactoryBase : SchemesManagerFactory(), SettingsSavingComponent {
   private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, ExternalizableScheme>>()
 
   abstract val componentManager: ComponentManager
@@ -85,27 +85,27 @@ public abstract class SchemeManagerFactoryBase : SchemesManagerFactory(), Settin
 
     CompoundRuntimeException.throwIfNotEmpty(errors)
   }
-}
 
-private class ApplicationSchemeManagerFactory : SchemeManagerFactoryBase() {
-  override val componentManager: ComponentManager
-    get() = ApplicationManager.getApplication()
+  private class ApplicationSchemeManagerFactory : SchemeManagerFactoryBase() {
+    override val componentManager: ComponentManager
+      get() = ApplicationManager.getApplication()
 
-  override fun checkPath(originalPath: String): String {
-    var path = super.checkPath(originalPath)
-    if (path.startsWith(ROOT_CONFIG)) {
-      path = path.substring(ROOT_CONFIG.length() + 1)
-      val message = "Path must not contains ROOT_CONFIG macro, corrected: $path"
-      if (ApplicationManager.getApplication().isUnitTestMode) throw AssertionError(message) else LOG.warn(message)
+    override fun checkPath(originalPath: String): String {
+      var path = super.checkPath(originalPath)
+      if (path.startsWith(ROOT_CONFIG)) {
+        path = path.substring(ROOT_CONFIG.length() + 1)
+        val message = "Path must not contains ROOT_CONFIG macro, corrected: $path"
+        if (ApplicationManager.getApplication().isUnitTestMode) throw AssertionError(message) else LOG.warn(message)
+      }
+      return path
     }
-    return path
+
+    override fun pathToFile(path: String, storageManager: StateStorageManager) = File(storageManager.expandMacros("$ROOT_CONFIG/$path"))
   }
 
-  override fun pathToFile(path: String, storageManager: StateStorageManager) = File(storageManager.expandMacros("$ROOT_CONFIG/$path"))
-}
+  private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
+    override val componentManager = project
 
-private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
-  override val componentManager = project
-
-  override fun pathToFile(path: String, storageManager: StateStorageManager) = File(project.basePath, if (ProjectUtil.isDirectoryBased(project)) "${Project.DIRECTORY_STORE_FOLDER}/$path" else ".$path")
+    override fun pathToFile(path: String, storageManager: StateStorageManager) = File(project.basePath, if (ProjectUtil.isDirectoryBased(project)) "${Project.DIRECTORY_STORE_FOLDER}/$path" else ".$path")
+  }
 }

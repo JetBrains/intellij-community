@@ -43,7 +43,7 @@ import org.jetbrains.settingsRepository.*
 import java.io.IOException
 import java.text.MessageFormat
 
-open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndicator?, val commitMessageFormatter: CommitMessageFormatter = IdeaCommitMessageFormatter()) {
+open internal class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndicator?, val commitMessageFormatter: CommitMessageFormatter = IdeaCommitMessageFormatter()) {
   val repository = manager.repository
 
   // we must use the same StoredConfig instance during the operation
@@ -63,7 +63,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
 
     var refToMerge = prefetchedRefToMerge ?: fetch() ?: return null
     val mergeResult = merge(refToMerge, mergeStrategy, commitMessage = commitMessage)
-    val mergeStatus = mergeResult.mergeStatus
+    val mergeStatus = mergeResult.status
     if (LOG.isDebugEnabled) {
       LOG.debug(mergeStatus.toString())
     }
@@ -162,7 +162,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
         if (refUpdate.update() != RefUpdate.Result.NEW) {
           throw NoHeadException(JGitText.get().commitOnRepoWithoutHEADCurrentlyNotSupported)
         }
-        return MergeResultEx(MergeStatus.FAST_FORWARD, arrayOf<ObjectId?>(null, srcCommit), ImmutableUpdateResult(dirCacheCheckout.updated.keySet(), dirCacheCheckout.removed))
+        return MergeResultEx(MergeStatus.FAST_FORWARD, arrayOf(null, srcCommit), ImmutableUpdateResult(dirCacheCheckout.updated.keySet(), dirCacheCheckout.removed))
       }
 
       val refLogMessage = StringBuilder("merge ")
@@ -171,7 +171,6 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
       val headCommit = revWalk.lookupCommit(headId)
       if (!forceMerge && revWalk.isMergedInto(srcCommit, headCommit)) {
         return MergeResultEx(MergeStatus.ALREADY_UP_TO_DATE, arrayOf<ObjectId?>(headCommit, srcCommit), EMPTY_UPDATE_RESULT)
-        //return MergeResult(headCommit, srcCommit, array(headCommit, srcCommit), MergeStatus.ALREADY_UP_TO_DATE, mergeStrategy, null)
       }
       else if (!forceMerge && fastForwardMode != FastForwardMode.NO_FF && revWalk.isMergedInto(headCommit, srcCommit)) {
         // FAST_FORWARD detected: skip doing a real merge but only update HEAD
@@ -272,7 +271,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
   }
 }
 
-class MergeResultEx(val mergeStatus: MergeStatus, val mergedCommits: Array<ObjectId?>, val result: ImmutableUpdateResult, val conflicts: Map<String, org.eclipse.jgit.merge.MergeResult<out Sequence>>? = null)
+class MergeResultEx(val status: MergeStatus, val mergedCommits: Array<ObjectId?>, val result: ImmutableUpdateResult, val conflicts: Map<String, org.eclipse.jgit.merge.MergeResult<out Sequence>>? = null)
 
 private fun updateHead(refLogMessage: StringBuilder, newHeadId: ObjectId, oldHeadID: ObjectId, repository: Repository) {
   val refUpdate = repository.updateRef(Constants.HEAD)

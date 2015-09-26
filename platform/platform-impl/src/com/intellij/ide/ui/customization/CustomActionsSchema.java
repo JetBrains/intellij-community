@@ -16,18 +16,20 @@
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,7 +51,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-public class CustomActionsSchema implements ExportableComponent, NamedJDOMExternalizable {
+@State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage(file = "customization.xml"))
+public class CustomActionsSchema implements PersistentStateComponent<Element> {
   @NonNls private static final String ACTIONS_SCHEMA = "custom_actions_schema";
   @NonNls private static final String ACTIVE = "active";
   @NonNls private static final String ELEMENT_ACTION = "action";
@@ -66,6 +69,8 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
 
   @NonNls private static final String GROUP = "group";
   private static final Logger LOG = Logger.getInstance(CustomActionsSchema.class);
+
+  private boolean isFirstLoadState = true;
 
   public CustomActionsSchema() {
     myIdToNameList.add(new Pair(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.MAIN_MENU_TITLE));
@@ -156,8 +161,14 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
+  public void loadState(Element element) {
+    try {
+      DefaultJDOMExternalizer.readExternal(this, element);
+    }
+    catch (InvalidDataException e) {
+      throw new RuntimeException(e);
+    }
+
     Element schElement = element;
     final String activeName = element.getAttributeValue(ACTIVE);
     if (activeName != null) {
@@ -173,30 +184,76 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
     }
     for (Object groupElement : schElement.getChildren(GROUP)) {
       ActionUrl url = new ActionUrl();
-      url.readExternal((Element)groupElement);
+      try {
+        url.readExternal((Element)groupElement);
+      }
+      catch (InvalidDataException e) {
+        throw new RuntimeException(e);
+      }
       myActions.add(url);
     }
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       //noinspection UseOfSystemOutOrSystemErr
       System.err.println("read custom actions: " + myActions.toString());
     }
-    readIcons(element);
+
+    for (Element action : element.getChildren(ELEMENT_ACTION)) {
+      String actionId = action.getAttributeValue(ATTRIBUTE_ID);
+      String iconPath = action.getAttributeValue(ATTRIBUTE_ICON);
+      if (actionId != null){
+        myIconCustomizations.put(actionId, iconPath);
+      }
+    }
+
+    final boolean reload = !isFirstLoadState;
+    if (isFirstLoadState) {
+      isFirstLoadState = false;
+    }
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        initActionIcons();
+
+        if (reload) {
+          setCustomizationSchemaForCurrentProjects();
+        }
+      }
+    });
+  }
+
+  public static void setCustomizationSchemaForCurrentProjects() {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
+      if (frame != null) {
+        frame.updateView();
+      }
+    }
+
+    IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(null);
+    if (frame != null) {
+      frame.updateView();
+    }
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    //noinspection deprecation
-    DefaultJDOMExternalizer.writeExternal(this, element);
-    writeActions(element);
-    writeIcons(element);
-  }
-
-  private void writeActions(Element element) throws WriteExternalException {
-    for (ActionUrl group : myActions) {
-      Element groupElement = new Element(GROUP);
-      group.writeExternal(groupElement);
-      element.addContent(groupElement);
+  public Element getState() {
+    Element element = new Element("state");
+    try {
+      //noinspection deprecation
+      DefaultJDOMExternalizer.writeExternal(this, element);
+      for (ActionUrl group : myActions) {
+        Element groupElement = new Element(GROUP);
+        group.writeExternal(groupElement);
+        element.addContent(groupElement);
+      }
     }
+    catch (WriteExternalException e) {
+      throw new RuntimeException(e);
+    }
+    writeIcons(element);
+    return element;
   }
 
   public AnAction getCorrectedAction(String id) {
@@ -284,24 +341,6 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
     return path == null ? "" : path;
   }
 
-  private void readIcons(Element parent) {
-    for (Object actionO : parent.getChildren(ELEMENT_ACTION)) {
-      Element action = (Element)actionO;
-      final String actionId = action.getAttributeValue(ATTRIBUTE_ID);
-      final String iconPath = action.getAttributeValue(ATTRIBUTE_ICON);
-      if (actionId != null){
-        myIconCustomizations.put(actionId, iconPath);
-      }
-    }
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        initActionIcons();
-      }
-    });
-  }
-
   private void writeIcons(Element parent) {
     for (String actionId : myIconCustomizations.keySet()) {
       Element action = new Element(ELEMENT_ACTION);
@@ -343,24 +382,6 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
     if (frame != null) {
       frame.updateView();
     }
-  }
-
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return IdeBundle.message("title.custom.actions.schemas");
-  }
-
-  @Override
-  public String getExternalFileName() {
-    return "customization";
   }
 
   private static class Pair {

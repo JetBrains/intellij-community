@@ -73,8 +73,6 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
 
     override fun expandMacros(file: String) = throw UnsupportedOperationException("Method expandMacros not implemented in " + javaClass)
 
-    override fun collapseMacros(path: String) = throw UnsupportedOperationException("Method collapseMacros not implemented in " + javaClass)
-
     override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
   }
 

@@ -16,13 +16,14 @@
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.progress.ProgressIndicator
+import org.eclipse.jgit.api.MergeResult
 import org.eclipse.jgit.merge.MergeStrategy
 import org.jetbrains.jgit.dirCache.deleteAllFiles
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.MutableUpdateResult
 import org.jetbrains.settingsRepository.UpdateResult
 
-class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(manager, indicator) {
+internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(manager, indicator) {
   fun reset(toTheirs: Boolean, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult {
     val message = if (toTheirs) "Overwrite local to ${manager.getUpstream()}" else "Overwrite remote ${manager.getUpstream()} to local"
     if (LOG.isDebugEnabled) {
@@ -37,7 +38,17 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
     val commitMessage = commitMessageFormatter.message(message)
     // grab added/deleted/renamed/modified files
     val mergeStrategy = if (toTheirs) MergeStrategy.THEIRS else MergeStrategy.OURS
-    val firstMergeResult = pull(mergeStrategy, commitMessage)
+
+    var refToMerge = fetch()
+    val mergeResult = if (refToMerge == null) null else merge(refToMerge, mergeStrategy, forceMerge = true, commitMessage = commitMessage)
+    val firstMergeResult = mergeResult?.result
+
+    if (mergeResult?.status == MergeResult.MergeStatus.FAST_FORWARD && firstMergeResult!!.changed.isNotEmpty()) {
+      // we specify forceMerge, so if we get FAST_FORWARD it means that our repo doesn't have HEAD (empty) and we must delete all local files to revert all remote updates
+      repository.deleteAllFiles()
+      result.deleted.addAll(firstMergeResult!!.changed)
+      repository.commit(commitMessage)
+    }
 
     if (localRepositoryInitializer == null) {
       if (firstMergeResult == null) {
@@ -58,11 +69,11 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
           return result
         }
 
-        val mergeResult = merge(latestUpstreamCommit, mergeStrategy, true, forceMerge = true, commitMessage = commitMessage)
-        if (!mergeResult.mergeStatus.isSuccessful) {
-          throw IllegalStateException(mergeResult.toString())
+        val secondMergeResult = merge(latestUpstreamCommit, mergeStrategy, true, forceMerge = true, commitMessage = commitMessage)
+        if (!secondMergeResult.status.isSuccessful) {
+          throw IllegalStateException(secondMergeResult.toString())
         }
-        result.add(mergeResult.result)
+        result.add(secondMergeResult.result)
       }
       else {
         result.add(firstMergeResult)
@@ -70,12 +81,12 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
     }
     else {
       assert(!toTheirs)
+
       result.add(firstMergeResult)
 
       // must be performed only after initial pull, so, local changes will be relative to remote files
       localRepositoryInitializer()
       manager.commit(indicator)
-      result.add(pull(mergeStrategy, commitMessage))
     }
     return result
   }
