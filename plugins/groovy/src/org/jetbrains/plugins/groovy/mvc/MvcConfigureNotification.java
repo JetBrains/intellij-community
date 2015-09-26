@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification;
@@ -35,7 +36,8 @@ public class MvcConfigureNotification extends GroovyFrameworkConfigNotification 
 
   @Override
   public boolean hasFrameworkStructure(@NotNull Module module) {
-    return framework.hasFrameworkStructure(module);
+    return framework.hasFrameworkStructure(module) &&
+           VfsUtil.findRelativeFile(framework.findAppRoot(module), "application.properties") != null;
   }
 
   @Override
