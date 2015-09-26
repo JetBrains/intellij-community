@@ -22,7 +22,6 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -183,9 +182,6 @@ public class VcsHistoryUtil {
         }
         catch (IOException e) {
           LOG.info(e);
-        }
-        catch (ProcessCanceledException ex) {
-          LOG.info(ex);
         }
       }
     }.queue();
