@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,7 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity, Dum
 
         final StringBuilder content = new StringBuilder()
           .append("<html><body>")
-          .append("Module").append('\'').append(module.getName()).append('\'')
+          .append("Module ").append('\'').append(module.getName()).append('\'')
           .append(" has no ").append(name).append(" SDK.");
         if (!actions.isEmpty()) content.append("<br/>");
         content.append(StringUtil.join(actions.keySet(), new Function<String, String>() {
@@ -94,7 +95,9 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity, Dum
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       for (MvcFramework framework : frameworks) {
         if (framework.hasFrameworkStructure(module) && !framework.hasFrameworkJar(module)) {
-          return Pair.create(module, framework);
+          if (VfsUtil.findRelativeFile(framework.findAppRoot(module), "application.properties") != null) {
+            return Pair.create(module, framework);
+          }
         }
       }
     }
