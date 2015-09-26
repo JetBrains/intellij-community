@@ -90,25 +90,20 @@ class GitDefineRemoteDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    try {
-      String name = getRemoteName();
-      String url = getRemoteUrl();
-      String error = validateRemoteUnderModal(name, url);
-      if (error != null) {
-        LOG.warn(String.format("Invalid remote. Name: [%s], URL: [%s], error: %s", name, url, error));
-        Messages.showErrorDialog(myRepository.getProject(), error, "Invalid Remote URL");
-      }
-      else {
-        super.doOKAction();
-      }
+    String name = getRemoteName();
+    String url = getRemoteUrl();
+    String error = validateRemoteUnderModal(name, url);
+    if (error != null) {
+      LOG.warn(String.format("Invalid remote. Name: [%s], URL: [%s], error: %s", name, url, error));
+      Messages.showErrorDialog(myRepository.getProject(), error, "Invalid Remote URL");
     }
-    catch (ProcessCanceledException pce) {
-      // let the dialog stay open
+    else {
+      super.doOKAction();
     }
   }
 
   @Nullable
-  private String validateRemoteUnderModal(final String name, final String url) {
+  private String validateRemoteUnderModal(@NotNull String name, @NotNull final String url) throws ProcessCanceledException {
     if (url.isEmpty()) {
       return "URL can't be empty";
     }
