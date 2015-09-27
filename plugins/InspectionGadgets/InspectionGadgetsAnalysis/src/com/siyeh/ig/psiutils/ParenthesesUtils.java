@@ -89,7 +89,7 @@ public class ParenthesesUtils {
     s_binaryOperatorPrecedence.put(JavaTokenType.NE, EQUALITY_PRECEDENCE);
   }
 
-  public static String getText(PsiExpression expression, int precedence) {
+  public static String getText(@NotNull PsiExpression expression, int precedence) {
     if (getPrecedence(expression) > precedence) {
       return '(' + expression.getText() + ')';
     }

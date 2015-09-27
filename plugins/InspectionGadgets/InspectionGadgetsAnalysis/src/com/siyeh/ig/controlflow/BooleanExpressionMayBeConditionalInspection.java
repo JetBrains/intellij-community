@@ -105,10 +105,8 @@ public class BooleanExpressionMayBeConditionalInspection extends BaseInspection 
       }
     }
 
-    private static String getText(PsiExpression expression) {
-      return (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.CONDITIONAL_PRECEDENCE)
-             ? '(' + expression.getText() + ')'
-             : expression.getText();
+    private static String getText(@NotNull PsiExpression expression) {
+      return ParenthesesUtils.getText(expression, ParenthesesUtils.CONDITIONAL_PRECEDENCE);
     }
   }
 
@@ -121,6 +119,7 @@ public class BooleanExpressionMayBeConditionalInspection extends BaseInspection 
 
     @Override
     public void visitBinaryExpression(PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (!JavaTokenType.OROR.equals(tokenType)) {
         return;
