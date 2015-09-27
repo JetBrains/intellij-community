@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -90,6 +91,14 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
     final PsiExpression condition = expression.getCondition();
     assert thenExpression != null;
     assert elseExpression != null;
+    if (EquivalenceChecker.expressionsAreEquivalent(BoolUtils.getNegated(thenExpression), elseExpression)) {
+        return ParenthesesUtils.getText(condition, ParenthesesUtils.EQUALITY_PRECEDENCE) + " != " +
+               BoolUtils.getNegatedExpressionText(thenExpression, ParenthesesUtils.EQUALITY_PRECEDENCE);
+    }
+    else if (EquivalenceChecker.expressionsAreEquivalent(thenExpression, BoolUtils.getNegated(elseExpression))) {
+      return ParenthesesUtils.getText(condition, ParenthesesUtils.EQUALITY_PRECEDENCE) + " == " +
+             ParenthesesUtils.getText(thenExpression, ParenthesesUtils.EQUALITY_PRECEDENCE);
+    }
     if (BoolUtils.isTrue(thenExpression)) {
       final String elseExpressionText = ParenthesesUtils.getText(elseExpression, ParenthesesUtils.OR_PRECEDENCE);
       return ParenthesesUtils.getText(condition, ParenthesesUtils.OR_PRECEDENCE) + " || " + elseExpressionText;
@@ -117,12 +126,12 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
       if (thenExpression == null) {
         return;
       }
-      final PsiType thenType = thenExpression.getType();
-      if (!PsiType.BOOLEAN.equals(thenType)) {
-        return;
-      }
       final PsiExpression elseExpression = expression.getElseExpression();
       if (elseExpression == null) {
+        return;
+      }
+      final PsiType thenType = thenExpression.getType();
+      if (!PsiType.BOOLEAN.equals(thenType)) {
         return;
       }
       final PsiType elseType = elseExpression.getType();
@@ -132,6 +141,10 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
       final boolean thenConstant = BoolUtils.isFalse(thenExpression) || BoolUtils.isTrue(thenExpression);
       final boolean elseConstant = BoolUtils.isFalse(elseExpression) || BoolUtils.isTrue(elseExpression);
       if (thenConstant == elseConstant) {
+        if (EquivalenceChecker.expressionsAreEquivalent(BoolUtils.getNegated(thenExpression), elseExpression) ||
+            EquivalenceChecker.expressionsAreEquivalent(thenExpression, BoolUtils.getNegated(elseExpression))) {
+          registerError(expression, expression);
+        }
         return;
       }
       registerError(expression, expression);
