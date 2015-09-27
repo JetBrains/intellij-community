@@ -45,6 +45,9 @@ public abstract class MvcProjectStructureDetector extends ProjectStructureDetect
   public DirectoryProcessingResult detectRoots(@NotNull File dir, @NotNull File[] children, @NotNull File base,
                                                @NotNull List<DetectedProjectRoot> result) {
     for (File child : children) {
+      if (child.getName().equals("build.gradle")) return DirectoryProcessingResult.PROCESS_CHILDREN;
+    }
+    for (File child : children) {
       if (child.getName().equals(myDirectoryName) && child.isDirectory()) {
         result.add(new GroovyMvcProjectRoot(dir));
         return DirectoryProcessingResult.SKIP_CHILDREN;

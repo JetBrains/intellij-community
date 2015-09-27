@@ -26,6 +26,8 @@ import com.intellij.diff.DiffManager;
 import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
+import com.intellij.diff.merge.MergeTool;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -42,7 +44,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -169,12 +173,12 @@ public class ApplyPatchAction extends DumbAwareAction {
 
     if (localContent == null) return ApplyPatchStatus.FAILURE;
 
-    final Ref<Boolean> successRef = new Ref<Boolean>();
+    final Ref<ApplyPatchStatus> applyPatchStatusReference = new Ref<ApplyPatchStatus>();
     Consumer<MergeResult> callback = new Consumer<MergeResult>() {
       @Override
       public void consume(MergeResult result) {
         FileDocumentManager.getInstance().saveDocument(document);
-        successRef.set(result != MergeResult.CANCEL);
+        applyPatchStatusReference.setIfNull(result != MergeResult.CANCEL ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE);
       }
     };
 
@@ -199,9 +203,26 @@ public class ApplyPatchAction extends DumbAwareAction {
       else {
         request = PatchDiffRequestFactory.createBadMergeRequest(project, document, file, localContent, patchedContent, callback);
       }
+      request.putUserData(DiffUserDataKeysEx.MERGE_CANCEL_HANDLER, new Condition<MergeTool.MergeViewer>() {
+        @Override
+        public boolean value(MergeTool.MergeViewer viewer) {
+          int result = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(),
+                                                      "Would you like to abort applying patch action?",
+                                                      "Close Merge",
+                                                      "Abort", "Skip File", "Cancel", Messages.getQuestionIcon());
 
+          if (result == Messages.YES) {
+            applyPatchStatusReference.set(ApplyPatchStatus.ABORT);
+          }
+          else if (result == Messages.NO) {
+            applyPatchStatusReference.set(ApplyPatchStatus.FAILURE);
+          }
+
+          return result != Messages.CANCEL;
+        }
+      });
       DiffManager.getInstance().showMerge(project, request);
-      return successRef.get() == Boolean.TRUE ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE;
+      return applyPatchStatusReference.get();
     }
     catch (InvalidDiffRequestException e) {
       LOG.warn(e);
