@@ -277,6 +277,7 @@ public class PyCodeFragmentUtil {
           for (PsiElement resolved : multiResolve(reference)) {
             if (!subGraphElements.contains(resolved)) {
               result.add(element);
+              break;
             }
           }
         }
