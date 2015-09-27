@@ -18,7 +18,6 @@ package com.jetbrains.python.packaging;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -34,18 +33,8 @@ import java.io.IOException;
  * PyPI cache updater
  * User : catherine
  */
-public class PyPIPackagesUpdater implements StartupActivity {
+public class PyPackagesUpdater implements StartupActivity {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.packaging.PyPIPackagesUpdater");
-
-  public static PyPIPackagesUpdater getInstance() {
-    final StartupActivity[] extensions = Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY);
-    for (StartupActivity extension : extensions) {
-      if (extension instanceof PyPIPackagesUpdater) {
-        return (PyPIPackagesUpdater) extension;
-      }
-    }
-    throw new UnsupportedOperationException("could not find self");
-  }
 
   @Override
   public void runActivity(@NotNull final Project project) {
@@ -68,19 +57,35 @@ public class PyPIPackagesUpdater implements StartupActivity {
         }
       });
     }
+    if (checkCondaUpdateNeeded(project)) {
+      application.executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          PyCondaPackageService.getInstance().updatePackagesCache();
+        }
+      });
+    }
   }
 
+  private static boolean checkCondaUpdateNeeded(Project project) {
+    if (!hasPython(project)) return false;
+    final long timeDelta = System.currentTimeMillis() - PyCondaPackageService.getInstance().LAST_TIME_CHECKED;
+    if (Math.abs(timeDelta) < DateFormatUtil.DAY) return false;
+    return true;
+  }
 
-  public static boolean checkNeeded(Project project, PyPackageService service) {
-    boolean hasPython = false;
+  private static boolean hasPython(Project project) {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final Sdk sdk = PythonSdkType.findPythonSdk(module);
       if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
-        hasPython = true;
-        break;
+        return true;
       }
     }
-    if (!hasPython) return false;
+    return false;
+  }
+
+  public static boolean checkNeeded(Project project, PyPackageService service) {
+    if (!hasPython(project)) return false;
     final long timeDelta = System.currentTimeMillis() - service.LAST_TIME_CHECKED;
     if (Math.abs(timeDelta) < DateFormatUtil.DAY) return false;
     return true;

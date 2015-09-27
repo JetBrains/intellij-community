@@ -49,11 +49,12 @@ public class PyPackageManagementService extends PackageManagementService {
   private final Project myProject;
   private final Sdk mySdk;
 
-  public PyPackageManagementService(Project project, Sdk sdk) {
+  public PyPackageManagementService(@NotNull final Project project, @NotNull final Sdk sdk) {
     myProject = project;
     mySdk = sdk;
   }
 
+  @NotNull
   public Sdk getSdk() {
     return mySdk;
   }
@@ -90,7 +91,7 @@ public class PyPackageManagementService extends PackageManagementService {
     return packages;
   }
 
-  private static List<RepoPackage> versionMapToPackageList(Map<String, String> packageToVersionMap) {
+  protected static List<RepoPackage> versionMapToPackageList(Map<String, String> packageToVersionMap) {
     final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
     String url = customRepoConfigured ? PyPIPackageUtil.PYPI_URL : "";
     List<RepoPackage> packages = new ArrayList<RepoPackage>();

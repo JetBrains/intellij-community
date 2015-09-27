@@ -93,6 +93,8 @@
 
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageService"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
+    <applicationService serviceInterface="com.jetbrains.python.packaging.PyCondaPackageService"
+                        serviceImplementation="com.jetbrains.python.packaging.PyCondaPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.module.PyModuleService"
                         serviceImplementation="com.jetbrains.python.module.PyModuleServiceImpl"/>
 
@@ -523,7 +525,7 @@
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/PythonDarcula.xml"/>
 
     <postStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdater"/>
-    <postStartupActivity implementation="com.jetbrains.python.packaging.PyPIPackagesUpdater"/>
+    <postStartupActivity implementation="com.jetbrains.python.packaging.PyPackagesUpdater"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.testing.PyIntegratedToolsProjectConfigurator" id="integratedTools" order="after sdk"/>
 
 

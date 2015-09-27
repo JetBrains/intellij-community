@@ -37,8 +37,8 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.NullableConsumer;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.packaging.PyPackageManagers;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
-import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.sdk.*;
@@ -94,7 +94,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       @Override
       public void actionPerformed(ActionEvent e) {
         final Sdk selectedSdk = (Sdk)mySdkCombo.getSelectedItem();
-        myPackagesPanel.updatePackages(selectedSdk != null ? new PyPackageManagementService(myProject, selectedSdk) : null);
+        myPackagesPanel.updatePackages(selectedSdk != null ? PyPackageManagers.getInstance().getManagementService(myProject, selectedSdk) : null);
         myPackagesPanel.updateNotifications(selectedSdk);
       }
     });
@@ -148,7 +148,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         }
         updateSdkList(false);
         mySdkCombo.getModel().setSelectedItem(myProjectSdksModel.findSdk(sdk.getName()));
-        myPackagesPanel.updatePackages(new PyPackageManagementService(myProject, sdk));
+        myPackagesPanel.updatePackages(PyPackageManagers.getInstance().getManagementService(myProject, sdk));
         myPackagesPanel.updateNotifications(sdk);
       }
     };
@@ -336,7 +336,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     final Sdk sdk = getSdk();
     mySdkCombo.getModel().setSelectedItem(sdk == null ? null : myProjectSdksModel.findSdk(sdk.getName()));
-    myPackagesPanel.updatePackages(sdk != null ? new PyPackageManagementService(myProject, sdk) : null);
+    myPackagesPanel.updatePackages(sdk != null ? PyPackageManagers.getInstance().getManagementService(myProject, sdk) : null);
     myPackagesPanel.updateNotifications(sdk);
 
   }
