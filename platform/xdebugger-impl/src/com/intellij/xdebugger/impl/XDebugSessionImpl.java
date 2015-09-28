@@ -969,6 +969,9 @@ public class XDebugSessionImpl implements XDebugSession {
 
     @Override
     public void breakpointRemoved(@NotNull final XBreakpoint<?> breakpoint) {
+      if (getActiveNonLineBreakpoint() == breakpoint) {
+        myActiveNonLineBreakpoint = null;
+      }
       processAllHandlers(breakpoint, false);
     }
 
