@@ -20,9 +20,11 @@ import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
+import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import com.jetbrains.python.validation.UnsupportedFeaturesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +55,14 @@ public class CreateCondaEnvDialog extends AbstractCreateVirtualEnvDialog {
     mySdkCombo.setModel(new CollectionComboBoxModel<String>(pythonVersions));
     mySdkCombo.setSelectedItem("3.5");
     checkValid();
+  }
+
+  @Override
+  protected void setInitialDestination() {
+    final List<VirtualFile> locations = VirtualEnvSdkFlavor.getCondaDefaultLocations();
+    if (!locations.isEmpty()) {
+      myInitialPath = locations.get(0).getPath();
+    }
   }
 
   protected void layoutPanel(final List<Sdk> allSdks) {
