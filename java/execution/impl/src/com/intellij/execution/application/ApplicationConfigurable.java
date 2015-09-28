@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.application;
 
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.ConfigurationUtil;
@@ -44,7 +45,7 @@ import java.awt.event.ActionListener;
 public class ApplicationConfigurable extends SettingsEditor<ApplicationConfiguration> implements PanelWithAnchor {
   private CommonJavaParametersPanel myCommonProgramParameters;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myMainClass;
-  private LabeledComponent<JComboBox> myModule;
+  private LabeledComponent<ModulesComboBox> myModule;
   private JPanel myWholePanel;
 
   private final ConfigurationModuleSelector myModuleSelector;
