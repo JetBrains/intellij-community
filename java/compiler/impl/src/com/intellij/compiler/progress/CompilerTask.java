@@ -88,12 +88,12 @@ public class CompilerTask extends CompilerTaskBase {
     this(project, contentName, headlessMode, forceAsync, waitForPreviousSession, false);
   }
 
-  protected CompilerTask(@NotNull Project project,
-                       String contentName,
-                       final boolean headlessMode,
-                       boolean forceAsync,
-                       boolean waitForPreviousSession,
-                       boolean compilationStartedAutomatically) {
+  public CompilerTask(@NotNull Project project,
+                      String contentName,
+                      final boolean headlessMode,
+                      boolean forceAsync,
+                      boolean waitForPreviousSession,
+                      boolean compilationStartedAutomatically) {
     super(project, contentName, waitForPreviousSession);
     myContentName = contentName;
     myHeadlessMode = headlessMode;

@@ -13,6 +13,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * The point of this class is not to depend on Swing to be available in headless environments.
+ * Please do not add JComponent references here.
+ */
 public abstract class CompilerTaskBase extends Task.Backgroundable {
   protected final boolean myWaitForPreviousSession;
   @NotNull protected final Object myContentId = new IDObject("content_id");
