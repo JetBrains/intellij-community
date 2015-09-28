@@ -1224,6 +1224,25 @@ public class Test {
     assert myFixture.lookup.currentItem instanceof LiveTemplateLookupElement
   }
 
+  public void testMoreRecentExactMatchesTemplateFirst() {
+    TemplateManager manager = TemplateManager.getInstance(getProject());
+    Template template = manager.createTemplate("itar", "myGroup", null);
+    JavaCodeContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement);
+    ((TemplateImpl)template).templateContext.setEnabled(contextType, true);
+    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
+    
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, testRootDisposable)
+    myFixture.configureByText("a.java", """
+public class Test {
+    void foo() {
+        ita<caret>
+    }
+}""")
+    type 'r'
+    myFixture.assertPreferredCompletionItems(0, 'itar', 'itar')
+  }
+
+
   public void testUpdatePrefixMatchingOnTyping() {
     myFixture.addClass("class CertificateEncodingException {}")
     myFixture.addClass("class CertificateException {}")
@@ -1412,7 +1431,7 @@ class Foo {{
   }
 
   public void testAmbiguousClassQualifier() {
-    myFixture.addClass("package foo; public class Util<T> { public static void foo() {}; public static final int CONSTANT = 2; }")
+    myFixture.addClass("package foo; public class Util<T> { public static void foo() {} public static final int CONSTANT = 2; }")
     myFixture.addClass("package bar; public class Util { public static void bar() {} }")
     myFixture.configureByText 'a.java', 'class Foo {{ Util<caret> }}'
     type '.'
