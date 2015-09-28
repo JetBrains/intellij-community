@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,12 @@
  */
 package com.intellij.find.editorHeaderActions;
 
-import com.intellij.find.EditorSearchSession;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ShortcutSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class RemoveOccurrenceAction extends OccurrenceAction {
-  public RemoveOccurrenceAction() {
-    super(IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE, AllIcons.Actions.RemoveMulticaret);
-  }
-
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    e.getRequiredData(EditorSearchSession.SESSION_KEY).removeOccurrence();
-  }
+public interface ContextAwareShortcutProvider {
+  @Nullable
+  ShortcutSet getShortcut(@NotNull DataContext context);
 }

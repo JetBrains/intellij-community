@@ -85,7 +85,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private static final int START_ICON_AREA_WIDTH = 15;
   private static final int FREE_PAINTERS_LEFT_AREA_WIDTH = 8;
   private static final int FREE_PAINTERS_RIGHT_AREA_WIDTH = 5;
-  private static final int GAP_BETWEEN_ICONS_AND_RIGHT_FREE_PAINTERS_AREA = 5;
   private static final int GAP_BETWEEN_ICONS = 3;
   private static final int GAP_BETWEEN_AREAS = 5;
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
@@ -436,7 +435,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       int offset = getLineNumberAreaOffset() + myLineNumberAreaWidth;
       doPaintLineNumbers(g, clip, offset, myLineNumberConvertor);
       if (myAdditionalLineNumberConvertor != null) {
-        doPaintLineNumbers(g, clip, offset + myAdditionalLineNumberAreaWidth, myAdditionalLineNumberConvertor);
+        doPaintLineNumbers(g, clip, offset + getAreaWidthWithGap(myAdditionalLineNumberAreaWidth), myAdditionalLineNumberConvertor);
       }
     }
   }
@@ -1086,7 +1085,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public int getFoldingAreaOffset() {
-    return getLineMarkerAreaOffset() + getNextAreaOffset(getLineMarkerAreaWidth());
+    return getLineMarkerAreaOffset() + getLineMarkerAreaWidth();
   }
 
   public int getFoldingAreaWidth() {
@@ -1119,7 +1118,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
            !myEditor.isInPresentationMode();
   }
 
-  private static int getNextAreaOffset(int width) {
+  private static int getAreaWidthWithGap(int width) {
     if (width > 0) {
       return width + GAP_BETWEEN_AREAS;
     }
@@ -1127,12 +1126,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public int getLineNumberAreaWidth() {
-    return isLineNumbersShown() ? myLineNumberAreaWidth + myAdditionalLineNumberAreaWidth : 0;
+    return isLineNumbersShown() ? myLineNumberAreaWidth + getAreaWidthWithGap(myAdditionalLineNumberAreaWidth) : 0;
   }
 
   public int getLineMarkerAreaWidth() {
     return isLineMarkersShown() ? ((myLeftFreePaintersAreaShown ? FREE_PAINTERS_LEFT_AREA_WIDTH : 0) + 
-                                   myIconsAreaWidth + FREE_PAINTERS_RIGHT_AREA_WIDTH) :
+                                   myIconsAreaWidth + GAP_BETWEEN_AREAS + FREE_PAINTERS_RIGHT_AREA_WIDTH) :
            0;
   }
 
@@ -1165,25 +1164,19 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Nullable
   public EditorMouseEventArea getEditorMouseAreaByOffset(int offset) {
-    int x = offset - getLineNumberAreaOffset();
-
-    if (x >= 0 && (x -= getNextAreaOffset(getLineNumberAreaWidth())) < 0) {
+    if (offset < getAnnotationsAreaOffset()) {
       return EditorMouseEventArea.LINE_NUMBERS_AREA;
     }
 
-    if (x >= 0 && (x -= getNextAreaOffset(getAnnotationsAreaWidth())) < 0) {
+    if (offset < getAnnotationsAreaOffset() + getAnnotationsAreaWidth()) {
       return EditorMouseEventArea.ANNOTATIONS_AREA;
     }
 
-    if (x >= 0 && (x -= myTextAnnotationExtraSize) < 0) {
+    if (offset < getFoldingAreaOffset()) {
       return EditorMouseEventArea.LINE_MARKERS_AREA;
     }
 
-    if (x >= 0 && (x -= getNextAreaOffset(getLineMarkerAreaWidth())) < 0) {
-      return EditorMouseEventArea.LINE_MARKERS_AREA;
-    }
-
-    if (x >= 0 && (x - getFoldingAreaWidth()) < 0) {
+    if (offset < getFoldingAreaOffset() + getFoldingAreaWidth()) {
       return EditorMouseEventArea.FOLDING_OUTLINE_AREA;
     }
 
@@ -1196,7 +1189,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public int getAnnotationsAreaOffset() {
-    return getLineNumberAreaOffset() + getNextAreaOffset(getLineNumberAreaWidth());
+    return getLineNumberAreaOffset() + getAreaWidthWithGap(getLineNumberAreaWidth());
   }
 
   @Override
@@ -1210,17 +1203,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public int getLineMarkerAreaOffset() {
-    return getAnnotationsAreaOffset() + getNextAreaOffset(getAnnotationsAreaWidthEx());
+    return getAnnotationsAreaOffset() + getAreaWidthWithGap(getAnnotationsAreaWidthEx());
   }
 
   @Override
   public int getIconAreaOffset() {
-    return getLineMarkerAreaOffset() + getNextAreaOffset(myLeftFreePaintersAreaShown ? FREE_PAINTERS_LEFT_AREA_WIDTH : 0);
+    return getLineMarkerAreaOffset() + (myLeftFreePaintersAreaShown ? FREE_PAINTERS_LEFT_AREA_WIDTH : 0);
   }
   
   @Override
   public int getLineMarkerFreePaintersAreaOffset() {
-    return getIconAreaOffset() + myIconsAreaWidth + GAP_BETWEEN_ICONS_AND_RIGHT_FREE_PAINTERS_AREA;
+    return getIconAreaOffset() + myIconsAreaWidth + GAP_BETWEEN_AREAS;
   }
 
   @Override

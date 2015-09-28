@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,48 +15,32 @@
  */
 package com.intellij.find.editorHeaderActions;
 
-import com.intellij.find.EditorSearchComponent;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
+import java.util.List;
 
-/**
-* Created by IntelliJ IDEA.
-* User: zajac
-* Date: 05.03.11
-* Time: 10:40
-* To change this template use File | Settings | File Templates.
-*/
-public class PrevOccurrenceAction extends EditorHeaderAction implements DumbAware {
-
-  public PrevOccurrenceAction(EditorSearchComponent editorSearchComponent, JComponent shortcutHolder) {
-    super(editorSearchComponent);
-
-    copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_OCCURENCE));
-
-    ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
-    ContainerUtil.addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_PREVIOUS).getShortcutSet().getShortcuts());
-    if (!editorSearchComponent.getFindModel().isMultiline()) {
-      ContainerUtil.addAll(shortcuts,
-                           ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).getShortcutSet().getShortcuts());
-
-      shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), null));
-    }
-    registerShortcutsForComponent(shortcuts, shortcutHolder);
+public final class PrevOccurrenceAction extends PrevNextOccurrenceAction {
+  public PrevOccurrenceAction(@NotNull Handler handler) {
+    super(IdeActions.ACTION_PREVIOUS_OCCURENCE, handler);
   }
 
+  @NotNull
   @Override
-  public void actionPerformed(final AnActionEvent e) {
-    myEditorSearchComponent.searchBackward();
+  protected List<Shortcut> getDefaultShortcuts() {
+    return Utils.shortcutsOf(IdeActions.ACTION_FIND_PREVIOUS);
   }
 
+  @NotNull
   @Override
-  public void update(final AnActionEvent e) {
-    e.getPresentation().setEnabled(myEditorSearchComponent.hasMatches());
+  protected List<Shortcut> getSingleLineShortcuts() {
+    return ContainerUtil.append(Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_UP),
+                                new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), null));
   }
 }

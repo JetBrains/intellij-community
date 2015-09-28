@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.StrictSubtypingConstraint;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 
 import java.util.*;
@@ -110,7 +111,7 @@ public class InferenceIncorporationPhase {
         if (aType instanceof PsiWildcardType) {
 
           for (PsiType eqBound : eqBounds) {
-            if (mySession.getInferenceVariable(eqBound) == null) return false;
+            if (!isInferenceVariableOrFreshTypeParameter(eqBound)) return false;
           }
 
           final PsiClassType[] paramBounds = inferenceVariable.getParameter().getExtendsListTypes();
@@ -134,7 +135,7 @@ public class InferenceIncorporationPhase {
             }
 
             for (PsiType lowerBound : lowerBounds) {
-              if (mySession.getInferenceVariable(lowerBound) == null) return false;
+              if (isInferenceVariableOrFreshTypeParameter(lowerBound)) return false;
             }
 
           } else if (((PsiWildcardType)aType).isExtends()) {
@@ -153,7 +154,7 @@ public class InferenceIncorporationPhase {
             }
 
             for (PsiType lowerBound : lowerBounds) {
-              if (mySession.getInferenceVariable(lowerBound) == null) return false;
+              if (isInferenceVariableOrFreshTypeParameter(lowerBound)) return false;
             }
 
           } else {
@@ -178,6 +179,13 @@ public class InferenceIncorporationPhase {
       }
     }
     return true;
+  }
+
+  private static Boolean isInferenceVariableOrFreshTypeParameter(PsiType eqBound) {
+    final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(eqBound);
+    if (psiClass instanceof InferenceVariable ||
+        psiClass instanceof PsiTypeParameter && InferenceSession.isFreshVariable((PsiTypeParameter)psiClass)) return true;
+    return false;
   }
 
   boolean isFullyIncorporated() {

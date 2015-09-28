@@ -19,7 +19,9 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
-public class EditorSearchComponentTest extends LightPlatformCodeInsightFixtureTestCase {
+import javax.swing.text.JTextComponent;
+
+public class EditorSearchTest extends LightPlatformCodeInsightFixtureTestCase {
   private static final String THE_CODE = "public class A {\n" +
                                    "  //First comment ABC, ABCD, abc\n" +
                                    "  int ABC = 3;\n" +
@@ -34,18 +36,18 @@ public class EditorSearchComponentTest extends LightPlatformCodeInsightFixtureTe
     myFixture.getEditor().getSelectionModel().setSelection(i, i+key.length());
     myFixture.performEditorAction("Find");
     IdeEventQueue.getInstance().flushQueue();
-    assertEquals(key, getEditorSearchComponent().getSearchTextComponent().getText());
-    assertEquals(key, getEditorSearchComponent().getSearchTextComponent().getSelectedText());
-    assertEquals(3, getEditorSearchComponent().getSearchTextComponent().getCaretPosition());
+    assertEquals(key, getSearchTextComponent().getText());
+    assertEquals(key, getSearchTextComponent().getSelectedText());
+    assertEquals(3, getSearchTextComponent().getCaretPosition());
     assertTrue(getEditorSearchComponent().hasMatches());
     IdeFocusManager.findInstance().requestFocus(myFixture.getEditor().getContentComponent(), false);
     IdeEventQueue.getInstance().flushQueue();
 
     myFixture.performEditorAction("Find");
     IdeEventQueue.getInstance().flushQueue();
-    assertEquals(key, getEditorSearchComponent().getSearchTextComponent().getText());
-    assertEquals(key, getEditorSearchComponent().getSearchTextComponent().getSelectedText());
-    assertEquals(key.length(), getEditorSearchComponent().getSearchTextComponent().getCaretPosition());
+    assertEquals(key, getSearchTextComponent().getText());
+    assertEquals(key, getSearchTextComponent().getSelectedText());
+    assertEquals(key.length(), getSearchTextComponent().getCaretPosition());
 
     getEditorSearchComponent().close();
 
@@ -55,14 +57,17 @@ public class EditorSearchComponentTest extends LightPlatformCodeInsightFixtureTe
     IdeEventQueue.getInstance().flushQueue();
     myFixture.performEditorAction("Find");
     IdeEventQueue.getInstance().flushQueue();
-    assertEquals(key, getEditorSearchComponent().getSearchTextComponent().getText());
-    assertEquals(key, getEditorSearchComponent().getSearchTextComponent().getSelectedText());
-    assertEquals(key.length(), getEditorSearchComponent().getSearchTextComponent().getCaretPosition());
+    assertEquals(key, getSearchTextComponent().getText());
+    assertEquals(key, getSearchTextComponent().getSelectedText());
+    assertEquals(key.length(), getSearchTextComponent().getCaretPosition());
 
   }
 
-  private EditorSearchComponent getEditorSearchComponent() {
-    return (EditorSearchComponent)myFixture.getEditor().getHeaderComponent();
+  private EditorSearchSession getEditorSearchComponent() {
+    return EditorSearchSession.get(myFixture.getEditor());
   }
 
+  private JTextComponent getSearchTextComponent() {
+    return getEditorSearchComponent().getComponent().getSearchTextComponent();
+  }
 }

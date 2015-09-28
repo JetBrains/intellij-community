@@ -15,16 +15,16 @@
  */
 package com.intellij.find.editorHeaderActions;
 
-import com.intellij.find.EditorSearchComponent;
+import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
-import java.util.Collections;
 
 /**
 * Created by IntelliJ IDEA.
@@ -33,33 +33,25 @@ import java.util.Collections;
 * Time: 10:40
 * To change this template use File | Settings | File Templates.
 */
-public class RestorePreviousSettingsAction extends EditorHeaderAction implements DumbAware {
-  private final JComponent myShortcutHolder;
-  private static final KeyboardShortcut SHORTCUT = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null);
-
-  public RestorePreviousSettingsAction(EditorSearchComponent editorSearchComponent, JComponent shortcutHolder) {
-    super(editorSearchComponent);
-    myShortcutHolder = shortcutHolder;
-    registerShortcutsForComponent(Collections.<Shortcut>singletonList(SHORTCUT), shortcutHolder);
+public class RestorePreviousSettingsAction extends AnAction implements ShortcutProvider, DumbAware {
+  @Override
+  public void update(AnActionEvent e) {
+    Project project = e.getProject();
+    EditorSearchSession search = e.getData(EditorSearchSession.SESSION_KEY);
+    e.getPresentation().setEnabled(project != null && search != null && !project.isDisposed() &&
+                                   search.getTextInField().isEmpty() &&
+                                   FindManager.getInstance(project).getPreviousFindModel() != null);
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
-    final FindModel model = FindManager.getInstance(e.getProject()).getPreviousFindModel();
-    if (model != null) {
-      myEditorSearchComponent.getFindModel().copyFrom(model);
-    }
+  public void actionPerformed(AnActionEvent e) {
+    FindModel findModel = e.getRequiredData(EditorSearchSession.SESSION_KEY).getFindModel();
+    findModel.copyFrom(FindManager.getInstance(e.getProject()).getPreviousFindModel());
   }
 
+  @Nullable
   @Override
-  public void update(final AnActionEvent e) {
-    e.getPresentation().setEnabled(
-      e.getProject() != null
-      && myEditorSearchComponent.getSearchTextComponent().getText().isEmpty()
-      && FindManager.getInstance(e.getProject()).getPreviousFindModel() != null);
-  }
-
-  public static String getAd() {
-    return "Use " + KeymapUtil.getShortcutText(SHORTCUT) + " to restore previous find/replace settings";
+  public ShortcutSet getShortcut() {
+    return new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,30 +17,24 @@ package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindModel;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
-public class TogglePreserveCaseAction extends EditorHeaderToggleAction {
-  public TogglePreserveCaseAction() {
-    super("Pr&eserve Case");
-  }
+public class EditorHeaderSetSearchContextAction extends EditorHeaderToggleAction {
+  private final FindModel.SearchContext myContext;
 
-  @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
+  protected EditorHeaderSetSearchContextAction(@NotNull String text, @NotNull FindModel.SearchContext context) {
+    super(text);
 
-    EditorSearchSession search = e.getData(EditorSearchSession.SESSION_KEY);
-    FindModel findModel = search != null ? search.getFindModel() : null;
-    e.getPresentation().setEnabled(findModel != null && !findModel.isRegularExpressions());
+    myContext = context;
   }
 
   @Override
   protected boolean isSelected(@NotNull EditorSearchSession session) {
-    return session.getFindModel().isPreserveCase();
+    return session.getFindModel().getSearchContext() == myContext;
   }
 
   @Override
   protected void setSelected(@NotNull EditorSearchSession session, boolean selected) {
-    session.getFindModel().setPreserveCase(selected);
+    session.getFindModel().setSearchContext(selected ? myContext : FindModel.SearchContext.ANY);
   }
 }
