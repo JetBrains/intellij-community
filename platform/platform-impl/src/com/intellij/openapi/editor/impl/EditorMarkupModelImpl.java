@@ -879,7 +879,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
       }
       else {
-        x = myMinMarkHeight + getThinGap();
+        x = isMirrored() ? 0 : myMinMarkHeight + getThinGap();
         paintWidth = getErrorIconWidth();
       }
       g.setColor(color);
