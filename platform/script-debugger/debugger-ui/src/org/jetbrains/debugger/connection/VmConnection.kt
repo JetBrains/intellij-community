@@ -37,7 +37,7 @@ public abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
   private val dispatcher = EventDispatcher.create(DebugEventListener::class.java)
   private val connectionDispatcher = EventDispatcher.create(SocketConnectionListener::class.java)
 
-  public volatile var vm: T? = null
+  public @Volatile var vm: T? = null
     protected set
 
   private val opened = AsyncPromise<Any?>()

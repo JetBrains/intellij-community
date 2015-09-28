@@ -21,7 +21,7 @@ import org.eclipse.jgit.lib.Repository
 import org.jetbrains.jgit.dirCache.AddLoadedFile
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.settingsRepository.IcsManager
-import org.jetbrains.settingsRepository.git
+import org.jetbrains.settingsRepository.git.createRepository as createGitRepository
 import org.junit.Rule
 import java.nio.file.FileSystem
 import java.nio.file.Path
@@ -62,4 +62,4 @@ abstract class IcsTestCase {
   val provider by lazy(LazyThreadSafetyMode.NONE) { icsManager.ApplicationLevelProvider() }
 }
 
-fun TemporaryDirectory.createRepository(directoryName: String? = null) = git.createRepository(newDirectory(directoryName))
+fun TemporaryDirectory.createRepository(directoryName: String? = null) = createGitRepository(newDirectory(directoryName))

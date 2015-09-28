@@ -18,13 +18,13 @@ import com.intellij.util.net.NetUtils
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.AsyncValueLoader
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.util.concurrency
+import org.jetbrains.util.concurrency.AsyncPromise as OJUCAsyncPromise
 import org.jetbrains.util.concurrency.toPromise
 import javax.swing.Icon
 
 val LOG: Logger = Logger.getInstance(NetService::class.java)
 
-public abstract class NetService @jvmOverloads protected constructor(protected val project: Project, private val consoleManager: ConsoleManager = ConsoleManager()) : Disposable {
+public abstract class NetService @JvmOverloads protected constructor(protected val project: Project, private val consoleManager: ConsoleManager = ConsoleManager()) : Disposable {
   protected val processHandler: AsyncValueLoader<OSProcessHandler> = object : AsyncValueLoader<OSProcessHandler>() {
     override fun isCancelOnReject() = true
 
@@ -86,10 +86,10 @@ public abstract class NetService @jvmOverloads protected constructor(protected v
     }
   }
 
-  throws(ExecutionException::class)
+  @Throws(ExecutionException::class)
   protected abstract fun createProcessHandler(project: Project, port: Int): OSProcessHandler?
 
-  protected open fun connectToProcess(promise: concurrency.AsyncPromise<OSProcessHandler>, port: Int, processHandler: OSProcessHandler, errorOutputConsumer: Consumer<String>) {
+  protected open fun connectToProcess(promise: OJUCAsyncPromise<OSProcessHandler>, port: Int, processHandler: OSProcessHandler, errorOutputConsumer: Consumer<String>) {
     promise.setResult(processHandler)
   }
 

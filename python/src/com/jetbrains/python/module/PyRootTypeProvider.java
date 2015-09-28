@@ -123,10 +123,12 @@ public abstract class PyRootTypeProvider {
 
   private void addRoot(VirtualFilePointer root, PyContentEntriesEditor editor) {
     editor.getContentEntryEditor().addRoot(this, root);
+    editor.getErrorPanel().getValidatorsManager().validate();
   }
 
   protected void removeRoot(VirtualFile selectedFile, PyContentEntriesEditor editor, ModifiableRootModel model) {
     editor.getContentEntryEditor().removeRoot(null, selectedFile.getUrl(), this);
+    editor.getErrorPanel().getValidatorsManager().validate();
   }
 
   protected boolean hasRoot(VirtualFile file, PyContentEntriesEditor editor) {

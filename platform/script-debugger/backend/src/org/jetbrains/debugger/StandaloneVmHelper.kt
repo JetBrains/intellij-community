@@ -20,7 +20,7 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.oio.OioEventLoopGroup
-import org.jetbrains.concurrency
+import org.jetbrains.concurrency.Promise as OJCPromise
 import org.jetbrains.jsonProtocol.Request
 import org.jetbrains.rpc.MessageProcessor
 import org.jetbrains.rpc.MessageWriter
@@ -31,7 +31,7 @@ import org.jetbrains.util.concurrency.catchError
 import java.util.concurrent.TimeUnit
 
 public open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: MessageProcessor) : MessageWriter(), AttachStateManager {
-  private volatile var channel: Channel? = null
+  private @Volatile var channel: Channel? = null
 
   override fun write(content: ByteBuf) = write((content as Any))
 
@@ -82,8 +82,8 @@ public open class StandaloneVmHelper(private val vm: Vm, private val messageProc
 
     messageProcessor.closed()
     channel = null
-    @suppress("USELESS_CAST")
-    val p = messageProcessor.send(disconnectRequest) as concurrency.Promise<*>
+    @Suppress("USELESS_CAST")
+    val p = messageProcessor.send(disconnectRequest) as OJCPromise<*>
     p.processed {
       promise.catchError {
         messageProcessor.cancelWaitingRequests()
@@ -105,7 +105,7 @@ fun doCloseChannel(channel: Channel, promise: AsyncPromise<Any?>) {
       try {
         // if NIO, so, it is shared and we don't need to release it
         if (eventLoop is OioEventLoopGroup) {
-          @suppress("USELESS_CAST")
+          @Suppress("USELESS_CAST")
           (eventLoop as OioEventLoopGroup).shutdownGracefully(1L, 2L, TimeUnit.NANOSECONDS)
         }
       }

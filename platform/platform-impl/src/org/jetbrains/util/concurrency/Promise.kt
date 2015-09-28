@@ -17,7 +17,8 @@ package org.jetbrains.util.concurrency
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import org.jetbrains.concurrency
+import org.jetbrains.concurrency.Promise as OJCPromise
+import org.jetbrains.concurrency.AsyncPromise as OJCAsyncPromise
 
 interface Promise<T> {
   enum class State {
@@ -89,13 +90,13 @@ fun ResolvedPromise(): Promise<*> = DONE
 
 fun <T> ResolvedPromise(result: T): Promise<T> = DonePromise(result)
 
-fun <T> concurrency.Promise<T>.toPromise(): AsyncPromise<T> {
+fun <T> OJCPromise<T>.toPromise(): AsyncPromise<T> {
   val promise = AsyncPromise<T>()
   val oldPromise = this
   done({ promise.setResult(it) })
     .rejected({ promise.setError(it) })
 
-  if (oldPromise is concurrency.AsyncPromise) {
+  if (oldPromise is OJCAsyncPromise) {
     promise
       .done { oldPromise.setResult(it) }
       .rejected { oldPromise.setError(it) }
@@ -103,8 +104,8 @@ fun <T> concurrency.Promise<T>.toPromise(): AsyncPromise<T> {
   return promise
 }
 
-fun <T> Promise<T>.toPromise(): concurrency.AsyncPromise<T> {
-  val promise = concurrency.AsyncPromise<T>()
+fun <T> Promise<T>.toPromise(): OJCAsyncPromise<T> {
+  val promise = OJCAsyncPromise<T>()
   done { promise.setResult(it) }
     .rejected { promise.setError(it) }
   return promise

@@ -22,7 +22,6 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import gnu.trove.THashMap
 import gnu.trove.THashSet
-import org.jetbrains.util.concurrency
 import org.jetbrains.util.concurrency.Promise
 import org.jetbrains.util.concurrency.ResolvedPromise
 
@@ -78,7 +77,7 @@ public abstract class LineBreakpointManager(private val vm: Vm, private val debu
     }
   }
 
-  public fun removeBreakpoint(breakpoint: XLineBreakpoint<*>, temporary: Boolean): concurrency.Promise<*> {
+  public fun removeBreakpoint(breakpoint: XLineBreakpoint<*>, temporary: Boolean): Promise<*> {
     val disable = temporary && vm.getBreakpointManager().getMuteMode() !== BreakpointManager.MUTE_MODE.NONE
     beforeBreakpointRemoved(breakpoint, disable)
     return doRemoveBreakpoint(breakpoint, disable)
@@ -87,7 +86,7 @@ public abstract class LineBreakpointManager(private val vm: Vm, private val debu
   protected open fun beforeBreakpointRemoved(breakpoint: XLineBreakpoint<*>, disable: Boolean) {
   }
 
-  public fun doRemoveBreakpoint(breakpoint: XLineBreakpoint<*>, disable: Boolean): concurrency.Promise<*> {
+  public fun doRemoveBreakpoint(breakpoint: XLineBreakpoint<*>, disable: Boolean): Promise<*> {
     var vmBreakpoints: Collection<Breakpoint> = emptySet()
     synchronized (lock) {
       if (disable) {
@@ -121,7 +120,7 @@ public abstract class LineBreakpointManager(private val vm: Vm, private val debu
     }
 
     val breakpointManager = vm.getBreakpointManager()
-    val promises = SmartList<concurrency.Promise<*>>()
+    val promises = SmartList<Promise<*>>()
     if (disable) {
       for (vmBreakpoint in vmBreakpoints) {
         vmBreakpoint.enabled = false
@@ -133,7 +132,7 @@ public abstract class LineBreakpointManager(private val vm: Vm, private val debu
         promises.add(breakpointManager.remove(vmBreakpoint))
       }
     }
-    return concurrency.Promise.all(promises)
+    return Promise.all(promises)
   }
 
   public fun setBreakpoint(breakpoint: XLineBreakpoint<*>, locations: List<Location>) {

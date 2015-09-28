@@ -30,7 +30,7 @@ import com.intellij.openapi.components.store.ReadOnlyModificationException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util
+import com.intellij.openapi.util.Pair as JBPair
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
@@ -112,7 +112,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  override fun save(readonlyFiles: MutableList<util.Pair<StateStorage.SaveSession, VirtualFile>>) {
+  override fun save(readonlyFiles: MutableList<JBPair<StateStorage.SaveSession, VirtualFile>>) {
     val externalizationSession = if (components.isEmpty()) null else storageManager.startExternalization()
     if (externalizationSession != null) {
       val names = ArrayUtilRt.toStringArray(components.keySet())
@@ -191,7 +191,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<util.Pair<SaveSession, VirtualFile>> = arrayListOf(), prevErrors: MutableList<Throwable>? = null): MutableList<Throwable>? {
+  protected open fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<JBPair<SaveSession, VirtualFile>> = arrayListOf(), prevErrors: MutableList<Throwable>? = null): MutableList<Throwable>? {
     var errors = prevErrors
     for (session in saveSessions) {
       errors = executeSave(session, readonlyFiles, prevErrors)
@@ -447,14 +447,14 @@ abstract class ComponentStoreImpl : IComponentStore {
       throw AssertionError("All storages are deprecated")
     }
 
-    protected fun executeSave(session: SaveSession, readonlyFiles: MutableList<util.Pair<SaveSession, VirtualFile>>, previousErrors: MutableList<Throwable>?): MutableList<Throwable>? {
+    protected fun executeSave(session: SaveSession, readonlyFiles: MutableList<JBPair<SaveSession, VirtualFile>>, previousErrors: MutableList<Throwable>?): MutableList<Throwable>? {
       var errors = previousErrors
       try {
         session.save()
       }
       catch (e: ReadOnlyModificationException) {
         LOG.warn(e)
-        readonlyFiles.add(util.Pair.create<SaveSession, VirtualFile>(e.session ?: session, e.file))
+        readonlyFiles.add(JBPair.create<SaveSession, VirtualFile>(e.session ?: session, e.file))
       }
       catch (e: Exception) {
         if (errors == null) {

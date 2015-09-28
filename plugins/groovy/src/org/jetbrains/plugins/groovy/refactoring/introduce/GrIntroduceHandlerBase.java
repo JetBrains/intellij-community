@@ -202,6 +202,11 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   public static List<GrExpression> collectExpressions(final PsiFile file, final Editor editor, final int offset, boolean acceptVoidCalls) {
     int correctedOffset = correctOffset(editor, offset);
     final PsiElement elementAtCaret = file.findElementAt(correctedOffset);
+    return collectExpressions(elementAtCaret, acceptVoidCalls);
+  }
+
+  @NotNull
+  public static List<GrExpression> collectExpressions(PsiElement elementAtCaret, boolean acceptVoidCalls) {
     final List<GrExpression> expressions = new ArrayList<GrExpression>();
 
     for (GrExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, GrExpression.class);

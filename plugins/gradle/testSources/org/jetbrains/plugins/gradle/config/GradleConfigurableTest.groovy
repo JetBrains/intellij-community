@@ -29,7 +29,7 @@ public class GradleConfigurableTest {
       applyPreferLocalInstallationToWrapper: { preferLocalInstallationToWrapper, project -> },
       getGradleHome: { new File(VALID_GRADLE_HOME) },
       getDefaultProject: { defaultProject },
-      isGradleSdkHome: { it.path == VALID_GRADLE_HOME },
+      isGradleSdkHome: { File home -> home.path == VALID_GRADLE_HOME },
       isGradleWrapperDefined: { it == VALID_LINKED_PATH_WITH_WRAPPER }
     ]
     projectImpl = [:]

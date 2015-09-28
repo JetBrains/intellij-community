@@ -20,19 +20,19 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import kotlin.properties.Delegates
 import kotlin.test.assertEquals
-import org.junit.Before as before
-import org.junit.Test as test
+import org.junit.Before
+import org.junit.Test
 
 class ArchiveFileSystemPerformanceTest : BareTestFixtureTestCase() {
   private var fs: ArchiveFileSystem by Delegates.notNull()
   private var entry: VirtualFile by Delegates.notNull()
 
-  before fun setUp() {
+  @Before fun setUp() {
     fs = StandardFileSystems.jar() as ArchiveFileSystem
     entry = fs.findFileByPath("${PlatformTestUtil.getRtJarPath()}!/java/lang/Object.class")!!
   }
 
-  test fun getRootByEntry() {
+  @Test fun getRootByEntry() {
     val root = fs.getRootByEntry(entry)!!
     PlatformTestUtil.startPerformanceTest("ArchiveFileSystem.getRootByEntry()", 50, {
       for (i in 0..100000) {
@@ -41,7 +41,7 @@ class ArchiveFileSystemPerformanceTest : BareTestFixtureTestCase() {
     }).cpuBound().assertTiming()
   }
 
-  test fun getLocalByEntry() {
+  @Test fun getLocalByEntry() {
     val local = fs.getLocalByEntry(entry)!!
     PlatformTestUtil.startPerformanceTest("ArchiveFileSystem.getLocalByEntry()", 50, {
       for (i in 0..100000) {

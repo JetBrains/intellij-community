@@ -27,7 +27,7 @@ abstract class ChangeListRemoveConfirmation() {
   abstract fun askIfShouldRemoveChangeLists(ask: List<LocalChangeList>): Boolean
   
   companion object {
-    JvmStatic
+    @JvmStatic
     fun processLists(project: Project, explicitly: Boolean, allLists: Collection<LocalChangeList>, ask: ChangeListRemoveConfirmation) {
       val confirmationAsked = ContainerUtil.newIdentityTroveSet<LocalChangeList>()
       val doNotRemove = ContainerUtil.newIdentityTroveSet<LocalChangeList>()

@@ -12,7 +12,7 @@ import org.jetbrains.io.NettyUtil
 import java.net.InetSocketAddress
 
 public abstract class SingleConnectionNetService(project: Project) : NetService(project) {
-  protected volatile var processChannel: Channel? = null
+  protected @Volatile var processChannel: Channel? = null
 
   protected abstract fun configureBootstrap(bootstrap: Bootstrap, errorOutputConsumer: Consumer<String>)
 
