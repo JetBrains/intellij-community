@@ -18,7 +18,6 @@ package com.jetbrains.python.packaging.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.CatchingConsumer;
-import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageVersionComparator;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.PyCondaPackageService;
@@ -71,8 +70,4 @@ public class PyCondaManagementService extends PyPackageManagementService {
     consumer.consume(versions);
   }
 
-  @Override
-  public void uninstallPackages(List<InstalledPackage> installedPackages, Listener listener) {
-    super.uninstallPackages(installedPackages, listener);
-  }
 }
