@@ -21,11 +21,11 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -37,6 +37,8 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -106,12 +108,18 @@ public class PyConvertLocalFunctionToTopLevelFunction extends BaseIntentionActio
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    final PyResolveContext context = PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.userInitiated(project, file));
     final PyFunction function = findNestedFunctionUnderCaret(editor, file);
     assert function != null;
     final Set<String> enclosingScopeReads = new LinkedHashSet<String>(); 
     final Collection<ScopeOwner> scopeOwners = PsiTreeUtil.collectElementsOfType(function, ScopeOwner.class);
     for (ScopeOwner owner : scopeOwners) {
-      for (PsiElement element : findReadsFromEnclosingScope(owner, function)) {
+      final AnalysisResult scope = findReadsFromEnclosingScope(owner, function, context);
+      if (!scope.nonlocalWritesToEnclosingScope.isEmpty()) {
+        PyUtil.showBalloon(project, PyBundle.message("INTN.convert.local.function.to.top.level.function.nonlocal"), MessageType.WARNING);
+        return;
+      }
+      for (PsiElement element : scope.readFromEnclosingScope) {
         if (element instanceof PyElement) {
           ContainerUtil.addIfNotNull(enclosingScopeReads, ((PyElement)element).getName());
         }
@@ -120,7 +128,7 @@ public class PyConvertLocalFunctionToTopLevelFunction extends BaseIntentionActio
     final String commaSeparatedNames = StringUtil.join(enclosingScopeReads, ", ");
 
     // Update existing usages
-    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     for (UsageInfo usage : PyRefactoringUtil.findUsages(function, false)) {
       final PsiElement element = usage.getElement();
       if (element != null) {
@@ -154,19 +162,32 @@ public class PyConvertLocalFunctionToTopLevelFunction extends BaseIntentionActio
   }
 
   @NotNull
-  private static List<PsiElement> findReadsFromEnclosingScope(@NotNull ScopeOwner owner, @NotNull PyFunction targetFunction) {
+  private static AnalysisResult findReadsFromEnclosingScope(@NotNull ScopeOwner owner,
+                                                            @NotNull PyFunction targetFunction,
+                                                            @NotNull PyResolveContext context) {
     final ControlFlow controlFlow = ControlFlowCache.getControlFlow(owner);
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> readFromEnclosingScope = new ArrayList<PsiElement>();
+    final List<PyTargetExpression> nonlocalWrites = new ArrayList<PyTargetExpression>(); 
     for (Instruction instruction : controlFlow.getInstructions()) {
       if (instruction instanceof ReadWriteInstruction) {
-        final ReadWriteInstruction readInstruction = (ReadWriteInstruction)instruction;
-        if (readInstruction.getAccess().isReadAccess()) {
-          final PsiElement element = readInstruction.getElement();
-          if (element != null) {
-            for (PsiReference reference : element.getReferences()) {
-              final PsiElement resolved = reference.resolve();
+        final ReadWriteInstruction readWriteInstruction = (ReadWriteInstruction)instruction;
+        final PsiElement element = readWriteInstruction.getElement();
+        if (element == null) {
+          continue;
+        }
+        if (readWriteInstruction.getAccess().isReadAccess()) {
+          for (PsiElement resolved : PyUtil.multiResolveTopPriority(element, context)) {
+            if (resolved != null && isFromEnclosingScope(resolved, targetFunction)) {
+              readFromEnclosingScope.add(element);
+              break;
+            }
+          }
+        }
+        if (readWriteInstruction.getAccess().isWriteAccess()) {
+          if (element instanceof PyTargetExpression && element.getParent() instanceof PyNonlocalStatement) {
+            for (PsiElement resolved : PyUtil.multiResolveTopPriority(element, context)) {
               if (resolved != null && isFromEnclosingScope(resolved, targetFunction)) {
-                result.add(element);
+                nonlocalWrites.add((PyTargetExpression)element);
                 break;
               }
             }
@@ -174,7 +195,17 @@ public class PyConvertLocalFunctionToTopLevelFunction extends BaseIntentionActio
         }
       }
     }
-    return result; 
+    return new AnalysisResult(readFromEnclosingScope, nonlocalWrites); 
+  }
+  
+  private static class AnalysisResult {
+    final List<PsiElement> readFromEnclosingScope;
+    final List<PyTargetExpression> nonlocalWritesToEnclosingScope;
+
+    public AnalysisResult(@NotNull List<PsiElement> readFromEnclosingScope, @NotNull List<PyTargetExpression> nonlocalWrites) {
+      this.readFromEnclosingScope = readFromEnclosingScope;
+      this.nonlocalWritesToEnclosingScope = nonlocalWrites;
+    }
   }
 
   private static boolean isFromEnclosingScope(@NotNull PsiElement element, @NotNull PyFunction targetFunction) {
