@@ -17,6 +17,6 @@ public class CompilerTaskFactoryImpl implements CompilerTaskFactory {
                                              boolean forceAsync,
                                              boolean waitForPreviousSession,
                                              boolean compilationStartedAutomatically) {
-    return new CompilerTask(myProject, contentName, headlessMode, forceAsync, waitForPreviousSession, compilationStartedAutomatically, true);
+    return new CompilerTask(myProject, headlessMode, contentName, forceAsync, waitForPreviousSession, compilationStartedAutomatically);
   }
 }

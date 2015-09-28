@@ -85,7 +85,7 @@ public class CompilerTask extends CompilerTaskBase {
   @Deprecated
   public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync,
                       boolean waitForPreviousSession) {
-    this(project, contentName, headlessMode, forceAsync, waitForPreviousSession, false, true);
+    this(project, headlessMode, contentName, forceAsync, waitForPreviousSession, false);
   }
 
 
@@ -99,16 +99,15 @@ public class CompilerTask extends CompilerTaskBase {
                       boolean forceAsync,
                       boolean waitForPreviousSession,
                       boolean compilationStartedAutomatically) {
-    this(project, contentName, headlessMode, forceAsync, waitForPreviousSession, compilationStartedAutomatically, true);
+    this(project, headlessMode, contentName, forceAsync, waitForPreviousSession, compilationStartedAutomatically);
   }
 
   protected CompilerTask(@NotNull Project project,
+                         boolean headlessMode,
                          String contentName,
-                         final boolean headlessMode,
                          boolean forceAsync,
                          boolean waitForPreviousSession,
-                         boolean compilationStartedAutomatically,
-                         boolean ignored) {
+                         boolean compilationStartedAutomatically) {
     super(project, contentName, waitForPreviousSession);
     myContentName = contentName;
     myHeadlessMode = headlessMode;
