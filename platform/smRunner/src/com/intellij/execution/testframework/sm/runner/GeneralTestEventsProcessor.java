@@ -47,20 +47,20 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   protected final SMTRunnerEventsListener myEventPublisher;
   private final String myTestFrameworkName;
   private final Project myProject;
-  private TransferToEDTQueue<Runnable> myTransferToEDTQueue =
-    new TransferToEDTQueue<Runnable>("SM queue", new Processor<Runnable>() {
-      @Override
-      public boolean process(Runnable runnable) {
-        runnable.run();
-        return true;
-      }
-    }, getDisposedCondition(), 300);
+  private TransferToEDTQueue<Runnable> myTransferToEDTQueue;
   protected List<SMTRunnerEventsListener> myListenerAdapters = new ArrayList<SMTRunnerEventsListener>();
 
   public GeneralTestEventsProcessor(Project project, @NotNull String testFrameworkName) {
     myProject = project;
     myEventPublisher = project.getMessageBus().syncPublisher(SMTRunnerEventsListener.TEST_STATUS);
     myTestFrameworkName = testFrameworkName;
+    myTransferToEDTQueue = new TransferToEDTQueue<Runnable>("SM queue", new Processor<Runnable>() {
+      @Override
+      public boolean process(Runnable runnable) {
+        runnable.run();
+        return true;
+      }
+    }, project.getDisposed(), 300);
   }
   // tree construction events
 
@@ -238,7 +238,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public Condition getDisposedCondition() {
-    return myProject.getDisposed();
+    return Condition.FALSE;
   }
 
   public void addToInvokeLater(final Runnable runnable) {
