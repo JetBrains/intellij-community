@@ -34,14 +34,14 @@ import java.util.concurrent.*;
 import static com.intellij.util.io.BaseDataReader.AdaptiveSleepingPolicy;
 
 public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandlerBase");
+  private static final Logger LOG = Logger.getInstance(BaseOSProcessHandler.class);
 
-  @NotNull protected final Process myProcess;
-  @Nullable protected final String myCommandLine;
+  protected final Process myProcess;
+  protected final String myCommandLine;
+  protected final Charset myCharset;
   protected final ProcessWaitFor myWaitFor;
-  @Nullable protected final Charset myCharset;
 
-  public BaseOSProcessHandler(@NotNull final Process process, @Nullable final String commandLine, @Nullable Charset charset) {
+  public BaseOSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset) {
     myProcess = process;
     myCommandLine = commandLine;
     myCharset = charset;
