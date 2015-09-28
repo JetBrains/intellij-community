@@ -1,0 +1,4 @@
+def func(x):
+    def nested(y):
+        return x + y
+    return nested(42)
