@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,49 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 23-May-2007
- */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.JavaRunConfigurationExtensionManager;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.theoryinpractice.testng.model.TestType;
-import com.theoryinpractice.testng.util.TestNGUtil;
-import org.jetbrains.annotations.Nullable;
-
-public class TestNGSuiteConfigurationProducer extends TestNGConfigurationProducer{
-
-
-  @Override
-  protected boolean setupConfigurationFromContext(TestNGConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
-    final PsiElement element = context.getPsiLocation();
-    final PsiFile containingFile = element != null ? element.getContainingFile() : null;
-    if (containingFile == null) return false;
-    final VirtualFile virtualFile = containingFile.getVirtualFile();
-    if (virtualFile == null || !virtualFile.isValid()) return false;
-    if (!TestNGUtil.isTestngXML(virtualFile)) return false;
-    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
-    setupConfigurationModule(context, configuration);
-    final Module originalModule = configuration.getConfigurationModule().getModule();
-    configuration.getPersistantData().SUITE_NAME = virtualFile.getPath();
-    configuration.getPersistantData().TEST_OBJECT = TestType.SUITE.getType();
-    configuration.restoreOriginalModule(originalModule);
-    configuration.setGeneratedName();
-    settings.setName(configuration.getName());
-    sourceElement.set(containingFile);
-    return true;
+public class TestNGSuiteConfigurationProducer extends AbstractTestNGSuiteConfigurationProducer {
+  public TestNGSuiteConfigurationProducer() {
+    super(TestNGConfigurationType.getInstance());
   }
 }

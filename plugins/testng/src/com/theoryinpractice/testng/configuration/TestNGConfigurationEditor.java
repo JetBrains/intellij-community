@@ -72,7 +72,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguration> implements PanelWithAnchor {
+public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends SettingsEditor<T> implements PanelWithAnchor {
   //private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
   private final Project project;
 
