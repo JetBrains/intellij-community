@@ -22,7 +22,6 @@ import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
@@ -78,7 +77,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     myRequest = request;
 
     myContext = new MyDiffContext();
-    myContext.putUserData(DiffUserDataKeysEx.PLACE, DiffPlaces.MERGE);
+    myContext.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.MERGE);
 
     myAvailableTools = DiffManagerEx.getInstance().getMergeTools();
 
