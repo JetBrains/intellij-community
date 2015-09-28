@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
+import org.jetbrains.jps.api.GlobalOptions;
 
 import java.util.Collections;
 import java.util.UUID;
@@ -44,12 +45,17 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   private CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status myBuildStatus;
   private final Project myProject;
   private final WolfTheProblemSolver myWolf;
+  private volatile boolean myUnprocessedFSChangesDetected = false;
 
   public AutoMakeMessageHandler(Project project) {
     super(project);
     myProject = project;
     myBuildStatus = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.SUCCESS;
     myWolf = WolfTheProblemSolver.getInstance(project);
+  }
+
+  public boolean unprocessedFSChangesDetected() {
+    return myUnprocessedFSChangesDetected;
   }
 
   @Override
@@ -76,6 +82,15 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
           publisher.fileGenerated(root, relativePath);
         }
         return;
+
+      case CUSTOM_BUILDER_MESSAGE:
+         if (event.hasCustomBuilderMessage()) {
+           final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message = event.getCustomBuilderMessage();
+           if (GlobalOptions.JPS_SYSTEM_BUILDER_ID.equals(message.getBuilderId()) && GlobalOptions.JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID.equals(message.getMessageType())) {
+             myUnprocessedFSChangesDetected = true;
+           }
+         }
+         return;
 
       default:
         return;

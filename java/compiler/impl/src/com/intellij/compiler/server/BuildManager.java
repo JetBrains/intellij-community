@@ -516,6 +516,9 @@ public class BuildManager implements Disposable {
       }
       finally {
         myAutomakeFutures.remove(future);
+        if (handler.unprocessedFSChangesDetected()) {
+          scheduleAutoMake();
+        }
       }
     }
   }

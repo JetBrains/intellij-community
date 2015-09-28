@@ -109,7 +109,9 @@ public class BuildFSState {
   }
 
   public long getEventRegistrationStamp(File file) {
-    return myRegistrationStamps.get(file);
+    synchronized (myRegistrationStamps) {
+      return myRegistrationStamps.get(file);
+    }
   }
 
   public boolean hasWorkToDo(BuildTarget<?> target) {
@@ -118,6 +120,38 @@ public class BuildFSState {
     }
     FilesDelta delta = myDeltas.get(target);
     return delta != null && delta.hasChanges();
+  }
+
+  /**
+   * @return true if there were changed files reported for the specified target, _after_ the target compilation had been started
+   */
+  public boolean hasUnprocessedChanges(@NotNull CompileContext context, @NotNull BuildTarget<?> target) {
+    if (!myInitialScanPerformed.contains(target)) {
+      return false;
+    }
+    final FilesDelta delta = myDeltas.get(target);
+    if (delta == null) {
+      return false;
+    }
+    final long targetBuildStart = context.getCompilationStartStamp(target);
+    if (targetBuildStart <= 0L) {
+      return false;
+    }
+    final CompileScope scope = context.getScope();
+    try {
+      delta.lockData();
+      for (Set<File> files : delta.getSourcesToRecompile().values()) {
+        for (File file : files) {
+          if ((getEventRegistrationStamp(file) > targetBuildStart || FileSystemUtil.lastModified(file) > targetBuildStart) && scope.isAffected(target, file)) {
+            return true;
+          }
+        }
+      }
+    }
+    finally {
+      delta.unlockData();
+    }
+    return false;
   }
 
   public void markInitialScanPerformed(BuildTarget<?> target) {
@@ -211,7 +245,10 @@ public class BuildFSState {
           LOG.debug(rd.getTarget() + ": MARKED DIRTY: " + file.getPath());
         }
         if (saveEventStamp) {
-          myRegistrationStamps.put(file, System.currentTimeMillis());
+          final long eventStamp = System.currentTimeMillis();
+          synchronized (myRegistrationStamps) {
+            myRegistrationStamps.put(file, eventStamp);
+          }
         }
         if (tsStorage != null) {
           tsStorage.removeStamp(file, rd.getTarget());
@@ -258,7 +295,9 @@ public class BuildFSState {
     clearContextChunk(null);
     myInitialScanPerformed.clear();
     myDeltas.clear();
-    myRegistrationStamps.clear();
+    synchronized (myRegistrationStamps) {
+      myRegistrationStamps.clear();
+    }
   }
 
   public void clearContextRoundData(@Nullable CompileContext context) {
