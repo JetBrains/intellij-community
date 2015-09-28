@@ -273,7 +273,7 @@ libraryLicense(name: "asm-4.0-all", libraryName: "asm-4.0-all", version: "4.0", 
 libraryLicense(name: "jsr305", libraryName: "jsr305", version: "snapshot", license: "BSD", url: "http://code.google.com/p/jsr-305/", licenseUrl: "http://code.google.com/p/jsr-305/source/browse/trunk/ri/LICENSE")
 libraryLicense(name: "jzlib", libraryName: "jzlib", version: "1.1.1", license: "BSD", url: "http://www.jcraft.com/jzlib/", licenseUrl: "http://www.jcraft.com/jzlib/LICENSE.txt")
 libraryLicense(name: "PureJavaComm", libraryName: "purejavacomm", version: "0.0.16", license: "BSD", url: "http://www.sparetimelabs.com/purejavacomm")
-libraryLicense(name: "pty4j", libraryName: "pty4j", version: "0.4", license: "Eclipse Public License v1.0", url: "https://github.com/traff/pty4j")
+libraryLicense(name: "pty4j", libraryName: "pty4j", version: "0.5", license: "Eclipse Public License v1.0", url: "https://github.com/traff/pty4j")
 libraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "0.2", license: "LGPL 2", url: "https://github.com/traff/jediterm", licenseUrl: "https://github.com/traff/jediterm/blob/master/COPYING")
 libraryLicense(name: "bouncy-castle", version: "1.48", license: "MIT License", url: "http://bouncycastle.org", licenseUrl: "http://bouncycastle.org/licence.html")
 libraryLicense(name: "kXML2", libraryName: "kxml2", version: "2.3.0", license: "BSD", url: "http://sourceforge.net/projects/kxml/")
