@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.markup.LineMarkerRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -67,7 +68,8 @@ import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 
-import static com.intellij.diff.util.DiffUtil.*;
+import static com.intellij.diff.util.DiffUtil.getDiffType;
+import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 /**
  * @author irengrig
@@ -341,6 +343,9 @@ public class LineStatusTrackerDrawing {
     DocumentEx doc = (DocumentEx)tracker.getVcsDocument();
     EditorEx uEditor = (EditorEx)EditorFactory.getInstance().createViewer(doc, tracker.getProject());
     uEditor.setColorsScheme(editor.getColorsScheme());
+
+    FileType fileType = tracker.getVirtualFile().getFileType();
+    DiffUtil.setEditorCodeStyle(tracker.getProject(), uEditor, fileType);
 
     EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
     EditorHighlighter highlighter = highlighterFactory.createEditorHighlighter(tracker.getProject(), getFileName(tracker.getDocument()));

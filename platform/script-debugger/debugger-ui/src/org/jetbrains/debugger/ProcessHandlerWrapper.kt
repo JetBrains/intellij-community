@@ -22,19 +22,19 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.xdebugger.XDebugProcess
 
-public class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val handler: ProcessHandler) : ProcessHandler(), KillableProcess {
+class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val handler: ProcessHandler) : ProcessHandler(), KillableProcess {
   init {
-    if (handler.isStartNotified()) {
-      super<ProcessHandler>.startNotify()
+    if (handler.isStartNotified) {
+      super.startNotify()
     }
 
     handler.addProcessListener(object : ProcessAdapter() {
       override fun startNotified(event: ProcessEvent) {
-        super<ProcessHandler>@ProcessHandlerWrapper.startNotify()
+        super@ProcessHandlerWrapper.startNotify()
       }
 
       override fun processTerminated(event: ProcessEvent) {
-        notifyProcessTerminated(event.getExitCode())
+        notifyProcessTerminated(event.exitCode)
       }
     })
   }
@@ -43,7 +43,7 @@ public class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, priv
     private val LOG: Logger = Logger.getInstance(ProcessHandlerWrapper::class.java)
   }
 
-  override fun isSilentlyDestroyOnClose() = handler.isSilentlyDestroyOnClose()
+  override fun isSilentlyDestroyOnClose() = handler.isSilentlyDestroyOnClose
 
   override fun startNotify() {
     handler.startNotify()
@@ -81,7 +81,7 @@ public class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, priv
 
   override fun detachIsDefault() = handler.detachIsDefault()
 
-  override fun getProcessInput() = handler.getProcessInput()
+  override fun getProcessInput() = handler.processInput
 
   override fun canKillProcess() = handler is KillableProcess && handler.canKillProcess()
 

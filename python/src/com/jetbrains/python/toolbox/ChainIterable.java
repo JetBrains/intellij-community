@@ -15,12 +15,12 @@
  */
 package com.jetbrains.python.toolbox;
 
+import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 /**
  * Iterable that splices other iterables and iterates over them sequentially.
@@ -85,42 +85,32 @@ public class ChainIterable<T> extends ChainedListBase<Iterable<T>> implements It
   private static class ChainIterator<T> implements Iterator<T> {
   
     private ChainedListBase<Iterable<T>> myLink; // link of the chain we're currently at
-    private Iterator<T> myCurrent;
+    @NotNull private Iterator<T> myCurrent = Iterators.emptyIterator();
   
     public ChainIterator(@Nullable ChainedListBase<Iterable<T>> initial) {
       myLink = initial;
     }
   
     // returns either null or a non-exhausted iterator.
-    @Nullable
+    @NotNull
     private Iterator<T> getCurrent() {
-      while ((myCurrent == null || !myCurrent.hasNext()) && (myLink != null && myLink.myPayload != null)) { // fix myCurrent
-        if (myCurrent == null) {
+      while (!myCurrent.hasNext() && myLink != null) { // fix myCurrent
+        if (myLink.myPayload != null) {
           myCurrent = myLink.myPayload.iterator();
-          assert myCurrent != null;
         }
-        else {
-          myLink= myLink.myNext;
-          myCurrent = null;
-        }
+        myLink= myLink.myNext;
       }
       return myCurrent;
     }
   
     @Override
     public boolean hasNext() {
-      return getCurrent() != null;
+      return getCurrent().hasNext();
     }
   
     @Override
     public T next() {
-      final Iterator<T> current = getCurrent();
-      if (current != null) {
-        return current.next();
-      }
-      else {
-        throw new NoSuchElementException();
-      }
+      return getCurrent().next();
     }
   
     @Override

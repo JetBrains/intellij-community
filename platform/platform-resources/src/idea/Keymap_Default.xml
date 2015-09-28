@@ -1026,6 +1026,10 @@
     <keyboard-shortcut first-keystroke="control alt shift T"/>
   </action>
 
+  <action id="NewScratchFile">
+    <keyboard-shortcut first-keystroke="control alt shift INSERT"/>
+  </action>
+
   <action id="EditorMatchBrace">
     <keyboard-shortcut first-keystroke="control shift M" />
   </action>

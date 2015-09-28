@@ -30,7 +30,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
@@ -115,7 +114,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     this(s, project, new TestData(), factory);
   }
 
-  private TestNGConfiguration(String s, Project project, TestData data, ConfigurationFactory factory) {
+  protected TestNGConfiguration(String s, Project project, TestData data, ConfigurationFactory factory) {
     super(s, new JavaRunConfigurationModule(project, false), factory);
     this.data = data;
     this.project = project;
@@ -131,15 +130,8 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
 
   @Override
   protected ModuleBasedConfiguration createInstance() {
-    try {
-      return new TestNGConfiguration(getName(), getProject(), (TestData)data.clone(),
-                                     TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
-    }
-    catch (CloneNotSupportedException e) {
-      //can't happen right?
-      e.printStackTrace();
-    }
-    return null;
+    return new TestNGConfiguration(getName(), getProject(), data.clone(),
+                                   TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
   }
 
   @Override
@@ -259,7 +251,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
       patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + suffix);
     }
     data.setPatterns(patterns);
-    final Module module = RunConfigurationProducer.getInstance(TestNGPatternConfigurationProducer.class)
+    final Module module = RunConfigurationProducer.getInstance(AbstractTestNGPatternConfigurationProducer.class)
       .findModule(this, getConfigurationModule().getModule(), patterns);
     if (module == null) {
       data.setScope(TestSearchScope.WHOLE_PROJECT);

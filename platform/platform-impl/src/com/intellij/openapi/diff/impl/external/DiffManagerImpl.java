@@ -55,6 +55,7 @@ import java.util.List;
     @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
   }
 )
+@Deprecated
 public class DiffManagerImpl extends DiffManager implements PersistentStateComponent<Element> {
   public static final int FULL_DIFF_DIVIDER_POLYGONS_OFFSET = 3;
   private static final Logger LOG = Logger.getInstance(DiffManagerImpl.class);

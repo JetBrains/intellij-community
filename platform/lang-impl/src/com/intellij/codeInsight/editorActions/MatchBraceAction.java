@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -28,6 +29,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
@@ -50,9 +52,9 @@ public class MatchBraceAction extends EditorAction {
       final Caret caret = editor.getCaretModel().getCurrentCaret();
       final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
       final CharSequence text = editor.getDocument().getCharsSequence();
-      int offset = caret.getOffset();
-      final FileType fileType = PsiUtilBase.getPsiFileAtOffset(file, offset).getFileType();
 
+      int offset = caret.getOffset();
+      FileType fileType = getFileType(file, offset);
       HighlighterIterator iterator = highlighter.createIterator(offset);
 
       if (iterator.atEnd()) {
@@ -63,11 +65,15 @@ public class MatchBraceAction extends EditorAction {
 
         if (offset >= 0) {
           final HighlighterIterator i = highlighter.createIterator(offset);
-          if (!BraceMatchingUtil.isRBraceToken(i, text, PsiUtilBase.getPsiFileAtOffset(file, i.getStart()).getFileType())) offset++;
+          if (!BraceMatchingUtil.isRBraceToken(i, text, getFileType(file, i.getStart()))) offset++;
         }
       }
 
+      if (offset < 0) return;
+
       iterator = highlighter.createIterator(offset);
+      fileType = getFileType(file, iterator.getStart());
+
       while (!BraceMatchingUtil.isLBraceToken(iterator, text, fileType) &&
              !BraceMatchingUtil.isRBraceToken(iterator, text, fileType)) {
         iterator.retreat();
@@ -75,15 +81,24 @@ public class MatchBraceAction extends EditorAction {
       }
 
       if (BraceMatchingUtil.matchBrace(text, fileType, iterator, true)) {
-        caret.removeSelection();
-        caret.moveToOffset(iterator.getEnd());
+        moveCaret(editor, caret, iterator.getEnd());
         return;
       }
       iterator = highlighter.createIterator(offset);
       if (BraceMatchingUtil.matchBrace(text, fileType, iterator, false)) {
-        caret.removeSelection();
-        caret.moveToOffset(iterator.getStart());
+        moveCaret(editor, caret, iterator.getStart());
       }
     }
+  }
+
+  @NotNull
+  private static FileType getFileType(PsiFile file, int offset) {
+    return PsiUtilBase.getPsiFileAtOffset(file, offset).getFileType();
+  }
+
+  private static void moveCaret(Editor editor, Caret caret, int offset) {
+    caret.removeSelection();
+    caret.moveToOffset(offset);
+    EditorModificationUtil.scrollToCaret(editor);
   }
 }

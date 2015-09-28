@@ -19,42 +19,13 @@
  */
 package com.intellij.util.io.storage;
 
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.ByteSequence;
-import com.intellij.openapi.util.io.FileUtil;
-import junit.framework.TestCase;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
 
-public class StorageTest extends TestCase {
-  protected Storage myStorage;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myStorage = createStorage(getFileName());
-  }
-
-  @NotNull
-  protected Storage createStorage(String fileName) throws IOException {
-    return new Storage(fileName);
-  }
-
-  protected String getFileName() {
-    return FileUtil.getTempDirectory() + File.separatorChar + getName();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    Disposer.dispose(myStorage);
-    Storage.deleteFiles(getFileName());
-    super.tearDown();
-  }
-
+public class StorageTest extends StorageTestBase {
   public void testSmoke() throws Exception {
     final int record = myStorage.createNewRecord();
     myStorage.writeBytes(record, new ByteSequence("Hello".getBytes()), false);

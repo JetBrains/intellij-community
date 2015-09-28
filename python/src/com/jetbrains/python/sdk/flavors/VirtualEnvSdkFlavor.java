@@ -42,7 +42,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   private VirtualEnvSdkFlavor() {
   }
   private final static String[] NAMES = new String[]{"jython", "pypy", "python.exe", "jython.bat", "pypy.exe"};
-  private final static String[] CONDA_DEFAULT_ROOTS = new String[]{"anaconda", "anaconda3", "miniconda", "miniconda3",
+  public final static String[] CONDA_DEFAULT_ROOTS = new String[]{"anaconda", "anaconda3", "miniconda", "miniconda3",
     "Anaconda", "Anaconda3", "Miniconda", "Miniconda3"};
 
   public static VirtualEnvSdkFlavor INSTANCE = new VirtualEnvSdkFlavor();

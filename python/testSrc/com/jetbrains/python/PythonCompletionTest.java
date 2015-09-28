@@ -408,10 +408,25 @@ public class PythonCompletionTest extends PyTestCase {
   // PY-16877
   public void testSectionNamesInGoogleDocstring() {
     runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
       public void run() {
         final List<String> variants = doTestByFile();
         assertNotNull(variants);
-        assertContainsElements(variants, "Args", "Parameters", "Keyword arguments", "Returns");
+        assertContainsElements(variants, "Args", "Keyword Args", "Returns");
+        assertDoesntContain(variants, "Parameters", "Return", "Yield");
+      }
+    });
+  }
+
+  // PY-17023
+  public void testSectionNamesInNumpyDocstrings() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {
+      @Override
+      public void run() {
+        final List<String> variants = doTestByFile();
+        assertNotNull(variants);
+        assertContainsElements(variants, "Parameters", "Other Parameters", "Returns");
+        assertDoesntContain(variants, "Args", "Return", "Yield");
       }
     });
   }
@@ -421,9 +436,7 @@ public class PythonCompletionTest extends PyTestCase {
     runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
       @Override
       public void run() {
-        final List<String> variants = doTestByFile();
-        assertNotNull(variants);
-        assertContainsElements(variants, "Return", "Returns");
+        doTest();
       }
     });
   }
@@ -480,6 +493,18 @@ public class PythonCompletionTest extends PyTestCase {
       @Override
       public void run() {
         doTest();
+      }
+    });
+  }
+
+  // PY-17002
+  public void testParamTypeInGoogleDocstringWithoutClosingParenthesis() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        final List<String> variants = doTestByFile();
+        assertNotNull(variants);
+        assertSameElements(variants, "str", "basestring");
       }
     });
   }

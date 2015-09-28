@@ -718,6 +718,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="PointlessNullCheck" bundle="com.siyeh.InspectionGadgetsBundle" key="pointless.nullcheck.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.PointlessNullCheckInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableBooleanExpression" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="simplifiable.boolean.expression.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.controlflow.SimplifiableBooleanExpressionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableConditionalExpression" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="simplifiable.conditional.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"

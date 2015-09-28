@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -391,11 +391,14 @@ public class CompletionLookupArranger extends LookupArranger {
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
       boolean isSuddenLiveTemplate = isSuddenLiveTemplate(item);
-      if (isPrefixItem(lookup, item, true) && !isSuddenLiveTemplate ||
-          item.getLookupString().equals(selectedText)) {
-        
-        if (exactMatchIndex == -1 || item instanceof LiveTemplateLookupElement) {
-          // prefer most recent item or LiveTemplate item
+      if (isPrefixItem(lookup, item, true) && !isSuddenLiveTemplate || item.getLookupString().equals(selectedText)) {
+        if (item instanceof LiveTemplateLookupElement) {
+          // prefer most recent live template lookup item
+          exactMatchIndex = i;
+          break;
+        }
+        if (exactMatchIndex == -1) {
+          // prefer most recent item
           exactMatchIndex = i;
         }
       }

@@ -1,5 +1,5 @@
 <project name="Download Kotlin" default="extract">
-  <property name="kotlin.build.type.id" value="Kotlin_M13_Idea142branch150versionNoTests"/>
+  <property name="kotlin.build.type.id" value="Kotlin_M14_Idea142branch150versionNoTests"/>
   <property name="kotlin.build.selector" value=".lastSuccessful"/>
 
   <target name="get_latest">

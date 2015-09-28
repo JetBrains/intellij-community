@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.applet;
 
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.CheckableRunConfigurationEditor;
 import com.intellij.execution.ui.AlternativeJREPanel;
@@ -57,7 +58,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   private TextFieldWithBrowseButton myHtmlFile;
   private JTextField myWidth;
   private JTextField myHeight;
-  private LabeledComponent<JComboBox> myModule;
+  private LabeledComponent<ModulesComboBox> myModule;
   private JPanel myTablePlace;
   private JBLabel myHtmlFileLabel;
   private JBLabel myClassNameLabel;
@@ -175,7 +176,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     myTable.scrollRectToVisible(myTable.getCellRect(index, 0, true));
   }
 
-  private JComboBox getModuleComponent() {
+  private ModulesComboBox getModuleComponent() {
     return myModule.getComponent();
   }
 

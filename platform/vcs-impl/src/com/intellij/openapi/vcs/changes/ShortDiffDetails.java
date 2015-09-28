@@ -38,6 +38,11 @@ import javax.swing.*;
  * Date: 8/17/11
  * Time: 7:08 PM
  */
+
+/**
+ * @deprecated use {@link CacheChangeProcessor} instead
+ */
+@Deprecated
 public class ShortDiffDetails implements RefreshablePanel<Change>, Disposable {
   private final Project myProject;
   private final VcsChangeDetailsManager myVcsChangeDetailsManager;

@@ -34,6 +34,11 @@ public abstract class JavaFileStructureTestCase extends FileStructureTestBase {
   public void setUp() throws Exception {
     super.setUp();
     myShowAnonymousByDefault = PropertiesComponent.getInstance().getBoolean(getAnonymousPropertyName());
+  }
+
+  @Override
+  protected void configureDefault() {
+    super.configureDefault();
     if (getTestName(false).contains("Anonymous")) {
       setShowAnonymous(true);
     }

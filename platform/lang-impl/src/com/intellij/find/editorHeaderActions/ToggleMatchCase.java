@@ -15,25 +15,23 @@
  */
 package com.intellij.find.editorHeaderActions;
 
-import com.intellij.find.EditorSearchComponent;
+import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindSettings;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class ToggleMatchCase extends EditorHeaderToggleAction {
-  private static final String CASE_SENSITIVE = "Match &Case";
-
-  public ToggleMatchCase(EditorSearchComponent editorSearchComponent) {
-    super(editorSearchComponent, CASE_SENSITIVE);
+  public ToggleMatchCase() {
+    super("Match &Case");
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
-    return myEditorSearchComponent.getFindModel().isCaseSensitive();
+  protected boolean isSelected(@NotNull EditorSearchSession session) {
+    return session.getFindModel().isCaseSensitive();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    myEditorSearchComponent.getFindModel().setCaseSensitive(state);
-    FindSettings.getInstance().setLocalCaseSensitive(state);
+  protected void setSelected(@NotNull EditorSearchSession session, boolean selected) {
+    session.getFindModel().setCaseSensitive(selected);
+    FindSettings.getInstance().setLocalCaseSensitive(selected);
   }
 }

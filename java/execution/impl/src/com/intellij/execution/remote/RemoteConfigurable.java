@@ -20,6 +20,7 @@
  */
 package com.intellij.execution.remote;
 
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.ui.ConfigurationArgumentsHelpArea;
@@ -52,7 +53,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private ConfigurationArgumentsHelpArea myHelpArea;
   @NonNls private ConfigurationArgumentsHelpArea myJDK13HelpArea;
   private ConfigurationArgumentsHelpArea myJDK14HelpArea;
-  private LabeledComponent<JComboBox> myModule;
+  private LabeledComponent<ModulesComboBox> myModule;
   private String myHostName = "";
   @NonNls
   protected static final String LOCALHOST = "localhost";

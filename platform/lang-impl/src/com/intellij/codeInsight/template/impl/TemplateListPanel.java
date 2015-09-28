@@ -64,7 +64,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
   public static final Comparator<TemplateImpl> TEMPLATE_COMPARATOR = new Comparator<TemplateImpl>() {
     @Override
     public int compare(@NotNull final TemplateImpl o1, @NotNull final TemplateImpl o2) {
-      return o1.getKey().compareToIgnoreCase(o2.getKey());
+      int compareKey = o1.getKey().compareToIgnoreCase(o2.getKey());
+      return compareKey != 0 ? compareKey : o1.getGroupName().compareToIgnoreCase(o2.getGroupName());
     }
   };
 

@@ -55,8 +55,10 @@ public class DocStringSectionHeaderCompletionContributor extends CompletionContr
                final TextRange linePrefixRange = new TextRange(document.getLineStartOffset(document.getLineNumber(offset)), offset);
                final String prefix = StringUtil.trimLeading(document.getText(linePrefixRange));
                result = result.withPrefixMatcher(prefix).caseInsensitive();
-               for (String tag : SectionBasedDocString.SECTION_NAMES) {
-                 result.addElement(LookupElementBuilder.create(StringUtil.capitalize(tag)));
+               final Iterable<String> names = format == DocStringFormat.GOOGLE ? GoogleCodeStyleDocString.PREFERRED_SECTION_HEADERS
+                                                                               : NumpyDocString.PREFERRED_SECTION_HEADERS; 
+               for (String tag : names) {
+                 result.addElement(LookupElementBuilder.create(tag));
                }
              }
            });

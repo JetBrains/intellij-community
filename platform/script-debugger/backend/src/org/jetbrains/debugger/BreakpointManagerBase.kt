@@ -57,7 +57,7 @@ public abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointM
 
     breakpoints.add(breakpoint)
     if (enabled) {
-      doSetBreakpoint(target, breakpoint).rejected { dispatcher.getMulticaster().errorOccurred(breakpoint, it.getMessage() ?: it.toString()) }
+      doSetBreakpoint(target, breakpoint).rejected { dispatcher.multicaster.errorOccurred(breakpoint, it.getMessage() ?: it.toString()) }
     }
     return breakpoint
   }
@@ -93,7 +93,7 @@ public abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointM
 
   protected fun notifyBreakpointResolvedListener(breakpoint: T) {
     if (breakpoint.isResolved) {
-      dispatcher.getMulticaster().resolved(breakpoint)
+      dispatcher.multicaster.resolved(breakpoint)
     }
   }
 

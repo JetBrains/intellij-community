@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
-import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -53,7 +52,7 @@ public class PyManagePackagesDialog extends DialogWrapper {
     PackagesNotificationPanel notificationPanel = new PackagesNotificationPanel();
     final PyInstalledPackagesPanel packagesPanel = new PyInstalledPackagesPanel(project, notificationPanel);
     packagesPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
-    packagesPanel.updatePackages(new PyPackageManagementService(project, sdk));
+    packagesPanel.updatePackages(PyPackageManagers.getInstance().getManagementService(project, sdk));
     packagesPanel.updateNotifications(sdk);
 
     myMainPanel = new JPanel(new BorderLayout());
@@ -67,7 +66,7 @@ public class PyManagePackagesDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         Sdk sdk = (Sdk) sdkComboBox.getSelectedItem();
-        packagesPanel.updatePackages(new PyPackageManagementService(project, sdk));
+        packagesPanel.updatePackages(PyPackageManagers.getInstance().getManagementService(project, sdk));
         packagesPanel.updateNotifications(sdk);
       }
     });

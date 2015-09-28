@@ -15,39 +15,35 @@
  */
 package com.intellij.find.editorHeaderActions;
 
-import com.intellij.find.EditorSearchComponent;
+import com.intellij.find.EditorSearchSession;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class SelectAllAction extends EditorHeaderAction implements DumbAware {
-  public SelectAllAction(EditorSearchComponent editorSearchComponent) {
-    super(editorSearchComponent);
-
-    copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL_OCCURRENCES));
-    getTemplatePresentation().setIcon(AllIcons.Actions.CheckMulticaret);
-
-    List<Shortcut> shortcuts = new ArrayList<Shortcut>();
-    ContainerUtil.addAll(shortcuts, getShortcutSet().getShortcuts());
-    ContainerUtil.addAll(shortcuts, CommonShortcuts.ALT_ENTER.getShortcuts());
-    registerShortcutsForComponent(shortcuts, editorSearchComponent.getSearchTextComponent());
+public class SelectAllAction extends OccurrenceAction {
+  public SelectAllAction() {
+    super(IdeActions.ACTION_SELECT_ALL_OCCURRENCES, AllIcons.Actions.CheckMulticaret);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    myEditorSearchComponent.selectAllOccurrences();
-    myEditorSearchComponent.close();
+    EditorSearchSession search = e.getRequiredData(EditorSearchSession.SESSION_KEY);
+    search.selectAllOccurrences();
+    search.close();
   }
 
+  @Nullable
   @Override
-  public void update(AnActionEvent e) {
-    boolean isFind = !myEditorSearchComponent.getFindModel().isReplaceState();
-    boolean hasMatches = myEditorSearchComponent.hasMatches();
-    e.getPresentation().setVisible(isFind);
-    e.getPresentation().setEnabled(isFind && hasMatches);
+  public ShortcutSet getShortcut() {
+    List<Shortcut> shortcuts = ContainerUtil.newArrayList();
+    AnAction selectAllOccurrences = ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL_OCCURRENCES);
+    if (selectAllOccurrences != null) {
+      ContainerUtil.addAll(shortcuts, selectAllOccurrences.getShortcutSet().getShortcuts());
+    }
+    ContainerUtil.addAll(shortcuts, CommonShortcuts.ALT_ENTER.getShortcuts());
+    return Utils.shortcutSetOf(shortcuts);
   }
 }

@@ -20,7 +20,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.find.EditorSearchComponent;
+import com.intellij.find.EditorSearchSession;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -56,7 +56,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 public class HighlightUsagesHandler extends HighlightHandlerBase {
@@ -192,9 +191,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       editor = ((EditorWindow)editor).getDelegate();
     }
 
-    final JComponent oldHeader = editor.getHeaderComponent();
-    if (oldHeader instanceof EditorSearchComponent) {
-      final EditorSearchComponent oldSearch = (EditorSearchComponent)oldHeader;
+    EditorSearchSession oldSearch = EditorSearchSession.get(editor);
+    if (oldSearch != null) {
       if (oldSearch.hasMatches()) {
         String oldText = oldSearch.getTextInField();
         if (!oldSearch.getFindModel().isRegularExpressions()) {
@@ -208,9 +206,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       }
     }
 
-    final EditorSearchComponent header = new EditorSearchComponent(editor, project);
-    header.getFindModel().setRegularExpressions(false);
-    editor.setHeaderComponent(header);
+    EditorSearchSession.start(editor, project).getFindModel().setRegularExpressions(false);
   }
 
   public static class DoHighlightRunnable implements Runnable {

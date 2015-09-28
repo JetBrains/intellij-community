@@ -37,7 +37,7 @@ def compare(a, b, *, key=None):
 def foo(a, <weak_warning descr="Missing parameter c in docstring">c</weak_warning>):
   """
   
-  Params:
+  Parameters:
     a:
     <weak_warning descr="Unexpected parameter b in docstring">b</weak_warning>:
   """

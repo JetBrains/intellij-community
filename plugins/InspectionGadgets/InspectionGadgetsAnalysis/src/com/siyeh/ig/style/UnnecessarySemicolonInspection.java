@@ -97,6 +97,11 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     }
   }
 
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return !LanguageUtil.isInTemplateLanguageFile(file);
+  }
+
   private static class UnnecessarySemicolonVisitor extends BaseInspectionVisitor {
     @Override
     public void visitFile(PsiFile file) {
@@ -111,8 +116,6 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     }
 
     private void findTopLevelSemicolons(PsiElement element) {
-      if (LanguageUtil.isInTemplateLanguageFile(element)) return;
-      
       for (PsiElement sibling = element.getFirstChild(); sibling != null; sibling = skipForwardWhiteSpacesAndComments(sibling)) {
         if (PsiUtil.isJavaToken(sibling, JavaTokenType.SEMICOLON)) {
           registerError(sibling, ProblemHighlightType.LIKE_UNUSED_SYMBOL);

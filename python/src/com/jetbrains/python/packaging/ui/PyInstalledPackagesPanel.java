@@ -76,7 +76,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
             PackagesNotificationPanel.showError("Failed to install Python packaging tools", description);
           }
           packageManager.refresh();
-          updatePackages(new PyPackageManagementService(myProject, sdk));
+          updatePackages(PyPackageManagers.getInstance().getManagementService(myProject, sdk));
           updateNotifications(sdk);
         }
       });
@@ -130,7 +130,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
                         if (sdk != null) {
                           fix.run(sdk);
                           myNotificationArea.removeLinkHandler(key);
-                          updatePackages(new PyPackageManagementService(myProject, sdk));
+                          updatePackages(PyPackageManagers.getInstance().getManagementService(myProject, sdk));
                           updateNotifications(sdk);
                         }
                       }
@@ -164,7 +164,8 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     final String name = pkg.getName();
     if (PyPackageManager.PIP.equals(name) ||
         PyPackageManager.SETUPTOOLS.equals(name) ||
-        PyPackageManager.DISTRIBUTE.equals(name)) {
+        PyPackageManager.DISTRIBUTE.equals(name) ||
+        PyCondaPackageManagerImpl.PYTHON.equals(name)) {
       return false;
     }
     return true;
@@ -177,6 +178,6 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
 
   @Override
   protected boolean canUpgradePackage(InstalledPackage pyPackage) {
-    return myHasManagement;
+    return myHasManagement && !PyCondaPackageManagerImpl.PYTHON.equals(pyPackage.getName());
   }
 }

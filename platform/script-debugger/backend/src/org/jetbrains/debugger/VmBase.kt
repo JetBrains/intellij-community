@@ -15,10 +15,8 @@
  */
 package org.jetbrains.debugger
 
-import kotlin.properties.Delegates
-
 public abstract class VmBase protected constructor(override val debugListener: DebugEventListener) : Vm, AttachStateManager {
-  override val evaluateContext: EvaluateContext? by Delegates.lazy { computeEvaluateContext() }
+  override val evaluateContext: EvaluateContext? by lazy(LazyThreadSafetyMode.NONE) { computeEvaluateContext() }
 
   override val attachStateManager: AttachStateManager
     get() = this

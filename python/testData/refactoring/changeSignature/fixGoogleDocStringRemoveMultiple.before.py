@@ -1,6 +1,6 @@
 def f(a, b, c, d):
     """
-    Params:
+    Parameters:
       a : foo
       b : bar
       c : baz

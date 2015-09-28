@@ -51,10 +51,6 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     super(process, commandLine, charset);
   }
 
-  protected OSProcessHandler(@NotNull OSProcessHandler base) {
-    this(base.myProcess, base.myCommandLine);
-  }
-
   @Override
   protected Future<?> executeOnPooledThread(Runnable task) {
     Application app = ApplicationManager.getApplication();

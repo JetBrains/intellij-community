@@ -164,7 +164,7 @@ public class TaskFile {
     TaskFile that = (TaskFile)o;
 
     if (getIndex() != that.getIndex()) return false;
-    if (name.equals(that.name)) return false;
+    if (!name.equals(that.name)) return false;
 
     final List<AnswerPlaceholder> answerPlaceholders = getAnswerPlaceholders();
     final List<AnswerPlaceholder> thatAnswerPlaceholders = that.getAnswerPlaceholders();

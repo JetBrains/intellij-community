@@ -360,7 +360,7 @@ public class SwingHelper {
               TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
   }
 
-  public static <T extends JComponent> void doInstall(@Nullable Project project,
+  private static <T extends JComponent> void doInstall(@Nullable Project project,
                                                        @NotNull ComponentWithBrowseButton<T> componentWithBrowseButton,
                                                        @NotNull JTextField textField,
                                                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,

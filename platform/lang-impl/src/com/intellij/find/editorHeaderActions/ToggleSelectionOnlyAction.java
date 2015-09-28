@@ -1,30 +1,29 @@
 package com.intellij.find.editorHeaderActions;
 
-import com.intellij.find.EditorSearchComponent;
+import com.intellij.find.EditorSearchSession;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class ToggleSelectionOnlyAction extends EditorHeaderToggleAction {
-  private static final String SELECTION_ONLY = "In &Selection";
-
-  public ToggleSelectionOnlyAction(EditorSearchComponent editorSearchComponent) {
-    super(editorSearchComponent, SELECTION_ONLY);
-  }
-
-  @Override
-  public boolean isSelected(AnActionEvent e) {
-    return !myEditorSearchComponent.getFindModel().isGlobal();
+  public ToggleSelectionOnlyAction() {
+    super("In &Selection");
   }
 
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    final boolean replaceState = myEditorSearchComponent.getFindModel().isReplaceState();
-    e.getPresentation().setVisible(replaceState);
-    e.getPresentation().setEnabled(replaceState);
+
+    EditorSearchSession session = e.getData(EditorSearchSession.SESSION_KEY);
+    e.getPresentation().setEnabledAndVisible(session != null && session.getFindModel().isReplaceState());
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    myEditorSearchComponent.getFindModel().setGlobal(!state);
+  protected boolean isSelected(@NotNull EditorSearchSession session) {
+    return !session.getFindModel().isGlobal();
+  }
+
+  @Override
+  protected void setSelected(@NotNull EditorSearchSession session, boolean selected) {
+    session.getFindModel().setGlobal(!selected);
   }
 }
