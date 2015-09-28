@@ -27,8 +27,8 @@ class TestManager(val projectRule: ProjectRule, private val tempDirManager: Temp
 
   private var ioFileToDelete: File? = null
 
-  Retention(RetentionPolicy.RUNTIME)
-  Target(ElementType.METHOD)
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
   annotation public class TestDescriptor(public val filePath: String,
                                          public val line: Int = -1,
                                          public val column: Int = -1,

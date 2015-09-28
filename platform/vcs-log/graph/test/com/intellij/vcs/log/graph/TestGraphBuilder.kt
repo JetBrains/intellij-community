@@ -39,7 +39,7 @@ import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 
-public trait BaseTestGraphBuilder {
+public interface BaseTestGraphBuilder {
   public val Int.U: SimpleNode get() = SimpleNode(this, GraphNodeType.USUAL)
   public val Int.UNM: SimpleNode get() = SimpleNode(this, GraphNodeType.UNMATCHED)
   public val Int.NOT_LOAD: SimpleNode get() = SimpleNode(this, GraphNodeType.NOT_LOAD_COMMIT)
@@ -95,7 +95,7 @@ public class TestGraphBuilder : BaseTestGraphBuilder {
 
     init {
       val idsMap = HashMap<Int, Int>()
-      nodes = buildNodes.map2 {(index, it) ->
+      nodes = buildNodes.map2 {index, it ->
         idsMap[index] = it.nodeId
         GraphNode(index, it.type)
       }
@@ -247,7 +247,7 @@ class TestPermanentGraphInfo(
     override fun getTimestamp(index: Int) = commitInfo.getTimestamp(graph.getNodeId(index))
   }
 
-  val graphLayout = GraphLayoutBuilder.build(graph) {(x, y) ->
+  val graphLayout = GraphLayoutBuilder.build(graph) {x, y ->
     if (headsOrder.isEmpty()) {
       graph.getNodeId(x) - graph.getNodeId(y)
     } else {

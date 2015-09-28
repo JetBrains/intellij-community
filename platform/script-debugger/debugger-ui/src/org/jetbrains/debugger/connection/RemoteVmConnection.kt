@@ -112,7 +112,7 @@ public fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemTo
       .setTitle("Choose Page to Debug")
       .setItemChoosenCallback(object : Runnable {
         override fun run() {
-          @suppress("UNCHECKED_CAST")
+          @Suppress("UNCHECKED_CAST")
           val value = list.getSelectedValue() as T
           if (value == null) {
             result.setError("No target to inspect")

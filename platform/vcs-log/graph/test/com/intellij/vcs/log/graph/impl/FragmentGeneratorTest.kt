@@ -130,45 +130,45 @@ val difficult = graph {
 class FragmentGeneratorTest {
 
   class MiddleNodesTest {
-    Test fun simple() = simple.getMiddleNodes(0, 2) assert "0,1,2"
-    Test fun empty() = twoBranch.getMiddleNodes(0, 1) assert ""
-    Test fun withDownRedundantBranches() = downTree.getMiddleNodes(0, 4) assert "0,1,2,4"
-    Test fun withUpRedundantBranches() = upTree.getMiddleNodes(1, 5) assert "1,3,4,5"
+    @Test fun simple() = simple.getMiddleNodes(0, 2) assert "0,1,2"
+    @Test fun empty() = twoBranch.getMiddleNodes(0, 1) assert ""
+    @Test fun withDownRedundantBranches() = downTree.getMiddleNodes(0, 4) assert "0,1,2,4"
+    @Test fun withUpRedundantBranches() = upTree.getMiddleNodes(1, 5) assert "1,3,4,5"
 
-    Test fun difficult1() = difficult.getMiddleNodes(1, 7) assert "1,3,4,5,6,7"
-    Test fun difficult2() = difficult.getMiddleNodes(0, 5) assert "0,1,3,5"
-    Test fun difficult3() = difficult.getMiddleNodes(1, 8) assert "1,3,4,5,6,8"
+    @Test fun difficult1() = difficult.getMiddleNodes(1, 7) assert "1,3,4,5,6,7"
+    @Test fun difficult2() = difficult.getMiddleNodes(0, 5) assert "0,1,3,5"
+    @Test fun difficult3() = difficult.getMiddleNodes(1, 8) assert "1,3,4,5,6,8"
   }
 
   class NearRedNode {
-    Test fun simple1() = simple.redNodes(0).getNearRedNode(2, 10, true) assert 0
-    Test fun simple2() = simple.redNodes(2).getNearRedNode(0, 10, false) assert 2
-    Test fun simple3() = simple.redNodes(2, 1).getNearRedNode(0, 10, false) assert 1
-    Test fun simple4() = simple.redNodes(0, 1).getNearRedNode(0, 10, false) assert 0
-    Test fun simple5() = simple.redNodes(0, 1).getNearRedNode(2, 10, true) assert 1
+    @Test fun simple1() = simple.redNodes(0).getNearRedNode(2, 10, true) assert 0
+    @Test fun simple2() = simple.redNodes(2).getNearRedNode(0, 10, false) assert 2
+    @Test fun simple3() = simple.redNodes(2, 1).getNearRedNode(0, 10, false) assert 1
+    @Test fun simple4() = simple.redNodes(0, 1).getNearRedNode(0, 10, false) assert 0
+    @Test fun simple5() = simple.redNodes(0, 1).getNearRedNode(2, 10, true) assert 1
 
-    Test fun downTree1() = downTree.redNodes(4, 5).getNearRedNode(0, 10, false) assert 4
-    Test fun downTree2() = downTree.redNodes(2, 3).getNearRedNode(0, 10, false) assert 2
-    Test fun upTree1() = upTree.redNodes(1, 2).getNearRedNode(5, 10, true) assert 2
-    Test fun upTree2() = upTree.redNodes(4, 0).getNearRedNode(5, 10, true) assert 4
+    @Test fun downTree1() = downTree.redNodes(4, 5).getNearRedNode(0, 10, false) assert 4
+    @Test fun downTree2() = downTree.redNodes(2, 3).getNearRedNode(0, 10, false) assert 2
+    @Test fun upTree1() = upTree.redNodes(1, 2).getNearRedNode(5, 10, true) assert 2
+    @Test fun upTree2() = upTree.redNodes(4, 0).getNearRedNode(5, 10, true) assert 4
 
-    Test fun difficult1() = difficult.redNodes(4, 5, 6).getNearRedNode(0, 10, false) assert 4
-    Test fun difficult2() = difficult.redNodes(2, 5, 6).getNearRedNode(1, 10, false) assert 5
+    @Test fun difficult1() = difficult.redNodes(4, 5, 6).getNearRedNode(0, 10, false) assert 4
+    @Test fun difficult2() = difficult.redNodes(2, 5, 6).getNearRedNode(1, 10, false) assert 5
 
-    Test fun nullAnswer1() = difficult.redNodes(8).getNearRedNode(0, 6, false) assert null
-    Test fun nullAnswer2() = difficult.redNodes(8).getNearRedNode(0, 7, false) assert 8
+    @Test fun nullAnswer1() = difficult.redNodes(8).getNearRedNode(0, 6, false) assert null
+    @Test fun nullAnswer2() = difficult.redNodes(8).getNearRedNode(0, 7, false) assert 8
   }
 
   class GreenFragment {
-    Test fun simple1() = simple.redNodes(0).getGreenFragmentForCollapse(2, 10) assert "0|n|1,2"
-    Test fun simple2() = simple.redNodes(0, 2).getGreenFragmentForCollapse(1, 10) assert "0|2|1"
-    Test fun simple3() = simple.redNodes(0, 2).getGreenFragmentForCollapse(0, 10) assert "n|n|"
+    @Test fun simple1() = simple.redNodes(0).getGreenFragmentForCollapse(2, 10) assert "0|n|1,2"
+    @Test fun simple2() = simple.redNodes(0, 2).getGreenFragmentForCollapse(1, 10) assert "0|2|1"
+    @Test fun simple3() = simple.redNodes(0, 2).getGreenFragmentForCollapse(0, 10) assert "n|n|"
 
-    Test fun downTree1() = downTree.redNodes(4).getGreenFragmentForCollapse(2, 10) assert "n|4|0,2"
-    Test fun downTree2() = downTree.redNodes(4).getGreenFragmentForCollapse(1, 10) assert "n|4|0,1"
+    @Test fun downTree1() = downTree.redNodes(4).getGreenFragmentForCollapse(2, 10) assert "n|4|0,2"
+    @Test fun downTree2() = downTree.redNodes(4).getGreenFragmentForCollapse(1, 10) assert "n|4|0,1"
 
-    Test fun difficult1() = difficult.redNodes(1, 7).getGreenFragmentForCollapse(3, 10) assert "1|7|3,5"
-    Test fun difficult2() = difficult.redNodes(1, 7).getGreenFragmentForCollapse(8, 10) assert "1|n|3,4,5,6,8"
-    Test fun difficult3() = difficult.redNodes(1, 7).getGreenFragmentForCollapse(2, 10) assert "n|7|0,2,6"
+    @Test fun difficult1() = difficult.redNodes(1, 7).getGreenFragmentForCollapse(3, 10) assert "1|7|3,5"
+    @Test fun difficult2() = difficult.redNodes(1, 7).getGreenFragmentForCollapse(8, 10) assert "1|n|3,4,5,6,8"
+    @Test fun difficult3() = difficult.redNodes(1, 7).getGreenFragmentForCollapse(2, 10) assert "n|7|0,2,6"
   }
 }

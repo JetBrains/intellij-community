@@ -77,7 +77,7 @@ public class TestDialogManager : DialogManager() {
     myOnMessage = handler
   }
 
-  @deprecated("Use onMessage")
+  @Deprecated("Use onMessage")
   public fun registerMessageHandler(handler: TestMessageHandler) {
     myOnMessage = { handler.handleMessage(it) }
   }

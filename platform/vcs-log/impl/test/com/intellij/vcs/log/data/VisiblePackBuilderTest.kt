@@ -38,7 +38,7 @@ import kotlin.test.assertTrue
 
 class VisiblePackBuilderTest {
 
-  Test fun `no filters`() {
+  @Test fun `no filters`() {
     val graph = graph {
       1(2) *"master"
       2(3)
@@ -49,7 +49,7 @@ class VisiblePackBuilderTest {
     assertEquals(4, visiblePack.getVisibleGraph().getVisibleCommitCount())
   }
 
-  Test fun `branch filter`() {
+  @Test fun `branch filter`() {
     val graph = graph {
       1(3) *"master"
       2(3) *"feature"
@@ -62,7 +62,7 @@ class VisiblePackBuilderTest {
     assertDoesNotContain(visibleGraph, 2)
   }
 
-  Test fun `filter by user in memory`() {
+  @Test fun `filter by user in memory`() {
     val graph = graph {
       1(2) *"master"
       2(3)
@@ -78,7 +78,7 @@ class VisiblePackBuilderTest {
     assertDoesNotContain(visibleGraph, 3)
   }
 
-  Test fun `filter by branch deny`() {
+  @Test fun `filter by branch deny`() {
     val graph = graph {
       1(3) *"master"
       2(3) *"feature"
@@ -91,7 +91,7 @@ class VisiblePackBuilderTest {
     assertDoesNotContain(visibleGraph, 1)
   }
 
-  Test fun `filter by branch deny works with extra results from vcs provider`() {
+  @Test fun `filter by branch deny works with extra results from vcs provider`() {
     val graph = graph {
       1(3) *"master"  +null
       2(3) *"feature" +null

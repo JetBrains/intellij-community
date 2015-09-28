@@ -43,10 +43,10 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
                                                              private val smartStepIntoHandler: XSmartStepIntoHandler<*>?,
                                                              protected val executionResult: ExecutionResult?) : XDebugProcess(session) {
   protected val repeatStepInto: AtomicBoolean = AtomicBoolean()
-  volatile protected var lastStep: StepAction? = null
-  volatile protected var lastCallFrame: CallFrame? = null
-  volatile protected var isForceStep: Boolean = false
-  volatile protected var disableDoNotStepIntoLibraries: Boolean = false
+  @Volatile protected var lastStep: StepAction? = null
+  @Volatile protected var lastCallFrame: CallFrame? = null
+  @Volatile protected var isForceStep: Boolean = false
+  @Volatile protected var disableDoNotStepIntoLibraries: Boolean = false
 
   protected val urlToFileCache: ConcurrentMap<Url, VirtualFile> = ContainerUtil.newConcurrentMap<Url, VirtualFile>()
 
