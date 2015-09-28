@@ -90,7 +90,7 @@ public class ParenthesesUtils {
   }
 
   public static String getText(@NotNull PsiExpression expression, int precedence) {
-    if (getPrecedence(expression) > precedence) {
+    if (getPrecedence(expression) >= precedence) {
       return '(' + expression.getText() + ')';
     }
     return expression.getText();
