@@ -29,10 +29,10 @@ public class BinaryRequestHandlerTest {
   private val _chain = RuleChain
       .outerRule(fixtureManager)
 
-  Rule
+  @Rule
   public fun getChain(): RuleChain = _chain
 
-  Test
+  @Test
   public fun test() {
     val text = "Hello!"
     val result = AsyncPromise<String>()
@@ -42,7 +42,7 @@ public class BinaryRequestHandlerTest {
         channel.pipeline().addLast(object : Decoder() {
           override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
             val requiredLength = 4 + text.length()
-            val response = readContent(input, context, requiredLength) {(buffer, context, isCumulateBuffer) -> buffer.toString(buffer.readerIndex(), requiredLength, CharsetUtil.UTF_8) }
+            val response = readContent(input, context, requiredLength) {buffer, context, isCumulateBuffer -> buffer.toString(buffer.readerIndex(), requiredLength, CharsetUtil.UTF_8) }
             if (response != null) {
               result.setResult(response)
             }

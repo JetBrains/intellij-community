@@ -15,16 +15,16 @@
  */
 package com.intellij.vcs.log.graph.impl
 
-import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.TestGraphBuilder
-import com.intellij.vcs.log.graph.utils.UnsignedBitSet
+import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType
-import com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator
-import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
-import com.intellij.vcs.log.graph.graph
-import org.junit.Assert.*
-import org.junit.Test
 import com.intellij.vcs.log.graph.asTestGraphString
+import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
+import com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator
+import com.intellij.vcs.log.graph.graph
+import com.intellij.vcs.log.graph.utils.UnsignedBitSet
+import org.junit.Assert.assertEquals
+import org.junit.Test
 
 public class DottedFilterEdgesGeneratorTest {
 
@@ -43,7 +43,7 @@ public class DottedFilterEdgesGeneratorTest {
     assertEquals(expectedResultGraph.asTestGraphString(true), actualResultGraph.asTestGraphString(true))
   }
 
-  Test fun simple() = graph {
+  @Test fun simple() = graph {
     1(2)
     2.UNM(3)
     3()
@@ -52,7 +52,7 @@ public class DottedFilterEdgesGeneratorTest {
     3()
   }
 
-  Test fun simple2Up() = graph {
+  @Test fun simple2Up() = graph {
     1(3)
     2(3)
     3.UNM(4)
@@ -63,7 +63,7 @@ public class DottedFilterEdgesGeneratorTest {
     4()
   }
 
-  Test fun simple2Down() = graph {
+  @Test fun simple2Down() = graph {
     1(2)
     2.UNM(3, 4)
     3()
@@ -81,7 +81,7 @@ public class DottedFilterEdgesGeneratorTest {
   |\|\
   3 4 5
  */
-  Test fun downTree() = graph {
+  @Test fun downTree() = graph {
     0(1, 2)
     1.UNM(3, 4)
     2.UNM(4, 5)
@@ -102,7 +102,7 @@ public class DottedFilterEdgesGeneratorTest {
   \/
   5
  */
-  Test fun upTree() = graph {
+  @Test fun upTree() = graph {
     0(3)
     1(3, 4)
     2(4)
@@ -126,7 +126,7 @@ public class DottedFilterEdgesGeneratorTest {
   |/
   6
  */
-  Test fun simpleMerge() = graph {
+  @Test fun simpleMerge() = graph {
     1(2, 3)
     2(4)
     3(5)
@@ -140,7 +140,7 @@ public class DottedFilterEdgesGeneratorTest {
     6()
   }
 
-  Test fun simpleMerge2() = graph {
+  @Test fun simpleMerge2() = graph {
     1(2, 3)
     2.UNM(4)
     3.UNM(5)

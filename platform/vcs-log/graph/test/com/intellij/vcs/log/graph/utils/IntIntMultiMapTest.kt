@@ -16,7 +16,7 @@
 package com.intellij.vcs.log.graph.utils
 
 import com.intellij.util.containers.MultiMap
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 
@@ -72,7 +72,7 @@ class IntIntMultiMapTest {
 
   fun runTest(test: MapTester.() -> Unit) = MapTester().test()
 
-  Test fun simple() {
+  @Test fun simple() {
     runTest {
       putValue(2, 239)
       putValue(2, 17)
@@ -87,14 +87,14 @@ class IntIntMultiMapTest {
     }
   }
 
-  Test fun removeOneValue() {
+  @Test fun removeOneValue() {
     runTest {
       putValue(1, 2)
       remove(1, 2)
     }
   }
 
-  Test fun removeTwoValue() {
+  @Test fun removeTwoValue() {
     runTest {
       putValue(1, 2)
       putValue(1, 3)
@@ -103,7 +103,7 @@ class IntIntMultiMapTest {
     }
   }
 
-  Test fun addDifferentKeys() {
+  @Test fun addDifferentKeys() {
     runTest {
       putValue(1, 1)
       putValue(2, 10)
@@ -113,7 +113,7 @@ class IntIntMultiMapTest {
     }
   }
 
-  Test fun removeForNonExistedKey() {
+  @Test fun removeForNonExistedKey() {
     runTest {
       remove(1, 3)
 
