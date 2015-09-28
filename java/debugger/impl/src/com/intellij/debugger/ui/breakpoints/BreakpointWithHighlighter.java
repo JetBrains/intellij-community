@@ -326,7 +326,9 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
               ApplicationManager.getApplication().runReadAction(new Runnable() {
                 @Override
                 public void run() {
-                  updateCaches(debugProcess);
+                  if (!project.isDisposed()) {
+                    updateCaches(debugProcess);
+                  }
                 }
               });
               DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
