@@ -200,7 +200,7 @@ public class PyPackageManagementService extends PackageManagementService {
   }
 
   @Nullable
-  public static ErrorDescription toErrorDescription(@Nullable List<ExecutionException> exceptions, @NotNull Sdk sdk) {
+  public static ErrorDescription toErrorDescription(@Nullable List<ExecutionException> exceptions, @Nullable Sdk sdk) {
     if (exceptions != null && !exceptions.isEmpty() && !isCancelled(exceptions)) {
       return createDescription(exceptions.get(0), sdk);
     }
@@ -321,7 +321,7 @@ public class PyPackageManagementService extends PackageManagementService {
   }
 
   @NotNull
-  private static ErrorDescription createDescription(@NotNull ExecutionException e, @NotNull Sdk sdk) {
+  private static ErrorDescription createDescription(@NotNull ExecutionException e, @Nullable Sdk sdk) {
     if (e instanceof PyExecutionException) {
       final PyExecutionException ee = (PyExecutionException)e;
       final String stdoutCause = findErrorCause(ee.getStdout());
@@ -337,7 +337,7 @@ public class PyPackageManagementService extends PackageManagementService {
   }
 
   @Nullable
-  private static String findErrorSolution(@NotNull PyExecutionException e, @Nullable String cause, @NotNull Sdk sdk) {
+  private static String findErrorSolution(@NotNull PyExecutionException e, @Nullable String cause, @Nullable Sdk sdk) {
     if (cause != null) {
       if (StringUtil.containsIgnoreCase(cause, "SyntaxError")) {
         final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
@@ -350,7 +350,7 @@ public class PyPackageManagementService extends PackageManagementService {
       return "Make sure that you have installed Python development packages for your operating system.";
     }
 
-    if ("pip".equals(e.getCommand())) {
+    if ("pip".equals(e.getCommand()) && sdk != null) {
       return "Try to run this command from the system terminal. Make sure that you use the correct version of 'pip' " +
              "installed for your Python interpreter located at '" + sdk.getHomePath() + "'.";
     }

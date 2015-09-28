@@ -178,6 +178,6 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
 
   @Override
   protected boolean canUpgradePackage(InstalledPackage pyPackage) {
-    return myHasManagement;
+    return myHasManagement && !PyCondaPackageManagerImpl.PYTHON.equals(pyPackage.getName());
   }
 }

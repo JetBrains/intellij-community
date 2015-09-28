@@ -27,7 +27,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +50,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   @Override
   public boolean hasManagement(boolean cachedOnly) throws ExecutionException {
-    return getCondaExecutable(mySdk) != null;
+    return findCondaExecutable(mySdk) != null;
   }
 
   @Override
@@ -75,7 +74,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   }
 
   private ProcessOutput getCondaOutput(@NotNull final String command, List<String> arguments) throws ExecutionException {
-    final String condaExecutable = getCondaExecutable(mySdk);
+    final String condaExecutable = findCondaExecutable(mySdk);
 
     final String path = getCondaDirectory();
     if (path == null) throw new PyExecutionException("Empty conda name for " + mySdk, command, arguments);
@@ -163,7 +162,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   }
 
   @Nullable
-  public static String getCondaExecutable(Sdk sdk) {
+  public static String findCondaExecutable(Sdk sdk) {
     final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
     final VirtualFile homeDirectory = sdk.getHomeDirectory();
     if (homeDirectory == null) return null;
@@ -172,14 +171,13 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   }
 
   @NotNull
-  @Override
-  public String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException {
-    final String condaExecutable = getCondaExecutable(mySdk);
-    final String versionString = mySdk.getVersionString();
-    final LanguageLevel level = versionString != null ? LanguageLevel.fromPythonVersion(versionString) : LanguageLevel.PYTHON35;
+  public static String createVirtualEnv(@NotNull String destinationDir, String version) throws ExecutionException {
+    final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
+    final String condaExecutable = PyCondaPackageService.getCondaExecutable(condaName);
+    if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.<String>emptyList(), new ProcessOutput());
 
     final ArrayList<String> parameters = Lists.newArrayList(condaExecutable, "create", "-p", destinationDir,
-                                                            "python=" + level.toString(), "-y");
+                                                            "python=" + version, "-y");
 
     final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
     final Process process = commandLine.createProcess();

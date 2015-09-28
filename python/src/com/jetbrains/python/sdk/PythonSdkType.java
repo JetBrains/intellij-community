@@ -69,6 +69,7 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.facet.PythonFacetSettings;
+import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
@@ -311,6 +312,11 @@ public class PythonSdkType extends SdkType {
   public static boolean isVirtualEnv(Sdk sdk) {
     final String path = sdk.getHomePath();
     return path != null && getVirtualEnvRoot(path) != null;
+  }
+
+  public static boolean isCondaVirtualEnv(Sdk sdk) {
+    final String path = sdk.getHomePath();
+    return path != null && PyCondaPackageManagerImpl.findCondaExecutable(sdk) != null;
   }
 
   @Nullable
