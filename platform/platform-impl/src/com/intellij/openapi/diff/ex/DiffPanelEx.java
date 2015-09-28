@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Deprecated
 public interface DiffPanelEx extends DiffPanel, Disposable {
   @Nullable
   Editor getEditor1();

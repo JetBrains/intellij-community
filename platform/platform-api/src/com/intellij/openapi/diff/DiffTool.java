@@ -23,7 +23,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-
+/**
+ * @deprecated use {@link com.intellij.diff.DiffTool} instead
+ */
+@Deprecated
 public interface DiffTool {
   /**
    * @see DiffManager#getIdeaDiffTool()
