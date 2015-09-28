@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -77,15 +78,19 @@ public class MatchBraceAction extends EditorAction {
       }
 
       if (BraceMatchingUtil.matchBrace(text, fileType, iterator, true)) {
-        caret.removeSelection();
-        caret.moveToOffset(iterator.getEnd());
+        moveCaret(editor, caret, iterator.getEnd());
         return;
       }
       iterator = highlighter.createIterator(offset);
       if (BraceMatchingUtil.matchBrace(text, fileType, iterator, false)) {
-        caret.removeSelection();
-        caret.moveToOffset(iterator.getStart());
+        moveCaret(editor, caret, iterator.getStart());
       }
     }
+  }
+
+  protected static void moveCaret(Editor editor, Caret caret, int offset) {
+    caret.removeSelection();
+    caret.moveToOffset(offset);
+    EditorModificationUtil.scrollToCaret(editor);
   }
 }
