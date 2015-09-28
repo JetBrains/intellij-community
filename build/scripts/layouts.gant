@@ -651,7 +651,7 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
     }
 
     layoutPlugin("settings-repository") {
-      fileset(dir: "$home/plugins/settings-repository/lib", excludes: "**/*-sources.jar,**/*.xml,**/com/**,**/org/**,**/java/**")
+      fileset(dir: "$home/plugins/settings-repository/lib", excludes: "**/*-sources.jar,**/*.xml,**/com/**,**/org/**,**/java/**,**/dev/**")
     }
   }
 }
