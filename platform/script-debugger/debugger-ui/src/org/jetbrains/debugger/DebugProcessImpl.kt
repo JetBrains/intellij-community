@@ -83,7 +83,10 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
 
   override final fun getSmartStepIntoHandler() = smartStepIntoHandler
 
-  override final fun getBreakpointHandlers() = _breakpointHandlers
+  override final fun getBreakpointHandlers() = when (connection.state.status) {
+    ConnectionStatus.DISCONNECTED, ConnectionStatus.DETACHED, ConnectionStatus.CONNECTION_FAILED -> XBreakpointHandler.EMPTY_ARRAY
+    else -> _breakpointHandlers
+  }
 
   override final fun getEditorsProvider() = editorsProvider
 
