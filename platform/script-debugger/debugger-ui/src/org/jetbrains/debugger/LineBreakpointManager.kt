@@ -37,7 +37,7 @@ public abstract class LineBreakpointManager(private val vm: Vm, private val debu
       override fun resolved(breakpoint: Breakpoint) {
         var breakpoints = synchronized (lock) { vmToIdeBreakpoint.get(breakpoint) }
         for (ideBreakpoint in breakpoints) {
-          debugProcess.getSession().updateBreakpointPresentation(ideBreakpoint, AllIcons.Debugger.Db_verified_breakpoint, null)
+          debugProcess.session.updateBreakpointPresentation(ideBreakpoint, AllIcons.Debugger.Db_verified_breakpoint, null)
         }
       }
 
@@ -47,13 +47,13 @@ public abstract class LineBreakpointManager(private val vm: Vm, private val debu
         }
 
         if (synchronized (lock) { runToLocationBreakpoints.remove(breakpoint) }) {
-          debugProcess.getSession().reportError("Cannot run to cursor: ${errorMessage!!}")
+          debugProcess.session.reportError("Cannot run to cursor: ${errorMessage!!}")
           return
         }
 
         var breakpoints = synchronized (lock) { vmToIdeBreakpoint.get(breakpoint) }
         for (ideBreakpoint in breakpoints) {
-          debugProcess.getSession().updateBreakpointPresentation(ideBreakpoint, AllIcons.Debugger.Db_invalid_breakpoint, errorMessage)
+          debugProcess.session.updateBreakpointPresentation(ideBreakpoint, AllIcons.Debugger.Db_invalid_breakpoint, errorMessage)
         }
       }
     })
@@ -71,7 +71,7 @@ public abstract class LineBreakpointManager(private val vm: Vm, private val debu
       for (vmBreakpoint in target) {
         if (!vmBreakpoint.enabled) {
           vmBreakpoint.enabled = true
-          breakpointManager.flush(vmBreakpoint).rejected { debugProcess.getSession().updateBreakpointPresentation(breakpoint, AllIcons.Debugger.Db_invalid_breakpoint, it.getMessage()) }
+          breakpointManager.flush(vmBreakpoint).rejected { debugProcess.session.updateBreakpointPresentation(breakpoint, AllIcons.Debugger.Db_invalid_breakpoint, it.getMessage()) }
         }
       }
     }
@@ -155,8 +155,8 @@ public abstract class LineBreakpointManager(private val vm: Vm, private val debu
   protected fun doSetBreakpoint(breakpoint: XLineBreakpoint<*>?, location: Location, isTemporary: Boolean): Breakpoint {
     val breakpointManager = vm.getBreakpointManager()
     val target = createTarget(breakpoint, breakpointManager, location, isTemporary)
-    val condition = breakpoint?.getConditionExpression()
-    return breakpointManager.setBreakpoint(target, location.getLine(), location.getColumn(), condition?.getExpression(), Breakpoint.EMPTY_VALUE, true)
+    val condition = breakpoint?.conditionExpression
+    return breakpointManager.setBreakpoint(target, location.line, location.column, condition?.expression, Breakpoint.EMPTY_VALUE, true)
   }
 
   protected abstract fun createTarget(breakpoint: XLineBreakpoint<*>?, breakpointManager: BreakpointManager, location: Location, isTemporary: Boolean): BreakpointTarget
@@ -200,7 +200,7 @@ public abstract class LineBreakpointManager(private val vm: Vm, private val debu
 
   public fun clearRunToLocationBreakpoints() {
     var breakpoints = synchronized (lock) {
-      if (runToLocationBreakpoints.isEmpty()) {
+      if (runToLocationBreakpoints.isEmpty) {
         return@clearRunToLocationBreakpoints
       }
       var breakpoints = runToLocationBreakpoints.toArray<Breakpoint>(arrayOfNulls<Breakpoint>(runToLocationBreakpoints.size()))
