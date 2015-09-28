@@ -869,6 +869,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
     Collection<FileEditor> activeTextEditors = new THashSet<FileEditor>(editors.size());
     for (Editor editor : editors) {
+      if (editor.isDisposed()) continue;
       TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
       activeTextEditors.add(textEditor);
     }
