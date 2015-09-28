@@ -6,17 +6,17 @@ import org.jetbrains.annotations.NotNull;
 public class CompilerTaskFactoryImpl implements CompilerTaskFactory {
   private Project myProject;
 
-  public CompilerTaskFactoryImpl(@NotNull  Project project) {
+  public CompilerTaskFactoryImpl(@NotNull Project project) {
     myProject = project;
   }
 
   @NotNull
   @Override
   public CompilerTaskBase createCompilerTask(String contentName,
-                                         final boolean headlessMode,
-                                         boolean forceAsync,
-                                         boolean waitForPreviousSession,
-                                         boolean compilationStartedAutomatically) {
-    return new CompilerTask(myProject, contentName, headlessMode, forceAsync, waitForPreviousSession, compilationStartedAutomatically);
+                                             final boolean headlessMode,
+                                             boolean forceAsync,
+                                             boolean waitForPreviousSession,
+                                             boolean compilationStartedAutomatically) {
+    return new CompilerTask(myProject, contentName, headlessMode, forceAsync, waitForPreviousSession, compilationStartedAutomatically, true);
   }
 }

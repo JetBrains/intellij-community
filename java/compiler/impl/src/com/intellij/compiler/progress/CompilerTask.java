@@ -85,15 +85,30 @@ public class CompilerTask extends CompilerTaskBase {
   @Deprecated
   public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync,
                       boolean waitForPreviousSession) {
-    this(project, contentName, headlessMode, forceAsync, waitForPreviousSession, false);
+    this(project, contentName, headlessMode, forceAsync, waitForPreviousSession, false, true);
   }
 
+
+  /**
+   * @deprecated please use {@link CompilerTaskFactory} instead of direct call to this constructor
+   */
+  @Deprecated
   public CompilerTask(@NotNull Project project,
                       String contentName,
                       final boolean headlessMode,
                       boolean forceAsync,
                       boolean waitForPreviousSession,
                       boolean compilationStartedAutomatically) {
+    this(project, contentName, headlessMode, forceAsync, waitForPreviousSession, compilationStartedAutomatically, true);
+  }
+
+  protected CompilerTask(@NotNull Project project,
+                         String contentName,
+                         final boolean headlessMode,
+                         boolean forceAsync,
+                         boolean waitForPreviousSession,
+                         boolean compilationStartedAutomatically,
+                         boolean ignored) {
     super(project, contentName, waitForPreviousSession);
     myContentName = contentName;
     myHeadlessMode = headlessMode;
