@@ -20,7 +20,6 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.oio.OioEventLoopGroup
-import org.jetbrains.concurrency.Promise as OJCPromise
 import org.jetbrains.jsonProtocol.Request
 import org.jetbrains.rpc.MessageProcessor
 import org.jetbrains.rpc.MessageWriter
@@ -29,6 +28,7 @@ import org.jetbrains.util.concurrency.Promise
 import org.jetbrains.util.concurrency.ResolvedPromise
 import org.jetbrains.util.concurrency.catchError
 import java.util.concurrent.TimeUnit
+import org.jetbrains.concurrency.Promise as OJCPromise
 
 public open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: MessageProcessor) : MessageWriter(), AttachStateManager {
   private @Volatile var channel: Channel? = null
@@ -37,12 +37,12 @@ public open class StandaloneVmHelper(private val vm: Vm, private val messageProc
 
   public fun getChannelIfActive(): Channel? {
     val currentChannel = channel
-    return if (currentChannel == null || !currentChannel.isActive()) null else currentChannel
+    return if (currentChannel == null || !currentChannel.isActive) null else currentChannel
   }
 
   public fun write(content: Any): Boolean {
     val channel = getChannelIfActive()
-    return channel != null && !channel.writeAndFlush(content).isCancelled()
+    return channel != null && !channel.writeAndFlush(content).isCancelled
   }
 
   public interface VmEx : Vm {
