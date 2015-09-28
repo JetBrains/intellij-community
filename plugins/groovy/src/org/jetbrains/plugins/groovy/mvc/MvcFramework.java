@@ -634,6 +634,10 @@ public abstract class MvcFramework {
     return res;
   }
 
+  public boolean isUpgradeActionSupported(Module module) {
+    return true;
+  }
+
   @Nullable
   public static MvcFramework getInstance(@Nullable final Module module) {
     if (module == null) {
