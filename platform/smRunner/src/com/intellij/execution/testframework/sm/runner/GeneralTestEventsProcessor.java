@@ -23,12 +23,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.TransferToEDTQueue;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -241,7 +238,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public Condition getDisposedCondition() {
-    return Conditions.alwaysFalse();
+    return myProject.getDisposed();
   }
 
   public void addToInvokeLater(final Runnable runnable) {
