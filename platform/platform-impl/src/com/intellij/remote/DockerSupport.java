@@ -49,6 +49,9 @@ public abstract class DockerSupport {
   public abstract List<String> getVMs() throws DockerMachineException, DockerMachineCommandException;
 
   @NotNull
+  public abstract String getStatus(@NotNull String machineName);
+
+  @NotNull
   public abstract ConnectionInfo getConnectionInfo(@NotNull String machineName) throws DockerMachineException, DockerMachineCommandException;
 
   @NotNull

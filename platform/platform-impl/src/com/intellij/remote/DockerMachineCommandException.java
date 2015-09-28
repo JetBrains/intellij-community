@@ -27,6 +27,10 @@ public class DockerMachineCommandException extends RuntimeException {
     super(buildErrorMessage(exitCode, stderr));
   }
 
+  public DockerMachineCommandException(String message) {
+    super(message);
+  }
+
   @NotNull
   private static String buildErrorMessage(int exitCode, String stderr) {
     StringBuilder sb = new StringBuilder()
