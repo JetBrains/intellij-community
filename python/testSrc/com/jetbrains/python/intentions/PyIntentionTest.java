@@ -686,6 +686,11 @@ public class  PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.convert.static.method.to.function"));
   }
 
+  // PY-6637
+  public void testMakeLocalFunctionTopLevelSimple() {
+    doTest(PyBundle.message("INTN.convert.local.function.to.top.level.function"));
+  }
+
   private void doDocStubTest(@NotNull DocStringFormat format) {
     runWithDocStringFormat(format, new Runnable() {
       @Override
