@@ -175,4 +175,9 @@ public class OfflineProblemDescriptor {
   public String getModuleName() {
     return myModuleName;
   }
+
+  @Override
+  public String toString() {
+    return myDescription;
+  }
 }
