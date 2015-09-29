@@ -264,7 +264,6 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   }
 
   public FileEditorState getState(@NotNull VirtualFile file, final FileEditorProvider provider) {
-    validateEntries();
     final HistoryEntry entry = getEntry(file);
     return entry != null ? entry.getState(provider) : null;
   }
@@ -273,7 +272,6 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
    * @return may be null
    */
   public FileEditorProvider getSelectedProvider(final VirtualFile file) {
-    validateEntries();
     final HistoryEntry entry = getEntry(file);
     return entry != null ? entry.mySelectedProvider : null;
   }
