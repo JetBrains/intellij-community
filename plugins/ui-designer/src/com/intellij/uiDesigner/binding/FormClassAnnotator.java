@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import java.util.List;
 public class FormClassAnnotator implements Annotator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.binding.FormClassAnnotator");
 
+  @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof PsiField) {
       PsiField field = (PsiField) psiElement;
@@ -76,20 +77,24 @@ public class FormClassAnnotator implements Annotator {
       final String message = UIDesignerBundle.message("field.is.overwritten.by.generated.code", field.getName());
       Annotation annotation = holder.createWarningAnnotation(field.getInitializer(), message);
       annotation.registerFix(new IntentionAction() {
+        @Override
         @NotNull
         public String getText() {
           return message;
         }
 
+        @Override
         @NotNull
         public String getFamilyName() {
           return UIBundle.message("remove.field.initializer.quick.fix");
         }
 
+        @Override
         public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
           return field.getInitializer() != null;
         }
 
+        @Override
         public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
           if (!FileModificationService.getInstance().preparePsiElementForWrite(field)) return;
           final PsiExpression initializer = field.getInitializer();
@@ -97,6 +102,7 @@ public class FormClassAnnotator implements Annotator {
           initializer.delete();
         }
 
+        @Override
         public boolean startInWriteAction() {
           return true;
         }
