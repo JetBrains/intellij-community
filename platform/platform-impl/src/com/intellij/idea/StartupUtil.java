@@ -244,6 +244,7 @@ public class StartupUtil {
     finally { writer.close(); }
   }
 
+  @SuppressWarnings("SSBasedInspection")
   private static void delete(File ideTempFile) {
     if (!FileUtilRt.delete(ideTempFile)) {
       ideTempFile.deleteOnExit();
@@ -251,25 +252,36 @@ public class StartupUtil {
   }
 
   private synchronized static boolean lockSystemFolders(String[] args) {
-    assert ourLock == null;
+    if (ourLock != null) {
+      throw new AssertionError();
+    }
+
     ourLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
 
-    SocketLock.ActivateStatus activateStatus = ourLock.lock(args);
-    if (activateStatus != SocketLock.ActivateStatus.NO_INSTANCE) {
-      if (activateStatus != null && (Main.isHeadless() || activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE)) {
-        String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.";
-        Main.showMessage("Too Many Instances", message, true);
-      }
+    SocketLock.ActivateStatus status;
+    try {
+      status = ourLock.lock(args);
+    }
+    catch (Exception e) {
+      Main.showMessage("Cannot Lock System Folders", e);
       return false;
     }
 
-    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-      @Override
-      public void run() {
-        ourLock.dispose();
-      }
-    });
-    return true;
+    if (status == SocketLock.ActivateStatus.NO_INSTANCE) {
+      ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+        @Override
+        public void run() {
+          ourLock.dispose();
+        }
+      });
+      return true;
+    }
+    else if (Main.isHeadless() || status == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
+      String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.";
+      Main.showMessage("Too Many Instances", message, true);
+    }
+
+    return false;
   }
 
   private static void fixProcessEnvironment(Logger log) {
