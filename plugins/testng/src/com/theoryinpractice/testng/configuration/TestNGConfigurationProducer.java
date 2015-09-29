@@ -42,6 +42,11 @@ public abstract class TestNGConfigurationProducer extends JavaRunConfigurationPr
     super(configurationType);
   }
 
+  @SuppressWarnings("unused") //used in kotlin
+  public TestNGConfigurationProducer() {
+    super(TestNGConfigurationType.getInstance());
+  }
+  
   @Override
   public boolean isConfigurationFromContext(TestNGConfiguration testNGConfiguration, ConfigurationContext context) {
     if (RunConfigurationProducer.getInstance(AbstractTestNGPatternConfigurationProducer.class).isMultipleElementsSelected(context)) {

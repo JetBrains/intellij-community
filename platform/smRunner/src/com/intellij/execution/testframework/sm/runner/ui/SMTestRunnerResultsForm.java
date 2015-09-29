@@ -117,6 +117,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private AbstractTestProxy myLastSelected;
   private Alarm myUpdateQueue;
   private Set<Update> myRequests = Collections.synchronizedSet(new HashSet<Update>());
+  private boolean myDisposed = false;
 
   public SMTestRunnerResultsForm(@NotNull final JComponent console,
                                  final TestConsoleProperties consoleProperties) {
@@ -337,13 +338,14 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     addToHistory(testsRoot, myProperties, this);
   }
 
-  private static void addToHistory(final SMTestProxy.SMRootTestProxy root,
-                                   TestConsoleProperties consoleProperties,
-                                   Disposable parentDisposable) {
+  private void addToHistory(final SMTestProxy.SMRootTestProxy root,
+                            TestConsoleProperties consoleProperties,
+                            Disposable parentDisposable) {
     final RunProfile configuration = consoleProperties.getConfiguration();
     if (configuration instanceof RunConfiguration && 
         !(consoleProperties instanceof ImportedTestConsoleProperties) &&
-        !ApplicationManager.getApplication().isUnitTestMode()) {
+        !ApplicationManager.getApplication().isUnitTestMode() &&
+        !myDisposed) {
       final MySaveHistoryTask backgroundable = new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration);
       final BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(backgroundable);
       Disposer.register(parentDisposable, new Disposable() {
@@ -532,6 +534,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myShowStatisticForProxyHandler = null;
     myEventListeners.clear();
     myStatisticsPane.doDispose();
+    myDisposed = true;
   }
 
   public void showStatisticsForSelectedProxy() {

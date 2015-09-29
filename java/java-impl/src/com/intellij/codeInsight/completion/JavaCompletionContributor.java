@@ -768,7 +768,8 @@ public class JavaCompletionContributor extends CompletionContributor {
       iterator.advance();
     }
 
-    if (!iterator.atEnd() && (iterator.getTokenType() == JavaTokenType.LPARENTH)) {
+    if (!iterator.atEnd() && iterator.getTokenType() == JavaTokenType.LPARENTH && PsiTreeUtil.getParentOfType(ref, PsiExpression.class, PsiClass.class) == null) {
+      // looks like a method declaration, e.g. StringBui<caret>methodName() inside a class
       return true;
     }
 

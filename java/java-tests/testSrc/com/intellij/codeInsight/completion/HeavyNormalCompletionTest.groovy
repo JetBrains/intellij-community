@@ -117,7 +117,7 @@ public class HeavyNormalCompletionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.completeBasic();
     assertOrderedEquals(myFixture.getLookupElementStrings(), "getAaa", "getBbb");
     myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getCaretModel().getOffset() + 2);
-    assertNull(myFixture.completeBasic());
+    assert myFixture.completeBasic() == null
   }
 
   public void testQualifyInaccessibleClassName() throws Exception {
