@@ -39,7 +39,7 @@ class ModuleStoreTest {
       }
     }
 
-    private fun VirtualFile.loadModule() = runWriteAction { ModuleManager.getInstance(projectRule.project).loadModule(getPath()) }
+    private fun VirtualFile.loadModule() = runWriteAction { ModuleManager.getInstance(projectRule.project).loadModule(path) }
 
     fun Path.createModule() = projectRule.createModule(this)
   }
@@ -51,8 +51,7 @@ class ModuleStoreTest {
 
   @Test fun `set option`() {
     val moduleFile = runWriteAction {
-      VfsTestUtil.createFile(tempDirManager.newVirtualDirectory("module"), "test.iml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-        "<module type=\"JAVA_MODULE\" foo=\"bar\" version=\"4\" />")
+      VfsTestUtil.createFile(tempDirManager.newVirtualDirectory("module"), "test.iml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<module type=\"JAVA_MODULE\" foo=\"bar\" version=\"4\" />")
     }
 
     moduleFile.loadModule().useAndDispose {
@@ -117,7 +116,7 @@ class ModuleStoreTest {
       assertThat(moduleFile).isRegularFile()
 
       val virtualFile = LocalFileSystem.getInstance().findFileByPath(modulePath)!!
-      val newData = moduleFile.readText().replace("<content url=\"file://\$MODULE_DIR$/${name}\" />\n", "").toByteArray()
+      val newData = moduleFile.readText().replace("<content url=\"file://\$MODULE_DIR$/$name\" />\n", "").toByteArray()
       runWriteAction {
         virtualFile.setBinaryContent(newData)
       }
