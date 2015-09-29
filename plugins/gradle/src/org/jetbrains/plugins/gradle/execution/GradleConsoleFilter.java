@@ -48,13 +48,25 @@ public class GradleConsoleFilter implements Filter {
 
   @Nullable
   @Override
-  public Result applyFilter(String line, int entireLength) {
-    final String filePrefix = "Build file '";
-    final String linePrefix = "' line: ";
-    int filePrefixIndex = StringUtil.indexOf(line, filePrefix);
-    if (filePrefixIndex == -1) {
+  public Result applyFilter(final String line, final int entireLength) {
+    String[] filePrefixes = new String[]{"Build file '", "build file '"};
+    String[] linePrefixes = new String[]{"' line: ", "': "};
+    String filePrefix = null;
+    String linePrefix = null;
+    for (int i = 0; i < filePrefixes.length; i++) {
+      int filePrefixIndex = StringUtil.indexOf(line, filePrefixes[i]);
+      if (filePrefixIndex != -1) {
+        filePrefix = filePrefixes[i];
+        linePrefix = linePrefixes[i];
+        break;
+      }
+    }
+
+    if (filePrefix == null || linePrefix == null) {
       return null;
     }
+
+    int filePrefixIndex = StringUtil.indexOf(line, filePrefix);
 
     final String fileAndLineNumber = line.substring(filePrefix.length() + filePrefixIndex);
     int linePrefixIndex = StringUtil.indexOf(fileAndLineNumber, linePrefix);
@@ -66,6 +78,16 @@ public class GradleConsoleFilter implements Filter {
     final String fileName = fileAndLineNumber.substring(0, linePrefixIndex);
     myFilteredFileName = fileName;
     String lineNumberStr = fileAndLineNumber.substring(linePrefixIndex + linePrefix.length(), fileAndLineNumber.length()).trim();
+    int lineNumberEndIndex = 0;
+    for (int i = 0; i < lineNumberStr.length(); i++) {
+      if (Character.isDigit(lineNumberStr.charAt(i))) {
+        lineNumberEndIndex = i;
+      }
+      else {
+        break;
+      }
+    }
+    lineNumberStr = lineNumberStr.substring(0, lineNumberEndIndex + 1);
     int lineNumber;
     try {
       lineNumber = Integer.parseInt(lineNumberStr);
@@ -80,11 +102,9 @@ public class GradleConsoleFilter implements Filter {
       return null;
     }
 
-    int textStartOffset = entireLength - line.length() + filePrefix.length();
+    int textStartOffset = entireLength - line.trim().length() + filePrefix.length() - 1;
     int highlightEndOffset = textStartOffset + fileName.length();
-
     OpenFileHyperlinkInfo info = new OpenFileHyperlinkInfo(myProject, file, Math.max(lineNumber - 1, 0));
-
     TextAttributes attributes = HYPERLINK_ATTRIBUTES.clone();
     if (!ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file)) {
       Color color = UIUtil.getInactiveTextColor();
