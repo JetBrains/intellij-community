@@ -20,7 +20,6 @@
   <xi:include href="/META-INF/coverage-common-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationExtension implementation="com.intellij.execution.coverage.CoverageJavaRunConfigurationExtension"/>
-    <!--<coverageRunner implementation="com.intellij.coverage.CoberturaCoverageRunner"/>-->
     <coverageRunner implementation="com.intellij.coverage.IDEACoverageRunner"/>
     <coverageRunner implementation="com.intellij.coverage.JaCoCoCoverageRunner"/>
     <coverageEngine implementation="com.intellij.coverage.JavaCoverageEngine" order = "last"/>

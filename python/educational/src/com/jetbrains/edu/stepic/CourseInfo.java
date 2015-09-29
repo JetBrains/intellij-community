@@ -69,8 +69,11 @@ public class CourseInfo {
   }
 
   public static class Author {
-    String first_name;
-    String last_name;
+    int id;
+    String first_name = "";
+    String last_name = "";
+
+    public Author() {}
 
     public Author(String firstName, String lastName) {
       first_name = firstName;
@@ -80,6 +83,10 @@ public class CourseInfo {
     public String getName() {
       return StringUtil.join(new String[]{first_name, last_name}, " ");
     }
+
+    public int getId() {
+      return id;
+    }
   }
 
   public void setName(String name) {
@@ -88,6 +95,11 @@ public class CourseInfo {
 
   public void setAuthors(List<Author> authors) {
     myAuthors = authors;
+    for (Author author : authors) {
+      if (author.id > 0) {
+        instructors.add(author.id);
+      }
+    }
   }
 
   public void addAuthor(Author author) {

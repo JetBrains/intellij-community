@@ -138,6 +138,18 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testStaticImportOfObjectsToString() throws Exception {
+    doTest();
+  }
+
+  public void testConflictsWithRawQualifier() throws Exception {
+    doTest();
+  }
+
+  public void testIgnoreCandidatesWithLowerApplicabilityLevel() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }

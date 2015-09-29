@@ -3219,4 +3219,20 @@ public void testSCR260() throws Exception {
                "    };\n\n\n" +
                "}  ");
   }
+  
+  public void testReformatPackageAnnotation() {
+    doTextTest(
+      "@ParametersAreNonnullByDefault package com.example;",
+      "@ParametersAreNonnullByDefault\n" +
+      "package com.example;"
+    );
+    
+    doTextTest(
+      "        @ParametersAreNonnullByDefault\n" +
+      "package com.example;",
+      "@ParametersAreNonnullByDefault\n" +
+      "package com.example;"
+    );
+  }
+  
 }

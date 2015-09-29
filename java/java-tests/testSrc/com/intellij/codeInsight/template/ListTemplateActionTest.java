@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,17 @@ public class ListTemplateActionTest extends LightCodeInsightFixtureTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    addTemplate("simple", "simple template text", "description");
-    addTemplate("complex key", "complex template text", "");
-    addTemplate("template.with.desc", "template with description", "desc");
+    addTemplate("simple", "simple template text", "description", "test");
+    addTemplate("complex key", "complex template text", "", "test");
+    addTemplate("template.with.desc", "template with description", "desc", "test");
+    
+    addTemplate("duplicateKey", "template with description", "desc", "test1");
+    addTemplate("duplicateKey", "template with description", "desc", "test2");
   }
 
-  private void addTemplate(String key, String text, String description) {
+  private void addTemplate(String key, String text, String description, String group) {
     TemplateManager manager = TemplateManager.getInstance(getProject());
-    TemplateImpl template = (TemplateImpl)manager.createTemplate(key, "test", text);
+    TemplateImpl template = (TemplateImpl)manager.createTemplate(key, group, text);
     template.setDescription(description);
     TemplateContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.class);
     template.getTemplateContext().setEnabled(contextType, true);
@@ -51,6 +54,12 @@ public class ListTemplateActionTest extends LightCodeInsightFixtureTestCase {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/list/";
   }
 
+  public void testWithSameKeys() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    new ListTemplatesAction().actionPerformedImpl(myFixture.getProject(), myFixture.getEditor());
+    assertSameElements(myFixture.getLookupElementStrings(), "duplicateKey", "duplicateKey");
+  }
+  
   public void testWithoutPrefix() {
     doTest("simple");
   }

@@ -20,5 +20,6 @@
     <orderEntry type="module" module-name="interactive-learning" />
     <orderEntry type="module" module-name="interactive-learning-python" />
     <orderEntry type="module" module-name="hg4idea" />
+    <orderEntry type="module" module-name="ipnb" />
   </component>
 </module>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,20 @@
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,6 +38,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,12 +51,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: Jan 20, 2005
- */
-public class CustomActionsSchema implements ExportableComponent, NamedJDOMExternalizable {
-
+@State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage(file = "customization.xml"))
+public class CustomActionsSchema implements PersistentStateComponent<Element> {
   @NonNls private static final String ACTIONS_SCHEMA = "custom_actions_schema";
   @NonNls private static final String ACTIVE = "active";
   @NonNls private static final String ELEMENT_ACTION = "action";
@@ -62,14 +61,16 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
 
   private final Map<String, String> myIconCustomizations = new HashMap<String, String>();
 
-  private ArrayList<ActionUrl> myActions = new ArrayList<ActionUrl>();
+  private List<ActionUrl> myActions = new ArrayList<ActionUrl>();
 
-  private final HashMap<String , ActionGroup> myIdToActionGroup = new HashMap<String, ActionGroup>();
+  private final Map<String, ActionGroup> myIdToActionGroup = new HashMap<String, ActionGroup>();
 
   private final List<Pair> myIdToNameList = new ArrayList<Pair>();
 
   @NonNls private static final String GROUP = "group";
-  private static final Logger LOG = Logger.getInstance("#" + CustomActionsSchema.class.getName());
+  private static final Logger LOG = Logger.getInstance(CustomActionsSchema.class);
+
+  private boolean isFirstLoadState = true;
 
   public CustomActionsSchema() {
     myIdToNameList.add(new Pair(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.MAIN_MENU_TITLE));
@@ -106,11 +107,12 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
     resortActions();
   }
 
-  public ArrayList<ActionUrl> getActions() {
+  @NotNull
+  public List<ActionUrl> getActions() {
     return myActions;
   }
 
-  public void setActions(final ArrayList<ActionUrl> actions) {
+  public void setActions(@NotNull List<ActionUrl> actions) {
     myActions = actions;
     resortActions();
   }
@@ -136,9 +138,11 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
   }
 
   public boolean isModified(CustomActionsSchema schema) {
-    final ArrayList<ActionUrl> storedActions = schema.getActions();
+    List<ActionUrl> storedActions = schema.getActions();
     if (ApplicationManager.getApplication().isUnitTestMode() && !storedActions.isEmpty()) {
+      //noinspection UseOfSystemOutOrSystemErr
       System.err.println("stored: " + storedActions.toString());
+      //noinspection UseOfSystemOutOrSystemErr
       System.err.println("actual: " + getActions().toString());
     }
     if (storedActions.size() != getActions().size()) {
@@ -156,12 +160,19 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
     return false;
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
+  @Override
+  public void loadState(Element element) {
+    try {
+      DefaultJDOMExternalizer.readExternal(this, element);
+    }
+    catch (InvalidDataException e) {
+      throw new RuntimeException(e);
+    }
+
     Element schElement = element;
     final String activeName = element.getAttributeValue(ACTIVE);
     if (activeName != null) {
-      for (Element toolbarElement : (Iterable<Element>)element.getChildren(ACTIONS_SCHEMA)) {
+      for (Element toolbarElement : element.getChildren(ACTIONS_SCHEMA)) {
         for (Object o : toolbarElement.getChildren("option")) {
           if (Comparing.strEqual(((Element)o).getAttributeValue("name"), "myName") &&
               Comparing.strEqual(((Element)o).getAttributeValue("value"), activeName)) {
@@ -173,27 +184,76 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
     }
     for (Object groupElement : schElement.getChildren(GROUP)) {
       ActionUrl url = new ActionUrl();
-      url.readExternal((Element)groupElement);
+      try {
+        url.readExternal((Element)groupElement);
+      }
+      catch (InvalidDataException e) {
+        throw new RuntimeException(e);
+      }
       myActions.add(url);
     }
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      //noinspection UseOfSystemOutOrSystemErr
       System.err.println("read custom actions: " + myActions.toString());
     }
-    readIcons(element);
-  }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-    writeActions(element);
-    writeIcons(element);
-  }
-
-  private void writeActions(Element element) throws WriteExternalException {
-    for (ActionUrl group : myActions) {
-      Element groupElement = new Element(GROUP);
-      group.writeExternal(groupElement);
-      element.addContent(groupElement);
+    for (Element action : element.getChildren(ELEMENT_ACTION)) {
+      String actionId = action.getAttributeValue(ATTRIBUTE_ID);
+      String iconPath = action.getAttributeValue(ATTRIBUTE_ICON);
+      if (actionId != null){
+        myIconCustomizations.put(actionId, iconPath);
+      }
     }
+
+    final boolean reload = !isFirstLoadState;
+    if (isFirstLoadState) {
+      isFirstLoadState = false;
+    }
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        initActionIcons();
+
+        if (reload) {
+          setCustomizationSchemaForCurrentProjects();
+        }
+      }
+    });
+  }
+
+  public static void setCustomizationSchemaForCurrentProjects() {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
+      if (frame != null) {
+        frame.updateView();
+      }
+    }
+
+    IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(null);
+    if (frame != null) {
+      frame.updateView();
+    }
+  }
+
+  @Override
+  public Element getState() {
+    Element element = new Element("state");
+    try {
+      //noinspection deprecation
+      DefaultJDOMExternalizer.writeExternal(this, element);
+      for (ActionUrl group : myActions) {
+        Element groupElement = new Element(GROUP);
+        group.writeExternal(groupElement);
+        element.addContent(groupElement);
+      }
+    }
+    catch (WriteExternalException e) {
+      throw new RuntimeException(e);
+    }
+    writeIcons(element);
+    return element;
   }
 
   public AnAction getCorrectedAction(String id) {
@@ -211,15 +271,6 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
       }
     }
     return myIdToActionGroup.get(id);
-  }
-
-  public void resetMainActionGroups() {
-    for (Pair pair : myIdToNameList) {
-      final ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(pair.first);
-      if (actionGroup != null) { //J2EE/Commander plugin was disabled
-        myIdToActionGroup.put(pair.first, CustomizationUtil.correctActionGroup(actionGroup, this, pair.second, pair.second));
-      }
-    }
   }
 
   public void fillActionGroups(DefaultMutableTreeNode root){
@@ -290,22 +341,6 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
     return path == null ? "" : path;
   }
 
-  private void readIcons(Element parent) {
-    for (Object actionO : parent.getChildren(ELEMENT_ACTION)) {
-      Element action = (Element)actionO;
-      final String actionId = action.getAttributeValue(ATTRIBUTE_ID);
-      final String iconPath = action.getAttributeValue(ATTRIBUTE_ICON);
-      if (actionId != null){
-        myIconCustomizations.put(actionId, iconPath);
-      }
-    }
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        initActionIcons();
-      }
-    });
-  }
-
   private void writeIcons(Element parent) {
     for (String actionId : myIconCustomizations.keySet()) {
       Element action = new Element(ELEMENT_ACTION);
@@ -333,37 +368,20 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
           catch (IOException e) {
             LOG.debug(e);
           }
-          icon = image != null ? IconLoader.getIcon(image) : null;
+          icon = image == null ? null : new JBImageIcon(image);
         }
         else {
           icon = AllIcons.Toolbar.Unknown;
         }
-        if (anAction.getTemplatePresentation() != null) {
-          anAction.getTemplatePresentation().setIcon(icon);
-          anAction.getTemplatePresentation().setDisabledIcon(IconLoader.getDisabledIcon(icon));
-          anAction.setDefaultIcon(false);
-        }
+        anAction.getTemplatePresentation().setIcon(icon);
+        anAction.getTemplatePresentation().setDisabledIcon(IconLoader.getDisabledIcon(icon));
+        anAction.setDefaultIcon(false);
       }
     }
     final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(null);
     if (frame != null) {
       frame.updateView();
     }
-  }
-
-
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
-  }
-
-  @NotNull
-  public String getPresentableName() {
-    return IdeBundle.message("title.custom.actions.schemas");
-  }
-
-  public String getExternalFileName() {
-    return "customization";
   }
 
   private static class Pair {
@@ -374,6 +392,8 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
       this.first = first;
       this.second = second;
     }
+
+
 
     public int hashCode() {
       return first.hashCode();
@@ -387,7 +407,7 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
   private static class ActionUrlComparator implements Comparator<ActionUrl> {
     public static ActionUrlComparator INSTANCE = new ActionUrlComparator();
     private static final int DELETED = 1;
-    private static final int ADDED = 2;
+    @Override
     public int compare(ActionUrl u1, ActionUrl u2) {
       final int w1 = getEquivalenceClass(u1);
       final int w2 = getEquivalenceClass(u2);

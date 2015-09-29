@@ -40,11 +40,11 @@ public class PythonSourceRootConfigurator implements DirectoryProjectConfigurato
   @NonNls private static final String SETUP_PY = "setup.py";
 
   @Override
-  public void configureProject(Project project, @NotNull final VirtualFile baseDir, Ref<Module> moduleRef) {
+  public void configureProject(Project project, @NotNull VirtualFile baseDir, Ref<Module> moduleRef) {
     VirtualFile setupPy = baseDir.findChild(SETUP_PY);
     if (setupPy != null) {
       final CharSequence content = LoadTextUtil.loadText(setupPy);
-      PyFile setupPyFile = (PyFile) PsiFileFactory.getInstance(project).createFileFromText(SETUP_PY, content.toString());
+      PyFile setupPyFile = (PyFile) PsiFileFactory.getInstance(project).createFileFromText(SETUP_PY, PythonFileType.INSTANCE, content.toString());
       final SetupCallVisitor visitor = new SetupCallVisitor();
       setupPyFile.accept(visitor);
       String dir = visitor.getRootPackageDir();

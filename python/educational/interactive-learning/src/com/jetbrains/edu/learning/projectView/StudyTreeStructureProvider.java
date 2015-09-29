@@ -71,7 +71,8 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
                                            @NotNull final VirtualFile virtualFile) {
     if (!StudyTaskManager.getInstance(project).isInvisibleFile(virtualFile.getPath())) {
       String fileName = virtualFile.getName();
-      if (!fileName.contains(EduNames.WINDOW_POSTFIX) && !fileName.contains(EduNames.WINDOWS_POSTFIX)) {
+      if (!fileName.contains(EduNames.WINDOW_POSTFIX) && !fileName.contains(EduNames.WINDOWS_POSTFIX)
+          && !StudyUtils.isTestsFile(project, fileName) && !EduNames.TASK_HTML.equals(fileName) && !fileName.contains(".answer")) {
         nodes.add(node);
       }
     }

@@ -34,8 +34,6 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -71,7 +69,7 @@ public class TabAction extends EditorAction {
     }
   }
 
-  private static void insertTabAtCaret(Editor editor, @NotNull Caret caret, Project project) {
+  private static void insertTabAtCaret(Editor editor, @NotNull Caret caret, @Nullable Project project) {
     MacUIUtil.hideCursor();
     int columnNumber;
     if (caret.hasSelection()) {
@@ -84,8 +82,7 @@ public class TabAction extends EditorAction {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
 
     final Document doc = editor.getDocument();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(doc);
-    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByFile(file);
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByDocument(project, doc);
 
     int tabSize = indentOptions.INDENT_SIZE;
     int spacesToAddCount = tabSize - columnNumber % Math.max(1,tabSize);

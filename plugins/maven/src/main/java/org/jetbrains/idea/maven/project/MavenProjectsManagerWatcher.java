@@ -273,6 +273,10 @@ public class MavenProjectsManagerWatcher {
     scheduleUpdateAll(false, false);
   }
 
+  /**
+   * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
+   * if project is closed)
+   */
   public Promise<Void> scheduleUpdateAll(boolean force, final boolean forceImportAndResolve) {
     final AsyncPromise<Void> promise = new AsyncPromise<Void>();
     Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
@@ -300,7 +304,10 @@ public class MavenProjectsManagerWatcher {
     return new Runnable() {
         @Override
         public void run() {
-          if (myProject.isDisposed()) return;
+          if (myProject.isDisposed()) {
+            promise.setError("Project disposed");
+            return;
+          }
 
           if (forceImportAndResolve || myManager.getImportingSettings().isImportAutomatically()) {
             myManager.scheduleImportAndResolve().done(new Consumer<List<Module>>() {
@@ -309,6 +316,9 @@ public class MavenProjectsManagerWatcher {
                 promise.setResult(null);
               }
             });
+          }
+          else {
+            promise.setResult(null);
           }
         }
       };

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
  */
 package com.intellij.debugger.jdi;
 
+import com.intellij.util.ThreeState;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   //caches
   private ReferenceType myReferenceType;
   private Type myType;
-  private Boolean myIsCollected = null;
+  private ThreeState myIsCollected = ThreeState.UNSURE;
 
   public ObjectReferenceProxyImpl(VirtualMachineProxyImpl virtualMachineProxy, @NotNull ObjectReference objectReference) {
     super(virtualMachineProxy);
@@ -83,15 +84,15 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
 
   public boolean isCollected() {
     checkValid();
-    if (myIsCollected == null || Boolean.FALSE.equals(myIsCollected)) {
+    if (myIsCollected != ThreeState.YES) {
       try {
-        myIsCollected = Boolean.valueOf(VirtualMachineProxyImpl.isCollected(myObjectReference));
+        myIsCollected = ThreeState.fromBoolean(VirtualMachineProxyImpl.isCollected(myObjectReference));
       }
       catch (VMDisconnectedException ignored) {
-        myIsCollected = Boolean.TRUE;
+        myIsCollected = ThreeState.YES;
       }
     }
-    return myIsCollected.booleanValue();
+    return myIsCollected.toBoolean();
   }
 
   public long uniqueID() {
@@ -141,9 +142,9 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
    */
   @Override
   protected void clearCaches() {
-    if (Boolean.FALSE.equals(myIsCollected)) {
+    if (myIsCollected == ThreeState.NO) {
       // clearing cache makes sense only if the object has not been collected yet
-      myIsCollected = null;
+      myIsCollected = ThreeState.UNSURE;
     }
   }
 }

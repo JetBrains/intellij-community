@@ -253,7 +253,7 @@ public class SliceLeafAnalyzer {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             @Override
             public void run() {
-              final SliceUsage sliceUsage = element.getValue();
+              final JavaSliceUsage sliceUsage = (JavaSliceUsage)element.getValue();
 
               Collection<? extends AbstractTreeNode> children = element.getChildren();
               if (children.isEmpty()) {

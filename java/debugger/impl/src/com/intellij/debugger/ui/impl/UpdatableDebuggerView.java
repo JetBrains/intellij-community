@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,7 +45,7 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
     myStateManager = stateManager;
 
     final DebuggerContextListener contextListener = new DebuggerContextListener() {
-      public void changeEvent(DebuggerContextImpl newContext, DebuggerSession.Event event) {
+      public void changeEvent(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
         UpdatableDebuggerView.this.changeEvent(newContext, event);
       }
     };

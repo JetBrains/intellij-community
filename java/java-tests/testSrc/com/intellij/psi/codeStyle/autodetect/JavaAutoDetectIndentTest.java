@@ -16,11 +16,15 @@
 package com.intellij.psi.codeStyle.autodetect;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.editor.Document;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.autodetect.AbstractIndentAutoDetectionTest;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.autodetect.LineIndentInfo;
-import com.intellij.psi.codeStyle.autodetect.LineIndentInfoBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -99,30 +103,17 @@ public class JavaAutoDetectIndentTest extends AbstractIndentAutoDetectionTest {
 
     doTestTabsUsed(options);
   }
-
-  public void testSpacesToNumbers() throws Exception {
-    String text = "     i\n" +
-                  "    a\n" +
-                  "          t\n";
-    doTestLineToIndentMapping(text, 5, 4, 10);
-  }
-
-  public void testEmptyLines() throws Exception {
-    doTestLineToIndentMapping("     \n\n\n", -1, -1, -1);
-  }
-
+  
   public void testSpacesInSimpleClass() {
     doTestLineToIndentMapping(
       "public class A {\n" +
-      "\n" +
       "    public void test() {\n" +
       "      int a = 2;\n" +
       "    }\n" +
-      "\n" +
       "    public void a() {\n" +
       "    }\n" +
       "}",
-      0, -1, 4, 6, 4, -1, 4, 4, 0
+      0, 4, 6, 4, 4, 4, 0
     );
   }
 
@@ -132,11 +123,9 @@ public class JavaAutoDetectIndentTest extends AbstractIndentAutoDetectionTest {
       "{\n" +
       "  int a;\n" +
       "  int b;\n" +
-      "  \n" +
       "  public void test() {\n" +
       "    int c;\n" +
       "  }\n" +
-      "  \n" +
       "  public void run() {\n" +
       "    Runnable runnable = new Runnable() {\n" +
       "      @Override\n" +
@@ -146,12 +135,22 @@ public class JavaAutoDetectIndentTest extends AbstractIndentAutoDetectionTest {
       "    };\n" +
       "  }\n" +
       "}",
-      0, 0, 2, 2, -1, 2, 4, 2, -1, 2, 4, 6, 6, 8, 6, 4, 2, 0
+      0, 0, 2, 2, 2, 4, 2, 2, 4, 6, 6, 8, 6, 4, 2, 0
     );
   }
 
-  private static void doTestLineToIndentMapping(@NotNull CharSequence text, int... spacesForLine) {
-    List<LineIndentInfo> list = new LineIndentInfoBuilder(text, PlainTextLanguage.INSTANCE).build();
+  private static void doTestLineToIndentMapping(@NotNull String text, int... spacesForLine) {
+    configureFromFileText("x.java", text);
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(myFile);
+    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(myFile);
+    
+    Assert.assertNotNull(document);
+    Assert.assertNotNull(builder);
+    
+    FormattingModel model = builder.createModel(myFile, CodeStyleSettingsManager.getSettings(getProject()));
+    Block block = model.getRootBlock();
+    List<LineIndentInfo> list = new FormatterBasedLineIndentInfoBuilder(document, block).build();
+    
     Assert.assertEquals(list.size(), spacesForLine.length);
     for (int i = 0; i < spacesForLine.length; i++) {
       int indentSize = list.get(i).getIndentSize();

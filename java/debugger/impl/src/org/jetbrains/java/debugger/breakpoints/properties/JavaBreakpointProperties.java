@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.java.debugger.breakpoints.properties;
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -51,10 +52,13 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
   }
 
   public void addInstanceFilter(long l) {
-    final InstanceFilter[] filters = new InstanceFilter[myInstanceFilters.length + 1];
-    System.arraycopy(myInstanceFilters, 0, filters, 0, myInstanceFilters.length);
-    filters[myInstanceFilters.length] = InstanceFilter.create(String.valueOf(l));
-    myInstanceFilters = filters;
+    InstanceFilter newFilter = InstanceFilter.create(String.valueOf(l));
+    if (myInstanceFilters == null) {
+      myInstanceFilters = new InstanceFilter[] {newFilter};
+    }
+    else {
+      myInstanceFilters = ArrayUtil.append(myInstanceFilters, newFilter);
+    }
   }
 
   @Tag("class-filters")

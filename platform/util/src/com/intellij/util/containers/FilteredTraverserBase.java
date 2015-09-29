@@ -63,7 +63,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
         return children(t);
       }
     };
-    return traversal.traversal(getRoots(), adjusted).filter(meta.resultFilter.AND());
+    return traversal.traversal(getRoots(), adjusted).filter(meta.filter.AND());
   }
 
   @NotNull
@@ -82,11 +82,6 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   }
 
   @NotNull
-  public final JBIterable<T> leavesDfsTraversal() {
-    return traverse(TreeTraversal.LEAVES_DFS);
-  }
-
-  @NotNull
   public final JBIterable<T> bfsTraversal() {
     return traverse(TreeTraversal.PLAIN_BFS);
   }
@@ -94,11 +89,6 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   @NotNull
   public final JBIterable<T> tracingBfsTraversal() {
     return traverse(TreeTraversal.TRACING_BFS);
-  }
-
-  @NotNull
-  public final JBIterable<T> leavesBfsTraversal() {
-    return traverse(TreeTraversal.LEAVES_BFS);
   }
 
   @NotNull
@@ -122,28 +112,28 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   }
 
   @NotNull
-  public Self expand(@NotNull Condition<? super T> filter) {
-    return newInstance(meta.expand(filter));
+  public Self expand(@NotNull Condition<? super T> c) {
+    return newInstance(meta.expand(c));
   }
 
   @NotNull
-  public Self expandAndFilter(Condition<? super T> filter) {
-    return newInstance(meta.expand(filter).filter(filter));
+  public Self regard(@NotNull Condition<? super T> c) {
+    return newInstance(meta.regard(c));
   }
 
   @NotNull
-  public Self expandAndSkip(Condition<? super T> filter) {
-    return newInstance(meta.expand(filter).filter(not(filter)));
+  public Self expandAndFilter(Condition<? super T> c) {
+    return newInstance(meta.expand(c).filter(c));
   }
 
   @NotNull
-  public Self children(@NotNull Condition<? super T> filter) {
-    return newInstance(meta.children(filter));
+  public Self expandAndSkip(Condition<? super T> c) {
+    return newInstance(meta.expand(c).filter(not(c)));
   }
 
   @NotNull
-  public Self filter(@NotNull Condition<? super T> filter) {
-    return newInstance(meta.filter(filter));
+  public Self filter(@NotNull Condition<? super T> c) {
+    return newInstance(meta.filter(c));
   }
 
   @NotNull
@@ -152,13 +142,13 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   }
 
   @NotNull
-  public Self forceExclude(@NotNull Condition<? super T> filter) {
-    return newInstance(meta.forceExclude(filter));
+  public Self forceIgnore(@NotNull Condition<? super T> c) {
+    return newInstance(meta.forceIgnore(c));
   }
 
   @NotNull
-  public Self forceExpandAndSkip(@NotNull Condition<? super T> filter) {
-    return newInstance(meta.forceExpandAndSkip(filter));
+  public Self forceDisregard(@NotNull Condition<? super T> c) {
+    return newInstance(meta.forceDisregard(c));
   }
 
   @NotNull
@@ -166,8 +156,8 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     if (isAlwaysLeaf(node)) {
       return JBIterable.empty();
     }
-    else if (meta.childFilter.next == null && meta.forceExpandAndSkip.next == null) {
-      return JBIterable.from(tree.fun(node)).filter(not(meta.forceExclude.OR()));
+    else if (meta.regard.next == null && meta.forceDisregard.next == null) {
+      return JBIterable.from(tree.fun(node)).filter(not(meta.forceIgnore.OR()));
     }
     else {
       // traverse subtree to select accepted children
@@ -176,7 +166,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   }
 
   protected boolean isAlwaysLeaf(@NotNull T node) {
-    return !meta.expandFilter.valueAnd(node);
+    return !meta.expand.valueAnd(node);
   }
 
   @NotNull
@@ -199,60 +189,59 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   protected static class Meta<T> {
     final Iterable<? extends T> roots;
     final TreeTraversal traversal;
-    final Cond<T> expandFilter;
-    final Cond<T> childFilter;
-    final Cond<T> resultFilter;
+    final Cond<T> expand;
+    final Cond<T> regard;
+    final Cond<T> filter;
 
-    final Cond<T> forceExclude;
-    final Cond<T> forceExpandAndSkip;
+    final Cond<T> forceIgnore;
+    final Cond<T> forceDisregard;
 
     public Meta(@NotNull Iterable<? extends T> roots,
                 @NotNull TreeTraversal traversal,
-                @NotNull Cond<T> expandFilter,
-                @NotNull Cond<T> childFilter,
-                @NotNull Cond<T> resultFilter,
-                @NotNull Cond<T> forceExclude,
-                @NotNull Cond<T> forceExpandAndSkip) {
+                @NotNull Cond<T> expand,
+                @NotNull Cond<T> regard,
+                @NotNull Cond<T> filter,
+                @NotNull Cond<T> forceIgnore,
+                @NotNull Cond<T> forceDisregard) {
       this.roots = roots;
       this.traversal = traversal;
-      this.expandFilter = expandFilter;
-      this.childFilter = childFilter;
-      this.resultFilter = resultFilter;
-      this.forceExclude = forceExclude;
-      this.forceExpandAndSkip = forceExpandAndSkip;
+      this.expand = expand;
+      this.regard = regard;
+      this.filter = filter;
+      this.forceIgnore = forceIgnore;
+      this.forceDisregard = forceDisregard;
     }
 
     public Meta<T> reset() {
-      return new Meta<T>(roots, TreeTraversal.PRE_ORDER_DFS, Cond.TRUE, Cond.TRUE, Cond.TRUE, forceExclude, forceExpandAndSkip);
+      return new Meta<T>(roots, TreeTraversal.PRE_ORDER_DFS, Cond.TRUE, Cond.TRUE, Cond.TRUE, forceIgnore, forceDisregard);
     }
 
     public Meta<T> withRoots(@NotNull Iterable<? extends T> roots) {
-      return new Meta<T>(roots, traversal, expandFilter, childFilter, resultFilter, forceExclude, forceExpandAndSkip);
+      return new Meta<T>(roots, traversal, expand, regard, filter, forceIgnore, forceDisregard);
     }
 
     public Meta<T> withTraversal(TreeTraversal traversal) {
-      return new Meta<T>(roots, traversal, expandFilter, childFilter, resultFilter, forceExclude, forceExpandAndSkip);
+      return new Meta<T>(roots, traversal, expand, regard, filter, forceIgnore, forceDisregard);
     }
 
-    public Meta<T> expand(@NotNull Condition<? super T> filter) {
-      return new Meta<T>(roots, traversal, expandFilter.append(filter), childFilter, resultFilter, forceExclude, forceExpandAndSkip);
+    public Meta<T> expand(@NotNull Condition<? super T> c) {
+      return new Meta<T>(roots, traversal, expand.append(c), regard, this.filter, forceIgnore, forceDisregard);
     }
 
-    public Meta<T> children(@NotNull Condition<? super T> filter) {
-      return new Meta<T>(roots, traversal, expandFilter, childFilter.append(filter), resultFilter, forceExclude, forceExpandAndSkip);
+    public Meta<T> regard(@NotNull Condition<? super T> c) {
+      return new Meta<T>(roots, traversal, expand, regard.append(c), this.filter, forceIgnore, forceDisregard);
     }
 
-    public Meta<T> filter(@NotNull Condition<? super T> filter) {
-      return new Meta<T>(roots, traversal, expandFilter, childFilter, resultFilter.append(filter), forceExclude, forceExpandAndSkip);
+    public Meta<T> filter(@NotNull Condition<? super T> c) {
+      return new Meta<T>(roots, traversal, expand, regard, this.filter.append(c), forceIgnore, forceDisregard);
     }
 
-    // forceExclude and forceSkip filter is always accumulated
-    public Meta<T> forceExclude(Condition<? super T> filter) {
-      return new Meta<T>(roots, traversal, expandFilter, childFilter, resultFilter, forceExclude.append(filter), forceExpandAndSkip);
+    public Meta<T> forceIgnore(Condition<? super T> c) {
+      return new Meta<T>(roots, traversal, expand, regard, this.filter, forceIgnore.append(c), forceDisregard);
     }
 
-    public Meta<T> forceExpandAndSkip(Condition<? super T> filter) {
-      return new Meta<T>(roots, traversal, expandFilter, childFilter, resultFilter, forceExclude, forceExpandAndSkip.append(filter));
+    public Meta<T> forceDisregard(Condition<? super T> c) {
+      return new Meta<T>(roots, traversal, expand, regard, this.filter, forceIgnore, forceDisregard.append(c));
     }
 
     Function.Mono<TreeTraversal.GuidedIt<T>> createChildrenGuide(final T parent) {
@@ -274,7 +263,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
     private void doPerformChildrenGuidance(TreeTraversal.GuidedIt<T> it, Condition<? super T> expand) {
       if (it.curChild == null) return;
-      if (forceExclude.valueOr(it.curChild)) return;
+      if (forceIgnore.valueOr(it.curChild)) return;
       if (it.curParent == null || expand.value(it.curChild)) {
         it.queueNext(it.curChild);
       }
@@ -284,11 +273,11 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     }
 
     private Condition<? super T> buildExpandConditionForChildren(T parent) {
-      // implement: or2(forceExpandAndSkip, not(childFilter));
-      // and handle JBIterable.StatefulTransform and EdgeFilter conditions
+      // implements: or2(forceExpandAndSkip, not(childFilter));
+      // and handles JBIterable.StatefulTransform and EdgeFilter conditions
       Cond copy = null;
       boolean invert = true;
-      Cond c = childFilter;
+      Cond c = regard;
       while (c != null) {
         Condition impl = JBIterable.Stateful.copy(c.impl);
         if (impl != (invert ? Condition.TRUE : Condition.FALSE)) {
@@ -298,7 +287,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
           }
         }
         if (c.next == null) {
-          c = invert ? forceExpandAndSkip : null;
+          c = invert ? forceDisregard : null;
           invert = false;
         }
         else {

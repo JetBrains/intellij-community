@@ -17,38 +17,37 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.util.JDOMBuilder.attr
 import com.intellij.openapi.util.JDOMBuilder.tag
-import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.Test
 
 class XmlElementStorageTest {
-  public Test fun testGetStateSucceeded() {
+  @Test fun testGetStateSucceeded() {
     val storage = MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))))
-    val state = storage.getState(this, "test", javaClass<Element>())
-    TestCase.assertNotNull(state)
-    TestCase.assertEquals("component", state.getName())
-    TestCase.assertNotNull(state.getChild("foo"))
+    val state = storage.getState(this, "test", Element::class.java)
+    assertThat(state).isNotNull()
+    assertThat(state!!.name).isEqualTo("component")
+    assertThat(state.getChild("foo")).isNotNull()
   }
 
-  public Test fun testGetStateNotSucceeded() {
+  @Test fun `get state not succeeded`() {
     val storage = MyXmlElementStorage(tag("root"))
-    val state = storage.getState(this, "test", javaClass<Element>())
+    val state = storage.getState(this, "test", Element::class.java)
     assertThat(state).isNull()
   }
 
-  public Test fun `set state overrides old state`() {
+  @Test fun `set state overrides old state`() {
     val storage = MyXmlElementStorage(tag("root", tag("component", attr("name", "test"), tag("foo"))))
     val newState = tag("component", attr("name", "test"), tag("bar"))
     val externalizationSession = storage.startExternalization()!!
-    externalizationSession.setState(this, "test", newState)
+    externalizationSession.setState(null, "test", newState)
     externalizationSession.createSaveSession()!!.save()
     assertThat(storage.savedElement).isNotNull()
     assertThat(storage.savedElement!!.getChild("component").getChild("bar")).isNotNull()
     assertThat(storage.savedElement!!.getChild("component").getChild("foo")).isNull()
   }
 
-  private class MyXmlElementStorage(private val myElement: Element) : XmlElementStorage("", "root", null, null, null) {
+  private class MyXmlElementStorage(private val myElement: Element) : XmlElementStorage("", "root") {
     var savedElement: Element? = null
 
     override fun loadLocalData() = myElement

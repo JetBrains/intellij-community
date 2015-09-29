@@ -61,7 +61,7 @@ public class PyMethodOverridingInspection extends PyInspection {
       String name = function.getName();
       if (PyNames.INIT.equals(name) || PyNames.NEW.equals(name)) return;  // these are expected to change signature
       // real work
-      for (PsiElement psiElement : PySuperMethodsSearch.search(function)) {
+      for (PsiElement psiElement : PySuperMethodsSearch.search(function, myTypeEvalContext)) {
         if (psiElement instanceof PyFunction) {
           final PyFunction baseMethod = (PyFunction)psiElement;
           final PyClass baseClass = baseMethod.getContainingClass();

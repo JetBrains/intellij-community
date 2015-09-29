@@ -18,6 +18,7 @@ package com.intellij.internal;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Alarm;
@@ -39,10 +40,14 @@ public class DebugAttachDetector {
   private boolean myReady = false;
 
   public DebugAttachDetector() {
-    if (!ApplicationManagerEx.getApplicationEx().isInternal() || "true".equals(System.getProperty("idea.debug.mode"))) return;
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    if (!app.isInternal()
+        || app.isUnitTestMode()
+        || app.isHeadlessEnvironment()
+        || "true".equals(System.getProperty("idea.debug.mode"))) return;
 
     for (String argument : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
-      if (argument.startsWith("-agentlib:jdwp")) {
+      if (argument.startsWith("-agentlib:jdwp") && argument.contains("transport=dt_socket")) {
         String[] params = argument.split(",");
         for (String param : params) {
           if (param.startsWith("address")) {

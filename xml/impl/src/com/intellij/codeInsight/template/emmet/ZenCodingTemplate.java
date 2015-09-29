@@ -20,7 +20,9 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.CustomLiveTemplateBase;
+import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.LiveTemplateBuilder;
 import com.intellij.codeInsight.template.emmet.filters.SingleLineEmmetFilter;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
@@ -34,9 +36,11 @@ import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StandardPatterns;
@@ -62,6 +66,9 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
 
   @Nullable
   public static ZenCodingGenerator findApplicableDefaultGenerator(@NotNull PsiElement context, boolean wrapping) {
+    if (!context.isValid()) {
+      return null;
+    }
     for (ZenCodingGenerator generator : ZenCodingGenerator.getInstances()) {
       if (generator.isMyContext(context, wrapping) && generator.isAppliedByDefault(context)) {
         return generator;
@@ -106,7 +113,11 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   @Override
   public void expand(@NotNull String key, @NotNull CustomTemplateCallback callback) {
     ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext(), false);
-    assert defaultGenerator != null;
+    if (defaultGenerator == null) {
+      LOG.error("Cannot find defaultGenerator for key `" + key +"` at " + callback.getEditor().getCaretModel().getOffset() + " offset", 
+                AttachmentFactory.createAttachment(callback.getEditor().getDocument()));
+      return;
+    }
     try {
       expand(key, callback, defaultGenerator, Collections.<ZenCodingFilter>emptyList(), true, Registry.intValue("emmet.segments.limit"));
     }
@@ -221,7 +232,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     }
 
     List<GenerationNode> genNodes = fakeParentNode.getChildren();
-    LiveTemplateBuilder builder = new LiveTemplateBuilder(segmentsLimit);
+    LiveTemplateBuilder builder = new LiveTemplateBuilder(EmmetOptions.getInstance().isAddEditPointAtTheEndOfTemplate(), segmentsLimit);
     int end = -1;
     for (int i = 0, genNodesSize = genNodes.size(); i < genNodesSize; i++) {
       GenerationNode genNode = genNodes.get(i);
@@ -241,39 +252,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
         break;
       }
     }
-
-    callback.startTemplate(builder.buildTemplate(), null, new TemplateEditingAdapter() {
-      private TextRange myEndVarRange;
-      private Editor myEditor;
-
-      @Override
-      public void beforeTemplateFinished(TemplateState state, Template template) {
-        int variableNumber = state.getCurrentVariableNumber();
-        if (variableNumber >= 0 && template instanceof TemplateImpl) {
-          TemplateImpl t = (TemplateImpl)template;
-          while (variableNumber < t.getVariableCount()) {
-            String varName = t.getVariableNameAt(variableNumber);
-            if (LiveTemplateBuilder.isEndVariable(varName)) {
-              myEndVarRange = state.getVariableRange(varName);
-              myEditor = state.getEditor();
-              break;
-            }
-            variableNumber++;
-          }
-        }
-      }
-
-      @Override
-      public void templateFinished(Template template, boolean brokenOff) {
-        if (brokenOff && myEndVarRange != null && myEditor != null) {
-          int offset = myEndVarRange.getStartOffset();
-          if (offset >= 0 && offset != myEditor.getCaretModel().getOffset()) {
-            myEditor.getCaretModel().moveToOffset(offset);
-            myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          }
-        }
-      }
-    });
+    callback.startTemplate(builder.buildTemplate(), null, null);
   }
 
   private static void checkTemplateOutputLength(ZenCodingNode node, CustomTemplateCallback callback) throws EmmetException {

@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -61,10 +62,10 @@ public class MavenRootModelAdapter {
 
   private final Set<String> myOrderEntriesBeforeJdk = new THashSet<String>();
 
-  public MavenRootModelAdapter(@NotNull MavenProject p, @NotNull Module module, final MavenModifiableModelsProvider rootModelsProvider) {
+  public MavenRootModelAdapter(@NotNull MavenProject p, @NotNull Module module, final IdeModifiableModelsProvider rootModelsProvider) {
     myMavenProject = p;
-    myModuleModel = rootModelsProvider.getModuleModel();
-    myRootModel = rootModelsProvider.getRootModel(module);
+    myModuleModel = rootModelsProvider.getModifiableModuleModel();
+    myRootModel = rootModelsProvider.getModifiableRootModel(module);
 
     myRootModelModuleExtension = myRootModel.getModuleExtension(MavenSourceFoldersModuleExtension.class);
     myRootModelModuleExtension.init(module, myRootModel);
@@ -329,7 +330,7 @@ public class MavenRootModelAdapter {
 
   public void addLibraryDependency(MavenArtifact artifact,
                                    DependencyScope scope,
-                                   MavenModifiableModelsProvider provider,
+                                   IdeModifiableModelsProvider provider,
                                    MavenProject project) {
     assert !MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope()); // System dependencies must be added ad module library, not as project wide library.
 
@@ -339,7 +340,7 @@ public class MavenRootModelAdapter {
     if (library == null) {
       library = provider.createLibrary(libraryName);
     }
-    Library.ModifiableModel libraryModel = provider.getLibraryModel(library);
+    Library.ModifiableModel libraryModel = provider.getModifiableLibraryModel(library);
 
     updateUrl(libraryModel, OrderRootType.CLASSES, artifact, null, null, true);
     updateUrl(libraryModel, OrderRootType.SOURCES, artifact, MavenExtraArtifactType.SOURCES, project, false);

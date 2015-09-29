@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,34 @@
  */
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.components.ComponentManagerConfig;
+import com.intellij.openapi.components.OldComponentConfig;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PluginBean extends ComponentManagerConfig {
+public class PluginBean {
+  @Tag(APPLICATION_COMPONENTS)
+  @AbstractCollection(surroundWithTag = false)
+  public OldComponentConfig[] applicationComponents;
+
+  @Tag(PROJECT_COMPONENTS)
+  @AbstractCollection(surroundWithTag = false)
+  public OldComponentConfig[] projectComponents;
+
+  @Tag(MODULE_COMPONENTS)
+  @AbstractCollection(surroundWithTag = false)
+  public OldComponentConfig[] moduleComponents;
+
+  @NonNls public static final String APPLICATION_COMPONENTS = "application-components";
+  @NonNls public static final String PROJECT_COMPONENTS = "project-components";
+  @NonNls public static final String MODULE_COMPONENTS = "module-components";
+
   @Tag("name")
   public String name;
 
@@ -81,6 +98,9 @@ public class PluginBean extends ComponentManagerConfig {
 
   @Attribute("use-idea-classloader")
   public boolean useIdeaClassLoader;
+
+  @Attribute("allow-bundled-update")
+  public boolean allowBundledUpdate;
 
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false, elementTag = "module")

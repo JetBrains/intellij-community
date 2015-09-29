@@ -33,9 +33,15 @@ public abstract class MergeContext implements UserDataHolder {
 
   public abstract void requestFocus();
 
+  /**
+   * Called by MergeTool on conflict resolve end. Should delegate to the {@link MergeRequest#applyResult(MergeResult)}
+   */
   @CalledInAwt
   public abstract void finishMerge(@NotNull MergeResult result);
 
+  /**
+   * @see com.intellij.diff.util.DiffUserDataKeys
+   */
   @Nullable
   @Override
   public <T> T getUserData(@NotNull Key<T> key) {

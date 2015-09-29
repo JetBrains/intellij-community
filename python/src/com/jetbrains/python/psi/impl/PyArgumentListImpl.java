@@ -30,7 +30,6 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -292,31 +291,6 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
       PyPsiUtils.deleteAdjacentCommaWithWhitespaces(this, node.getPsi());
     }
     super.deleteChildInternal(node);
-  }
-
-  @NotNull
-  public CallArgumentsMapping analyzeCall(PyResolveContext resolveContext) {
-    return analyzeCall(resolveContext, 0);
-  }
-
-  @NotNull
-  public CallArgumentsMapping analyzeCall(PyResolveContext resolveContext, int offset) {
-    final CallArgumentsMappingImpl ret = new CallArgumentsMappingImpl(this);
-    // declaration-based checks
-    // proper arglist is: [positional,...][name=value,...][*tuple,][**dict]
-    // where "positional" may be a tuple of nested "positional" parameters, too.
-    // following the spec: http://docs.python.org/ref/calls.html
-    PyCallExpression call = getCallExpression();
-    if (call != null) {
-      PyCallExpression.PyMarkedCallee resolvedCallee = call.resolveCallee(resolveContext, offset);
-      if (resolvedCallee != null) {
-        ret.mapArguments(resolvedCallee, resolveContext.getTypeEvalContext());
-      }
-      else {
-        ret.verifyArguments();
-      }
-    }
-    return ret;
   }
 
   private static class NoKeyArguments extends NotNullPredicate<PyExpression> {

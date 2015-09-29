@@ -68,6 +68,7 @@ abstract class ChangeCorrector {
     myBuilder = new DiffIterableUtil.ChangeBuilder(length1, length2);
   }
 
+  @NotNull
   public FairDiffIterable build() {
     execute();
     return fair(myBuilder.finish());

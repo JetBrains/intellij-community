@@ -36,14 +36,8 @@ public abstract class ProjectWizardStepFactory {
   public static ProjectWizardStepFactory getInstance() {
     return ServiceManager.getService(ProjectWizardStepFactory.class);
   }
-  /**
-   * @deprecated
-   */
-  public abstract ModuleWizardStep createNameAndLocationStep(WizardContext wizardContext, JavaModuleBuilder builder, ModulesProvider modulesProvider, Icon icon, @NonNls String helpId);
 
   public abstract ModuleWizardStep createNameAndLocationStep(WizardContext wizardContext);
-
-  public abstract ModuleWizardStep createOutputPathPathsStep(ModuleWizardStep nameAndLocationStep, JavaModuleBuilder builder, Icon icon, @NonNls String helpId);
 
   /**
    * @deprecated Use another version of this method:

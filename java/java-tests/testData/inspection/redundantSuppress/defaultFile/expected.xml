@@ -3,7 +3,7 @@
 
   <problem>
     <file>X.java</file>
-    <line>4</line>
+    <line>5</line>
     <problem_class>Redundant suppression</problem_class>
     <description>Redundant suppression</description>
     <entry_point TYPE="method" FQNAME="x.S void f()" />
@@ -28,7 +28,7 @@
 
   <problem>
     <file>X.java</file>
-    <line>19</line>
+    <line>20</line>
     <problem_class>Redundant suppression</problem_class>
     <description>Redundant suppression</description>
     <entry_point TYPE="method" FQNAME="x.S void h()" />

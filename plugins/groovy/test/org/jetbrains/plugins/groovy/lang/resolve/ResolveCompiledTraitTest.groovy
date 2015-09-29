@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.lang.resolve
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.compiled.ClsClassImpl
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
@@ -25,6 +27,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -174,6 +177,113 @@ class ExternalConcrete implements somepackage.TT {
     @Override
     def someAbstractMethod() {}
 }'''
+  }
+
+  void 'test trait parameter not within its bounds'() {
+    testHighlighting '''\
+class ExternalConcrete2 implements somepackage.GenericTrait<String, somepackage.Pojo, <warning descr="Type parameter 'java.lang.Integer' is not in its bound; should extend 'A'">Integer</warning>> {}
+'''
+  }
+
+  void 'test generic trait method'() {
+    def definition = configureTraitInheritor()
+    def method = definition.findMethodsByName("methodWithTraitGenerics", false)[0]
+    assert method.typeParameters.length == 0
+    assert method.returnType.canonicalText == "Pojo"
+    assert method.parameterList.parametersCount == 2
+    assert method.parameterList.parameters[0].type.canonicalText == "java.lang.String"
+    assert method.parameterList.parameters[1].type.canonicalText == "PojoInheritor"
+  }
+
+  void 'test generic trait method with type parameters'() {
+    configureTraitInheritor()
+    def reference = configureByText(
+      'foo.groovy',
+      'new ExternalConcrete().<Integer>methodWit<caret>hMethodGenerics(1, "2", null)',
+      GrReferenceExpression
+    )
+    def resolved = reference.advancedResolve()
+    def method = resolved.element as PsiMethod
+    def substitutor = resolved.substitutor
+    assert method.typeParameterList.typeParameters.length == 1
+    assert substitutor.substitute(method.returnType).canonicalText == "java.lang.Integer"
+    assert method.parameterList.parametersCount == 3
+    assert substitutor.substitute(method.parameterList.parameters[0].type).canonicalText == "java.lang.Integer"
+    assert method.parameterList.parameters[1].type.canonicalText == "java.lang.String"
+    assert method.parameterList.parameters[2].type.canonicalText == "PojoInheritor"
+  }
+
+  void 'test generic trait method type parameters clashing'() {
+    configureTraitInheritor()
+    def reference = configureByText(
+      'foo.groovy',
+      'new ExternalConcrete().<Integer>methodWith<caret>MethodGenericsClashing(1,"", new PojoInheritor())',
+      GrReferenceExpression
+    )
+    def resolved = reference.advancedResolve()
+    def method = resolved.element as PsiMethod
+    def substitutor = resolved.substitutor
+    assert method.typeParameterList.typeParameters.length == 1
+    assert substitutor.substitute(method.returnType).canonicalText == "java.lang.Integer"
+    assert method.parameterList.parametersCount == 3
+    assert substitutor.substitute(method.parameterList.parameters[0].type).canonicalText == "java.lang.Integer"
+    assert method.parameterList.parameters[1].type.canonicalText == "java.lang.String"
+    assert method.parameterList.parameters[2].type.canonicalText == "PojoInheritor"
+  }
+
+
+  void 'test generic trait static method'() {
+    def definition = configureTraitInheritor()
+    def method = definition.findMethodsByName("staticMethodWithTraitGenerics", false)[0]
+    assert method.typeParameters.length == 0
+    assert method.returnType.canonicalText == "Pojo"
+    assert method.parameterList.parametersCount == 2
+    assert method.parameterList.parameters[0].type.canonicalText == "java.lang.String"
+    assert method.parameterList.parameters[1].type.canonicalText == "PojoInheritor"
+  }
+
+  void 'test generic trait static method with type parameters'() {
+    configureTraitInheritor()
+    def reference = configureByText(
+      'foo.groovy',
+      'new ExternalConcrete().<Integer>staticMethodWit<caret>hMethodGenerics(1, "2", null)',
+      GrReferenceExpression
+    )
+    def resolved = reference.advancedResolve()
+    def method = resolved.element as PsiMethod
+    def substitutor = resolved.substitutor
+    assert method.typeParameterList.typeParameters.length == 1
+    assert substitutor.substitute(method.returnType).canonicalText == "java.lang.Integer"
+    assert method.parameterList.parametersCount == 3
+    assert substitutor.substitute(method.parameterList.parameters[0].type).canonicalText == "java.lang.Integer"
+    assert method.parameterList.parameters[1].type.canonicalText == "java.lang.String"
+    assert method.parameterList.parameters[2].type.canonicalText == "PojoInheritor"
+  }
+
+  void 'test generic trait static method type parameters clashing'() {
+    configureTraitInheritor()
+    def reference = configureByText(
+      'foo.groovy',
+      'new ExternalConcrete().<Integer>staticMethodWith<caret>MethodGenericsClashing(1,"", new PojoInheritor())',
+      GrReferenceExpression
+    )
+    def resolved = reference.advancedResolve()
+    def method = resolved.element as PsiMethod
+    def substitutor = resolved.substitutor
+    assert method.typeParameterList.typeParameters.length == 1
+    assert substitutor.substitute(method.returnType).canonicalText == "java.lang.Integer"
+    assert method.parameterList.parametersCount == 3
+    assert substitutor.substitute(method.parameterList.parameters[0].type).canonicalText == "java.lang.Integer"
+    assert method.parameterList.parameters[1].type.canonicalText == "java.lang.String"
+    assert method.parameterList.parameters[2].type.canonicalText == "PojoInheritor"
+  }
+
+  private PsiClass configureTraitInheritor() {
+    myFixture.addFileToProject "inheritors.groovy", '''\
+class PojoInheritor extends somepackage.Pojo {}
+class ExternalConcrete implements somepackage.GenericTrait<Pojo, String, PojoInheritor> {}
+'''
+    myFixture.findClass("ExternalConcrete")
   }
 
   private testHighlighting(String text) {

@@ -189,6 +189,12 @@ public class MismatchedCollectionQueryUpdate {
   }
 
   List<String> boo() {return null;}
+
+  private List<? extends CharSequence> sequences = null;
+
+  {
+    sequences.stream().map(CharSequence ::length);
+  }
 }
 
 class MethReference<E> {

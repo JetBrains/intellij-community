@@ -141,7 +141,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void loadDevelopersAsynchronously() {
-    Task.Backgroundable task = new Task.Backgroundable(null, "Loading developers list", true) {
+    Task.Backgroundable task = new Task.Backgroundable(null, "Loading Developers List", true) {
       private final Collection[] myDevelopers = new Collection[]{Collections.emptyList()};
 
       @Override
@@ -602,7 +602,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (submitter == null) {
         PluginId pluginId = findPluginId(throwable);
         IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-        if (plugin == null || PluginManagerMain.isJetBrainsPlugin(plugin)) {
+        if (plugin == null || PluginManagerMain.isDevelopedByJetBrains(plugin)) {
           myForeignPluginWarningPanel.setVisible(false);
           return;
         }
@@ -1010,7 +1010,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       return null;
     }
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    if (plugin == null || PluginManagerMain.isJetBrainsPlugin(plugin)) {
+    if (plugin == null) {
       return getCorePluginSubmitter(reporters);
     }
     for (ErrorReportSubmitter reporter : reporters) {
@@ -1018,6 +1018,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (descriptor != null && Comparing.equal(pluginId, descriptor.getPluginId())) {
         return reporter;
       }
+    }
+    if (PluginManagerMain.isDevelopedByJetBrains(plugin)) {
+      return getCorePluginSubmitter(reporters);
     }
     return null;
   }

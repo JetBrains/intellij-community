@@ -18,7 +18,6 @@ package com.intellij.util;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
@@ -27,10 +26,10 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -86,23 +85,29 @@ public class Restarter {
   private static void runCommand(String... beforeRestart) throws IOException {
     if (beforeRestart.length == 0) return;
 
-    try {
-      Process process = Runtime.getRuntime().exec(beforeRestart);
-
-      Thread outThread = new Thread(new StreamRedirector(process.getInputStream(), System.out),"restarter redirector out");
-      Thread errThread = new Thread(new StreamRedirector(process.getErrorStream(), System.err),"restarter redirector err");
-      outThread.start();
-      errThread.start();
-
-      try {
-        process.waitFor();
-      }
-      finally {
-        outThread.join();
-        errThread.join();
-      }
+    File restartDir = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart");
+    if (!FileUtilRt.createDirectory(restartDir)) {
+      throw new IOException("Cannot create dir: " + restartDir);
     }
-    catch (InterruptedException ignore) { }
+
+    File restarter = new File(restartDir, "restarter.sh");
+    BufferedWriter output = new BufferedWriter(new FileWriter(restarter));
+    try {
+      output.write("#!/bin/sh\n");
+      for (int i = 0; i < beforeRestart.length; i++) {
+        output.write(beforeRestart[i]);
+        if (i <= beforeRestart.length - 2) output.write(' ');
+        if (i >= beforeRestart.length - 2) output.write('"');
+      }
+      output.write('\n');
+    }
+    finally {
+      output.close();
+    }
+
+    if (!restarter.setExecutable(true, true)) {
+      throw new IOException("Cannot make file executable: " + restarter);
+    }
   }
 
   private static void restartOnWindows(@NotNull final String... beforeRestart) throws IOException {
@@ -178,23 +183,5 @@ public class Restarter {
 
   private interface Shell32 extends StdCallLibrary {
     Pointer CommandLineToArgvW(WString command_line, IntByReference argc);
-  }
-
-  private static class StreamRedirector implements Runnable {
-    private final InputStream myIn;
-    private final OutputStream myOut;
-
-    private StreamRedirector(InputStream in, OutputStream out) {
-      myIn = in;
-      myOut = out;
-    }
-
-    @Override
-    public void run() {
-      try {
-        StreamUtil.copyStreamContent(myIn, myOut);
-      }
-      catch (IOException ignore) { }
-    }
   }
 }

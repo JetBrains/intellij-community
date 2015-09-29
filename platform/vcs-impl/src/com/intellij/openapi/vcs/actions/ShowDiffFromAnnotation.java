@@ -15,23 +15,22 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.DiffNavigationContext;
-import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
-import com.intellij.diff.DiffDialogHints;
-import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.LineNumberListener;
+import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -54,20 +53,17 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
-  private final UpToDateLineNumberProvider myLineNumberProvider;
+class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumberListener {
   private final FileAnnotation myFileAnnotation;
   private final AbstractVcs myVcs;
   private final VirtualFile myFile;
   private int currentLine;
   private boolean myEnabled;
 
-  ShowDiffFromAnnotation(final UpToDateLineNumberProvider lineNumberProvider,
-                         final FileAnnotation fileAnnotation, final AbstractVcs vcs, final VirtualFile file) {
+  ShowDiffFromAnnotation(final FileAnnotation fileAnnotation, final AbstractVcs vcs, final VirtualFile file) {
     super(ActionsBundle.message("action.Diff.UpdatedFiles.text"),
           ActionsBundle.message("action.Diff.UpdatedFiles.description"),
           AllIcons.Actions.Diff);
-    myLineNumberProvider = lineNumberProvider;
     myFileAnnotation = fileAnnotation;
     myVcs = vcs;
     myFile = file;
@@ -82,19 +78,14 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
 
   @Override
   public void update(AnActionEvent e) {
-    final int number = getActualLineNumber();
+    final int number = currentLine;
     e.getPresentation().setVisible(myEnabled);
     e.getPresentation().setEnabled(myEnabled && number >= 0 && number < myFileAnnotation.getLineCount());
   }
 
-  private int getActualLineNumber() {
-    if (currentLine < 0) return -1;
-    return myLineNumberProvider.getLineNumber(currentLine);
-  }
-
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final int actualNumber = getActualLineNumber();
+    final int actualNumber = currentLine;
     if (actualNumber < 0) return;
 
     final VcsRevisionNumber revisionNumber = myFileAnnotation.getLineRevisionNumber(actualNumber);

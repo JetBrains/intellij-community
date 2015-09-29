@@ -18,9 +18,11 @@ package org.jetbrains.jps.incremental.fs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileSystemUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.IOUtil;
+import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -51,6 +53,7 @@ public class BuildFSState {
   // alternatively, when false, after first scan will rely on external notifications about changes
   private final boolean myAlwaysScanFS;
   private final Set<BuildTarget<?>> myInitialScanPerformed = Collections.synchronizedSet(new HashSet<BuildTarget<?>>());
+  private final TObjectLongHashMap<File> myRegistrationStamps = new TObjectLongHashMap<File>(FileUtil.FILE_HASHING_STRATEGY);
   private final Map<BuildTarget<?>, FilesDelta> myDeltas = Collections.synchronizedMap(new HashMap<BuildTarget<?>, FilesDelta>());
 
   public BuildFSState(boolean alwaysScanFS) {
@@ -105,12 +108,50 @@ public class BuildFSState {
     getDelta(rd.getTarget()).clearRecompile(rd);
   }
 
+  public long getEventRegistrationStamp(File file) {
+    synchronized (myRegistrationStamps) {
+      return myRegistrationStamps.get(file);
+    }
+  }
+
   public boolean hasWorkToDo(BuildTarget<?> target) {
     if (!myInitialScanPerformed.contains(target)) {
       return true;
     }
     FilesDelta delta = myDeltas.get(target);
     return delta != null && delta.hasChanges();
+  }
+
+  /**
+   * @return true if there were changed files reported for the specified target, _after_ the target compilation had been started
+   */
+  public boolean hasUnprocessedChanges(@NotNull CompileContext context, @NotNull BuildTarget<?> target) {
+    if (!myInitialScanPerformed.contains(target)) {
+      return false;
+    }
+    final FilesDelta delta = myDeltas.get(target);
+    if (delta == null) {
+      return false;
+    }
+    final long targetBuildStart = context.getCompilationStartStamp(target);
+    if (targetBuildStart <= 0L) {
+      return false;
+    }
+    final CompileScope scope = context.getScope();
+    try {
+      delta.lockData();
+      for (Set<File> files : delta.getSourcesToRecompile().values()) {
+        for (File file : files) {
+          if ((getEventRegistrationStamp(file) > targetBuildStart || FileSystemUtil.lastModified(file) > targetBuildStart) && scope.isAffected(target, file)) {
+            return true;
+          }
+        }
+      }
+    }
+    finally {
+      delta.unlockData();
+    }
+    return false;
   }
 
   public void markInitialScanPerformed(BuildTarget<?> target) {
@@ -185,11 +226,11 @@ public class BuildFSState {
    * Note: marked file will well be visible as "dirty" only on the next compilation round!
    * @throws IOException
    */
-  public final boolean markDirty(@Nullable CompileContext context, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
-    return markDirty(context, CompilationRound.NEXT, file, rd, tsStorage);
+  public final boolean markDirty(@Nullable CompileContext context, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage, boolean saveEventStamp) throws IOException {
+    return markDirty(context, CompilationRound.NEXT, file, rd, tsStorage, saveEventStamp);
   }
 
-  public boolean markDirty(@Nullable CompileContext context, CompilationRound round, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
+  public boolean markDirty(@Nullable CompileContext context, CompilationRound round, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage, boolean saveEventStamp) throws IOException {
     final FilesDelta roundDelta = getRoundDelta(round == CompilationRound.NEXT? NEXT_ROUND_DELTA_KEY : CURRENT_ROUND_DELTA_KEY, context);
     if (roundDelta != null && isInCurrentContextTargets(context, rd)) {
       roundDelta.markRecompile(rd, file);
@@ -202,6 +243,12 @@ public class BuildFSState {
       if (marked) {
         if (LOG.isDebugEnabled()) {
           LOG.debug(rd.getTarget() + ": MARKED DIRTY: " + file.getPath());
+        }
+        if (saveEventStamp) {
+          final long eventStamp = System.currentTimeMillis();
+          synchronized (myRegistrationStamps) {
+            myRegistrationStamps.put(file, eventStamp);
+          }
         }
         if (tsStorage != null) {
           tsStorage.removeStamp(file, rd.getTarget());
@@ -248,6 +295,9 @@ public class BuildFSState {
     clearContextChunk(null);
     myInitialScanPerformed.clear();
     myDeltas.clear();
+    synchronized (myRegistrationStamps) {
+      myRegistrationStamps.clear();
+    }
   }
 
   public void clearContextRoundData(@Nullable CompileContext context) {
@@ -323,9 +373,12 @@ public class BuildFSState {
         for (File file : files) {
           if (scope.isAffected(target, file)) {
             final long currentFileStamp = FileSystemUtil.lastModified(file);
-            if (!rd.isGenerated() && currentFileStamp > targetBuildStartStamp) {
+            if (!rd.isGenerated() && (currentFileStamp > targetBuildStartStamp || getEventRegistrationStamp(file) > targetBuildStartStamp)) {
               // if the file was modified after the compilation had started,
               // do not save the stamp considering file dirty
+              // Important!
+              // Event registration stamp check is essential for the files that were actually changed _before_ targetBuildStart,
+              // but corresponding change event was received and processed _after_ targetBuildStart
               if (Utils.IS_TEST_MODE) {
                 LOG.info("Timestamp after compilation started; marking dirty again: " + file.getPath());
               }

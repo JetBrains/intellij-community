@@ -104,11 +104,11 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   @Override
   @NotNull
   public String getText() {
-    final String alias = getXmlExtension().getNamespaceAlias(getFile());
+    final String alias = getXmlNamespaceHelper().getNamespaceAlias(getFile());
     return XmlErrorMessages.message("create.namespace.declaration.quickfix", alias);
   }
 
-  private XmlNamespaceHelper getXmlExtension() {
+  private XmlNamespaceHelper getXmlNamespaceHelper() {
     return XmlNamespaceHelper.getHelper(getFile());
   }
 
@@ -148,7 +148,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     if (element instanceof XmlAttribute) {
       element = element.getParent();
     }
-    Set<String> set = getXmlExtension().guessUnboundNamespaces(element, xmlFile);
+    Set<String> set = getXmlNamespaceHelper().guessUnboundNamespaces(element, xmlFile);
 
     final String match = getUnboundNamespaceForPrefix(myNamespacePrefix, xmlFile, set);
     if (match != null) {
@@ -227,7 +227,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   private String getTitle() {
-    return XmlErrorMessages.message("select.namespace.title", StringUtil.capitalize(getXmlExtension().getNamespaceAlias(getFile())));
+    return XmlErrorMessages.message("select.namespace.title", StringUtil.capitalize(getXmlNamespaceHelper().getNamespaceAlias(getFile())));
   }
 
   @Override

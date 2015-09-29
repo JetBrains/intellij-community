@@ -19,6 +19,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.openapi.util.Couple;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.ClassType;
 import com.sun.jdi.Method;
@@ -39,14 +40,14 @@ public class UnBoxingEvaluator implements Evaluator{
   private final Evaluator myOperand;
   private static final Map<String, Couple<String>> TYPES_TO_CONVERSION_METHOD_MAP = new HashMap<String, Couple<String>>();
   static {
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Boolean", Couple.of("booleanValue", "()Z"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Byte", Couple.of("byteValue", "()B"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Character", Couple.of("charValue", "()C"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Short", Couple.of("shortValue", "()S"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Integer", Couple.of("intValue", "()I"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Long", Couple.of("longValue", "()J"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Float", Couple.of("floatValue", "()F"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put("java.lang.Double", Couple.of("doubleValue", "()D"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_BOOLEAN, Couple.of("booleanValue", "()Z"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_BYTE, Couple.of("byteValue", "()B"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_CHARACTER, Couple.of("charValue", "()C"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_SHORT, Couple.of("shortValue", "()S"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_INTEGER, Couple.of("intValue", "()I"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_LONG, Couple.of("longValue", "()J"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_FLOAT, Couple.of("floatValue", "()F"));
+    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_DOUBLE, Couple.of("doubleValue", "()D"));
   }
 
   public static boolean isTypeUnboxable(String typeName) {

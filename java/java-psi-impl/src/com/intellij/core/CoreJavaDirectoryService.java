@@ -45,13 +45,17 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
   @Override
   public PsiClass[] getClasses(@NotNull PsiDirectory dir) {
     LOG.assertTrue(dir.isValid());
+    return getPsiClasses(dir, dir.getFiles());
+  }
 
+  @NotNull
+  public static PsiClass[] getPsiClasses(@NotNull PsiDirectory dir, PsiFile[] psiFiles) {
     FileIndexFacade index = FileIndexFacade.getInstance(dir.getProject());
     VirtualFile virtualDir = dir.getVirtualFile();
     boolean onlyCompiled = index.isInLibraryClasses(virtualDir) && !index.isInSourceContent(virtualDir);
 
     List<PsiClass> classes = null;
-    for (PsiFile file : dir.getFiles()) {
+    for (PsiFile file : psiFiles) {
       if (onlyCompiled && !(file instanceof ClsFileImpl)) {
         continue;
       }

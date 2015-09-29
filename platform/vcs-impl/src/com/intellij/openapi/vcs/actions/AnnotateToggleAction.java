@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -27,19 +26,18 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
-import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
@@ -47,7 +45,6 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.SortedList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,12 +59,12 @@ import java.util.List;
  */
 public class AnnotateToggleAction extends ToggleAction implements DumbAware, AnnotationColors {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.actions.AnnotateToggleAction");
-  protected static final Key<Collection<ActiveAnnotationGutter>> KEY_IN_EDITOR = Key.create("Annotations");
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    final boolean enabled = isEnabled(VcsContextFactory.SERVICE.getInstance().createContextOn(e));
+    final boolean enabled = isEnabled(VcsContextFactory.SERVICE.getInstance().createContextOn(e)) ||
+                            AnnotateDiffViewerAction.isEnabled(e);
     e.getPresentation().setEnabled(enabled);
   }
 
@@ -127,19 +124,25 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
   }
 
   private static boolean isAnnotated(@NotNull Editor editor) {
-    Collection annotations = editor.getUserData(KEY_IN_EDITOR);
-    return annotations != null && !annotations.isEmpty();
+    return editor.getGutter().isAnnotationsShown();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean selected) {
+    if (AnnotateDiffViewerAction.isEnabled(e)) {
+      AnnotateDiffViewerAction.perform(e);
+      return;
+    }
+
     final VcsContext context = VcsContextFactory.SERVICE.getInstance().createContextOn(e);
     Editor editor = context.getEditor();
     VirtualFile selectedFile = context.getSelectedFile();
     if (selectedFile == null) return;
 
+    Project project = context.getProject();
+    if (project == null) return;
     if (!selected) {
-      for (FileEditor fileEditor : FileEditorManager.getInstance(context.getProject()).getEditors(selectedFile)) {
+      for (FileEditor fileEditor : FileEditorManager.getInstance(project).getEditors(selectedFile)) {
         if (fileEditor instanceof TextEditor) {
           ((TextEditor)fileEditor).getEditor().getGutter().closeAllAnnotations();
         }
@@ -147,7 +150,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     }
     else {
       if (editor == null) {
-        FileEditor[] fileEditors = FileEditorManager.getInstance(context.getProject()).openFile(selectedFile, false);
+        FileEditor[] fileEditors = FileEditorManager.getInstance(project).openFile(selectedFile, false);
         for (FileEditor fileEditor : fileEditors) {
           if (fileEditor instanceof TextEditor) {
             editor = ((TextEditor)fileEditor).getEditor();
@@ -155,7 +158,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
         }
       }
       LOG.assertTrue(editor != null);
-      doAnnotate(editor, context.getProject());
+      doAnnotate(editor, project);
     }
   }
 
@@ -191,6 +194,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
         catch (VcsException e) {
           exceptionRef.set(e);
         }
+        catch (ProcessCanceledException pce) {
+          throw pce;
+        }
         catch (Throwable t) {
           exceptionRef.set(new VcsException(t));
         }
@@ -207,25 +213,36 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
         if (!exceptionRef.isNull()) {
           LOG.warn(exceptionRef.get());
-          AbstractVcsHelper.getInstance(project).showErrors(Arrays.asList(exceptionRef.get()), VcsBundle.message("message.title.annotate"));
+          AbstractVcsHelper.getInstance(project).showErrors(Collections.singletonList(exceptionRef.get()), VcsBundle.message("message.title.annotate"));
         }
 
         if (!fileAnnotationRef.isNull()) {
-          doAnnotate(editor, project, file, fileAnnotationRef.get(), vcs, true);
+          doAnnotate(editor, project, file, fileAnnotationRef.get(), vcs);
         }
       }
     };
     ProgressManager.getInstance().run(annotateTask);
   }
 
-  public static void doAnnotate(final Editor editor,
-                                final Project project,
-                                final VirtualFile file,
-                                final FileAnnotation fileAnnotation,
-                                final AbstractVcs vcs, final boolean onCurrentRevision) {
-    final UpToDateLineNumberProvider getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
+  public static void doAnnotate(@NotNull final Editor editor,
+                                @NotNull final Project project,
+                                @Nullable final VirtualFile currentFile,
+                                @NotNull final FileAnnotation fileAnnotation,
+                                @NotNull final AbstractVcs vcs) {
+    doAnnotate(editor, project, currentFile, fileAnnotation, vcs, null);
+  }
+
+  public static void doAnnotate(@NotNull final Editor editor,
+                                @NotNull final Project project,
+                                @Nullable final VirtualFile currentFile,
+                                @NotNull final FileAnnotation fileAnnotation,
+                                @NotNull final AbstractVcs vcs,
+                                @Nullable UpToDateLineNumberProvider getUpToDateLineNumber) {
+    if (fileAnnotation.getFile() != null && fileAnnotation.getFile().isInLocalFileSystem()) {
+      ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener().registerAnnotation(fileAnnotation.getFile(), fileAnnotation);
+    }
+
     editor.getGutter().closeAllAnnotations();
-    final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener();
 
     fileAnnotation.setCloser(new Runnable() {
       @Override
@@ -240,43 +257,36 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
         });
       }
     });
-    if (onCurrentRevision) {
-      listener.registerAnnotation(file, fileAnnotation);
-    }
 
-    // be careful, not proxies but original items are put there (since only their presence not behaviour is important)
-    Collection<ActiveAnnotationGutter> annotations = editor.getUserData(KEY_IN_EDITOR);
-    if (annotations == null) {
-      annotations = new HashSet<ActiveAnnotationGutter>();
-      editor.putUserData(KEY_IN_EDITOR, annotations);
-    }
 
     final EditorGutterComponentEx editorGutter = (EditorGutterComponentEx)editor.getGutter();
     final List<AnnotationFieldGutter> gutters = new ArrayList<AnnotationFieldGutter>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
-    final List<AnAction> additionalActions = new ArrayList<AnAction>();
-    if (vcs.getCommittedChangesProvider() != null) {
-      additionalActions.add(new ShowDiffFromAnnotation(getUpToDateLineNumber, fileAnnotation, vcs, file));
+    if (getUpToDateLineNumber == null) getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
+
+    final AnnotationPresentation presentation = new AnnotationPresentation(fileAnnotation, getUpToDateLineNumber, switcher);
+    if (currentFile != null && vcs.getCommittedChangesProvider() != null) {
+      presentation.addAction(new ShowDiffFromAnnotation(fileAnnotation, vcs, currentFile));
     }
-    additionalActions.add(new CopyRevisionNumberFromAnnotateAction(getUpToDateLineNumber, fileAnnotation));
-    final AnnotationPresentation presentation =
-      new AnnotationPresentation(fileAnnotation, switcher, editorGutter,
-                                 additionalActions.toArray(new AnAction[additionalActions.size()]));
+    presentation.addAction(new CopyRevisionNumberFromAnnotateAction(fileAnnotation));
+    presentation.addAction(Separator.getInstance());
 
     final Couple<Map<VcsRevisionNumber, Color>> bgColorMap =
       Registry.is("vcs.show.colored.annotations") ? computeBgColors(fileAnnotation) : null;
-    final Map<String, Integer> historyIds = Registry.is("vcs.show.history.numbers") ? computeLineNumbers(fileAnnotation) : null;
+    final Map<VcsRevisionNumber, Integer> historyIds = Registry.is("vcs.show.history.numbers") ? computeLineNumbers(fileAnnotation) : null;
 
     if (switcher != null) {
       switcher.switchTo(switcher.getDefaultSource());
       final LineAnnotationAspect revisionAspect = switcher.getRevisionAspect();
       final CurrentRevisionAnnotationFieldGutter currentRevisionGutter =
-        new CurrentRevisionAnnotationFieldGutter(fileAnnotation, editor, revisionAspect, presentation, bgColorMap);
+        new CurrentRevisionAnnotationFieldGutter(fileAnnotation, revisionAspect, presentation, bgColorMap);
       final MergeSourceAvailableMarkerGutter mergeSourceGutter =
-        new MergeSourceAvailableMarkerGutter(fileAnnotation, editor, null, presentation, bgColorMap);
+        new MergeSourceAvailableMarkerGutter(fileAnnotation, null, presentation, bgColorMap);
 
-      presentation.addSourceSwitchListener(currentRevisionGutter);
-      presentation.addSourceSwitchListener(mergeSourceGutter);
+      SwitchAnnotationSourceAction switchAction = new SwitchAnnotationSourceAction(switcher, editorGutter);
+      presentation.addAction(switchAction);
+      switchAction.addSourceSwitchListener(currentRevisionGutter);
+      switchAction.addSourceSwitchListener(mergeSourceGutter);
 
       currentRevisionGutter.consume(switcher.getDefaultSource());
       mergeSourceGutter.consume(switcher.getDefaultSource());
@@ -287,27 +297,21 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
     final LineAnnotationAspect[] aspects = fileAnnotation.getAspects();
     for (LineAnnotationAspect aspect : aspects) {
-      gutters.add(new AnnotationFieldGutter(fileAnnotation, editor, aspect, presentation, bgColorMap));
+      gutters.add(new AnnotationFieldGutter(fileAnnotation, aspect, presentation, bgColorMap));
     }
 
 
     if (historyIds != null) {
-      gutters.add(new HistoryIdColumn(fileAnnotation, editor, presentation, bgColorMap, historyIds));
+      gutters.add(new HistoryIdColumn(fileAnnotation, presentation, bgColorMap, historyIds));
     }
-    gutters.add(new HighlightedAdditionalColumn(fileAnnotation, editor, null, presentation, bgColorMap));
+    gutters.add(new HighlightedAdditionalColumn(fileAnnotation, null, presentation, bgColorMap));
     final AnnotateActionGroup actionGroup = new AnnotateActionGroup(gutters, editorGutter);
     presentation.addAction(actionGroup, 1);
-    gutters.add(new ExtraFieldGutter(fileAnnotation, editor, presentation, bgColorMap, actionGroup));
+    gutters.add(new ExtraFieldGutter(fileAnnotation, presentation, bgColorMap, actionGroup));
 
-    presentation.addAction(new AnnotateCurrentRevisionAction(getUpToDateLineNumber, fileAnnotation, vcs));
-    presentation.addAction(new AnnotatePreviousRevisionAction(getUpToDateLineNumber, fileAnnotation, vcs));
+    presentation.addAction(new AnnotateCurrentRevisionAction(fileAnnotation, vcs));
+    presentation.addAction(new AnnotatePreviousRevisionAction(fileAnnotation, vcs));
     addActionsFromExtensions(presentation, fileAnnotation);
-
-    for (AnAction action : presentation.getActions()) {
-      if (action instanceof LineNumberListener) {
-        presentation.addLineNumberListener((LineNumberListener)action);
-      }
-    }
 
     for (AnnotationFieldGutter gutter : gutters) {
       final AnnotationGutterLineConvertorProxy proxy = new AnnotationGutterLineConvertorProxy(getUpToDateLineNumber, gutter);
@@ -317,7 +321,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
       else {
         editor.getGutter().registerTextAnnotation(proxy);
       }
-      annotations.add(gutter);
     }
   }
 
@@ -332,31 +335,16 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
   }
 
   @Nullable
-  private static Map<String, Integer> computeLineNumbers(@NotNull FileAnnotation fileAnnotation) {
-    final SortedList<VcsFileRevision> revisions = new SortedList<VcsFileRevision>(new Comparator<VcsFileRevision>() {
-      @Override
-      public int compare(VcsFileRevision o1, VcsFileRevision o2) {
-        try {
-          final int result = o1.getRevisionDate().compareTo(o2.getRevisionDate());
-          return result != 0 ? result : o1.getRevisionNumber().compareTo(o2.getRevisionNumber());
-        }
-        catch (Exception e) {
-          return 0;
-        }
-      }
-    });
-    final Map<String, Integer> numbers = new HashMap<String, Integer>();
+  private static Map<VcsRevisionNumber, Integer> computeLineNumbers(@NotNull FileAnnotation fileAnnotation) {
+    final Map<VcsRevisionNumber, Integer> numbers = new HashMap<VcsRevisionNumber, Integer>();
     final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
     if (fileRevisionList != null) {
-      revisions.addAll(fileRevisionList);
-      for (VcsFileRevision revision : fileRevisionList) {
-        final String revNumber = revision.getRevisionNumber().asString();
-        if (!numbers.containsKey(revNumber)) {
-          final int num = revisions.indexOf(revision);
-          if (num != -1) {
-            numbers.put(revNumber, num + 1);
-          }
-        }
+      int size = fileRevisionList.size();
+      for (int i = 0; i < size; i++) {
+        VcsFileRevision revision = fileRevisionList.get(i);
+        final VcsRevisionNumber number = revision.getRevisionNumber();
+
+        numbers.put(number, size - i);
       }
     }
     return numbers.size() < 2 ? null : numbers;

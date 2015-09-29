@@ -76,6 +76,6 @@ public class BackspaceHandler extends EditorActionHandler {
       process.prefixUpdated();
     }
 
-    lookup.hide();
+    lookup.hideLookup(false);
   }
 }

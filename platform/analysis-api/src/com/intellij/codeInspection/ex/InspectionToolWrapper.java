@@ -60,8 +60,13 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   protected InspectionToolWrapper(@NotNull InspectionToolWrapper<T, E> other) {
     myEP = other.myEP;
     // we need to create a copy for buffering
-    //noinspection unchecked
-    myTool = other.myTool == null ? null : (T)InspectionToolsRegistrarCore.instantiateTool(other.myTool.getClass());
+    if (other.myTool != null) {
+      //noinspection unchecked
+      myTool = myEP != null ? (T)myEP.instantiateTool() : (T)InspectionToolsRegistrarCore.instantiateTool(other.myTool.getClass());
+    }
+    else {
+      myTool = null;
+    }
   }
 
   public void initialize(@NotNull GlobalInspectionContext context) {
@@ -90,7 +95,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   /**
    * @see #applyToDialects()
-   * @see #isApplicable(com.intellij.lang.Language)
+   * @see #isApplicable(Language)
    */
   @Nullable
   public String getLanguage() {

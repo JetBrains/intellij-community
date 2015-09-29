@@ -25,7 +25,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.sdk.PySdkUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -69,12 +68,12 @@ public class PyNoneFunctionAssignmentInspection extends PyInspection {
       final PyExpression value = node.getAssignedValue();
       if (value instanceof PyCallExpression) {
         final PyType type = myTypeEvalContext.getType(value);
-        final PyExpression callee = ((PyCallExpression)value).getCallee();
+        final PyCallExpression callExpr = (PyCallExpression)value;
+        final PyExpression callee = callExpr.getCallee();
 
         if (type instanceof PyNoneType && callee != null) {
-          final PyTypeChecker.AnalyzeCallResults analyzeCallResults = PyTypeChecker.analyzeCall(((PyCallExpression)value), myTypeEvalContext);
-          if (analyzeCallResults != null) {
-            final PyCallable callable = analyzeCallResults.getCallable();
+          final PyCallable callable = callExpr.resolveCalleeFunction(getResolveContext());
+          if (callable != null) {
             if (PySdkUtil.isElementInSkeletons(callable)) {
               return;
             }

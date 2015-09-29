@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.Processor;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyExpression;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -147,6 +149,18 @@ public class PyJavaClassType implements PyClassLikeType {
       result.add(new PyJavaClassType(cls, myDefinition));
     }
     return result;
+  }
+
+  @Override
+  public void visitMembers(@NotNull final Processor<PsiElement> processor, final boolean inherited, @NotNull TypeEvalContext context) {
+    // TODO: Implement
+  }
+
+  @NotNull
+  @Override
+  public List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
+    // TODO: Implement
+    return Collections.emptyList();
   }
 
   @Override

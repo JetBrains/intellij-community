@@ -16,12 +16,15 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,13 +40,16 @@ public class EditBreakpointAction extends XDebuggerActionBase implements DumbAwa
       myRenderer = breakpointRenderer;
       myBreakpoint = breakpoint;
       myDebuggerSupport = debuggerSupport;
+      AnAction action = ActionManager.getInstance().getAction("ViewBreakpoints");
+      copyShortcutFrom(action);
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
       final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-      if (editor == null) return;
-      myDebuggerSupport.getEditBreakpointAction().editBreakpoint(getEventProject(e), editor, myBreakpoint, myRenderer);
+      Project project = getEventProject(e);
+      if (editor == null || project == null) return;
+      myDebuggerSupport.getEditBreakpointAction().editBreakpoint(project, editor, myBreakpoint, myRenderer);
     }
   }
 

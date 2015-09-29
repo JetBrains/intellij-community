@@ -51,6 +51,7 @@ class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
   public void removeSettingsChangedListener(ChangeListener listener) {
   }
 
+  @NotNull
   @Override
   public String getReportText() {
     StringBuilder buf = new StringBuilder();
@@ -103,6 +104,7 @@ class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
     buf.append(lineSeparator);
   }
 
+  @NotNull
   @Override
   public String getDefaultFilePath() {
     return UsageViewSettings.getInstance().EXPORT_FILE_NAME;

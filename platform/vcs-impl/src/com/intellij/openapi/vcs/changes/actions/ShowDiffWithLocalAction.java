@@ -19,21 +19,19 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.CurrentContentRevision;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction.*;
+import static com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction.showDiffForChange;
 
 /**
  * @author yole
@@ -48,36 +46,36 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
-    Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    assert changes != null;
+    ChangesSelection selection = e.getRequiredData(VcsDataKeys.CHANGES_SELECTION);
+
+    int index = 0;
     List<Change> changesToLocal = new ArrayList<Change>();
-    for(Change change: changes) {
-      ContentRevision afterRevision = change.getAfterRevision();
+    for (int i = 0; i < selection.getChanges().size(); i++) {
+      if (i == selection.getIndex()) index = changesToLocal.size();
+      ContentRevision afterRevision = selection.getChanges().get(i).getAfterRevision();
       if (afterRevision != null && isValidAfterRevision(afterRevision)) {
         changesToLocal.add(new Change(afterRevision, CurrentContentRevision.create(afterRevision.getFile())));
       }
     }
     if (!changesToLocal.isEmpty()) {
-      showDiffForChange(project, changesToLocal, 0);
+      showDiffForChange(project, changesToLocal, index);
     }
   }
 
   public void update(final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    ChangesSelection selection = e.getData(VcsDataKeys.CHANGES_SELECTION);
+    boolean isInAir = CommittedChangesBrowserUseCase.IN_AIR.equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(e.getDataContext()));
 
-    e.getPresentation().setEnabled(project != null && changes != null &&
-                                   (! CommittedChangesBrowserUseCase.IN_AIR
-                                     .equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(e.getDataContext()))) &&
-                                   anyHasAfterRevision(changes));
+    e.getPresentation().setEnabled(project != null && selection != null && !isInAir && anyHasAfterRevision(selection.getChanges()));
   }
 
-  private static boolean isValidAfterRevision(final ContentRevision afterRevision) {
+  private static boolean isValidAfterRevision(@Nullable final ContentRevision afterRevision) {
     return afterRevision != null && !afterRevision.getFile().isNonLocal() && !afterRevision.getFile().isDirectory();
   }
 
-  private static boolean anyHasAfterRevision(final Change[] changes) {
-    for(Change c: changes) {
+  private static boolean anyHasAfterRevision(@NotNull final List<Change> changes) {
+    for (Change c : changes) {
       if (isValidAfterRevision(c.getAfterRevision())) {
         return true;
       }

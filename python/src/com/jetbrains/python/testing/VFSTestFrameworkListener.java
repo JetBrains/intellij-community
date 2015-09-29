@@ -17,7 +17,6 @@ package com.jetbrains.python.testing;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
@@ -126,7 +125,7 @@ public class VFSTestFrameworkListener {
   }
 
   public static VFSTestFrameworkListener getInstance() {
-    return ServiceManager.getService(VFSTestFrameworkListener.class);
+    return ApplicationManager.getApplication().getComponent(VFSTestFrameworkListener.class);
   }
 
   public void pyTestInstalled(boolean installed, String sdkHome) {

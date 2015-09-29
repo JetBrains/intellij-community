@@ -82,7 +82,7 @@ try:
     port = int(f.read())
 except Exception:
     type, value, traceback = sys.exc_info()
-    print(value)
+    print('No IDE instance has been found. New one will be started.')
     port = -1
 
 if port == -1:

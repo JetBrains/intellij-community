@@ -22,10 +22,8 @@ import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -60,7 +58,9 @@ public class ConsoleViewUtil {
 
   public static EditorEx setupConsoleEditor(Project project, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
     EditorFactory editorFactory = EditorFactory.getInstance();
-    EditorEx editor = (EditorEx) editorFactory.createViewer(((EditorFactoryImpl)editorFactory).createDocument(true), project);
+    Document document = ((EditorFactoryImpl)editorFactory).createDocument(true);
+    UndoUtil.disableUndoFor(document);
+    EditorEx editor = (EditorEx) editorFactory.createViewer(document, project);
     setupConsoleEditor(editor, foldingOutlineShown, lineMarkerAreaShown);
     return editor;
   }

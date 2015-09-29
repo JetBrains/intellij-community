@@ -52,6 +52,7 @@ import java.io.IOException;
 public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvider, Disposable {
 
   private static final String EMPTY_TASK_TEXT = "Please, open any task to see task description";
+  private static final Logger LOG = Logger.getInstance(StudyToolWindow.class);
 
   public StudyToolWindow(final Project project) {
     super(true, true);
@@ -76,7 +77,10 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
     final Task task = taskFile.getTask();
 
     if (task != null) {
-      final String taskText = task.getText();
+      final String taskText = getTaskText(task, task.getTaskDir(project));
+      if (taskText == null) {
+        return;
+      }
       JBScrollPane scrollPane = new JBScrollPane(taskTextPane);
       taskTextPane.setText(taskText);
       taskTextPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
@@ -167,23 +171,35 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
     }
 
     private void setTaskText(@Nullable final Task task, @Nullable final VirtualFile taskDirectory) {
-      if (task == null) {
+      String text =  getTaskText(task, taskDirectory);
+      if (text == null) {
         myTaskTextPane.setText(EMPTY_TASK_TEXT);
         return;
       }
-      String text = task.getText();
-      if (text == null && taskDirectory != null) {
-        VirtualFile taskTextFile = taskDirectory.findChild(EduNames.TASK_HTML);
-        if (taskTextFile != null) {
-          try {
-            text = FileUtil.loadTextAndClose(taskTextFile.getInputStream());
-          }
-          catch (IOException e) {
-            LOG.info(e);
-          }
-        }
-      }
       myTaskTextPane.setText(text);
     }
+  }
+
+  @Nullable
+  private static String getTaskText(@Nullable final Task task, @Nullable final VirtualFile taskDirectory) {
+    if (task == null) {
+      return null;
+    }
+    String text = task.getText();
+    if (text != null) {
+      return text;
+    }
+    if (taskDirectory != null) {
+      VirtualFile taskTextFile = taskDirectory.findChild(EduNames.TASK_HTML);
+      if (taskTextFile != null) {
+        try {
+          return FileUtil.loadTextAndClose(taskTextFile.getInputStream());
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+      }
+    }
+    return null;
   }
 }

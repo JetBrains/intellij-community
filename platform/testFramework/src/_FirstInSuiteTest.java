@@ -19,6 +19,7 @@ import com.intellij.testFramework.TestRunnerUtil;
 import junit.framework.TestCase;
 
 import javax.swing.*;
+import java.nio.charset.Charset;
 import java.util.List;
 
 /**
@@ -75,5 +76,18 @@ public class _FirstInSuiteTest extends TestCase {
   // performance tests
   public void testNothingPerformance() throws Exception {
     testNothing();
+  }
+
+  // agents where this test is failing should be disabled and configured properly
+  public void testFileEncoding() {
+    assertEncoding("file.encoding");
+    assertEncoding("sun.jnu.encoding");
+  }
+
+  private static void assertEncoding(String property) {
+    String encoding = System.getProperty(property);
+    System.out.println("** " + property + "=" + encoding);
+    assertNotNull(encoding);
+    assertFalse(Charset.forName(encoding).aliases().contains("default"));
   }
 }

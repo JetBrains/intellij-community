@@ -29,7 +29,7 @@ public class Functions {
     return Function.ID;
   }
 
-  public static <A> Function<A, String> toString() {
+  public static <A> Function<A, String> TO_STRING() {
     return Function.TO_STRING;
   }
 
@@ -49,7 +49,7 @@ public class Functions {
     }
   };
 
-  public static <T> Function<T, Class> toClass() {
+  public static <T> Function<T, Class> TO_CLASS() {
     return (Function<T, Class>)TO_CLASS;
   }
 

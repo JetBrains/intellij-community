@@ -169,7 +169,9 @@ public class RemoteConnectionCredentialsWrapper {
 
       @Override
       public void vagrant(@NotNull VagrantBasedCredentialsHolder cred) {
-        result.set(VAGRANT_PREFIX + cred.getVagrantFolder());
+        result.set(VAGRANT_PREFIX + cred.getVagrantFolder()
+                   + (StringUtil.isNotEmpty(cred.getMachineName()) ?
+                      "@" + cred.getMachineName() : ""));
       }
 
       @Override

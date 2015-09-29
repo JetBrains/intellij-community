@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
@@ -81,7 +82,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       AllClassesSearch.search(searchScope, project, parameters.getNameCondition()).forEach(new Processor<PsiClass>() {
         @Override
         public boolean process(final PsiClass aClass) {
-          ProgressIndicatorProvider.checkCanceled();
+          ProgressManager.checkCanceled();
           return isJavaLangObject(aClass) || consumer.process(aClass);
         }
       });
@@ -95,7 +96,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     final Processor<PsiClass> processor = new ReadActionProcessor<PsiClass>() {
       @Override
       public boolean processInReadAction(PsiClass candidate) {
-        ProgressIndicatorProvider.checkCanceled();
+        ProgressManager.checkCanceled();
 
         if (parameters.isCheckInheritance() || parameters.isCheckDeep() && !(candidate instanceof PsiAnonymousClass)) {
           if (!candidate.isInheritor(currentBase.get(), false)) {
@@ -130,7 +131,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     final GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);
     
     while (!stack.isEmpty()) {
-      ProgressIndicatorProvider.checkCanceled();
+      ProgressManager.checkCanceled();
 
       final PsiAnchor anchor = stack.pop();
       if (!processed.add(anchor)) continue;

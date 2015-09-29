@@ -121,6 +121,7 @@ public int hashCode() {
 #macro(addFieldHashCode $field $brace)
 #set($name = $field.accessor)
 #if ($field.notNull)#adjustHashCodeToArrays($field)
+#elseif ($field.array && $java_version > 4)#adjustHashCodeToArrays($field)
   #else
     #if ($brace)(##
     #end

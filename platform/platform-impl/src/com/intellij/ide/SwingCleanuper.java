@@ -221,7 +221,7 @@ public final class SwingCleanuper implements ApplicationComponent{
             if (ac != null && myNativeAXResourceField != null) {
               try {
                 Object resource = myNativeAXResourceField.get(ac);
-                if (resource != null && resource.getClass().getName().equals("apple.awt.CAccessible")) {
+                if (resource != null && isCAccessible(resource)) {
                   Field accessible = ReflectionUtil.findField(resource.getClass(), Accessible.class, "accessible");
                   accessible.set(resource, null);
                 }
@@ -233,6 +233,11 @@ public final class SwingCleanuper implements ApplicationComponent{
         }
       }
     }, AWTEvent.HIERARCHY_EVENT_MASK);
+  }
+
+  private static boolean isCAccessible(Object resource) {
+    final String name = resource.getClass().getName();
+    return name.equals("apple.awt.CAccessible") || name.equals("sun.lwawt.macosx.CAccessible");
   }
 
   private static boolean isCAccessibleListener(EventListener listener) {

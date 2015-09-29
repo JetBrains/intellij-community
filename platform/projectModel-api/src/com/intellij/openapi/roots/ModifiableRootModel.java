@@ -127,7 +127,8 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   /**
    * Returns library table with module libraries.<br>
-   * <b>Note:</b> returned library table does not support listeners.
+   * <b>Note:</b> returned library table does not support listeners. Also one shouldn't invoke 'commit()' or 'dispose()' methods on it,
+   * it is automatically committed or disposed along with this {@link ModifiableRootModel} instance.
    *
    * @return library table to be modified
    */

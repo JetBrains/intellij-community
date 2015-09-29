@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.ArrayUtil;
@@ -73,6 +74,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
  * @author peter
  */
 public class VfsData {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.impl.VfsData");
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
@@ -142,8 +144,14 @@ public class VfsData {
     if (segment != null || !create) return segment;
     return ourSegments.cacheOrGet(key, new Segment());
   }
+  
+  public static class FileAlreadyCreatedException extends Exception {
+    private FileAlreadyCreatedException(String message) {
+      super(message);
+    }
+  }
 
-  public static void initFile(int id, Segment segment, int nameId, @NotNull Object data) {
+  public static void initFile(int id, Segment segment, int nameId, @NotNull Object data) throws FileAlreadyCreatedException {
     assert id > 0;
     int offset = getOffset(id);
 
@@ -152,12 +160,12 @@ public class VfsData {
     Object existingData = segment.myObjectArray.get(offset);
     if (existingData != null) {
       int parent = FSRecords.getParent(id);
-      String msg = "File already created: " + existingData + "; parentId=" + parent;
+      String msg = "File already created: " + nameId + ", data=" + existingData + "; parentId=" + parent;
       if (parent > 0) {
         msg += "; parent.name=" + FSRecords.getName(parent);
         msg += "; parent.children=" + Arrays.toString(FSRecords.listAll(id));
       }
-      throw new AssertionError(msg);
+      throw new FileAlreadyCreatedException(msg);
     }
     segment.myObjectArray.set(offset, data);
   }
@@ -223,6 +231,9 @@ public class VfsData {
     }
 
     void setFlag(int id, int mask, boolean value) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Set flag " + Integer.toHexString(mask) + "=" + value + " for id=" + id);
+      }
       assert (mask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       int offset = getOffset(id) * 2 + 1;
       while (true) {

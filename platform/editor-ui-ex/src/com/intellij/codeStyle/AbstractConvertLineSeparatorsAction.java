@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.text.StringUtil;
@@ -133,7 +134,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
       return false;
     }
     Module module = FileIndexFacade.getInstance(project).getModuleForFile(file);
-    return module == null || !file.equals(module.getModuleFile());
+    return module == null || !ModuleUtilCore.isModuleFile(module, file);
   }
 
   public static void changeLineSeparators(@NotNull final Project project,

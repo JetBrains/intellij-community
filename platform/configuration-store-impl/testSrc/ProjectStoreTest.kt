@@ -32,11 +32,11 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
-fun createProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit) {
+fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, task: (Project) -> Unit) {
   createOrLoadProject(tempDirManager, task)
 }
 
-fun loadProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, task: (Project) -> Unit) {
+fun loadAndUseProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, task: (Project) -> Unit) {
   createOrLoadProject(tempDirManager, task, projectCreator)
 }
 
@@ -51,29 +51,30 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
     }
 
     val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
-    var project = if (projectCreator == null) projectManager.newProject(null, filePath, true, false, false)!! else projectManager.loadProject(filePath)!!
-    try {
-      projectManager.openTestProject(project)
-      task(project)
-    }
-    finally {
-      projectManager.closeProject(project, false, true, false)
+    var project = if (projectCreator == null) projectManager.newProject(null, filePath, true, false)!! else projectManager.loadProject(filePath)!!
+    project.runInLoadComponentStateMode {
+      try {
+        projectManager.openTestProject(project)
+        task(project)
+      }
+      finally {
+        projectManager.closeProject(project, false, true, false)
+      }
     }
   }
 }
 
 class ProjectStoreTest {
   companion object {
-    ClassRule val projectRule = ProjectRule()
+    @ClassRule val projectRule = ProjectRule()
   }
 
   val tempDirManager = TemporaryDirectory()
 
   private val ruleChain = RuleChain(tempDirManager)
+  @Rule fun getChain() = ruleChain
 
-  public Rule fun getChain(): RuleChain = ruleChain
-
-  Language("XML")
+  @Language("XML")
   private val iprFileContent =
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
       "<project version=\"4\">\n" +
@@ -82,7 +83,7 @@ class ProjectStoreTest {
       "  </component>\n" +
       "</project>"
 
-  State(name = "AATestComponent", storages = arrayOf(Storage(file = StoragePathMacros.PROJECT_FILE)))
+  @State(name = "AATestComponent", storages = arrayOf(Storage(file = StoragePathMacros.PROJECT_FILE)))
   private class TestComponent : PersistentStateComponent<TestState> {
     private var state: TestState? = null
 
@@ -95,26 +96,26 @@ class ProjectStoreTest {
 
   data class TestState(var value: String = "default")
 
-  public Test fun directoryBasedStorage() {
-    loadProject(tempDirManager, {
+  @Test fun directoryBasedStorage() {
+    loadAndUseProject(tempDirManager, {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
       it.path
     }) { project ->
       val testComponent = test(project)
 
       // test reload on external change
-      val file = File(project.stateStore.getStateStorageManager().expandMacros(StoragePathMacros.PROJECT_FILE))
+      val file = File(project.stateStore.stateStorageManager.expandMacros(StoragePathMacros.PROJECT_FILE))
       file.writeText(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
 
-      project.getBaseDir().refresh(false, true)
+      project.baseDir.refresh(false, true)
       (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
 
-      assertThat(testComponent.getState()).isEqualTo(TestState("newValue"))
+      assertThat(testComponent.state).isEqualTo(TestState("newValue"))
     }
   }
 
-  public Test fun fileBasedStorage() {
-    loadProject(tempDirManager, { it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path }) { project ->
+  @Test fun fileBasedStorage() {
+    loadAndUseProject(tempDirManager, { it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path }) { project ->
       test(project)
     }
   }
@@ -122,12 +123,12 @@ class ProjectStoreTest {
   private fun test(project: Project): TestComponent {
     val testComponent = TestComponent()
     project.stateStore.initComponent(testComponent, true)
-    assertThat(testComponent.getState()).isEqualTo(TestState("customValue"))
+    assertThat(testComponent.state).isEqualTo(TestState("customValue"))
 
-    testComponent.getState()!!.value = "foo"
+    testComponent.state!!.value = "foo"
     project.saveStore()
 
-    val file = File(project.stateStore.getStateStorageManager().expandMacros(StoragePathMacros.PROJECT_FILE))
+    val file = File(project.stateStore.stateStorageManager.expandMacros(StoragePathMacros.PROJECT_FILE))
     assertThat(file).isFile()
     // test exact string - xml prolog, line separators, indentation and so on must be exactly the same
     // todo get rid of default component states here

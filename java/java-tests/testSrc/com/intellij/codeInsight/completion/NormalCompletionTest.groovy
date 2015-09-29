@@ -512,6 +512,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testBreakInIfCondition() throws Throwable { doTest(); }
   public void testAccessStaticViaInstance() throws Throwable { doTest(); }
 
+  public void testIfConditionLt() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'getAnnotationsAreaOffset'
+  }
+
   public void testAccessStaticViaInstanceSecond() throws Throwable {
     configure()
     myFixture.complete(CompletionType.BASIC, 2)
@@ -1155,6 +1160,13 @@ class XInternalError {}
     assertFirstStringItems "XInternalError", "XInternalTimerServiceController"
   }
 
+  public void testNonImportedAnnotationClass() {
+    myFixture.addClass("package foo; public @interface XAnotherAnno {}")
+    configure()
+    type('X')
+    assertFirstStringItems "XAnno", "XAnotherAnno"
+  }
+
   public void testMetaAnnotation() {
     myFixture.configureByText "a.java", "@<caret> @interface Anno {}"
     myFixture.complete(CompletionType.BASIC)
@@ -1317,8 +1329,8 @@ class XInternalError {}
 
   public void testSuggestAllTypeArguments() {
     configure()
-    assert 'String, String' == lookup.items[1].lookupString
-    lookup.currentItem = lookup.items[1]
+    assert 'String, List<String>' == lookup.items[0].lookupString
+    assert 'String, List<String>' == LookupElementPresentation.renderElement(lookup.items[0]).itemText
     type '\n'
     checkResult()
   }

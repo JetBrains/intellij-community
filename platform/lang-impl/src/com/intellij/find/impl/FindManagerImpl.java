@@ -240,10 +240,9 @@ public class FindManagerImpl extends FindManager {
   public FindModel getFindNextModel(@NotNull final Editor editor) {
     if (myFindNextModel == null) return null;
 
-    final JComponent header = editor.getHeaderComponent();
-    if (header instanceof EditorSearchComponent && !isSelectNextOccurrenceWasPerformed) {
-      final EditorSearchComponent searchComponent = (EditorSearchComponent)header;
-      final String textInField = searchComponent.getTextInField();
+    EditorSearchSession search = EditorSearchSession.get(editor);
+    if (search != null && !isSelectNextOccurrenceWasPerformed) {
+      String textInField = search.getTextInField();
       if (!Comparing.equal(textInField, myFindInFileModel.getStringToFind()) && !textInField.isEmpty()) {
         FindModel patched = new FindModel();
         patched.copyFrom(myFindNextModel);
@@ -930,16 +929,15 @@ public class FindManagerImpl extends FindManager {
   }
 
   private static boolean tryToFindNextUsageViaEditorSearchComponent(Editor editor, SearchResults.Direction forwardOrBackward) {
-    if (editor.getHeaderComponent() instanceof EditorSearchComponent) {
-      EditorSearchComponent searchComponent = (EditorSearchComponent)editor.getHeaderComponent();
-      if (searchComponent.hasMatches()) {
-        if (forwardOrBackward == SearchResults.Direction.UP) {
-          searchComponent.searchBackward();
-        } else {
-          searchComponent.searchForward();
-        }
-        return true;
+    EditorSearchSession search = EditorSearchSession.get(editor);
+    if (search != null && search.hasMatches()) {
+      if (forwardOrBackward == SearchResults.Direction.UP) {
+        search.searchBackward();
       }
+      else {
+        search.searchForward();
+      }
+      return true;
     }
     return false;
   }

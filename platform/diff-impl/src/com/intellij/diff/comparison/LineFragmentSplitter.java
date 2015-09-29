@@ -17,12 +17,10 @@ package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.ByWord.InlineChunk;
 import com.intellij.diff.comparison.ByWord.NewlineChunk;
-import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -58,15 +56,14 @@ class LineFragmentSplitter {
 
   private int last1 = -1;
   private int last2 = -1;
-
-  private boolean lastHasEqualWords = false;
-  private boolean hasEqualWords = false;
+  private PendingChunk pendingChunk = null;
 
   // indexes here are a bit tricky
   // -1 - the beginning of file, words.size() - end of file, everything in between - InlineChunks (words or newlines)
 
   @NotNull
   public List<WordBlock> run() {
+    boolean hasEqualWords = false;
     for (Range range : myIterable.iterateUnchanged()) {
       int count = range.end1 - range.start1;
       for (int i = 0; i < count; i++) {
@@ -74,47 +71,46 @@ class LineFragmentSplitter {
         int index2 = range.start2 + i;
 
         if (isNewline(myWords1, index1) && isNewline(myWords2, index2)) { // split by matched newlines
-          addLineChunk(index1, index2);
+          addLineChunk(index1, index2, hasEqualWords);
+          hasEqualWords = false;
         }
         else {
           if (isFirstInLine(myWords1, index1) && isFirstInLine(myWords2, index2)) { // split by matched first word in line
-            addLineChunk(index1 - 1, index2 - 1);
+            addLineChunk(index1 - 1, index2 - 1, hasEqualWords);
+            hasEqualWords = false;
           }
           // TODO: split by 'last word in line' + 'last word in whole sequence' ?
           hasEqualWords = true;
         }
       }
     }
-    addLineChunk(myWords1.size(), myWords2.size());
+    addLineChunk(myWords1.size(), myWords2.size(), hasEqualWords);
+
+    if (pendingChunk != null) myResult.add(pendingChunk.block);
 
     return myResult;
   }
 
-  private void addLineChunk(int end1, int end2) {
+  private void addLineChunk(int end1, int end2, boolean hasEqualWords) {
     if (last1 > end1 || last2 > end2) return;
 
-    WordBlock block = createBlock(last1, last2, end1, end2);
-    if (block.offsets.isEmpty()) return;
+    PendingChunk chunk = createChunk(last1, last2, end1, end2, hasEqualWords);
+    if (chunk.block.offsets.isEmpty()) return;
 
-    WordBlock lastBlock = ContainerUtil.getLastItem(myResult);
-
-    if (lastBlock != null && shouldMergeBlocks(lastBlock, block)) {
-      myResult.remove(myResult.size() - 1);
-      myResult.add(mergeBlocks(lastBlock, block));
-      lastHasEqualWords = hasEqualWords || lastHasEqualWords;
+    if (pendingChunk != null && shouldMergeChunks(pendingChunk, chunk)) {
+      pendingChunk = mergeChunks(pendingChunk, chunk);
     }
     else {
-      myResult.add(block);
-      lastHasEqualWords = hasEqualWords;
+      if (pendingChunk != null) myResult.add(pendingChunk.block);
+      pendingChunk = chunk;
     }
 
-    hasEqualWords = false;
     last1 = end1;
     last2 = end2;
   }
 
   @NotNull
-  private WordBlock createBlock(int start1, int start2, int end1, int end2) {
+  private PendingChunk createChunk(int start1, int start2, int end1, int end2, boolean hasEqualWords) {
     int startOffset1 = getOffset(myWords1, myText1, start1);
     int startOffset2 = getOffset(myWords2, myText2, start2);
     int endOffset1 = getOffset(myWords1, myText1, end1);
@@ -125,27 +121,44 @@ class LineFragmentSplitter {
     end1 = Math.min(end1 + 1, myWords1.size());
     end2 = Math.min(end2 + 1, myWords2.size());
 
-    return new WordBlock(new Range(start1, end1, start2, end2), new Range(startOffset1, endOffset1, startOffset2, endOffset2));
+    WordBlock block = new WordBlock(new Range(start1, end1, start2, end2), new Range(startOffset1, endOffset1, startOffset2, endOffset2));
+
+    return new PendingChunk(block, hasEqualWords, hasWordsInside(block), isEqualsIgnoreWhitespace(block));
   }
 
-  private boolean shouldMergeBlocks(@NotNull WordBlock lastBlock, @NotNull WordBlock newBlock) {
-    if (!lastHasEqualWords && !hasEqualWords) return true; // combine lines, that matched only by '\n'
-    if (isEqualsIgnoreWhitespace(newBlock) && isEqualsIgnoreWhitespace(lastBlock)) return true; // combine whitespace-only changed lines
-    if (noWordsInside(lastBlock) || noWordsInside(newBlock)) return true; // squash block without words in it
+  private static boolean shouldMergeChunks(@NotNull PendingChunk chunk1, @NotNull PendingChunk chunk2) {
+    if (!chunk1.hasEqualWords && !chunk2.hasEqualWords) return true; // combine lines, that matched only by '\n'
+    if (chunk1.isEqualIgnoreWhitespaces && chunk2.isEqualIgnoreWhitespaces) return true; // combine whitespace-only changed lines
+    if (!chunk1.hasWordsInside || !chunk2.hasWordsInside) return true; // squash block without words in it
     return false;
+  }
+
+  @NotNull
+  private static PendingChunk mergeChunks(@NotNull PendingChunk chunk1, @NotNull PendingChunk chunk2) {
+    WordBlock block1 = chunk1.block;
+    WordBlock block2 = chunk2.block;
+    WordBlock newBlock = new WordBlock(new Range(block1.words.start1, block2.words.end1, block1.words.start2, block2.words.end2),
+                                       new Range(block1.offsets.start1, block2.offsets.end1, block1.offsets.start2, block2.offsets.end2));
+    return new PendingChunk(newBlock,
+                            chunk1.hasEqualWords || chunk2.hasEqualWords,
+                            chunk1.hasWordsInside || chunk2.hasWordsInside,
+                            chunk1.isEqualIgnoreWhitespaces && chunk2.isEqualIgnoreWhitespaces);
   }
 
   private boolean isEqualsIgnoreWhitespace(@NotNull WordBlock block) {
     CharSequence sequence1 = myText1.subSequence(block.offsets.start1, block.offsets.end1);
     CharSequence sequence2 = myText2.subSequence(block.offsets.start2, block.offsets.end2);
-
     return StringUtil.equalsIgnoreWhitespaces(sequence1, sequence2);
   }
 
-  @NotNull
-  private static WordBlock mergeBlocks(@NotNull WordBlock start, @NotNull WordBlock end) {
-    return new WordBlock(new Range(start.words.start1, end.words.end1, start.words.start2, end.words.end2),
-                         new Range(start.offsets.start1, end.offsets.end1, start.offsets.start2, end.offsets.end2));
+  private boolean hasWordsInside(@NotNull WordBlock block) {
+    for (int i = block.words.start1; i < block.words.end1; i++) {
+      if (!(myWords1.get(i) instanceof NewlineChunk)) return true;
+    }
+    for (int i = block.words.start2; i < block.words.end2; i++) {
+      if (!(myWords2.get(i) instanceof NewlineChunk)) return true;
+    }
+    return false;
   }
 
   private static int getOffset(@NotNull List<InlineChunk> words, @NotNull CharSequence text, int index) {
@@ -165,16 +178,6 @@ class LineFragmentSplitter {
     return words1.get(index - 1) instanceof NewlineChunk;
   }
 
-  private boolean noWordsInside(@NotNull WordBlock block) {
-    for (int i = block.words.start1; i < block.words.end1; i++) {
-      if (!(myWords1.get(i) instanceof NewlineChunk)) return false;
-    }
-    for (int i = block.words.start2; i < block.words.end2; i++) {
-      if (!(myWords2.get(i) instanceof NewlineChunk)) return false;
-    }
-    return true;
-  }
-
   //
   // Helpers
   //
@@ -186,6 +189,20 @@ class LineFragmentSplitter {
     public WordBlock(@NotNull Range words, @NotNull Range offsets) {
       this.words = words;
       this.offsets = offsets;
+    }
+  }
+
+  private static class PendingChunk {
+    @NotNull public final WordBlock block;
+    public final boolean hasEqualWords;
+    public final boolean hasWordsInside;
+    public final boolean isEqualIgnoreWhitespaces;
+
+    public PendingChunk(@NotNull WordBlock block, boolean hasEqualWords, boolean hasWordsInside, boolean isEqualIgnoreWhitespaces) {
+      this.block = block;
+      this.hasEqualWords = hasEqualWords;
+      this.hasWordsInside = hasWordsInside;
+      this.isEqualIgnoreWhitespaces = isEqualIgnoreWhitespaces;
     }
   }
 }

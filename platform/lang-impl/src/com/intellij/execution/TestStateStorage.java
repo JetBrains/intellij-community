@@ -21,10 +21,12 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.PersistentEnumeratorBase;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +36,7 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.concurrent.ScheduledFuture;
 
 /**
  * @author Dmitry Avdeev
@@ -41,6 +44,8 @@ import java.util.Date;
 public class TestStateStorage implements Disposable {
 
   private static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");
+  private final File myFile;
+
   public static File getTestHistoryRoot(Project project) {
     return new File(TEST_HISTORY_PATH, project.getLocationHash());
   }
@@ -56,7 +61,9 @@ public class TestStateStorage implements Disposable {
   }
 
   private static final Logger LOG = Logger.getInstance(TestStateStorage.class);
+  @Nullable
   private PersistentHashMap<String, Record> myMap;
+  private volatile ScheduledFuture<?> myMapFlusher;
 
   public static TestStateStorage getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, TestStateStorage.class);
@@ -64,71 +71,103 @@ public class TestStateStorage implements Disposable {
 
   public TestStateStorage(Project project) {
 
-    File file = new File(getTestHistoryRoot(project).getPath() + "/testStateMap");
-    FileUtilRt.createParentDirs(file);
+    myFile = new File(getTestHistoryRoot(project).getPath() + "/testStateMap");
+    FileUtilRt.createParentDirs(myFile);
     try {
-      myMap = create(file);
-    }
-    catch (PersistentEnumeratorBase.CorruptedException e) {
-      PersistentHashMap.deleteFilesStartingWith(file);
-      try {
-        myMap = create(file);
-      }
-      catch (IOException e1) {
-        LOG.error(e1);
-      }
-    }
-    catch (IOException e) {
+      myMap = initializeMap();
+    } catch (IOException e) {
       LOG.error(e);
     }
+    myMapFlusher = FlushingDaemon.everyFiveSeconds(new Runnable() {
+      @Override
+      public void run() {
+        flushMap();
+      }
+    });
 
     Disposer.register(project, this);
   }
 
-  @NotNull
-  protected PersistentHashMap<String, Record> create(File file) throws IOException {
-    return new PersistentHashMap<String, Record>(file, new EnumeratorStringDescriptor(), new DataExternalizer<Record>() {
-      @Override
-      public void save(@NotNull DataOutput out, Record value) throws IOException {
-        out.writeInt(value.magnitude);
-        out.writeLong(value.date.getTime());
-      }
+  protected PersistentHashMap<String, Record> initializeMap() throws IOException {
+    return IOUtil.openCleanOrResetBroken(getComputable(myFile), myFile);
+  }
 
+  private synchronized void flushMap() {
+    if (myMapFlusher == null) return; // disposed
+    if (myMap != null && myMap.isDirty()) myMap.force();
+  }
+
+  @NotNull
+  private static ThrowableComputable<PersistentHashMap<String, Record>, IOException> getComputable(final File file) {
+    return new ThrowableComputable<PersistentHashMap<String, Record>, IOException>() {
       @Override
-      public Record read(@NotNull DataInput in) throws IOException {
-        return new Record(in.readInt(), new Date(in.readLong()));
+      public PersistentHashMap<String, Record> compute() throws IOException {
+        return new PersistentHashMap<String, Record>(file, new EnumeratorStringDescriptor(), new DataExternalizer<Record>() {
+          @Override
+          public void save(@NotNull DataOutput out, Record value) throws IOException {
+            out.writeInt(value.magnitude);
+            out.writeLong(value.date.getTime());
+          }
+
+          @Override
+          public Record read(@NotNull DataInput in) throws IOException {
+            return new Record(in.readInt(), new Date(in.readLong()));
+          }
+        });
       }
-    });
+    };
   }
 
   @Nullable
-  public Record getState(String testUrl) {
+  public synchronized Record getState(String testUrl) {
     try {
       return myMap == null ? null : myMap.get(testUrl);
     }
     catch (IOException e) {
-      LOG.error(e);
+      thingsWentWrongLetsReinitialize(e);
       return null;
     }
   }
 
-  public void writeState(@NotNull String testUrl, Record record) {
+  public synchronized void writeState(@NotNull String testUrl, Record record) {
     if (myMap == null) return;
     try {
       myMap.put(testUrl, record);
     }
     catch (IOException e) {
-      LOG.error(e);
+      thingsWentWrongLetsReinitialize(e);
     }
   }
 
   @Override
-  public void dispose() {
+  public synchronized void dispose() {
+    myMapFlusher.cancel(false);
+    myMapFlusher = null;
+    if (myMap == null) return;
     try {
       myMap.close();
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+  }
+
+  private void thingsWentWrongLetsReinitialize(IOException e) {
+    try {
+      if (myMap != null) {
+        try {
+          myMap.close();
+        }
+        catch (IOException ignore) {
+        }
+        IOUtil.deleteAllFilesStartingWith(myFile);
+      }
+      myMap = initializeMap();
+      LOG.error("Repaired after crash", e);
+    }
+    catch (IOException e1) {
+      LOG.error("Cannot repair", e1);
+      myMap = null;
     }
   }
 }

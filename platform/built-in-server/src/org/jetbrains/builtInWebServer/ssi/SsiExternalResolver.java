@@ -17,13 +17,14 @@ package org.jetbrains.builtInWebServer.ssi;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashMap;
 import io.netty.handler.codec.http.HttpRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.builtInWebServer.PathInfo;
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.Map;
 
@@ -44,12 +45,12 @@ public final class SsiExternalResolver {
 
   private Map<String, String> variables = new THashMap<String, String>();
   private final String parentPath;
-  @NotNull private final VirtualFile parentFile;
+  @NotNull private final File parentFile;
 
   public SsiExternalResolver(@NotNull Project project,
                              @NotNull HttpRequest request,
                              @NotNull String parentPath,
-                             @NotNull VirtualFile parentFile) {
+                             @NotNull File parentFile) {
     this.project = project;
     this.request = request;
     this.parentPath = parentPath;
@@ -75,23 +76,30 @@ public final class SsiExternalResolver {
   }
 
   @Nullable
-  public VirtualFile findFile(@NotNull String originalPath, boolean virtual) {
+  public File findFile(@NotNull String originalPath, boolean virtual) {
     String path = FileUtil.toCanonicalPath(originalPath, '/');
     if (!virtual) {
-      return parentFile.findFileByRelativePath(path);
+      return new File(parentFile, path);
     }
 
     path = path.charAt(0) == '/' ? path : (parentPath + '/' + path);
-    return WebServerPathToFileManager.getInstance(project).get(path);
+    PathInfo pathInfo = WebServerPathToFileManager.getInstance(project).getPathInfo(path, true);
+    if (pathInfo == null) {
+      return null;
+    }
+    if (pathInfo.getIoFile() != null) {
+      return pathInfo.getIoFile();
+    }
+    return new File(pathInfo.getFile().getPath());
   }
 
   public long getFileLastModified(String path, boolean virtual) {
-    VirtualFile file = findFile(path, virtual);
-    return file == null ? 0 : file.getTimeStamp();
+    File file = findFile(path, virtual);
+    return file == null || !file.exists() ? 0 : file.lastModified();
   }
 
   public long getFileSize(@NotNull String path, boolean virtual) {
-    VirtualFile file = findFile(path, virtual);
-    return file == null ? -1 : file.getLength();
+    File file = findFile(path, virtual);
+    return file == null || !file.exists() ? -1 : file.length();
   }
 }

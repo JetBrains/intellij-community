@@ -281,7 +281,6 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   }
 
   private boolean doMove(@NotNull SvnVcs vcs, final File src, final File dst) {
-    long srcTime = src.lastModified();
     try {
       final boolean isUndo = isUndo(vcs);
       final String list = isUndo ? null : SvnChangelistListener.getCurrentMapping(vcs, src);
@@ -301,7 +300,6 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       if (! isUndo && list != null) {
         SvnChangelistListener.putUnderList(vcs.getProject(), list, dst);
       }
-      dst.setLastModified(srcTime);
     }
     catch(VcsException e) {
       addToMoveExceptions(vcs.getProject(), e);

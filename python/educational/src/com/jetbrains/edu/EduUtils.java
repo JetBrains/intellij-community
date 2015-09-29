@@ -4,28 +4,30 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.util.Function;
 import com.intellij.util.containers.HashMap;
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Lesson;
-import com.jetbrains.edu.courseFormat.StudyItem;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.oldCourseFormat.OldCourse;
 import com.jetbrains.edu.oldCourseFormat.TaskWindow;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -94,12 +96,12 @@ public class EduUtils {
         fileWindows = taskDir.createChildData(taskFile, name);
         printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
         for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
-          if (!answerPlaceholder.isValid(document)) {
+          int length = useLength ? answerPlaceholder.getLength() : answerPlaceholder.getPossibleAnswerLength();
+          if (!answerPlaceholder.isValid(document, length)) {
             printWriter.println("#educational_plugin_window = ");
             continue;
           }
           int start = answerPlaceholder.getRealStartOffset(document);
-          int length = useLength ? answerPlaceholder.getLength() : answerPlaceholder.getPossibleAnswerLength();
           final String windowDescription = document.getText(new TextRange(start, start + length));
           printWriter.println("#educational_plugin_window = " + windowDescription);
         }
@@ -278,21 +280,31 @@ public class EduUtils {
 
   @NotNull
   public static Course transformOldCourse(@NotNull final OldCourse oldCourse) {
+    return transformOldCourse(oldCourse, null);
+  }
+
+  @NotNull
+  public static Course transformOldCourse(@NotNull final OldCourse oldCourse,
+                                          @Nullable Function<Pair<AnswerPlaceholder, StudyStatus>, Void> setStatus) {
     Course course = new Course();
     course.setDescription(oldCourse.description);
     course.setName(oldCourse.name);
     course.setAuthors(new String[]{oldCourse.author});
 
+    String updatedCoursePath = FileUtil.join(PathManager.getConfigPath(), "courses", oldCourse.name);
+    if (new File(updatedCoursePath).exists()) {
+      course.setCourseDirectory(FileUtil.toSystemIndependentName(updatedCoursePath));
+    }
     final ArrayList<Lesson> lessons = new ArrayList<Lesson>();
     for (com.jetbrains.edu.oldCourseFormat.Lesson oldLesson : oldCourse.lessons) {
       final Lesson lesson = new Lesson();
       lesson.setName(oldLesson.name);
-      lesson.setIndex(oldLesson.myIndex);
+      lesson.setIndex(oldLesson.myIndex + 1);
 
       final ArrayList<Task> tasks = new ArrayList<Task>();
       for (com.jetbrains.edu.oldCourseFormat.Task oldTask : oldLesson.taskList) {
         final Task task = new Task();
-        task.setIndex(oldTask.myIndex);
+        task.setIndex(oldTask.myIndex + 1);
         task.setName(oldTask.name);
         task.setLesson(lesson);
         final HashMap<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
@@ -305,15 +317,19 @@ public class EduUtils {
           final ArrayList<AnswerPlaceholder> placeholders = new ArrayList<AnswerPlaceholder>();
           for (TaskWindow window : oldTaskFile.taskWindows) {
             final AnswerPlaceholder placeholder = new AnswerPlaceholder();
-
             placeholder.setIndex(window.myIndex);
             placeholder.setHint(window.hint);
             placeholder.setLength(window.length);
             placeholder.setLine(window.line);
             placeholder.setPossibleAnswer(window.possibleAnswer);
             placeholder.setStart(window.start);
-
             placeholders.add(placeholder);
+            placeholder.setInitialState(new AnswerPlaceholder.MyInitialState(window.myInitialLine,
+                                                                             window.myInitialLength,
+                                                                             window.myInitialStart));
+            if (setStatus != null) {
+              setStatus.fun(Pair.create(placeholder, window.myStatus));
+            }
           }
 
           taskFile.setAnswerPlaceholders(placeholders);
@@ -328,7 +344,18 @@ public class EduUtils {
       lessons.add(lesson);
     }
     course.setLessons(lessons);
-    course.initCourse(false);
+    course.initCourse(true);
     return course;
+  }
+
+  public static boolean isImage(String fileName) {
+    final String[] readerFormatNames = ImageIO.getReaderFormatNames();
+    for (@NonNls String format : readerFormatNames) {
+      final String ext = format.toLowerCase();
+      if (fileName.endsWith(ext)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

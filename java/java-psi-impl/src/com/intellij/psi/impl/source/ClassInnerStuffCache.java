@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,11 +139,8 @@ public class ClassInnerStuffCache {
       @Nullable
       @Override
       public Result<PsiMethod> compute() {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
         String text = "public static " + myClass.getName() + "[] values() { }";
-        PsiMethod physicalMethod = factory.createMethodFromText(text, myClass);
-        PsiMethod method = new LightMethod(myClass.getManager(), physicalMethod, myClass);
-        return new Result<PsiMethod>(method, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
+        return new Result<PsiMethod>(getSyntheticMethod(text), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
       }
     });
   }
@@ -154,11 +151,8 @@ public class ClassInnerStuffCache {
       @Nullable
       @Override
       public Result<PsiMethod> compute() {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
         String text = "public static " + myClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }";
-        PsiMethod physicalMethod = factory.createMethodFromText(text, myClass);
-        PsiMethod method = new LightMethod(myClass.getManager(), physicalMethod, myClass);
-        return new Result<PsiMethod>(method, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
+        return new Result<PsiMethod>(getSyntheticMethod(text), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
       }
     });
   }
@@ -234,6 +228,12 @@ public class ClassInnerStuffCache {
       }
     }
     return cachedInners;
+  }
+
+  private PsiMethod getSyntheticMethod(String text) {
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
+    PsiMethod method = factory.createMethodFromText(text, myClass);
+    return new LightMethod(myClass.getManager(), method, myClass);
   }
 
   public void dropCaches() {

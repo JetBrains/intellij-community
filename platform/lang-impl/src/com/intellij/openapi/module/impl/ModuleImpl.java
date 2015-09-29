@@ -22,7 +22,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.ModuleServiceManagerImpl;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
-import com.intellij.openapi.components.impl.stores.FileStorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -84,11 +83,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     super.bootstrapPicoContainer(name);
   }
 
-  @NotNull
-  private static FileStorage getMainStorage(@NotNull Module module) {
-    return (FileStorage)ComponentsPackage.getStateStore(module).getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT);
-  }
-
   @Override
   public void init(@NotNull final String path, @Nullable final Runnable beforeComponentCreation) {
     init(ProgressManager.getInstance().getProgressIndicator(), new Runnable() {
@@ -140,7 +134,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   @Nullable
   public VirtualFile getModuleFile() {
-    return getMainStorage(this).getVirtualFile();
+    return LocalFileSystem.getInstance().findFileByPath(getModuleFilePath());
   }
 
   @Override
@@ -346,7 +340,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
     private void setModuleFilePath(String newFilePath) {
       ClasspathStorage.modulePathChanged(ModuleImpl.this, newFilePath);
-      getMainStorage(ModuleImpl.this).setFile(null, new File(newFilePath));
       ComponentsPackage.getStateStore(ModuleImpl.this).setPath(FileUtilRt.toSystemIndependentName(newFilePath));
     }
 

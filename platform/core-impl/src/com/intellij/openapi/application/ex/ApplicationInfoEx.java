@@ -73,6 +73,8 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getPluginsListUrl();
 
+  public abstract String getChannelsListUrl();
+
   public abstract String getPluginsDownloadUrl();
 
   public abstract String getBuiltinPluginsUrl();

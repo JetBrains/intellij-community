@@ -45,6 +45,7 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
 
   private static final File USER_CACHE_APP_DIR = new File(PathManager.getSystemPath(), "vcs-users");
   private static final Logger LOG = Logger.getInstance(VcsUserRegistryImpl.class);
+  private static final int STORAGE_VERSION = 1;
   private static final PersistentEnumeratorBase.DataFilter ACCEPT_ALL_DATA_FILTER = new PersistentEnumeratorBase.DataFilter() {
     @Override
     public boolean accept(int id) {
@@ -56,7 +57,7 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
   @NotNull private final Interner<VcsUser> myInterner;
 
   VcsUserRegistryImpl(@NotNull Project project) {
-    final File mapFile = new File(USER_CACHE_APP_DIR, project.getName() + "." + project.getLocationHash());
+    final File mapFile = new File(USER_CACHE_APP_DIR, project.getLocationHash() + "." + STORAGE_VERSION);
     Disposer.register(project, this);
     myPersistentEnumerator = initEnumerator(mapFile);
     myInterner = new Interner<VcsUser>();

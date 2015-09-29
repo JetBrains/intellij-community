@@ -29,12 +29,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.PomTargetPsiElement;
-import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiTarget;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.PopupHandler;
@@ -43,6 +40,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,6 +83,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     final DefaultActionGroup propertiesPopupGroup = new DefaultActionGroup();
     propertiesPopupGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_STRUCTURE_VIEW_POPUP));
     propertiesPopupGroup.add(Separator.getInstance(), Constraints.FIRST);
+    propertiesPopupGroup.add(new IgnoreIncompletePropertyPropertiesFilesAction(), Constraints.FIRST);
     propertiesPopupGroup.add(new NewPropertyAction(true), Constraints.FIRST);
     PopupHandler.installPopupHandler(getTree(), propertiesPopupGroup, IdeActions.GROUP_STRUCTURE_VIEW_POPUP, ActionManager.getInstance());
   }
@@ -234,6 +233,11 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     public boolean canDeleteElement(@NotNull final DataContext dataContext) {
       return true;
     }
+  }
+
+  @NonNls
+  public String getHelpID() {
+    return "editing.propertyFile.bundleEditor";
   }
 }
 

@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -198,7 +199,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   public void dispose() {
     if (myContext != null) {
       for (final LibrariesModifiableModel provider : myContext.myLevel2Providers.values()) {
-        provider.disposeUncommittedLibraries();
+        Disposer.dispose(provider);
       }
     }
   }

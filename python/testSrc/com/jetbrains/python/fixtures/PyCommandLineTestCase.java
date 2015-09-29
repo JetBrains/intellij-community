@@ -24,7 +24,7 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -41,7 +41,7 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
   protected static int verifyPyDevDParameters(List<String> params) {
     params = Lists.newArrayList(params);
     int debugParam = params.remove("--DEBUG") ? 1 : 0;
-    assertEquals(PythonHelpersLocator.getHelperPath("pydev/pydevd.py"), params.get(0));
+    assertEquals(PythonHelper.DEBUGGER.asParamString(), params.get(0));
     assertEquals("--multiproc", params.get(1));
     assertEquals("--client", params.get(2));
     assertEquals("--port", params.get(4));

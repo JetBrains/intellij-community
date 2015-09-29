@@ -29,6 +29,9 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated use {@link com.intellij.diff.actions.CompareClipboardWithSelectionAction} instead
+ */
 @Deprecated
 public class CompareClipboardWithSelection extends BaseDiffAction {
   @Nullable

@@ -22,12 +22,15 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
+import com.jetbrains.python.sdk.PySdkUpdater;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
@@ -41,17 +44,17 @@ public class PythonMockSdk {
   private PythonMockSdk() {
   }
 
-  public static Sdk findOrCreate(String version) {
+  public static Sdk findOrCreate(final String version, @NotNull final VirtualFile ... additionalRoots) {
     final List<Sdk> sdkList = ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance());
     for (Sdk sdk : sdkList) {
       if (sdk.getName().equals(MOCK_SDK_NAME + " " + version)) {
         return sdk;
       }
     }
-    return create(version);
+    return create(version, additionalRoots);
   }
 
-  public static Sdk create(final String version) {
+  public static Sdk create(final String version, @NotNull final VirtualFile ... additionalRoots) {
     final String mock_path = PythonTestUtil.getTestDataPath() + "/MockSdk" + version + "/";
 
     String sdkHome = new File(mock_path, "bin/python"+version).getPath();
@@ -72,10 +75,14 @@ public class PythonMockSdk {
       sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libPath), OrderRootType.CLASSES);
     }
 
-    PyUserSkeletonsUtil.addUserSkeletonsRoot(sdkModificator);
+    PyUserSkeletonsUtil.addUserSkeletonsRoot(PySdkUpdater.fromSdkModificator(sdk, sdkModificator));
 
     String mock_stubs_path = mock_path + PythonSdkType.SKELETON_DIR_NAME;
     sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(mock_stubs_path), PythonSdkType.BUILTIN_ROOT_TYPE);
+
+    for (final VirtualFile root : additionalRoots) {
+      sdkModificator.addRoot(root, OrderRootType.CLASSES);
+    }
 
     sdkModificator.commitChanges();
 

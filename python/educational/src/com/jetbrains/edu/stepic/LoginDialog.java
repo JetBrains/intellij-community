@@ -4,6 +4,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 
 public class LoginDialog extends DialogWrapper {
   private final LoginPanel myLoginPanel;
@@ -18,7 +19,7 @@ public class LoginDialog extends DialogWrapper {
 
   @NotNull
   protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction()};
+    return new Action[]{getOKAction(), new RegisterAction(), getCancelAction()};
   }
 
   @Override
@@ -63,4 +64,17 @@ public class LoginDialog extends DialogWrapper {
       this.password = password;
     }
   }
+
+  protected class RegisterAction extends DialogWrapperAction {
+    private RegisterAction() {
+      super("Register");
+    }
+
+    @Override
+    protected void doAction(ActionEvent e) {
+      EduStepicConnector.createUser(myLoginPanel.getAuthData().email, myLoginPanel.getAuthData().password);
+      doOKAction();
+    }
+  }
+
 }

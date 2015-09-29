@@ -44,8 +44,6 @@ public class DiffLineMarkerRenderer implements LineMarkerRenderer {
 
   @Override
   public void paint(Editor editor, Graphics g, Rectangle range) {
-    Color color = myDiffType.getColor(editor);
-
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     Graphics2D g2 = (Graphics2D)g;
     int x1 = 0;
@@ -53,22 +51,35 @@ public class DiffLineMarkerRenderer implements LineMarkerRenderer {
     int y = range.y;
     int height = range.height;
 
+    int annotationsOffset = gutter.getAnnotationsAreaOffset();
+    int annotationsWidth = gutter.getAnnotationsAreaWidth();
+    if (annotationsWidth != 0) {
+      drawMarker(editor, g2, x1, annotationsOffset, y, height, false);
+      x1 = annotationsOffset + annotationsWidth;
+    }
+
+    if (myIgnoredFoldingOutline) {
+      int xOutline = gutter.getWhitespaceSeparatorOffset();
+      drawMarker(editor, g2, xOutline, x2, y, height, true);
+      drawMarker(editor, g2, x1, xOutline, y, height, false);
+    } else {
+      drawMarker(editor, g2, x1, x2, y, height, false);
+    }
+  }
+
+  private void drawMarker(Editor editor, Graphics2D g2,
+                          int x1, int x2, int y, int height,
+                          boolean ignoredOutline) {
+    Color color = myDiffType.getColor(editor);
     if (height > 2) {
-      if (!myResolved) {
-        if (myIgnoredFoldingOutline) {
-          int xOutline = gutter.getWhitespaceSeparatorOffset();
-
-          g.setColor(myDiffType.getIgnoredColor(editor));
-          g.fillRect(xOutline, y, x2 - xOutline, height);
-
-          g.setColor(color);
-          g.fillRect(x1, y, xOutline - x1, height);
-        }
-        else {
-          g.setColor(color);
-          g.fillRect(x1, y, x2 - x1, height);
-        }
+      if (ignoredOutline) {
+        g2.setColor(myDiffType.getIgnoredColor(editor));
       }
+      else {
+        g2.setColor(color);
+      }
+      if (!myResolved) g2.fillRect(x1, y, x2 - x1, height);
+
       DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y - 1, color, false, myResolved);
       DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y + height - 1, color, false, myResolved);
     }

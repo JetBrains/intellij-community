@@ -164,6 +164,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public void markInvalidated() {
     myInvalidated = true;
+    DebugUtil.onInvalidated(this);
   }
 
   @Override
@@ -185,17 +186,35 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     FileElement treeElement = createFileElement(viewProvider.getContents());
     treeElement.setPsi(this);
 
-    final StubTree stub = derefStub();
-    List<Pair<StubBasedPsiElementBase, CompositeElement>> bindings = calcStubAstBindings(treeElement, cachedDocument, stub);
+    while (true) {
+      StubTree stub = derefStub();
+      List<Pair<StubBasedPsiElementBase, CompositeElement>> bindings = calcStubAstBindings(treeElement, cachedDocument, stub);
 
+      FileElement savedTree = ensureTreeElement(viewProvider, treeElement, stub, bindings);
+      if (savedTree != null) {
+        return savedTree;
+      }
+    }
+  }
+
+  @Nullable
+  private FileElement ensureTreeElement(@NotNull FileViewProvider viewProvider,
+                                        @NotNull FileElement treeElement,
+                                        @Nullable StubTree stub,
+                                        @NotNull List<Pair<StubBasedPsiElementBase, CompositeElement>> bindings) {
     synchronized (PsiLock.LOCK) {
       FileElement existing = derefTreeElement();
       if (existing != null) {
         return existing;
       }
 
+      if (stub != derefStub()) {
+        return null; // stub has been just loaded by another thread, it needs to be bound to AST
+      }
+
       if (stub != null) {
         treeElement.putUserData(STUB_TREE_IN_PARSED_TREE, new SoftReference<StubTree>(stub));
+        putUserData(ObjectStubTree.LAST_STUB_TREE_HASH, stub.hashCode());
       }
 
       switchFromStubToAst(bindings);
@@ -683,6 +702,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         final StubTree stubTree = new StubTree(matchingStub);
         stubTree.setDebugInfo("created in getStubTree()");
         if (root.second == this) stubHolder = stubTree;
+        root.second.putUserData(ObjectStubTree.LAST_STUB_TREE_HASH, null);
         ((PsiFileImpl)root.second).myStub = new SoftReference<StubTree>(stubTree);
       }
       return stubHolder;

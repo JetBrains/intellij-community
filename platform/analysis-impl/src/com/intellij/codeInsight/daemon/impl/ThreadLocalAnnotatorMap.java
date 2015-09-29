@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -26,21 +24,27 @@ import org.picocontainer.PicoContainer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * User: cdr
  */
-abstract class ThreadLocalAnnotatorMap<T, KeyT extends UserDataHolder> {
+abstract class ThreadLocalAnnotatorMap<KeyT, T> {
   private volatile int version;
   @NotNull
   public abstract Collection<T> initialValue(@NotNull KeyT key);
 
-  // pair(version, map)
-  private final ThreadLocal<Pair<Integer, Map<KeyT,List<T>>>> CACHE = new ThreadLocal<Pair<Integer, Map<KeyT,List<T>>>>(){
+  private static class VersionedMap<KeyT, T> extends THashMap<KeyT, List<T>> {
+    private final int version;
+
+    private VersionedMap(int version) {
+      this.version = version;
+    }
+  }
+
+  private final ThreadLocal<VersionedMap<KeyT, T>> CACHE = new ThreadLocal<VersionedMap<KeyT, T>>(){
     @Override
-    protected Pair<Integer, Map<KeyT,List<T>>> initialValue() {
-      return Pair.<Integer, Map<KeyT,List<T>>>create(version, new THashMap<KeyT, List<T>>());
+    protected VersionedMap<KeyT, T> initialValue() {
+      return new VersionedMap<KeyT, T>(version);
     }
   };
 
@@ -59,13 +63,11 @@ abstract class ThreadLocalAnnotatorMap<T, KeyT extends UserDataHolder> {
 
   @NotNull
   public List<T> get(@NotNull KeyT key) {
-    Pair<Integer, Map<KeyT, List<T>>> pair = CACHE.get();
-    Integer mapVersion = pair.getFirst();
-    if (version != mapVersion) {
+    VersionedMap<KeyT, T> map = CACHE.get();
+    if (version != map.version) {
       CACHE.remove();
-      pair = CACHE.get();
+      map = CACHE.get();
     }
-    Map<KeyT, List<T>> map = pair.getSecond();
     List<T> cached = map.get(key);
     if (cached == null) {
       Collection<T> templates = initialValue(key);

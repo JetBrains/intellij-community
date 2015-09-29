@@ -167,10 +167,10 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     PsiClass aClass = (PsiClass)info.getMember();
     if (Boolean.FALSE.equals(info.getOverrides())) {
       final PsiReferenceList sourceReferenceList = info.getSourceReferenceList();
-      LOG.assertTrue(sourceReferenceList != null);
-      PsiJavaCodeReferenceElement ref = mySourceClass.equals(sourceReferenceList.getParent()) ?
-                                        RefactoringUtil.removeFromReferenceList(sourceReferenceList, aClass) :
-                                        RefactoringUtil.findReferenceToClass(sourceReferenceList, aClass);
+      PsiJavaCodeReferenceElement ref = sourceReferenceList == null ? null :
+                                        mySourceClass.equals(sourceReferenceList.getParent()) ?
+                                          RefactoringUtil.removeFromReferenceList(sourceReferenceList, aClass) :
+                                          RefactoringUtil.findReferenceToClass(sourceReferenceList, aClass);
       if (ref != null && !myTargetSuperClass.isInheritor(aClass, false)) {
         RefactoringUtil.replaceMovedMemberTypeParameters(ref, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
         final PsiReferenceList referenceList =

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.naming;
 import com.intellij.codeInspection.ui.ConventionOptionsPanel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -44,6 +45,24 @@ public abstract class ConventionInspection extends BaseInspection {
   public int m_maxLength = getDefaultMaxLength();
 
   protected Pattern m_regexPattern = Pattern.compile(m_regex);
+
+  @Override
+  @NotNull
+  protected final String buildErrorString(Object... infos) {
+    final String name = (String)infos[0];
+    final int length = name.length();
+    if (length < getMinLength()) {
+      return InspectionGadgetsBundle.message("naming.convention.problem.descriptor.short", getElementDescription(),
+                                             Integer.valueOf(length), Integer.valueOf(getMinLength()));
+    }
+    else if (getMaxLength() > 0 && length > getMaxLength()) {
+      return InspectionGadgetsBundle.message("naming.convention.problem.descriptor.long", getElementDescription(),
+                                             Integer.valueOf(length), Integer.valueOf(getMaxLength()));
+    }
+    return InspectionGadgetsBundle.message("naming.convention.problem.descriptor.regex.mismatch", getElementDescription(), getRegex());
+  }
+
+  protected abstract String getElementDescription();
 
   @NonNls
   protected abstract String getDefaultRegex();

@@ -41,6 +41,7 @@ import java.util.List;
 */
 class InjectedSelfElementInfo extends SmartPointerElementInfo {
   private final SmartPsiFileRange myInjectedFileRangeInHostFile;
+  @Nullable private final AffixOffsets myAffixOffsets;
   private final Class<? extends PsiElement> anchorClass;
   private final Language anchorLanguage;
   @NotNull
@@ -62,6 +63,24 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     myInjectedFileRangeInHostFile = smartPointerManager.createSmartPsiFileRangePointer(hostFile, hostRange);
     anchorLanguage = containingFile.getLanguage();
     anchorClass = injectedElement.getClass(); //containingFile.findElementAt(injectedRange.getStartOffset()).getClass();
+
+    int startAffixIndex = -1;
+    int startAffixOffset = -1;
+    int endAffixIndex = -1;
+    int endAffixOffset = -1;
+    List<TextRange> fragments = InjectedLanguageManager.getInstance(project).getNonEditableFragments((DocumentWindow)containingFile.getViewProvider().getDocument());
+    for (int i = 0; i < fragments.size(); i++) {
+      TextRange range = fragments.get(i);
+      if (range.containsOffset(injectedRange.getStartOffset())) {
+        startAffixIndex = i;
+        startAffixOffset = injectedRange.getStartOffset() - range.getStartOffset();
+      }
+      if (range.containsOffset(injectedRange.getEndOffset())) {
+        endAffixIndex = i;
+        endAffixOffset = injectedRange.getEndOffset() - range.getStartOffset();
+      }
+    }
+    myAffixOffsets = startAffixIndex >= 0 || endAffixIndex >= 0 ? new AffixOffsets(startAffixIndex, startAffixOffset, endAffixIndex, endAffixOffset) : null;
   }
 
   @Override
@@ -94,7 +113,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     if (segment == null) return null;
 
     PsiFile injectedPsi = getInjectedFileIn(hostContext, hostFile, TextRange.create(segment));
-    ProperTextRange rangeInInjected = hostToInjected(true, segment, injectedPsi);
+    ProperTextRange rangeInInjected = hostToInjected(true, segment, injectedPsi, myAffixOffsets);
     if (rangeInInjected == null) return null;
 
     return SelfElementInfo.findElementInside(injectedPsi, rangeInInjected.getStartOffset(), rangeInInjected.getEndOffset(), anchorClass, anchorLanguage);
@@ -103,15 +122,18 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
   private PsiFile getInjectedFileIn(@NotNull final PsiElement hostContext,
                                     @NotNull final PsiFile hostFile,
                                     @NotNull final TextRange rangeInHostFile) {
-    final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(getProject());
+    final PsiDocumentManagerBase docManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject());
     final PsiFile[] result = {null};
     final PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       @Override
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-        TextRange hostRange = manager.injectedToHost(injectedPsi, new TextRange(0, injectedPsi.getTextLength()));
-        Document document = PsiDocumentManager.getInstance(getProject()).getDocument(injectedPsi);
-        if (hostRange.contains(rangeInHostFile) && document instanceof DocumentWindow) {
-         result[0] = injectedPsi;
+        Document document = docManager.getDocument(injectedPsi);
+        if (document instanceof DocumentWindow) {
+          DocumentWindow window = (DocumentWindow)docManager.getLastCommittedDocument(document);
+          TextRange hostRange = window.injectedToHost(new TextRange(0, injectedPsi.getTextLength()));
+          if (hostRange.contains(rangeInHostFile)) {
+           result[0] = injectedPsi;
+          }
         }
       }
     };
@@ -156,7 +178,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     PsiElement hostContext = myHostContext.getElement();
     if (hostContext == null) return null;
 
-    Segment segment = myInjectedFileRangeInHostFile.getRange();
+    Segment segment = myInjectedFileRangeInHostFile.getPsiRange();
     if (segment == null) return null;
     final TextRange rangeInHostFile = TextRange.create(segment);
     return getInjectedFileIn(hostContext, hostFile, rangeInHostFile);
@@ -170,19 +192,23 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     Segment hostElementRange = psi ? myInjectedFileRangeInHostFile.getPsiRange() : myInjectedFileRangeInHostFile.getRange();
     if (hostElementRange == null) return null;
 
-    return hostToInjected(psi, hostElementRange, restoreFile());
+    return hostToInjected(psi, hostElementRange, restoreFile(), myAffixOffsets);
   }
 
   @Nullable
-  private ProperTextRange hostToInjected(boolean psi, Segment hostRange, @Nullable PsiFile injectedFile) {
+  private static ProperTextRange hostToInjected(boolean psi, Segment hostRange, @Nullable PsiFile injectedFile, @Nullable AffixOffsets affixOffsets) {
     VirtualFile virtualFile = injectedFile == null ? null : injectedFile.getVirtualFile();
     if (virtualFile instanceof VirtualFileWindow) {
+      Project project = injectedFile.getProject();
       DocumentWindow documentWindow = ((VirtualFileWindow)virtualFile).getDocumentWindow();
       if (psi) {
-        documentWindow = (DocumentWindow) ((PsiDocumentManagerBase) PsiDocumentManager.getInstance(getProject())).getLastCommittedDocument(documentWindow);
+        documentWindow = (DocumentWindow) ((PsiDocumentManagerBase) PsiDocumentManager.getInstance(project)).getLastCommittedDocument(documentWindow);
       }
       int start = documentWindow.hostToInjected(hostRange.getStartOffset());
       int end = documentWindow.hostToInjected(hostRange.getEndOffset());
+      if (affixOffsets != null) {
+        return affixOffsets.expandRangeToAffixes(start, end, InjectedLanguageManager.getInstance(project).getNonEditableFragments(documentWindow));
+      }
       return ProperTextRange.create(start, end);
     }
 
@@ -210,4 +236,34 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
   public Project getProject() {
     return myHostContext.getProject();
   }
+
+  private static class AffixOffsets {
+    final int startAffixIndex;
+    final int startAffixOffset;
+    final int endAffixIndex;
+    final int endAffixOffset;
+
+    AffixOffsets(int startAffixIndex, int startAffixOffset, int endAffixIndex, int endAffixOffset) {
+      this.startAffixIndex = startAffixIndex;
+      this.startAffixOffset = startAffixOffset;
+      this.endAffixIndex = endAffixIndex;
+      this.endAffixOffset = endAffixOffset;
+    }
+
+    @Nullable
+    ProperTextRange expandRangeToAffixes(int start, int end, List<TextRange> fragments) {
+      if (startAffixIndex >= 0) {
+        TextRange fragment = startAffixIndex < fragments.size() ? fragments.get(startAffixIndex) : null;
+        if (fragment == null || startAffixOffset > fragment.getLength()) return null;
+        start = fragment.getStartOffset() + startAffixOffset;
+      }
+      if (endAffixIndex >= 0) {
+        TextRange fragment = endAffixIndex < fragments.size() ? fragments.get(endAffixIndex) : null;
+        if (fragment == null || endAffixOffset > fragment.getLength()) return null;
+        end = fragment.getStartOffset() + endAffixOffset;
+      }
+      return ProperTextRange.create(start, end);
+    }
+  }
+
 }

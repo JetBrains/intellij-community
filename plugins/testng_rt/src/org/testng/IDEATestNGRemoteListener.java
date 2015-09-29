@@ -21,15 +21,15 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   private final Map<ExposedTestResult, String> myParamsMap = new HashMap<ExposedTestResult, String>();
 
   public IDEATestNGRemoteListener() {
-    myPrintStream = System.out;
+    this(System.out);
   }
 
   public IDEATestNGRemoteListener(PrintStream printStream) {
     myPrintStream = printStream;
+    myPrintStream.println("##teamcity[enteredTheMatrix]");
   }
 
   public synchronized void onStart(final ISuite suite) {
-    myPrintStream.println("##teamcity[enteredTheMatrix]");
     if (suite != null) {
       final List<ITestNGMethod> allMethods = suite.getAllMethods();
       if (allMethods != null) {

@@ -1,5 +1,7 @@
 package com.jetbrains.edu.oldCourseFormat;
 
+import com.jetbrains.edu.courseFormat.StudyStatus;
+
 /**
  * Implementation of windows which user should type in
  */
@@ -15,4 +17,5 @@ public class TaskWindow {
   public int myInitialLine = -1;
   public int myInitialStart = -1;
   public int myInitialLength = -1;
+  public StudyStatus myStatus = StudyStatus.Unchecked;
 }

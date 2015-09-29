@@ -40,7 +40,6 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -212,7 +211,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
       @Override
       protected void updateActionTooltips() {
-        for (ActionButton actionButton : JBSwingUtilities.uiTraverser().withRoot(myButtonPanel).preOrderDfsTraversal().filter(ActionButton.class)) {
+        for (ActionButton actionButton : UIUtil.uiTraverser().withRoot(myButtonPanel).preOrderDfsTraversal().filter(ActionButton.class)) {
           actionButton.updateTooltip();
         }
       }

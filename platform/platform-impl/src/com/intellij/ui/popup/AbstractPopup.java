@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.Alarm;
 import com.intellij.util.BooleanFunction;
@@ -266,7 +267,8 @@ public class AbstractPopup implements JBPopup {
 
       if (pinCallback != null) {
         myCaption.setButtonComponent(new InplaceButton(
-          new IconButton("Pin", AllIcons.General.AutohideOff, AllIcons.General.AutohideOff, AllIcons.General.AutohideOffInactive),
+          new IconButton("Open as Tool Window", 
+                         AllIcons.General.AutohideOff, AllIcons.General.AutohideOff, AllIcons.General.AutohideOffInactive),
           new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
@@ -1132,7 +1134,7 @@ public class AbstractPopup implements JBPopup {
   private Window updateMaskAndAlpha(Window window) {
     if (window == null) return null;
 
-    if (window.isDisplayable() && window.isShowing()) return window;
+    if (!window.isDisplayable() || !window.isShowing()) return window;
 
     final WindowManagerEx wndManager = getWndManager();
     if (wndManager == null) return window;
@@ -1270,6 +1272,14 @@ public class AbstractPopup implements JBPopup {
         int delta = screen.width + screen.x - location.x;
         if (size.width > delta) {
           size.width = delta;
+          // we shrank horizontally - need to increase height to fit the horizontal scrollbar
+          JScrollPane scrollPane = ScrollUtil.findScrollPane(myContent);
+          if (scrollPane != null && scrollPane.getHorizontalScrollBarPolicy() != ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
+            JScrollBar scrollBar = scrollPane.getHorizontalScrollBar();
+            if (scrollBar != null) {
+              prefSize.height += scrollBar.getPreferredSize().height;
+            }
+          }
         }
       }
     }
@@ -1724,14 +1734,12 @@ public class AbstractPopup implements JBPopup {
     boolean doRevalidate = false;
     if (myHeaderComponent != null) {
       myHeaderPanel.remove(myHeaderComponent);
-      myHeaderPanel.add(myCaption, BorderLayout.NORTH);
       myHeaderComponent = null;
       doRevalidate = true;
     }
 
     if (c != null) {
-      myHeaderPanel.remove(myCaption);
-      myHeaderPanel.add(c, BorderLayout.NORTH);
+      myHeaderPanel.add(c, BorderLayout.CENTER);
       myHeaderComponent = c;
 
       final Dimension size = myContent.getSize();

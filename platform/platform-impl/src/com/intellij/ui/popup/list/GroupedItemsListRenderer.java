@@ -56,10 +56,14 @@ public class GroupedItemsListRenderer extends GroupedElementsRenderer.List imple
 
   @Override
   protected JComponent createItemComponent() {
+    createLabel();
+    return layoutComponent(myTextLabel);
+  }
+
+  protected void createLabel() {
     myTextLabel = new ErrorLabel();
     myTextLabel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
     myTextLabel.setOpaque(true);
-    return layoutComponent(myTextLabel);
   }
 
   protected final JComponent layoutComponent(JComponent middleItemComponent) {
@@ -78,6 +82,4 @@ public class GroupedItemsListRenderer extends GroupedElementsRenderer.List imple
 
   protected void customizeComponent(JList list, Object value, boolean isSelected) {
   }
-
-
 }

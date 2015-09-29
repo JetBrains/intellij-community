@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.StrictSubtypingConstraint;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 
 import java.util.*;
@@ -110,23 +111,31 @@ public class InferenceIncorporationPhase {
         if (aType instanceof PsiWildcardType) {
 
           for (PsiType eqBound : eqBounds) {
-            if (mySession.getInferenceVariable(eqBound) == null) return false;
+            if (!isInferenceVariableOrFreshTypeParameter(eqBound)) return false;
           }
 
-          final PsiClassType[] paramBounds = parameters[i].getExtendsListTypes();
+          final PsiClassType[] paramBounds = inferenceVariable.getParameter().getExtendsListTypes();
+
+          PsiType glb = null;
+          for (PsiClassType paramBound : paramBounds) {
+            if (glb == null) {
+              glb = paramBound;
+            }
+            else {
+              glb = GenericsUtil.getGreatestLowerBound(glb, paramBound);
+            }
+          }
 
           if (!((PsiWildcardType)aType).isBounded()) {
 
             for (PsiType upperBound : upperBounds) {
-              if (mySession.getInferenceVariable(upperBound) == null) {
-                for (PsiClassType paramBound : paramBounds) {
-                  addConstraint(new StrictSubtypingConstraint(upperBound, mySession.substituteWithInferenceVariables(paramBound)));
-                }
+              if (glb != null && mySession.getInferenceVariable(upperBound) == null) {
+                addConstraint(new StrictSubtypingConstraint(upperBound, mySession.substituteWithInferenceVariables(glb)));
               }
             }
 
             for (PsiType lowerBound : lowerBounds) {
-              if (mySession.getInferenceVariable(lowerBound) == null) return false;
+              if (isInferenceVariableOrFreshTypeParameter(lowerBound)) return false;
             }
 
           } else if (((PsiWildcardType)aType).isExtends()) {
@@ -137,16 +146,15 @@ public class InferenceIncorporationPhase {
               if (mySession.getInferenceVariable(upperBound) == null) {
                 if (paramBounds.length == 1 && paramBounds[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || paramBounds.length == 0) {
                   addConstraint(new StrictSubtypingConstraint(upperBound, extendsBound));
-                } else if (extendsBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-                  for (PsiClassType paramBound : paramBounds) {
-                    addConstraint(new StrictSubtypingConstraint(upperBound, mySession.substituteWithInferenceVariables(paramBound)));
-                  }
+                }
+                else if (extendsBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && glb != null) {
+                  addConstraint(new StrictSubtypingConstraint(upperBound, mySession.substituteWithInferenceVariables(glb)));
                 }
               }
             }
 
             for (PsiType lowerBound : lowerBounds) {
-              if (mySession.getInferenceVariable(lowerBound) == null) return false;
+              if (isInferenceVariableOrFreshTypeParameter(lowerBound)) return false;
             }
 
           } else {
@@ -154,10 +162,8 @@ public class InferenceIncorporationPhase {
             final PsiType superBound = ((PsiWildcardType)aType).getSuperBound();
 
             for (PsiType upperBound : upperBounds) {
-              if (mySession.getInferenceVariable(upperBound) == null) {
-                for (PsiClassType paramBound : paramBounds) {
-                  addConstraint(new StrictSubtypingConstraint(mySession.substituteWithInferenceVariables(paramBound), upperBound));
-                }
+              if (glb != null && mySession.getInferenceVariable(upperBound) == null) {
+                addConstraint(new StrictSubtypingConstraint(mySession.substituteWithInferenceVariables(glb), upperBound));
               }
             }
 
@@ -173,6 +179,13 @@ public class InferenceIncorporationPhase {
       }
     }
     return true;
+  }
+
+  private static Boolean isInferenceVariableOrFreshTypeParameter(PsiType eqBound) {
+    final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(eqBound);
+    if (psiClass instanceof InferenceVariable ||
+        psiClass instanceof PsiTypeParameter && InferenceSession.isFreshVariable((PsiTypeParameter)psiClass)) return true;
+    return false;
   }
 
   boolean isFullyIncorporated() {

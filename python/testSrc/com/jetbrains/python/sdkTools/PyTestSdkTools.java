@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.sdk.InvalidSdkException;
+import com.jetbrains.python.sdk.PySdkUpdater;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
@@ -114,7 +115,7 @@ public final class PyTestSdkTools {
     modificator.removeRoots(OrderRootType.CLASSES);
 
     for (final String path : PythonSdkType.getSysPathsFromScript(sdk.getHomePath())) {
-      PythonSdkType.addSdkRoot(modificator, path);
+      PythonSdkType.addSdkRoot(PySdkUpdater.fromSdkModificator(sdk, modificator), path);
     }
     if (!addSkeletons) {
       UsefulTestCase.edt(new Runnable() {
@@ -130,7 +131,7 @@ public final class PyTestSdkTools {
     final File skeletonsDir = new File(tempDir, PythonSdkType.SKELETON_DIR_NAME);
     FileUtil.createDirectory(skeletonsDir);
     final String skeletonsPath = skeletonsDir.toString();
-    PythonSdkType.addSdkRoot(modificator, skeletonsPath);
+    PythonSdkType.addSdkRoot(PySdkUpdater.fromSdkModificator(sdk, modificator), skeletonsPath);
 
     UsefulTestCase.edt(new Runnable() {
       @Override

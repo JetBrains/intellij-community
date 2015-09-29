@@ -477,7 +477,7 @@ public class TestNGUtil {
   }
 
   public static boolean isTestNGClass(PsiClass psiClass) {
-    return hasTest(psiClass, true, true, false);
+    return hasTest(psiClass, true, false, false);
   }
 
   public static boolean checkTestNGInClasspath(PsiElement psiElement) {

@@ -38,6 +38,7 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -203,26 +204,19 @@ public class CompilerTester {
     semaphore.down();
 
     final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
-      public void run() {
-        try {
-          getProject().save();
-          CompilerTestUtil.saveApplicationSettings();
-          for (Module module : myModules) {
-            VirtualFile moduleFile = module.getModuleFile();
-            assert moduleFile != null;
-            File ioFile = VfsUtilCore.virtualToIoFile(moduleFile);
-            if (!ioFile.exists()) {
-              getProject().save();
-              assert ioFile.exists() : "File does not exist: " + ioFile.getPath();
-            }
+      public void run() throws Throwable {
+        getProject().save();
+        CompilerTestUtil.saveApplicationSettings();
+        for (Module module : myModules) {
+          File ioFile = new File(module.getModuleFilePath());
+          if (!ioFile.exists()) {
+            getProject().save();
+            assert ioFile.exists() : "File does not exist: " + ioFile.getPath();
           }
-          runnable.consume(callback);
         }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+        runnable.consume(callback);
       }
     });
 

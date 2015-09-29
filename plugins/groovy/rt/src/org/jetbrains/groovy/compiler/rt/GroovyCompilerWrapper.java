@@ -41,6 +41,10 @@ public class GroovyCompilerWrapper {
   private static final String LINKAGE_ERROR =
     "A groovyc error occurred while trying to load one of the classes in project dependencies, please ensure it's present. " +
     "See the message and the stack trace below for reference\n\n";
+  private static final String INCOMPATIBLE_CLASS_CHANGE_ERROR =
+    "A groovyc error occurred while trying to load one of the classes in project dependencies. " +
+    "Please ensure its version is compatible with other jars (including Groovy ones) in the dependencies. " +
+    "See the message and the stack trace below for reference\n\n";
   private final List<CompilerMessage> collector;
   private boolean forStubs;
 
@@ -74,13 +78,19 @@ public class GroovyCompilerWrapper {
       } else {
         throw e;
       }
-
     }
     catch (TypeNotPresentException e) {
       processException(e, LINKAGE_ERROR);
     }
+    catch (IncompatibleClassChangeError e) {
+      processException(e, INCOMPATIBLE_CLASS_CHANGE_ERROR);
+    }
     catch (LinkageError e) {
-      processException(e, LINKAGE_ERROR);
+      if (e.getCause() instanceof GroovyRuntimeException) {
+        processException(e, getExceptionMessage((GroovyRuntimeException)e.getCause()));
+      } else {
+        processException(e, LINKAGE_ERROR);
+      }
     }
     finally {
       addWarnings(unit.getErrorCollector());
@@ -201,6 +211,9 @@ public class GroovyCompilerWrapper {
 
     final StringWriter writer = new StringWriter();
     writer.append(prefix);
+    if (!prefix.endsWith("\n")) {
+      writer.append("\n\n");
+    }
     //noinspection IOResourceOpenedButNotSafelyClosed
     exception.printStackTrace(new PrintWriter(writer));
     collector.add(new CompilerMessage(forStubs ? GroovyCompilerMessageCategories.INFORMATION : GroovyCompilerMessageCategories.ERROR, writer.toString(), null, -1, -1));
@@ -230,16 +243,30 @@ public class GroovyCompilerWrapper {
     int lineNumber = astNode == null ? -1 : astNode.getLineNumber();
     int columnNumber = astNode == null ? -1 : astNode.getColumnNumber();
 
-    String message = exception.getMessageWithoutLocationText();
-    if (message == null) {
-      StringWriter stringWriter = new StringWriter();
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      PrintWriter writer = new PrintWriter(stringWriter);
-      exception.printStackTrace(writer);
-      message = stringWriter.getBuffer().toString();
+    collector.add(new CompilerMessage(GroovyCompilerMessageCategories.ERROR, getExceptionMessage(exception), moduleName, lineNumber, columnNumber));
+  }
+
+  @NotNull
+  private static String getExceptionMessage(GroovyRuntimeException exception) {
+    if (exception.getCause() instanceof ClassNotFoundException) {
+      String className = exception.getCause().getMessage();
+      return "An error occurred while trying to load a required class " + className + "." +
+               " Please ensure it's present in the project dependencies. " +
+               "See the message and the stack trace below for reference\n\n" + getStackTrace(exception);
     }
 
-    collector.add(new CompilerMessage(GroovyCompilerMessageCategories.ERROR, message, moduleName, lineNumber, columnNumber));
+    String message = exception.getMessageWithoutLocationText();
+    return message == null ? getStackTrace(exception) : message;
+  }
+
+  @NotNull
+  private static String getStackTrace(GroovyRuntimeException exception) {
+    String message;StringWriter stringWriter = new StringWriter();
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    PrintWriter writer = new PrintWriter(stringWriter);
+    exception.printStackTrace(writer);
+    message = stringWriter.getBuffer().toString();
+    return message;
   }
 
   private static ModuleNode findModule(ASTNode node) {

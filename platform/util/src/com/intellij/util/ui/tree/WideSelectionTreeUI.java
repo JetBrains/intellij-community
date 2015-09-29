@@ -38,7 +38,6 @@ import java.awt.event.MouseListener;
 */
 public class WideSelectionTreeUI extends BasicTreeUI {
   public static final String TREE_TABLE_TREE_KEY = "TreeTableTree";
-  public static final String NO_SELECTION_PAINTING_DARK = "NO_SELECTION_PAINTING_DARK";
 
   @NonNls public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
   @NonNls public static final String STRIPED_CLIENT_PROPERTY = "mac.ui.striped";
@@ -90,6 +89,15 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   @Override
   protected MouseListener createMouseListener() {
     return new MouseEventAdapter<MouseListener>(super.createMouseListener()) {
+      @Override
+      public void mouseDragged(MouseEvent event) {
+        JTree tree = (JTree)event.getSource();
+        Object property = tree.getClientProperty("DnD Source"); // DnDManagerImpl.SOURCE_KEY
+        if (property == null) {
+          super.mouseDragged(event); // use Swing-based DnD only if custom DnD is not set 
+        }
+      }
+
       @Override
       protected MouseEvent convert(MouseEvent event) {
         if (!event.isConsumed() && SwingUtilities.isLeftMouseButton(event)) {
@@ -331,8 +339,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
         }
       }
       else {
-        if (selected && (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())
-            && ! Boolean.TRUE.equals(tree.getClientProperty(NO_SELECTION_PAINTING_DARK))) {
+        if (selected && (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
           Color bg = UIUtil.getTreeSelectionBackground(tree.hasFocus() || Boolean.TRUE.equals(tree.getClientProperty(TREE_TABLE_TREE_KEY)));
 
           if (myWideSelectionCondition.value(row)) {

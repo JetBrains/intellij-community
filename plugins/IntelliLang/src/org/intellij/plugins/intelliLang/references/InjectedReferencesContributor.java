@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.references;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -64,7 +65,8 @@ public class InjectedReferencesContributor extends PsiReferenceContributor {
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
         ReferenceInjector[] extensions = ReferenceInjector.EXTENSION_POINT_NAME.getExtensions();
         final List<PsiReference> references = new SmartList<PsiReference>();
-        Configuration configuration = Configuration.getProjectInstance(element.getProject());
+        Project project = element.getProject();
+        Configuration configuration = Configuration.getProjectInstance(project);
         final Ref<Boolean> injected = new Ref<Boolean>(Boolean.FALSE);
         for (ReferenceInjector injector : extensions) {
           Collection<BaseInjection> injections = configuration.getInjectionsByLanguageId(injector.getId());
@@ -81,7 +83,7 @@ public class InjectedReferencesContributor extends PsiReferenceContributor {
           }
         }
         if (element instanceof PsiLanguageInjectionHost) {
-          final TemporaryPlacesRegistry registry = TemporaryPlacesRegistry.getInstance(element.getProject());
+          final TemporaryPlacesRegistry registry = TemporaryPlacesRegistry.getInstance(project);
           InjectedLanguage language = registry.getLanguageFor((PsiLanguageInjectionHost)element, element.getContainingFile());
           if (language != null) {
             ReferenceInjector injector = ReferenceInjector.findById(language.getID());

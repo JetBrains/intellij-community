@@ -17,18 +17,16 @@ package com.jetbrains.python.findUsages;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.impl.rules.UsageTypeProviderEx;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.CallArgumentsMappingImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -38,7 +36,6 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
   private static final UsageType UNTYPED = new UsageType("Untyped (probable) usage");
   private static final UsageType USAGE_IN_ISINSTANCE = new UsageType("Usage in isinstance()");
   private static final UsageType USAGE_IN_SUPERCLASS = new UsageType("Usage in superclass list");
-  private static final UsageType SIGNATURE_MISMATCH = new UsageType("Untyped (probable) usage, signature mismatch");
 
   @Override
   public UsageType getUsageType(PsiElement element) {
@@ -55,11 +52,7 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
         if (qualifier != null) {
           final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
           final PyType type = context.getType(qualifier);
-          if (type == null) {
-            final PyCallExpression call = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
-            if (call != null && element == call.getCallee()) {
-              return checkMatchingSignatureGroup(call, targets, context);
-            }
+          if (type == null || type instanceof PyStructuralType) {
             return UNTYPED;
           }
         }
@@ -82,24 +75,6 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
         final PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
         if (pyClass != null && PsiTreeUtil.isAncestor(pyClass.getSuperClassExpressionList(), element, true)) {
           return USAGE_IN_SUPERCLASS;
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static UsageType checkMatchingSignatureGroup(PyCallExpression call, UsageTarget[] targets, @NotNull TypeEvalContext context) {
-    if (targets.length == 1 && targets[0] instanceof PsiElementUsageTarget) {
-      final PsiElement element = ((PsiElementUsageTarget)targets[0]).getElement();
-      if (element instanceof PyFunction) {
-        PyFunction function = (PyFunction)element;
-        final PyFunction.Modifier modifier = function.getModifier();
-        PyCallExpression.PyMarkedCallee callee = new PyCallExpression.PyMarkedCallee(function, modifier, 1, true);
-        CallArgumentsMappingImpl mapping = new CallArgumentsMappingImpl(call.getArgumentList());
-        mapping.mapArguments(callee, context);
-        if (mapping.hasProblems()) {
-          return SIGNATURE_MISMATCH;
         }
       }
     }

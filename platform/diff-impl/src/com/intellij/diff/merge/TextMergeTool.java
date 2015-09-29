@@ -155,6 +155,7 @@ public class TextMergeTool implements MergeTool {
       return myViewer.getPreferredFocusedComponent();
     }
 
+    @NotNull
     @Override
     public ToolbarComponents init() {
       ToolbarComponents components = new ToolbarComponents();
@@ -166,7 +167,7 @@ public class TextMergeTool implements MergeTool {
       components.closeHandler = new BooleanGetter() {
         @Override
         public boolean get() {
-          return MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext);
+          return MergeUtil.showExitWithoutApplyingChangesDialog(TextMergeViewer.this, myMergeRequest, myMergeContext);
         }
       };
 
@@ -312,7 +313,7 @@ public class TextMergeTool implements MergeTool {
               }
             }
             if (result == MergeResult.CANCEL &&
-                !MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext)) {
+                !MergeUtil.showExitWithoutApplyingChangesDialog(TextMergeViewer.this, myMergeRequest, myMergeContext)) {
               return;
             }
             destroyChangedBlocks();
@@ -416,7 +417,7 @@ public class TextMergeTool implements MergeTool {
           return apply(mergeFragments, outputModificationStamp);
         }
         catch (DiffTooBigException e) {
-          return applyNotification(DiffNotifications.DIFF_TOO_BIG);
+          return applyNotification(DiffNotifications.createDiffTooBig());
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -662,17 +663,18 @@ public class TextMergeTool implements MergeTool {
 
         public MergeCommandAction(@Nullable Project project,
                                   @Nullable String commandName,
+                                  boolean underBulkUpdate,
                                   @Nullable List<TextMergeChange> changes) {
-          super(project, getEditor(ThreeSide.BASE).getDocument(), commandName);
-          myAffectedChanges = collectAffectedChanges(changes);
+          this(project, commandName, null, UndoConfirmationPolicy.DEFAULT, underBulkUpdate, changes);
         }
 
         public MergeCommandAction(@Nullable Project project,
                                   @Nullable String commandName,
                                   @Nullable String commandGroupId,
                                   @NotNull UndoConfirmationPolicy confirmationPolicy,
+                                  boolean underBulkUpdate,
                                   @Nullable List<TextMergeChange> changes) {
-          super(project, getEditor(ThreeSide.BASE).getDocument(), commandName, commandGroupId, confirmationPolicy);
+          super(project, getEditor(ThreeSide.BASE).getDocument(), commandName, commandGroupId, confirmationPolicy, underBulkUpdate);
           myAffectedChanges = collectAffectedChanges(changes);
         }
 
@@ -744,9 +746,10 @@ public class TextMergeTool implements MergeTool {
        * affected changes should be sorted
        */
       public void executeMergeCommand(@Nullable String commandName,
+                                      boolean underBulkUpdate,
                                       @Nullable List<TextMergeChange> affected,
                                       @NotNull final Runnable task) {
-        new MergeCommandAction(getProject(), commandName, affected) {
+        new MergeCommandAction(getProject(), commandName, underBulkUpdate, affected) {
           @Override
           protected void doExecute() {
             task.run();
@@ -754,8 +757,10 @@ public class TextMergeTool implements MergeTool {
         }.run();
       }
 
-      public void executeMergeCommand(@Nullable String commandName, @NotNull final Runnable task) {
-        executeMergeCommand(commandName, null, task);
+      public void executeMergeCommand(@Nullable String commandName,
+                                      @Nullable List<TextMergeChange> affected,
+                                      @NotNull Runnable task) {
+        executeMergeCommand(commandName, false, affected, task);
       }
 
       @CalledInAwt
@@ -972,18 +977,12 @@ public class TextMergeTool implements MergeTool {
 
           String title = e.getPresentation().getText() + " in merge";
 
-          getEditor(ThreeSide.BASE).getDocument().setInBulkUpdate(true);
-          try {
-            executeMergeCommand(title, selectedChanges, new Runnable() {
-              @Override
-              public void run() {
-                apply(side, selectedChanges);
-              }
-            });
-          }
-          finally {
-            getEditor(ThreeSide.BASE).getDocument().setInBulkUpdate(false);
-          }
+          executeMergeCommand(title, true, selectedChanges, new Runnable() {
+            @Override
+            public void run() {
+              apply(side, selectedChanges);
+            }
+          });
         }
 
         private boolean isSomeChangeSelected(@NotNull ThreeSide side) {
@@ -1095,18 +1094,12 @@ public class TextMergeTool implements MergeTool {
         }
 
         public void actionPerformed(AnActionEvent e) {
-          getEditor(ThreeSide.BASE).getDocument().setInBulkUpdate(true);
-          try {
-            executeMergeCommand("Apply Non Conflicted Changes", new Runnable() {
-              @Override
-              public void run() {
-                doPerform();
-              }
-            });
-          }
-          finally {
-            getEditor(ThreeSide.BASE).getDocument().setInBulkUpdate(false);
-          }
+          executeMergeCommand("Apply Non Conflicted Changes", true, null, new Runnable() {
+            @Override
+            public void run() {
+              doPerform();
+            }
+          });
 
           TextMergeChange firstConflict = getFirstUnresolvedChange(true, null);
           if (firstConflict != null) doScrollToChange(firstConflict, true);

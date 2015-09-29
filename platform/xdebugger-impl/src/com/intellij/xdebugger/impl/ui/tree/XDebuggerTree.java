@@ -395,6 +395,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
         if (nodeFilter.value(node)) {
           setSelectionPath(node.getPath());
+          removeTreeListener(this); // remove the listener on first match
         }
       }
 

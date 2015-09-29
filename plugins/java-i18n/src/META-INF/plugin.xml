@@ -35,7 +35,7 @@
                      key="inspection.unresolved.property.key.reference.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.properties.files" enabledByDefault="true"
                      level="ERROR" implementationClass="com.intellij.codeInspection.i18n.InvalidPropertyKeyInspection"/>
-    <globalInspection shortName="InconsistentResourceBundle" bundle="messages.InspectionsBundle"
+    <globalInspection language="Properties" shortName="InconsistentResourceBundle" bundle="messages.InspectionsBundle"
                       key="inconsistent.resource.bundle.display.name" groupBundle="messages.PropertiesBundle"
                       groupKey="properties.files.inspection.group.display.name" enabledByDefault="true" level="ERROR"
                       implementationClass="com.intellij.codeInspection.i18n.inconsistentResourceBundle.InconsistentResourceBundleInspection"/>

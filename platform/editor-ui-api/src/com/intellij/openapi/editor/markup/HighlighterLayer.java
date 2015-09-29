@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.openapi.editor.markup;
 
 public interface HighlighterLayer {
-  int CARET_ROW = 1000;
-  int SYNTAX = 2000;
+  int SYNTAX = 1000;
+  int CARET_ROW = 2000;
   int ADDITIONAL_SYNTAX = 3000;
   int GUARDED_BLOCKS = 3500;
   int WARNING = 4000;
@@ -25,6 +25,6 @@ public interface HighlighterLayer {
   int ELEMENT_UNDER_CARET = 5500;
   int SELECTION = 6000;
 
-  int FIRST = CARET_ROW;
+  int FIRST = SYNTAX;
   int LAST = SELECTION;
 }

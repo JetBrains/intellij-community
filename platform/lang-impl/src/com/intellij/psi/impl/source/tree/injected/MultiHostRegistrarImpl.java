@@ -312,7 +312,13 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
                                          @NotNull SmartPsiElementPointer<PsiLanguageInjectionHost> pointer) {
     FileDocumentManagerImpl.registerDocument(documentWindow, viewProvider.getVirtualFile());
 
-    viewProvider.forceCachedPsi(psiFile);
+    DebugUtil.startPsiModification("MultiHostRegistrar cacheEverything");
+    try {
+      viewProvider.forceCachedPsi(psiFile);
+    }
+    finally {
+      DebugUtil.finishPsiModification();
+    }
 
     psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
     PsiDocumentManagerBase.cachePsi(documentWindow, psiFile);

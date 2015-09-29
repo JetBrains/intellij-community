@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,6 +112,7 @@ public class OrderRootType {
     List<PersistentOrderRootType> allTypes = new ArrayList<PersistentOrderRootType>();
     Collections.addAll(allTypes, getAllPersistentTypes());
     Collections.sort(allTypes, new Comparator<PersistentOrderRootType>() {
+      @Override
       public int compare(@NotNull final PersistentOrderRootType o1, @NotNull final PersistentOrderRootType o2) {
         return o1.name().compareToIgnoreCase(o2.name());
       }

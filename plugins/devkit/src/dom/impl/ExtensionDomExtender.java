@@ -215,7 +215,10 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   public static boolean isClassField(String fieldName) {
-    return (fieldName.endsWith("Class") && !fieldName.equals("forClass")) || fieldName.equals("implementation");
+    return (fieldName.endsWith("Class") && !fieldName.equals("forClass")) || 
+           fieldName.equals("implementation") || 
+           fieldName.equals("serviceInterface") || 
+           fieldName.equals("serviceImplementation");
   }
 
   @Nullable

@@ -56,7 +56,8 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
 
   @Override
   public String getElementText(PsiElement element) {
-    return element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "";
+    final String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
+    return StringUtil.notNullize(name, "<unnamed>");
   }
 
   @Override

@@ -122,7 +122,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
 
     final Project project = resourceBundle.getProject();
     if (properties.size() != propertiesFileMapping.size() &&
-        Messages.YES == Messages.showYesNoDialog(project,
+        Messages.NO == Messages.showYesNoDialog(project,
                                                  "Source and target resource bundles properties files are not matched correctly. Copy properties anyway?",
                                                  "Resource Bundles Are not Matched", null)) {
       return;
@@ -255,6 +255,8 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
           myCurrentResourceBundle = ((ResourceBundleAsFileSystemItem)e.getItem()).getResourceBundle();
         }
       });
+      resourceBundleComboBox.setSelectedItem(new ResourceBundleAsFileSystemItem(myCurrentResourceBundle));
+
       myPropertyNameTextField = new JBTextField(ContainerUtil.getFirstItem(myProperties).getKey());
       myPropertyNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
@@ -280,7 +282,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
   private static class ResourceBundleAsFileSystemItem extends SyntheticFileSystemItem {
     private final ResourceBundle myResourceBundle;
 
-    public ResourceBundleAsFileSystemItem(ResourceBundle resourceBundle) {
+    public ResourceBundleAsFileSystemItem(@NotNull ResourceBundle resourceBundle) {
       super(resourceBundle.getProject());
       myResourceBundle = resourceBundle;
     }
@@ -320,6 +322,19 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     @Override
     public Icon getIcon(int flags) {
       return AllIcons.Nodes.ResourceBundle;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ResourceBundleAsFileSystemItem item = (ResourceBundleAsFileSystemItem)o;
+      return myResourceBundle.equals(item.myResourceBundle);
+    }
+
+    @Override
+    public int hashCode() {
+      return myResourceBundle.hashCode();
     }
   }
 

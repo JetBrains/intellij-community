@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -50,6 +51,8 @@ import java.util.*;
  * @author max
  */
 public class QuickFixAction extends AnAction {
+  private static final Logger LOG = Logger.getInstance("#" + QuickFixAction.class.getName());
+
   public static final QuickFixAction[] EMPTY = new QuickFixAction[0];
   protected final InspectionToolWrapper myToolWrapper;
 
@@ -152,7 +155,7 @@ public class QuickFixAction extends AnAction {
         public void run() {
           CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
           final SequentialModalProgressTask progressTask =
-            new SequentialModalProgressTask(project, templatePresentationText, false);
+            new SequentialModalProgressTask(project, templatePresentationText, true);
           progressTask.setMinIterationTime(200);
           progressTask.setTask(new PerformFixesTask(project, descriptors, ignoredElements, progressTask, context));
           ProgressManager.getInstance().run(progressTask);
@@ -311,6 +314,14 @@ public class QuickFixAction extends AnAction {
 
     @Override
     protected void applyFix(Project project, CommonProblemDescriptor descriptor) {
+      if (descriptor instanceof ProblemDescriptor && 
+          ((ProblemDescriptor)descriptor).getStartElement() == null &&
+          ((ProblemDescriptor)descriptor).getEndElement() == null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Invalidated psi for " + descriptor);
+        }
+        return;
+      }
       QuickFixAction.this.applyFix(myProject, myContext, new CommonProblemDescriptor[]{descriptor}, myIgnoredElements);
     }
 

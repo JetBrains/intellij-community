@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -48,7 +49,7 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
       return null;
     }
 
-    if (!PsiUtil.isPluginProject(element.getProject())) {
+    if (DumbService.isDumb(element.getProject()) || !PsiUtil.isPluginProject(element.getProject())) {
       return null;
     }
 

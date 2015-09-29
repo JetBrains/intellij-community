@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -84,6 +85,7 @@ public class ShelvedChangeList implements JDOMExternalizable, ExternalizableSche
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
+    PATH = FileUtil.toSystemIndependentName(PATH);
     mySchemeName = element.getAttributeValue(NAME_ATTRIBUTE);
     DATE = new Date(Long.parseLong(element.getAttributeValue(ATTRIBUTE_DATE)));
     myRecycled = Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_RECYCLED_CHANGELIST));
@@ -168,5 +170,9 @@ public class ShelvedChangeList implements JDOMExternalizable, ExternalizableSche
   @Override
   public void setName(@NotNull String newName) {
     mySchemeName = newName;
+  }
+
+  public boolean checkValid() {
+    return new File(PATH).exists();
   }
 }

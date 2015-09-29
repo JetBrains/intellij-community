@@ -66,6 +66,7 @@ public class PythonFacet extends Facet<PythonFacetConfiguration> implements Libr
             final ModifiableModelsProvider provider = ModifiableModelsProvider.SERVICE.getInstance();
             final LibraryTable.ModifiableModel libraryTableModifiableModel = provider.getLibraryTableModifiableModel();
             Library library = libraryTableModifiableModel.getLibraryByName(name);
+            provider.disposeLibraryTableModifiableModel(libraryTableModifiableModel);
             if (library == null) {
               // we just create new project library
               library = PythonSdkTableListener.addLibrary(sdk);

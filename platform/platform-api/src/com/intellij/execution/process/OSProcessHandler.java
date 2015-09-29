@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,40 +30,31 @@ import java.util.concurrent.Future;
 
 public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
-  private boolean myHasPty = false;
 
+  private boolean myHasPty = false;
   private boolean myDestroyRecursively = true;
 
   public OSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    this(commandLine.createProcess(), commandLine.getCommandLineString(), CharsetToolkit.UTF8_CHARSET);
+    this(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
     setHasPty(commandLine instanceof PtyCommandLine);
   }
 
-  public OSProcessHandler(@NotNull final Process process) {
+  public OSProcessHandler(@NotNull Process process) {
     this(process, null);
   }
 
-  public OSProcessHandler(@NotNull final Process process, @Nullable final String commandLine) {
+  public OSProcessHandler(@NotNull Process process, @Nullable String commandLine) {
     this(process, commandLine, EncodingManager.getInstance().getDefaultCharset());
   }
 
-  public OSProcessHandler(@NotNull final Process process, @Nullable final String commandLine, @Nullable final Charset charset) {
+  public OSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset) {
     super(process, commandLine, charset);
-  }
-
-  protected OSProcessHandler(@NotNull final OSProcessHandler base) {
-    this(base.myProcess, base.myCommandLine);
   }
 
   @Override
   protected Future<?> executeOnPooledThread(Runnable task) {
-    final Application application = ApplicationManager.getApplication();
-
-    if (application != null) {
-      return application.executeOnPooledThread(task);
-    }
-
-    return super.executeOnPooledThread(task);
+    Application app = ApplicationManager.getApplication();
+    return app != null ? app.executeOnPooledThread(task) : super.executeOnPooledThread(task);
   }
 
   protected boolean shouldDestroyProcessRecursively() {

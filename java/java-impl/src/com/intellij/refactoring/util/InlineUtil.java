@@ -343,6 +343,12 @@ public class InlineUtil {
           PsiElement resolved = resolveResult.getElement();
           if (resolved instanceof PsiTypeParameter) {
             PsiType newType = resolveResult.getSubstitutor().putAll(substitutor).substitute((PsiTypeParameter)resolved);
+            if (newType instanceof PsiCapturedWildcardType) {
+              newType = ((PsiCapturedWildcardType)newType).getUpperBound();
+            }
+            if (newType instanceof PsiWildcardType) {
+              newType = ((PsiWildcardType)newType).getBound();
+            }
             if (newType == null) {
               newType = PsiType.getJavaLangObject(resolved.getManager(), resolved.getResolveScope());
             }

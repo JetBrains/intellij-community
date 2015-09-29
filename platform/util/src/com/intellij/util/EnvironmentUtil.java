@@ -24,6 +24,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
@@ -32,37 +33,38 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import static java.util.Collections.unmodifiableMap;
+
 public class EnvironmentUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.EnvironmentUtil");
 
   private static final int SHELL_ENV_READING_TIMEOUT = 20000;
 
+  private static final String LANG = "LANG";
+  private static final String LC_ALL = "LC_ALL";
+  private static final String LC_CTYPE = "LC_CTYPE";
+
   private static final Future<Map<String, String>> ourEnvGetter;
   static {
     if (SystemInfo.isMac && "unlocked".equals(System.getProperty("__idea.mac.env.lock")) && Registry.is("idea.fix.mac.env")) {
-      ExecutorService executor = Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("get shell env"));
+      ExecutorService executor = Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("Shell Env Loader"));
       ourEnvGetter = executor.submit(new Callable<Map<String, String>>() {
         @Override
         public Map<String, String> call() throws Exception {
-          try {
-            return getShellEnv();
-          }
-          catch (Throwable t) {
-            LOG.warn("can't get shell environment", t);
-            return System.getenv();
-          }
+          return unmodifiableMap(setCharsetVar(getShellEnv()));
         }
       });
       executor.shutdown();
     }
     else {
-      ourEnvGetter = new FixedFuture<Map<String, String>>(System.getenv());
+      ourEnvGetter = new FixedFuture<Map<String, String>>(getSystemEnv());
     }
   }
 
@@ -73,24 +75,21 @@ public class EnvironmentUtil {
       try {
         return ourEnvGetter.get();
       }
-      catch (Exception e) {
-        LOG.warn(e);
-        return System.getenv();
+      catch (Throwable t) {
+        LOG.warn("can't get shell environment", t);
+        return getSystemEnv();
       }
     }
   };
 
-  private static final NotNullLazyValue<Map<String, String>> ourEnvironmentOsSpecific = new AtomicNotNullLazyValue<Map<String, String>>() {
-    @NotNull
-    @Override
-    protected Map<String, String> compute() {
-      Map<String, String> env = ourEnvironment.getValue();
-      if (SystemInfo.isWindows) {
-        env = Collections.unmodifiableMap(new THashMap<String, String>(env, CaseInsensitiveStringHashingStrategy.INSTANCE));
-      }
-      return env;
+  private static Map<String, String> getSystemEnv() {
+    if (SystemInfo.isWindows) {
+      return unmodifiableMap(new THashMap<String, String>(System.getenv(), CaseInsensitiveStringHashingStrategy.INSTANCE));
     }
-  };
+    else {
+      return System.getenv();
+    }
+  }
 
   private EnvironmentUtil() { }
 
@@ -99,8 +98,20 @@ public class EnvironmentUtil {
   }
 
   /**
-   * Returns the process environment.
-   * On Mac OS X a shell (Terminal.app) environment is returned (unless disabled by a system property).
+   * A wrapper layer around {@link System#getenv()}.
+   * <p>
+   * On Windows, the returned map is case-insensitive (i.e. {@code map.get("Path") == map.get("PATH")} holds).
+   * <p>
+   * On Mac OS X things are complicated.<br/>
+   * An app launched by a GUI launcher (Finder, Dock, Spotlight etc.) receives a pretty empty and useless environment,
+   * since standard Unix ways of setting variables via e.g. ~/.profile do not work. What's more important, there are no
+   * sane alternatives. This causes a lot of user complaints about tools working in a terminal not working when launched
+   * from the IDE. To ease their pain, the IDE loads a shell environment (see {@link #getShellEnv()} for gory details)
+   * and returns it as the result.<br/>
+   * And one more thing (c): locale variables on OS X are usually set by a terminal app - meaning they are missing
+   * even from a shell environment above. This again causes user complaints about tools being unable to output anything
+   * outside ASCII range when launched from the IDE. Resolved by adding LC_CTYPE variable to the map if it doesn't contain
+   * explicitly set locale variables (LANG/LC_ALL/LC_CTYPE). See {@link #setCharsetVar(Map)} for details.
    *
    * @return unmodifiable map of the process environment.
    */
@@ -110,18 +121,22 @@ public class EnvironmentUtil {
   }
 
   /**
-   * Returns value for the passed environment variable name.
-   * The passed environment variable name is handled in a case-sensitive or case-insensitive manner depending on OS.<p>
-   * For example, on Windows <code>getValue("Path")</code> will return the same result as <code>getValue("PATH")</code>.
+   * Same as {@code getEnvironmentMap().get(name)}.
+   * Returns value for the passed environment variable name, or null if no such variable found.
    *
-   * @param name environment variable name
-   * @return value of the environment variable or null if no such variable found
+   * @see #getEnvironmentMap()
    */
   @Nullable
   public static String getValue(@NotNull String name) {
-    return ourEnvironmentOsSpecific.getValue().get(name);
+    return getEnvironmentMap().get(name);
   }
 
+  /**
+   * Same as {@code flattenEnvironment(getEnvironmentMap())}.
+   * Returns an environment as an array of "NAME=VALUE" strings.
+   *
+   * @see #getEnvironmentMap()
+   */
   public static String[] getEnvironment() {
     return flattenEnvironment(getEnvironmentMap());
   }
@@ -150,16 +165,13 @@ public class EnvironmentUtil {
       throw new Exception("bin:" + PathManager.getBinPath());
     }
 
-    File envFile = FileUtil.createTempFile("intellij-shell-env", null, false);
+    File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
     try {
       String[] command = {shell, "-l", "-i", "-c", ("'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'")};
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
       Process process = Runtime.getRuntime().exec(command);
-      ProcessKiller processKiller = new ProcessKiller(process);
-      processKiller.killAfter(SHELL_ENV_READING_TIMEOUT);
-      int rv = process.waitFor();
-      processKiller.stopWaiting();
+      int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
 
       String lines = FileUtil.loadFile(envFile);
       if (rv != 0 || lines.isEmpty()) {
@@ -193,54 +205,58 @@ public class EnvironmentUtil {
     }
 
     LOG.info("shell environment loaded (" + newEnv.size() + " vars)");
-    return Collections.unmodifiableMap(newEnv);
+    return newEnv;
   }
 
-
-  private static class ProcessKiller {
-    private final Process myProcess;
-    private final Object myWaiter = new Object();
-
-    public ProcessKiller(Process process) {
-      myProcess = process;
+  private static int waitAndTerminateAfter(@NotNull Process process, int timeoutMillis) {
+    Integer exitCode = waitFor(process, timeoutMillis);
+    if (exitCode != null) {
+      return exitCode;
     }
-
-    public void killAfter(long timeout) {
-      final long stop = System.currentTimeMillis() + timeout;
-      new Thread("kill after") {
-        @Override
-        public void run() {
-          synchronized (myWaiter) {
-            while (System.currentTimeMillis() < stop) {
-              try {
-                myProcess.exitValue();
-                break;
-              }
-              catch (IllegalThreadStateException ignore) { }
-
-              try {
-                myWaiter.wait(100);
-              }
-              catch (InterruptedException ignore) { }
-            }
-          }
-
-          try {
-            myProcess.exitValue();
-          }
-          catch (IllegalThreadStateException e) {
-            UnixProcessManager.sendSigKillToProcessTree(myProcess);
-            LOG.warn("timed out");
-          }
-        }
-      }.start();
+    LOG.warn("shell env loader is timed out");
+    UnixProcessManager.sendSigIntToProcessTree(process);
+    exitCode = waitFor(process, 1000);
+    if (exitCode != null) {
+      return exitCode;
     }
+    LOG.warn("failed to terminate shell env loader process gracefully, terminating forcibly");
+    UnixProcessManager.sendSigKillToProcessTree(process);
+    exitCode = waitFor(process, 1000);
+    if (exitCode != null) {
+      return exitCode;
+    }
+    LOG.warn("failed to kill shell env loader");
+    return -1;
+  }
 
-    public void stopWaiting() {
-      synchronized (myWaiter) {
-        myWaiter.notifyAll();
+  @Nullable
+  private static Integer waitFor(@NotNull Process process, int timeoutMillis) {
+    long stop = System.currentTimeMillis() + timeoutMillis;
+    while (System.currentTimeMillis() < stop) {
+      TimeoutUtil.sleep(100);
+      try {
+        return process.exitValue();
       }
+      catch (IllegalThreadStateException ignore) { }
     }
+    return null;
+  }
+
+  private static Map<String, String> setCharsetVar(@NotNull Map<String, String> env) {
+    if (!isCharsetVarDefined(env)) {
+      Locale locale = Locale.getDefault();
+      Charset charset = CharsetToolkit.getDefaultSystemCharset();
+      String language = locale.getLanguage();
+      String country = locale.getCountry();
+      String value = (language.isEmpty() || country.isEmpty() ? "en_US" : language + '_' + country) + '.' + charset.name();
+      env.put(LC_CTYPE, value);
+      LOG.info("LC_CTYPE=" + value);
+    }
+    return env;
+  }
+
+  private static boolean isCharsetVarDefined(@NotNull Map<String, String> env) {
+    return !env.isEmpty() && (env.containsKey(LANG) || env.containsKey(LC_ALL) || env.containsKey(LC_CTYPE));
   }
 
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs) {

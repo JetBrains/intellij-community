@@ -24,7 +24,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakStringInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.misc.Resource;
 
 import java.io.File;
 import java.io.IOException;
@@ -235,7 +234,14 @@ public class UrlClassLoader extends ClassLoader {
       Package pkg = getPackage(pkgName);
       if (pkg == null) {
         try {
-          definePackage(pkgName, null, null, null, null, null, null, null);
+          definePackage(pkgName,
+                        res.getValue(Resource.Attribute.SPEC_TITLE),
+                        res.getValue(Resource.Attribute.SPEC_VERSION),
+                        res.getValue(Resource.Attribute.SPEC_VENDOR),
+                        res.getValue(Resource.Attribute.IMPL_TITLE),
+                        res.getValue(Resource.Attribute.IMPL_VERSION),
+                        res.getValue(Resource.Attribute.IMPL_VENDOR),
+                        null);
         }
         catch (IllegalArgumentException e) {
           // do nothing, package already defined by some other thread

@@ -5,28 +5,30 @@ import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.externalDependencies.ProjectExternalDependency
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.deleteRecursively
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
-import java.io.File
+import java.nio.file.Paths
 
 class DefaultProjectStoreTest {
   companion object {
-    ClassRule val projectRule = ProjectRule()
+    @ClassRule val projectRule = ProjectRule()
   }
 
   private val tempDirManager = TemporaryDirectory()
 
-  private val requiredPlugins: List<ProjectExternalDependency> = listOf(DependencyOnPlugin("fake", "0", "1"))
+  private val requiredPlugins = listOf<ProjectExternalDependency>(DependencyOnPlugin("fake", "0", "1"))
 
   private val ruleChain = RuleChain(
     tempDirManager,
@@ -35,7 +37,7 @@ class DefaultProjectStoreTest {
 
       override fun before() {
         val app = ApplicationManagerEx.getApplicationEx()
-        isDoNotSave = app.isDoNotSave()
+        isDoNotSave = app.isDoNotSave
         app.doNotSave(false)
       }
 
@@ -45,7 +47,7 @@ class DefaultProjectStoreTest {
           app.doNotSave(isDoNotSave)
         }
         finally {
-          FileUtil.delete(File(app.stateStore.getStateStorageManager().expandMacros(StoragePathMacros.APP_CONFIG)))
+          Paths.get(app.stateStore.storageManager.expandMacros(StoragePathMacros.APP_CONFIG)).deleteRecursively()
         }
       }
     },
@@ -53,21 +55,24 @@ class DefaultProjectStoreTest {
       private var externalDependenciesManager: ExternalDependenciesManager? = null
 
       override fun before() {
-        externalDependenciesManager = ProjectManager.getInstance().getDefaultProject().service<ExternalDependenciesManager>()
-        externalDependenciesManager!!.setAllDependencies(requiredPlugins)
+        externalDependenciesManager = ProjectManager.getInstance().defaultProject.service<ExternalDependenciesManager>()
+        externalDependenciesManager!!.allDependencies = requiredPlugins
       }
 
       override fun after() {
-        externalDependenciesManager?.setAllDependencies(emptyList())
+        externalDependenciesManager?.allDependencies = emptyList()
       }
     }
   )
 
-  public Rule fun getChain(): RuleChain = ruleChain
+  @Rule fun getChain() = ruleChain
 
-  public Test fun `new project from default`() {
-    createProject(tempDirManager) {
-      assertThat(it.service<ExternalDependenciesManager>().getAllDependencies()).isEqualTo(requiredPlugins)
+  @Test fun `new project from default`() {
+    createProjectAndUseInLoadComponentStateMode(tempDirManager) {
+      assertThat(it.service<ExternalDependenciesManager>().allDependencies).isEqualTo(requiredPlugins)
     }
   }
 }
+
+val IComponentStore.storageManager: StateStorageManager
+  get() = stateStorageManager

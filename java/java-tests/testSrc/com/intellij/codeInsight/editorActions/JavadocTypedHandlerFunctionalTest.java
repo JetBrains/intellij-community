@@ -31,6 +31,10 @@ public class JavadocTypedHandlerFunctionalTest extends LightPlatformCodeInsightT
   public void testCodeTag() {
     doTest();
   }
+  
+  public void testTypeParam() {
+    doTest();
+  }
 
   private void doTest() {
     String testName = getTestName(true);

@@ -29,14 +29,13 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 class HistoryIdColumn extends AnnotationFieldGutter {
-  private final Map<String, Integer> myHistoryIds;
+  private final Map<VcsRevisionNumber, Integer> myHistoryIds;
 
   HistoryIdColumn(FileAnnotation annotation,
-                  final Editor editor,
                   final TextAnnotationPresentation presentation,
                   Couple<Map<VcsRevisionNumber, Color>> colorScheme,
-                  Map<String, Integer> ids) {
-    super(annotation, editor, null, presentation, colorScheme);
+                  Map<VcsRevisionNumber, Integer> ids) {
+    super(annotation, null, presentation, colorScheme);
     myHistoryIds = ids;
   }
 
@@ -45,7 +44,7 @@ class HistoryIdColumn extends AnnotationFieldGutter {
     if (!isAvailable()) return "";
     final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(line);
     if (revisionNumber != null) {
-      final Integer num = myHistoryIds.get(revisionNumber.asString());
+      final Integer num = myHistoryIds.get(revisionNumber);
       if (num != null) {
         final String size = String.valueOf(myHistoryIds.size());
         String value = num.toString();

@@ -17,7 +17,7 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -65,10 +65,9 @@ public class SuggestVariableNameMacro extends Macro {
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
     String[] names = getNames(context);
     if (names == null || names.length < 2) return null;
-    LookupItem[] items = new LookupItem[names.length];
+    LookupElement[] items = new LookupElement[names.length];
     for(int i = 0; i < names.length; i++) {
-      String name = names[i];
-      items[i] = LookupItem.fromString(name);
+      items[i] = LookupElementBuilder.create(names[i]);
     }
     return items;
   }

@@ -93,6 +93,7 @@ public class PyNames {
   public static final String FAKE_FUNCTION = "__function";
   public static final String FAKE_METHOD = "__method";
   public static final String FAKE_NAMEDTUPLE = "__namedtuple";
+  public static final String FAKE_COROUTINE = "__coroutine";
 
   public static final String FUTURE_MODULE = "__future__";
   public static final String UNICODE_LITERALS = "unicode_literals";
@@ -265,6 +266,7 @@ public class PyNames {
   private static final BuiltinDescription _self_other_descr = new BuiltinDescription("(self, other)");
   private static final BuiltinDescription _self_item_descr = new BuiltinDescription("(self, item)");
   private static final BuiltinDescription _self_key_descr = new BuiltinDescription("(self, key)");
+  private static final BuiltinDescription _exit_descr = new BuiltinDescription("(self, exc_type, exc_val, exc_tb)");
 
   private static final ImmutableMap<String, BuiltinDescription> BuiltinMethods = ImmutableMap.<String, BuiltinDescription>builder()
     .put("__abs__", _only_self_descr)
@@ -290,7 +292,7 @@ public class PyNames {
       //_BuiltinMethods.put("__doc__", _only_self_descr);
       //_BuiltinMethods.put("__docformat__", _only_self_descr);
     .put("__enter__", _only_self_descr)
-    .put("__exit__", new BuiltinDescription("(self, exc_type, exc_val, exc_tb)"))
+    .put("__exit__", _exit_descr)
     .put("__eq__", _self_other_descr)
       //_BuiltinMethods.put("__file__", _only_self_descr);
     .put("__float__", _only_self_descr)
@@ -396,6 +398,11 @@ public class PyNames {
     .put("__imatmul__", _self_other_descr)
     .put("__matmul__", _self_other_descr)
     .put("__rmatmul__", _self_other_descr)
+    .put("__await__", _only_self_descr)
+    .put("__aenter__", _only_self_descr)
+    .put("__aexit__", _exit_descr)
+    .put("__aiter__", _only_self_descr)
+    .put("__anext__", _only_self_descr)
     .build();
 
   public static ImmutableMap<String, BuiltinDescription> getBuiltinMethods(LanguageLevel level) {
@@ -450,6 +457,8 @@ public class PyNames {
   public static final String IN = "in";
   public static final String NOT = "not";
   public static final String LAMBDA = "lambda";
+  public static final String ASYNC = "async";
+  public static final String AWAIT = "await";
 
   /**
    * Contains keywords as of CPython 2.5.

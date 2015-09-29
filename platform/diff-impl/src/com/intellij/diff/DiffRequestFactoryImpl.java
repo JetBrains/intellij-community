@@ -65,6 +65,23 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     return new SimpleDiffRequest(title, content1, content2, title1, title2);
   }
 
+  @NotNull
+  @Override
+  public ContentDiffRequest createFromFiles(@Nullable Project project,
+                                            @NotNull VirtualFile leftFile,
+                                            @NotNull VirtualFile baseFile,
+                                            @NotNull VirtualFile rightFile) {
+    DiffContent content1 = myContentFactory.create(project, leftFile);
+    DiffContent content2 = myContentFactory.create(project, baseFile);
+    DiffContent content3 = myContentFactory.create(project, rightFile);
+
+    String title1 = getContentTitle(leftFile);
+    String title2 = getContentTitle(baseFile);
+    String title3 = getContentTitle(rightFile);
+
+    return new SimpleDiffRequest(null, content1, content2, content3, title1, title2, title3);
+  }
+
   @Override
   @NotNull
   public ContentDiffRequest createClipboardVsValue(@NotNull String value) {

@@ -112,7 +112,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final Map<VcsBackgroundableActions, BackgroundableActionEnabledHandler> myBackgroundableActionHandlerMap;
 
   private final List<Pair<String, TextAttributes>> myPendingOutput = new ArrayList<Pair<String, TextAttributes>>();
-  private VcsEventsListenerManagerImpl myVcsEventListenerManager;
 
   private final VcsHistoryCache myVcsHistoryCache;
   private final ContentRevisionCache myContentRevisionCache;
@@ -134,10 +133,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myInitialization = new VcsInitialization(myProject);
     myMappings = new NewMappings(myProject, myMessageBus, this, manager);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
-
-    if (!myProject.isDefault()) {
-      myVcsEventListenerManager = new VcsEventsListenerManagerImpl();
-    }
 
     myVcsHistoryCache = new VcsHistoryCache();
     myContentRevisionCache = new ContentRevisionCache();
@@ -807,8 +802,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
+  @Nullable
   public VcsEventsListenerManager getVcsEventsListenerManager() {
-    return myVcsEventListenerManager;
+    return null;
   }
 
   @Override
@@ -821,11 +817,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   public String haveDefaultMapping() {
     return myMappings.haveDefaultMapping();
-  }
-
-  @Override
-  protected VcsEnvironmentsProxyCreator getProxyCreator() {
-    return myVcsEventListenerManager;
   }
 
   public BackgroundableActionEnabledHandler getBackgroundableActionHandler(final VcsBackgroundableActions action) {

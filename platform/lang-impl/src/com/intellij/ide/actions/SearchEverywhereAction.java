@@ -38,6 +38,8 @@ import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
+import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
+import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
@@ -113,6 +115,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
@@ -1003,14 +1007,20 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
     public MySearchTextField() {
       super(false);
-      getTextEditor().setOpaque(false);
-      getTextEditor().setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(getTextEditor()));
-      getTextEditor().setBorder(new DarculaTextBorder());
+      JTextField editor = getTextEditor();
+      editor.setOpaque(false);
+      if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+        editor.setUI((MacIntelliJTextFieldUI)MacIntelliJTextFieldUI.createUI(editor));
+        editor.setBorder(new MacIntelliJTextBorder());
+      } else {
+        editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
+        editor.setBorder(new DarculaTextBorder());
+      }
 
-      getTextEditor().putClientProperty("JTextField.Search.noBorderRing", Boolean.TRUE);
+      editor.putClientProperty("JTextField.Search.noBorderRing", Boolean.TRUE);
       if (UIUtil.isUnderDarcula()) {
-        getTextEditor().setBackground(Gray._45);
-        getTextEditor().setForeground(Gray._240);
+        editor.setBackground(Gray._45);
+        editor.setForeground(Gray._240);
       }
     }
 
@@ -1058,8 +1068,22 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private String myLocationString;
     private Icon myLocationIcon;
     private Project myProject;
-    private JPanel myMainPanel = new JPanel(new BorderLayout());
+    private MyAccessibleComponent myMainPanel = new MyAccessibleComponent(new BorderLayout());
     private JLabel myTitle = new JLabel();
+
+    private class MyAccessibleComponent extends JPanel {
+      private Accessible myAccessible;
+      public MyAccessibleComponent(LayoutManager layout) {
+        super(layout);
+      }
+      void setAccessible(Accessible comp) {
+        myAccessible = comp;
+      }
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        return myAccessible != null ? myAccessible.getAccessibleContext() : super.getAccessibleContext();
+      }
+    }
 
     @Override
     public void clear() {
@@ -1130,6 +1154,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myMainPanel.add(createTitle(" " + title), BorderLayout.NORTH);
       }
       myMainPanel.add(cmp, BorderLayout.CENTER);
+      if (cmp instanceof Accessible) {
+        myMainPanel.setAccessible((Accessible)cmp);
+      }
       final int width = myMainPanel.getPreferredSize().width;
       if (width > myPopupActualWidth) {
         myPopupActualWidth = width;

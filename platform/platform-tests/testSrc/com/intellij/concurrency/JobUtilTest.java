@@ -390,7 +390,7 @@ public class JobUtilTest extends PlatformTestCase {
     }
   }
 
-  public void testTasksIsDoneAfterCancelInTheMiddleOfTheExecutionReturnsFalseUntilFinished() throws ExecutionException, InterruptedException {
+  public void testAfterCancelInTheMiddleOfTheExecutionTaskIsDoneReturnsFalseUntilFinished() throws ExecutionException, InterruptedException {
     Random random = new Random();
     for (int i=0; i<100; i++) {
       final AtomicBoolean finished = new AtomicBoolean();
@@ -407,14 +407,20 @@ public class JobUtilTest extends PlatformTestCase {
       TimeoutUtil.sleep(random.nextInt(100));
       job.cancel();
       long start = System.currentTimeMillis();
-      while (!finished.get() && (started.get() || System.currentTimeMillis() < start + 2000)) {
+      while (!job.isDone() && (started.get() || System.currentTimeMillis() < start + 2000)) {
         boolean wasDone = job.isDone();
         boolean wasStarted = started.get();
         boolean wasFinished = finished.get();
-        if (!wasFinished) {
-          assertTrue(wasStarted+", "+wasDone, wasDone == !wasStarted);
+        if (wasStarted && !wasFinished) {
+          assertFalse(wasDone);
         }
         // else no guarantees
+
+        // but can be finished=true but done=false still
+        if (wasDone) {
+          assertTrue(wasFinished);
+        }
+
       }
     }
   }

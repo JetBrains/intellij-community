@@ -412,12 +412,14 @@ public class SMTestProxy extends AbstractTestProxy {
    * @param duration In milliseconds
    */
   public void setDuration(final long duration) {
-    invalidateCachedDurationForContainerSuites();
-
     if (!isSuite()) {
+      invalidateCachedDurationForContainerSuites(duration - (myDuration != null ? myDuration : 0));
       myDurationIsCached = true;
       myDuration = (duration >= 0) ? duration : null;
       return;
+    }
+    else {
+      invalidateCachedDurationForContainerSuites(-1);
     }
 
     // Not allow to directly set duration for suites.
@@ -782,17 +784,28 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   /**
-   * Recursively invalidates cached duration for container(parent) suites
+   * Recursively invalidates cached duration for container(parent) suites or updates their value
+   * @param duration
    */
-  private void invalidateCachedDurationForContainerSuites() {
-    // Invalidates duration of this suite
-    myDuration = null;
-    myDurationIsCached = false;
+  private void invalidateCachedDurationForContainerSuites(long duration) {
+    if (duration >= 0) {
+      if (myDuration == null) {
+        myDuration = duration;
+      }
+      else {
+        myDuration += duration;
+      }
+    }
+    else {
+      // Invalidates duration of this suite
+      myDuration = null;
+      myDurationIsCached = false;
+    }
 
     // Invalidates duration of container suite
     final SMTestProxy containerSuite = getParent();
     if (containerSuite != null) {
-      containerSuite.invalidateCachedDurationForContainerSuites();
+      containerSuite.invalidateCachedDurationForContainerSuites(duration);
     }
   }
   
@@ -801,7 +814,7 @@ public class SMTestProxy extends AbstractTestProxy {
     while (parent != null && !(parent instanceof SMRootTestProxy)) {
       parent = parent.getParent();
     }
-    return parent instanceof SMRootTestProxy ? (SMRootTestProxy)parent : null;
+    return parent != null ? (SMRootTestProxy)parent : null;
   }
 
   public static class SMRootTestProxy extends SMTestProxy implements TestProxyRoot {

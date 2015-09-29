@@ -39,7 +39,7 @@ import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.documentation.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -552,7 +552,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public PyFunction findMethodByName(@Nullable final String name, boolean inherited) {
     if (name == null) return null;
     NameFinder<PyFunction> proc = new NameFinder<PyFunction>(name);
-    visitMethods(proc, inherited);
+    visitMethods(proc, inherited, null);
     return proc.getResult();
   }
 
@@ -920,11 +920,11 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
   }
 
-  public boolean visitMethods(Processor<PyFunction> processor, boolean inherited) {
-    return visitMethods(processor, inherited, false, null);
+  public boolean visitMethods(Processor<PyFunction> processor, boolean inherited, @Nullable final TypeEvalContext context) {
+    return visitMethods(processor, inherited, false, context);
   }
 
-  public boolean visitMethods(Processor<PyFunction> processor,
+  private boolean visitMethods(Processor<PyFunction> processor,
                               boolean inherited,
                               boolean skipClassObj, TypeEvalContext context) {
     PyFunction[] methods = getMethods(false);
@@ -934,7 +934,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         if (skipClassObj && PyNames.FAKE_OLD_BASE.equals(ancestor.getName())) {
           continue;
         }
-        if (!ancestor.visitMethods(processor, false)) {
+        if (!ancestor.visitMethods(processor, false, null)) {
           return false;
         }
       }

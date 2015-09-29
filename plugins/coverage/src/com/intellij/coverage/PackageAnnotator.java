@@ -310,6 +310,8 @@ public class PackageAnnotator {
           final String toplevelClassSrcFQName = getSourceToplevelFQName(classFqVMName);
           final Ref<VirtualFile> containingFileRef = new Ref<VirtualFile>();
           final Ref<PsiClass> psiClassRef = new Ref<PsiClass>();
+          final CoverageSuitesBundle suitesBundle = myCoverageManager.getCurrentSuitesBundle();
+          if (suitesBundle == null) continue;
           final Boolean isInSource = DumbService.getInstance(myProject).runReadActionInSmartMode(new Computable<Boolean>() {
             public Boolean compute() {
               if (myProject.isDisposed()) return null;
@@ -331,11 +333,11 @@ public class PackageAnnotator {
           String classCoverageKey = classFqVMName.replace('/', '.');
           boolean ignoreClass = false;
           for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
-            if (extension.ignoreCoverageForClass(myCoverageManager.getCurrentSuitesBundle(), child)) {
+            if (extension.ignoreCoverageForClass(suitesBundle, child)) {
               ignoreClass = true;
               break;
             }
-            if (extension.keepCoverageInfoForClassWithoutSource(myCoverageManager.getCurrentSuitesBundle(), child)) {
+            if (extension.keepCoverageInfoForClassWithoutSource(suitesBundle, child)) {
               coverageInfoForClass = classWithoutSourceCoverageInfo;
               break;
             }

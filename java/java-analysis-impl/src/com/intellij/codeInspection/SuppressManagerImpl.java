@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
@@ -30,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class SuppressManagerImpl extends SuppressManager {
+  private static final Logger LOG = Logger.getInstance(SuppressManager.class);
+
   @Override
   @NotNull
   public SuppressIntentionAction[] createSuppressActions(@NotNull final HighlightDisplayKey displayKey) {
@@ -41,7 +44,7 @@ public class SuppressManagerImpl extends SuppressManager {
   @Override
   public SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
     final HighlightDisplayKey displayKey = HighlightDisplayKey.findById(toolId);
-    assert displayKey != null : toolId;
+    LOG.assertTrue(displayKey != null, "Display key is null for `" + toolId + "` tool");
     return createBatchSuppressActions(displayKey);
   }
 

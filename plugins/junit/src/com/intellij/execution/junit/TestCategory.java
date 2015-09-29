@@ -23,6 +23,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.psi.*;
+import com.intellij.refactoring.listeners.RefactoringElementListener;
 
 /**
 * User: anna
@@ -66,5 +67,10 @@ class TestCategory extends TestPackage {
                                        PsiPackage testPackage,
                                        PsiDirectory testDir) {
     return false;
+  }
+
+  @Override
+  public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
+    return RefactoringListeners.getClassOrPackageListener(element, configuration.myCategory);
   }
 }

@@ -37,8 +37,9 @@ public abstract class VagrantSupport {
   public static VagrantSupport getInstance() {
     return ServiceManager.getService(VagrantSupport.class);
   }
-
-  public abstract ListenableFuture<RemoteCredentials> computeVagrantSettings(@Nullable Project project, @NotNull String vagrantFolder, @Nullable String machineName);
+  public abstract ListenableFuture<RemoteCredentials> computeVagrantSettings(@Nullable Project project,
+                                                                             @NotNull String vagrantFolder,
+                                                                             @Nullable String machineName);
 
   public static void showMissingVagrantSupportMessage(final @Nullable Project project) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -64,9 +65,17 @@ public abstract class VagrantSupport {
   public abstract List<String> getMachineNames(@NotNull String instanceFolder);
 
   public boolean isNotReadyForSsh(Throwable t) {
-    return t.getMessage().contains("not yet ready for SSH");
+    return isNotReadyForSsh(t.getMessage());
   }
 
+  public static boolean isNotReadyForSsh(@NotNull String errorMessage) {
+    return errorMessage.contains("not yet ready for SSH");
+  }
 
-  public static class MultipleMachinesException extends Exception {}
+  @Nullable
+  public abstract String findVagrantFolder(@NotNull Project project);
+
+
+  public static class MultipleMachinesException extends Exception {
+  }
 }

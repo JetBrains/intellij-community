@@ -116,7 +116,9 @@ class ExternalProjectBuilder extends BuilderSupport {
     ['bin': LibraryPathType.BINARY, 'src': LibraryPathType.SOURCE, 'doc': LibraryPathType.DOC].each {
       key, type -> attributes[key]?.each { result.addPath(type, it as String) }
     }
-    projectNode.createChild(ProjectKeys.LIBRARY, result)
+    if (attributes.level != 'module') {
+      projectNode.createChild(ProjectKeys.LIBRARY, result)
+    }
     result
   }
 

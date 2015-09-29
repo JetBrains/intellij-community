@@ -85,7 +85,12 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
   }
 
   protected void cloneRepo() {
-    git("clone " + PROJECT_URL + " .");
+    // project dir can be not empty
+    git("init");
+    git("remote add origin " + PROJECT_URL);
+    git("fetch");
+    git("checkout -t origin/master");
+
     setGitIdentity(myProjectRoot);
     GitInit.refreshAndConfigureVcsMappings(myProject, myProjectRoot, myProjectRoot.getPath());
   }

@@ -24,9 +24,9 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class GitCommitAndPushExecutor implements CommitExecutor {
-  private final GitCheckinEnvironment myCheckinEnvironment;
+  @NotNull private final GitCheckinEnvironment myCheckinEnvironment;
 
-  public GitCommitAndPushExecutor(GitCheckinEnvironment checkinEnvironment) {
+  public GitCommitAndPushExecutor(@NotNull GitCheckinEnvironment checkinEnvironment) {
     myCheckinEnvironment = checkinEnvironment;
   }
 

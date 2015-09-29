@@ -41,21 +41,10 @@ public class EduAnswerPlaceholderPainter {
     final int replacementLength = placeholder.getPossibleAnswerLength();
     int highlighterLength = useLength ? length : replacementLength;
     final int endOffset = startOffset + highlighterLength;
+    textAttributes.setEffectColor(color);
     RangeHighlighter
       highlighter = editor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, PLACEHOLDERS_LAYER,
                                                                 textAttributes, HighlighterTargetArea.EXACT_RANGE);
-    highlighter.setCustomRenderer(new CustomHighlighterRenderer() {
-      @Override
-      public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
-        Color oldColor = g.getColor();
-        g.setColor(color);
-        Point point = editor.logicalPositionToXY(editor.offsetToLogicalPosition(highlighter.getStartOffset()));
-        Point pointEnd = editor.logicalPositionToXY(editor.offsetToLogicalPosition(highlighter.getEndOffset()));
-        g.drawRect(point.x, point.y, pointEnd.x - point.x, editor.getLineHeight());
-        g.setColor(oldColor);
-      }
-    });
-
     highlighter.setGreedyToLeft(true);
     highlighter.setGreedyToRight(true);
   }

@@ -12,3 +12,12 @@ interface F {
 }
 
 interface <error descr="G inherits abstract and default for foo() from types E and F">G</error> extends E, F {}
+
+interface H {
+  default void m() {}
+}
+interface K {
+  default void m() {}
+}
+class L implements H {}
+class <error descr="M inherits unrelated defaults for m() from types H and K">M</error> extends L implements H, K {}

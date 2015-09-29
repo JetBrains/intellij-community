@@ -200,7 +200,7 @@ public class BuildArtifactAction extends DumbAwareAction {
         }
       }
 
-      new Task.Backgroundable(myProject, "Cleaning artifacts...", true) {
+      new Task.Backgroundable(myProject, "Cleaning Artifacts", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           List<File> deleted = new ArrayList<File>();

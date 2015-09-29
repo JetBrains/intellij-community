@@ -74,6 +74,7 @@ public final class UpdateChecker {
   private static Set<String> ourDisabledToUpdatePlugins;
   private static final Map<String, String> ourAdditionalRequestOptions = ContainerUtil.newHashMap();
   private static final Map<String, PluginDownloader> ourUpdatedPlugins = ContainerUtil.newHashMap();
+  private static final Set<NotificationUniqueType> SHOWN_NOTIFICATION_TYPES = Collections.synchronizedSet(EnumSet.noneOf(NotificationUniqueType.class));
 
   private static class Holder {
     private static final String UPDATE_URL = ApplicationInfoEx.getInstanceEx().getUpdateUrls().getCheckingUrl();
@@ -404,7 +405,7 @@ public final class UpdateChecker {
       }
       else {
         String message = IdeBundle.message("updates.new.version.available", ApplicationNamesInfo.getInstance().getFullProductName());
-        showNotification(project, message, false, runnable);
+        showNotification(project, message, false, runnable, NotificationUniqueType.NEW_CHANNEL);
       }
     }
     else if (updatedChannel != null) {
@@ -420,7 +421,7 @@ public final class UpdateChecker {
       }
       else {
         String message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().getFullProductName());
-        showNotification(project, message, false, runnable);
+        showNotification(project, message, false, runnable, NotificationUniqueType.UPDATE_IN_CHANNEL);
       }
     }
     else if (updatedPlugins != null && !updatedPlugins.isEmpty()) {
@@ -442,7 +443,7 @@ public final class UpdateChecker {
           }
         }, ", ");
         String message = IdeBundle.message("updates.plugins.ready.message", updatedPlugins.size(), plugins);
-        showNotification(project, message, false, runnable);
+        showNotification(project, message, false, runnable, NotificationUniqueType.PLUGINS_UPDATE);
       }
     }
     else if (alwaysShowResults) {
@@ -451,6 +452,20 @@ public final class UpdateChecker {
   }
 
   private static void showNotification(@Nullable Project project, String message, boolean error, @Nullable final Runnable runnable) {
+    showNotification(project, message, error, runnable, null);
+  }
+
+  private static void showNotification(@Nullable Project project,
+                                       String message,
+                                       boolean error,
+                                       @Nullable final Runnable runnable,
+                                       @Nullable final NotificationUniqueType notificationType) {
+    if (notificationType != null) {
+      if (!SHOWN_NOTIFICATION_TYPES.add(notificationType)) {
+        return;
+      }
+    }
+
     NotificationListener listener = null;
     if (runnable != null) {
       listener = new NotificationListener() {
@@ -464,7 +479,12 @@ public final class UpdateChecker {
 
     String title = IdeBundle.message("update.notifications.title");
     NotificationType type = error ? NotificationType.ERROR : NotificationType.INFORMATION;
-    NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), type, listener).notify(project);
+    NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), type, listener).whenExpired(new Runnable() {
+      @Override
+      public void run() {
+        SHOWN_NOTIFICATION_TYPES.remove(notificationType);
+      }
+    }).notify(project);
   }
 
   public static void addUpdateRequestParameter(@NotNull String name, @NotNull String value) {
@@ -645,5 +665,9 @@ public final class UpdateChecker {
         updateAndShowResult();
       }
     }
+  }
+
+  private enum NotificationUniqueType {
+    NEW_CHANNEL, UPDATE_IN_CHANNEL, PLUGINS_UPDATE
   }
 }

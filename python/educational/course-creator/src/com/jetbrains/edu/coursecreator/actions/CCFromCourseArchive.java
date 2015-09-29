@@ -41,11 +41,6 @@ public class CCFromCourseArchive extends DumbAwareAction {
   }
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
-    CCProjectService.setCCActionAvailable(e);
-  }
-
-  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {

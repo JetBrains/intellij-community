@@ -23,9 +23,12 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +46,7 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
   @NotNull private final Collection<ExpectedTypeInfo> myExpectedTypeInfos;
   private PsiElement myPosition;
 
-  public SmartCompletionDecorator(LookupElement item, Collection<ExpectedTypeInfo> expectedTypeInfos) {
+  public SmartCompletionDecorator(LookupElement item, @NotNull Collection<ExpectedTypeInfo> expectedTypeInfos) {
     super(item);
     myExpectedTypeInfos = expectedTypeInfos;
   }
@@ -114,9 +117,9 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
   public void handleInsert(InsertionContext context) {
     if (getObject() instanceof PsiVariable && context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
       context.commitDocument();
-      DefaultInsertHandler.removeEndOfIdentifier(context);
-      context.commitDocument();
+      replaceMethodCallIfNeeded(context);
     }
+    context.commitDocument();
     myPosition = getPosition(context, this);
 
     TailType tailType = computeTailType(context);
@@ -125,6 +128,20 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
 
     if (tailType == TailType.COMMA) {
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
+    }
+  }
+
+  private static void replaceMethodCallIfNeeded(InsertionContext context) {
+    PsiFile file = context.getFile();
+    PsiElement element = file.findElementAt(context.getTailOffset());
+    if (element instanceof PsiWhiteSpace &&
+        (!element.textContains('\n') ||
+         CodeStyleSettingsManager.getSettings(file.getProject()).getCommonSettings(JavaLanguage.INSTANCE).METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE
+        )) {
+      element = file.findElementAt(element.getTextRange().getEndOffset());
+    }
+    if (element != null && PsiUtilCore.getElementType(element) == JavaTokenType.LPARENTH && element.getParent() instanceof PsiExpressionList) {
+      context.getDocument().deleteString(context.getTailOffset(), element.getParent().getTextRange().getEndOffset());
     }
   }
 

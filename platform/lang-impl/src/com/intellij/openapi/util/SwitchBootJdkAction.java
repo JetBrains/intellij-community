@@ -162,7 +162,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
     @NotNull private final ComboBox myComboBox;
 
-    protected SwitchBootJdkDialog(@Nullable Project project, List<JdkBundleDescriptor> jdkBundlesList) {
+    protected SwitchBootJdkDialog(@Nullable Project project, final List<JdkBundleDescriptor> jdkBundlesList) {
       super(project, false);
 
       final ArrayList<JdkBundleDescriptor> pathsList = JdkUtil.findJdkPaths();
@@ -175,7 +175,9 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       DefaultComboBoxModel model = new DefaultComboBoxModel();
 
       for (JdkBundleDescriptor jdkBundlePath : pathsList) {
-        if (!jdkBundlesList.isEmpty() && FileUtil.filesEqual(jdkBundlePath.getBundleAsFile(),jdkBundlesList.get(0).getBundleAsFile())) {
+        if (!(jdkBundlesList.isEmpty() || jdkBundlePath == null)
+            && FileUtil.filesEqual(jdkBundlePath.getBundleAsFile(),jdkBundlesList.get(0).getBundleAsFile()))
+        {
           continue;
         }
         model.addElement(jdkBundlePath);
@@ -185,8 +187,20 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       myComboBox.setRenderer(new ListCellRendererWrapper() {
         @Override
         public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          JdkBundleDescriptor jdkBundleDescriptor = ((JdkBundleDescriptor)value);
-          setText(jdkBundleDescriptor.getVisualRepresentation());
+          if (value != null) {
+            JdkBundleDescriptor jdkBundleDescriptor = ((JdkBundleDescriptor)value);
+            setText(jdkBundleDescriptor.getVisualRepresentation());
+          } else {
+            LOG.error("Null value has been passed to a cell renderer. Available JDKs count: " +  pathsList.size());
+            StringBuilder jdkNames = new StringBuilder();
+            for (JdkBundleDescriptor jdkBundlePath : pathsList) {
+              if (!jdkBundlesList.isEmpty()) {
+                continue;
+              }
+              jdkNames.append(jdkBundlePath.getVisualRepresentation()).append("; ");
+            }
+            LOG.error("Available JDKs names: " + jdkNames.toString());
+          }
         }
       });
 

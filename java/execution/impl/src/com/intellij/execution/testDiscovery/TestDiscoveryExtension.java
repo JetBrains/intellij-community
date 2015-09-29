@@ -36,6 +36,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
@@ -43,7 +44,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.testme.instrumentation.ProjectData;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -137,7 +137,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
 
   @Override
   public boolean isListenerDisabled(RunConfigurationBase configuration, Object listener, RunnerSettings runnerSettings) {
-    return !(listener instanceof TestDiscoveryListener) || runnerSettings != null || !isApplicableFor(configuration);
+    return listener instanceof TestDiscoveryListener && (runnerSettings != null || !isApplicableFor(configuration));
   }
 
   @Override

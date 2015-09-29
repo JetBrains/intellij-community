@@ -29,10 +29,10 @@ public inline fun <T> runWriteAction(runnable: () -> T): T {
   }
 }
 
-public inline fun runReadAction(runnable: () -> Unit) {
+public inline fun <T> runReadAction(runnable: () -> T): T {
   val token = ReadAction.start()
   try {
-    runnable()
+    return runnable()
   }
   finally {
     token.finish()

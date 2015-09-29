@@ -34,7 +34,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UserActivityProviderComponent;
-import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -65,7 +64,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       JRootPane rootPane = UIUtil.getParentOfType(JRootPane.class, contextComponent);
       if (rootPane != null) {
         button = (ComboBoxButton)
-          JBSwingUtilities.uiTraverser().withRoot(rootPane).bfsTraversal().filter(new Condition<Component>() {
+          UIUtil.uiTraverser().withRoot(rootPane).bfsTraversal().filter(new Condition<Component>() {
             @Override
             public boolean value(Component component) {
               return component instanceof ComboBoxButton && ((ComboBoxButton)component).getMyAction() == ComboBoxAction.this;
@@ -378,7 +377,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     public Dimension getPreferredSize() {
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
       int width = isEmpty ? JBUI.scale(10) + ARROW_ICON.getIconWidth() : super.getPreferredSize().width;
-      if (isSmallVariant()) width += JBUI.scale(4);
+      if (isSmallVariant() && !(SystemInfo.isMac && UIUtil.isUnderIntelliJLaF())) width += JBUI.scale(4);
       return new Dimension(width, isSmallVariant() ? JBUI.scale(19) : super.getPreferredSize().height);
     }
 
@@ -394,75 +393,88 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public void paint(Graphics g) {
-      UISettings.setupAntialiasing(g);
-      final Dimension size = getSize();
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
+      final Dimension size = getSize();
 
-      final Color textColor = isEnabled()
-                      ? UIManager.getColor("Panel.foreground")
-                      : UIUtil.getInactiveTextColor();
-      if (myForceTransparent) {
-        final Icon icon = getIcon();
-        int x = 7;
-        if (icon != null) {
-          icon.paintIcon(this, g, x, (size.height - icon.getIconHeight()) / 2);
-          x += icon.getIconWidth() + 3;
-        }
-        if (!StringUtil.isEmpty(getText())) {
-          final Font font = getFont();
-          g.setFont(font);
-          g.setColor(textColor);
-          g.drawString(getText(), x, (size.height + font.getSize()) / 2 - 1);
-        }
+      if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+        putClientProperty("styleCombo", Boolean.TRUE);
+        super.paint(g);
       } else {
+        UISettings.setupAntialiasing(g);
 
-      if (isSmallVariant()) {
-        final Graphics2D g2 = (Graphics2D)g;
-        g2.setColor(UIUtil.getControlColor());
-        final int w = getWidth();
-        final int h = getHeight();
-        if (getModel().isArmed() && getModel().isPressed()) {
-          g2.setPaint(UIUtil.getGradientPaint(0, 0, UIUtil.getControlColor(), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.8)));
-        }
-        else {
-          if (UIUtil.isUnderDarcula()) {
-            g2.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.1), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.9)));
-          } else {
-            g2.setPaint(UIUtil.getGradientPaint(0, 0, new JBColor(SystemInfo.isMac? Gray._226 : Gray._245, Gray._131), 0, h, new JBColor(SystemInfo.isMac? Gray._198 : Gray._208, Gray._128)));
+        final Color textColor = isEnabled()
+                                ? UIManager.getColor("Panel.foreground")
+                                : UIUtil.getInactiveTextColor();
+        if (myForceTransparent) {
+          final Icon icon = getIcon();
+          int x = 7;
+          if (icon != null) {
+            icon.paintIcon(this, g, x, (size.height - icon.getIconHeight()) / 2);
+            x += icon.getIconWidth() + 3;
+          }
+          if (!StringUtil.isEmpty(getText())) {
+            final Font font = getFont();
+            g.setFont(font);
+            g.setColor(textColor);
+            g.drawString(getText(), x, (size.height + font.getSize()) / 2 - 1);
           }
         }
-        g2.fillRoundRect(2, 0, w - 2, h, 5, 5);
+        else {
 
-        Color borderColor = myMouseInside ? new JBColor(Gray._111, Gray._118) : new JBColor(Gray._151, Gray._95);
-        g2.setPaint(borderColor);
-        g2.drawRoundRect(2, 0, w - 3, h - 1, 5, 5);
+          if (isSmallVariant()) {
+            final Graphics2D g2 = (Graphics2D)g;
+            g2.setColor(UIUtil.getControlColor());
+            final int w = getWidth();
+            final int h = getHeight();
+            if (getModel().isArmed() && getModel().isPressed()) {
+              g2.setPaint(UIUtil.getGradientPaint(0, 0, UIUtil.getControlColor(), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.8)));
+            }
+            else {
+              if (UIUtil.isUnderDarcula()) {
+                g2.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.1), 0, h,
+                                                    ColorUtil.shift(UIUtil.getControlColor(), 0.9)));
+              }
+              else {
+                g2.setPaint(UIUtil.getGradientPaint(0, 0, new JBColor(SystemInfo.isMac ? Gray._226 : Gray._245, Gray._131), 0, h,
+                                                    new JBColor(SystemInfo.isMac ? Gray._198 : Gray._208, Gray._128)));
+              }
+            }
+            g2.fillRoundRect(2, 0, w - 2, h, 5, 5);
 
-        final Icon icon = getIcon();
-        int x = 7;
-        if (icon != null) {
-          icon.paintIcon(this, g, x, (size.height - icon.getIconHeight()) / 2);
-          x += icon.getIconWidth() + 3;
-        }
-        if (!StringUtil.isEmpty(getText())) {
-          final Font font = getFont();
-          g2.setFont(font);
-          g2.setColor(textColor);
-          g2.drawString(getText(), x, (size.height + font.getSize()) / 2 - 1);
+            Color borderColor = myMouseInside ? new JBColor(Gray._111, Gray._118) : new JBColor(Gray._151, Gray._95);
+            g2.setPaint(borderColor);
+            g2.drawRoundRect(2, 0, w - 3, h - 1, 5, 5);
+
+            final Icon icon = getIcon();
+            int x = 7;
+            if (icon != null) {
+              icon.paintIcon(this, g, x, (size.height - icon.getIconHeight()) / 2);
+              x += icon.getIconWidth() + 3;
+            }
+            if (!StringUtil.isEmpty(getText())) {
+              final Font font = getFont();
+              g2.setFont(font);
+              g2.setColor(textColor);
+              g2.drawString(getText(), x, (size.height + font.getSize()) / 2 - 1);
+            }
+          }
+          else {
+            super.paint(g);
+          }
         }
       }
-      else {
-        super.paint(g);
-      }
-    }
       final Insets insets = super.getInsets();
       final Icon icon = isEnabled() ? ARROW_ICON : DISABLED_ARROW_ICON;
-      final int x;
+      int x;
       if (isEmpty) {
         x = (size.width - icon.getIconWidth()) / 2;
       }
       else {
         if (isSmallVariant()) {
           x = size.width - icon.getIconWidth() - insets.right + 1;
+          if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+            x-=3;
+          }
         }
         else {
           x = size.width - icon.getIconWidth() - insets.right + (UIUtil.isUnderNimbusLookAndFeel() ? -3 : 2);

@@ -24,7 +24,7 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
-    <orderEntry type="module" module-name="compiler-impl" scope="TEST" />
+    <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="openapi" />
   </component>

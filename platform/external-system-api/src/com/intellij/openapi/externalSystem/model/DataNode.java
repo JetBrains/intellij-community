@@ -22,7 +22,6 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.lang.reflect.Modifier;
@@ -279,10 +278,9 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
 
   @Override
   public int hashCode() {
-    int result = myChildren.hashCode();
-    result = 31 * result + myKey.hashCode();
-    result = 31 * result + getData().hashCode();
-    return result;
+    // We can't use myChildren.hashCode() because it iterates whole subtree. This should not produce many collisions because 'getData()'
+    // usually refers to different objects
+    return 31 * myKey.hashCode() + getData().hashCode();
   }
 
   @Override

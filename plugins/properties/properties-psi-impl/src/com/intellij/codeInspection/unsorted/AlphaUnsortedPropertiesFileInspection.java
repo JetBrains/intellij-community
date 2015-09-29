@@ -57,9 +57,13 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
             return;
           }
         }
-        final String resourceBundleBaseName = propertiesFile.getResourceBundle().getBaseName();
-        if (!isResourceBundleAlphaSortedExceptOneFile(propertiesFile.getResourceBundle(), propertiesFile)) {
-          holder.registerProblem(file, String.format(MESSAGE_TEMPLATE_WHOLE_RESOURCE_BUNDLE, resourceBundleBaseName), ProblemHighlightType.INFO, new PropertiesSorterQuickFix(true, propertiesFile));
+        final ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
+        final String resourceBundleBaseName = resourceBundle.getBaseName();
+        if (!isResourceBundleAlphaSortedExceptOneFile(resourceBundle, propertiesFile)) {
+          final List<PropertiesFile> allFiles = resourceBundle.getPropertiesFiles();
+          holder.registerProblem(file, String.format(MESSAGE_TEMPLATE_WHOLE_RESOURCE_BUNDLE, resourceBundleBaseName),
+                                 ProblemHighlightType.INFO,
+                                 new PropertiesSorterQuickFix(true, allFiles.toArray(new PropertiesFile[allFiles.size()])));
           return;
         }
         if (!propertiesFile.isAlphaSorted()) {
@@ -121,8 +125,8 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
 
     Collections.sort(properties, new Comparator<IProperty>() {
       @Override
-      public int compare(IProperty p1, IProperty p2) {
-        return Comparing.compare(p1.getKey(), p2.getKey());
+      public int compare(@NotNull IProperty p1, @NotNull IProperty p2) {
+        return Comparing.compare(p1.getKey(), p2.getKey(), String.CASE_INSENSITIVE_ORDER);
       }
     });
     final char delimiter = PropertiesCodeStyleSettings.getInstance(file.getProject()).KEY_VALUE_DELIMITER;

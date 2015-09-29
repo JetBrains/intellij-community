@@ -33,8 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
-import javax.accessibility.AccessibleRole;
-import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.TreeCellRenderer;
@@ -48,7 +46,6 @@ import java.text.CharacterIterator;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * This is high performance Swing component which represents an icon
@@ -113,8 +110,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private boolean myIconOpaque = false;
 
   private boolean myAutoInvalidate = !(this instanceof TreeCellRenderer);
-
-  private final AccessibleContext myContext = new MyAccessibleContext();
 
   private boolean myIconOnTheRight = false;
   private boolean myTransparentIconBackground;
@@ -1029,39 +1024,16 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   @Override
   public AccessibleContext getAccessibleContext() {
-    return myContext;
+    if (accessibleContext == null) {
+      accessibleContext = new MyAccessibleContext();
+    }
+    return accessibleContext;
   }
 
-  private static class MyAccessibleContext extends AccessibleContext {
+  private class MyAccessibleContext extends JComponent.AccessibleJComponent {
     @Override
-    public AccessibleRole getAccessibleRole() {
-      return AccessibleRole.AWT_COMPONENT;
-    }
-
-    @Override
-    public AccessibleStateSet getAccessibleStateSet() {
-      return new AccessibleStateSet();
-    }
-
-    @Override
-    public int getAccessibleIndexInParent() {
-      return 0;
-    }
-
-    @Override
-    public int getAccessibleChildrenCount() {
-      return 0;
-    }
-
-    @Nullable
-    @Override
-    public Accessible getAccessibleChild(int i) {
-      return null;
-    }
-
-    @Override
-    public Locale getLocale() throws IllegalComponentStateException {
-      return Locale.getDefault();
+    public String getAccessibleName() {
+      return SimpleColoredComponent.this.toString();
     }
   }
 

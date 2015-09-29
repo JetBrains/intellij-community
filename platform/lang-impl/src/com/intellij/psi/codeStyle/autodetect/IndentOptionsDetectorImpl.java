@@ -15,13 +15,16 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
-import com.intellij.lang.Language;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,15 +41,11 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   private final PsiFile myFile;
   private final Project myProject;
   private final Document myDocument;
-  private final Language myLanguage;
-  private final boolean myUseFormatterBasedLineIndentBuilder;
 
   public IndentOptionsDetectorImpl(@NotNull PsiFile file) {
     myFile = file;
-    myLanguage = file.getLanguage();
     myProject = file.getProject();
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myFile);
-    myUseFormatterBasedLineIndentBuilder = Registry.is("editor.detect.indent.by.formatter");
   }
 
   @Override
@@ -65,10 +64,13 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
 
   private List<LineIndentInfo> calcLineIndentInfo() {
     if (myDocument == null) return null;
-    if (myUseFormatterBasedLineIndentBuilder) {
-      return new FormatterBasedLineIndentInfoBuilder(myFile).build();
-    }
-    return new LineIndentInfoBuilder(myDocument.getCharsSequence(), myLanguage).build();
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+    FormattingModelBuilder modelBuilder = LanguageFormatting.INSTANCE.forContext(myFile);
+    if (modelBuilder == null) return null;
+    
+    FormattingModel model = modelBuilder.createModel(myFile, settings);
+    Block rootBlock = model.getRootBlock();
+    return new FormatterBasedLineIndentInfoBuilder(myDocument, rootBlock).build();
   }
 
   private void adjustIndentOptions(@NotNull IndentOptions indentOptions, @NotNull IndentUsageStatistics stats) {

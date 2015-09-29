@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
@@ -87,21 +88,23 @@ public class DataFlowRunner {
       }
     }
 
-    return Arrays.asList(createMemoryState());
+    return Collections.singletonList(createMemoryState());
   }
 
   public final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, InstructionVisitor visitor) {
     Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor);
     return initialStates == null ? RunnerResult.NOT_APPLICABLE : analyzeMethod(psiBlock, visitor, false, initialStates);
   }
-  
+
+  @NotNull
   public final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock,
                                           InstructionVisitor visitor,
                                           boolean ignoreAssertions,
                                           @NotNull Collection<DfaMemoryState> initialStates) {
+    if (PsiTreeUtil.findChildOfType(psiBlock, OuterLanguageElement.class) != null) return RunnerResult.NOT_APPLICABLE;
+
     try {
-      ControlFlowAnalyzer analyzer = createControlFlowAnalyzer();
-      final ControlFlow flow = analyzer.buildControlFlow(psiBlock, ignoreAssertions);
+      final ControlFlow flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions).buildControlFlow();
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
       int[] loopNumber = LoopAnalyzer.calcInLoop(flow);
 
@@ -307,10 +310,6 @@ public class DataFlowRunner {
     if (body != null) {
       myNestedClosures.putValue(body, createClosureState(state));
     }
-  }
-
-  protected ControlFlowAnalyzer createControlFlowAnalyzer() {
-    return new ControlFlowAnalyzer(myValueFactory);
   }
 
   protected DfaMemoryState createMemoryState() {

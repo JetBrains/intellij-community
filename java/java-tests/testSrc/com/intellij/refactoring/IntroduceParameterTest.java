@@ -17,12 +17,10 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
@@ -50,7 +48,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_7;
+    return LanguageLevel.JDK_1_8;
   }
 
   public void testNoUsages() {
@@ -140,6 +138,10 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
   }
 
+  public void testCollapseToLambda() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false);
+  }
+
   public void testSuperWithSideEffect() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false,
            "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class");
@@ -172,9 +174,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
   }
 
   public void testIncompleteVararg() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, true, false, true, false,
-           "Incomplete call(method()): 2 parameters expected but only 0 found\n" +
-           "Incomplete call(method()): expected to delete the 0 parameter but only 0 parameters found");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, true, false, true, false);
   }
 
   public void testIncorrectScope() {
@@ -459,15 +459,23 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     }
     TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, initializer, occurrences)
                                                               : new TIntArrayList();
-    new IntroduceParameterProcessor(
+    IntroduceParameterProcessor processor = new IntroduceParameterProcessor(
       getProject(), method, methodToSearchFor, initializer, expr, localVar, true, parameterName, replaceAllOccurrences,
       replaceFieldsWithGetters, declareFinal, generateDelegate, null, parametersToRemove
-    ){
+    ) {
       @Override
       protected boolean isReplaceDuplicates() {
         return replaceDuplicates;
       }
-    }.run();
+    };
+    PsiType initializerType = initializer.getType();
+    if (initializerType != null && initializerType != PsiType.NULL) {
+      PsiExpression lambda = AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(initializer, initializerType);
+      if (lambda != null) {
+        processor.setParameterInitializer(lambda);
+      }
+    }
+    processor.run();
 
     myEditor.getSelectionModel().removeSelection();
     return true;

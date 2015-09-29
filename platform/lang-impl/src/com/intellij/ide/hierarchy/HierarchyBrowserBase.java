@@ -16,6 +16,7 @@
 
 package com.intellij.ide.hierarchy;
 
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.ContextHelpAction;
@@ -96,7 +97,8 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
   protected void appendActions(@NotNull DefaultActionGroup actionGroup, @Nullable String helpID) {
     actionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
-    actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_ALL));
+    final ActionManager actionManager = ActionManager.getInstance();
+    actionGroup.add(actionManager.getAction(IdeActions.ACTION_EXPAND_ALL));
     actionGroup.add(new PinToolwindowTabAction(){
       @Override
       public void update(AnActionEvent event) {
@@ -105,6 +107,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
         event.getPresentation().setVisible(myContent != null);
       }
     });
+    actionGroup.add(CommonActionsManager.getInstance().createExportToTextFileAction(new ExporterToTextFileHierarchy(this)));
     actionGroup.add(new CloseAction());
     if (helpID != null) {
       actionGroup.add(new ContextHelpAction(helpID));

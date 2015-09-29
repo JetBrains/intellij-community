@@ -32,15 +32,13 @@ public class ClassEscapesItsScopeInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "class.escapes.defined.scope.display.name");
+    return InspectionGadgetsBundle.message("class.escapes.defined.scope.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "class.escapes.defined.scope.problem.descriptor");
+    return InspectionGadgetsBundle.message("class.escapes.defined.scope.problem.descriptor");
   }
 
   @Override
@@ -48,8 +46,7 @@ public class ClassEscapesItsScopeInspection extends BaseInspection {
     return new ClassEscapesItsScopeVisitor();
   }
 
-  private static class ClassEscapesItsScopeVisitor
-    extends BaseInspectionVisitor {
+  private static class ClassEscapesItsScopeVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -60,31 +57,7 @@ public class ClassEscapesItsScopeInspection extends BaseInspection {
       if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
-      final PsiType returnType = method.getReturnType();
-      if (returnType == null) {
-        return;
-      }
-      final PsiType componentType = returnType.getDeepComponentType();
-      if (!(componentType instanceof PsiClassType)) {
-        return;
-      }
-      final PsiClass returnClass = ((PsiClassType)componentType).resolve();
-      if (returnClass == null || returnClass instanceof PsiTypeParameter) {
-        return;
-      }
-      if (!isLessRestrictiveScope(method, returnClass)) {
-        return;
-      }
-      final PsiTypeElement typeElement = method.getReturnTypeElement();
-      if (typeElement == null) {
-        return;
-      }
-      final PsiJavaCodeReferenceElement baseTypeElement =
-        typeElement.getInnermostComponentReferenceElement();
-      if (baseTypeElement == null) {
-        return;
-      }
-      registerError(baseTypeElement);
+      checkForEscaping(method, method.getReturnType(), method.getReturnTypeElement());
     }
 
     @Override
@@ -100,7 +73,13 @@ public class ClassEscapesItsScopeInspection extends BaseInspection {
       if (containingClass.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
-      final PsiType type = field.getType();
+      checkForEscaping(field, field.getType(), field.getTypeElement());
+    }
+
+    private void checkForEscaping(PsiMember member, PsiType type, PsiTypeElement typeElement) {
+      if (type == null || typeElement == null) {
+        return;
+      }
       final PsiType componentType = type.getDeepComponentType();
       if (!(componentType instanceof PsiClassType)) {
         return;
@@ -109,50 +88,26 @@ public class ClassEscapesItsScopeInspection extends BaseInspection {
       if (fieldClass == null || fieldClass instanceof PsiTypeParameter) {
         return;
       }
-      if (!fieldHasLessRestrictiveScope(field, fieldClass)) {
+      if (!isLessRestrictiveScope(member, fieldClass)) {
         return;
       }
-      final PsiTypeElement typeElement = field.getTypeElement();
-      if (typeElement == null) {
-        return;
-      }
-      final PsiJavaCodeReferenceElement baseTypeElement =
-        typeElement.getInnermostComponentReferenceElement();
+
+      final PsiJavaCodeReferenceElement baseTypeElement = typeElement.getInnermostComponentReferenceElement();
       if (baseTypeElement == null) {
         return;
       }
       registerError(baseTypeElement);
     }
 
-
-    private static boolean isLessRestrictiveScope(PsiMethod method,
-                                                  PsiClass aClass) {
+    private static boolean isLessRestrictiveScope(PsiMember method, PsiClass aClass) {
       final int methodScopeOrder = getScopeOrder(method);
       final int classScopeOrder = getScopeOrder(aClass);
       final PsiClass containingClass = method.getContainingClass();
-      final int containingClassScopeOrder =
-        getScopeOrder(containingClass);
-      if (methodScopeOrder <= classScopeOrder ||
-          containingClassScopeOrder <= classScopeOrder) {
+      if (containingClass != null && containingClass.getQualifiedName() == null) {
         return false;
       }
-      final PsiMethod[] superMethods = method.findSuperMethods();
-      for (PsiMethod superMethod : superMethods) {
-        if (!isLessRestrictiveScope(superMethod, aClass)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    private static boolean fieldHasLessRestrictiveScope(PsiField field,
-                                                        PsiClass aClass) {
-      final int fieldScopeOrder = getScopeOrder(field);
-      final PsiClass containingClass = field.getContainingClass();
       final int containingClassScopeOrder = getScopeOrder(containingClass);
-      final int classScopeOrder = getScopeOrder(aClass);
-      return fieldScopeOrder > classScopeOrder &&
-             containingClassScopeOrder > classScopeOrder;
+      return methodScopeOrder > classScopeOrder && containingClassScopeOrder > classScopeOrder;
     }
 
     private static int getScopeOrder(PsiModifierListOwner element) {

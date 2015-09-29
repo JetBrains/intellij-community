@@ -48,11 +48,10 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   VirtualFile getModuleFile();
 
   /**
-   * Returns the path to the module .iml file.
-   *
-   * @return the path to the .iml file.
+   * System-independent path to the .iml file.
    */
-  @NotNull String getModuleFilePath();
+  @NotNull
+  String getModuleFilePath();
 
   /**
    * Returns the project to which this module belongs.

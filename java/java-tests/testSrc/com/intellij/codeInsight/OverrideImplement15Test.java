@@ -21,7 +21,6 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.ImplementAbstractMethodHandler;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -87,6 +86,18 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
     }
   }
 
+  public void testOverridingLibraryFunctionWithConfiguredParameterPrefix() throws Exception {
+    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
+    try {
+      codeStyleSettings.PARAMETER_NAME_PREFIX = "in";
+      CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(codeStyleSettings);
+      doTest(false);
+    }
+    finally {
+      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+    }
+  }
+
   public void testLongParameterList() {
     CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
     try {
@@ -110,7 +121,7 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
     assert psiClass != null;
 
-    final Collection<MethodSignature> signatures = OverrideImplementUtil.getMethodSignaturesToOverride(psiClass);
+    final Collection<MethodSignature> signatures = OverrideImplementExploreUtil.getMethodSignaturesToOverride(psiClass);
     final Collection<String> strings = ContainerUtil.map(signatures, FunctionUtil.string());
 
     assertTrue(strings.toString(), strings.contains("HierarchicalMethodSignatureImpl: A([PsiType:String])"));

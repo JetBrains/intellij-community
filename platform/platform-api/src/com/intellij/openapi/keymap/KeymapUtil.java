@@ -110,11 +110,22 @@ public class KeymapUtil {
    * @return string representation of passed mouse shortcut.
    */
   public static String getMouseShortcutText(int button, @JdkConstants.InputEventMask int modifiers, int clickCount) {
-    if (clickCount < 3) {
-      return KeyMapBundle.message("mouse." + (clickCount == 1? "" : "double.") + "click.shortcut.text", getModifiersText(mapNewModifiers(modifiers)), button);
+    String resource;
+    if (button == MouseShortcut.BUTTON_WHEEL_UP) {
+      resource = "mouse.wheel.rotate.up.shortcut.text";
+    }
+    else if (button == MouseShortcut.BUTTON_WHEEL_DOWN) {
+      resource = "mouse.wheel.rotate.down.shortcut.text";
+    }
+    else if (clickCount < 2) {
+      resource = "mouse.click.shortcut.text";
+    }
+    else if (clickCount < 3) {
+      resource = "mouse.double.click.shortcut.text";
     } else {
       throw new IllegalStateException("unknown clickCount: " + clickCount);
     }
+    return KeyMapBundle.message(resource, getModifiersText(mapNewModifiers(modifiers)), button);
   }
 
   @JdkConstants.InputEventMask
@@ -401,7 +412,7 @@ public class KeymapUtil {
     if (keymap == null) {
       return false;
     }
-    int button = e.getButton();
+    int button = MouseShortcut.getButton(e);
     int modifiers = e.getModifiersEx();
     if (button == MouseEvent.NOBUTTON && e.getID() == MouseEvent.MOUSE_DRAGGED) {
       // mouse drag events don't have button field set due to some reason

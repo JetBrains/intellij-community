@@ -61,7 +61,7 @@ public class GroovyPsiManager {
   private final Map<String, GrTypeDefinition> myArrayClass = new HashMap<String, GrTypeDefinition>();
 
   private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = ContainerUtil.createConcurrentWeakMap();
-  private final ConcurrentMap<PsiMember, Boolean> myCompileStatic = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<PsiMember, Boolean> myCompileStatic = ContainerUtil.createConcurrentWeakMap();
 
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("groovyPsiManager");
 

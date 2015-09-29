@@ -1,0 +1,69 @@
+<div class="section" id="the-with-statement">
+<span id="as"></span><span id="with"></span><h2>The <a class="reference internal" href="#with"><tt class="xref std std-keyword docutils literal"><span class="pre">with</span></tt></a> statement</h2>
+<p id="index-16">The <a class="reference internal" href="#with"><tt class="xref std std-keyword docutils literal"><span class="pre">with</span></tt></a> statement is used to wrap the execution of a block with
+methods defined by a context manager (see section <a class="reference internal" href="datamodel.html#context-managers"><em>With Statement Context Managers</em></a>).
+This allows common <a class="reference internal" href="#try"><tt class="xref std std-keyword docutils literal"><span class="pre">try</span></tt></a>...<a class="reference internal" href="#except"><tt class="xref std std-keyword docutils literal"><span class="pre">except</span></tt></a>...<a class="reference internal" href="#finally"><tt class="xref std std-keyword docutils literal"><span class="pre">finally</span></tt></a>
+usage patterns to be encapsulated for convenient reuse.</p>
+<pre>
+<strong id="grammar-token-with_stmt">with_stmt</strong> ::=  &quot;with&quot; with_item (&quot;,&quot; with_item)* &quot;:&quot; <a class="reference internal" href="#grammar-token-suite"><tt class="xref docutils literal"><span class="pre">suite</span></tt></a>
+<strong id="grammar-token-with_item">with_item</strong> ::=  <a class="reference internal" href="expressions.html#grammar-token-expression"><tt class="xref docutils literal"><span class="pre">expression</span></tt></a> [&quot;as&quot; <a class="reference internal" href="simple_stmts.html#grammar-token-target"><tt class="xref docutils literal"><span class="pre">target</span></tt></a>]
+</pre>
+<p>The execution of the <a class="reference internal" href="#with"><tt class="xref std std-keyword docutils literal"><span class="pre">with</span></tt></a> statement with one &#8220;item&#8221; proceeds as follows:</p>
+<ol class="arabic">
+<li><p class="first">The context expression (the expression given in the <a class="reference internal" href="#grammar-token-with_item"><tt class="xref std std-token docutils literal"><span class="pre">with_item</span></tt></a>) is
+evaluated to obtain a context manager.</p>
+</li>
+<li><p class="first">The context manager&#8217;s <a class="reference internal" href="datamodel.html#object.__exit__" title="object.__exit__"><tt class="xref py py-meth docutils literal"><span class="pre">__exit__()</span></tt></a> is loaded for later use.</p>
+</li>
+<li><p class="first">The context manager&#8217;s <a class="reference internal" href="datamodel.html#object.__enter__" title="object.__enter__"><tt class="xref py py-meth docutils literal"><span class="pre">__enter__()</span></tt></a> method is invoked.</p>
+</li>
+<li><p class="first">If a target was included in the <a class="reference internal" href="#with"><tt class="xref std std-keyword docutils literal"><span class="pre">with</span></tt></a> statement, the return value
+from <a class="reference internal" href="datamodel.html#object.__enter__" title="object.__enter__"><tt class="xref py py-meth docutils literal"><span class="pre">__enter__()</span></tt></a> is assigned to it.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The <a class="reference internal" href="#with"><tt class="xref std std-keyword docutils literal"><span class="pre">with</span></tt></a> statement guarantees that if the <a class="reference internal" href="datamodel.html#object.__enter__" title="object.__enter__"><tt class="xref py py-meth docutils literal"><span class="pre">__enter__()</span></tt></a>
+method returns without an error, then <a class="reference internal" href="datamodel.html#object.__exit__" title="object.__exit__"><tt class="xref py py-meth docutils literal"><span class="pre">__exit__()</span></tt></a> will always be
+called. Thus, if an error occurs during the assignment to the target list,
+it will be treated the same as an error occurring within the suite would
+be. See step 6 below.</p>
+</div>
+</li>
+<li><p class="first">The suite is executed.</p>
+</li>
+<li><p class="first">The context manager&#8217;s <a class="reference internal" href="datamodel.html#object.__exit__" title="object.__exit__"><tt class="xref py py-meth docutils literal"><span class="pre">__exit__()</span></tt></a> method is invoked.  If an exception
+caused the suite to be exited, its type, value, and traceback are passed as
+arguments to <a class="reference internal" href="datamodel.html#object.__exit__" title="object.__exit__"><tt class="xref py py-meth docutils literal"><span class="pre">__exit__()</span></tt></a>. Otherwise, three <a class="reference internal" href="../library/constants.html#None" title="None"><tt class="xref py py-const docutils literal"><span class="pre">None</span></tt></a> arguments are
+supplied.</p>
+<p>If the suite was exited due to an exception, and the return value from the
+<a class="reference internal" href="datamodel.html#object.__exit__" title="object.__exit__"><tt class="xref py py-meth docutils literal"><span class="pre">__exit__()</span></tt></a> method was false, the exception is reraised.  If the return
+value was true, the exception is suppressed, and execution continues with the
+statement following the <a class="reference internal" href="#with"><tt class="xref std std-keyword docutils literal"><span class="pre">with</span></tt></a> statement.</p>
+<p>If the suite was exited for any reason other than an exception, the return
+value from <a class="reference internal" href="datamodel.html#object.__exit__" title="object.__exit__"><tt class="xref py py-meth docutils literal"><span class="pre">__exit__()</span></tt></a> is ignored, and execution proceeds at the normal
+location for the kind of exit that was taken.</p>
+</li>
+</ol>
+<p>With more than one item, the context managers are processed as if multiple
+<a class="reference internal" href="#with"><tt class="xref std std-keyword docutils literal"><span class="pre">with</span></tt></a> statements were nested:</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="k">with</span> <span class="n">A</span><span class="p">()</span> <span class="k">as</span> <span class="n">a</span><span class="p">,</span> <span class="n">B</span><span class="p">()</span> <span class="k">as</span> <span class="n">b</span><span class="p">:</span>
+    <span class="n">suite</span>
+</pre></div>
+</div>
+<p>is equivalent to</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="k">with</span> <span class="n">A</span><span class="p">()</span> <span class="k">as</span> <span class="n">a</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">B</span><span class="p">()</span> <span class="k">as</span> <span class="n">b</span><span class="p">:</span>
+        <span class="n">suite</span>
+</pre></div>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 3.1: </span>Support for multiple context expressions.</p>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><span class="target" id="index-17"></span><a class="pep reference external" href="http://www.python.org/dev/peps/pep-0343"><strong>PEP 0343</strong></a> - The &#8220;with&#8221; statement</dt>
+<dd>The specification, background, and examples for the Python <a class="reference internal" href="#with"><tt class="xref std std-keyword docutils literal"><span class="pre">with</span></tt></a>
+statement.</dd>
+</dl>
+</div>
+</div>

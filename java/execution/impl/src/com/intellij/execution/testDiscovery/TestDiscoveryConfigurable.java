@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testDiscovery;
 
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.ClassBrowser;
@@ -51,7 +52,7 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
   private final ConfigurationModuleSelector myModuleSelector;
   // Fields
   private JPanel myWholePanel = new JPanel(new BorderLayout());
-  private LabeledComponent<JComboBox> myModule = new LabeledComponent<JComboBox>();
+  private LabeledComponent<ModulesComboBox> myModule = new LabeledComponent<ModulesComboBox>();
   private CommonJavaParametersPanel myCommonJavaParameters = new CommonJavaParametersPanel();
   private AlternativeJREPanel myAlternativeJREPanel = new AlternativeJREPanel();
   private LabeledComponent<EditorTextFieldWithBrowseButton> myClass = new LabeledComponent<EditorTextFieldWithBrowseButton>();
@@ -65,7 +66,7 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
   public TestDiscoveryConfigurable(final Project project) {
     myModule.setText("Use classpath of");
     myModule.setLabelLocation(BorderLayout.WEST);
-    myModule.setComponent(new JComboBox());
+    myModule.setComponent(new ModulesComboBox());
     myModuleSelector = new ConfigurationModuleSelector(project, getModulesComponent());
     myCommonJavaParameters.setModuleContext(myModuleSelector.getModule());
     myCommonJavaParameters.setHasModuleMacro();
@@ -225,7 +226,7 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
     updateComponents();
   }
 
-  public JComboBox getModulesComponent() {
+  public ModulesComboBox getModulesComponent() {
     return myModule.getComponent();
   }
 

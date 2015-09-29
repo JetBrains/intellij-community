@@ -72,11 +72,11 @@ class DocumentationBuilderKit {
   }
 
   static <T> Iterable<T> interleave(Iterable<T> source, T filler) {
-    List<T> ret = new LinkedList<T>();
-    boolean is_next = false;
+    final List<T> ret = new LinkedList<T>();
+    boolean isNext = false;
     for (T what : source) {
-      if (is_next) ret.add(filler);
-      else is_next = true;
+      if (isNext) ret.add(filler);
+      else isNext = true;
       ret.add(what);
     }
     return ret;
@@ -97,7 +97,7 @@ class DocumentationBuilderKit {
   }
 
   static class LinkWrapper implements FP.Lambda1<Iterable<String>, Iterable<String>> {
-    private String myLink;
+    private final String myLink;
 
     LinkWrapper(String link) {
       myLink = link;

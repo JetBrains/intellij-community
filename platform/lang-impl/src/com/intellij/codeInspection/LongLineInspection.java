@@ -17,12 +17,15 @@ package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.ide.DataManager;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.HyperlinkLabel;
@@ -77,8 +80,11 @@ public class LongLineInspection extends LocalInspectionTool {
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final Project project = manager.getProject();
     final int codeStyleRightMargin = CodeStyleSettingsManager.getSettings(project).getRightMargin(file.getLanguage());
-    final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-    final Document document = psiDocumentManager.getDocument(file);
+    final VirtualFile vFile = file.getVirtualFile();
+    if (vFile instanceof VirtualFileWindow) {
+      return null;
+    }
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile);
     if (document == null) {
       return null;
     }

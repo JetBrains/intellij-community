@@ -16,6 +16,10 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -32,16 +36,27 @@ class SequentialCleanupTask implements SequentialTask {
   private static final Logger LOG = Logger.getInstance(SequentialCleanupTask.class);
 
   private final Project myProject;
-  private final LinkedHashMap<PsiFile, List<HighlightInfo>> myResults;
-  private Iterator<PsiFile> myFileIterator;
+  private final List<Pair<PsiFile, HighlightInfo>> myResults = new ArrayList<Pair<PsiFile, HighlightInfo>>();
   private final SequentialModalProgressTask myProgressTask;
   private int myCount = 0;
   
   public SequentialCleanupTask(Project project, LinkedHashMap<PsiFile, List<HighlightInfo>> results, SequentialModalProgressTask task) {
     myProject = project;
-    myResults = results;
+    for (Map.Entry<PsiFile, List<HighlightInfo>> entry : results.entrySet()) {
+      PsiFile file = entry.getKey();
+      List<HighlightInfo> infos = entry.getValue();
+      // sort from bottom to top
+      Collections.sort(infos, new Comparator<HighlightInfo>() {
+        @Override
+        public int compare(HighlightInfo info1, HighlightInfo info2) {
+          return info2.getStartOffset() - info1.getStartOffset();
+        }
+      });
+      for (HighlightInfo info : infos) {
+        myResults.add(Pair.create(file, info));
+      }
+    }
     myProgressTask = task;
-    myFileIterator = myResults.keySet().iterator();
   }
 
   @Override
@@ -49,42 +64,35 @@ class SequentialCleanupTask implements SequentialTask {
 
   @Override
   public boolean isDone() {
-    return myFileIterator == null || !myFileIterator.hasNext();
+    return myCount > myResults.size() - 1;
   }
 
   @Override
   public boolean iteration() {
+    final Pair<PsiFile, HighlightInfo> pair = myResults.get(myCount++);
     final ProgressIndicator indicator = myProgressTask.getIndicator();
     if (indicator != null) {
-      indicator.setFraction((double) myCount++/myResults.size());
+      indicator.setFraction((double) myCount/myResults.size());
+      indicator.setText("Processing " + pair.first.getName());
     }
-    final PsiFile file = myFileIterator.next();
-    final List<HighlightInfo> infos = myResults.get(file);
-    // sort from bottom to top
-    Collections.sort(infos, new Comparator<HighlightInfo>() {
-      @Override
-      public int compare(HighlightInfo info1, HighlightInfo info2) {
-        return info2.getStartOffset() - info1.getStartOffset();
+    for (final Pair<HighlightInfo.IntentionActionDescriptor, TextRange> actionRange : pair.second.quickFixActionRanges) {
+      final AccessToken token = WriteAction.start();
+      try {
+        actionRange.getFirst().getAction().invoke(myProject, null, pair.first);
       }
-    });
-    for (HighlightInfo info : infos) {
-      for (final Pair<HighlightInfo.IntentionActionDescriptor, TextRange> actionRange : info.quickFixActionRanges) {
-        try {
-          actionRange.getFirst().getAction().invoke(myProject, null, file);
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      finally {
+        token.finish();
       }
     }
     return true;
   }
 
   @Override
-  public void stop() {
-    myFileIterator = null;
-  }
+  public void stop() {}
 }

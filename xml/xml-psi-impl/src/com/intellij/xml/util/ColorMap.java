@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,6 +208,7 @@ public class ColorMap {
                                                      "  \t  \tpowderblue \t#b0e0e6 \t176,224,230\n" +
                                                      "  \t  \tpurple \t#800080 \t128,0,128\n" +
                                                      "  \t  \tred \t#ff0000 \t255,0,0\n" +
+                                                     "  \t  \trebeccapurple \t#663399 \t102,51,153\n" +
                                                      "  \t  \trosybrown \t#bc8f8f \t188,143,143\n" +
                                                      "  \t  \troyalblue \t#4169e1 \t65,105,225\n" +
                                                      "  \t  \tsaddlebrown \t#8b4513 \t139,69,19\n" +
@@ -244,7 +245,7 @@ public class ColorMap {
 
     while (tokenizer.hasMoreTokens()) {
       String name = tokenizer.nextToken();
-      ourSystemColors.add(name.toLowerCase());
+      ourSystemColors.add(name.toLowerCase(Locale.US));
       tokenizer.nextToken();
     }
 
@@ -307,7 +308,7 @@ public class ColorMap {
     if (StringUtil.isEmptyOrSpaces(text)) {
       return null;
     }
-    String hexValue = text.charAt(0) == '#' ? text : getHexCodeForColorName(text.toLowerCase());
+    String hexValue = text.charAt(0) == '#' ? text : getHexCodeForColorName(text.toLowerCase(Locale.US));
     if (hexValue != null) {
       return ColorUtil.fromHex(hexValue, null);
     }

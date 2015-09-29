@@ -30,7 +30,6 @@ import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Iterator;
 import java.util.List;
 
 public class CompoundNodeRenderer extends NodeRendererImpl{
@@ -97,11 +96,10 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    final List children = element.getChildren(NodeRendererSettings.RENDERER_TAG);
+    List<Element> children = element.getChildren(NodeRendererSettings.RENDERER_TAG);
     if (children != null) {
-      for (Iterator it = children.iterator(); it.hasNext();) {
-        final Element elem = (Element)it.next();
-        final String role = elem.getAttributeValue("role");
+      for (Element elem : children) {
+        String role = elem.getAttributeValue("role");
         if (role == null) {
           continue;
         }

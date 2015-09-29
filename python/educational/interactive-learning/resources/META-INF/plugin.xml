@@ -7,6 +7,7 @@
   <description><![CDATA[
       Educational plugin core for students. 
       ]]></description>
+  <vendor>JetBrains</vendor>
 
   <change-notes><![CDATA[
 
@@ -33,6 +34,10 @@
   </extensionPoints>
 
   <actions>
+    <action id="Edu.NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" text="New Scratch File...">
+      <add-to-group group-id="FileOpenGroup" relative-to-action="OpenFile" anchor="before"/>
+    </action>
+
     <action id="CheckAction" class="com.jetbrains.edu.learning.actions.StudyCheckAction"  text="Check Task"
             description="Check current task">
     </action>
@@ -57,17 +62,16 @@
             description="Show hint for answer placeholder"/>
     <action id="StudyRunAction" class="com.jetbrains.edu.learning.actions.StudyRunAction" text="Run File With Tests"
             description="Run your code with tests"/>
-    <action id="StudyShowAnswersAction" class="com.jetbrains.edu.learning.actions.StudyShowAnswersAction"
+    <action id="StudyShowAnswersAction" class="com.jetbrains.edu.learning.actions.StudyFillPlaceholdersAction"
             text="Fill Answer Placeholders">
       <add-to-group group-id="HelpMenu" anchor="first"/>
     </action>
-    <action overrides="true"  id="RenameElement" class="com.jetbrains.edu.learning.actions.StudyRenameTaskFileAction"
-      text="Rename..."
-    />
 
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
+                      serviceImplementation="com.jetbrains.edu.learning.StudyDocumentationManager" overrides="true"/>
     <postStartupActivity implementation="com.jetbrains.edu.learning.stepic.StudyCoursesUpdater"/>
 
     <applicationConfigurable groupId="tools" instance="com.jetbrains.edu.learning.stepic.StudyConfigurable"
@@ -86,6 +90,8 @@
     <highlightErrorFilter implementation="com.jetbrains.edu.learning.editor.StudyHighlightErrorFilter"/>
     <projectService serviceInterface="com.jetbrains.edu.learning.StudyTaskManager"
                     serviceImplementation="com.jetbrains.edu.learning.StudyTaskManager"/>
-     <extendWordSelectionHandler implementation="com.jetbrains.edu.learning.StudyAnswerPlaceholderExtendWordHandler"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.edu.learning.StudyAnswerPlaceholderExtendWordHandler"/>
+    <renameHandler implementation="com.jetbrains.edu.learning.StudyRenameHandler"/>
+    <refactoring.moveHandler implementation="com.jetbrains.edu.learning.StudyMoveDelegate" order="first"/>
   </extensions>
 </idea-plugin>

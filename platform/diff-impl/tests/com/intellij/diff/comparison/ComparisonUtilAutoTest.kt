@@ -15,35 +15,20 @@
  */
 package com.intellij.diff.comparison
 
+import com.intellij.diff.DiffTestCase
+import com.intellij.diff.assertEquals
+import com.intellij.diff.assertFalse
+import com.intellij.diff.assertTrue
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.util.Couple
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.containers.HashMap
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
-public class ComparisonUtilAutoTest : AutoTestCase() {
-  private var oldRegistryValue: Boolean = false
-
-  override fun setUp() {
-    super.setUp()
-    oldRegistryValue = REGISTRY.asBoolean()
-    REGISTRY.setValue(true)
-  }
-
-  override fun tearDown() {
-    REGISTRY.setValue(oldRegistryValue)
-    super.tearDown()
-  }
-
+public class ComparisonUtilAutoTest : DiffTestCase() {
   public fun testChar() {
     doTestChar(System.currentTimeMillis(), 30, 30)
   }
@@ -72,7 +57,7 @@ public class ComparisonUtilAutoTest : AutoTestCase() {
       val sequence2 = text2.getCharsSequence()
 
       val fragments = MANAGER.compareLinesInner(sequence1, sequence2, policy, INDICATOR)
-      debugData.set(fragments)
+      debugData.put("Fragments", fragments)
 
       checkResultLine(text1, text2, fragments, policy, true)
     }
@@ -86,10 +71,10 @@ public class ComparisonUtilAutoTest : AutoTestCase() {
       val sequence2 = text2.getCharsSequence()
 
       val fragments = MANAGER.compareLinesInner(sequence1, sequence2, policy, INDICATOR)
-      debugData.set(fragments)
+      debugData.put("Fragments", fragments)
 
       val squashedFragments = MANAGER.squash(fragments)
-      debugData.set(listOf(fragments, squashedFragments))
+      debugData.put("Squashed Fragments", squashedFragments)
 
       checkResultLine(text1, text2, squashedFragments, policy, false)
     }
@@ -103,10 +88,10 @@ public class ComparisonUtilAutoTest : AutoTestCase() {
       val sequence2 = text2.getCharsSequence()
 
       val fragments = MANAGER.compareLinesInner(sequence1, sequence2, policy, INDICATOR)
-      debugData.set(fragments)
+      debugData.put("Fragments", fragments)
 
       val processed = MANAGER.processBlocks(fragments, sequence1, sequence2, policy, true, true)
-      debugData.set(listOf(fragments, processed))
+      debugData.put("Processed Fragments", processed)
 
       checkResultLine(text1, text2, processed, policy, false)
     }
@@ -120,7 +105,7 @@ public class ComparisonUtilAutoTest : AutoTestCase() {
       val sequence2 = text2.getCharsSequence()
 
       val fragments = MANAGER.compareChars(sequence1, sequence2, policy, INDICATOR)
-      debugData.set(fragments)
+      debugData.put("Fragments", fragments)
 
       checkResultChar(sequence1, sequence2, fragments, policy)
     }
@@ -134,52 +119,28 @@ public class ComparisonUtilAutoTest : AutoTestCase() {
       val sequence2 = text2.getCharsSequence()
 
       val fragments = MANAGER.compareWords(sequence1, sequence2, policy, INDICATOR)
-      debugData.set(fragments)
+      debugData.put("Fragments", fragments)
 
       checkResultWord(sequence1, sequence2, fragments, policy)
     }
   }
 
   private fun doTest(seed: Long, runs: Int, maxLength: Int, policies: List<ComparisonPolicy>,
-                     test: (Document, Document, ComparisonPolicy, Ref<Any>) -> Unit) {
-    RNG.setSeed(seed)
+                     test: (Document, Document, ComparisonPolicy, DiffTestCase.DebugData) -> Unit) {
+    doAutoTest(seed, runs) { debugData ->
+      debugData.put("MaxLength", maxLength)
 
-    var policy: ComparisonPolicy? = null
-    var lastSeed: Long = -1;
-    val debugData = Ref<Any>()
+      val text1 = DocumentImpl(generateText(maxLength))
+      val text2 = DocumentImpl(generateText(maxLength))
 
-    for (i in 1..runs) {
-      if (i % 1000 == 0) println(i)
-      var text1: Document? = null
-      var text2: Document? = null
-      try {
-        lastSeed = getCurrentSeed()
+      debugData.put("Text1", textToReadableFormat(text1.getCharsSequence()))
+      debugData.put("Text2", textToReadableFormat(text2.getCharsSequence()))
 
-        text1 = generateText(maxLength)
-        text2 = generateText(maxLength)
-
-        for (comparisonPolicy in policies) {
-          policy = comparisonPolicy
-          test(text1, text2, comparisonPolicy, debugData)
-        }
-      }
-      catch (e: Throwable) {
-        println("Seed: " + seed)
-        println("Runs: " + runs)
-        println("MaxLength: " + maxLength)
-        println("Policy: " + policy!!)
-        println("I: " + i)
-        println("Current seed: " + lastSeed)
-        println("Text1: " + textToReadableFormat(text1?.getCharsSequence()))
-        println("Text2: " + textToReadableFormat(text2?.getCharsSequence()))
-        println("Debug Data: " + debugData.get())
-        throw e
+      for (comparisonPolicy in policies) {
+        debugData.put("Policy", comparisonPolicy)
+        test(text1, text2, comparisonPolicy, debugData)
       }
     }
-  }
-
-  private fun generateText(maxLength: Int): Document {
-    return DocumentImpl(generateText(maxLength, CHAR_COUNT, CHAR_TABLE))
   }
 
   private fun checkResultLine(text1: Document, text2: Document, fragments: List<LineFragment>, policy: ComparisonPolicy, allowNonSquashed: Boolean) {
@@ -190,7 +151,7 @@ public class ComparisonUtilAutoTest : AutoTestCase() {
         val sequence1 = text1.subsequence(fragment.getStartOffset1(), fragment.getEndOffset1())
         val sequence2 = text2.subsequence(fragment.getStartOffset2(), fragment.getEndOffset2())
 
-        checkResultWord(sequence1, sequence2, fragment.getInnerFragments(), policy)
+        checkResultWord(sequence1, sequence2, fragment.getInnerFragments()!!, policy)
       }
     }
 
@@ -356,23 +317,5 @@ public class ComparisonUtilAutoTest : AutoTestCase() {
 
   private fun Document.subsequence(start: Int, end: Int): CharSequence {
     return this.getCharsSequence().subSequence(start, end)
-  }
-
-  private fun getLineCount(document: Document): Int {
-    return Math.max(1, document.getLineCount())
-  }
-
-  companion object {
-    private val REGISTRY = Registry.get("diff.verify.iterable");
-
-    private val INDICATOR = DumbProgressIndicator.INSTANCE
-    private val MANAGER = ComparisonManagerImpl()
-
-    private val CHAR_COUNT = 12
-    private val CHAR_TABLE: Map<Int, Char> = {
-      val map = HashMap<Int, Char>()
-      listOf('\n', '\n', '\t', ' ', ' ', '.', '<', '!').forEachIndexed { i, c -> map.put(i, c) }
-      map
-    }()
   }
 }

@@ -16,23 +16,20 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -41,7 +38,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -138,46 +134,6 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     myOrigCreationStamp = myOrigDocument.getModificationStamp(); // store creation stamp for UNDO tracking
     myOrigDocument.addDocumentListener(this, this);
     myNewDocument.addDocumentListener(this, this);
-    EditorFactory editorFactory = ObjectUtils.assertNotNull(EditorFactory.getInstance());
-    // not FileEditorManager listener because of RegExp checker and alike
-    editorFactory.addEditorFactoryListener(new EditorFactoryAdapter() {
-
-      int myEditorCount;
-
-      @Override
-      public void editorCreated(@NotNull EditorFactoryEvent event) {
-        if (event.getEditor().getDocument() != myNewDocument) return;
-        myEditorCount ++;
-        final EditorActionHandler editorEscape = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ESCAPE);
-        if (!myAction.isShowInBalloon()) {
-          new AnAction() {
-            @Override
-            public void update(AnActionEvent e) {
-              Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-              e.getPresentation().setEnabled(
-                editor != null && LookupManager.getActiveLookup(editor) == null &&
-                TemplateManager.getInstance(myProject).getActiveTemplate(editor) == null &&
-                (editorEscape == null || !editorEscape.isEnabled(editor, e.getDataContext())));
-            }
-
-            @Override
-            public void actionPerformed(AnActionEvent e) {
-              closeEditor();
-            }
-          }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, event.getEditor().getContentComponent());
-        }
-      }
-
-      @Override
-      public void editorReleased(@NotNull EditorFactoryEvent event) {
-        if (event.getEditor().getDocument() != myNewDocument) return;
-        if (-- myEditorCount > 0) return;
-
-        if (Boolean.TRUE.equals(myNewVirtualFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) return;
-
-        Disposer.dispose(QuickEditHandler.this);
-      }
-    }, this);
 
     if ("JAVA".equals(firstShred.getHost().getLanguage().getID())) {
       PsiLanguageInjectionHost.Shred lastShred = ContainerUtil.getLastItem(shreds);

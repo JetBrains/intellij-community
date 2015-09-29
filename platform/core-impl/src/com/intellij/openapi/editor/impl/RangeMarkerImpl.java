@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.Processor;
@@ -192,12 +193,26 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     final int newLength = e.getNewLength();
 
     // changes after the end.
-    if (intervalEnd < offset || !isGreedyToRight && intervalEnd == offset) {
+    if (intervalEnd < offset) {
+      return new ProperTextRange(intervalStart, intervalEnd);
+    }
+    if (!isGreedyToRight && intervalEnd == offset) {
+      // handle replaceString that was minimized and resulted in insertString at the range end
+      if (e instanceof DocumentEventImpl && oldLength == 0 && ((DocumentEventImpl)e).getInitialStartOffset() < offset) {
+        return new ProperTextRange(intervalStart, intervalEnd + newLength);
+      }
       return new ProperTextRange(intervalStart, intervalEnd);
     }
 
     // changes before start
-    if (intervalStart > offset + oldLength || !isGreedyToLeft && intervalStart == offset + oldLength) {
+    if (intervalStart > offset + oldLength) {
+      return new ProperTextRange(intervalStart + newLength - oldLength, intervalEnd + newLength - oldLength);
+    }
+    if (!isGreedyToLeft && intervalStart == offset + oldLength) {
+      // handle replaceString that was minimized and resulted in insertString at the range start
+      if (e instanceof DocumentEventImpl && oldLength == 0 && ((DocumentEventImpl)e).getInitialStartOffset() + ((DocumentEventImpl)e).getInitialOldLength() > offset) {
+        return new ProperTextRange(intervalStart - oldLength, intervalEnd + newLength - oldLength);
+      }
       return new ProperTextRange(intervalStart + newLength - oldLength, intervalEnd + newLength - oldLength);
     }
 

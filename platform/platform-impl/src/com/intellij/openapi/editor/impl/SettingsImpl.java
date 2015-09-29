@@ -359,8 +359,8 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Nullable
-  private PsiFile getPsiFile(@NotNull Project project) {
-    if (myEditor != null) {
+  private PsiFile getPsiFile(@Nullable Project project) {
+    if (project != null && myEditor != null) {
       return PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
     }
     return null;

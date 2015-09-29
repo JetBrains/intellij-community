@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.process.ColoredProcessHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -118,7 +119,6 @@ public class ProcessRunner {
   /**
    * Creates process builder and setups it's commandLine, working directory, environment variables
    *
-   * @param additionalLoadPath Additional load path
    * @param workingDir         Process working dir
    * @param executablePath     Path to executable file
    * @param arguments          Process commandLine  @return process builder
@@ -136,20 +136,12 @@ public class ProcessRunner {
       cmdLine.setWorkDirectory(toSystemDependentName(workingDir));
     }
 
-    List<String> fixedArguments = new ArrayList<String>();
-    Collections.addAll(fixedArguments, arguments);
-    cmdLine.addParameters(fixedArguments);
+    cmdLine.addParameters(arguments);
 
-    cmdLine.setPassParentEnvironment(passParentEnv);
-
-    //Setting cmdLine params
-    Map<String, String> env = cmdLine.getEnvironment();
-    //User's custom env variables
-    if (userDefinedEnv != null) {
-      env.putAll(userDefinedEnv);
-    }
+    cmdLine.withParentEnvironmentType(passParentEnv ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
+    cmdLine.withEnvironment(userDefinedEnv);
     //Inline parent env variables occurrences
-    EnvironmentUtil.inlineParentOccurrences(env);
+    EnvironmentUtil.inlineParentOccurrences(cmdLine.getEnvironment());
 
     return cmdLine;
   }

@@ -30,8 +30,6 @@ public interface StateStorage {
   @Nullable
   <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto, boolean reload);
 
-  <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass);
-
   boolean hasState(@NotNull String componentName, boolean reloadData);
 
   @Nullable
@@ -43,7 +41,7 @@ public interface StateStorage {
   void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames);
 
   interface ExternalizationSession {
-    void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state);
+    void setState(@Nullable Object component, @NotNull String componentName, @NotNull Object state);
 
     /**
      * return null if nothing to save

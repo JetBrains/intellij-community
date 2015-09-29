@@ -133,23 +133,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
           setFlag(true, USED_FOR_WRITING_MASK);
         }
       }
-      PsiType psiType = psiField.getType();
-      RefClass ownerClass = refUtil.getOwnerClass(getRefManager(), psiField);
-
-      if (ownerClass != null) {
-        psiType = psiType.getDeepComponentType();
-        if (psiType instanceof PsiClassType) {
-          PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
-          if (psiClass != null && getRefManager().belongsToScope(psiClass)) {
-              RefClassImpl refClass = (RefClassImpl)getRefManager().getReference(psiClass);
-            if (refClass != null) {
-              refClass.addTypeReference(ownerClass);
-              refClass.addClassExporter(this);
-            }
-          }
-        }
-
-      }
+      refUtil.addTypeReference(psiField, psiField.getType(), getRefManager(), this);
       getRefManager().fireBuildReferences(this);
     }
   }

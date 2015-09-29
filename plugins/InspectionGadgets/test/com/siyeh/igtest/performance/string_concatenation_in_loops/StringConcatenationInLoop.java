@@ -11,16 +11,16 @@ public class StringConcatenationInLoop
         String foo = "";
         for(int i = 0; i < 5; i++)
         {
-            (foo) = ((foo) + ("  ") + (i));
-            foo += foo + "  " + i;
-            baz( foo + "  " + i);
+            (foo) = ((foo) <warning descr="String concatenation '+' in loop">+</warning> ("  ") + (i));
+            foo <warning descr="String concatenation '+=' in loop">+=</warning> foo <warning descr="String concatenation '+' in loop">+</warning> "  " + i;
+            baz( foo <warning descr="String concatenation '+' in loop">+</warning> "  " + i);
             if(bar())
             {
                 return baz(("foo" + "bar"));
             }
             if(bar())
             {
-                throw new OutOfMemoryError("foo" + i);
+                throw new Error("foo" + i);
             }
         }
         System.out.println(foo);
@@ -42,8 +42,8 @@ public class StringConcatenationInLoop
         String s = "asdf";
         final int len =  array.length;
         for (int k = 0; k < len; k++) {
-            array[k] += "b";
-            s += k;
+            array[k] <warning descr="String concatenation '+=' in loop">+=</warning> "b";
+            s <warning descr="String concatenation '+=' in loop">+=</warning> k;
         }
     }
 

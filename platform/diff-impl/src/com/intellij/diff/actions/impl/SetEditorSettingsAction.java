@@ -22,9 +22,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
@@ -143,7 +147,11 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    return myActions;
+    List<AnAction> result = new ArrayList<AnAction>();
+    ContainerUtil.addAll(result, myActions);
+    result.add(Separator.getInstance());
+    result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP));
+    return ContainerUtil.toArray(result, new AnAction[result.size()]);
   }
 
   private abstract class EditorSettingToggleAction extends ToggleAction implements DumbAware {

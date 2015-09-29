@@ -353,6 +353,10 @@ public class CreateTestDialog extends DialogWrapper {
       model.addElement(descriptor);
       if (hasTestRoots && descriptor.isLibraryAttached(myTargetModule)) {
         attachedLibraries.add(descriptor);
+
+        if (defaultLibrary == null) {
+          defaultDescriptor = descriptor;
+        }
       }
 
       if (Comparing.equal(defaultLibrary, descriptor.getName())) {

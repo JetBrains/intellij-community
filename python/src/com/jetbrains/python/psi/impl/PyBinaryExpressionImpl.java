@@ -24,15 +24,14 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.PyBinaryExpression;
-import com.jetbrains.python.psi.PyElementType;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
 
 /**
  * @author yole
@@ -135,11 +134,38 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       }
       return PyUnionType.union(leftType, rightType);
     }
-    final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCall(this, context);
-    if (results != null) {
-      final PyType type = results.getCallable().getCallType(context, this);
-      if (!PyTypeChecker.isUnknown(type) && !(type instanceof PyNoneType)) {
-        return type;
+    final List<PyTypeChecker.AnalyzeCallResults> results = PyTypeChecker.analyzeCallSite(this, context);
+    if (!results.isEmpty()) {
+      final List<PyType> types = new ArrayList<PyType>();
+      final List<PyType> matchedTypes = new ArrayList<PyType>();
+      for (PyTypeChecker.AnalyzeCallResults result : results) {
+        boolean matched = true;
+        for (Map.Entry<PyExpression, PyNamedParameter> entry : result.getArguments().entrySet()) {
+          final PyExpression argument = entry.getKey();
+          final PyNamedParameter parameter = entry.getValue();
+          if (parameter.isPositionalContainer() || parameter.isKeywordContainer()) {
+            continue;
+          }
+          final Map<PyGenericType, PyType> substitutions = new HashMap<PyGenericType, PyType>();
+          final PyType parameterType = context.getType(parameter);
+          final PyType argumentType = context.getType(argument);
+          if (!PyTypeChecker.match(parameterType, argumentType, context, substitutions)) {
+            matched = false;
+          }
+        }
+        final PyType type = result.getCallable().getCallType(context, this);
+        if (!PyTypeChecker.isUnknown(type) && !(type instanceof PyNoneType)) {
+          types.add(type);
+          if (matched) {
+            matchedTypes.add(type);
+          }
+        }
+      }
+      if (!matchedTypes.isEmpty()) {
+        return PyUnionType.union(matchedTypes);
+      }
+      if (!types.isEmpty()) {
+        return PyUnionType.union(types);
       }
     }
     if (PyNames.COMPARISON_OPERATORS.contains(getReferencedName())) {

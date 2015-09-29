@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,12 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.util.Consumer;
 
 /**
+ * TODO: To be removed in IDEA 16.
  * @author irengrig
  *         Date: 12/15/10
  *         Time: 5:42 PM
  */
+@Deprecated
 public interface VcsEventsListenerManager {
   void removeCheckin(final Object key);
   void removeUpdate(final Object key);

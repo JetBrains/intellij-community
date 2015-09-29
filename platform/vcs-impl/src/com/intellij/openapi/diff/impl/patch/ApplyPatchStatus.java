@@ -23,11 +23,12 @@
 package com.intellij.openapi.diff.impl.patch;
 
 public enum ApplyPatchStatus {
-  SUCCESS, PARTIAL, ALREADY_APPLIED, FAILURE;
+  SUCCESS, PARTIAL, ALREADY_APPLIED, FAILURE, ABORT;
 
   public static ApplyPatchStatus and(ApplyPatchStatus lhs, ApplyPatchStatus rhs) {
     if (lhs == null) return rhs;
     if (rhs == null) return lhs;
+    if (lhs == ABORT || rhs == ABORT) return ABORT;
     if (lhs == FAILURE || rhs == FAILURE) return FAILURE;
     if (lhs == SUCCESS && rhs == SUCCESS) return SUCCESS;
     if (lhs == ALREADY_APPLIED && rhs == ALREADY_APPLIED) return ALREADY_APPLIED;

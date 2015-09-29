@@ -522,6 +522,7 @@ public class ManagePackagesDialog extends DialogWrapper {
 
           @Override
           public void consume(Exception exception) {
+            myDescriptionTextArea.setText("No information available");
             LOG.info("Error retrieving package details", exception);
           }
         });

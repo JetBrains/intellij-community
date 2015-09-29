@@ -151,6 +151,7 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
                                   String libName,
                                   String url,
                                   String srcUrl,
+                                  String nativeRoot, 
                                   ExpandMacroToPathMap macroMap) {
     final JpsLibrary jpsLibrary = rootModel.addModuleLibrary(libName, JpsJavaLibraryType.INSTANCE);
     final JpsDependenciesList dependenciesList = rootModel.getDependenciesList();

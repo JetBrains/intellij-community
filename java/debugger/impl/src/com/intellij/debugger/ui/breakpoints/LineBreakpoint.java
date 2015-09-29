@@ -203,8 +203,9 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     Method method = loc.method();
     // Some frameworks may create synthetic methods with lines mapped to user code, see IDEA-143852
     // if (DebuggerUtils.isSynthetic(method)) { return false; }
-    boolean res = !(method.isConstructor() && loc.codeIndex() == 0 && isAnonymousClass(classType));
-    if (!res) return false;
+    if (isAnonymousClass(classType)) {
+      if ((method.isConstructor() && loc.codeIndex() == 0) || method.isBridge()) return false;
+    }
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {

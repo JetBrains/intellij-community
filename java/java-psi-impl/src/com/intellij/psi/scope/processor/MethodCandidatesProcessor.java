@@ -58,7 +58,10 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     if (isAccepted(method) && !(isInterfaceStaticMethodAccessibleThroughInheritance(method) && ImportsUtil.hasStaticImportOn(myPlace, method, true))) {
       if (!staticProblem && myAccessClass != null && method.hasModifierProperty(PsiModifier.STATIC)) {
         final PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null && containingClass.isInterface() && !containingClass.equals(myAccessClass)) {
+        if (containingClass != null && 
+            containingClass.isInterface() &&
+            !(myAccessClass instanceof PsiTypeParameter) &&
+            !containingClass.equals(myAccessClass)) {
           staticProblem = true;
         }
       }

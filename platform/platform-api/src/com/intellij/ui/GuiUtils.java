@@ -15,8 +15,8 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -366,25 +366,8 @@ public class GuiUtils {
     return s;
   }
 
-  public static void invokeAndWait(@NotNull Runnable runnable) throws InvocationTargetException, InterruptedException {
-    Application application = ApplicationManager.getApplication();
-    assert !application.isDispatchThread() : "Must not be invoked from AWT dispatch thread";
-    if (application.isReadAccessAllowed()) {
-      // make ApplicationImpl catch deadlock situation with readLock held
-      application.invokeAndWait(runnable, application.getDefaultModalityState());
-      return;
-    }
-    SwingUtilities.invokeAndWait(runnable);
-  }
-
   public static void runOrInvokeAndWait(@NotNull Runnable runnable) throws InvocationTargetException, InterruptedException {
-    Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      invokeAndWait(runnable);
-    }
+    ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
   }
 
   public static JTextField createUndoableTextField() {

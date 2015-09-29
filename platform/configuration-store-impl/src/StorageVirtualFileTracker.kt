@@ -1,8 +1,8 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.StateStorageManager
-import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class StorageVirtualFileTracker(private val messageBus: MessageBus) {
   private val filePathToStorage: ConcurrentMap<String, TrackedStorage> = ContainerUtil.newConcurrentMap()
-  private volatile var hasDirectoryBasedStorages = false
+  private @Volatile var hasDirectoryBasedStorages = false
 
   private val vfsListenerAdded = AtomicBoolean()
 
@@ -55,28 +55,28 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
         eventLoop@
         for (event in events) {
           var storage: StateStorage?
-          if (event is VFilePropertyChangeEvent && VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
-            val oldPath = event.getOldPath()
+          if (event is VFilePropertyChangeEvent && VirtualFile.PROP_NAME.equals(event.propertyName)) {
+            val oldPath = event.oldPath
             storage = filePathToStorage.remove(oldPath)
             if (storage != null) {
-              filePathToStorage.put(event.getPath(), storage)
+              filePathToStorage.put(event.path, storage)
               if (storage is FileBasedStorage) {
-                storage.setFile(null, File(event.getPath()))
+                storage.setFile(null, File(event.path))
               }
               // we don't support DirectoryBasedStorage renaming
 
               // StoragePathMacros.MODULE_FILE -> old path, we must update value
-              storage.storageManager.pathRenamed(oldPath, event.getPath(), event)
+              storage.storageManager.pathRenamed(oldPath, event.path, event)
             }
           }
           else {
-            val path = event.getPath()
+            val path = event.path
             storage = filePathToStorage.get(path)
             // we don't care about parent directory create (because it doesn't affect anything) and move (because it is not supported case),
             // but we should detect deletion - but again, it is not supported case. So, we don't check if some of registered storages located inside changed directory.
 
             // but if we have DirectoryBasedStorage, we check - if file located inside it
-            if (storage == null && hasDirectoryBasedStorages && StringUtilRt.endsWithIgnoreCase(path, StorageUtil.DEFAULT_EXT)) {
+            if (storage == null && hasDirectoryBasedStorages && StringUtilRt.endsWithIgnoreCase(path, FileStorageCoreUtil.DEFAULT_EXT)) {
               storage = filePathToStorage.get(VfsUtil.getParentDir(path))
             }
           }
@@ -88,12 +88,12 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
           when (event) {
             is VFileMoveEvent -> {
               if (storage is FileBasedStorage) {
-                storage.setFile(null, File(event.getPath()))
+                storage.setFile(null, File(event.path))
               }
             }
             is VFileCreateEvent -> {
               if (storage is FileBasedStorage) {
-                storage.setFile(event.getFile(), null)
+                storage.setFile(event.file, null)
               }
             }
             is VFileDeleteEvent -> {
@@ -108,7 +108,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
           }
 
           val componentManager = storage.storageManager.componentManager!!
-          componentManager.getMessageBus().syncPublisher(StateStorageManager.STORAGE_TOPIC).storageFileChanged(event, storage, componentManager)
+          componentManager.messageBus.syncPublisher(StateStorageManager.STORAGE_TOPIC).storageFileChanged(event, storage, componentManager)
         }
       }
     })

@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.diagnostic.DebugLogManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -38,7 +39,7 @@ public class DebugLogConfigureAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : e.getProject();
-    DebugLogManager logCustomizer = ServiceManager.getService(DebugLogManager.class);
+    DebugLogManager logCustomizer = ApplicationManager.getApplication().getComponent(DebugLogManager.class);
     DebugLogConfigureDialog dialog = new DebugLogConfigureDialog(project, logCustomizer.getSavedCategories());
     if (dialog.showAndGet()) {
       List<String> categories = dialog.getLogCategories();

@@ -32,6 +32,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -75,27 +77,24 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
 
   private static final String LEGAL_NOTICE_KEY = "decompiler.legal.notice.accepted";
 
-  private final IFernflowerLogger myLogger = new IdeaLogger();
-  private final Map<String, Object> myOptions;
+  private final NotNullLazyValue<IFernflowerLogger> myLogger = new AtomicNotNullLazyValue<IFernflowerLogger>() {
+    @NotNull
+    @Override
+    protected IFernflowerLogger compute() {
+      return new IdeaLogger();
+    }
+  };
+  private final NotNullLazyValue<Map<String, Object>> myOptions = new AtomicNotNullLazyValue<Map<String, Object>>() {
+    @NotNull
+    @Override
+    protected Map<String, Object> compute() {
+      return getOptions();
+    }
+  };
   private final Map<VirtualFile, ProgressIndicator> myProgress = ContainerUtil.newConcurrentMap();
   private boolean myLegalNoticeAccepted;
 
   public IdeaDecompiler() {
-    Map<String, Object> options = ContainerUtil.newHashMap();
-    options.put(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR, "0");
-    options.put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");
-    options.put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
-    options.put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
-    options.put(IFernflowerPreferences.LITERALS_AS_IS, "1");
-    options.put(IFernflowerPreferences.NEW_LINE_SEPARATOR, "1");
-    options.put(IFernflowerPreferences.BANNER, BANNER);
-    options.put(IFernflowerPreferences.MAX_PROCESSING_METHOD, 60);
-
-    Project project = DefaultProjectFactory.getInstance().getDefaultProject();
-    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(JavaFileType.INSTANCE);
-    options.put(IFernflowerPreferences.INDENT_STRING, StringUtil.repeat(" ", indentOptions.INDENT_SIZE));
-
     Application app = ApplicationManager.getApplication();
     myLegalNoticeAccepted = app.isUnitTestMode() || PropertiesComponent.getInstance().isValueSet(LEGAL_NOTICE_KEY);
     if (!myLegalNoticeAccepted) {
@@ -115,12 +114,30 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
         }
       });
     }
+  }
 
-    if (app.isUnitTestMode()) {
+  private static Map<String, Object> getOptions() {
+    Map<String, Object> options = ContainerUtil.newHashMap();
+
+    options.put(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR, "0");
+    options.put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");
+    options.put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
+    options.put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
+    options.put(IFernflowerPreferences.LITERALS_AS_IS, "1");
+    options.put(IFernflowerPreferences.NEW_LINE_SEPARATOR, "1");
+    options.put(IFernflowerPreferences.BANNER, BANNER);
+    options.put(IFernflowerPreferences.MAX_PROCESSING_METHOD, 60);
+
+    Project project = DefaultProjectFactory.getInstance().getDefaultProject();
+    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(JavaFileType.INSTANCE);
+    options.put(IFernflowerPreferences.INDENT_STRING, StringUtil.repeat(" ", indentOptions.INDENT_SIZE));
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       options.put(IFernflowerPreferences.UNIT_TEST_MODE, "1");
     }
 
-    myOptions = Collections.unmodifiableMap(options);
+    return Collections.unmodifiableMap(options);
   }
 
   private void showLegalNotice(final Project project, final VirtualFile file) {
@@ -164,7 +181,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       MyBytecodeProvider provider = new MyBytecodeProvider(files);
       MyResultSaver saver = new MyResultSaver();
 
-      Map<String, Object> options = ContainerUtil.newHashMap(myOptions);
+      Map<String, Object> options = ContainerUtil.newHashMap(myOptions.getValue());
       if (Registry.is("decompiler.use.line.mapping")) {
         options.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1");
         options.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "0");
@@ -181,7 +198,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
         options.put(IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1");
       }
 
-      BaseDecompiler decompiler = new BaseDecompiler(provider, saver, options, myLogger);
+      BaseDecompiler decompiler = new BaseDecompiler(provider, saver, options, myLogger.getValue());
       for (String path : files.keySet()) {
         decompiler.addSpace(new File(path), true);
       }

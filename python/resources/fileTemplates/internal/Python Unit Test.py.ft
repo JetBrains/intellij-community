@@ -1,5 +1,3 @@
-__author__ = '$USER'
-
 import unittest
 
 class MyTestCase(unittest.TestCase):

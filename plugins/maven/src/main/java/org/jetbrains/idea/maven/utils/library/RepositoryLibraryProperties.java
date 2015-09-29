@@ -86,7 +86,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
     }
   }
 
-  String getGroupId() {
+  public String getGroupId() {
     return groupId;
   }
 

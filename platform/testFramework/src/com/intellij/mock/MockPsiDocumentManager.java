@@ -67,6 +67,12 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
     return document.getModificationStamp();
   }
 
+  @Nullable
+  @Override
+  public Document getLastCommittedDocument(@NotNull PsiFile file) {
+    return null;
+  }
+
   @Override
   @NotNull
   public Document[] getUncommittedDocuments() {

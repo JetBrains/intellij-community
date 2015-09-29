@@ -2,6 +2,6 @@ def foo(a, **args):
     pass
 
 b = {}
-foo(**b, <error descr="Cannot appear past keyword arguments or *arg or **kwarg">a<caret>=1</error>)
+foo(**b, <error descr="Python versions < 3.5 do not allow keyword arguments after **expression">a<caret>=1</error>)
 
 

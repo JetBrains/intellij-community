@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ProjectModelModificationService;
+import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
@@ -68,7 +68,7 @@ class AddLibraryToDependenciesFix extends OrderEntryFix {
   @Override
   public void invoke(@NotNull final Project project, @Nullable final Editor editor, PsiFile file) {
     DependencyScope scope = suggestScopeByLocation(myCurrentModule, myReference.getElement());
-    ProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, myLibrary, scope);
+    JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, myLibrary, scope);
     if (editor != null) {
       importClass(myCurrentModule, editor, myReference, myQualifiedClassName);
     }

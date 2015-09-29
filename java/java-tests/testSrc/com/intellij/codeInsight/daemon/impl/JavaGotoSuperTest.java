@@ -96,7 +96,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     assertSame(MarkerType.OVERRIDDEN_METHOD.getNavigationHandler(), iMarker.getNavigationHandler());
 
     LineMarkerInfo aMarker = findMarkerWithElement(markers, aRun.getNameIdentifier());
-    assertSame(MarkerType.OVERRIDING_METHOD.getNavigationHandler(), aMarker.getNavigationHandler());
+    assertSame(MarkerType.SIBLING_OVERRIDING_METHOD.getNavigationHandler(), aMarker.getNavigationHandler());
   }
 
   private static LineMarkerInfo findMarkerWithElement(List<LineMarkerInfo> markers, PsiElement psiMethod) {

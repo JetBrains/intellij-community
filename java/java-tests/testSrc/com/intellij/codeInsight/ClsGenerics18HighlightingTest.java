@@ -15,12 +15,32 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 
 public class ClsGenerics18HighlightingTest extends ClsGenericsHighlightingTest {
   public void testIDEA121866() { doTest(); }
 
   public void testIDEA127714() { doTest(); }
+
+  public void testCaptureContext() {
+    String name = getTestName(false);
+    addLibrary(name + ".jar", name + "-sources.jar");
+    Project project = myFixture.getProject();
+    PsiClass aClass = JavaPsiFacade.getInstance(project).findClass("a.Pair", GlobalSearchScope.allScope(project));
+    assertNotNull(aClass);
+    PsiFile containingFile = aClass.getContainingFile();
+    PsiElement navigationElement = containingFile.getNavigationElement();
+    assertInstanceOf(navigationElement, PsiFileImpl.class);
+    myFixture.openFileInEditor(((PsiFile)navigationElement).getVirtualFile());
+    myFixture.checkHighlighting();
+  }
 
   @Override
   protected LanguageLevel getLanguageLevel() {

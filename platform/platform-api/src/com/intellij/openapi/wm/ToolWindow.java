@@ -172,6 +172,14 @@ public interface ToolWindow extends BusyObject {
   void setToHideOnEmptyContent(boolean hideOnEmpty);
 
   boolean isToHideOnEmptyContent();
+
+  /**
+   *
+   * @param show if <code>false</code> stripe button would be hidden
+   */
+  void setShowStripeButton(boolean show);
+
+  boolean isShowStripeButton();
   
   boolean isDisposed();
 

@@ -87,7 +87,6 @@ import java.util.List;
  * @author Valentin
  * @author Eugene Belyaev
  * @author Konstantin Bulenkov
- * @author and me too (Chinee?)
  */
 public class IntentionHintComponent implements Disposable, ScrollAwareHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionHintComponent.ListPopupRunnable");

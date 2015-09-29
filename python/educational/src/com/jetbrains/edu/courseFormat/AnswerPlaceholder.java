@@ -116,6 +116,10 @@ public class AnswerPlaceholder {
   }
 
   public boolean isValid(@NotNull final Document document) {
+    return isValid(document, length);
+  }
+
+  public boolean isValid(@NotNull final Document document, int length) {
     boolean isLineValid = line < document.getLineCount() && line >= 0;
     if (!isLineValid) return false;
     boolean isStartValid = start >= 0 && start < document.getLineEndOffset(line);

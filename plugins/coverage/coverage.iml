@@ -18,6 +18,7 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/coverage-report.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/coverage-report-idea.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/freemarker.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

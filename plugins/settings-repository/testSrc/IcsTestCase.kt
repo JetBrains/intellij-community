@@ -21,10 +21,10 @@ import org.eclipse.jgit.lib.Repository
 import org.jetbrains.jgit.dirCache.AddLoadedFile
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.settingsRepository.IcsManager
-import org.jetbrains.settingsRepository.git
+import org.jetbrains.settingsRepository.git.createRepository as createGitRepository
 import org.junit.Rule
+import java.nio.file.FileSystem
 import java.nio.file.Path
-import kotlin.properties.Delegates
 
 fun Repository.add(path: String, data: String) = add(path, data.toByteArray())
 
@@ -46,14 +46,20 @@ abstract class IcsTestCase {
   val tempDirManager = TemporaryDirectory()
   @Rule fun getTemporaryFolder() = tempDirManager
 
-  val icsManager by Delegates.lazy {
+  private val fsRule = InMemoryFsRule()
+  @Rule fun _inMemoryFsRule() = fsRule
+
+  val fs: FileSystem
+    get() = fsRule.fs
+
+  val icsManager by lazy(LazyThreadSafetyMode.NONE) {
     val icsManager = IcsManager(tempDirManager.newDirectory())
     icsManager.repositoryManager.createRepositoryIfNeed()
     icsManager.repositoryActive = true
     icsManager
   }
 
-  val provider by Delegates.lazy { icsManager.ApplicationLevelProvider() }
+  val provider by lazy(LazyThreadSafetyMode.NONE) { icsManager.ApplicationLevelProvider() }
 }
 
-fun TemporaryDirectory.createRepository(directoryName: String? = null) = git.createRepository(newDirectory(directoryName))
+fun TemporaryDirectory.createRepository(directoryName: String? = null) = createGitRepository(newDirectory(directoryName))

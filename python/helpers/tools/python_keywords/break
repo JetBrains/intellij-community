@@ -1,0 +1,16 @@
+<div class="section" id="the-break-statement">
+<span id="break"></span><h2>The <a class="reference internal" href="#break"><tt class="xref std std-keyword docutils literal"><span class="pre">break</span></tt></a> statement</h2>
+<pre id="index-27">
+<strong id="grammar-token-break_stmt">break_stmt</strong> ::=  &quot;break&quot;
+</pre>
+<p><a class="reference internal" href="#break"><tt class="xref std std-keyword docutils literal"><span class="pre">break</span></tt></a> may only occur syntactically nested in a <a class="reference internal" href="compound_stmts.html#for"><tt class="xref std std-keyword docutils literal"><span class="pre">for</span></tt></a> or
+<a class="reference internal" href="compound_stmts.html#while"><tt class="xref std std-keyword docutils literal"><span class="pre">while</span></tt></a> loop, but not nested in a function or class definition within
+that loop.</p>
+<p id="index-28">It terminates the nearest enclosing loop, skipping the optional <a class="reference internal" href="compound_stmts.html#else"><tt class="xref std std-keyword docutils literal"><span class="pre">else</span></tt></a>
+clause if the loop has one.</p>
+<p>If a <a class="reference internal" href="compound_stmts.html#for"><tt class="xref std std-keyword docutils literal"><span class="pre">for</span></tt></a> loop is terminated by <a class="reference internal" href="#break"><tt class="xref std std-keyword docutils literal"><span class="pre">break</span></tt></a>, the loop control
+target keeps its current value.</p>
+<p id="index-29">When <a class="reference internal" href="#break"><tt class="xref std std-keyword docutils literal"><span class="pre">break</span></tt></a> passes control out of a <a class="reference internal" href="compound_stmts.html#try"><tt class="xref std std-keyword docutils literal"><span class="pre">try</span></tt></a> statement with a
+<a class="reference internal" href="compound_stmts.html#finally"><tt class="xref std std-keyword docutils literal"><span class="pre">finally</span></tt></a> clause, that <a class="reference internal" href="compound_stmts.html#finally"><tt class="xref std std-keyword docutils literal"><span class="pre">finally</span></tt></a> clause is executed before
+really leaving the loop.</p>
+</div>

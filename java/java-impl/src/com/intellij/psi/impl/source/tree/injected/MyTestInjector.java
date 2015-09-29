@@ -29,6 +29,7 @@ import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
@@ -72,6 +73,7 @@ public class MyTestInjector {
     registerForStringVarInitializer(parent, project, Language.findLanguageByID("Oracle"), "oracle", null, null);
 
     registerForParameterValue(parent, project, Language.findLanguageByID("Groovy"), "groovy");
+    registerForStringVarInitializer(parent, project, JavaLanguage.INSTANCE, "java", "", "");
   }
 
   private static void registerForParameterValue(Disposable parent, final Project project, final Language language, final String paramName) {

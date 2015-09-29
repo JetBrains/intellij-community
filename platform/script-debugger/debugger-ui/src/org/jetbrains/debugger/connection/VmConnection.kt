@@ -27,17 +27,17 @@ import org.jetbrains.debugger.Vm
 import org.jetbrains.util.concurrency.AsyncPromise
 import org.jetbrains.util.concurrency.Promise
 import org.jetbrains.util.concurrency.ResolvedPromise
-import org.jetbrains.util.concurrency.pending
+import org.jetbrains.util.concurrency.isPending
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.event.HyperlinkListener
 
-public abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
+abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
   private val state = AtomicReference(ConnectionState(ConnectionStatus.NOT_CONNECTED))
-  private val dispatcher = EventDispatcher.create(javaClass<DebugEventListener>())
-  private val connectionDispatcher = EventDispatcher.create(javaClass<SocketConnectionListener>())
+  private val dispatcher = EventDispatcher.create(DebugEventListener::class.java)
+  private val connectionDispatcher = EventDispatcher.create(SocketConnectionListener::class.java)
 
-  public volatile var vm: T? = null
+  @Volatile var vm: T? = null
     protected set
 
   private val opened = AsyncPromise<Any?>()
@@ -45,12 +45,12 @@ public abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
 
   override fun getState() = state.get()
 
-  public fun addDebugListener(listener: DebugEventListener) {
+  fun addDebugListener(listener: DebugEventListener) {
     dispatcher.addListener(listener)
   }
 
   @TestOnly
-  public fun opened(): Promise<*> = opened
+  fun opened(): Promise<*> = opened
 
   override fun executeOnStart(runnable: Runnable) {
     opened.done { runnable.run() }
@@ -59,11 +59,11 @@ public abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
   protected fun setState(status: ConnectionStatus, message: String? = null, messageLinkListener: HyperlinkListener? = null) {
     val newState = ConnectionState(status, message, messageLinkListener)
     val oldState = state.getAndSet(newState)
-    if (oldState == null || oldState.getStatus() != status) {
+    if (oldState == null || oldState.status != status) {
       if (status == ConnectionStatus.CONNECTION_FAILED) {
-        opened.setError(newState.getMessage())
+        opened.setError(newState.message)
       }
-      connectionDispatcher.getMulticaster().statusChanged(status)
+      connectionDispatcher.multicaster.statusChanged(status)
     }
   }
 
@@ -72,18 +72,18 @@ public abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
   }
 
   protected val debugEventListener: DebugEventListener
-    get() = dispatcher.getMulticaster()
+    get() = dispatcher.multicaster
 
   protected open fun startProcessing() {
     opened.setResult(null)
   }
 
-  public fun close(message: String?, status: ConnectionStatus) {
+  fun close(message: String?, status: ConnectionStatus) {
     if (!closed.compareAndSet(false, true)) {
       return
     }
 
-    if (opened.pending) {
+    if (opened.isPending) {
       opened.setError("closed")
     }
     setState(status, message)
@@ -94,8 +94,8 @@ public abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
     vm = null
   }
 
-  public open fun detachAndClose(): Promise<*> {
-    if (opened.pending) {
+  open fun detachAndClose(): Promise<*> {
+    if (opened.isPending) {
       opened.setError("detached and closed")
     }
 

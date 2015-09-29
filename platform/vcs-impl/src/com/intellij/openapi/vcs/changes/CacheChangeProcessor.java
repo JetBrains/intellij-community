@@ -86,6 +86,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
 
   @CalledInAwt
   public void updateRequest(final boolean force, boolean useCache, @Nullable final ScrollToPolicy scrollToChangePolicy) {
+    if (isDisposed()) return;
     final Change change = myCurrentChange;
 
     DiffRequest cachedRequest = loadRequestFast(change, useCache);

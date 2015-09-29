@@ -17,6 +17,7 @@ package git4idea.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -27,25 +28,29 @@ import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsAbstractHistorySession;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.vfs.VcsFileSystem;
+import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.util.StringScanner;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
+import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAnnotationProvider {
+public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheableAnnotationProvider {
   private final Project myProject;
   @NonNls private static final String AUTHOR_KEY = "author";
   @NonNls private static final String COMMITTER_TIME_KEY = "committer-time";
@@ -67,13 +72,10 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     final Exception[] exception = new Exception[1];
     Runnable command = new Runnable() {
       public void run() {
-        final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         try {
           final FilePath currentFilePath = VcsUtil.getFilePath(file.getPath());
           final FilePath realFilePath;
-          if (progress != null) {
-            progress.setText(GitBundle.message("getting.history", file.getName()));
-          }
+          setProgressIndicatorText(GitBundle.message("getting.history", file.getName()));
           final List<VcsFileRevision> revisions = GitHistoryUtils.history(myProject, currentFilePath);
           if (revision == null) {
             realFilePath = GitHistoryUtils.getLastCommitName(myProject, currentFilePath);
@@ -81,11 +83,13 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
           else {
             realFilePath = ((GitFileRevision)revision).getPath();
           }
-          if (progress != null) {
-            progress.setText(GitBundle.message("computing.annotation", file.getName()));
-          }
-          final GitFileAnnotation result = annotate(realFilePath, revision, revisions, file);
+          setProgressIndicatorText(GitBundle.message("computing.annotation", file.getName()));
+          VcsRevisionNumber revisionNumber = revision != null ? revision.getRevisionNumber() : null;
+          final GitFileAnnotation result = annotate(realFilePath, revisionNumber, revisions, file);
           annotation[0] = result;
+        }
+        catch (ProcessCanceledException pce) {
+          throw pce;
         }
         catch (Exception e) {
           exception[0] = e;
@@ -105,10 +109,28 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     return annotation[0];
   }
 
-  private GitFileAnnotation annotate(final FilePath repositoryFilePath,
-                                     final VcsFileRevision revision,
-                                     final List<VcsFileRevision> revisions,
-                                     final VirtualFile file) throws VcsException {
+  @NotNull
+  @Override
+  public FileAnnotation annotate(@NotNull final FilePath path, @NotNull final VcsRevisionNumber revision) throws VcsException {
+    setProgressIndicatorText(GitBundle.message("getting.history", path.getName()));
+    List<VcsFileRevision> revisions = GitHistoryUtils.history(myProject, path, null, revision);
+
+    GitFileRevision fileRevision = new GitFileRevision(myProject, path, (GitRevisionNumber)revision);
+    VcsVirtualFile file = new VcsVirtualFile(path.getPath(), fileRevision, VcsFileSystem.getInstance());
+
+    setProgressIndicatorText(GitBundle.message("computing.annotation", path.getName()));
+    return annotate(path, revision, revisions, file);
+  }
+
+  private static void setProgressIndicatorText(@Nullable String text) {
+    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    if (progress != null) progress.setText(text);
+  }
+
+  private GitFileAnnotation annotate(@NotNull final FilePath repositoryFilePath,
+                                     @Nullable final VcsRevisionNumber revision,
+                                     @NotNull final List<VcsFileRevision> revisions,
+                                     @NotNull final VirtualFile file) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(myProject, GitUtil.getGitRoot(repositoryFilePath), GitCommand.BLAME);
     h.setStdoutSuppressed(true);
     h.setCharset(file.getCharset());
@@ -117,12 +139,12 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
       h.addParameters("HEAD");
     }
     else {
-      h.addParameters(revision.getRevisionNumber().asString());
+      h.addParameters(revision.asString());
     }
     h.endOptions();
     h.addRelativePaths(repositoryFilePath);
     String output = h.run();
-    GitFileAnnotation annotation = new GitFileAnnotation(myProject, file, revision == null ? null : revision.getRevisionNumber());
+    GitFileAnnotation annotation = new GitFileAnnotation(myProject, file, revision == null ? null : revision);
     class CommitInfo {
       Date date;
       String author;

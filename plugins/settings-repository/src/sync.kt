@@ -31,10 +31,12 @@ import com.intellij.openapi.util.Computable
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.ui.UIUtil
 import gnu.trove.THashSet
-import java.util.LinkedHashSet
+import java.util.*
+
+private val LOG_1 = org.jetbrains.settingsRepository.LOG
 
 class SyncManager(private val icsManager: IcsManager, private val autoSyncManager: AutoSyncManager) {
-  volatile var writeAndDeleteProhibited = false
+  @Volatile var writeAndDeleteProhibited = false
     private set
 
   public fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult? {
@@ -47,7 +49,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
         writeAndDeleteProhibited = true
         ProgressManager.getInstance().run(object : Task.Modal(project, IcsBundle.message("task.sync.title"), true) {
           override fun run(indicator: ProgressIndicator) {
-            indicator.setIndeterminate(true)
+            indicator.isIndeterminate = true
 
             autoSyncManager.waitAutoSync(indicator)
 
@@ -59,11 +61,11 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
                 // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
               }
               catch (e: ProcessCanceledException) {
-                LOG.warn("Canceled")
+                LOG_1.warn("Canceled")
                 return
               }
               catch (e: Throwable) {
-                LOG.error(e)
+                LOG_1.error(e)
 
                 // "RESET_TO_*" will do "reset hard", so, probably, error will be gone, so, we can continue operation
                 if (syncType == SyncType.MERGE) {
@@ -73,7 +75,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
               }
             }
 
-            if (indicator.isCanceled()) {
+            if (indicator.isCanceled) {
               return
             }
 
@@ -81,13 +83,19 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
               when (syncType) {
                 SyncType.MERGE -> {
                   updateResult = repositoryManager.pull(indicator)
+                  var doPush = true
                   if (localRepositoryInitializer != null) {
                     // must be performed only after initial pull, so, local changes will be relative to remote files
                     localRepositoryInitializer()
-                    repositoryManager.commit(indicator)
-                    updateResult = updateResult.concat(repositoryManager.pull(indicator))
+                    if (!repositoryManager.commit(indicator, syncType) || repositoryManager.getAheadCommitsCount() == 0) {
+                      // avoid error during findRemoteRefUpdatesFor on push - if localRepositoryInitializer specified and nothing to commit (failed or just no files to commit (empty local configuration - no files)),
+                      // so, nothing to push
+                      doPush = false
+                    }
                   }
-                  repositoryManager.push(indicator)
+                  if (doPush) {
+                    repositoryManager.push(indicator)
+                  }
                 }
                 SyncType.OVERWRITE_LOCAL -> {
                   // we don't push - probably, repository will be modified/removed (user can do something, like undo) before any other next push activities (so, we don't want to disturb remote)
@@ -95,17 +103,19 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
                 }
                 SyncType.OVERWRITE_REMOTE -> {
                   updateResult = repositoryManager.resetToMy(indicator, localRepositoryInitializer)
-                  repositoryManager.push(indicator)
+                  if (repositoryManager.getAheadCommitsCount() > 0) {
+                    repositoryManager.push(indicator)
+                  }
                 }
               }
             }
             catch (e: ProcessCanceledException) {
-              LOG.debug("Canceled")
+              LOG_1.debug("Canceled")
               return
             }
             catch (e: Throwable) {
               if (e !is AuthenticationException && e !is NoRemoteRepositoryException && e !is CannotResolveConflictInTestMode) {
-                LOG.error(e)
+                LOG_1.error(e)
               }
               exception = e
               return
@@ -114,7 +124,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
             icsManager.repositoryActive = true
             if (updateResult != null) {
               val app = ApplicationManager.getApplication()
-              restartApplication = updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult!!, app.getMessageBus())
+              restartApplication = updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult!!, app.messageBus)
             }
             if (!restartApplication && syncType == SyncType.OVERWRITE_LOCAL) {
               (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
@@ -140,7 +150,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
   }
 }
 
-private fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateResult: UpdateResult, messageBus: MessageBus): Boolean {
+internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateResult: UpdateResult, messageBus: MessageBus): Boolean {
   val changedComponentNames = LinkedHashSet<String>()
   val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted)
   if (changed.isEmpty() && deleted.isEmpty()) {
@@ -179,7 +189,7 @@ private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateS
       (stateStorage as XmlElementStorage).updatedFromStreamProvider(changedComponentNames, deleted)
     }
     catch (e: Throwable) {
-      LOG.error(e)
+      LOG_1.error(e)
     }
   }
 }

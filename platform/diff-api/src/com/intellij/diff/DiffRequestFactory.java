@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/*
+/**
  * Use ProgressManager.executeProcessUnderProgress() to pass modality state if needed
  */
 public abstract class DiffRequestFactory {
@@ -45,6 +45,12 @@ public abstract class DiffRequestFactory {
 
   @NotNull
   public abstract ContentDiffRequest createFromFiles(@Nullable Project project, @NotNull VirtualFile file1, @NotNull VirtualFile file2);
+
+  @NotNull
+  public abstract ContentDiffRequest createFromFiles(@Nullable Project project,
+                                                     @NotNull VirtualFile leftFile,
+                                                     @NotNull VirtualFile baseFile,
+                                                     @NotNull VirtualFile rightFile);
 
   @NotNull
   public abstract ContentDiffRequest createClipboardVsValue(@NotNull String value);

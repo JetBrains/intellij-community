@@ -570,16 +570,19 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   @NotNull
   public CharSequence getLastCommittedText(@NotNull Document document) {
-    if (document instanceof DocumentWindow) return document.getImmutableCharSequence(); //todo
-    assert document instanceof DocumentImpl;
     return getLastCommittedDocument(document).getImmutableCharSequence();
   }
 
   @Override
   public long getLastCommittedStamp(@NotNull Document document) {
-    if (document instanceof DocumentWindow) return document.getModificationStamp(); //todo
-    assert document instanceof DocumentImpl;
     return getLastCommittedDocument(document).getModificationStamp();
+  }
+
+  @Override
+  @Nullable
+  public Document getLastCommittedDocument(@NotNull PsiFile file) {
+    Document document = getDocument(file);
+    return document == null ? null : getLastCommittedDocument(document);
   }
 
   @NotNull

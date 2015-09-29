@@ -108,7 +108,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       int line = myDocument.getLineNumber(mySegmentStartOffset);
       mySegmentEndOffset = Math.min(myNextWrapOffset, Math.min(mySegmentEndOffset, myDocument.getLineEndOffset(line)));
       int lineStartOffset = myDocument.getLineStartOffset(line);
-      myFragmentIterator = myView.getLineLayout(line).getFragmentsInVisualOrder(myCurrentX, myCurrentVisualColumn,
+      myFragmentIterator = myView.getTextLayoutCache().getLineLayout(line).getFragmentsInVisualOrder(myCurrentX, myCurrentVisualColumn,
                                                                                 mySegmentStartOffset - lineStartOffset, 
                                                                                 mySegmentEndOffset - lineStartOffset).iterator();
     }

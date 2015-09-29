@@ -40,6 +40,8 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassLikeTypeUtil;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -73,25 +75,32 @@ public class PyOverrideImplementUtil {
     }
     final PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
     if (pyClass == null && element instanceof PsiWhiteSpace && element.getPrevSibling() instanceof PyClass) {
-      return (PyClass) element.getPrevSibling();
+      return (PyClass)element.getPrevSibling();
     }
     return pyClass;
   }
 
   public static void chooseAndOverrideMethods(final Project project, @NotNull final Editor editor, @NotNull final PyClass pyClass) {
+
+
     FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_OVERRIDE_IMPLEMENT);
     chooseAndOverrideOrImplementMethods(project, editor, pyClass);
   }
 
 
   private static void chooseAndOverrideOrImplementMethods(final Project project,
-                                                         @NotNull final Editor editor,
-                                                         @NotNull final PyClass pyClass) {
+                                                          @NotNull final Editor editor,
+                                                          @NotNull final PyClass pyClass) {
     LOG.assertTrue(pyClass.isValid());
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    final Collection<PyFunction> superFunctions = getAllSuperFunctions(pyClass);
-    chooseAndOverrideOrImplementMethods(project, editor, pyClass, superFunctions, "Select Methods to Override", false);
+    final Set<PyFunction> result = new HashSet<PyFunction>();
+    TypeEvalContext context = TypeEvalContext.codeCompletion(project, null);
+    final Collection<PyFunction> superFunctions = getAllSuperFunctions(pyClass, context);
+
+
+    result.addAll(superFunctions);
+    chooseAndOverrideOrImplementMethods(project, editor, pyClass, result, "Select Methods to Override", false);
   }
 
   public static void chooseAndOverrideOrImplementMethods(@NotNull final Project project,
@@ -155,16 +164,17 @@ public class PyOverrideImplementUtil {
     final PyStatementList statementList = pyClass.getStatementList();
     final int offset = editor.getCaretModel().getOffset();
     PsiElement anchor = null;
-    for (PyStatement statement: statementList.getStatements()) {
+    for (PyStatement statement : statementList.getStatements()) {
       if (statement.getTextRange().getStartOffset() < offset ||
-          (statement instanceof PyExpressionStatement && ((PyExpressionStatement)statement).getExpression() instanceof PyStringLiteralExpression)) {
+          (statement instanceof PyExpressionStatement &&
+           ((PyExpressionStatement)statement).getExpression() instanceof PyStringLiteralExpression)) {
         anchor = statement;
       }
     }
 
     PyFunction element = null;
     for (PyMethodMember newMember : newMembers) {
-      PyFunction baseFunction = (PyFunction) newMember.getPsiElement();
+      PyFunction baseFunction = (PyFunction)newMember.getPsiElement();
       final PyFunctionBuilder builder = buildOverriddenFunction(pyClass, baseFunction, implement);
       PyFunction function = builder.addFunctionAfter(statementList, anchor, LanguageLevel.forElement(statementList));
       element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function);
@@ -182,7 +192,7 @@ public class PyOverrideImplementUtil {
 
   private static PyFunctionBuilder buildOverriddenFunction(PyClass pyClass, PyFunction baseFunction, boolean implement) {
     final boolean overridingNew = PyNames.NEW.equals(baseFunction.getName());
-    PyFunctionBuilder pyFunctionBuilder = new PyFunctionBuilder(baseFunction.getName());
+    PyFunctionBuilder pyFunctionBuilder = new PyFunctionBuilder(baseFunction.getName(), baseFunction);
     final PyDecoratorList decorators = baseFunction.getDecoratorList();
     boolean baseMethodIsStatic = false;
     if (decorators != null) {
@@ -210,7 +220,7 @@ public class PyOverrideImplementUtil {
 
     boolean hadStar = false;
     List<String> parameters = new ArrayList<String>();
-    for (PyParameter parameter: baseParams) {
+    for (PyParameter parameter : baseParams) {
       final PyNamedParameter pyNamedParameter = parameter.getAsNamed();
       if (pyNamedParameter != null) {
         String repr = pyNamedParameter.getRepr(false);
@@ -244,7 +254,7 @@ public class PyOverrideImplementUtil {
           PsiElement outerClass = PsiTreeUtil.getParentOfType(pyClass, PyClass.class, true, PyFunction.class);
           String className = pyClass.getName();
           final List<String> nameResult = Lists.newArrayList(className);
-          while(outerClass != null) {
+          while (outerClass != null) {
             nameResult.add(0, ((PyClass)outerClass).getName());
             outerClass = PsiTreeUtil.getParentOfType(outerClass, PyClass.class, true, PyFunction.class);
           }
@@ -297,7 +307,7 @@ public class PyOverrideImplementUtil {
     final PyExpression[] superClassExpressions = fromClass.getSuperClassExpressions();
     for (PyExpression expression : superClassExpressions) {
       if (expression instanceof PyReferenceExpression) {
-        PsiElement target = ((PyReferenceExpression) expression).getReference().resolve();
+        PsiElement target = ((PyReferenceExpression)expression).getReference().resolve();
         if (target == toClass) {
           return expression.getText();
         }
@@ -307,13 +317,24 @@ public class PyOverrideImplementUtil {
   }
 
   @NotNull
-  public static Collection<PyFunction> getAllSuperFunctions(@NotNull PyClass pyClass) {
+  public static Collection<PyFunction> getAllSuperFunctions(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
+
+    // This is a legacy approach. Should be removed soon since type-based members should be enough
     final Map<String, PyFunction> superFunctions = new HashMap<String, PyFunction>();
     for (PyFunction function : pyClass.getMethods(true)) {
       if (!superFunctions.containsKey(function.getName())) {
         superFunctions.put(function.getName(), function);
       }
     }
-    return superFunctions.values();
+
+
+
+    final Set<PyFunction> functions = new HashSet<PyFunction>(superFunctions.values());
+    final PyClassLikeType type = PyUtil.as(context.getType(pyClass), PyClassLikeType.class);
+
+    if (type != null) {
+      functions.addAll(PyClassLikeTypeUtil.getMembersOfType(type, PyFunction.class, context));
+    }
+    return functions;
   }
 }

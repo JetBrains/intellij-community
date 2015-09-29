@@ -211,8 +211,22 @@ public class GitHistoryUtils {
    * @param exceptionConsumer This consumer is notified in case of error while executing git command.
    * @param parameters        Optional parameters which will be added to the git log command just before the path.
    */
-  public static void history(final Project project, FilePath path, @Nullable VirtualFile root, final Consumer<GitFileRevision> consumer,
-                             final Consumer<VcsException> exceptionConsumer, String... parameters) {
+  public static void history(@NotNull Project project,
+                             @NotNull FilePath path,
+                             @Nullable VirtualFile root,
+                             @NotNull Consumer<GitFileRevision> consumer,
+                             @NotNull Consumer<VcsException> exceptionConsumer,
+                             String... parameters) {
+    history(project, path, root, GitRevisionNumber.HEAD, consumer, exceptionConsumer, parameters);
+  }
+
+  public static void history(@NotNull final Project project,
+                             @NotNull FilePath path,
+                             @Nullable VirtualFile root,
+                             @NotNull VcsRevisionNumber startingRevision,
+                             @NotNull final Consumer<GitFileRevision> consumer,
+                             @NotNull final Consumer<VcsException> exceptionConsumer,
+                             String... parameters) {
     // adjust path using change manager
     final FilePath filePath = getLastCommitName(project, path);
     final VirtualFile finalRoot;
@@ -227,8 +241,8 @@ public class GitHistoryUtils {
                                                     HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
                                                     SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
 
-    final AtomicReference<String> firstCommit = new AtomicReference<String>("HEAD");
-    final AtomicReference<String> firstCommitParent = new AtomicReference<String>("HEAD");
+    final AtomicReference<String> firstCommit = new AtomicReference<String>(startingRevision.asString());
+    final AtomicReference<String> firstCommitParent = new AtomicReference<String>(firstCommit.get());
     final AtomicReference<FilePath> currentPath = new AtomicReference<FilePath>(filePath);
     final AtomicReference<GitLineHandler> logHandler = new AtomicReference<GitLineHandler>();
     final AtomicBoolean skipFurtherOutput = new AtomicBoolean();
@@ -683,19 +697,22 @@ public class GitHistoryUtils {
     return history(project, path, root, parameters);
   }
 
-  /**
-   * Get history for the file
-   *
-   * @param project the context project
-   * @param path    the file path
-   * @return the list of the revisions
-   * @throws VcsException if there is problem with running git
-   */
-  public static List<VcsFileRevision> history(final Project project, FilePath path, final VirtualFile root, final String... parameters) throws VcsException {
+  public static List<VcsFileRevision> history(@NotNull Project project,
+                                              @NotNull FilePath path,
+                                              @Nullable VirtualFile root,
+                                              String... parameters) throws VcsException {
+    return history(project, path, root, GitRevisionNumber.HEAD, parameters);
+  }
+
+  public static List<VcsFileRevision> history(@NotNull Project project,
+                                              @NotNull FilePath path,
+                                              @Nullable VirtualFile root,
+                                              @NotNull VcsRevisionNumber startingFrom,
+                                              String... parameters) throws VcsException {
     final List<VcsFileRevision> rc = new ArrayList<VcsFileRevision>();
     final List<VcsException> exceptions = new ArrayList<VcsException>();
 
-    history(project, path, root, new Consumer<GitFileRevision>() {
+    history(project, path, root, startingFrom, new Consumer<GitFileRevision>() {
       @Override public void consume(GitFileRevision gitFileRevision) {
         rc.add(gitFileRevision);
       }

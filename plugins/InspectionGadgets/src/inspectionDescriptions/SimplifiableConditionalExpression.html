@@ -1,11 +1,15 @@
 <html>
 <body>
-Reports conditional expressions of the form
-<b><i>condition</i>?true:<i>foo</i></b> or
-<b><i>condition</i>?false:<i>foo</i></b>. These
-expressions may be safely simplified to
-<b><i>condition</i> || <i>foo</i></b> or
-<b>!<i>condition</i> && <i>foo</i></b>, respectively.
+Reports conditional expressions of the form<br>
+<code>condition ? true : foo</code>,<br>
+<code>condition ? false : foo</code>,<br>
+<code>condition ? foo : !foo</code> and<br>
+<code>condition ? !foo : foo</code>.<br>
+These expressions may be safely simplified to<br>
+<code>condition || foo</code>,<br>
+<code>!condition && foo</code>,<br>
+<code>condition == foo</code> and<br>
+<code>condition != foo</code>, respectively.
 <!-- tooltip end -->
 <p>
 

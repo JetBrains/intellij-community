@@ -20,12 +20,15 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationUtil;
+import com.intellij.execution.impl.JavaScratchRunConfigurationExtension;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -91,12 +94,20 @@ public class ApplicationConfigurationProducer extends JavaRunConfigurationProduc
         return false;
       }
 
+      // for scratches it is enough to check that the configuration is associated with the same scratch file
+      final VirtualFile scratchFile = JavaScratchRunConfigurationExtension.getScratchVirtualFile(appConfiguration);
+      if (scratchFile != null) {
+        final PsiFile containingFile = aClass.getContainingFile();
+        if (containingFile != null && scratchFile.equals(containingFile.getVirtualFile())) {
+          return true;
+        }
+      }
+
       final Module configurationModule = appConfiguration.getConfigurationModule().getModule();
       if (Comparing.equal(context.getModule(), configurationModule)) return true;
 
-      ApplicationConfiguration template = (ApplicationConfiguration)context.getRunManager()
-        .getConfigurationTemplate(getConfigurationFactory())
-        .getConfiguration();
+      ApplicationConfiguration template =
+        (ApplicationConfiguration)context.getRunManager().getConfigurationTemplate(getConfigurationFactory()).getConfiguration();
       final Module predefinedModule = template.getConfigurationModule().getModule();
       if (Comparing.equal(predefinedModule, configurationModule)) {
         return true;

@@ -92,6 +92,9 @@ public class ExceptionUtil {
       // filter class declaration in code
       return Collections.emptyList();
     }
+    else if (element instanceof PsiLambdaExpression) {
+      return Collections.emptyList();
+    }
     else if (element instanceof PsiMethodCallExpression) {
       PsiReferenceExpression methodRef = ((PsiMethodCallExpression)element).getMethodExpression();
       JavaResolveResult result = methodRef.advancedResolve(false);

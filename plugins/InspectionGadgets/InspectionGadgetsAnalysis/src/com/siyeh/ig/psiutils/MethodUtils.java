@@ -235,6 +235,10 @@ public class MethodUtils {
     return statements.length == 0;
   }
 
+  /**
+   * Returns true if the method or constructor is trivial, i.e. does nothing of consequence. This is true when the method is empty, but
+   * also when it is a constructor which only calls super, contains empty statements or "if (false)" statements.
+   */
   public static boolean isTrivial(PsiMethod method, boolean throwIsTrivial) {
     return isTrivial(method.getBody(), throwIsTrivial);
   }

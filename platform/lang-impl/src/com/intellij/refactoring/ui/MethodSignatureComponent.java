@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -32,13 +33,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public class MethodSignatureComponent extends EditorTextField {
   public MethodSignatureComponent(String signature, Project project, FileType filetype) {
-    this(EditorFactory.getInstance().createDocument(signature), project, filetype);
-  }
-
-  public MethodSignatureComponent(Document document, Project project, FileType filetype) {
-    super(document, project, filetype, true, false);
+    super(createNonUndoableDocument(signature), project, filetype, true, false);
     setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN));
     setBackground(EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.CARET_ROW_COLOR));
+  }
+
+  private static Document createNonUndoableDocument(String text) {
+    Document document = EditorFactory.getInstance().createDocument(text);
+    UndoUtil.disableUndoFor(document);
+    return document;
   }
 
   public void setSignature(String signature) {

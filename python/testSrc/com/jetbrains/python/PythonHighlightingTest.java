@@ -20,8 +20,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -227,6 +227,22 @@ public class PythonHighlightingTest extends PyTestCase {
     scheme.setAttributes(xKey, xAttributes);
 
     doTest();
+  }
+
+  public void testAsync() {
+    doTest(LanguageLevel.PYTHON35, true, true);
+  }
+
+  public void testAwait() {
+    doTest(LanguageLevel.PYTHON35, true, true);
+  }
+
+  public void testYieldInsideAsyncDef() {
+    doTest(LanguageLevel.PYTHON35, false, false);
+  }
+
+  public void testUnpackingStar() {
+    doTest(LanguageLevel.PYTHON35, false, false);
   }
 
   // ---

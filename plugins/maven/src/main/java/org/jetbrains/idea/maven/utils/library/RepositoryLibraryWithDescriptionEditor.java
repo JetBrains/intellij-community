@@ -1,8 +1,17 @@
 package org.jetbrains.idea.maven.utils.library;
 
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryPropertiesEditorBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesDialog;
+import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
+import org.jetbrains.idea.maven.utils.library.remote.MavenDependenciesRemoteManager;
+import org.jetbrains.idea.maven.utils.library.remote.MavenRemoteTask;
+
+import java.util.List;
 
 public class RepositoryLibraryWithDescriptionEditor
   extends LibraryPropertiesEditorBase<RepositoryLibraryProperties, RepositoryLibraryType> {
@@ -18,28 +27,40 @@ public class RepositoryLibraryWithDescriptionEditor
   @Override
   protected void edit() {
     @NotNull RepositoryLibraryProperties properties = myEditorComponent.getProperties();
-    String oldVersion = properties.getVersion();
+    //String oldVersion = properties.getVersion();
     boolean wasGeneratedName =
       RepositoryLibraryType.getInstance().getDescription(properties).equals(myEditorComponent.getLibraryEditor().getName());
-    RepositoryLibraryPropertiesEditor editor = new RepositoryLibraryPropertiesEditor(
-      myEditorComponent.getProject(),
+    RepositoryLibraryPropertiesModel model = new RepositoryLibraryPropertiesModel(
+      properties.getVersion(),
       RepositoryUtils.libraryHasSources(myEditorComponent.getLibraryEditor()),
-      RepositoryUtils.libraryHasJavaDocs(myEditorComponent.getLibraryEditor()),
-      properties);
-    editor.init();
-    editor.setTitle(RepositoryLibraryDescription.findDescription(properties).getDisplayName());
-    if (!editor.showAndGet()) {
+      RepositoryUtils.libraryHasJavaDocs(myEditorComponent.getLibraryEditor()));
+    RepositoryLibraryPropertiesDialog dialog = new RepositoryLibraryPropertiesDialog(
+      myEditorComponent.getProject(),
+      model,
+      RepositoryLibraryDescription.findDescription(properties),
+      true);
+    if (!dialog.showAndGet()) {
       return;
     }
-    myEditorComponent.getProperties().loadState(editor.getProperties());
+    myEditorComponent.getProperties().changeVersion(model.getVersion());
     if (wasGeneratedName) {
       myEditorComponent.renameLibrary(RepositoryLibraryType.getInstance().getDescription(properties));
     }
-    myEditorComponent.getLibraryEditor().removeAllRoots();
-    myEditorComponent.getLibraryEditor().addRoots(RepositoryUtils.download(
-      myEditorComponent.getProject(),
-      editor.downloadSources(),
-      editor.downloadJavaDocs(),
-      properties));
+
+    final LibraryEditor libraryEditor = myEditorComponent.getLibraryEditor();
+    MavenDependenciesRemoteManager.getInstance(myEditorComponent.getProject())
+      .downloadDependenciesAsync(
+        properties,
+        model.isDownloadSources(),
+        model.isDownloadJavaDocs(),
+        RepositoryUtils.getStorageRoot(myEditorComponent.getLibraryEditor().getUrls(OrderRootType.CLASSES), myEditorComponent.getProject()),
+        new MavenRemoteTask.ResultProcessor<List<OrderRoot>>() {
+          @Override
+          public void process(List<OrderRoot> roots) {
+            libraryEditor.removeAllRoots();
+            libraryEditor.addRoots(roots);
+          }
+        }
+      );
   }
 }

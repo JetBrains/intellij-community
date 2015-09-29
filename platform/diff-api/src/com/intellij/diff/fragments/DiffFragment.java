@@ -15,6 +15,9 @@
  */
 package com.intellij.diff.fragments;
 
+/**
+ * Modified part of the text
+ */
 public interface DiffFragment {
   int getStartOffset1();
 

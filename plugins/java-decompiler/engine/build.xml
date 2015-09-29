@@ -46,7 +46,7 @@
   </target>
 
   <target name="test" depends="init,test-compile">
-    <junit printsummary="true" failureproperty="tests.failed">
+    <junit printsummary="true" failureproperty="tests.failed" fork="true">
       <classpath path="${test-out}:${out}"/>
       <classpath refid="junit"/>
       <batchtest>

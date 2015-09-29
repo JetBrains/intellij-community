@@ -118,7 +118,7 @@ public class PyCharmEduInitialConfigurator {
                                                                              "Goto Error/Bookmark Actions", "GoToEditPointGroup",
                                                                              "Change Navigation Actions", "Method Navigation Actions",
                                                                              "EvaluateExpression", "Pause", "ViewBreakpoints",
-                                                                             "XDebugger.MuteBreakpoints");
+                                                                             "XDebugger.MuteBreakpoints", "SaveAs");
 
   public static class First {
 
@@ -140,6 +140,7 @@ public class PyCharmEduInitialConfigurator {
       patchMainMenu();
       uiSettings.SHOW_NAVIGATION_BAR = false;
       propertiesComponent.setValue(CONFIGURED_V1, true);
+      propertiesComponent.setValue("ShowDocumentationInToolWindow", true);
     }
 
     if (!propertiesComponent.getBoolean(CONFIGURED)) {

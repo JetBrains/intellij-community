@@ -19,8 +19,10 @@ import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -158,7 +160,12 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   private void test() {
     myTestURL = getCurrentUrlText();
-    boolean testResult = test(myTestURL);
+    boolean testResult = ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Boolean, RuntimeException>() {
+      @Override
+      public Boolean compute() {
+        return test(myTestURL);
+      }
+    }, DvcsBundle.message("clone.testing", myTestURL), true, myProject);
 
     if (testResult) {
       Messages.showInfoMessage(myTestButton, DvcsBundle.message("clone.test.success.message", myTestURL),

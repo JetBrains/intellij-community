@@ -47,7 +47,7 @@ final class SwitchManagerAppComponent extends AnActionListener.Adapter implement
   @Override
   public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
     Project project = event.getProject();
-    if (project != null && !project.isDefault() && !switchActions.contains(action)) {
+    if (project != null && !project.isDisposed() && !project.isDefault() && !switchActions.contains(action)) {
       SwitchManager.getInstance(project).disposeCurrentSession(false);
     }
   }

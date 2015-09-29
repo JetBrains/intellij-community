@@ -78,17 +78,22 @@ class AnchorElementInfo extends SelfElementInfo {
 
     PsiFile file = restoreFile();
     if (file == null) return null;
-    PsiElement anchor = file.findElementAt(psiRange.getStartOffset());
+    PsiElement anchor = findElementInside(file, psiRange.getStartOffset(), psiRange.getEndOffset(), myType, myLanguage);
     if (anchor == null) return null;
 
     TextRange range = anchor.getTextRange();
-    if (range.getStartOffset() != psiRange.getStartOffset() || range.getEndOffset() != psiRange.getEndOffset()) return null;
+    if (range == null || range.getStartOffset() != psiRange.getStartOffset() || range.getEndOffset() != psiRange.getEndOffset()) return null;
 
+    return restoreFromAnchor(anchor);
+  }
+
+  @Nullable
+  static PsiElement restoreFromAnchor(PsiElement anchor) {
     for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensions()) {
       final PsiElement element = provider.restoreElement(anchor);
       if (element != null) return element;
     }
-    return null;
+    return anchor;
   }
 
   @Override
@@ -121,9 +126,11 @@ class AnchorElementInfo extends SelfElementInfo {
     Document document = getDocumentToSynchronize();
     if (element != null && document != null) {
       // switch to tree
-      myStubElementTypeAndId = pack(-1, null);
       PsiElement anchor = AnchorElementInfoFactory.getAnchor(element);
-      setRange((anchor == null ? element : anchor).getTextRange());
+      if (anchor == null) anchor = element;
+      myType = anchor.getClass();
+      setRange(anchor.getTextRange());
+      myStubElementTypeAndId = pack(-1, null);
     }
   }
 

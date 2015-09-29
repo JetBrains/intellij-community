@@ -61,6 +61,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
@@ -182,6 +184,18 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
     finally {
       setLanguageLevel(null);
+    }
+  }
+
+  protected void runWithDocStringFormat(@NotNull DocStringFormat format, @NotNull Runnable runnable) {
+    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
+    final DocStringFormat oldFormat = settings.getFormat();
+    settings.setFormat(format);
+    try {
+      runnable.run();
+    }
+    finally {
+      settings.setFormat(oldFormat);
     }
   }
 
@@ -418,6 +432,12 @@ public abstract class PyTestCase extends UsefulTestCase {
   @NotNull
   protected CodeStyleSettings getCodeStyleSettings() {
     return CodeStyleSettingsManager.getSettings(myFixture.getProject());
+  }
+
+  @NotNull
+  protected CommonCodeStyleSettings.IndentOptions getIndentOptions() {
+    //noinspection ConstantConditions
+    return getCommonCodeStyleSettings().getIndentOptions();
   }
 }
 

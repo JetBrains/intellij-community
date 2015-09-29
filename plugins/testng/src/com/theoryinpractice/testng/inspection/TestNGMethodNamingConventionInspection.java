@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,18 +38,9 @@ public class TestNGMethodNamingConventionInspection extends ConventionInspection
     return "TestNG test method naming convention";
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
-    final String methodName = (String)infos[0];
-    final int length = methodName.length();
-    if (length < getMinLength()) {
-      return "TestNG test method name <code>#ref</code> is too short (" + length + " < " + getMinLength() + ") #loc";
-    }
-    else if (length > getMaxLength()) {
-      return "TestNG test method name <code>#ref</code> is too long (" + length + " > " + getMaxLength() + ") #loc";
-    }
-    return "JUnit4 test method name <code>#ref</code> doesn't match regex '{0}' #loc";
+  protected String getElementDescription() {
+    return "TestNG test method";
   }
 
   @Override

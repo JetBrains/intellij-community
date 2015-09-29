@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -206,6 +206,11 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       myScope = xmlFile.getResolveScope();
     }
 
+    @Nullable
+    private PsiClass findClass(@NotNull String fqn) {
+      return ClassUtil.findPsiClass(myPsiManager, fqn, null, true, myScope);
+    }
+
     public boolean process(ComponentType type, XmlTag component, @Nullable XmlTagValue impl, @Nullable XmlTagValue intf) {
       if (impl == null) {
         addProblem(component,
@@ -216,10 +221,10 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
         PsiClass intfClass = null;
         if (intf != null) {
           intfName = intf.getTrimmedText();
-          intfClass = JavaPsiFacade.getInstance(myPsiManager.getProject()).findClass(intfName, myScope);
+          intfClass = findClass(intfName);
         }
         final String implClassName = impl.getTrimmedText();
-        final PsiClass implClass = JavaPsiFacade.getInstance(myPsiManager.getProject()).findClass(implClassName, myScope);
+        final PsiClass implClass = findClass(implClassName);
         if (implClass == null) {
           addProblem(impl,
                   DevKitBundle.message("inspections.registration.problems.cannot.resolve.class",
@@ -304,7 +309,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
         final PsiElement token = getAttValueToken(attribute);
         if (token != null) {
           final String actionClassName = attribute.getValue().trim();
-          final PsiClass actionClass = ClassUtil.findPsiClass(myPsiManager, actionClassName, null, true,  myScope);
+          final PsiClass actionClass = findClass(actionClassName);
           if (actionClass == null) {
             addProblem(token,
                     DevKitBundle.message("inspections.registration.problems.cannot.resolve.class",
@@ -313,7 +318,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
               .createCreateClassOrInterfaceFix(token, actionClassName, true, AnAction.class.getName())));
           } else {
             if (!type.isOfType(actionClass)) {
-              final PsiClass psiClass = JavaPsiFacade.getInstance(myPsiManager.getProject()).findClass(type.myClassName, myScope);
+              final PsiClass psiClass = findClass(type.myClassName);
               if (psiClass != null && !actionClass.isInheritor(psiClass, true)) {
                 addProblem(token,
                         DevKitBundle.message("inspections.registration.problems.action.incompatible.class", type.myClassName),

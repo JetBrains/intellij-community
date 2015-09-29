@@ -59,5 +59,5 @@ class ReadOnlySourcesManager(private val settings: IcsSettings, public val rootD
     _repositories = null
   }
 
-  TestOnly fun sourceToDir(source: ReadonlySource) = File(rootDir, source.path!!)
+  @TestOnly fun sourceToDir(source: ReadonlySource) = File(rootDir, source.path!!)
 }

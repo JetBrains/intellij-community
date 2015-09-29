@@ -25,7 +25,8 @@ import com.intellij.openapi.externalSystem.model.project.ExternalModuleBuildClas
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildClasspathPojo;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -52,7 +53,7 @@ import java.util.*;
  * @since 8/27/13
  */
 @Order(ExternalSystemConstants.UNORDERED)
-public class BuildClasspathModuleGradleDataService implements ProjectDataService<BuildScriptClasspathData, Module> {
+public class BuildClasspathModuleGradleDataService extends AbstractProjectDataService<BuildScriptClasspathData, Module> {
 
   private static final Logger LOG = Logger.getInstance(BuildClasspathModuleGradleDataService.class);
 
@@ -64,8 +65,9 @@ public class BuildClasspathModuleGradleDataService implements ProjectDataService
 
   @Override
   public void importData(@NotNull final Collection<DataNode<BuildScriptClasspathData>> toImport,
+                         @Nullable ProjectData projectData,
                          @NotNull final Project project,
-                         boolean synchronous) {
+                         @NotNull IdeModifiableModelsProvider modelsProvider) {
     if (toImport.isEmpty()) {
       return;
     }
@@ -155,9 +157,5 @@ public class BuildClasspathModuleGradleDataService implements ProjectDataService
     }
 
     GradleBuildClasspathManager.getInstance(project).reload();
-  }
-
-  @Override
-  public void removeData(@NotNull Collection<? extends Module> toRemove, @NotNull Project project, boolean synchronous) {
   }
 }

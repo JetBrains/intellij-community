@@ -41,6 +41,7 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -486,6 +487,23 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       setBorder(BorderFactory.createEmptyBorder(1, 10, 3, 10));
     }
 
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new MyAccessibleContext();
+      }
+      return accessibleContext;
+    }
+
+    // TODO: consider making MyRenderer a subclass of SimpleColoredComponent.
+    // This should eliminate the need to add this accessibility stuff.
+    private class MyAccessibleContext extends JPanel.AccessibleJPanel {
+      @Override
+      public String getAccessibleName() {
+        return myTextLabel.getText();
+      }
+    }
+
     public Component getTreeCellRendererComponent(JTree tree,
                                                   Object value,
                                                   boolean selected,
@@ -555,12 +573,12 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       }
       // configure node icon
       Icon nodeIcon = null;
-      if (node != null) {
-        if (0 == node.getChildCount()) {
+      if (value instanceof DefaultMutableTreeNode) {
+        DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
+        if (0 == treeNode.getChildCount()) {
           nodeIcon = myTree.getEmptyHandle();
         }
-        else if (value instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
+        else {
           nodeIcon = myTree.isExpanded(new TreePath(treeNode.getPath()))
                      ? myTree.getExpandedHandle()
                      : myTree.getCollapsedHandle();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.CompilerTester;
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -70,16 +67,10 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     }
     myModuleOutputDir = new File(ourOutputRoot, PathUtil.getFileName(getTestAppPath()));
     myChecker = initOutputChecker();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
-      public void run() {
-        try {
-          ExecutionTestCase.super.setUp();
-        }
-        catch (Throwable e) {
-          e.printStackTrace();
-          assertTrue(false);
-        }
+      public void run() throws Throwable {
+        ExecutionTestCase.super.setUp();
       }
     });
     if (!myModuleOutputDir.exists()) {
@@ -129,7 +120,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
   }
 
   @Override
-  protected void runBareRunnable(Runnable runnable) throws Throwable {
+  protected void runBareRunnable(ThrowableRunnable<Throwable> runnable) throws Throwable {
     runnable.run();
   }
 
@@ -144,15 +135,10 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     if (myCompilerTester != null) {
       myCompilerTester.tearDown();
     }
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
-      public void run() {
-        try {
-          ExecutionTestCase.super.tearDown();
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
+      public void run() throws Throwable {
+        ExecutionTestCase.super.tearDown();
       }
     });
     //myChecker.checkValid(getTestProjectJdk());

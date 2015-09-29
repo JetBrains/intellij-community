@@ -42,7 +42,7 @@ public abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointM
     override fun equals(b1: T, b2: T) = b1.target.javaClass == b2.target.javaClass && b1.target == b2.target && b1.line == b2.line && b1.column == b2.column && StringUtil.equals(b1.condition, b2.condition)
   })
 
-  protected val dispatcher: EventDispatcher<BreakpointManager.BreakpointListener> = EventDispatcher.create(javaClass<BreakpointManager.BreakpointListener>())
+  protected val dispatcher: EventDispatcher<BreakpointManager.BreakpointListener> = EventDispatcher.create(BreakpointManager.BreakpointListener::class.java)
 
   protected abstract fun createBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean): T
 
@@ -57,13 +57,13 @@ public abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointM
 
     breakpoints.add(breakpoint)
     if (enabled) {
-      doSetBreakpoint(target, breakpoint).rejected { dispatcher.getMulticaster().errorOccurred(breakpoint, it.getMessage() ?: it.toString()) }
+      doSetBreakpoint(target, breakpoint).rejected { dispatcher.multicaster.errorOccurred(breakpoint, it.getMessage() ?: it.toString()) }
     }
     return breakpoint
   }
 
   override fun remove(breakpoint: Breakpoint): Promise<*> {
-    @suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST")
     val b = breakpoint as T
     val existed = breakpoints.remove(b)
     if (existed) {
@@ -93,11 +93,11 @@ public abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointM
 
   protected fun notifyBreakpointResolvedListener(breakpoint: T) {
     if (breakpoint.isResolved) {
-      dispatcher.getMulticaster().resolved(breakpoint)
+      dispatcher.multicaster.resolved(breakpoint)
     }
   }
 
-  @suppress("UNCHECKED_CAST")
+  @Suppress("UNCHECKED_CAST")
   override fun flush(breakpoint: Breakpoint) = (breakpoint as T).flush(this)
 
   override fun enableBreakpoints(enabled: Boolean): Promise<*> = RejectedPromise<Any?>("Unsupported")

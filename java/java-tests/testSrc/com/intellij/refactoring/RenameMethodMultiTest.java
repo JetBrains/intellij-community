@@ -94,6 +94,10 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
     doAutomaticRenameMethod("p.Foo", "void foo()", "bar");
   }
 
+  public void testOnlyChildMethod() throws Exception {
+    doTest("p.Foo", "void foo()", "bar");
+  }
+
   private void doTest(final String methodSignature, final String newName) throws Exception {
     doTest(getTestName(false), methodSignature, newName);
   }

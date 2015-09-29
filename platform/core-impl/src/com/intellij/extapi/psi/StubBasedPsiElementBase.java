@@ -171,6 +171,12 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
         break;
       }
     }
+    StubElement eachStub = myStub;
+    while (eachStub != null) {
+      message += "\n each stub " + (eachStub instanceof PsiFileStubImpl ? ((PsiFileStubImpl)eachStub).getDiagnostics() : eachStub);
+      eachStub = eachStub.getParentStub();
+    }
+
     if (ourTraceStubAstBinding) {
       message += dumpCreationTraces(treeElement);
     }

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.StatementEffectFunctionCallQuickFix;
 import com.jetbrains.python.inspections.quickfix.StatementEffectIntroduceVariableQuickFix;
 import com.jetbrains.python.psi.*;
@@ -148,6 +149,10 @@ public class PyStatementEffectInspection extends PyInspection {
             return true;
           }
         }
+      }
+      else if (expression instanceof PyPrefixExpression) {
+        final PyPrefixExpression prefixExpr = (PyPrefixExpression)expression;
+        return prefixExpr.getOperator() == PyTokenTypes.AWAIT_KEYWORD;
       }
       return false;
     }

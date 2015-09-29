@@ -27,6 +27,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -289,4 +293,14 @@ public abstract class CompilerManager {
   public abstract void setValidationEnabled(ModuleType moduleType, boolean enabled);
 
   public abstract boolean isValidationEnabled(Module moduleType);
+
+  public abstract Collection<ClassObject> compileJavaCode(List<String> options,
+                                                          Collection<File> platformCp,
+                                                          Collection<File> classpath,
+                                                          Collection<File> sourcePath,
+                                                          Collection<File> files,
+                                                          File outputDir) throws IOException, CompilationException;
+
+  @Nullable
+  public abstract File getJavacCompilerWorkingDir();
 }

@@ -57,8 +57,8 @@ public final class EditorUtil {
    * @return true if the editor is in fact an ordinary file editor;
    * false if the editor is part of EditorTextField, CommitMessage and etc.
    */
-  public static boolean isRealFileEditor(@NotNull Editor editor) {
-    return TextEditorProvider.getInstance().getTextEditor(editor) instanceof TextEditorImpl;
+  public static boolean isRealFileEditor(@Nullable Editor editor) {
+    return editor != null && TextEditorProvider.getInstance().getTextEditor(editor) instanceof TextEditorImpl;
   }
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {

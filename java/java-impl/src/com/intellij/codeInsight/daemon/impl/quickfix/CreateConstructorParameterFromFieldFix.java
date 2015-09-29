@@ -57,19 +57,21 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
 
   private final SmartPsiElementPointer<PsiField> myField;
   private final PsiClass myClass;
+  private int myConstructorsLength;
 
   public CreateConstructorParameterFromFieldFix(@NotNull PsiField field) {
     myClass = field.getContainingClass();
     myField = SmartPointerManager.getInstance(field.getProject()).createSmartPsiElementPointer(field);
     if (myClass != null) {
       getFieldsToFix().add(myField);
+      myConstructorsLength = myClass.getConstructors().length;
     }
   }
 
   @Override
   @NotNull
   public String getText() {
-    if (getFieldsToFix().size() > 1 && myClass.getConstructors().length <= 1) return "Add constructor parameters";
+    if (getFieldsToFix().size() > 1 && myConstructorsLength <= 1) return "Add constructor parameters";
     return QuickFixBundle.message("add.constructor.parameter.name");
   }
 
@@ -81,7 +83,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return isAvailable(getField());
+    return (myClass == null || myClass.isValid()) && isAvailable(getField());
   }
 
   private static boolean isAvailable(PsiField field) {

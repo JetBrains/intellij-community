@@ -16,10 +16,7 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerManager;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessAdapter;
-import com.intellij.debugger.engine.SuspendContext;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -96,7 +93,7 @@ public class BatchEvaluator {
       }
 
       if (batchEvaluatorClass != null) {
-        Method constructor = batchEvaluatorClass.concreteMethodByName("<init>", "()V");
+        Method constructor = batchEvaluatorClass.concreteMethodByName(JVMNameUtil.CONSTRUCTOR_NAME, "()V");
         if(constructor != null){
           ObjectReference evaluator = null;
           try {

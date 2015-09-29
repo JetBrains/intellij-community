@@ -36,7 +36,7 @@ public class StudyInstructionPainter extends EditorEmptyTextPainter {
 
     UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.5f);
 
-    painter.appendLine("Educational Edition").underlined(new JBColor(Gray._150, Gray._180));
+    painter.appendLine("PyCharm Edu").underlined(new JBColor(Gray._150, Gray._180));
     addAction(painter, "Navigate to the next answer placeholder", StudyNextWindowAction.ACTION_ID, StudyNextWindowAction.SHORTCUT2, true);
     String shortcut1 = getShortcutText(StudyPrevWindowAction.ACTION_ID, StudyPrevWindowAction.SHORTCUT, false, false);
     String shortcut2 = getShortcutText(StudyNextWindowAction.ACTION_ID, StudyNextWindowAction.SHORTCUT, false, false);

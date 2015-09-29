@@ -75,4 +75,9 @@ public class CCDirectoryNode extends PsiDirectoryNode {
     }
     return 0;
   }
+
+  @Override
+  public String getNavigateActionText(boolean focusEditor) {
+    return null;
+  }
 }

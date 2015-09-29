@@ -54,6 +54,7 @@ import java.util.List;
  *         Date: 6/15/11
  *         Time: 5:36 PM
  */
+@Deprecated
 public class VcsChangeDetailsManager {
   private final List<VcsChangeDetailsProvider> myProviders = new ArrayList<VcsChangeDetailsProvider>();
   private final List<VcsChangeDetailsProvider> myDedicatedList;

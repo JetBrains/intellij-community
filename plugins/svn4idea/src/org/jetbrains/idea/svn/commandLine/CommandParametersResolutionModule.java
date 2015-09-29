@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,11 +68,11 @@ public class CommandParametersResolutionModule extends BaseCommandRuntimeModule 
     // TODO: Do we really need search existing parent - or just take parent directory if target is file???
     workingDirectory = CommandUtil.findExistingParent(workingDirectory);
 
-    if (workingDirectory == null) {
-      workingDirectory =
-        !myVcs.getProject().isDefault() ? VfsUtilCore.virtualToIoFile(myVcs.getProject().getBaseDir()) : CommandUtil.getHomeDirectory();
-    }
+    return workingDirectory != null ? workingDirectory : getDefaultWorkingDirectory(myVcs.getProject());
+  }
 
-    return workingDirectory;
+  @NotNull
+  public static File getDefaultWorkingDirectory(@NotNull Project project) {
+    return !project.isDefault() ? VfsUtilCore.virtualToIoFile(project.getBaseDir()) : CommandUtil.getHomeDirectory();
   }
 }

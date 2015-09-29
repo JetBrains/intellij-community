@@ -166,7 +166,8 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
             if (branching) {
               RichControlFlow richControlFlow = new RichControlFlow(graph, dfs);
               if (richControlFlow.reducible()) {
-                processBranchingMethod(method, methodNode, richControlFlow, argumentTypes, isReferenceResult, isInterestingResult, stable, jsr, equations);
+                NegationAnalysis negated = tryNegation(method, argumentTypes, graph, isBooleanResult, dfs, jsr);
+                processBranchingMethod(method, methodNode, richControlFlow, argumentTypes, isReferenceResult, isBooleanResult, stable, jsr, equations, negated);
                 return Pair.create(primaryKey, equations);
               }
               LOG.debug(method + ": CFG is not reducible");
@@ -190,15 +191,107 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
         }
       }
 
+      private NegationAnalysis tryNegation(final Method method,
+                                           final Type[] argumentTypes,
+                                           final ControlFlowGraph graph,
+                                           final boolean isBooleanResult,
+                                           final DFSTree dfs,
+                                           final boolean jsr) throws AnalyzerException {
+
+        class Util {
+          boolean isMethodCall(int opCode) {
+            return opCode == Opcodes.INVOKESTATIC ||
+                   opCode == Opcodes.INVOKESPECIAL ||
+                   opCode == Opcodes.INVOKEVIRTUAL ||
+                   opCode == Opcodes.INVOKEINTERFACE;
+          }
+
+          boolean singleIfBranch() {
+            int branch = 0;
+
+            for (int i = 0; i < graph.transitions.length; i++) {
+              int[] transition = graph.transitions[i];
+              if (transition.length == 2) {
+                branch++;
+                int opCode = graph.methodNode.instructions.get(i).getOpcode();
+                boolean isIfInsn = opCode == Opcodes.IFEQ || opCode == Opcodes.IFNE;
+                if (!isIfInsn) {
+                  return false;
+                }
+              }
+              if (branch > 1)
+                return false;
+            }
+            return branch == 1;
+          }
+
+          boolean singleMethodCall() {
+            int callCount = 0;
+            for (int i = 0; i < graph.transitions.length; i++) {
+              if (isMethodCall(graph.methodNode.instructions.get(i).getOpcode())) {
+                callCount++;
+                if (callCount > 1) {
+                  return false;
+                }
+              }
+            }
+            return callCount == 1;
+          }
+
+          public boolean booleanConstResult() {
+            try {
+              final boolean[] origins =
+                OriginsAnalysis.resultOrigins(
+                  leakingParametersAndFrames(method, graph.methodNode, argumentTypes, jsr).frames,
+                  graph.methodNode.instructions,
+                  graph);
+
+              for (int i = 0; i < origins.length; i++) {
+                if (origins[i]) {
+                  int opCode = graph.methodNode.instructions.get(i).getOpcode();
+                  boolean isBooleanConst = opCode == Opcodes.ICONST_0 || opCode == Opcodes.ICONST_1;
+                  if (!isBooleanConst) {
+                    return false;
+                  }
+                }
+              }
+
+              return true;
+            }
+            catch (AnalyzerException ignore) {
+            }
+            return false;
+          }
+        }
+
+        if (graph.methodNode.instructions.size() < 20 && isBooleanResult && dfs.back.isEmpty() && !jsr) {
+          Util util = new Util();
+          if (util.singleIfBranch() && util.singleMethodCall() && util.booleanConstResult()) {
+            NegationAnalysis analyzer = new NegationAnalysis(method, graph);
+            try {
+              analyzer.analyze();
+              return analyzer;
+            }
+            catch (NegationAnalysisFailure ignore) {
+              return null;
+            }
+          }
+        }
+
+        return null;
+      }
+
       private void processBranchingMethod(final Method method,
                                           final MethodNode methodNode,
                                           final RichControlFlow richControlFlow,
                                           Type[] argumentTypes,
                                           boolean isReferenceResult,
-                                          boolean isInterestingResult,
+                                          boolean isBooleanResult,
                                           final boolean stable,
                                           boolean jsr,
-                                          List<Equation<Key, Value>> result) throws AnalyzerException {
+                                          List<Equation<Key, Value>> result,
+                                          NegationAnalysis negatedAnalysis) throws AnalyzerException {
+        boolean isInterestingResult = isBooleanResult || isReferenceResult;
         boolean maybeLeakingParameter = isInterestingResult;
         for (Type argType : argumentTypes) {
           if (ASMUtils.isReferenceType(argType)) {
@@ -268,9 +361,19 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
                 }
                 else {
                   // may be null on some branch, running "null->..." analysis
-                  result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.Null), origins, stable, sharedPendingStates).analyze());
+                  if (isBooleanResult && negatedAnalysis != null) {
+                      result.add(negatedAnalysis.contractEquation(i, Value.Null, stable));
+                  }
+                  else {
+                    result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.Null), origins, stable, sharedPendingStates).analyze());
+                  }
                 }
-                result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.NotNull), origins, stable, sharedPendingStates).analyze());
+                if (isBooleanResult && negatedAnalysis != null) {
+                  result.add(negatedAnalysis.contractEquation(i, Value.NotNull, stable));
+                }
+                else {
+                  result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.NotNull), origins, stable, sharedPendingStates).analyze());
+                }
               }
               else {
                 // parameter is not leaking, so a contract is the same as for the whole method

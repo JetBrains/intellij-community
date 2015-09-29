@@ -30,7 +30,6 @@
 
 1.3 => lib/idea_rt.jar
 
-1.7 => lib/fxHelpBrowser.jar
 1.7 => lib/optimizedFileManager.jar
 
 1.5 => plugins/Groovy/lib/groovy_rt.jar

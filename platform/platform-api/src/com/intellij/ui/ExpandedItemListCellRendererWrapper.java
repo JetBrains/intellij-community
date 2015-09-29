@@ -36,7 +36,7 @@ public class ExpandedItemListCellRendererWrapper implements ListCellRenderer {
     Component result = myWrappee.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     if (!myHandler.getExpandedItems().contains(index)) return result;
     Rectangle bounds = result.getBounds();
-    ExpandedItemRendererComponentWrapper wrapper = new ExpandedItemRendererComponentWrapper(result);
+    ExpandedItemRendererComponentWrapper wrapper = ExpandedItemRendererComponentWrapper.wrap(result);
     if (UIUtil.getClientProperty(list, ExpandableItemsHandler.EXPANDED_RENDERER) == Boolean.TRUE) {
       JComponent res = ObjectUtils.tryCast(result, JComponent.class);
       if (res != null && UIUtil.getClientProperty(res, ExpandableItemsHandler.USE_RENDERER_BOUNDS) == Boolean.TRUE) {

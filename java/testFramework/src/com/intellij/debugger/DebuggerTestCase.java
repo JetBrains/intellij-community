@@ -61,6 +61,7 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.sun.jdi.Location;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -419,6 +420,17 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
   public DebuggerContextImpl createDebuggerContext(final SuspendContextImpl suspendContext) {
     return createDebuggerContext(suspendContext, suspendContext.getFrameProxy());
+  }
+
+  protected void printLocation(SuspendContextImpl suspendContext) {
+    try {
+      Location location = suspendContext.getFrameProxy().location();
+      String message = "paused at " + location.sourcePath() + ":" + location.lineNumber();
+      println(message, ProcessOutputTypes.SYSTEM);
+    }
+    catch (Throwable e) {
+      addException(e);
+    }
   }
 
   protected void createBreakpointInHelloWorld() {

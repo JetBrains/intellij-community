@@ -18,31 +18,27 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.LineNumberListener;
-import com.intellij.util.ui.TextTransferable;
+import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.util.ui.TextTransferable;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class CopyRevisionNumberFromAnnotateAction extends AnAction implements LineNumberListener {
-  private final UpToDateLineNumberProvider myGetUpToDateLineNumber;
+public class CopyRevisionNumberFromAnnotateAction extends AnAction implements UpToDateLineNumberListener {
   private final FileAnnotation myAnnotation;
   private int myLineNumber = -1;
 
-  public CopyRevisionNumberFromAnnotateAction(UpToDateLineNumberProvider getUpToDateLineNumber, FileAnnotation annotation) {
+  public CopyRevisionNumberFromAnnotateAction(FileAnnotation annotation) {
     super("Copy revision number");
-    myGetUpToDateLineNumber = getUpToDateLineNumber;
     myAnnotation = annotation;
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     if (myLineNumber < 0) return;
-    final int corrected = myGetUpToDateLineNumber.getLineNumber(myLineNumber);
-    final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(corrected);
+    final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(myLineNumber);
     if (revisionNumber != null) {
       final String revision = revisionNumber.asString();
       CopyPasteManager.getInstance().setContents(new TextTransferable(revision));
@@ -51,9 +47,7 @@ public class CopyRevisionNumberFromAnnotateAction extends AnAction implements Li
 
   @Override
   public void update(AnActionEvent e) {
-    int corrected = myLineNumber;
-    final boolean enabled = myLineNumber >= 0 && (corrected = myGetUpToDateLineNumber.getLineNumber(myLineNumber)) >= 0 &&
-                            myAnnotation.getLineRevisionNumber(corrected) != null;
+    final boolean enabled = myLineNumber >= 0 && myAnnotation.getLineRevisionNumber(myLineNumber) != null;
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled);
   }

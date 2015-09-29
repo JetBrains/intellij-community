@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Lesson implements StudyItem {
-  @Transient
   public int id;
   @Transient
   public List<Integer> steps;
