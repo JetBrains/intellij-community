@@ -129,7 +129,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   @Nullable
   private static String findExecutable(String condaName, VirtualFile condaFolder) {
     if (condaFolder != null) {
-      final VirtualFile bin = condaFolder.findChild("bin");
+      final VirtualFile bin = condaFolder.findChild(SystemInfo.isWindows ? "Scripts" : "bin");
       if (bin != null) {
         final VirtualFile[] children = bin.getChildren();
         if (children.length == 0) return null;
