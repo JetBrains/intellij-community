@@ -79,9 +79,25 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     return CONDA_CHANNELS;
   }
 
+  public void addChannel(@NotNull final String url) {
+    CONDA_CHANNELS.add(url);
+  }
+
+  public void removeChannel(@NotNull final String url) {
+    if (CONDA_CHANNELS.contains(url)) {
+      CONDA_CHANNELS.remove(url);
+    }
+  }
+
   @Nullable
   public static String getCondaPython() {
     final String condaName = SystemInfo.isWindows ? "python.exe" : "python";
+    return getCondaExecutable(condaName);
+  }
+
+  @Nullable
+  public static String getCondaExecutable() {
+    final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
     return getCondaExecutable(condaName);
   }
 
