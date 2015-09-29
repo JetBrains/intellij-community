@@ -138,7 +138,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
                                                                                                                        workingDir, manager,
                                                                                                                        remoteSdkAdditionalData,
                                                                                                                        pathMapper,
-                                                                                                                       askForSudo);
+                                                                                                                       askForSudo, true);
           }
           catch (InterruptedException e) {
             throw new ExecutionException(e);

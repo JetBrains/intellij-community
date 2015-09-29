@@ -48,5 +48,5 @@ public interface PyRemoteProcessStarterManager {
                                      @Nullable String workingDir,
                                      @NotNull PythonRemoteInterpreterManager manager,
                                      @NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData,
-                                     @NotNull PyRemotePathMapper pathMapper, boolean askForSudo) throws ExecutionException, InterruptedException;
+                                     @NotNull PyRemotePathMapper pathMapper, boolean askForSudo, boolean checkHelpers) throws ExecutionException, InterruptedException;
 }
