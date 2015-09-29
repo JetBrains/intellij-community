@@ -18,6 +18,8 @@ package com.jetbrains.python.refactoring;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
@@ -56,6 +58,14 @@ public abstract class PyBaseRefactoringAction extends BaseRefactoringAction {
 
   @Override
   protected boolean isAvailableForFile(PsiFile file) {
-    return isAvailableForLanguage(file.getLanguage());
+    return isAvailableForLanguage(file.getLanguage()) && !isLibraryFile(file);
+  }
+
+  private static boolean isLibraryFile(@NotNull PsiFile file) {
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile != null && ProjectRootManager.getInstance(file.getProject()).getFileIndex().isInLibraryClasses(virtualFile)) {
+      return true;
+    }
+    return false;
   }
 }
