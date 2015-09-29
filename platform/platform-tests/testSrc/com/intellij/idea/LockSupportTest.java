@@ -81,7 +81,7 @@ public class LockSupportTest {
 
   @Test(timeout = 30000)
   public void testTwoLocks() {
-    List<SocketLock> toClose = new ArrayList<SocketLock>();
+    List<SocketLock> toClose = new ArrayList<>();
     try {
       assertThat(createLock(toClose, myTempDir, "1", "1-").lock(), equalTo(SocketLock.ActivateStatus.NO_INSTANCE));
       assertThat(createLock(toClose, myTempDir, "1.1", "1-1").lock(), equalTo(SocketLock.ActivateStatus.NO_INSTANCE));
@@ -92,9 +92,7 @@ public class LockSupportTest {
       assertThat(createLock(toClose, myTempDir, "1.1", "1-1").lock(), equalTo(SocketLock.ActivateStatus.ACTIVATED));
     }
     finally {
-      for (SocketLock lock : toClose) {
-        lock.dispose();
-      }
+      toClose.forEach(SocketLock::dispose);
     }
   }
 
