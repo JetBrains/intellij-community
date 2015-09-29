@@ -15,10 +15,16 @@
  */
 package com.jetbrains.python.packaging.ui;
 
+import com.google.common.collect.Lists;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
-import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageVersionComparator;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.PyCondaPackageService;
@@ -29,7 +35,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class PyCondaManagementService extends PyPackageManagementService {
-
+  private static final Logger LOG = Logger.getInstance(PyCondaManagementService.class);
   public PyCondaManagementService(@NotNull final Project project, @NotNull final Sdk sdk) {
     super(project, sdk);
   }
@@ -60,6 +66,53 @@ public class PyCondaManagementService extends PyPackageManagementService {
   }
 
   @Override
+  public void addRepository(String repositoryUrl) {
+    final String conda = PyCondaPackageService.getCondaExecutable();
+    final ArrayList<String> parameters = Lists.newArrayList(conda, "config", "--add", "channels",  repositoryUrl, "--force");
+    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
+
+    try {
+      final Process process = commandLine.createProcess();
+      final CapturingProcessHandler handler = new CapturingProcessHandler(process);
+      final ProcessOutput result = handler.runProcess();
+      final int exitCode = result.getExitCode();
+      if (exitCode != 0) {
+        final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr()) ?
+                               "Permission denied" : "Non-zero exit code";
+        LOG.warn("Failed to add repository " + message);
+      }
+      PyCondaPackageService.getInstance().addChannel(repositoryUrl);
+    }
+    catch (ExecutionException e) {
+      LOG.warn("Failed to add repository");
+    }
+
+  }
+
+  @Override
+  public void removeRepository(String repositoryUrl) {
+    final String conda = PyCondaPackageService.getCondaExecutable();
+    final ArrayList<String> parameters = Lists.newArrayList(conda, "config", "--remove", "channels", repositoryUrl, "--force");
+    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
+
+    try {
+      final Process process = commandLine.createProcess();
+      final CapturingProcessHandler handler = new CapturingProcessHandler(process);
+      final ProcessOutput result = handler.runProcess();
+      final int exitCode = result.getExitCode();
+      if (exitCode != 0) {
+        final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr()) ?
+                               "Permission denied" : "Non-zero exit code";
+        LOG.warn("Failed to remove repository " + message);
+      }
+      PyCondaPackageService.getInstance().removeChannel(repositoryUrl);
+    }
+    catch (ExecutionException e) {
+      LOG.warn("Failed to remove repository");
+    }
+  }
+
+  @Override
   public boolean canInstallToUser() {
     return false;
   }
@@ -71,8 +124,4 @@ public class PyCondaManagementService extends PyPackageManagementService {
     consumer.consume(versions);
   }
 
-  @Override
-  public void uninstallPackages(List<InstalledPackage> installedPackages, Listener listener) {
-    super.uninstallPackages(installedPackages, listener);
-  }
 }

@@ -276,7 +276,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       @Override
       public void computeInReadAction(@NotNull ProgressIndicator indicator) {
         if (!isUpToDate()) {
-          indicator.cancel();
+          scheduleRunActions();
           return;
         }
 

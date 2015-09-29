@@ -5,6 +5,7 @@ import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,12 +25,14 @@ import com.jetbrains.edu.learning.courseFormat.UserTest;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedList;
 import java.util.List;
 
 public class StudyRunAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(StudyRunAction.class.getName());
   public static final String ACTION_ID = "StudyRunAction";
   private ProcessHandler myHandler;
+  private List<ProcessListener> myProcessListeners = new LinkedList<ProcessListener>();
 
   public StudyRunAction() {
     super("Run File With Tests", "Run your code with tests", AllIcons.General.Run);
@@ -75,6 +78,11 @@ public class StudyRunAction extends DumbAwareAction {
         return;
       }
       myHandler = new OSProcessHandler(process);
+
+      for (ProcessListener processListener : myProcessListeners) {
+        myHandler.addProcessListener(processListener);
+      }
+
       final RunContentExecutor executor = StudyUtils.getExecutor(project, currentTask, myHandler);
       if (executor != null) {
         Disposer.register(project, executor);
@@ -82,6 +90,14 @@ public class StudyRunAction extends DumbAwareAction {
       }
       EduUtils.synchronize();
     }
+  }
+
+  public void addProcessListener(@NotNull final ProcessListener processListener) {
+    myProcessListeners.add(processListener);
+  }
+
+  public void removeProcessListener(@NotNull final ProcessListener processListener) {
+    myProcessListeners.remove(processListener);
   }
 
   public void actionPerformed(@NotNull AnActionEvent e) {

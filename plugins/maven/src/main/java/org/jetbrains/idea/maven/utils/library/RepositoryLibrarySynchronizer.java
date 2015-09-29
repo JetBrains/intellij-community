@@ -41,6 +41,9 @@ import java.util.Collection;
 public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware{
   private static boolean isLibraryNeedToBeReloaded(LibraryEx library, RepositoryLibraryProperties properties) {
     String version = properties.getVersion();
+    if (version == null) {
+      return false;
+    }
     if (version.equals(RepositoryUtils.LatestVersionId)
         || version.equals(RepositoryUtils.ReleaseVersionId)
         || version.endsWith(RepositoryUtils.SnapshotVersionSuffix)) {
@@ -95,8 +98,9 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
                   return false;
                 }
                 LibraryEx libraryEx = (LibraryEx)library;
-                return libraryEx.getKind() == RepositoryLibraryType.REPOSITORY_LIBRARY_KIND &&
-                       libraryEx.getProperties() instanceof RepositoryLibraryProperties;
+                return libraryEx.getKind() == RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
+                       && libraryEx.getProperties() instanceof RepositoryLibraryProperties
+                       && isLibraryNeedToBeReloaded(libraryEx, (RepositoryLibraryProperties)libraryEx.getProperties());
               }
             });
             for (Library library : libraries) {

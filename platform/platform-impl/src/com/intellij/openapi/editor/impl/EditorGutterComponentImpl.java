@@ -80,6 +80,36 @@ import java.awt.geom.AffineTransform;
 import java.util.*;
 import java.util.List;
 
+/**
+ * Gutter content (left to right):
+ * <ul>
+ *   <li>GAP_BETWEEN_AREAS</li>
+ *   <li>Line numbers area
+ *     <ul>
+ *       <li>Line numbers</li>
+ *       <li>GAP_BETWEEN_AREAS</li>
+ *       <li>Additional line numbers (used in diff)</li>
+ *     </ul>
+ *   </li>
+ *   <li>GAP_BETWEEN_AREAS</li>
+ *   <li>Annotations area
+ *     <ul>
+ *       <li>Annotations</li>
+ *       <li>Annotations extra (used in distraction free mode)</li>
+ *     </ul>
+ *   </li>
+ *   <li>GAP_BETWEEN_AREAS</li>
+ *   <li>Line markers area
+ *     <ul>
+ *       <li>Left free painters</li>
+ *       <li>Icons</li>
+ *       <li>GAP_BETWEEN_AREAS</li>
+ *       <li>Free painters</li>
+ *     </ul>
+ *   </li>
+ *   <li>Folding area</li>
+ *</ul>
+ */
 class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
   private static final int START_ICON_AREA_WIDTH = 15;

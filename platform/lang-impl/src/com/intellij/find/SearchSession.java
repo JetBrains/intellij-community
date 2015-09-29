@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.util;
+package com.intellij.find;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PlatformIcons;
+import com.intellij.openapi.actionSystem.DataKey;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+public interface SearchSession {
+  DataKey<SearchSession> KEY = DataKey.create("search.replace.session");
+  String INCORRECT_REGEX_MESSAGE = "Incorrect regular expression";
 
-public class HttpUrlCellAppearance extends ValidFileCellAppearance {
-  public HttpUrlCellAppearance(VirtualFile file) {
-    super(file);
-  }
+  @NotNull
+  FindModel getFindModel();
 
-  @Override
-  protected Icon getIcon() {
-    return PlatformIcons.WEB_ICON;
-  }
+  @NotNull
+  SearchReplaceComponent getComponent();
+
+  boolean hasMatches();
+
+  void searchForward();
+
+  void searchBackward();
+
+  void close();
 }

@@ -49,6 +49,7 @@ public class LowMemoryWatcher {
   private static final Runnable ourJanitor = new Runnable() {
     @Override
     public void run() {
+      LOG.info("Low memory signal received.");
       try {
         for (LowMemoryWatcher watcher : ourInstances) {
           try {

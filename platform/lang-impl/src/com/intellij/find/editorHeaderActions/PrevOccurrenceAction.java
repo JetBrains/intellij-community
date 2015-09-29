@@ -15,6 +15,8 @@
  */
 package com.intellij.find.editorHeaderActions;
 
+import com.intellij.find.SearchSession;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -27,8 +29,13 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 
 public final class PrevOccurrenceAction extends PrevNextOccurrenceAction {
-  public PrevOccurrenceAction(@NotNull Handler handler) {
-    super(IdeActions.ACTION_PREVIOUS_OCCURENCE, handler);
+  public PrevOccurrenceAction() {
+    super(IdeActions.ACTION_PREVIOUS_OCCURENCE);
+  }
+
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    e.getRequiredData(SearchSession.KEY).searchBackward();
   }
 
   @NotNull

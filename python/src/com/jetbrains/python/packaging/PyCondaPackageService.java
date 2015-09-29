@@ -79,9 +79,25 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     return CONDA_CHANNELS;
   }
 
+  public void addChannel(@NotNull final String url) {
+    CONDA_CHANNELS.add(url);
+  }
+
+  public void removeChannel(@NotNull final String url) {
+    if (CONDA_CHANNELS.contains(url)) {
+      CONDA_CHANNELS.remove(url);
+    }
+  }
+
   @Nullable
   public static String getCondaPython() {
     final String condaName = SystemInfo.isWindows ? "python.exe" : "python";
+    return getCondaExecutable(condaName);
+  }
+
+  @Nullable
+  public static String getCondaExecutable() {
+    final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
     return getCondaExecutable(condaName);
   }
 
@@ -113,11 +129,15 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   @Nullable
   private static String findExecutable(String condaName, VirtualFile condaFolder) {
     if (condaFolder != null) {
-      final VirtualFile bin = condaFolder.findChild("bin");
+      final VirtualFile bin = condaFolder.findChild(SystemInfo.isWindows ? "Scripts" : "bin");
       if (bin != null) {
-        final VirtualFile[] children = bin.getChildren();
-        if (children.length == 0) return null;
-        final String executableFile = PythonSdkType.getExecutablePath(children[0].getPath(), condaName);
+        String directoryPath = bin.getPath();
+        if (!SystemInfo.isWindows) {
+          final VirtualFile[] children = bin.getChildren();
+          if (children.length == 0) return null;
+          directoryPath = children[0].getPath();
+        }
+        final String executableFile = PythonSdkType.getExecutablePath(directoryPath, condaName);
         if (executableFile != null) {
           return executableFile;
         }

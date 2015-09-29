@@ -128,7 +128,7 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
     new LocationNameFieldsBinding(project, myDestination, myName, myInitialPath, "Select Location for Virtual Environment");
   }
 
-  private void setInitialDestination() {
+  protected void setInitialDestination() {
     myInitialPath = "";
 
     final VirtualFile file = VirtualEnvSdkFlavor.getDefaultLocation();

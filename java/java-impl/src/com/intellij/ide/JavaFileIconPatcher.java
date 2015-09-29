@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.ide;
 
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -36,6 +36,7 @@ import javax.swing.*;
  * @author yole
  */
 public class JavaFileIconPatcher implements FileIconPatcher {
+  @Override
   public Icon patchIcon(final Icon baseIcon, final VirtualFile file, final int flags, final Project project) {
     if (project == null) {
       return baseIcon;
@@ -58,7 +59,7 @@ public class JavaFileIconPatcher implements FileIconPatcher {
     }
 
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    if (psiFile instanceof PsiClassOwner && psiFile.getViewProvider().getBaseLanguage() == StdLanguages.JAVA) {
+    if (psiFile instanceof PsiClassOwner && psiFile.getViewProvider().getBaseLanguage() == JavaLanguage.INSTANCE) {
       PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();
       if (classes.length > 0) {
         // prefer icon of the class named after file

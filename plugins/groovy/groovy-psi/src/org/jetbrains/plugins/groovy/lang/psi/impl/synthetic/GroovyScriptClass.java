@@ -194,7 +194,7 @@ public class GroovyScriptClass extends LightElement implements PsiClass, Synthet
     return RecursionManager.doPreventingRecursion(this, false, new Computable<PsiClassType>() {
       @Override
       public PsiClassType compute() {
-        return CachedValuesManager.getCachedValue(myFile, new CachedValueProvider<PsiClassType>() {
+        return CachedValuesManager.getCachedValue(GroovyScriptClass.this, new CachedValueProvider<PsiClassType>() {
           @Nullable
           @Override
           public Result<PsiClassType> compute() {

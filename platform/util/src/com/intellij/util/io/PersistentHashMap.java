@@ -118,7 +118,6 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   private final LowMemoryWatcher myAppendCacheFlusher = LowMemoryWatcher.register(new Runnable() {
     @Override
     public void run() {
-      LOG.info("Low memory signal received. Dropping memory caches...");
       dropMemoryCaches();
     }
   });

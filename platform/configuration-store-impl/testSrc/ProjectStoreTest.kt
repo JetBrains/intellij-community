@@ -25,6 +25,7 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
+import com.intellij.util.PathUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
@@ -64,7 +65,7 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
   }
 }
 
-class ProjectStoreTest {
+internal class ProjectStoreTest {
   companion object {
     @ClassRule val projectRule = ProjectRule()
   }
@@ -76,12 +77,7 @@ class ProjectStoreTest {
 
   @Language("XML")
   private val iprFileContent =
-    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<project version=\"4\">\n" +
-      "  <component name=\"AATestComponent\">\n" +
-      "    <option name=\"value\" value=\"customValue\" />\n" +
-      "  </component>\n" +
-      "</project>"
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"AATestComponent\">\n    <option name=\"value\" value=\"customValue\" />\n  </component>\n</project>"
 
   @State(name = "AATestComponent", storages = arrayOf(Storage(file = StoragePathMacros.PROJECT_FILE)))
   private class TestComponent : PersistentStateComponent<TestState> {
@@ -103,6 +99,8 @@ class ProjectStoreTest {
     }) { project ->
       val testComponent = test(project)
 
+      assertThat(project.basePath).isEqualTo(PathUtil.getParentPath((PathUtil.getParentPath(project.projectFilePath!!))))
+
       // test reload on external change
       val file = File(project.stateStore.stateStorageManager.expandMacros(StoragePathMacros.PROJECT_FILE))
       file.writeText(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
@@ -117,6 +115,8 @@ class ProjectStoreTest {
   @Test fun fileBasedStorage() {
     loadAndUseProject(tempDirManager, { it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path }) { project ->
       test(project)
+
+      assertThat(project.basePath).isEqualTo(PathUtil.getParentPath(project.projectFilePath!!))
     }
   }
 

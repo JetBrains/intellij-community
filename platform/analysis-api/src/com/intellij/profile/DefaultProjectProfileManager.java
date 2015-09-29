@@ -22,8 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.ArrayUtil;
@@ -104,12 +102,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
       final Profile projectProfile = myProfiles.get(profile);
       if (projectProfile != null) {
         Element profileElement = new Element(PROFILE);
-        try {
-          projectProfile.writeExternal(profileElement);
-        }
-        catch (WriteExternalException e) {
-          LOG.error(e);
-        }
+        projectProfile.writeExternal(profileElement);
         boolean hasSmthToSave = sortedProfiles.length > 1 || isCustomProfileUsed();
         if (!hasSmthToSave) {
           for (Element child : profileElement.getChildren()) {
@@ -141,16 +134,12 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     for (Element o : state.getChildren(PROFILE)) {
       Profile profile = myApplicationProfileManager.createProfile();
       profile.setProfileManager(this);
-      try {
-        profile.readExternal(o);
-      }
-      catch (InvalidDataException e) {
-        LOG.error(e);
-      }
+      profile.readExternal(o);
       profile.setProjectLevel(true);
       if (profileKeys.contains(profile.getName())) {
         updateProfile(profile);
-      } else {
+      }
+      else {
         myProfiles.put(profile.getName(), profile);
       }
     }
@@ -250,10 +239,6 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
         myProfilesListener.remove(profilesListener);
       }
     });
-  }
-
-  public void removeProfilesListener(@NotNull ProfileChangeAdapter profilesListener) {
-    myProfilesListener.remove(profilesListener);
   }
 
   public static class ProfileStateSplitter extends MainConfigurationStateSplitter {
