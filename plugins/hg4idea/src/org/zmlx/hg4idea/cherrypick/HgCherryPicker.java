@@ -23,6 +23,8 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
 import org.jetbrains.annotations.NotNull;
@@ -103,17 +105,18 @@ public class HgCherryPicker extends VcsCherryPicker {
   }
 
   @Override
-  public boolean isEnabled(@NotNull VcsLog log, @NotNull List<VcsFullCommitDetails> details) {
-    if (details.isEmpty()) {
+  public boolean isEnabled(@NotNull VcsLog log, @NotNull Map<VirtualFile, List<Hash>> commits) {
+    if (commits.isEmpty()) {
       return false;
     }
 
-    for (VcsFullCommitDetails commit : details) {
-      HgRepository repository = HgUtil.getRepositoryManager(myProject).getRepositoryForRoot(commit.getRoot());
+    for (VirtualFile root: commits.keySet()) {
+      HgRepository repository = HgUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
       if (repository == null) {
         return false;
       }
     }
+
     return true;
   }
 }

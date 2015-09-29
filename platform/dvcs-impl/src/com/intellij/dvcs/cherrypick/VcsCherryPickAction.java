@@ -33,13 +33,11 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import icons.DvcsImplIcons;
 import org.jetbrains.annotations.NotNull;
@@ -102,17 +100,32 @@ public class VcsCherryPickAction extends DumbAwareAction {
       return;
     }
 
-    final List<VcsFullCommitDetails> details = VcsLogUtil.collectFirstPackOfLoadedSelectedDetails(log);
+    List<CommitId> details = VcsLogUtil.collectFirstPack(log.getSelectedCommits(), VcsLogUtil.COMMITS_LIMIT);
+    final Map<VirtualFile, List<Hash>> groupedByRoot = groupByRoot(details);
     VcsCherryPicker enabledCherryPicker = ContainerUtil.find(cherryPickers, new Condition<VcsCherryPicker>() {
       @Override
       public boolean value(VcsCherryPicker picker) {
         //all commits should be from one vcs, if not then all pickers should return false
-        return picker.isEnabled(log, details);
+        return picker.isEnabled(log, groupedByRoot);
       }
     });
     e.getPresentation().setEnabled(enabledCherryPicker != null);
     e.getPresentation().setText(
       enabledCherryPicker == null ? concatActionNamesForAllAvailable(cherryPickers) : enabledCherryPicker.getActionTitle());
+  }
+
+  @NotNull
+  private static Map<VirtualFile, List<Hash>> groupByRoot(@NotNull List<CommitId> details) {
+    Map<VirtualFile, List<Hash>> result = ContainerUtil.newHashMap();
+    for (CommitId commit: details) {
+      List<Hash> hashes = result.get(commit.getRoot());
+      if (hashes == null) {
+        hashes = ContainerUtil.newArrayList();
+        result.put(commit.getRoot(), hashes);
+      }
+      hashes.add(commit.getHash());
+    }
+    return result;
   }
 
   @NotNull

@@ -106,7 +106,7 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
   @Nullable
   private MultiMap<Repo, Hash> groupFirstPackOfCommits(@NotNull Project project, @NotNull VcsLog log) {
     MultiMap<Repo, CommitId> commitIds =
-      groupCommits(project, VcsLogUtil.collectFirstPack(log.getSelectedCommits(), VcsLogUtil.DETAILS_LIMIT),
+      groupCommits(project, VcsLogUtil.collectFirstPack(log.getSelectedCommits(), VcsLogUtil.COMMITS_LIMIT),
                    new Function<CommitId, VirtualFile>() {
                      @Override
                      public VirtualFile fun(CommitId hash) {
