@@ -40,7 +40,7 @@ private fun StateStorage.ExternalizationSession.save() {
 
 private fun StateStorageBase<*>.setStateAndSave(componentName: String, state: String?) {
   var externalizationSession = startExternalization()!!
-  externalizationSession.setState(null, componentName, if (state == null) Element("state") else JDOMUtil.load(state.reader))
+  externalizationSession.setState(null, componentName, if (state == null) Element("state") else JDOMUtil.load(state.reader()))
   externalizationSession.save()
 }
 
