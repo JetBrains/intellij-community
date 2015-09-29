@@ -28,6 +28,11 @@ public class JavaFileStructureHierarchyTest extends JavaFileStructureTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myFixture.copyDirectoryToProject("", "");
+  }
+
+  @Override
+  protected void configureDefault() {
+    super.configureDefault();
     setShowParents(true);
   }
 
