@@ -540,15 +540,7 @@ public abstract class ChooseByNameBase {
                   return; // Allow toolwindows to gain focus (used by QuickDoc shown in a toolwindow)
                 }
 
-                EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-                if (queue instanceof IdeEventQueue) {
-                  if (((IdeEventQueue)queue).wasRootRecentlyClicked(oppositeComponent)) {
-                    Component root = SwingUtilities.getRoot(myTextField);
-                    if (root == null || root.isShowing()) {
-                      hideHint();
-                    }
-                  }
-                }
+                hideHint();
               }
             }
           }, 5);
