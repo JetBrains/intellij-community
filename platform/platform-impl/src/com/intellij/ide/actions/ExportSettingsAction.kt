@@ -42,11 +42,9 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PairProcessor
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.ZipUtil
 import gnu.trove.THashSet
-
 import java.io.*
 import java.util.*
 import java.util.zip.ZipEntry
@@ -71,7 +69,7 @@ private class ExportSettingsAction : AnAction(), DumbAware {
 
     val exportFiles = THashSet(FileUtil.FILE_HASHING_STRATEGY)
     for (markedComponent in markedComponents) {
-      ContainerUtil.addAll<File, File, Set<File>>(exportFiles, *markedComponent.exportFiles)
+      exportFiles.addAll(markedComponent.files)
     }
 
     val saveFile = dialog.exportFile
@@ -120,11 +118,7 @@ private class MyZipOutputStream(out: OutputStream) : ZipOutputStream(out) {
   }
 }
 
-class ExportableComponentItem(private val files: Array<File>, private val name: String, val roamingType: RoamingType) : ExportableComponent {
-  override fun getExportFiles() = files
-
-  override fun getPresentableName() = name
-}
+data class ExportableItem(val files: List<File>, val presentableName: String, val roamingType: RoamingType)
 
 private val LOG = Logger.getInstance(ExportSettingsAction::class.java)
 
@@ -149,11 +143,12 @@ private fun exportInstalledPlugins(zipOut: MyZipOutputStream) {
   }
 }
 
-fun getExportableComponentsMap(onlyExisting: Boolean, computePresentableNames: Boolean, storageManager: StateStorageManager = ApplicationManager.getApplication().stateStore.stateStorageManager): MultiMap<File, ExportableComponent> {
-  val result = MultiMap.createLinkedSet<File, ExportableComponent>()
+fun getExportableComponentsMap(onlyExisting: Boolean, computePresentableNames: Boolean, storageManager: StateStorageManager = ApplicationManager.getApplication().stateStore.stateStorageManager): MultiMap<File, ExportableItem> {
+  val result = MultiMap.createLinkedSet<File, ExportableItem>()
   val processor = { component: ExportableComponent ->
-    for (exportFile in component.exportFiles) {
-      result.putValue(exportFile, component)
+    val item = ExportableItem(component.exportFiles.toList(), component.presentableName, RoamingType.DEFAULT)
+    for (exportFile in item.files) {
+      result.putValue(exportFile, item)
     }
   }
 
@@ -188,16 +183,16 @@ fun getExportableComponentsMap(onlyExisting: Boolean, computePresentableNames: B
         }
 
         val storage = storages[storageIndex]
-        if (storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class.java && storage.scheme == StorageScheme.DEFAULT && !StringUtil.isEmpty(storage.file) && storage.file.startsWith(StoragePathMacros.APP_CONFIG)) {
+        if (storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && storage.scheme == StorageScheme.DEFAULT && !storage.file.isNullOrEmpty()) {
           var additionalExportFile: File? = null
-          if (!StringUtil.isEmpty(stateAnnotation.additionalExportFile)) {
-            val expandedPath = storageManager.expandMacros(stateAnnotation.additionalExportFile)
-            additionalExportFile = File(expandedPath)
-            if (!additionalExportFile.exists()) {
-              //noinspection deprecation
-              additionalExportFile = File(storageManager.expandMacros(StoragePathMacros.ROOT_CONFIG) + '/' + expandedPath)
+          var additionalExportPath = stateAnnotation.additionalExportFile
+          if (additionalExportPath.isNotEmpty()) {
+            // backward compatibility - path can contain macro
+            @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
+            if (additionalExportPath[0] != '$') {
+              additionalExportPath = StoragePathMacros.ROOT_CONFIG + "/" + additionalExportPath
             }
-
+            additionalExportFile = File(storageManager.expandMacros(additionalExportPath))
             if (onlyExisting && !additionalExportFile.exists()) {
               additionalExportFile = null
             }
@@ -206,13 +201,8 @@ fun getExportableComponentsMap(onlyExisting: Boolean, computePresentableNames: B
           val file = File(storageManager.expandMacros(storage.file))
           val fileExists = !onlyExisting || file.exists()
           if (fileExists || additionalExportFile != null) {
-            val files = if (additionalExportFile == null) {
-              arrayOf(file)
-            }
-            else {
-              if (fileExists) arrayOf(file, additionalExportFile) else arrayOf(additionalExportFile)
-            }
-            val item = ExportableComponentItem(files, if (computePresentableNames) getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor) else "", storage.roamingType)
+            val files = if (additionalExportFile == null) listOf(file) else if (fileExists) listOf(file, additionalExportFile) else listOf(additionalExportFile)
+            val item = ExportableItem(files, if (computePresentableNames) getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor) else "", storage.roamingType)
             result.putValue(file, item)
             if (additionalExportFile != null) {
               result.putValue(additionalExportFile, item)
