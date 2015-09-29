@@ -90,12 +90,6 @@ public class PyConvertLocalFunctionToTopLevelFunctionAction extends PyBaseRefact
         result = (PyFunction)resolved;
       }
     }
-    //if (result != null) {
-    //  final VirtualFile virtualFile = result.getContainingFile().getVirtualFile();
-    //  if (virtualFile != null && ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInLibraryClasses(virtualFile)) {
-    //    return null;
-    //  }
-    //}
     return result;
   }
 
