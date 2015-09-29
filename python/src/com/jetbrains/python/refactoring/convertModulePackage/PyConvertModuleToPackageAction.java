@@ -26,7 +26,7 @@ public class PyConvertModuleToPackageAction extends PyBaseConvertModulePackageAc
   private static final Logger LOG = Logger.getInstance(PyConvertModuleToPackageAction.class);
 
   @Override
-  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  protected boolean isEnabledOnElementsOutsideEditor(@NotNull PsiElement[] elements) {
     if (elements.length == 1) {
       return elements[0] instanceof PyFile && !PyUtil.isPackage((PyFile)elements[0]);
     }

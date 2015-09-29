@@ -40,10 +40,10 @@ public abstract class PyBaseConvertModulePackageAction extends PyBaseRefactoring
   }
 
   @Override
-  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
-                                                        @NotNull Editor editor,
-                                                        @NotNull PsiFile file,
-                                                        @NotNull DataContext context) {
+  protected boolean isEnabledOnElementInsideEditor(@NotNull PsiElement element,
+                                                   @NotNull Editor editor,
+                                                   @NotNull PsiFile file,
+                                                   @NotNull DataContext context) {
     return false;
   }
 }

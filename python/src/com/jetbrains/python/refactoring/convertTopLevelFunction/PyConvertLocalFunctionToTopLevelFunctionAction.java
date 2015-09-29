@@ -63,17 +63,16 @@ public class PyConvertLocalFunctionToTopLevelFunctionAction extends PyBaseRefact
   }
 
   @Override
-  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
-    return elements.length == 1 && findNestedFunction(elements[0]) != null;
+  protected boolean isEnabledOnElementInsideEditor(@NotNull PsiElement element,
+                                                   @NotNull Editor editor,
+                                                   @NotNull PsiFile file,
+                                                   @NotNull DataContext context) {
+    return findNestedFunction(element) != null;
   }
 
-  @VisibleForTesting
   @Override
-  public boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
-                                                        @NotNull Editor editor,
-                                                        @NotNull PsiFile file,
-                                                        @NotNull DataContext context) {
-    return findNestedFunction(element) != null;
+  protected boolean isEnabledOnElementsOutsideEditor(@NotNull PsiElement[] elements) {
+    return false;
   }
 
   @Nullable
