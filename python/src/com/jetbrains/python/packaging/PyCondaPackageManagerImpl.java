@@ -50,7 +50,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   @Override
   public boolean hasManagement(boolean cachedOnly) throws ExecutionException {
-    return findCondaExecutable(mySdk) != null;
+    return isCondaVEnv(mySdk);
   }
 
   @Override
@@ -74,7 +74,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   }
 
   private ProcessOutput getCondaOutput(@NotNull final String command, List<String> arguments) throws ExecutionException {
-    final String condaExecutable = findCondaExecutable(mySdk);
+    final String condaExecutable = PyCondaPackageService.getCondaExecutable();
 
     final String path = getCondaDirectory();
     if (path == null) throw new PyExecutionException("Empty conda name for " + mySdk, command, arguments);
@@ -109,6 +109,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   private String getCondaDirectory() {
     final VirtualFile homeDirectory = mySdk.getHomeDirectory();
     if (homeDirectory == null) return null;
+    if (SystemInfo.isWindows) return homeDirectory.getParent().getPath();
     return homeDirectory.getParent().getParent().getPath();
   }
 
@@ -160,13 +161,13 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     return packages;
   }
 
-  @Nullable
-  public static String findCondaExecutable(Sdk sdk) {
-    final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
+  public static boolean isCondaVEnv(Sdk sdk) {
+    final String condaName = "conda-meta";
     final VirtualFile homeDirectory = sdk.getHomeDirectory();
-    if (homeDirectory == null) return null;
-    final VirtualFile condaExecutable = homeDirectory.getParent().findChild(condaName);
-    return condaExecutable != null ? condaExecutable.getPath() : null;
+    if (homeDirectory == null) return false;
+    final VirtualFile condaExecutable = SystemInfo.isWindows ? homeDirectory.getParent().findChild(condaName) :
+                                        homeDirectory.getParent().getParent().findChild(condaName);
+    return condaExecutable != null;
   }
 
   @NotNull
