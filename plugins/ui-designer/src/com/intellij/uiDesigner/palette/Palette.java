@@ -18,7 +18,6 @@ package com.intellij.uiDesigner.palette;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -78,7 +77,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   private final Map<Class, IntrospectedProperty[]> myClass2Properties;
   private final Map<String, ComponentItem> myClassName2Item;
   /*All groups in the palette*/
-  private final ArrayList<GroupItem> myGroups;
+  private final List<GroupItem> myGroups;
   /*Listeners, etc*/
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Project myProject;
@@ -138,9 +137,9 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
 
   @Override
   public Element getState() {
-    final Element e = new Element("state");
-    writeExternal(e);
-    return e;
+    Element state = new Element("state");
+    writeGroups(state);
+    return state;
   }
 
   @Override
@@ -203,7 +202,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
       final Document document = new SAXBuilder().build(getClass().getResourceAsStream("/idea/Palette2.xml"));
       for(Object o: document.getRootElement().getChildren(ELEMENT_GROUP)) {
         Element groupElement = (Element) o;
-        for(GroupItem group: myGroups) {
+        for (GroupItem group : myGroups) {
           if (group.getName().equals(groupElement.getAttributeValue(ATTRIBUTE_NAME))) {
             upgradeGroup(group, groupElement);
             break;
@@ -235,13 +234,6 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
     }
   }
 
-  public void writeExternal(@NotNull final Element element) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    writeGroups(element);
-    //element.setAttribute(ATTRIBUTE_VERSION, "2");
-  }
-
   /**
    * @return a predefined palette item which corresponds to the JPanel.
    */
@@ -264,7 +256,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
    * @return read-only list of all groups in the palette.
    * <em>DO NOT MODIFY OR CACHE THIS LIST</em>.
    */
-  public ArrayList<GroupItem> getGroups(){
+  public List<GroupItem> getGroups(){
     return myGroups;
   }
 
@@ -553,17 +545,13 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
     writeInitialValuesElement(itemElement, item.getInitialValues());
   }
 
-  /**
-   * @param parentElement element to which all "group" elements will be appended
-   */
-  private void writeGroups(@NotNull final Element parentElement){
-    for (final GroupItem group : myGroups) {
-      final Element groupElement = new Element(ELEMENT_GROUP);
+  private void writeGroups(@NotNull Element parentElement){
+    for (GroupItem group : myGroups) {
+      Element groupElement = new Element(ELEMENT_GROUP);
       parentElement.addContent(groupElement);
       groupElement.setAttribute(ATTRIBUTE_NAME, group.getName());
 
-      final ComponentItem[] itemList = group.getItems();
-      for (ComponentItem aItemList : itemList) {
+      for (ComponentItem aItemList : group.getItems()) {
         writeComponentItem(groupElement, aItemList);
       }
     }
