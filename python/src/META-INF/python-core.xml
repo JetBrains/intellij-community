@@ -169,12 +169,6 @@
     </intentionAction>
     
     <intentionAction>
-      <className>com.jetbrains.python.codeInsight.intentions.PyConvertLocalFunctionToTopLevelFunction</className>
-      <category>Python</category>
-    </intentionAction>
-
-
-    <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.SpecifyTypeInDocstringIntention</className>
       <category>Python</category>
     </intentionAction>
@@ -804,6 +798,12 @@
             use-shortcut-of="ForceStepInto">
       <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
+    </action>
+
+    <action id="PyConvertLocalFunctionToTopLevelFunctionAction" class="com.jetbrains.python.refactoring.convertTopLevelFunction.PyConvertLocalFunctionToTopLevelFunctionAction"
+            text="Convert local function to top-level function"
+            description="Convert local function to top-level function, transforming names from enclosing scope into parameters">
+      <add-to-group group-id="RefactoringMenu"/>
     </action>
 
   </actions>

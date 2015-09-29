@@ -15,23 +15,27 @@
  */
 package com.jetbrains.python.refactoring;
 
-import com.intellij.lang.Language;
-import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.actions.BaseRefactoringAction;
-import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.refactoring.convertTopLevelFunction.PyConvertLocalFunctionToTopLevelFunctionAction;
 
 /**
  * @author Mikhail Golubev
  */
-public abstract class PyBaseRefactoringAction extends BaseRefactoringAction {
+public class PyConvertLocalFunctionToTopLevelFunctionTest extends PyTestCase {
 
-  @Override
-  protected final boolean isAvailableForLanguage(Language language) {
-    return language.isKindOf(PythonLanguage.getInstance());
+  public void doTest() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    myFixture.testAction(new PyConvertLocalFunctionToTopLevelFunctionAction());
+    myFixture.checkResultByFile(getTestName(true) + ".after.py");
+  }
+
+  // PY-6637
+  public void testSimple() {
+    doTest();
   }
 
   @Override
-  protected boolean isAvailableForFile(PsiFile file) {
-    return isAvailableForLanguage(file.getLanguage());
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/refactoring/convertTopLevel/";
   }
 }

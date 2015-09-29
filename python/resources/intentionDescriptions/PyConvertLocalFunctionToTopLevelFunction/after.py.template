@@ -1,6 +1,0 @@
-def nested(y):
-    return x + y
-       
-
-def func(x):
-    return nested(x, 42)
