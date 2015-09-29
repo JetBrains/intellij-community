@@ -23,7 +23,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.data.LoadingDetails;
@@ -39,12 +40,12 @@ public abstract class VcsLogSingleCommitAction<Repo extends Repository> extends 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
 
-    VcsFullCommitDetails details = ContainerUtil.getFirstItem(log.getSelectedDetails());
-    assert details != null;
-    Repo repository = getRepositoryForRoot(project, details.getRoot());
+    CommitId commit = ContainerUtil.getFirstItem(log.getSelectedCommits());
+    assert commit != null;
+    Repo repository = getRepositoryForRoot(project, commit.getRoot());
     assert repository != null;
 
-    actionPerformed(repository, details);
+    actionPerformed(repository, commit.getHash());
   }
 
   @Override
@@ -56,36 +57,32 @@ public abstract class VcsLogSingleCommitAction<Repo extends Repository> extends 
       return;
     }
 
-    List<VcsFullCommitDetails> selectedDetails = log.getSelectedDetails();
-    if (selectedDetails.isEmpty()) {
+    List<CommitId> commits = log.getSelectedCommits();
+    if (commits.isEmpty()) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      VcsFullCommitDetails details = ContainerUtil.getFirstItem(selectedDetails);
-      if (details == null || details instanceof LoadingDetails) {
+      CommitId commit = ContainerUtil.getFirstItem(commits);
+      assert commit != null;
+      Repo repository = getRepositoryForRoot(project, commit.getRoot());
+
+      if (repository == null) {
         e.getPresentation().setEnabledAndVisible(false);
       }
       else {
-        Repo repository = getRepositoryForRoot(project, details.getRoot());
-
-        if (repository == null) {
-          e.getPresentation().setEnabledAndVisible(false);
-        }
-        else {
-          e.getPresentation().setVisible(isVisible(project, repository, details));
-          e.getPresentation().setEnabled(selectedDetails.size() == 1 && isEnabled(repository, details));
-        }
+        e.getPresentation().setVisible(isVisible(project, repository, commit.getHash()));
+        e.getPresentation().setEnabled(commits.size() == 1 && isEnabled(repository, commit.getHash()));
       }
     }
   }
 
-  protected abstract void actionPerformed(@NotNull Repo repository, @NotNull VcsFullCommitDetails commit);
+  protected abstract void actionPerformed(@NotNull Repo repository, @NotNull Hash commit);
 
-  protected boolean isEnabled(@NotNull Repo repository, @NotNull VcsFullCommitDetails commit) {
+  protected boolean isEnabled(@NotNull Repo repository, @NotNull Hash commit) {
     return true;
   }
 
-  protected boolean isVisible(@NotNull final Project project, @NotNull Repo repository, @NotNull VcsFullCommitDetails commit) {
+  protected boolean isVisible(@NotNull final Project project, @NotNull Repo repository, @NotNull Hash hash) {
     return !getRepositoryManager(project).isExternal(repository);
   }
 

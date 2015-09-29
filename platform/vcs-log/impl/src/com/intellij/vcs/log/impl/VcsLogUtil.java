@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class VcsLogUtil {
-  private static final int DETAILS_LIMIT = 100;
+  public static final int DETAILS_LIMIT = 100;
 
   @NotNull
   public static MultiMap<VirtualFile, VcsRef> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
@@ -186,6 +186,11 @@ public class VcsLogUtil {
     }
 
     return result;
+  }
+
+  @NotNull
+  public static <T> List<T> collectFirstPack(@NotNull List<T> list, int max) {
+    return list.subList(0, Math.min(list.size(), max));
   }
 
   @NotNull

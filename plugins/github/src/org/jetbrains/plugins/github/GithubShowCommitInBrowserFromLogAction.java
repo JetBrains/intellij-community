@@ -19,7 +19,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.data.LoadingDetails;
@@ -40,27 +41,27 @@ public class GithubShowCommitInBrowserFromLogAction extends GithubShowCommitInBr
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    List<VcsFullCommitDetails> selectedDetails = log.getSelectedDetails();
-    if (selectedDetails.size() != 1) {
+    List<CommitId> selectedCommits = log.getSelectedCommits();
+    if (selectedCommits.size() != 1) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    VcsFullCommitDetails details = ContainerUtil.getFirstItem(selectedDetails);
-    if (details == null || details instanceof LoadingDetails) {
+    CommitId commit = ContainerUtil.getFirstItem(selectedCommits);
+    if (commit == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(details.getRoot());
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(commit.getRoot());
     e.getPresentation().setEnabledAndVisible(repository != null && GithubUtil.isRepositoryOnGitHub(repository));
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsFullCommitDetails commit = ContainerUtil.getFirstItem(e.getRequiredData(VcsLogDataKeys.VCS_LOG).getSelectedDetails());
-    assert commit != null && !(commit instanceof LoadingDetails);
+    CommitId commit = ContainerUtil.getFirstItem(e.getRequiredData(VcsLogDataKeys.VCS_LOG).getSelectedCommits());
+    assert commit != null;
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(commit.getRoot());
-    openInBrowser(project, repository, commit.getId().asString());
+    openInBrowser(project, repository, commit.getHash().asString());
   }
 
 }
