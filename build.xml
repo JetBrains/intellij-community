@@ -16,8 +16,7 @@
     <isset property="build" />
   </condition>
 
-  <condition property="test.patterns" value="${testpatterns}"
-             else="org.jetbrains.android.*;com.android.tools.idea.*;com.google.gct.*;com.intellij.android.*">
+  <condition property="test.patterns" value="${testpatterns}" else="">
     <isset property="testpatterns" />
   </condition>
 
