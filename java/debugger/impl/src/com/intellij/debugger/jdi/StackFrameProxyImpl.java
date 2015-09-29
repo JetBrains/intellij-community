@@ -306,7 +306,14 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     InvalidStackFrameException error = null;
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        return getAllValues().get(localVariable.getVariable());
+        Map<LocalVariable, Value> values = getAllValues();
+        LocalVariable variable = localVariable.getVariable();
+        if (values.containsKey(variable)) {
+          return values.get(variable);
+        }
+        else { // try direct get
+          return getStackFrame().getValue(variable);
+        }
       }
       catch (InvalidStackFrameException e) {
         error = e;
@@ -358,6 +365,14 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
       }
       catch (AbsentInformationException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
+      }
+      catch (InternalException e) {
+        // extra logging for IDEA-141270
+        if (e.errorCode() == 35 || e.errorCode() == 101) {
+          LOG.info(e);
+          myAllValues = Collections.emptyMap();
+        }
+        else throw e;
       }
     }
     return myAllValues;

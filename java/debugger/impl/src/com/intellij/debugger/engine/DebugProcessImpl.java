@@ -158,7 +158,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myDebugProcessDispatcher.addListener(new DebugProcessAdapter() {
       @Override
       public void paused(SuspendContext suspendContext) {
-        myThreadBlockedMonitor.stopWatching(suspendContext.getThread());
+        myThreadBlockedMonitor.stopWatching(
+          suspendContext.getSuspendPolicy() != EventRequest.SUSPEND_ALL ? suspendContext.getThread() : null);
       }
     });
   }
@@ -2143,6 +2144,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   //  }
   //}
 
+  @NotNull
   public DebuggerContextImpl getDebuggerContext() {
     return mySession.getContextManager().getContext();
   }

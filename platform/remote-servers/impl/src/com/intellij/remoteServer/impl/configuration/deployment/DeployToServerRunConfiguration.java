@@ -17,10 +17,7 @@ package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
@@ -216,6 +213,27 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
     }
     XmlSerializer.serializeInto(state, element, SERIALIZATION_FILTERS);
     super.writeExternal(element);
+  }
+
+  @Override
+  public RunConfiguration clone() {
+    Element element = new Element("tag");
+    try {
+      writeExternal(element);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+
+    DeployToServerRunConfiguration result = (DeployToServerRunConfiguration)super.clone();
+
+    try {
+      result.readExternal(element);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
+    return result;
   }
 
   public static class ConfigurationState {

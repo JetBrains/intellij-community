@@ -142,7 +142,7 @@ public class ToolsImpl implements Tools {
     return result;
   }
 
-  public void writeExternal(Element inspectionElement) throws WriteExternalException {
+  public void writeExternal(@NotNull Element inspectionElement) throws WriteExternalException {
     if (myTools != null) {
       for (ScopeToolState state : myTools) {
         final Element scopeElement = new Element("scope");
