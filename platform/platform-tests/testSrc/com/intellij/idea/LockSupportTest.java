@@ -50,7 +50,7 @@ public class LockSupportTest {
   }
 
   @Test(timeout = 30000)
-  public void testUseCanonicalPathLock() {
+  public void testUseCanonicalPathLock() throws Exception {
     assumeThat(SystemInfo.isFileSystemCaseSensitive, is(false));
 
     String path1 = myTempDir.getPath();
@@ -69,7 +69,7 @@ public class LockSupportTest {
   }
 
   @Test(timeout = 30000)
-  public void testLock() {
+  public void testLock() throws Exception {
     SocketLock lock = new SocketLock(myTempDir.getPath() + "/c", myTempDir.getPath() + "/s");
     try {
       assertThat(lock.lock(), equalTo(SocketLock.ActivateStatus.NO_INSTANCE));
@@ -80,7 +80,7 @@ public class LockSupportTest {
   }
 
   @Test(timeout = 30000)
-  public void testTwoLocks() {
+  public void testTwoLocks() throws Exception {
     List<SocketLock> toClose = new ArrayList<>();
     try {
       assertThat(createLock(toClose, myTempDir, "1", "1-").lock(), equalTo(SocketLock.ActivateStatus.NO_INSTANCE));
@@ -104,7 +104,7 @@ public class LockSupportTest {
   }
 
   @Test(timeout = 30000)
-  public void testDispose() {
+  public void testDispose() throws Exception {
     SocketLock lock1 = new SocketLock(myTempDir.getPath() + "/1", myTempDir.getPath() + "/1-");
     SocketLock lock2 = new SocketLock(myTempDir.getPath() + "/1", myTempDir.getPath() + "/1-");
 
