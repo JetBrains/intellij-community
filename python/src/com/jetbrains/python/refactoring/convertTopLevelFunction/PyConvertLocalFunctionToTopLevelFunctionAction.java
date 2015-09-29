@@ -23,14 +23,12 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,6 +54,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author Mikhail Golubev
  */
 public class PyConvertLocalFunctionToTopLevelFunctionAction extends PyBaseRefactoringAction {
+  public static final String ID = "py.convert.local.function.to.top.level.function";
 
   @Override
   protected boolean isAvailableInEditorOnly() {
@@ -142,7 +141,8 @@ public class PyConvertLocalFunctionToTopLevelFunctionAction extends PyBaseRefact
     for (ScopeOwner owner : scopeOwners) {
       final AnalysisResult scope = findReadsFromEnclosingScope(owner, function, context);
       if (!scope.nonlocalWritesToEnclosingScope.isEmpty()) {
-        showErrorBalloon(editor, PyBundle.message("INTN.convert.local.function.to.top.level.function.nonlocal"));
+        final String errMsg = PyBundle.message("INTN.convert.local.function.to.top.level.function.nonlocal");
+        CommonRefactoringUtil.showErrorHint(project, editor, errMsg, null, ID);
         return;
       }
       for (PsiElement element : scope.readFromEnclosingScope) {
@@ -250,13 +250,5 @@ public class PyConvertLocalFunctionToTopLevelFunctionAction extends PyBaseRefact
 
   private static boolean isFromEnclosingScope(@NotNull PsiElement element, @NotNull PyFunction targetFunction) {
     return !PsiTreeUtil.isAncestor(targetFunction, element, false) && !(ScopeUtil.getScopeOwner(element) instanceof PsiFile);
-  }
-
-  private static void showErrorBalloon(@NotNull Editor editor, @NotNull String message) {
-    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    popupFactory.createHtmlTextBalloonBuilder(message, MessageType.ERROR, null)
-                .setDisposable(editor.getProject())
-                .createBalloon()
-                .show(popupFactory.guessBestPopupLocation(editor), Balloon.Position.below);
   }
 }
