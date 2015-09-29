@@ -24,6 +24,9 @@ import java.lang.annotation.RetentionPolicy;
 public @interface State {
   String name();
 
+  /**
+   * Could be specified as empty list if you need to load only default state ({@link #defaultStateAsResource()} must be true in this case)
+   */
   Storage[] storages();
 
   boolean reloadable() default true;
@@ -33,6 +36,9 @@ public @interface State {
    */
   boolean defaultStateAsResource() default false;
 
+  /**
+   * Additional export path (relative to application-level configuration root directory).
+   */
   String additionalExportFile() default "";
 
   Class<? extends NameGetter> presentableName() default NameGetter.class;

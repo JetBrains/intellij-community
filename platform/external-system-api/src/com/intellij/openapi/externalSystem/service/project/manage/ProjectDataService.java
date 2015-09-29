@@ -18,9 +18,13 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -75,9 +79,20 @@ public interface ProjectDataService<E, I> {
    * 
    * @param toImport
    * @param project
-   * @param synchronous
    */
-  void importData(@NotNull Collection<DataNode<E>> toImport, @NotNull Project project, boolean synchronous);
+  void importData(@NotNull Collection<DataNode<E>> toImport,
+                  @Nullable ProjectData projectData,
+                  @NotNull Project project,
+                  @NotNull IdeModifiableModelsProvider modelsProvider);
+
+  /**
+   * Compute orphan data.
+   */
+  @NotNull
+  Computable<Collection<I>> computeOrphanData(@NotNull Collection<DataNode<E>> toImport,
+                                              @NotNull ProjectData projectData,
+                                              @NotNull Project project,
+                                              @NotNull IdeModifiableModelsProvider modelsProvider);
 
   /**
    * Asks to remove all given ide project entities.
@@ -88,7 +103,10 @@ public interface ProjectDataService<E, I> {
    * 
    * @param toRemove     project entities to remove
    * @param project      target project
-   * @param synchronous  flag which defines if entities removal should be synchronous
    */
-  void removeData(@NotNull Collection<? extends I> toRemove, @NotNull Project project, boolean synchronous);
+  void removeData(@NotNull Computable<Collection<I>> toRemove,
+                  @NotNull Collection<DataNode<E>> toIgnore,
+                  @NotNull ProjectData projectData,
+                  @NotNull Project project,
+                  @NotNull IdeModifiableModelsProvider modelsProvider);
 }

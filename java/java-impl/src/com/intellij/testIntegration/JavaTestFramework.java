@@ -24,7 +24,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import com.intellij.openapi.roots.ProjectModelModificationService;
+import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -143,7 +143,7 @@ public abstract class JavaTestFramework implements TestFramework {
   public void setupLibrary(Module module) {
     ExternalLibraryDescriptor descriptor = getFrameworkLibraryDescriptor();
     if (descriptor != null) {
-      ProjectModelModificationService.getInstance(module.getProject()).addDependency(module, descriptor, DependencyScope.TEST);
+      JavaProjectModelModificationService.getInstance(module.getProject()).addDependency(module, descriptor, DependencyScope.TEST);
     }
     else {
       String path = getLibraryPath();

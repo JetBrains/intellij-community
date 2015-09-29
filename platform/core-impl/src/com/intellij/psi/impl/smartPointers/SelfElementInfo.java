@@ -26,6 +26,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,9 +37,9 @@ import java.util.List;
 */
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
-  private final Class myType;
+  protected volatile Class myType;
   private final SmartPointerManagerImpl myManager;
-  private final Language myLanguage;
+  protected final Language myLanguage;
   private final MarkerCache myMarkerCache;
   private final boolean myForInjected;
   private boolean myHasRange;
@@ -125,14 +126,34 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     return restoreFileFromVirtual(getVirtualFile(), getProject(), myLanguage);
   }
 
-  static PsiElement findElementInside(@NotNull PsiFile file,
+  public static PsiElement findElementInside(@NotNull PsiFile file,
                                       int syncStartOffset,
                                       int syncEndOffset,
                                       @NotNull Class type,
                                       @NotNull Language language) {
     PsiElement anchor = file.getViewProvider().findElementAt(syncStartOffset, language);
+    if (anchor == null && syncStartOffset == file.getTextLength()) {
+      PsiElement lastChild = file.getViewProvider().getPsi(language).getLastChild();
+      if (lastChild != null) {
+        anchor = PsiTreeUtil.getDeepestLast(lastChild);
+      }
+    }
     if (anchor == null) return null;
 
+    PsiElement result = findParent(syncStartOffset, syncEndOffset, type, anchor);
+    if (syncEndOffset == syncStartOffset) {
+      while (result == null && anchor.getTextRange().getStartOffset() == syncEndOffset) {
+        anchor = PsiTreeUtil.prevLeaf(anchor, false);
+        if (anchor == null) break;
+
+        result = findParent(syncStartOffset, syncEndOffset, type, anchor);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  private static PsiElement findParent(int syncStartOffset, int syncEndOffset, @NotNull Class type, PsiElement anchor) {
     TextRange range = anchor.getTextRange();
 
     if (range.getStartOffset() != syncStartOffset) return null;

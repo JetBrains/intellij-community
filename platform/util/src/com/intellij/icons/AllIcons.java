@@ -379,6 +379,7 @@ public class AllIcons {
     public static final Icon ArrowDown = IconLoader.getIcon("/general/arrowDown.png"); // 7x6
     public static final Icon AutohideOff = IconLoader.getIcon("/general/autohideOff.png"); // 14x14
     public static final Icon AutohideOffInactive = IconLoader.getIcon("/general/autohideOffInactive.png"); // 14x14
+    public static final Icon AutohideOffPressed = IconLoader.getIcon("/general/autohideOffPressed.png"); // 22x20
     public static final Icon AutoscrollFromSource = IconLoader.getIcon("/general/autoscrollFromSource.png"); // 16x16
     public static final Icon AutoscrollToSource = IconLoader.getIcon("/general/autoscrollToSource.png"); // 16x16
     public static final Icon Balloon = IconLoader.getIcon("/general/balloon.png"); // 16x16
@@ -556,6 +557,7 @@ public class AllIcons {
     public static final Icon Colors = IconLoader.getIcon("/gutter/colors.png"); // 12x12
     public static final Icon ExtAnnotation = IconLoader.getIcon("/gutter/extAnnotation.png"); // 12x12
     public static final Icon ImplementedMethod = IconLoader.getIcon("/gutter/implementedMethod.png"); // 12x12
+    public static final Icon ImplementingFunctional = IconLoader.getIcon("/gutter/implementingFunctional.png"); // 12x12
     public static final Icon ImplementingMethod = IconLoader.getIcon("/gutter/implementingMethod.png"); // 12x12
     public static final Icon OverridenMethod = IconLoader.getIcon("/gutter/overridenMethod.png"); // 12x12
     public static final Icon OverridingMethod = IconLoader.getIcon("/gutter/overridingMethod.png"); // 12x12

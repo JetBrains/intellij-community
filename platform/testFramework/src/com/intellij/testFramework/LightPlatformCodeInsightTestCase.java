@@ -268,16 +268,20 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @Override
   protected void tearDown() throws Exception {
-    FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-    VirtualFile[] openFiles = editorManager.getOpenFiles();
-    for (VirtualFile openFile : openFiles) {
-      editorManager.closeFile(openFile);
+    try {
+      FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
+      VirtualFile[] openFiles = editorManager.getOpenFiles();
+      for (VirtualFile openFile : openFiles) {
+        editorManager.closeFile(openFile);
+      }
+      deleteVFile();
+      myEditor = null;
+      myFile = null;
+      myVFile = null;
     }
-    deleteVFile();
-    myEditor = null;
-    myFile = null;
-    myVFile = null;
-    super.tearDown();
+    finally {
+      super.tearDown();
+    }
   }
 
   /**

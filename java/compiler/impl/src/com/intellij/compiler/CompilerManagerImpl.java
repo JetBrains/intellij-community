@@ -17,6 +17,7 @@ package com.intellij.compiler;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.compiler.impl.*;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
@@ -29,20 +30,38 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.net.NetUtils;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
+import org.jetbrains.jps.incremental.BinaryContent;
+import org.jetbrains.jps.javac.DiagnosticOutputConsumer;
+import org.jetbrains.jps.javac.ExternalJavacManager;
+import org.jetbrains.jps.javac.OutputFileConsumer;
+import org.jetbrains.jps.javac.OutputFileObject;
 
+import javax.tools.*;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Array;
+import java.net.URI;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 
@@ -58,6 +77,7 @@ public class CompilerManagerImpl extends CompilerManager {
   private final Semaphore myCompilationSemaphore = new Semaphore(1, true);
   private final Set<ModuleType> myValidationDisabledModuleTypes = new HashSet<ModuleType>();
   private final Set<LocalFileSystem.WatchRequest> myWatchRoots;
+  private volatile ExternalJavacManager myExternalJavacManager;
 
   public CompilerManagerImpl(final Project project, MessageBus messageBus) {
     myProject = project;
@@ -85,6 +105,11 @@ public class CompilerManagerImpl extends CompilerManager {
     myWatchRoots = lfs.addRootsToWatch(Collections.singletonList(FileUtil.toCanonicalPath(projectGeneratedSrcRoot.getPath())), true);
     Disposer.register(project, new Disposable() {
       public void dispose() {
+        final ExternalJavacManager manager = myExternalJavacManager;
+        myExternalJavacManager = null;
+        if (manager != null) {
+          manager.stop();
+        }
         lfs.removeWatchedRoots(myWatchRoots);
         if (ApplicationManager.getApplication().isUnitTestMode()) {    // force cleanup for created compiler system directory with generated sources
           FileUtil.delete(CompilerPaths.getCompilerSystemDirectory(project));
@@ -310,6 +335,144 @@ public class CompilerManagerImpl extends CompilerManager {
     return !myValidationDisabledModuleTypes.contains(ModuleType.get(module));
   }
 
+  @Override
+  public Collection<ClassObject> compileJavaCode(List<String> options,
+                                                 Collection<File> platformCp,
+                                                 Collection<File> classpath,
+                                                 Collection<File> sourcePath,
+                                                 Collection<File> files,
+                                                 File outputDir) throws IOException, CompilationException {
+
+    final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getBuildProcessRuntimeSdk(myProject);
+
+    String javaHome = null;
+    final Sdk sdk = runtime.getFirst();
+    final SdkTypeId type = sdk.getSdkType();
+    if (type instanceof JavaSdkType) {
+      javaHome = sdk.getHomePath();
+    }
+    if (javaHome == null) {
+      throw new IOException("Was not able to determine JDK for project " + myProject.getName());
+    }
+
+    final OutputCollector outputCollector = new OutputCollector();
+    DiagnosticCollector diagnostic = new DiagnosticCollector();
+
+    final Set<File> sourceRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    if (!sourcePath.isEmpty()) {
+      for (File file : sourcePath) {
+        sourceRoots.add(file);
+      }
+    }
+    else {
+      for (File file : files) {
+        final File parentFile = file.getParentFile();
+        if (parentFile != null) {
+          sourceRoots.add(parentFile);
+        }
+      }
+    }
+    final Map<File, Set<File>> outs = Collections.singletonMap(outputDir, sourceRoots);
+
+    final ExternalJavacManager javacManager = getJavacManager();
+    boolean compiledOk = javacManager != null && javacManager.forkJavac(
+      javaHome, -1, Collections.<String>emptyList(), options, platformCp, classpath, sourcePath, files, outs, diagnostic, outputCollector,
+      new JavacCompilerTool(), CanceledStatus.NULL
+    );
+
+    if (!compiledOk) {
+      final List<CompilationException.Message> messages = new SmartList<CompilationException.Message>();
+      for (Diagnostic<? extends JavaFileObject> d : diagnostic.getDiagnostics()) {
+        final JavaFileObject source = d.getSource();
+        final URI uri = source != null ? source.toUri() : null;
+        messages.add(new CompilationException.Message(
+          kindToCategory(d.getKind()), d.getMessage(Locale.US), uri != null? uri.toURL().toString() : null, (int)d.getLineNumber(), (int)d.getColumnNumber()
+        ));
+      }
+      throw new CompilationException("Compilation failed", messages);
+    }
+
+    final List<ClassObject> result = new ArrayList<ClassObject>();
+    for (OutputFileObject fileObject : outputCollector.getCompiledClasses()) {
+      final BinaryContent content = fileObject.getContent();
+      result.add(new CompiledClass(fileObject.getName(), fileObject.getClassName(), content != null ? content.toByteArray() : null));
+    }
+    return result;
+  }
+
+  private static CompilerMessageCategory kindToCategory(Diagnostic.Kind kind) {
+    switch (kind) {
+      case ERROR: return CompilerMessageCategory.ERROR;
+      case MANDATORY_WARNING: return CompilerMessageCategory.WARNING;
+      case WARNING: return CompilerMessageCategory.WARNING;
+      case NOTE: return CompilerMessageCategory.INFORMATION;
+      default:
+        return CompilerMessageCategory.INFORMATION;
+    }
+  }
+
+
+  @Nullable
+  private ExternalJavacManager getJavacManager() throws IOException {
+    ExternalJavacManager manager = myExternalJavacManager;
+    if (manager == null) {
+      synchronized (this) {
+        manager = myExternalJavacManager;
+        if (manager == null) {
+          final File compilerWorkingDir = getJavacCompilerWorkingDir();
+          if (compilerWorkingDir == null) {
+            return null; // should not happen for real projects
+          }
+          final int listenPort = NetUtils.findAvailableSocketPort();
+          manager = new ExternalJavacManager(compilerWorkingDir);
+          manager.start(listenPort);
+          myExternalJavacManager = manager;
+        }
+      }
+    }
+    return manager;
+  }
+
+  @Override
+  @Nullable
+  public File getJavacCompilerWorkingDir() {
+    final File projectBuildDir = BuildManager.getInstance().getProjectSystemDirectory(myProject);
+    if (projectBuildDir == null) {
+      return null;
+    }
+    projectBuildDir.mkdirs();
+    return projectBuildDir;
+  }
+
+  private static class CompiledClass implements ClassObject {
+    private final String myPath;
+    private final String myClassName;
+    private final byte[] myBytes;
+
+    public CompiledClass(String path, String className, byte[] bytes) {
+      myPath = path;
+      myClassName = className;
+      myBytes = bytes;
+    }
+
+    @Override
+    public String getPath() {
+      return myPath;
+    }
+
+    @Override
+    public String getClassName() {
+      return myClassName;
+    }
+
+    @Nullable
+    @Override
+    public byte[] getContent() {
+      return myBytes;
+    }
+  }
+
+
   private class ListenerNotificator implements CompileStatusNotification {
     private final @Nullable CompileStatusNotification myDelegate;
 
@@ -326,4 +489,42 @@ public class CompilerManagerImpl extends CompilerManager {
       }
     }
   }
+
+  private static class DiagnosticCollector implements DiagnosticOutputConsumer {
+    private final List<Diagnostic<? extends JavaFileObject>> myDiagnostics = new ArrayList<Diagnostic<? extends JavaFileObject>>();
+    public void outputLineAvailable(String line) {
+      // for debugging purposes uncomment this line
+      //System.out.println(line);
+    }
+
+    public void registerImports(String className, Collection<String> imports, Collection<String> staticImports) {
+      // ignore
+    }
+
+    public void javaFileLoaded(File file) {
+      // ignore
+    }
+
+    public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+      myDiagnostics.add(diagnostic);
+    }
+
+    public List<Diagnostic<? extends JavaFileObject>> getDiagnostics() {
+      return myDiagnostics;
+    }
+  }
+
+
+  private static class OutputCollector implements OutputFileConsumer {
+    private List<OutputFileObject> myClasses = new ArrayList<OutputFileObject>();
+
+    public void save(@NotNull OutputFileObject fileObject) {
+      myClasses.add(fileObject);
+    }
+
+    public List<OutputFileObject> getCompiledClasses() {
+      return myClasses;
+    }
+  }
+
 }

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
+import com.intellij.codeInspection.duplicateThrows.DuplicateThrowsInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
@@ -43,7 +44,8 @@ public class Suppress15InspectionsTest extends LightQuickFixParameterizedTestCas
       new AccessStaticViaInstance(),
       new DeprecationInspection(),
       new JavaDocReferenceInspection(),
-      new UncheckedWarningLocalInspection()
+      new UncheckedWarningLocalInspection(),
+      new DuplicateThrowsInspection()
     };
   }
 

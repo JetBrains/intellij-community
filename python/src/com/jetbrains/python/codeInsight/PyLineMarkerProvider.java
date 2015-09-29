@@ -35,7 +35,6 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.impl.blockEvaluator.PyEvaluationContext;
 import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
@@ -111,7 +110,8 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     @Nullable
     protected Query<PsiElement> search(final PsiElement elt) {
       if (!(elt.getParent() instanceof PyFunction)) return null;
-      return PySuperMethodsSearch.search((PyFunction)elt.getParent());
+      final TypeEvalContext context = TypeEvalContext.codeAnalysis(elt.getProject(), null);
+      return PySuperMethodsSearch.search((PyFunction)elt.getParent(), context);
     }
   };
 
@@ -180,7 +180,8 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     if (PyNames.INIT.equals(function.getName())) {
       return null;
     }
-    final PsiElement superMethod = PySuperMethodsSearch.search(function).findFirst();
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(element.getProject(), null);
+    final PsiElement superMethod = PySuperMethodsSearch.search(function, context).findFirst();
     if (superMethod != null) {
       PyClass superClass = null;
       if (superMethod instanceof PyFunction) {

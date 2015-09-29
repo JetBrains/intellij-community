@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CompoundRunConfiguration extends RunConfigurationBase implements WithoutOwnBeforeRunSteps {
+public class CompoundRunConfiguration extends RunConfigurationBase implements WithoutOwnBeforeRunSteps, Cloneable {
   static final Comparator<RunConfiguration> COMPARATOR = new Comparator<RunConfiguration>() {
     @Override
     public int compare(RunConfiguration o1, RunConfiguration o2) {
@@ -42,8 +42,8 @@ public class CompoundRunConfiguration extends RunConfigurationBase implements Wi
       return (i != 0) ? i : o1.getName().compareTo(o2.getName());
     }
   };
-  private final Set<Pair<String, String>> myPairs = new HashSet<Pair<String, String>>();
-  private final Set<RunConfiguration> mySetToRun = new TreeSet<RunConfiguration>(COMPARATOR);
+  private Set<Pair<String, String>> myPairs = new HashSet<Pair<String, String>>();
+  private Set<RunConfiguration> mySetToRun = new TreeSet<RunConfiguration>(COMPARATOR);
   private boolean myInitialized = false;
 
   public CompoundRunConfiguration(Project project, @NotNull CompoundRunConfigurationType type, String name) {
@@ -134,5 +134,15 @@ public class CompoundRunConfiguration extends RunConfigurationBase implements Wi
       child.setAttribute("name", configuration.getName());
       element.addContent(child);
     }
+  }
+
+  @Override
+  public RunConfiguration clone() {
+    CompoundRunConfiguration clone = (CompoundRunConfiguration)super.clone();
+    clone.myPairs = new HashSet<Pair<String, String>>();
+    clone.myPairs.addAll(myPairs);
+    clone.mySetToRun = new TreeSet<RunConfiguration>(COMPARATOR);
+    clone.mySetToRun.addAll(getSetToRun());
+    return clone;
   }
 }

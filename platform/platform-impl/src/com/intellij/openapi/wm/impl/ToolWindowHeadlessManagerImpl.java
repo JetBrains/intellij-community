@@ -301,6 +301,15 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       return false;
     }
 
+    @Override
+    public void setShowStripeButton(boolean show) {
+    }
+
+    @Override
+    public boolean isShowStripeButton() {
+      return false;
+    }
+
     @NotNull
     @Override
     public ActionCallback getReady(@NotNull Object requestor) {

@@ -39,11 +39,10 @@ class CurrentRevisionAnnotationFieldGutter extends AnnotationFieldGutter impleme
   private boolean myTurnedOn;
 
   CurrentRevisionAnnotationFieldGutter(FileAnnotation annotation,
-                                       Editor editor,
                                        LineAnnotationAspect aspect,
                                        TextAnnotationPresentation highlighting,
                                        Couple<Map<VcsRevisionNumber, Color>> colorScheme) {
-    super(annotation, editor, aspect, highlighting, colorScheme);
+    super(annotation, aspect, highlighting, colorScheme);
   }
 
   @Override

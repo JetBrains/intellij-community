@@ -67,6 +67,7 @@ public class DebuggerContextUtil {
     contextManager.setState(newContext, session != null? session.getState() : DebuggerSession.State.DISPOSED, DebuggerSession.Event.CONTEXT, null);
   }
 
+  @NotNull
   public static DebuggerContextImpl createDebuggerContext(@NotNull DebuggerSession session, SuspendContextImpl suspendContext){
     return DebuggerContextImpl.createDebuggerContext(session, suspendContext, suspendContext != null ? suspendContext.getThread() : null, null);
   }

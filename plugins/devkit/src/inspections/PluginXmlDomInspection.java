@@ -15,17 +15,19 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.openapi.module.Module;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiReference;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nls;
@@ -35,7 +37,9 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author mike
@@ -92,25 +96,17 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (module == null) return;
     if (!PsiUtil.isIdeaProject(module.getProject())) return;
 
-    if (ideaPlugin.getPluginId() == null) return;
+    String pluginId = ideaPlugin.getPluginId();
+    if (pluginId == null || pluginId.equals(PluginManagerCore.CORE_PLUGIN_ID)) return;
 
     final Vendor vendor = ContainerUtil.getFirstItem(ideaPlugin.getVendors());
-    if (vendor == null) return;
-    if (!"JetBrains".equals(vendor.getValue())) return;
-
-    for (Extensions extensions : ideaPlugin.getExtensions()) {
-      final List<Extension> definedEps = DomUtil.getDefinedChildrenOfType(extensions, Extension.class, true, false);
-      for (Extension extension : definedEps) {
-        final ExtensionPoint extensionPoint = extension.getExtensionPoint();
-        if (extensionPoint == null) continue;
-        if ("com.intellij.errorHandler".equals(extensionPoint.getEffectiveQualifiedName())) {
-          return;
-        }
-      }
+    if (vendor == null) {
+      holder.createProblem(DomUtil.getFileElement(ideaPlugin), "Plugin developed as a part of IntelliJ IDEA project should specify 'JetBrains' as its vendor",
+                           new SpecifyJetBrainsAsVendorQuickFix());
     }
-
-    holder.createProblem(DomUtil.getFileElement(ideaPlugin),
-                         "JetBrains plugin should provide <errorHandler>");
+    else if (!PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
+      holder.createProblem(vendor, "Plugin developed as a part of IntelliJ IDEA project should include 'JetBrains' as one of its vendors");
+    }
   }
 
   private static void annotateExtensions(Extensions extensions, DomElementAnnotationHolder holder) {
@@ -199,5 +195,55 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       return;
     }
     holder.createProblem(addToGroup.getAnchor(), "Must use '" + Anchor.after + "'|'" + Anchor.before + "' with 'relative-to-action'");
+  }
+
+  private static class SpecifyJetBrainsAsVendorQuickFix implements LocalQuickFix {
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return "Specify JetBrains as vendor";
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiFile file = descriptor.getPsiElement().getContainingFile();
+      DomFileElement<IdeaPlugin> fileElement = DomManager.getDomManager(project).getFileElement((XmlFile)file, IdeaPlugin.class);
+      if (fileElement != null) {
+        IdeaPlugin root = fileElement.getRootElement();
+        XmlTag after = getLastSubTag(root, root.getId(), ContainerUtil.getLastItem(root.getDescriptions()), ContainerUtil.getLastItem(root.getVersions()), root.getName());
+        XmlTag rootTag = root.getXmlTag();
+        XmlTag vendorTag = rootTag.createChildTag("vendor", rootTag.getNamespace(), PluginManagerMain.JETBRAINS_VENDOR, false);
+        if (after == null) {
+          rootTag.addSubTag(vendorTag, true);
+        }
+        else {
+          rootTag.addAfter(vendorTag, after);
+        }
+      }
+    }
+
+    private static XmlTag getLastSubTag(IdeaPlugin root, DomElement... children) {
+      Set<XmlTag> childrenTags = new HashSet<XmlTag>();
+      for (DomElement child : children) {
+        if (child != null) {
+          childrenTags.add(child.getXmlTag());
+        }
+      }
+      XmlTag[] subTags = root.getXmlTag().getSubTags();
+      for (int i = subTags.length - 1; i >= 0; i--) {
+        if (childrenTags.contains(subTags[i])) {
+          return subTags[i];
+        }
+      }
+      return null;
+    }
   }
 }

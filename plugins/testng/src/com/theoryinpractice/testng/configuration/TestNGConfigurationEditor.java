@@ -22,6 +22,7 @@
  */
 package com.theoryinpractice.testng.configuration;
 
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.MethodBrowser;
@@ -71,14 +72,14 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguration> implements PanelWithAnchor {
+public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends SettingsEditor<T> implements PanelWithAnchor {
   //private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
   private final Project project;
 
   private JPanel panel;
 
   private LabeledComponent<EditorTextFieldWithBrowseButton> classField;
-  private LabeledComponent<JComboBox> moduleClasspath;
+  private LabeledComponent<ModulesComboBox> moduleClasspath;
   private AlternativeJREPanel alternateJDK;
   private final ConfigurationModuleSelector moduleSelector;
   private JRadioButton suiteTest;
@@ -288,7 +289,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     return classField.getComponent().getText();
   }
 
-  public JComboBox getModulesComponent() {
+  public ModulesComboBox getModulesComponent() {
     return moduleClasspath.getComponent();
   }
 
@@ -437,7 +438,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     outputDirectoryButton.addBrowseFolderListener("TestNG", "Select test output directory", project,
                                                   FileChooserDescriptorFactory.createSingleFolderDescriptor());
     moduleClasspath.setEnabled(true);
-    moduleClasspath.setComponent(new JComboBox());
+    moduleClasspath.setComponent(new ModulesComboBox());
 
     propertiesTableModel = new TestNGParametersTableModel();
     listenerModel = new TestNGListenersTableModel();

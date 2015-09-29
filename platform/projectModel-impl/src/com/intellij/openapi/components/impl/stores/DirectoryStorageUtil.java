@@ -36,13 +36,13 @@ public class DirectoryStorageUtil {
   private static final Logger LOG = Logger.getInstance(DirectoryStorageUtil.class);
 
   @NotNull
-  public static Map<String, Map<String, Element>> loadFrom(@Nullable VirtualFile dir, @Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor) {
+  public static Map<String, Element> loadFrom(@Nullable VirtualFile dir, @Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor) {
     if (dir == null || !dir.exists()) {
       return Collections.emptyMap();
     }
 
     StringInterner interner = new StringInterner();
-    Map<String, Map<String, Element>> map = new THashMap<String, Map<String, Element>>();
+    Map<String, Element> fileToState = new THashMap<String, Element>();
     for (VirtualFile file : dir.getChildren()) {
       // ignore system files like .DS_Store on Mac
       if (!StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), FileStorageCoreUtil.DEFAULT_EXT)) {
@@ -56,8 +56,8 @@ public class DirectoryStorageUtil {
         }
 
         Element element = JDOMUtil.load(file.getInputStream());
-        String name = FileStorageCoreUtil.getComponentNameIfValid(element);
-        if (name == null) {
+        String componentName = FileStorageCoreUtil.getComponentNameIfValid(element);
+        if (componentName == null) {
           continue;
         }
 
@@ -79,31 +79,22 @@ public class DirectoryStorageUtil {
         JDOMUtil.internElement(state, interner);
         if (pathMacroSubstitutor != null) {
           pathMacroSubstitutor.expandPaths(state);
-          pathMacroSubstitutor.addUnknownMacros(name, PathMacrosCollector.getMacroNames(state));
+          pathMacroSubstitutor.addUnknownMacros(componentName, PathMacrosCollector.getMacroNames(state));
         }
 
-        Map<String, Element> fileToState = map.get(name);
-        if (fileToState == null) {
-          fileToState = new THashMap<String, Element>();
-          fileToState.put(file.getName(), state);
-          map.put(name, fileToState);
-        }
-        else {
-          fileToState.put(file.getName(), state);
-        }
+        fileToState.put(file.getName(), state);
       }
       catch (Throwable e) {
         LOG.warn("Unable to load state", e);
       }
     }
-    return map;
+    return fileToState;
   }
 
   @Nullable
-  public static Element getCompositeState(@NotNull Map<String, Map<String, Element>> states, @NotNull String componentName, @NotNull StateSplitterEx splitter) {
-    Map<String, Element> fileToState = states.get(componentName);
+  public static Element getCompositeState(@NotNull Map<String, Element> fileToState, @NotNull StateSplitterEx splitter) {
     Element state = new Element(FileStorageCoreUtil.COMPONENT);
-    if (fileToState == null || fileToState.isEmpty()) {
+    if (fileToState.isEmpty()) {
       return state;
     }
 

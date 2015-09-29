@@ -25,7 +25,7 @@ import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +122,7 @@ public abstract class ToolbarUpdater implements Activatable {
   protected abstract void updateActionsImpl(boolean transparentOnly, boolean forced);
 
   protected void updateActionTooltips() {
-    for (ActionButton actionButton : JBSwingUtilities.uiTraverser().withRoot(myComponent).preOrderDfsTraversal().filter(ActionButton.class)) {
+    for (ActionButton actionButton : UIUtil.uiTraverser().withRoot(myComponent).preOrderDfsTraversal().filter(ActionButton.class)) {
       actionButton.updateToolTipText();
     }
   }

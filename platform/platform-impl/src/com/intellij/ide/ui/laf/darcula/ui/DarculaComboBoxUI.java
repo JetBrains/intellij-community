@@ -44,8 +44,6 @@ import java.awt.geom.Path2D;
 @SuppressWarnings("GtkPreferredJComboBoxRenderer")
 public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   private final JComboBox myComboBox;
-  // Flag for calculating the display size
-  private boolean myDisplaySizeDirty = true;
 
   // Cached the size that the display needs to render the largest item
   private Dimension myDisplaySizeCache = JBUI.emptySize();
@@ -187,7 +185,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     JBInsets.addTo(display, myPadding);
 
     myDisplaySizeCache.setSize(display.width, display.height);
-    myDisplaySizeDirty = false;
 
     return display;
   }
@@ -332,18 +329,18 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
 
     hasFocus = false;
     checkFocus();
-    final Graphics2D g = (Graphics2D)g2;
+    final Graphics2D g = (Graphics2D)g2.create();
     final Rectangle arrowButtonBounds = arrowButton.getBounds();
     final int xxx = arrowButtonBounds.x - JBUI.scale(5);
     final int H = height - JBUI.scale(2);
     final int W = width - JBUI.scale(2);
 
-    final GraphicsConfig config = new GraphicsConfig(g);
+    final Shape clip = g.getClip();
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
     final int R = JBUI.scale(5);
     if (hasFocus) {
-      g.setClip(JBUI.scale(2), JBUI.scale(2), comboBox.getWidth()- JBUI.scale(4), comboBox.getHeight() - JBUI.scale(4));
+      g.clipRect(JBUI.scale(2), JBUI.scale(2), comboBox.getWidth()- JBUI.scale(4), comboBox.getHeight() - JBUI.scale(4));
     }
     if (editor != null && comboBox.isEditable()) {
       ((JComponent)editor).setBorder(null);
@@ -371,7 +368,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     paintCurrentValue(g, r, false);
 
     if (hasFocus) {
-      g.setClip(0, 0, comboBox.getWidth(), comboBox.getHeight());
+      g.setClip(clip);
       DarculaUIUtil.paintFocusRing(g, JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(4));
     }
     else {
@@ -379,14 +376,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
       g.drawRoundRect(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2), R, R);
       if (!UIUtil.isUnderDarcula() && comboBox.isEnabled()) {
         g.setColor(getArrowButtonFillColor(getBorderColor()));
-        final Shape clip = g.getClip();
         final int offX = xxx + JBUI.scale(5);
-        g.setClip(offX, y, width - offX, height);
+        g.clipRect(offX, y, width - offX, height);
         g.drawRoundRect(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2), R, R);
-        g.setClip(clip);
       }
     }
-    config.restore();
+    g.dispose();
   }
 
   private void checkFocus() {

@@ -206,6 +206,14 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     return false;
   }
 
+  public static PsiExpression replaceAnonymousWithLambda(@NotNull PsiElement anonymousClass, PsiType expectedType) {
+    PsiNewExpression newArrayExpression = (PsiNewExpression)JavaPsiFacade.getElementFactory(anonymousClass.getProject())
+      .createExpressionFromText("new " + expectedType.getCanonicalText() + "[]{" + anonymousClass.getText() + "}", anonymousClass);
+    PsiArrayInitializerExpression initializer = newArrayExpression.getArrayInitializer();
+    LOG.assertTrue(initializer != null);
+    return replacePsiElementWithLambda(initializer.getInitializers()[0], true);
+  }
+
   public static PsiExpression replacePsiElementWithLambda(@NotNull PsiElement element, final boolean ignoreEqualsMethod) {
     if (element instanceof PsiNewExpression) {
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return null;

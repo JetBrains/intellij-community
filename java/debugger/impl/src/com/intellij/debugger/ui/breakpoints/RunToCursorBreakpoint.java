@@ -26,17 +26,18 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Sep 13, 2006
  */
-public class RunToCursorBreakpoint<P extends JavaBreakpointProperties> extends LineBreakpoint<P> {
+public class RunToCursorBreakpoint extends LineBreakpoint<JavaLineBreakpointProperties> {
   private final boolean myRestoreBreakpoints;
   @NotNull
   protected final SourcePosition myCustomPosition;
   private String mySuspendPolicy;
+  private final JavaLineBreakpointProperties myProperties = new JavaLineBreakpointProperties();
 
   protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints) {
     super(project, null);
@@ -91,10 +92,6 @@ public class RunToCursorBreakpoint<P extends JavaBreakpointProperties> extends L
     return false;
   }
 
-  public boolean isInstanceFiltersEnabled() {
-    return false;
-  }
-
   @Override
   protected boolean isConditionEnabled() {
     return false;
@@ -114,9 +111,14 @@ public class RunToCursorBreakpoint<P extends JavaBreakpointProperties> extends L
     return true;
   }
 
+  @NotNull
   @Override
-  protected P getProperties() {
-    return null;
+  protected JavaLineBreakpointProperties getProperties() {
+    return myProperties;
+  }
+
+  @Override
+  protected void fireBreakpointChanged() {
   }
 
   @Override

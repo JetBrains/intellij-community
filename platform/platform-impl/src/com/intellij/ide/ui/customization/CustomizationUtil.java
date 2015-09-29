@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,9 +132,9 @@ public class CustomizationUtil {
     schema.fillActionGroups(root);
     final JTree defaultTree = new Tree(new DefaultTreeModel(root));
 
-    final ArrayList<ActionUrl> actions = new ArrayList<ActionUrl>();
-
+    final List<ActionUrl> actions = new ArrayList<ActionUrl>();
     TreeUtil.traverseDepth((TreeNode)tree.getModel().getRoot(), new TreeUtil.Traverse() {
+      @Override
       public boolean accept(Object node) {
         DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
         if (treeNode.isLeaf()) {
@@ -164,7 +164,7 @@ public class CustomizationUtil {
 
   private static void computeDiff(final ActionUrl[] defaultUserObjects,
                                   final ActionUrl[] currentUserObjects,
-                                  final ArrayList<ActionUrl> actions) {
+                                  @NotNull List<ActionUrl> actions) {
     Diff.Change change = null;
     try {
       change = Diff.buildChanges(defaultUserObjects, currentUserObjects);
@@ -199,7 +199,7 @@ public class CustomizationUtil {
         path.add(((Group)o).getName());
       }
     }
-    return getTreePath(0, path, tree.getModel().getRoot(), tree);
+    return getTreePath(0, path, tree.getModel().getRoot());
   }
 
   public static ActionUrl getActionUrl(final TreePath treePath, int actionType) {
@@ -214,20 +214,19 @@ public class CustomizationUtil {
 
     final DefaultMutableTreeNode component = ((DefaultMutableTreeNode)treePath.getLastPathComponent());
     url.setComponent(component.getUserObject());
-    DefaultMutableTreeNode node = component;
-    final TreeNode parent = node.getParent();
-    url.setAbsolutePosition(parent != null ? parent.getIndex(node) : 0);
+    final TreeNode parent = component.getParent();
+    url.setAbsolutePosition(parent != null ? parent.getIndex(component) : 0);
     url.setActionType(actionType);
     return url;
   }
 
 
   public static TreePath getTreePath(JTree tree, ActionUrl url) {
-    return getTreePath(0, url.getGroupPath(), tree.getModel().getRoot(), tree);
+    return getTreePath(0, url.getGroupPath(), tree.getModel().getRoot());
   }
 
   @Nullable
-  private static TreePath getTreePath(final int positionInPath, final List<String> path, final Object root, JTree tree) {
+  private static TreePath getTreePath(final int positionInPath, final List<String> path, final Object root) {
     if (!(root instanceof DefaultMutableTreeNode)) return null;
 
     final DefaultMutableTreeNode treeNode = ((DefaultMutableTreeNode)root);
@@ -257,7 +256,7 @@ public class CustomizationUtil {
 
     for (int j = 0; j < treeNode.getChildCount(); j++) {
       final TreeNode child = treeNode.getChildAt(j);
-      currentPath = getTreePath(positionInPath + 1, path, child, tree);
+      currentPath = getTreePath(positionInPath + 1, path, child);
       if (currentPath != null) {
         break;
       }
@@ -285,6 +284,7 @@ public class CustomizationUtil {
   public static MouseListener installPopupHandler(JComponent component, @NotNull final String groupId, final String place) {
     if (ApplicationManager.getApplication() == null) return new MouseAdapter(){};
     PopupHandler popupHandler = new PopupHandler() {
+      @Override
       public void invokePopup(Component comp, int x, int y) {
         ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
         final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(place, group);

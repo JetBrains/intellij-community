@@ -24,6 +24,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -65,17 +66,19 @@ import java.util.Queue;
 public class MvcConsole implements Disposable {
 
   private static final Key<Boolean> UPDATING_BY_CONSOLE_PROCESS = Key.create("UPDATING_BY_CONSOLE_PROCESS");
-
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.mvc.MvcConsole");
+  @NonNls private static final String CONSOLE_ID = "Groovy MVC Console";
+
+  @NonNls public static final String TOOL_WINDOW_ID = "Console";
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Mvc notifications", TOOL_WINDOW_ID);
+
   private final ConsoleViewImpl myConsole;
   private final Project myProject;
   private final ToolWindow myToolWindow;
   private final JPanel myPanel = new JPanel(new BorderLayout());
   private final Queue<MyProcessInConsole> myProcessQueue = new LinkedList<MyProcessInConsole>();
 
-  @NonNls private static final String CONSOLE_ID = "Groovy MVC Console";
 
-  @NonNls public static final String TOOL_WINDOW_ID = "Console";
 
   private final MyKillProcessAction myKillAction = new MyKillProcessAction();
   private boolean myExecuting = false;
@@ -148,7 +151,7 @@ public class MvcConsole implements Disposable {
 
     public MyProcessInConsole(final Module module,
                               final GeneralCommandLine commandLine,
-                              final Runnable onDone,
+                              @Nullable final Runnable onDone,
                               final boolean showConsole,
                               final boolean closeOnDone,
                               final String[] input) {

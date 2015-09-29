@@ -42,7 +42,6 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
     @CollectionBean public final List<String> pluginHosts = new SmartList<String>();
     @CollectionBean public final List<String> knownUpdateChannels = new SmartList<String>();
     @CollectionBean public final List<String> ignoredBuildNumbers = new SmartList<String>();
-    @CollectionBean public final List<String> outdatedPlugins = new SmartList<String>();
 
     public boolean CHECK_NEEDED = true;
     public long LAST_TIME_CHECKED = 0;
@@ -99,11 +98,6 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
 
   public void setUpdateChannelType(@NotNull String value) {
     myState.UPDATE_CHANNEL_TYPE = value;
-  }
-
-  @NotNull
-  public List<String> getOutdatedPlugins() {
-    return myState.outdatedPlugins;
   }
 
   private void updateDefaultChannel() {

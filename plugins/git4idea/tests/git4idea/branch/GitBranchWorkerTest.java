@@ -60,32 +60,21 @@ public class GitBranchWorkerTest extends GitPlatformTest {
   private List<GitRepository> myRepositories;
 
   public void setUp() throws Exception {
-    try {
-      super.setUp();
-    }
-    catch (Throwable t) {
-      super.tearDown();
-    }
+    super.setUp();
 
-    try {
-      cd(myProjectRoot);
-      File community = mkdir("community");
-      File contrib = mkdir("contrib");
+    cd(myProjectRoot);
+    File community = mkdir("community");
+    File contrib = mkdir("contrib");
 
-      myUltimate = createRepository(myProjectPath);
-      myCommunity = createRepository(community.getPath());
-      myContrib = createRepository(contrib.getPath());
-      myRepositories = Arrays.asList(myUltimate, myCommunity, myContrib);
+    myUltimate = createRepository(myProjectPath);
+    myCommunity = createRepository(community.getPath());
+    myContrib = createRepository(contrib.getPath());
+    myRepositories = Arrays.asList(myUltimate, myCommunity, myContrib);
 
-      cd(myProjectRoot);
-      touch(".gitignore", "community\ncontrib");
-      git("add .gitignore");
-      git("commit -m gitignore");
-    }
-    catch (Exception e) {
-      tearDown();
-      throw e;
-    }
+    cd(myProjectRoot);
+    touch(".gitignore", "community\ncontrib");
+    git("add .gitignore");
+    git("commit -m gitignore");
   }
 
   public void test_create_new_branch_without_problems() {

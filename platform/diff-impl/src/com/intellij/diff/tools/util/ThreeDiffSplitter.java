@@ -18,7 +18,6 @@ package com.intellij.diff.tools.util;
 import com.intellij.diff.tools.util.DiffSplitter.Painter;
 import com.intellij.diff.util.Side;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +27,8 @@ import java.awt.*;
 import java.util.List;
 
 public class ThreeDiffSplitter extends JPanel {
+  private static final int DIVIDER_WIDTH = 30;
+
   @NotNull private final List<Divider> myDividers;
   @NotNull private final List<? extends JComponent> myContents;
 
@@ -67,11 +68,7 @@ public class ThreeDiffSplitter extends JPanel {
   public void doLayout() {
     int width = getWidth();
     int height = getHeight();
-    int dividersTotalWidth = 0;
-    for (JComponent divider : myDividers) {
-      dividersTotalWidth += divider.getPreferredSize().width;
-    }
-    int panelWidth = (width - dividersTotalWidth) / 3;
+    int panelWidth = (width - DIVIDER_WIDTH * 2) / 3;
     int x = 0;
     for (int i = 0; i < myContents.size(); i++) {
       JComponent component = myContents.get(i);
@@ -80,20 +77,39 @@ public class ThreeDiffSplitter extends JPanel {
       x += panelWidth;
       if (i < myDividers.size()) {
         JComponent divider = myDividers.get(i);
-        int dividerWidth = divider.getPreferredSize().width;
-        divider.setBounds(x, 0, dividerWidth, height);
+        divider.setBounds(x, 0, DIVIDER_WIDTH, height);
         divider.validate();
-        x += dividerWidth;
+        x += DIVIDER_WIDTH;
       }
     }
   }
 
+  @Override
+  public Dimension getMinimumSize() {
+    int width = DIVIDER_WIDTH * 2;
+    int height = 0;
+    for (JComponent content : myContents) {
+      Dimension size = content.getMinimumSize();
+      width += size.width;
+      height = Math.max(height, size.height);
+    }
+    return new Dimension(width, height);
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    int width = DIVIDER_WIDTH * 2;
+    int height = 0;
+    for (JComponent content : myContents) {
+      Dimension size = content.getPreferredSize();
+      width += size.width;
+      height = Math.max(height, size.height);
+    }
+    return new Dimension(width, height);
+  }
+
   private static class Divider extends JComponent {
     @Nullable private Painter myPainter;
-
-    public Dimension getPreferredSize() {
-      return JBUI.size(30, 1);
-    }
 
     public void paint(Graphics g) {
       super.paint(g);

@@ -40,7 +40,9 @@ public class ResourceBundleRenameUtil {
   private final static Logger LOG = Logger.getInstance(ResourceBundleRenameUtil.class);
 
   public static void renameResourceBundleKey(final @NotNull PsiElement psiElement, final @NotNull Project project) {
-    PsiElementRenameHandler.invoke(psiElement, project, psiElement.getContainingFile(), null);
+    if (psiElement.isValid()) {
+      PsiElementRenameHandler.invoke(psiElement, project, psiElement.getContainingFile(), null);
+    }
   }
 
   public static void renameResourceBundleBaseName(final @NotNull ResourceBundle resourceBundle, final @NotNull Project project) {

@@ -201,7 +201,11 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
 
   @Override
   public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
-    return RelaxedHtmlFromSchemaElementDescriptor.addAttrDescriptorsForFacelets(context, super.getAttributesDescriptors(context));
+    return RelaxedHtmlFromSchemaElementDescriptor.addAttrDescriptorsForFacelets(context, getDefaultAttributeDescriptors(context));
+  }
+
+  public XmlAttributeDescriptor[] getDefaultAttributeDescriptors(XmlTag context) {
+    return super.getAttributesDescriptors(context);
   }
 
   public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {

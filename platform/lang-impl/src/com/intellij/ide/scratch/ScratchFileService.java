@@ -40,7 +40,7 @@ public abstract class ScratchFileService {
   public abstract String getRootPath(@NotNull RootType rootId);
 
   @Nullable
-  public abstract RootType getRootType(@NotNull VirtualFile file);
+  public abstract RootType getRootType(@Nullable VirtualFile file);
 
   public abstract VirtualFile findFile(@NotNull RootType rootType, @NotNull String pathName, @NotNull Option option) throws IOException;
 

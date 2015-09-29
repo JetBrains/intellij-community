@@ -18,7 +18,6 @@ package com.intellij.psi.filters;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -28,18 +27,8 @@ import org.jetbrains.annotations.NonNls;
  * Time: 13:57:35
  * To change this template use Options | File Templates.
  */
-public class XmlTextFilter implements ElementFilter, InitializableFilter{
-  protected String[] myValue;
-  private boolean myCaseInsensitiveFlag = false;
-
-  public XmlTextFilter(){
-    myValue = ArrayUtil.EMPTY_STRING_ARRAY;
-  }
-  public XmlTextFilter(@NonNls String value, boolean incensetiveFlag){
-    myCaseInsensitiveFlag = incensetiveFlag;
-    myValue = new String[1];
-    myValue[0] = value;
-  }
+public class XmlTextFilter implements ElementFilter {
+  protected final String[] myValue;
 
   public XmlTextFilter(@NonNls String value){
     myValue = new String[1];
@@ -50,12 +39,6 @@ public class XmlTextFilter implements ElementFilter, InitializableFilter{
     myValue = values;
   }
 
-  public XmlTextFilter(@NonNls String value1, @NonNls String value2){
-    myValue = new String[2];
-    myValue[0] = value1;
-    myValue[1] = value2;
-  }
-
   @Override
   public boolean isClassAcceptable(Class hintClass){
     return true;
@@ -64,16 +47,10 @@ public class XmlTextFilter implements ElementFilter, InitializableFilter{
   @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if(element != null) {
+      String text = getTextByElement(element);
       for (final String value : myValue) {
-        if (value == null) {
+        if (value == null || value.equals(text)) {
           return true;
-        }
-        final String elementText = getTextByElement(element);
-        if (myCaseInsensitiveFlag) {
-          if (value.equalsIgnoreCase(elementText)) return true;
-        }
-        else {
-          if (value.equals(elementText)) return true;
         }
       }
     }
@@ -91,17 +68,6 @@ public class XmlTextFilter implements ElementFilter, InitializableFilter{
     }
     ret += ")";
     return ret;
-  }
-
-  @Override
-  public void init(Object[] fromGetter){
-    try{
-      myValue = new String[fromGetter.length];
-      System.arraycopy(fromGetter, 0, myValue, 0, fromGetter.length);
-    }
-    catch(ClassCastException cce){
-      myValue = ArrayUtil.EMPTY_STRING_ARRAY;
-    }
   }
 
   protected String getTextByElement(Object element){

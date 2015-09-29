@@ -9,7 +9,7 @@
     <extensionPoint name="generalCodeStyleOptionsProvider" beanClass="com.intellij.application.options.GeneralCodeStyleOptionsProviderEP">
       <with attribute="instance" implements="com.intellij.application.options.GeneralCodeStyleOptionsProvider"/>
     </extensionPoint>
-    <extensionPoint name="autoImportOptionsProvider" beanClass="com.intellij.application.options.editor.AutoImportOptionsProviderEP">
+    <extensionPoint name="autoImportOptionsProvider" beanClass="com.intellij.application.options.editor.AutoImportOptionsProviderEP" area="IDEA_PROJECT">
       <with attribute="instance" implements="com.intellij.application.options.editor.AutoImportOptionsProvider"/>
     </extensionPoint>
     <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
@@ -848,6 +848,10 @@
 
     <extensionPoint name="packageDependencies.visitor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.packageDependencies.DependencyVisitorFactory"/>
+    </extensionPoint>
+
+    <extensionPoint name="lang.sliceProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.slicer.SliceLanguageSupportProvider"/>
     </extensionPoint>
   </extensionPoints>
 </idea-plugin>

@@ -36,10 +36,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.HintListener;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IconUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -229,11 +226,13 @@ public abstract class AbstractValueHint {
     }
 
     Point p = HintManagerImpl.getHintPosition(myCurrentHint, myEditor, myEditor.xyToLogicalPosition(myPoint), HintManager.UNDER);
+    HintHint hint = HintManagerImpl.createHintHint(myEditor, p, myCurrentHint, HintManager.UNDER, true);
+    hint.setShowImmediately(true);
     HintManagerImpl.getInstanceImpl().showEditorHint(myCurrentHint, myEditor, p,
                                                      HintManager.HIDE_BY_ANY_KEY |
                                                      HintManager.HIDE_BY_TEXT_CHANGE |
                                                      HintManager.HIDE_BY_SCROLLING, 0, false,
-                                                     HintManagerImpl.createHintHint(myEditor, p, myCurrentHint, HintManager.UNDER, true));
+                                                     hint);
     myInsideShow = false;
     return true;
   }
@@ -299,7 +298,7 @@ public abstract class AbstractValueHint {
   }
 
   protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
-    DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, getEditor(), myPoint, getProject());
+    DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, getEditor(), myPoint, getProject(), myHideRunnable);
   }
 
   @Override

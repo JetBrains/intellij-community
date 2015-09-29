@@ -102,6 +102,18 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     return PyCallExpressionHelper.resolveCallee(this, resolveContext, offset);
   }
 
+  @NotNull
+  @Override
+  public PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext) {
+    return PyCallExpressionHelper.mapArguments(this, resolveContext, 0);
+  }
+
+  @NotNull
+  @Override
+  public PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+    return PyCallExpressionHelper.mapArguments(this, resolveContext, implicitOffset);
+  }
+
   @Override
   public boolean isCalleeText(@NotNull String... nameCandidates) {
     return PyCallExpressionHelper.isCalleeText(this, nameCandidates);

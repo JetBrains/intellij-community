@@ -20,6 +20,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -502,7 +503,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              if (!myProject.isDisposed()) {
+              if (!myProject.isDisposed() && getToolWindow(bean.id) == null) {
                 initToolWindow(bean);
               }
             }
@@ -1122,6 +1123,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       // Remove tool window from the SideStack.
 
       mySideStack.remove(id);
+    }
+
+    if (!toBeShownInfo.isShowStripeButton()) {
+      toBeShownInfo.setShowStripeButton(true);
     }
 
     appendApplyWindowInfoCmd(toBeShownInfo, commandsList);
@@ -2427,6 +2432,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     public void sideStatusChanged(final InternalDecorator source, final boolean isSideTool) {
       setSideTool(source.getToolWindow().getId(), isSideTool);
     }
+
+    public void visibleStripeButtonChanged(InternalDecorator source, boolean visible) {
+      setShowStripeButton(source.getToolWindow().getId(), visible);
+    }
   }
 
   private void updateComponentTreeUI() {
@@ -2559,5 +2568,24 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
     return IdeFocusManager.getInstance(myProject).getTimestamp(trackOnlyForcedCommands);
+  }
+
+  public void setShowStripeButton(String id, boolean visibleOnPanel) {
+    checkId(id);
+    WindowInfoImpl info = getInfo(id);
+    if (visibleOnPanel == info.isShowStripeButton()) {
+      return;
+    }
+    info.setShowStripeButton(visibleOnPanel);
+    UsageTrigger.trigger("StripeButton[" + id + "]." + (visibleOnPanel ? "shown" : "hidden"));
+
+    final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
+    appendApplyWindowInfoCmd(info, commandList);
+    execute(commandList);
+  }
+
+  public boolean isShowStripeButton(String id) {
+    WindowInfoImpl info = getInfo(id);
+    return info == null || info.isShowStripeButton();
   }
 }

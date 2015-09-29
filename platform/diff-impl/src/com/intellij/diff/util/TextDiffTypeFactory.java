@@ -107,6 +107,11 @@ public class TextDiffTypeFactory {
     public Color getMarkerColor(@Nullable Editor editor) {
       return getAttributes(editor).getErrorStripeColor();
     }
+
+    @Override
+    public String toString() {
+      return myName;
+    }
   }
 
   private static final double MIDDLE_COLOR_FACTOR = 0.6;

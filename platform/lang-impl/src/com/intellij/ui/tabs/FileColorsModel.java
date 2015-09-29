@@ -18,6 +18,7 @@ package com.intellij.ui.tabs;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.psi.PsiFile;
@@ -37,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,18 +49,19 @@ import java.util.Map;
 public class FileColorsModel implements Cloneable {
   public static final String FILE_COLOR = "fileColor";
 
-  private final List<FileColorConfiguration> myConfigurations;
-  private final List<FileColorConfiguration> mySharedConfigurations;
-  private static final Map<String, String> globalScopes;
-  private static final Map<String, String> globalScopesColors;
+  private final List<FileColorConfiguration> myApplicationLevelConfigurations;
+  private final List<FileColorConfiguration> myProjectLevelConfigurations;
+  private static final Map<String, String> predefinedScopeNameToPropertyKey;
+  private static final Map<String, String> predefinedScopeNameToColor;
+
   static {
-    globalScopes = new HashMap<String, String>();
-    globalScopes.put(NonProjectFilesScope.NAME, "file.colors.enable.non.project");
+    predefinedScopeNameToPropertyKey = new THashMap<String, String>();
+    predefinedScopeNameToPropertyKey.put(NonProjectFilesScope.NAME, "file.colors.enable.non.project");
     if (PlatformUtils.isIntelliJ() || PlatformUtils.isRubyMine()) {
-      globalScopes.put(TestsScope.NAME, "file.colors.enable.tests");
+        predefinedScopeNameToPropertyKey.put(TestsScope.NAME, "file.colors.enable.tests");
     }
 
-    globalScopesColors = new HashMap<String, String>();
+    predefinedScopeNameToColor = new THashMap<String, String>();
   }
 
   @NotNull
@@ -68,86 +69,105 @@ public class FileColorsModel implements Cloneable {
 
   FileColorsModel(@NotNull final Project project) {
     myProject = project;
-    myConfigurations = new ArrayList<FileColorConfiguration>();
-    mySharedConfigurations = new ArrayList<FileColorConfiguration>();
+    myApplicationLevelConfigurations = new ArrayList<FileColorConfiguration>();
+    myProjectLevelConfigurations = new ArrayList<FileColorConfiguration>();
 
-    if (globalScopesColors.size() < globalScopes.size()) {
-      final DefaultScopesProvider defaultScopesProvider = DefaultScopesProvider.getInstance(project);
-      for (String scopeName : globalScopes.keySet()) {
+    if (predefinedScopeNameToColor.size() < predefinedScopeNameToPropertyKey.size()) {
+      DefaultScopesProvider defaultScopesProvider = DefaultScopesProvider.getInstance(project);
+      for (String scopeName : predefinedScopeNameToPropertyKey.keySet()) {
         final NamedScope scope = defaultScopesProvider.findCustomScope(scopeName);
         assert scope != null : "There is no custom scope with name " + scopeName;
         final Color color = ColorUtil.getColor(scope.getClass());
         assert color != null : scope.getClass().getName() + " is not annotated with @Colored";
         final String colorName = FileColorManagerImpl.getColorName(color);
-        globalScopesColors.put(scopeName, colorName == null ? ColorUtil.toHex(color) : colorName);
+        predefinedScopeNameToColor.put(scopeName, colorName == null ? ColorUtil.toHex(color) : colorName);
       }
     }
     initGlobalScopes();
   }
 
-  private FileColorsModel(@NotNull final Project project,
-                          @NotNull final List<FileColorConfiguration> regular,
-                          @NotNull final List<FileColorConfiguration> shared) {
+  private FileColorsModel(@NotNull Project project,
+                          @NotNull List<FileColorConfiguration> applicationLevel,
+                          @NotNull List<FileColorConfiguration> projectLevel) {
     myProject = project;
-    myConfigurations = new ArrayList<FileColorConfiguration>();
-    mySharedConfigurations = new ArrayList<FileColorConfiguration>();
-    myConfigurations.addAll(regular);
-    mySharedConfigurations.addAll(shared);
+    myApplicationLevelConfigurations = new ArrayList<FileColorConfiguration>();
+    myProjectLevelConfigurations = new ArrayList<FileColorConfiguration>();
+    myApplicationLevelConfigurations.addAll(applicationLevel);
+    myProjectLevelConfigurations.addAll(projectLevel);
     initGlobalScopes();
   }
 
   private void initGlobalScopes() {
-    for (String scopeName : globalScopes.keySet()) {
+    PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
+    for (String scopeName : predefinedScopeNameToPropertyKey.keySet()) {
       if (findConfiguration(scopeName, false) == null) {
-        String color = PropertiesComponent.getInstance().getValue(globalScopes.get(scopeName), globalScopesColors.get(scopeName));
+        String color = propertyComponent.getValue(predefinedScopeNameToPropertyKey.get(scopeName));
+        if (color == null) {
+          // backward compatibility, previously it was saved incorrectly as scope name instead of specified property key
+          color = propertyComponent.getValue(scopeName);
+          if (color == null) {
+            color = predefinedScopeNameToColor.get(scopeName);
+          }
+        }
+
         if (!color.isEmpty()) {
           final Color col = ColorUtil.fromHex(color, null);
           final String name = col == null ? null : FileColorManagerImpl.getColorName(col);
-          myConfigurations.add(new FileColorConfiguration(scopeName, name == null ? color : name));
+          myApplicationLevelConfigurations.add(new FileColorConfiguration(scopeName, name == null ? color : name));
         }
       }
     }
   }
 
-  public void save(final Element e, final boolean shared) {
-    final List<FileColorConfiguration> configurations = shared ? mySharedConfigurations : myConfigurations;
-    for (final FileColorConfiguration configuration : configurations) {
-      final String name = configuration.getScopeName();
-      if (!shared && globalScopes.containsKey(name)) {
-        PropertiesComponent.getInstance().setValue(name, configuration.getColorName(), globalScopesColors.get(name));
+  public void save(@NotNull Element e, boolean isProjectLevel) {
+    List<FileColorConfiguration> configurations = isProjectLevel ? myProjectLevelConfigurations : myApplicationLevelConfigurations;
+    for (FileColorConfiguration configuration : configurations) {
+      String scopeName = configuration.getScopeName();
+      String propertyKey = isProjectLevel ? null : predefinedScopeNameToPropertyKey.get(scopeName);
+      if (propertyKey == null) {
+        configuration.save(e);
       }
       else {
-        configuration.save(e);
+        PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
+        propertyComponent.setValue(propertyKey, configuration.getColorName(), predefinedScopeNameToColor.get(scopeName));
+        // previously it was saved incorrectly as scope name instead of specified property key
+        PropertiesComponent.getInstance().setValue(scopeName, null);
       }
     }
   }
 
-  public void load(final Element e, final boolean shared) {
-    List<FileColorConfiguration> configurations = shared ? mySharedConfigurations : myConfigurations;
+  public void load(@NotNull Element e, boolean isProjectLevel) {
+    List<FileColorConfiguration> configurations = isProjectLevel ? myProjectLevelConfigurations : myApplicationLevelConfigurations;
 
     configurations.clear();
 
-    final List<Element> list = e.getChildren(FILE_COLOR);
-    final Map<String, String> global = new HashMap<String, String>(globalScopes);
-    for (Element child : list) {
-      final FileColorConfiguration configuration = FileColorConfiguration.load(child);
+    Map<String, String> predefinedScopeNameToPropertyKey = new THashMap<String, String>(FileColorsModel.predefinedScopeNameToPropertyKey);
+    for (Element child : e.getChildren(FILE_COLOR)) {
+      FileColorConfiguration configuration = FileColorConfiguration.load(child);
       if (configuration != null) {
-        if (!shared) {
-          final String name = configuration.getScopeName();
-          if (globalScopes.get(name) != null) {
-            global.remove(name);
-          }
+        if (!isProjectLevel) {
+          predefinedScopeNameToPropertyKey.remove(configuration.getScopeName());
         }
         configurations.add(configuration);
       }
     }
 
-    if (!shared) {
-      final PropertiesComponent properties = PropertiesComponent.getInstance();
-      for (String scope : global.keySet()) {
-        final String colorName = properties.getValue(scope);
-        if (colorName != null) {
-          configurations.add(new FileColorConfiguration(scope, colorName));
+    if (!isProjectLevel) {
+      PropertiesComponent properties = PropertiesComponent.getInstance();
+      for (String scopeName : predefinedScopeNameToPropertyKey.keySet()) {
+        String colorName = properties.getValue(predefinedScopeNameToPropertyKey.get(scopeName));
+        if (colorName == null) {
+          // backward compatibility, previously it was saved incorrectly as scope name instead of specified property key
+          colorName = properties.getValue(scopeName);
+
+          // so, default value
+          if (colorName == null) {
+            colorName = predefinedScopeNameToColor.get(scopeName);
+          }
+        }
+        // empty means that value deleted
+        if (!StringUtil.isEmpty(colorName)) {
+          configurations.add(new FileColorConfiguration(scopeName, colorName));
         }
       }
     }
@@ -155,47 +175,41 @@ public class FileColorsModel implements Cloneable {
 
   @Override
   public FileColorsModel clone() throws CloneNotSupportedException {
-    final List<FileColorConfiguration> regular = new ArrayList<FileColorConfiguration>();
-    for (final FileColorConfiguration configuration : myConfigurations) {
-      regular.add(configuration.clone());
+    List<FileColorConfiguration> applicationLevel = new ArrayList<FileColorConfiguration>();
+    for (FileColorConfiguration configuration : myApplicationLevelConfigurations) {
+      applicationLevel.add(configuration.clone());
     }
 
-    final ArrayList<FileColorConfiguration> shared = new ArrayList<FileColorConfiguration>();
-    for (final FileColorConfiguration sharedConfiguration : mySharedConfigurations) {
-      shared.add(sharedConfiguration.clone());
+    List<FileColorConfiguration> projectLevel = new ArrayList<FileColorConfiguration>();
+    for (FileColorConfiguration configuration : myProjectLevelConfigurations) {
+      projectLevel.add(configuration.clone());
     }
-
-    return new FileColorsModel(myProject, regular, shared);
+    return new FileColorsModel(myProject, applicationLevel, projectLevel);
   }
 
-  public void add(@NotNull final FileColorConfiguration configuration, boolean shared) {
-    final List<FileColorConfiguration> configurations = shared ? mySharedConfigurations : myConfigurations;
+  public void add(@NotNull FileColorConfiguration configuration, boolean isProjectLevel) {
+    List<FileColorConfiguration> configurations = isProjectLevel ? myProjectLevelConfigurations : myApplicationLevelConfigurations;
     if (!configurations.contains(configuration)) {
       configurations.add(configuration);
     }
   }
 
-  public void add(@NotNull final String scopeName, @NotNull final String colorName, boolean shared) {
-    final FileColorConfiguration configuration = new FileColorConfiguration();
-    configuration.setScopeName(scopeName);
-    configuration.setColorName(colorName);
-
-    add(configuration, shared);
+  public void add(@NotNull String scopeName, @NotNull String colorName, boolean isProjectLevel) {
+    add(new FileColorConfiguration(scopeName, colorName), isProjectLevel);
   }
 
   @Nullable
-  private FileColorConfiguration findConfiguration(final String scopeName, final boolean shared) {
-    final List<FileColorConfiguration> configurations = shared ? mySharedConfigurations : myConfigurations;
-    for (final FileColorConfiguration configuration : configurations) {
+  private FileColorConfiguration findConfiguration(@NotNull String scopeName, boolean isProjectLevel) {
+    List<FileColorConfiguration> configurations = isProjectLevel ? myProjectLevelConfigurations : myApplicationLevelConfigurations;
+    for (FileColorConfiguration configuration : configurations) {
       if (scopeName.equals(configuration.getScopeName())) {
         return configuration;
       }
     }
-
     return null;
   }
 
-  public boolean isShared(@NotNull final String scopeName) {
+  public boolean isProjectLevel(@NotNull String scopeName) {
     return findConfiguration(scopeName, true) != null;
   }
 
@@ -205,7 +219,7 @@ public class FileColorsModel implements Cloneable {
       return null;
     }
     VirtualFile virtualFile = psiFile.getVirtualFile();
-    return virtualFile == null? null : getColor(virtualFile, psiFile.getProject());
+    return virtualFile == null ? null : getColor(virtualFile, psiFile.getProject());
   }
 
   @Nullable
@@ -223,7 +237,7 @@ public class FileColorsModel implements Cloneable {
 
   @Nullable
   private FileColorConfiguration findConfiguration(@NotNull final VirtualFile colored) {
-    for (FileColorConfiguration configuration : ContainerUtil.concat(myConfigurations, mySharedConfigurations)) {
+    for (FileColorConfiguration configuration : ContainerUtil.concat(myApplicationLevelConfigurations, myProjectLevelConfigurations)) {
       NamedScope scope = NamedScopesHolder.getScope(myProject, configuration.getScopeName());
       if (scope != null) {
         NamedScopesHolder namedScopesHolder = NamedScopesHolder.getHolder(myProject, configuration.getScopeName(), null);
@@ -236,42 +250,45 @@ public class FileColorsModel implements Cloneable {
     return null;
   }
 
-
-  public boolean isShared(FileColorConfiguration configuration) {
-    return mySharedConfigurations.contains(configuration);
+  public boolean isProjectLevel(@NotNull FileColorConfiguration configuration) {
+    return myProjectLevelConfigurations.contains(configuration);
   }
 
-  public void setConfigurations(@NotNull List<FileColorConfiguration> configurations, final boolean shared) {
-    if (shared) {
-      mySharedConfigurations.clear();
-      mySharedConfigurations.addAll(configurations);
+  public void setConfigurations(@NotNull List<FileColorConfiguration> configurations, boolean isProjectLevel) {
+    if (isProjectLevel) {
+      myProjectLevelConfigurations.clear();
+      myProjectLevelConfigurations.addAll(configurations);
     }
     else {
-      myConfigurations.clear();
-      Map<String, String> global = new THashMap<String, String>(globalScopes);
+      myApplicationLevelConfigurations.clear();
+      Map<String, String> predefinedScopeNameToPropertyKey = new THashMap<String, String>(FileColorsModel.predefinedScopeNameToPropertyKey);
+      PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
       for (FileColorConfiguration configuration : configurations) {
-        myConfigurations.add(configuration);
-        final String name = configuration.getScopeName();
-        if (global.containsKey(name)) {
-          PropertiesComponent.getInstance().setValue(global.get(name), configuration.getColorName());
-          global.remove(name);
+        myApplicationLevelConfigurations.add(configuration);
+        String propertyKey = predefinedScopeNameToPropertyKey.remove(configuration.getScopeName());
+        if (propertyKey != null) {
+          propertiesComponent.setValue(propertyKey, configuration.getColorName());
         }
       }
-      for (String name : global.keySet()) {
-        PropertiesComponent.getInstance().setValue(global.get(name), "");
+      for (String scopeName : predefinedScopeNameToPropertyKey.keySet()) {
+        // empty string means that value deleted
+        propertiesComponent.setValue(predefinedScopeNameToPropertyKey.get(scopeName), "");
+        // previously it was saved incorrectly as scope name instead of specified property key
+        propertiesComponent.setValue(scopeName, null);
       }
     }
   }
 
-  public boolean isColored(String scopeName, boolean shared) {
-    return findConfiguration(scopeName, shared) != null;
+  public boolean isColored(@NotNull String scopeName, boolean isProjectLevel) {
+    return findConfiguration(scopeName, isProjectLevel) != null;
   }
 
   public List<FileColorConfiguration> getLocalConfigurations() {
-    return myConfigurations;
+    return myApplicationLevelConfigurations;
   }
 
-  public List<FileColorConfiguration> getSharedConfigurations() {
-    return mySharedConfigurations;
+  @NotNull
+  public List<FileColorConfiguration> getProjectLevelConfigurations() {
+    return myProjectLevelConfigurations;
   }
 }

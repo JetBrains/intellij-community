@@ -98,12 +98,12 @@ class A {
     public int hashCode() {
         int result;
         long temp;
-        result = getA1() != null ? Arrays.hashCode(getA1()) : 0;
-        result = 31 * result + (getA2() != null ? Arrays.deepHashCode(getA2()) : 0);
-        result = 31 * result + (getA3() != null ? Arrays.hashCode(getA3()) : 0);
-        result = 31 * result + (getA4() != null ? Arrays.deepHashCode(getA4()) : 0);
-        result = 31 * result + (getA5() != null ? Arrays.hashCode(getA5()) : 0);
-        result = 31 * result + (getA6() != null ? Arrays.deepHashCode(getA6()) : 0);
+        result = Arrays.hashCode(getA1());
+        result = 31 * result + Arrays.deepHashCode(getA2());
+        result = 31 * result + Arrays.hashCode(getA3());
+        result = 31 * result + Arrays.deepHashCode(getA4());
+        result = 31 * result + Arrays.hashCode(getA5());
+        result = 31 * result + Arrays.deepHashCode(getA6());
         result = 31 * result + (int) getA7();
         result = 31 * result + (int) getA8();
         result = 31 * result + getA9();

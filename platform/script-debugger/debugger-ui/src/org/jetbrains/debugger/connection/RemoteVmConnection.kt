@@ -34,7 +34,7 @@ import java.net.ConnectException
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicReference
 
-public abstract class RemoteVmConnection : VmConnection<Vm>() {
+abstract class RemoteVmConnection : VmConnection<Vm>() {
   private val connectCancelHandler = AtomicReference<Runnable>()
 
   override fun getBrowser() = null
@@ -42,7 +42,7 @@ public abstract class RemoteVmConnection : VmConnection<Vm>() {
   public abstract fun createBootstrap(address: InetSocketAddress, vmResult: AsyncPromise<Vm>): Bootstrap
 
   public fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null) {
-    setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.getHostName()}:${address.getPort()}")
+    setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.hostName}:${address.port}")
     val future = ApplicationManager.getApplication().executeOnPooledThread(object : Runnable {
       override fun run() {
         if (Thread.interrupted()) {
@@ -72,10 +72,10 @@ public abstract class RemoteVmConnection : VmConnection<Vm>() {
         NettyUtil.connect(createBootstrap(address, result), address, connectionPromise, if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition)
       }
     })
-    connectCancelHandler.set(Runnable {  future.cancel(true) })
+    connectCancelHandler.set(Runnable { future.cancel(true) })
   }
 
-  protected open fun connectedAddressToPresentation(address: InetSocketAddress, vm: Vm): String = address.getHostName() + ":" + address.getPort()
+  protected open fun connectedAddressToPresentation(address: InetSocketAddress, vm: Vm): String = address.hostName + ":" + address.port
 
   override fun detachAndClose(): Promise<*> {
     try {
@@ -87,24 +87,24 @@ public abstract class RemoteVmConnection : VmConnection<Vm>() {
   }
 }
 
-public fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemToString: (T) -> String): Promise<T> {
+fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemToString: (T) -> String): Promise<T> {
   if (targets.size() == 1) {
-    return ResolvedPromise(ContainerUtil.getFirstItem(targets))
+    return ResolvedPromise(ContainerUtil.getFirstItem(targets)!!)
   }
   else if (targets.isEmpty()) {
     return RejectedPromise("No tabs to inspect")
   }
 
   val result = AsyncPromise<T>()
-  ApplicationManager.getApplication().invokeLater(Runnable {
+  ApplicationManager.getApplication().invokeLater({
     val list = JBList(targets)
-    list.setCellRenderer(object : ColoredListCellRenderer.KotlinFriendlyColoredListCellRenderer<T>() {
+    list.cellRenderer = object : ColoredListCellRenderer.KotlinFriendlyColoredListCellRenderer<T>() {
       override fun customizeCellRenderer(value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
         append(itemToString(value))
       }
-    })
+    }
     if (selectedIndex != -1) {
-      list.setSelectedIndex(selectedIndex)
+      list.selectedIndex = selectedIndex
     }
 
     JBPopupFactory.getInstance()
@@ -112,8 +112,8 @@ public fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemTo
       .setTitle("Choose Page to Debug")
       .setItemChoosenCallback(object : Runnable {
         override fun run() {
-          @suppress("UNCHECKED_CAST")
-          val value = list.getSelectedValue() as T
+          @Suppress("UNCHECKED_CAST")
+          val value = list.selectedValue as T
           if (value == null) {
             result.setError("No target to inspect")
           }

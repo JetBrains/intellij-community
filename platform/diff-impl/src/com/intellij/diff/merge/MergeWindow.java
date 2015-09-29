@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +54,11 @@ public class MergeWindow {
       protected void setWindowTitle(@NotNull String title) {
         myWrapper.setTitle(title);
       }
+
+      @Override
+      protected void rebuildSouthPanel() {
+        myWrapper.rebuildSouthPanel();
+      }
     };
 
     myWrapper = new MyDialog(processor);
@@ -67,12 +73,11 @@ public class MergeWindow {
   // TODO: use WindowWrapper
   private static class MyDialog extends DialogWrapper {
     @NotNull private final MergeRequestProcessor myProcessor;
-    @NotNull private final MergeRequestProcessor.BottomActions myBottomActions;
+    @NotNull private final Wrapper mySouthPanel = new Wrapper();
 
     public MyDialog(@NotNull MergeRequestProcessor processor) {
       super(processor.getProject(), true);
       myProcessor = processor;
-      myBottomActions = myProcessor.getBottomActions();
     }
 
     @Override
@@ -95,6 +100,13 @@ public class MergeWindow {
 
     @Nullable
     @Override
+    protected JComponent createSouthPanel() {
+      rebuildSouthPanel();
+      return mySouthPanel;
+    }
+
+    @Nullable
+    @Override
     public JComponent getPreferredFocusedComponent() {
       return myProcessor.getPreferredFocusedComponent();
     }
@@ -108,9 +120,10 @@ public class MergeWindow {
     @NotNull
     @Override
     protected Action[] createActions() {
-      List<Action> actions = ContainerUtil.skipNulls(ContainerUtil.list(myBottomActions.resolveAction, myBottomActions.cancelAction));
-      if (myBottomActions.resolveAction != null) {
-        myBottomActions.resolveAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
+      MergeRequestProcessor.BottomActions bottomActions = myProcessor.getBottomActions();
+      List<Action> actions = ContainerUtil.skipNulls(ContainerUtil.list(bottomActions.resolveAction, bottomActions.cancelAction));
+      if (bottomActions.resolveAction != null) {
+        bottomActions.resolveAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
       }
       return actions.toArray(new Action[actions.size()]);
     }
@@ -118,21 +131,24 @@ public class MergeWindow {
     @NotNull
     @Override
     protected Action[] createLeftSideActions() {
-      List<Action> actions = ContainerUtil.skipNulls(ContainerUtil.list(myBottomActions.applyLeft, myBottomActions.applyRight));
+      MergeRequestProcessor.BottomActions bottomActions = myProcessor.getBottomActions();
+      List<Action> actions = ContainerUtil.skipNulls(ContainerUtil.list(bottomActions.applyLeft, bottomActions.applyRight));
       return actions.toArray(new Action[actions.size()]);
     }
 
     @NotNull
     @Override
     protected Action getOKAction() {
-      if (myBottomActions.resolveAction != null) return myBottomActions.resolveAction;
+      MergeRequestProcessor.BottomActions bottomActions = myProcessor.getBottomActions();
+      if (bottomActions.resolveAction != null) return bottomActions.resolveAction;
       return super.getOKAction();
     }
 
     @NotNull
     @Override
     protected Action getCancelAction() {
-      if (myBottomActions.cancelAction != null) return myBottomActions.cancelAction;
+      MergeRequestProcessor.BottomActions bottomActions = myProcessor.getBottomActions();
+      if (bottomActions.cancelAction != null) return bottomActions.cancelAction;
       return super.getCancelAction();
     }
 
@@ -146,6 +162,10 @@ public class MergeWindow {
     public void doCancelAction() {
       if (!myProcessor.checkCloseAction()) return;
       super.doCancelAction();
+    }
+
+    public void rebuildSouthPanel() {
+      mySouthPanel.setContent(super.createSouthPanel());
     }
   }
 

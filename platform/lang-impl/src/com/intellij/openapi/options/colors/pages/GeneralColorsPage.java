@@ -101,7 +101,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
 
   private static final ColorDescriptor[] COLOR_DESCRIPTORS = {
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.background.in.readonly.files"), EditorColors.READONLY_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.deneral.color.descriptor.readonly.fragment.background"), EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.readonly.fragment.background"), EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.gutter.background"), EditorColors.GUTTER_BACKGROUND, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.notification.background"), EditorColors.NOTIFICATION_BACKGROUND, ColorDescriptor.Kind.BACKGROUND),
 

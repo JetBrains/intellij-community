@@ -177,7 +177,7 @@ public class ImportModuleAction extends AnAction {
   @Nullable
   public static AddModuleWizard createImportWizard(@Nullable final Project project,
                                                    @Nullable Component dialogParent,
-                                                   final VirtualFile file,
+                                                   @NotNull final VirtualFile file,
                                                    ProjectImportProvider... providers) {
     List<ProjectImportProvider> available = ContainerUtil.filter(providers, new Condition<ProjectImportProvider>() {
       @Override

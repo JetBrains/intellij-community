@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +58,8 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
     }
     if (element instanceof PyFunction) {
       if (!forHighlightUsages) {
-        final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true).findAll();
+        TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), null);
+        final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true, context).findAll();
         if (superMethods.size() > 0) {
           final PsiElement next = superMethods.iterator().next();
           // TODO should do this for Jython functions overriding Java methods too

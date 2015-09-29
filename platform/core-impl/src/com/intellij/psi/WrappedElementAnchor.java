@@ -55,4 +55,9 @@ public class WrappedElementAnchor extends PsiAnchor {
     PsiElement element = retrieve();
     return element == null ? -1 : element.getTextRange().getEndOffset();
   }
+
+  @Override
+  public String toString() {
+    return "WrappedElementAnchor(" + myBaseAnchor + "; provider=" + myAnchorProvider + ")";
+  }
 }

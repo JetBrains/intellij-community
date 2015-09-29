@@ -19,6 +19,7 @@
  */
 package com.intellij.psi.stubs;
 
+import com.google.common.base.Objects;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -133,5 +134,19 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
 
   public boolean rootsAreSet() {
     return myStubRoots != null;
+  }
+
+  public String getDiagnostics() {
+    ObjectStubTree stubTree = ObjectStubTree.getStubTree(this);
+    T file = myFile;
+    Integer lastStubTreeHash = file == null ? null : file.getUserData(ObjectStubTree.LAST_STUB_TREE_HASH);
+    return toString() +
+           Objects.toStringHelper(this)
+             .add("myFile", file)
+             .add("myInvalidationReason", myInvalidationReason)
+             .add("myStubRoots", myStubRoots)
+             .add("stubTree", stubTree)
+             .add("lastStubTreeHash", lastStubTreeHash)
+             .toString();
   }
 }

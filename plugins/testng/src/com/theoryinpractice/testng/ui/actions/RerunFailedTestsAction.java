@@ -113,13 +113,17 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
         if (strings == null || strings.isEmpty()) {
           strings = new ArrayList<String>();
         }
-        if (location instanceof PsiMemberParameterizedLocation) {
-          final String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
-          if (paramSetName != null) {
-            strings.add(TestNGConfigurationProducer.getInvocationNumber(paramSetName));
-          }
-        }
+        setupParameterName(location, strings);
         psiMethods.put(psiMethod, strings);
+      }
+    }
+  }
+
+  private static void setupParameterName(Location location, List<String> strings) {
+    if (location instanceof PsiMemberParameterizedLocation) {
+      final String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
+      if (paramSetName != null) {
+        strings.add(TestNGConfigurationProducer.getInvocationNumber(paramSetName));
       }
     }
   }

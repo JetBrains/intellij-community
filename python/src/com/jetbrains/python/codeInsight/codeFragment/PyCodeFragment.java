@@ -26,17 +26,20 @@ public class PyCodeFragment extends CodeFragment {
   private final Set<String> myGlobalWrites;
   private final Set<String> myNonlocalWrites;
   private final boolean myYieldInside;
+  private final boolean myAsync;
 
   public PyCodeFragment(final Set<String> input,
                         final Set<String> output,
                         final Set<String> globalWrites,
                         final Set<String> nonlocalWrites,
                         final boolean returnInside,
-                        final boolean yieldInside) {
+                        final boolean yieldInside,
+                        final boolean isAsync) {
     super(input, output, returnInside);
     myGlobalWrites = globalWrites;
     myNonlocalWrites = nonlocalWrites;
     myYieldInside = yieldInside;
+    myAsync = isAsync;
   }
 
   public Set<String> getGlobalWrites() {
@@ -49,5 +52,9 @@ public class PyCodeFragment extends CodeFragment {
 
   public boolean isYieldInside() {
     return myYieldInside;
+  }
+
+  public boolean isAsync() {
+    return myAsync;
   }
 }

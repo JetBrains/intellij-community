@@ -297,8 +297,8 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
           @Override
           public boolean process(JBPopup popup) {
             usageView.set(component.showInUsageView());
-            myTaskRef = null;
             popup.cancel();
+            myTaskRef = null;
             return false;
           }
         })

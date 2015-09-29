@@ -455,14 +455,9 @@ public final class IterationState {
         }
       }
 
-      if (syntax != null && highlighter.getLayer() < HighlighterLayer.SYNTAX) {
-        if (fold != null) {
-          cachedAttributes.add(fold);
-          fold = null;
-        }
-
-        cachedAttributes.add(syntax);
-        syntax = null;
+      if (fold != null && highlighter.getLayer() < HighlighterLayer.GUARDED_BLOCKS) {
+        cachedAttributes.add(fold);
+        fold = null;
       }
 
       if (guard != null && highlighter.getLayer() < HighlighterLayer.GUARDED_BLOCKS) {
@@ -473,6 +468,11 @@ public final class IterationState {
       if (caret != null && highlighter.getLayer() < HighlighterLayer.CARET_ROW) {
         cachedAttributes.add(caret);
         caret = null;
+      }
+
+      if (syntax != null && highlighter.getLayer() < HighlighterLayer.SYNTAX) {
+        cachedAttributes.add(syntax);
+        syntax = null;
       }
 
       TextAttributes textAttributes = highlighter.getTextAttributes();

@@ -15,10 +15,12 @@
  */
 package com.intellij.diff.comparison
 
-import com.intellij.testFramework.UsefulTestCase
-import junit.framework.TestCase
+import com.intellij.diff.DiffTestCase
+import com.intellij.diff.assertEquals
+import com.intellij.diff.assertTrue
+import com.intellij.diff.util.IntPair
 
-public class ComparisonUtilTest : UsefulTestCase() {
+public class ComparisonUtilTest : DiffTestCase() {
   public fun testTrimEquals() {
     doTestTrim(true, "", "")
     doTestTrim(true, "", "   ")
@@ -60,16 +62,105 @@ public class ComparisonUtilTest : UsefulTestCase() {
     doTestTrim(false, "xyx", "xYx")
   }
 
+  public fun testLineFragment() {
+    doTestLineFragment(
+        "", "x",
+        !0 - 0, !0 - 1,
+        !0 - 1, !0 - 1)
+
+    doTestLineFragment(
+        "x", "y",
+        !0 - 1, !0 - 1,
+        !0 - 1, !0 - 1)
+
+    doTestLineFragment(
+        "x_", "y_",
+        !0 - 2, !0 - 2,
+        !0 - 1, !0 - 1)
+
+    doTestLineFragment(
+        "x", "y_",
+        !0 - 1, !0 - 2,
+        !0 - 1, !0 - 2)
+
+    doTestLineFragment(
+        "x", "x_",
+        !1 - 1, !2 - 2,
+        !1 - 1, !1 - 2)
+
+    doTestLineFragment(
+        "x_y_z_", "x_Y_z_",
+        !2 - 4, !2 - 4,
+        !1 - 2, !1 - 2)
+
+    doTestLineFragment(
+        "x_y_z_", "x_y_Z_",
+        !4 - 6, !4 - 6,
+        !2 - 3, !2 - 3)
+
+    doTestLineFragment(
+        "x_y_z_", "x_y_Z_",
+        !4 - 6, !4 - 6,
+        !2 - 3, !2 - 3)
+
+    doTestLineFragment(
+        "x_y_z_", "x_y_Z",
+        !4 - 6, !4 - 5,
+        !2 - 4, !2 - 3)
+
+    doTestLineFragment(
+        "x_y_z", "x_y_Z_",
+        !4 - 5, !4 - 6,
+        !2 - 3, !2 - 4)
+
+    doTestLineFragment(
+        " ", "_ ",
+        !0 - 0, !0 - 1,
+        !0 - 0, !0 - 1)
+
+    doTestLineFragment(
+        " ", " _",
+        !1 - 1, !2 - 2,
+        !1 - 1, !1 - 2)
+  }
+
+  //
+  // Impl
+  //
+
+  private fun doTestLineFragment(string1: String, string2: String,
+                                 offsets1: IntPair, offsets2: IntPair,
+                                 lines1: IntPair, lines2: IntPair) {
+    val fragments = MANAGER.compareLines(parseSource(string1), parseSource(string2), ComparisonPolicy.DEFAULT, INDICATOR)
+    assertTrue(fragments.size() == 1, "Side: ${fragments.size()})")
+    val fragment = fragments.get(0)
+
+    assertEquals(offsets1.val1, fragment.getStartOffset1(), fragment.toString())
+    assertEquals(offsets1.val2, fragment.getEndOffset1(), fragment.toString())
+    assertEquals(offsets2.val1, fragment.getStartOffset2(), fragment.toString())
+    assertEquals(offsets2.val2, fragment.getEndOffset2(), fragment.toString())
+    assertEquals(lines1.val1, fragment.getStartLine1(), fragment.toString())
+    assertEquals(lines1.val2, fragment.getEndLine1(), fragment.toString())
+    assertEquals(lines2.val1, fragment.getStartLine2(), fragment.toString())
+    assertEquals(lines2.val2, fragment.getEndLine2(), fragment.toString())
+  }
+
   private fun doTestTrim(expected: Boolean, string1: String, string2: String) {
-    doTest(expected, string1, string2, ComparisonPolicy.TRIM_WHITESPACES);
+    doTest(expected, string1, string2, ComparisonPolicy.TRIM_WHITESPACES)
   }
 
   private fun doTest(expected: Boolean, string1: String, string2: String, policy: ComparisonPolicy) {
-    val result = MANAGER.isEquals(string1, string2, policy);
-    TestCase.assertEquals("---\n" + string1 + "\n---\n" + string2 + "\n---", expected, result);
+    val result = MANAGER.isEquals(string1, string2, policy)
+    assertEquals(expected, result, "---\n" + string1 + "\n---\n" + string2 + "\n---")
   }
 
-  companion object {
-    private val MANAGER = ComparisonManagerImpl()
+  //
+  // Helpers
+  //
+
+  public fun Int.not(): LineColHelper = LineColHelper(this)
+  public fun LineColHelper.minus(col: Int): IntPair = IntPair(this.line, col)
+
+  public inner class LineColHelper(val line: Int) {
   }
 }

@@ -246,8 +246,10 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent implement
             projectToDelete = selectScheduledProjects(false);
             mySheduledProjects.clear();
           }
-          MavenKeymapExtension.clearActions(myProject, projectToDelete);
-          MavenKeymapExtension.updateActions(myProject, projectToUpdate);
+          if (!myProject.isDisposed()) {
+            MavenKeymapExtension.clearActions(myProject, projectToDelete);
+            MavenKeymapExtension.updateActions(myProject, projectToUpdate);
+          }
         }
       });
     }

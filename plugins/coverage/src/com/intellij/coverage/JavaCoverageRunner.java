@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 
 /**
@@ -77,7 +78,15 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
 
       try {
         LOG.info("Coverage jars were copied to " + dir.getPath());
-        FileUtil.copyDir(new File(agentPath), dir);
+        FileUtil.copyDir(new File(agentPath), dir, new FileFilter() {
+          @Override
+          public boolean accept(File file) {
+            final String fileName = file.getName();
+            return fileName.startsWith("coverage-") || 
+                   fileName.startsWith("asm-all") ||
+                   fileName.startsWith("trove4j");
+          }
+        });
         return dir.getPath();
       }
       catch (IOException e) {

@@ -140,7 +140,7 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
   }
 
   public void hide() {
-    myContentPane.setVisible(false);
+    myContentPane.getParent().remove(myContentPane);
   }
 
   @Override

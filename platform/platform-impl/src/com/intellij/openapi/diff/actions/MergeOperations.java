@@ -64,8 +64,8 @@ public class MergeOperations {
       if (isWritable(mySide)) operations.add(removeOperation(range, getDocument()));
       TextRange otherRange = fragment.getRange(mySide.otherSide());
       boolean otherIsWritable = isWritable(mySide.otherSide());
-      if (otherIsWritable) operations.add(insertOperation(range, otherRange.getEndOffset(), getDocument(), getOtherDocument()));
-      if (otherRange.getLength() > 0 && otherIsWritable) operations.add(replaceOperation(range, otherRange, getDocument(), getOtherDocument()));
+      if (otherIsWritable) operations.add(insertOperation(range, otherRange.getEndOffset(), getDocument(), getOtherDocument(), mySide));
+      if (otherRange.getLength() > 0 && otherIsWritable) operations.add(replaceOperation(range, otherRange, getDocument(), getOtherDocument(), mySide));
     }
     return operations;
   }
@@ -99,21 +99,21 @@ public class MergeOperations {
     myDiffPanel.getEditor(side).getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
   }
 
-  private static Operation replaceOperation(TextRange range, TextRange otherRange, Document document, Document otherDocument) {
+  private static Operation replaceOperation(TextRange range, TextRange otherRange, Document document, Document otherDocument, FragmentSide base) {
     return new Operation(DiffBundle.message("merge.editor.replace.operation.name"),
-                         AllIcons.Diff.Arrow,
+                         base == FragmentSide.SIDE1 ? AllIcons.Diff.ArrowRight : AllIcons.Diff.Arrow,
                          otherDocument,
                          replaceModification(range, document, otherRange, otherDocument));
   }
 
   @Nullable
-  public static Operation mostSensible(Document document, Document otherDocument, TextRange range, TextRange otherRange) {
+  public static Operation mostSensible(Document document, Document otherDocument, TextRange range, TextRange otherRange, FragmentSide base) {
     if (!canMakeWritable(document) && !canMakeWritable(otherDocument)) return null;
     if (range.getLength() != 0) {
       if (canMakeWritable(otherDocument))
         return otherRange.getLength() != 0 ?
-               replaceOperation(range, otherRange, document, otherDocument) :
-               insertOperation(range, otherRange.getEndOffset(), document, otherDocument);
+               replaceOperation(range, otherRange, document, otherDocument, base) :
+               insertOperation(range, otherRange.getEndOffset(), document, otherDocument, base);
       else return otherRange.getLength() == 0 ? removeOperation(range, document) : null;
     }
     return null;
@@ -129,9 +129,9 @@ public class MergeOperations {
     };
   }
 
-  private static Operation insertOperation(TextRange range, int offset, Document document, Document otherDocument) {
+  private static Operation insertOperation(TextRange range, int offset, Document document, Document otherDocument, FragmentSide base) {
     return new Operation(DiffBundle.message("merge.editor.insert.operation.name"),
-                         AllIcons.Diff.ArrowLeftDown,
+                         base == FragmentSide.SIDE1 ? AllIcons.Diff.ArrowRightDown : AllIcons.Diff.ArrowLeftDown,
                          otherDocument,
                          insertModification(range, document, offset, otherDocument));
   }

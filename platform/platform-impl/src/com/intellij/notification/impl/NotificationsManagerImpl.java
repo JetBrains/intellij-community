@@ -264,6 +264,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
   }
 
   public static Balloon createBalloon(@NotNull final IdeFrame window, final Notification notification, final boolean showCallout, final boolean hideOnClickOutside) {
+    return createBalloon(window.getComponent(), notification, showCallout, hideOnClickOutside);
+  }
+
+  public static Balloon createBalloon(@Nullable final JComponent windowComponent, final Notification notification, final boolean showCallout, final boolean hideOnClickOutside) {
     final JEditorPane text = new JEditorPane();
     text.setEditorKit(UIUtil.getHTMLEditorKit());
 
@@ -304,7 +308,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
     text.setSize(preferredSize);
     
     Dimension paneSize = new Dimension(text.getPreferredSize());
-    JComponent windowComponent = window.getComponent();
 
     int maxHeight = JBUI.scale(400);
     int maxWidth = JBUI.scale(600);

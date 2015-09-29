@@ -80,6 +80,7 @@ public class RefManagerImpl extends RefManager {
   private final PsiManager myPsiManager;
 
   private volatile boolean myIsInProcess;
+  private volatile boolean myOfflineView;
 
   private final List<RefGraphAnnotator> myGraphAnnotators = new ArrayList<RefGraphAnnotator>();
   private GlobalInspectionContext myContext;
@@ -326,7 +327,14 @@ public class RefManagerImpl extends RefManager {
     myIsInProcess = false;
   }
 
+  public void startOfflineView() {
+    myOfflineView = true;
+  }
 
+  public boolean isOfflineView() {
+    return myOfflineView;
+  }
+  
   public boolean isInProcess() {
     return myIsInProcess;
   }
@@ -631,6 +639,6 @@ public class RefManagerImpl extends RefManager {
   }
 
   protected boolean isValidPointForReference() {
-    return myIsInProcess || ApplicationManager.getApplication().isUnitTestMode();
+    return myIsInProcess || myOfflineView || ApplicationManager.getApplication().isUnitTestMode();
   }
 }

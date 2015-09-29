@@ -225,4 +225,8 @@ public class TextAttributes implements Cloneable {
   public void setEnforceEmpty(boolean enforceEmpty) {
     myEnforceEmpty = enforceEmpty;
   }
+
+  public boolean isEnforceEmpty() {
+    return myEnforceEmpty;
+  }
 }

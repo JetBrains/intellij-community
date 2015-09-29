@@ -22,9 +22,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.documentation.docstrings.DocStringParameterReference;
+import com.jetbrains.python.documentation.docstrings.DocStringTypeReference;
 import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,30 +52,46 @@ public class PyDocstringCompletionContributor extends CompletionContributor {
 
   private static class IdentifierCompletionProvider extends CompletionProvider<CompletionParameters> {
 
-    private IdentifierCompletionProvider() {
-    }
-
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
-      if (parameters.isAutoPopup()) return;
       final PsiElement element = parameters.getOriginalPosition();
       if (element == null) return;
       final PsiFile file = element.getContainingFile();
-      if (file.findReferenceAt(parameters.getOffset()) != null) return;
-      final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
-      final Module module = ModuleUtilCore.findModuleForPsiElement(element);
-      if (module != null) {
-        result = result.withPrefixMatcher(getPrefix(parameters.getOffset(), file));
-        final Collection<String> identifiers = PyRefactoringUtil.collectUsedNames(docStringOwner);
-        for (String identifier : identifiers)
-          result.addElement(LookupElementBuilder.create(identifier).withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
+      // Parameter references are filled with DocStringParameterReference#getVariants
+      final PsiReference reference = file.findReferenceAt(parameters.getOffset());
+      if (reference == null) {
+        if (parameters.isAutoPopup()) return;
+        final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
+        final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+        if (module != null) {
+          result = result.withPrefixMatcher(getPrefix(parameters.getOffset(), file));
+          final Collection<String> identifiers = PyRefactoringUtil.collectUsedNames(docStringOwner);
+          for (String identifier : identifiers) {
+            result.addElement(LookupElementBuilder.create(identifier).withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
+          }
 
-
-        final Collection<String> fileIdentifiers = PyRefactoringUtil.collectUsedNames(parameters.getOriginalFile());
-        for (String identifier : fileIdentifiers)
-          result.addElement(LookupElementBuilder.create(identifier).withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
+          final Collection<String> fileIdentifiers = PyRefactoringUtil.collectUsedNames(parameters.getOriginalFile());
+          for (String identifier : fileIdentifiers) {
+            result.addElement(LookupElementBuilder.create(identifier).withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
+          }
+        }
+      }
+      else if (reference instanceof DocStringParameterReference) {
+        for (PyNamedParameter param : ((DocStringParameterReference)reference).collectParameterVariants()) {
+          result.addElement(LookupElementBuilder.createWithIcon(param));
+        }
+      }
+      else if (reference instanceof DocStringTypeReference) {
+        for (Object variant : ((DocStringTypeReference)reference).collectTypeVariants()) {
+          if (variant instanceof PsiNamedElement) {
+            result.addElement(LookupElementBuilder.createWithIcon((PsiNamedElement)variant));
+          }
+          else {
+            result.addElement(LookupElementBuilder.create(variant));
+          }
+        }
       }
     }
   }
@@ -89,7 +110,13 @@ public class PyDocstringCompletionContributor extends CompletionContributor {
   }
 
   @Override
-  public boolean invokeAutoPopup(@NotNull PsiElement position, char typeChar) {
-    return false;
+  public void beforeCompletion(@NotNull CompletionInitializationContext context) {
+    // With standard dummy identifier inserted, docstring might become malformed
+    // e.g. "@param para<caret>m" -> "@param paraIntellijIdeaRulezzz m"
+    // and param is no longer parameter, but type reference now
+    final PsiReference ref = context.getFile().findReferenceAt(context.getCaret().getOffset());
+    if (ref instanceof DocStringParameterReference || ref instanceof DocStringTypeReference) {
+      context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED);
+    }
   }
 }

@@ -17,21 +17,17 @@ package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.documentation.AbstractExternalFilter;
 import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +47,8 @@ import java.util.regex.Pattern;
  */
 
 public class JavaDocExternalFilter extends AbstractExternalFilter {
-  private final Project myProject;
+  private final Project myProject;  
+  private PsiElement myElement;
   
   private static final ParseSettings ourPackageInfoSettings = new ParseSettings(
     Pattern.compile("package\\s+[^\\s]+\\s+description", Pattern.CASE_INSENSITIVE),
@@ -59,8 +56,6 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     true, false
   );
   
-  protected static @NonNls final Pattern ourHTMLsuffix = Pattern.compile("[.][hH][tT][mM][lL]?");
-  protected static @NonNls final Pattern ourParentFolderprefix = Pattern.compile("^[.][.]/");
   protected static @NonNls final Pattern ourAnchorsuffix = Pattern.compile("#(.*)$");
   protected static @NonNls final Pattern ourHTMLFilesuffix = Pattern.compile("/([^/]*[.][hH][tT][mM][lL]?)$");
   private static @NonNls final Pattern ourHREFselector = Pattern.compile("<A.*?HREF=\"([^>\"]*)\"", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
@@ -76,25 +71,19 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
         if (BrowserUtil.isAbsoluteURL(href)) {
           return href;
         }
-
-        if (StringUtil.startsWithChar(href, '#')) {
-          return root + href;
+        String reference = JavaDocInfoGenerator.createReferenceForRelativeLink(href, myElement);
+        if (reference == null) {
+          if (href.startsWith("#")) {
+            return root + href;
+          }
+          else {
+            String nakedRoot = ourHTMLFilesuffix.matcher(root).replaceAll("/");
+            return doAnnihilate(nakedRoot + href);
+          }
         }
-
-        String nakedRoot = ourHTMLFilesuffix.matcher(root).replaceAll("/");
-
-        String stripped = ourHTMLsuffix.matcher(href).replaceAll("");
-        int len = stripped.length();
-
-        do stripped = ourParentFolderprefix.matcher(stripped).replaceAll(""); while (len > (len = stripped.length()));
-
-        final String elementRef = stripped.replaceAll("/", ".");
-        final String classRef = ourAnchorsuffix.matcher(elementRef).replaceAll("");
-
-        return
-          (JavaPsiFacade.getInstance(myProject).findClass(classRef, GlobalSearchScope.allScope(myProject)) != null)
-          ? DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + elementRef
-          : doAnnihilate(nakedRoot + href);
+        else {
+          return reference;
+        }
       }
     }
   };
@@ -121,10 +110,11 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
   @Nullable
    public String getExternalDocInfoForElement(@NotNull String docURL, final PsiElement element) throws Exception {
     String externalDoc = null;
+    myElement = element;
     String builtInServer = "http://localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort() + "/" + myProject.getName() + "/";
     if (docURL.startsWith(builtInServer)) {
       int refPosition = docURL.lastIndexOf('#');
-      VirtualFile file = WebServerPathToFileManager.getInstance(myProject).get(
+      VirtualFile file = WebServerPathToFileManager.getInstance(myProject).findVirtualFile(
         docURL.substring(builtInServer.length(), refPosition < builtInServer.length() ? docURL.length() : refPosition)
       );
       if (file != null) {

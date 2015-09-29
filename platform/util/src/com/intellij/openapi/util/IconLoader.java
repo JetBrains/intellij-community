@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
@@ -24,9 +25,11 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.imgscalr.Scalr;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,8 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.FilteredImageSource;
-import java.awt.image.ImageProducer;
+import java.awt.image.ImageFilter;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -49,6 +51,7 @@ public final class IconLoader {
   public static boolean STRICT = false;
   private static boolean USE_DARK_ICONS = UIUtil.isUnderDarcula();
   private static float SCALE = JBUI.scale(1f);
+  private static ImageFilter IMAGE_FILTER;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private static final ConcurrentMap<URL, CachedImageIcon> ourIconsCache = ContainerUtil.newConcurrentMap(100, 0.9f, 2);
@@ -111,6 +114,16 @@ public final class IconLoader {
   public static void setScale(float scale) {
     if (scale != SCALE) {
       SCALE = scale;
+      clearCache();
+    }
+  }
+
+  public static void setFilter(ImageFilter filter) {
+    if (!Registry.is("color.blindness.icon.filter")) {
+      filter = null;
+    }
+    if (IMAGE_FILTER != filter) {
+      IMAGE_FILTER = filter;
       clearCache();
     }
   }
@@ -284,19 +297,13 @@ public final class IconLoader {
 
       graphics.dispose();
 
-      Image img = createDisabled(image);
+      Image img = ImageUtil.filter(image, UIUtil.getGrayFilter());
       if (UIUtil.isRetina()) img = RetinaImage.createFrom(img, 2, ImageLoader.ourComponent);
 
       disabledIcon = new JBImageIcon(img);
       ourIcon2DisabledIcon.put(icon, disabledIcon);
     }
     return disabledIcon;
-  }
-
-  private static Image createDisabled(BufferedImage image) {
-    final GrayFilter filter = UIUtil.getGrayFilter();
-    final ImageProducer prod = new FilteredImageSource(image.getSource(), filter);
-    return Toolkit.getDefaultToolkit().createImage(prod);
   }
 
   public static Icon getTransparentIcon(@NotNull final Icon icon) {
@@ -326,27 +333,31 @@ public final class IconLoader {
     };
   }
 
-  private static final class CachedImageIcon implements Icon {
+  private static final class CachedImageIcon implements ScalableIcon {
     private Object myRealIcon;
     @NotNull
     private final URL myUrl;
     private boolean dark;
     private float scale;
+    private ImageFilter filter;
+    private HashMap<Float, Icon> scaledIcons;
 
     public CachedImageIcon(@NotNull URL url) {
       myUrl = url;
       dark = USE_DARK_ICONS;
       scale = SCALE;
+      filter = IMAGE_FILTER;
     }
 
     @NotNull
     private synchronized Icon getRealIcon() {
-      if (isLoaderDisabled() && (myRealIcon == null || dark != USE_DARK_ICONS || scale != SCALE)) return EMPTY_ICON;
+      if (isLoaderDisabled() && (myRealIcon == null || dark != USE_DARK_ICONS || scale != SCALE || filter != IMAGE_FILTER)) return EMPTY_ICON;
 
-      if (dark != USE_DARK_ICONS || scale != SCALE) {
+      if (dark != USE_DARK_ICONS || scale != SCALE || filter != IMAGE_FILTER) {
         myRealIcon = null;
         dark = USE_DARK_ICONS;
         scale = SCALE;
+        filter = IMAGE_FILTER;
       }
       Object realIcon = myRealIcon;
       if (realIcon instanceof Icon) return (Icon)realIcon;
@@ -357,7 +368,7 @@ public final class IconLoader {
         if (icon != null) return icon;
       }
 
-      Image image = ImageLoader.loadFromUrl(myUrl);
+      Image image = ImageUtil.filter(ImageLoader.loadFromUrl(myUrl), filter);
       icon = checkIcon(image, myUrl);
 
       if (icon != null) {
@@ -392,6 +403,33 @@ public final class IconLoader {
     public String toString() {
       return myUrl.toString();
     }
+
+    @Override
+    public Icon scale(float scaleFactor) {
+      if (scaleFactor == 1f) {
+        return this;
+      }
+      if (scaledIcons == null) {
+        scaledIcons = new HashMap<Float, Icon>(1);
+      }
+
+      Icon result = scaledIcons.get(scaleFactor);
+      if (result != null) {
+        return result;
+      }
+
+      final Image image = ImageUtil.filter(ImageLoader.loadFromUrl(myUrl, UIUtil.isUnderDarcula(), scaleFactor >= 1.5f), filter);
+      if (image != null) {
+        int width = (int)(getIconWidth() * scaleFactor);
+        int height = (int)(getIconHeight() * scaleFactor);
+        final BufferedImage resizedImage = Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
+        result = getIcon(resizedImage);
+        scaledIcons.put(scaleFactor, result);
+        return result;
+      }
+
+      return this;
+    }
   }
 
   public abstract static class LazyIcon implements Icon {
@@ -399,6 +437,7 @@ public final class IconLoader {
     private Icon myIcon;
     private boolean isDarkVariant = USE_DARK_ICONS;
     private float scale = SCALE;
+    private ImageFilter filter = IMAGE_FILTER;
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
@@ -421,9 +460,10 @@ public final class IconLoader {
     }
 
     protected final synchronized Icon getOrComputeIcon() {
-      if (!myWasComputed || isDarkVariant != USE_DARK_ICONS || scale != SCALE) {
+      if (!myWasComputed || isDarkVariant != USE_DARK_ICONS || scale != SCALE || filter != IMAGE_FILTER) {
         isDarkVariant = USE_DARK_ICONS;
         scale = SCALE;
+        filter = IMAGE_FILTER;
         myWasComputed = true;
         myIcon = compute();
       }

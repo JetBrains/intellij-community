@@ -218,6 +218,10 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     super.dispose();
   }
 
+  protected boolean beforeResolve(Collection<VirtualFile> files) {
+    return true;
+  }
+
   @Override
   @NonNls
   protected String getDimensionServiceKey() {
@@ -227,6 +231,10 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private void acceptRevision(final boolean isCurrent) {
     FileDocumentManager.getInstance().saveAllDocuments();
     final Collection<VirtualFile> files = myTable.getSelection();
+    if (!beforeResolve(files)) {
+      return;
+    }
+    
     for (final VirtualFile file : files) {
       final Ref<Exception> ex = new Ref<Exception>();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -297,7 +305,12 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
   private void showMergeDialog() {
     DiffRequestFactory requestFactory = DiffRequestFactory.getInstance();
-    for (final VirtualFile file : myTable.getSelection()) {
+    Collection<VirtualFile> files = myTable.getSelection();
+    if (!beforeResolve(files)) {
+      return;
+    }
+    
+    for (final VirtualFile file : files) {
       final MergeData mergeData;
       try {
         mergeData = myProvider.loadRevisions(file);
@@ -322,12 +335,19 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
       Consumer<MergeResult> callback = new Consumer<MergeResult>() {
         @Override
-        public void consume(MergeResult result) {
+        public void consume(final MergeResult result) {
           Document document = FileDocumentManager.getInstance().getCachedDocument(file);
           if (document != null) FileDocumentManager.getInstance().saveDocument(document);
           checkMarkModifiedProject(file);
 
-          if (result != MergeResult.CANCEL) markFileProcessed(file, MergeSession.Resolution.Merged);
+          if (result != MergeResult.CANCEL) {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                markFileProcessed(file, getSessionResolution(result));
+              }
+            });
+          }
         }
       };
 
@@ -349,6 +369,20 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       DiffManager.getInstance().showMerge(myProject, request);
     }
     updateModelFromFiles();
+  }
+
+  @NotNull
+  private static MergeSession.Resolution getSessionResolution(@NotNull MergeResult result) {
+    switch (result) {
+      case LEFT:
+        return MergeSession.Resolution.AcceptedYours;
+      case RIGHT:
+        return MergeSession.Resolution.AcceptedTheirs;
+      case RESOLVED:
+        return MergeSession.Resolution.Merged;
+      default:
+        throw new IllegalArgumentException(result.name());
+    }
   }
 
   private void checkMarkModifiedProject(@NotNull VirtualFile file) {

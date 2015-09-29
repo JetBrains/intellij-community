@@ -50,9 +50,10 @@ public class ShelvedBinaryFile implements JDOMExternalizable {
 
   public ShelvedBinaryFile(final String beforePath, final String afterPath, @Nullable final String shelvedPath) {
     assert beforePath != null || afterPath != null;
-    BEFORE_PATH = convertToSystemIndependent(beforePath);
-    AFTER_PATH = convertToSystemIndependent(afterPath);
-    SHELVED_PATH = convertToSystemIndependent(shelvedPath);
+    BEFORE_PATH = beforePath;
+    AFTER_PATH = afterPath;
+    SHELVED_PATH = shelvedPath;
+    convertPathsToSystemIndependent();
   }
 
   @Nullable
@@ -60,8 +61,15 @@ public class ShelvedBinaryFile implements JDOMExternalizable {
     return beforePath != null ? FileUtil.toSystemIndependentName(beforePath) : null;
   }
 
+  private void convertPathsToSystemIndependent() {
+    BEFORE_PATH = convertToSystemIndependent(BEFORE_PATH);
+    AFTER_PATH = convertToSystemIndependent(AFTER_PATH);
+    SHELVED_PATH = convertToSystemIndependent(SHELVED_PATH);
+  }
+
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
+    convertPathsToSystemIndependent();
   }
 
   public void writeExternal(Element element) throws WriteExternalException {

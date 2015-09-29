@@ -24,6 +24,6 @@ import com.intellij.openapi.project.Project;
 public class AutoImportOptionsTopHitProvider extends EditorOptionsTopHitProviderBase {
   @Override
   protected Configurable getConfigurable(Project project) {
-    return new AutoImportOptionsConfigurable();
+    return new AutoImportOptionsConfigurable(project);
   }
 }

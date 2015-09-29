@@ -1,3 +1,4 @@
+from time import sleep
 class TestPyTest:
     def testOne(self):
         print("I am test1")
@@ -8,6 +9,7 @@ class TestPyTest:
 
     def testFail(self):
         print("I will fail")
+        sleep(1) # To check duration
         assert False
 
 def testThree():

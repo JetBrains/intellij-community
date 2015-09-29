@@ -353,10 +353,11 @@ public class MavenDomUtil {
   }
 
   public static boolean isFilteredResourceFile(PsiElement element) {
-    VirtualFile file = getVirtualFile(element);
+    PsiFile psiFile = element.getContainingFile();
+    VirtualFile file = getVirtualFile(psiFile);
     if (file == null) return false;
 
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(element.getProject());
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(psiFile.getProject());
     MavenProject mavenProject = manager.findContainingProject(file);
     if (mavenProject == null) return false;
 

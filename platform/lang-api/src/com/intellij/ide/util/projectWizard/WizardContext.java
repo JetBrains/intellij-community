@@ -52,6 +52,7 @@ public class WizardContext extends UserDataHolderBase {
   private StorageScheme myProjectStorageFormat = StorageScheme.DIRECTORY_BASED;
   private boolean myNewWizard;
   private ModulesProvider myModulesProvider;
+  private boolean myProjectFileDirectorySetExplicitly;
 
   public void setProjectStorageFormat(StorageScheme format) {
     myProjectStorageFormat = format;
@@ -122,7 +123,16 @@ public class WizardContext extends UserDataHolderBase {
     return myProjectFileDirectory != null;
   }
 
+  public boolean isProjectFileDirectorySetExplicitly() {
+    return myProjectFileDirectorySetExplicitly;
+  }
+
   public void setProjectFileDirectory(String projectFileDirectory) {
+    setProjectFileDirectory(projectFileDirectory, false);
+  }
+
+  public void setProjectFileDirectory(String projectFileDirectory, boolean explicitly) {
+    myProjectFileDirectorySetExplicitly = explicitly;
     myProjectFileDirectory = projectFileDirectory;
   }
 

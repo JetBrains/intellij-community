@@ -24,39 +24,12 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.HashSet;
-import java.util.Set;
-
 public class StandardDataFlowRunner extends DataFlowRunner {
-  private final Set<Instruction> myCCEInstructions = new HashSet<Instruction>();
 
   public StandardDataFlowRunner() {
     this(false, true);
   }
   public StandardDataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers) {
     super(unknownMembersAreNullable, honorFieldInitializers);
-  }
-
-  public void onInstructionProducesCCE(Instruction instruction) {
-    myCCEInstructions.add(instruction);
-  }
-
-  @NotNull public Set<Instruction> getCCEInstructions() {
-    return myCCEInstructions;
-  }
-
-  @NotNull public static Set<Instruction> getRedundantInstanceofs(final DataFlowRunner runner, StandardInstructionVisitor visitor) {
-    HashSet<Instruction> result = new HashSet<Instruction>(1);
-    for (Instruction instruction : runner.getInstructions()) {
-      if (instruction instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction)) {
-        result.add(instruction);
-      }
-    }
-
-    return result;
   }
 }

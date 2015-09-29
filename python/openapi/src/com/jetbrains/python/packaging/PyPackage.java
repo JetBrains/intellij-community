@@ -43,7 +43,7 @@ public class PyPackage extends InstalledPackage {
 
 
   /**
-   * Checks if package meets requirement, descriped in [PEP-0386] format using {@link com.jetbrains.python.packaging.PyRequirement}
+   * Checks if package meets requirement, described in [PEP-0386] format using {@link PyRequirement}
    *
    * @param requirement to check if package matches
    * @return true if matches.

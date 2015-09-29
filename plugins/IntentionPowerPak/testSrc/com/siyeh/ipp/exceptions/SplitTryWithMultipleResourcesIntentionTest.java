@@ -73,6 +73,33 @@ public class SplitTryWithMultipleResourcesIntentionTest extends IPPTestCase {
       "}");
   }
 
+  public void testWithFinally() {
+    doTest(
+      "import java.io.*;\n" +
+      "class C {\n" +
+      "    void foo(File file1, File file2) throws IOException {\n" +
+      "        /*_Split 'try' statement with multiple resources*/try (FileInputStream in = new FileInputStream(file1); FileOutputStream out = new FileOutputStream(file2)) {\n" +
+      "            System.out.println(in + \", \" + out);\n" +
+      "        } finally {\n" +
+      "            System.out.println();\n" +
+      "        }\n" +
+      "    }\n" +
+      "}",
+
+      "import java.io.*;\n" +
+      "class C {\n" +
+      "    void foo(File file1, File file2) throws IOException {\n" +
+      "        try (FileInputStream in = new FileInputStream(file1)) {\n" +
+      "            try (FileOutputStream out = new FileOutputStream(file2)) {\n" +
+      "                System.out.println(in + \", \" + out);\n" +
+      "            }\n" +
+      "        } finally {\n" +
+      "            System.out.println();\n" +
+      "        }\n" +
+      "    }\n" +
+      "}");
+  }
+
   public void testMixedResources() {
     doTest(
       "import java.io.*;\n" +

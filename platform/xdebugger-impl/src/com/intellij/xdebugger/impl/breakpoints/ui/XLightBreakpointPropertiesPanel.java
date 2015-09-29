@@ -166,11 +166,17 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpointBase<?,?,?>> i
       myCustomPropertiesPanelWrapper.add(customPropertiesPanel.getComponent(), BorderLayout.CENTER);
       myCustomPanels.add(customPropertiesPanel);
     }
+    else {
+      myCustomPropertiesPanelWrapper.getParent().remove(myCustomPropertiesPanelWrapper);
+    }
 
     XBreakpointCustomPropertiesPanel<B> customConditionPanel = breakpointType.createCustomConditionsPanel();
     if (customConditionPanel != null) {
       myCustomConditionsPanelWrapper.add(customConditionPanel.getComponent(), BorderLayout.CENTER);
       myCustomPanels.add(customConditionPanel);
+    }
+    else {
+      myCustomConditionsPanelWrapper.getParent().remove(myCustomConditionsPanelWrapper);
     }
 
     XBreakpointCustomPropertiesPanel<B> customRightConditionPanel = breakpointType.createCustomRightPropertiesPanel(project);

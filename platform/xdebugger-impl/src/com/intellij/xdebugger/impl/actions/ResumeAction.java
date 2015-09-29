@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ package com.intellij.xdebugger.impl.actions;
 import com.intellij.execution.actions.ChooseDebugConfigurationPopupAction;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.AbstractDebuggerSession;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,20 +32,14 @@ import org.jetbrains.annotations.NotNull;
 public class ResumeAction extends XDebuggerActionBase implements DumbAware {
   @Override
   protected boolean isEnabled(AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
+    Project project = e.getProject();
     if (project == null) return false;
 
-    boolean haveCurrentSession = false;
-    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-      final AbstractDebuggerSession session = support.getCurrentSession(project);
-      if (session != null && !session.isStopped()) {
-        haveCurrentSession = true;
-        if (session.isPaused()) {
-          return true;
-        }
-      }
+    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+    if (session != null && !session.isStopped()) {
+      return session.isPaused();
     }
-    return !ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace()) && !haveCurrentSession;
+    return !ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace());
   }
 
   @Override

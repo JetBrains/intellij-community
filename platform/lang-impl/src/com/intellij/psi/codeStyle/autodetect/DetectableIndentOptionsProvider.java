@@ -129,8 +129,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider i
       new Runnable() {
         @Override
         public void run() {
-          ShowSettingsUtilImpl.showSettingsDialog(project, "preferences.sourceCode",
-                                                  ApplicationBundle.message("settings.code.style.general.autodetect.indents"));
+          ShowSettingsUtilImpl.showSettingsDialog(project, "preferences.sourceCode", "detect indent");
         }
       }
     );

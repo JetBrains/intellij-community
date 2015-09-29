@@ -43,12 +43,21 @@ import java.util.regex.Pattern;
  */
 public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
-  private static ImmutableMap<String, String> BUILTIN_COLLECTIONS = ImmutableMap.<String, String>builder()
+  private static ImmutableMap<String, String> COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
     .put("typing.List", "list")
     .put("typing.Dict", "dict")
     .put("typing.Set", PyNames.SET)
     .put("typing.FrozenSet", "frozenset")
     .put("typing.Tuple", PyNames.TUPLE)
+    .put("typing.Iterable", PyNames.COLLECTIONS + "." + PyNames.ITERABLE)
+    .put("typing.Iterator", PyNames.COLLECTIONS + "." + PyNames.ITERATOR)
+    .put("typing.Container", PyNames.COLLECTIONS + "." + PyNames.CONTAINER)
+    .put("typing.Sequence", PyNames.COLLECTIONS + "." + PyNames.SEQUENCE)
+    .put("typing.MutableSequence", PyNames.COLLECTIONS + "." + "MutableSequence")
+    .put("typing.Mapping", PyNames.COLLECTIONS + "." + PyNames.MAPPING)
+    .put("typing.MutableMapping", PyNames.COLLECTIONS + "." + "MutableMapping")
+    .put("typing.AbstractSet", PyNames.COLLECTIONS + "." + "Set")
+    .put("typing.MutableSet", PyNames.COLLECTIONS + "." + "MutableSet")
     .build();
 
   private static ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
@@ -187,20 +196,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyClass cls = function.getContainingClass();
       if (cls != null) {
         final List<PyGenericType> genericTypes = collectGenericTypes(cls, context);
-
-        final PyType elementType;
-        if (genericTypes.size() == 1) {
-          elementType = genericTypes.get(0);
-        }
-        else if (genericTypes.size() > 1) {
-          elementType = PyTupleType.create(cls, genericTypes.toArray(new PyType[genericTypes.size()]));
-        }
-        else {
-          elementType = null;
-        }
-
-        if (elementType != null) {
-          return new PyCollectionTypeImpl(cls, false, elementType);
+        final List<PyType> elementTypes = new ArrayList<PyType>(genericTypes);
+        if (!elementTypes.isEmpty()) {
+          return new PyCollectionTypeImpl(cls, false, elementTypes);
         }
       }
     }
@@ -438,6 +436,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         types.add(getType(expr, context));
       }
     }
+    else if (indexExpr != null) {
+      types.add(getType(indexExpr, context));
+    }
     return types;
   }
 
@@ -450,13 +451,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyType operandType = getType(operand, context);
       if (operandType instanceof PyClassType) {
         final PyClass cls = ((PyClassType)operandType).getPyClass();
+        final List<PyType> indexTypes = getIndexTypes(subscriptionExpr, context);
         if (PyNames.TUPLE.equals(cls.getQualifiedName())) {
-          final List<PyType> indexTypes = getIndexTypes(subscriptionExpr, context);
           return PyTupleType.create(expression, indexTypes.toArray(new PyType[indexTypes.size()]));
         }
         else if (indexExpr != null) {
-          final PyType indexType = context.getType(indexExpr);
-          return new PyCollectionTypeImpl(cls, false, indexType);
+          return new PyCollectionTypeImpl(cls, false, indexTypes);
         }
       }
     }
@@ -466,7 +466,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType getBuiltinCollection(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     final String collectionName = resolveToQualifiedName(expression, context);
-    final String builtinName = BUILTIN_COLLECTIONS.get(collectionName);
+    final String builtinName = COLLECTION_CLASSES.get(collectionName);
     return builtinName != null ? PyTypeParser.getTypeByName(expression, builtinName) : null;
   }
 

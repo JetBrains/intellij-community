@@ -25,22 +25,11 @@ import com.intellij.psi.PsiElement;
  * Time: 19:24:33
  * To change this template use Options | File Templates.
  */
-public class NotFilter
- implements ElementFilter{
-  ElementFilter myFilter;
-
-  public NotFilter(){}
+public class NotFilter implements ElementFilter {
+  private final ElementFilter myFilter;
 
   public NotFilter(ElementFilter filter){
     myFilter = filter;
-  }
-
-  public void setFilter(ElementFilter filter){
-    myFilter = filter;
-  }
-
-  public ElementFilter getFilter(){
-    return myFilter;
   }
 
   @Override
@@ -55,7 +44,7 @@ public class NotFilter
 
 
   public String toString(){
-    return "!" + getFilter();
+    return "!" + myFilter;
   }
 
 }

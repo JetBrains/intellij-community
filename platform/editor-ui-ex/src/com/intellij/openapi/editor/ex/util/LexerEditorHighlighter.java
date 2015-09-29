@@ -19,7 +19,6 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -360,24 +359,28 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   // Called to determine visual attributes of inserted character prior to starting a write action.
   // TODO Should be removed when we implement typing without starting write actions.
   public TextAttributes getAttributes(DocumentImpl document, int offset, char c) {
-    final int segmentIndex;
-    try {
-      segmentIndex = mySegments.findSegmentIndex(offset) - 2;
-    }
-    catch (IndexOutOfBoundsException ex) {
-      throw new IndexOutOfBoundsException(ex.getMessage() + " Lexer: " + myLexer);
-    }
-    int startIndex = Math.max(0, segmentIndex);
+    int startOffset = 0;
 
-    int data;
-    do {
-      data = mySegments.getSegmentData(startIndex);
-      if (isInitialState(data)|| startIndex == 0) break;
-      startIndex--;
-    }
-    while (true);
+    if (mySegments.getSegmentCount() > 0) {
+      final int segmentIndex;
+      try {
+        segmentIndex = mySegments.findSegmentIndex(offset) - 2;
+      }
+      catch (IndexOutOfBoundsException ex) {
+        throw new IndexOutOfBoundsException(ex.getMessage() + " Lexer: " + myLexer);
+      }
+      int startIndex = Math.max(0, segmentIndex);
 
-    int startOffset = mySegments.getSegmentStart(startIndex);
+      int data;
+      do {
+        data = mySegments.getSegmentData(startIndex);
+        if (isInitialState(data)|| startIndex == 0) break;
+        startIndex--;
+      }
+      while (true);
+
+      startOffset = mySegments.getSegmentStart(startIndex);
+    }
 
     ImmutableText newText = document.getImmutableText().insert(offset, Character.toString(c));
 
@@ -396,7 +399,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   protected TextAttributes convertAttributes(@NotNull TextAttributesKey[] keys) {
-    TextAttributes attrs = myScheme.getAttributes(HighlighterColors.TEXT);
+    TextAttributes attrs = new TextAttributes();
     for (TextAttributesKey key : keys) {
       TextAttributes attrs2 = myScheme.getAttributes(key);
       if (attrs2 != null) {

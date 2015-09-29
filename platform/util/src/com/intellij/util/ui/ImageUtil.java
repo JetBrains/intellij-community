@@ -18,7 +18,7 @@ package com.intellij.util.ui;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
+import java.awt.image.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -35,5 +35,11 @@ public class ImageUtil {
     g.drawImage(image, 0, 0, null);
     g.dispose();
     return bufferedImage;
+  }
+
+  public static Image filter(Image image, ImageFilter filter) {
+    if (image == null || filter == null) return image;
+    return Toolkit.getDefaultToolkit().createImage(
+      new FilteredImageSource(image.getSource(), filter));
   }
 }

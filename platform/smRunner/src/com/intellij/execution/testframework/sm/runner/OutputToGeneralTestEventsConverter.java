@@ -428,6 +428,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
     public void visitTestFailed(@NotNull final TestFailed testFailed) {
       final Map<String, String> attributes = testFailed.getAttributes();
+      LOG.assertTrue(testFailed.getFailureMessage() != null, "No failure message for: " + myTestFrameworkName);
       final boolean testError = attributes.get(ATTR_KEY_TEST_ERROR) != null;
       TestFailedEvent testFailedEvent = new TestFailedEvent(testFailed, testError, 
                                                             attributes.get(ATTR_KEY_EXPECTED_FILE_PATH),
@@ -535,7 +536,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         fireRootPresentationAdded(attributes.get("name"), attributes.get("comment"), attributes.get("location"));
       }
       else {
-        GeneralToSMTRunnerEventsConvertor.logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);
+        GeneralTestEventsProcessor.logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);
       }
     }
 

@@ -40,6 +40,8 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
    */
   public static final String NOT_COMMITTED_HASH = StringUtil.repeat("0", 40);
 
+  public static final GitRevisionNumber HEAD = new GitRevisionNumber("HEAD");
+
   /**
    * the revision number (40 character hashcode, tag, or reference). In some cases incomplete hashcode could be used.
    */

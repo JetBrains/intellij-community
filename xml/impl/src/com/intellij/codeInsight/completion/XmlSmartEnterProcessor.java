@@ -57,7 +57,7 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
         int caretAt = editor.getCaretModel().getOffset();
         final CharSequence text = doc.getCharsSequence();
         final int probableCommaOffset = CharArrayUtil.shiftForward(text, insertionOffset, " \t");
-        final PsiElement siebling = tagAtCaret.getNextSibling();
+        final PsiElement sibling = tagAtCaret.getNextSibling();
         int caretTo = caretAt;
         char ch;
 
@@ -107,16 +107,16 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
             caretTo = probableCommaOffset + text2insert.length();
           }
         }
-        else if (siebling instanceof XmlTag && siebling.getTextRange().getStartOffset() == caretAt) {
+        else if (sibling instanceof XmlTag && sibling.getTextRange().getStartOffset() == caretAt) {
           final XmlAttribute xmlAttribute = PsiTreeUtil.getParentOfType(atCaret, XmlAttribute.class, false, XmlTag.class);
           final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, false);
 
           doc.insertString(caretAt, text2insert);
           if (shouldInsertClosingTag(xmlAttribute, tagAtCaret)) {
-            doc.insertString(siebling.getTextRange().getEndOffset() + text2insert.length(), "</" + tagAtCaret.getName() + ">");
+            doc.insertString(sibling.getTextRange().getEndOffset() + text2insert.length(), "</" + tagAtCaret.getName() + ">");
           }
 
-          caretTo = siebling.getTextRange().getEndOffset() + text2insert.length();
+          caretTo = sibling.getTextRange().getEndOffset() + text2insert.length();
         }
         else if (probableCommaOffset >= text.length() || ((ch = text.charAt(probableCommaOffset)) != '/' && ch != '>')) {
           final XmlAttribute xmlAttribute = PsiTreeUtil.getParentOfType(atCaret, XmlAttribute.class, false, XmlTag.class);

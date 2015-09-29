@@ -145,8 +145,4 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
     myAnchor = anchor;
     myCbEnabled.setAnchor(anchor);
   }
-
-  public JBCheckBox getCbEnabled() {
-    return myCbEnabled;
-  }
 }

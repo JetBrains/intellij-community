@@ -93,7 +93,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
-  private final FileTreeAccessFilter myFileTreeAccessFilter = new FileTreeAccessFilter();
+  private VirtualFileFilter myVirtualFileFilter = new FileTreeAccessFilter();
 
   @Override
   protected boolean isRunInWriteAction() {
@@ -282,7 +282,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
     final JavaPsiFacadeEx facade = getJavaFacade();
     if (facade != null) {
-      facade.setAssertOnFileLoadingFilter(myFileTreeAccessFilter, myTestRootDisposable); // check repository work
+      facade.setAssertOnFileLoadingFilter(myVirtualFileFilter, myTestRootDisposable); // check repository work
     }
 
     try {
@@ -302,16 +302,24 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   @Override
   protected Editor createEditor(@NotNull VirtualFile file) {
-    allowTreeAccessForFile(file);
+    if (myVirtualFileFilter instanceof FileTreeAccessFilter) {
+      allowTreeAccessForFile(file);
+    }
     return super.createEditor(file);
   }
 
+  protected void setVirtualFileFilter(@NotNull VirtualFileFilter filter) {
+    myVirtualFileFilter = filter;
+  }
+
   protected void allowTreeAccessForFile(@NotNull VirtualFile file) {
-    myFileTreeAccessFilter.allowTreeAccessForFile(file);
+    assert myVirtualFileFilter instanceof FileTreeAccessFilter : "configured filter does not support this method";
+    ((FileTreeAccessFilter)myVirtualFileFilter).allowTreeAccessForFile(file);
   }
 
   protected void allowTreeAccessForAllFiles() {
-    myFileTreeAccessFilter.allowTreeAccessForAllFiles();
+    assert myVirtualFileFilter instanceof FileTreeAccessFilter : "configured filter does not support this method";
+    ((FileTreeAccessFilter)myVirtualFileFilter).allowTreeAccessForAllFiles();
   }
 
   @NotNull

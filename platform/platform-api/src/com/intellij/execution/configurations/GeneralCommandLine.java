@@ -41,9 +41,37 @@ import java.util.*;
 
 /**
  * OS-independent way of executing external processes with complex parameters.
- * <p/>
+ * <p>
  * Main idea of the class is to accept parameters "as-is", just as they should look to an external process, and quote/escape them
- * as required by the underlying platform.
+ * as required by the underlying platform - so to run some program with a "parameter with space" all that's needed is
+ * {@code new GeneralCommandLine("some program", "parameter with space").createProcess()}.
+ * <p>
+ * Consider the following things when using this class.
+ *
+ * <h3>Working directory</h3>
+ * By default, a current directory of the IDE process is used (usually a "bin/" directory of IDE installation).
+ * If a child process may create files in it, this choice is unwelcome. On the other hand, informational commands (e.g. "git --version")
+ * are safe. When unsure, set it to something neutral - like user's home or a temp directory.
+ *
+ * <h3>Parent Environment</h3>
+ * {@link ParentEnvironmentType Three options here}.
+ * For commands designed from the ground up for typing into a terminal, use {@link ParentEnvironmentType#CONSOLE CONSOLE}
+ * (typical cases: version controls, Node.js and all the stuff around it, Python and Ruby interpreters and utilities, etc).
+ * For GUI apps and CLI tools which aren't primarily intended to be launched by humans, use {@link ParentEnvironmentType#SYSTEM SYSTEM}
+ * (examples: UI builders, browsers, XCode components). For the empty environment, there is {@link ParentEnvironmentType#NONE NONE}.
+ * According to an extensive research conducted by British scientists (tm) on a diverse population of both wild and domesticated tools
+ * (no one was harmed), most of them are either insensitive to an environment or fall into the first category,
+ * thus backing up the choice of CONSOLE as the default value.
+ *
+ * <h3>Encoding/Charset</h3>
+ * The {@link #getCharset()} method is used by classes like {@link com.intellij.execution.process.OSProcessHandler OSProcessHandler}
+ * or {@link com.intellij.execution.util.ExecUtil ExecUtil} to decode bytes of a child's output stream. For proper conversion,
+ * the same value should be used on another side of the pipe. Chances are you don't have to mess with the setting -
+ * because a platform-dependent guessing behind {@link Charset#defaultCharset()} is used by default and a child process
+ * may happen to use a similar heuristic.
+ * If the above automagic fails or more control is needed, the charset may be set explicitly. Again, do not forget the other side -
+ * call {@code addParameter("-Dfile.encoding=...")} for Java-based tools, or use {@code withEnvironment("HGENCODING", "...")}
+ * for Mercurial, etc.
  *
  * @see com.intellij.execution.util.ExecUtil
  * @see com.intellij.execution.process.OSProcessHandler
@@ -51,10 +79,26 @@ import java.util.*;
 public class GeneralCommandLine implements UserDataHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.GeneralCommandLine");
 
+  /**
+   * Determines the scope of a parent environment passed to a child process.
+   * <p>
+   * {@code NONE} means a child process will receive an empty environment. <br/>
+   * {@code SYSTEM} will provide it with the same environment as an IDE. <br/>
+   * {@code CONSOLE} provides the child with a similar environment as if it was launched from, well, a console.
+   * On OS X, a console environment is simulated (see {@link EnvironmentUtil#getEnvironmentMap()} for reasons it's needed
+   * and details on how it works). On Windows and Unix hosts, this option is no different from {@code SYSTEM}
+   * since there is no drastic distinction in environment between GUI and console apps.
+   */
+  public enum ParentEnvironmentType {NONE, SYSTEM, CONSOLE}
+
+  // todo revise usages, then set to ParentEnvironmentType.CONSOLE and inline
+  private static ParentEnvironmentType defaultParentEnvironmentType =
+    PlatformUtils.isAppCode() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.CONSOLE;
+
   private String myExePath = null;
   private File myWorkDirectory = null;
   private final Map<String, String> myEnvParams = new MyTHashMap();
-  private boolean myPassParentEnvironment = true;
+  private ParentEnvironmentType myParentEnvironmentType = defaultParentEnvironmentType;
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myRedirectErrorStream = false;
@@ -129,39 +173,72 @@ public class GeneralCommandLine implements UserDataHolder {
     return this;
   }
 
-  public boolean isPassParentEnvironment() {
-    return myPassParentEnvironment;
-  }
-
   @NotNull
-  public GeneralCommandLine withPassParentEnvironment(boolean passParentEnvironment) {
-    myPassParentEnvironment = passParentEnvironment;
+  public GeneralCommandLine withEnvironment(@NotNull String key, @NotNull String value) {
+    getEnvironment().put(key, value);
     return this;
   }
 
+  public boolean isPassParentEnvironment() {
+    return myParentEnvironmentType != ParentEnvironmentType.NONE;
+  }
+
+  /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
+  public GeneralCommandLine withPassParentEnvironment(boolean passParentEnvironment) {
+    return withParentEnvironmentType(passParentEnvironment ? defaultParentEnvironmentType : ParentEnvironmentType.NONE);
+  }
+
+  /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public void setPassParentEnvironment(boolean passParentEnvironment) {
-    withPassParentEnvironment(passParentEnvironment);
+    withParentEnvironmentType(passParentEnvironment ? defaultParentEnvironmentType : ParentEnvironmentType.NONE);
+  }
+
+  @NotNull
+  public ParentEnvironmentType getParentEnvironmentType() {
+    return myParentEnvironmentType;
+  }
+
+  @NotNull
+  public GeneralCommandLine withParentEnvironmentType(@NotNull ParentEnvironmentType type) {
+    myParentEnvironmentType = type;
+    return this;
   }
 
   /**
-   * @return unmodifiable map of the parent environment, that will be passed to the process if isPassParentEnvironment() == true
+   * Returns an environment that will be passed to a child process.
    */
   @NotNull
   public Map<String, String> getParentEnvironment() {
-    return PlatformUtils.isAppCode() ? System.getenv() // Temporarily fix for OC-8606
-                                     : EnvironmentUtil.getEnvironmentMap();
+    switch (myParentEnvironmentType) {
+      case SYSTEM:
+        return System.getenv();
+      case CONSOLE:
+        return EnvironmentUtil.getEnvironmentMap();
+      default:
+        return Collections.emptyMap();
+    }
   }
 
   public void addParameters(String... parameters) {
-    for (String parameter : parameters) {
-      addParameter(parameter);
-    }
+    withParameters(parameters);
   }
 
   public void addParameters(@NotNull List<String> parameters) {
-    for (String parameter : parameters) {
-      addParameter(parameter);
-    }
+    withParameters(parameters);
+  }
+
+  @NotNull
+  public GeneralCommandLine withParameters(@NotNull String... parameters) {
+    for (String parameter : parameters) addParameter(parameter);
+    return this;
+  }
+
+  @NotNull
+  public GeneralCommandLine withParameters(@NotNull List<String> parameters) {
+    for (String parameter : parameters) addParameter(parameter);
+    return this;
   }
 
   public void addParameter(@NotNull String parameter) {
@@ -254,6 +331,8 @@ public class GeneralCommandLine implements UserDataHolder {
   public Process createProcess() throws ExecutionException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Executing [" + getCommandLineString() + "]");
+      LOG.debug("  environment: " + myEnvParams + " (+" + myParentEnvironmentType + ")");
+      LOG.debug("  charset: " + myCharset);
     }
 
     List<String> commands;
@@ -294,21 +373,20 @@ public class GeneralCommandLine implements UserDataHolder {
       return;
     }
     if (!myWorkDirectory.exists()) {
-      throw new ExecutionException(
-        IdeBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory.getAbsolutePath()));
+      throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory));
     }
     if (!myWorkDirectory.isDirectory()) {
-      throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.not.directory"));
+      throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.not.directory", myWorkDirectory));
     }
   }
 
   protected void setupEnvironment(@NotNull Map<String, String> environment) {
     environment.clear();
 
-    if (myPassParentEnvironment) {
+    if (myParentEnvironmentType != ParentEnvironmentType.NONE) {
       environment.putAll(getParentEnvironment());
     }
-    
+
     if (!myEnvParams.isEmpty()) {
       if (SystemInfo.isWindows) {
         THashMap<String, String> envVars = new THashMap<String, String>(CaseInsensitiveStringHashingStrategy.INSTANCE);

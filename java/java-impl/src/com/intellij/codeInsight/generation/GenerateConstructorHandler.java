@@ -154,7 +154,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     for (ClassMember member : members) {
       if (member instanceof PsiFieldMember) {
         final PsiField psiField = ((PsiFieldMember)member).getElement();
-        if (psiField != null && psiField.hasModifierProperty(PsiModifier.FINAL)) {
+        if (psiField.hasModifierProperty(PsiModifier.FINAL)) {
           preselection.add(member);
         }
       }
@@ -185,12 +185,12 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
       for (PsiMethod baseConstructor : baseConstructors) {
         baseConstructor = GenerateMembersUtil.substituteGenericMethod(baseConstructor, substitutor, aClass);
-        constructors.add(new PsiGenerationInfo(generateConstructorPrototype(aClass, baseConstructor, myCopyJavadoc, fields)));
+        constructors.add(new PsiGenerationInfo<PsiMethod>(generateConstructorPrototype(aClass, baseConstructor, myCopyJavadoc, fields)));
       }
       return filterOutAlreadyInsertedConstructors(aClass, constructors);
     }
     final List<GenerationInfo> constructors =
-      Collections.<GenerationInfo>singletonList(new PsiGenerationInfo(generateConstructorPrototype(aClass, null, false, fields)));
+      Collections.<GenerationInfo>singletonList(new PsiGenerationInfo<PsiMethod>(generateConstructorPrototype(aClass, null, false, fields)));
     return filterOutAlreadyInsertedConstructors(aClass, constructors);
   }
 

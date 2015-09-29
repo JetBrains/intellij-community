@@ -17,13 +17,11 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.StreamProvider
-import com.intellij.configurationStore.isProjectOrModuleFile
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -48,10 +46,10 @@ import kotlin.properties.Delegates
 
 val PLUGIN_NAME: String = "Settings Repository"
 
-val LOG: Logger = Logger.getInstance(javaClass<IcsManager>())
+internal val LOG: Logger = Logger.getInstance(IcsManager::class.java)
 
-val icsManager by Delegates.lazy {
-  ApplicationLoadListener.EP_NAME.findExtension(javaClass<IcsApplicationLoadListener>()).icsManager
+val icsManager by lazy(LazyThreadSafetyMode.NONE) {
+  ApplicationLoadListener.EP_NAME.findExtension(IcsApplicationLoadListener::class.java).icsManager
 }
 
 class IcsManager(dir: File) {
@@ -93,7 +91,7 @@ class IcsManager(dir: File) {
       ProgressManager.getInstance().run(object : Task.Backgroundable(null, IcsBundle.message("task.commit.title")) {
         override fun run(indicator: ProgressIndicator) {
           try {
-            repositoryManager.commit(indicator)
+            repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
           }
           catch (e: Throwable) {
             LOG.error(e)
@@ -103,15 +101,15 @@ class IcsManager(dir: File) {
     }
   }, settings.commitDelay)
 
-  private volatile var autoCommitEnabled = true
+  private @Volatile var autoCommitEnabled = true
 
-  volatile var repositoryActive = false
+  @Volatile var repositoryActive = false
 
   val autoSyncManager = AutoSyncManager(this)
   private val syncManager = SyncManager(this, autoSyncManager)
 
   private fun scheduleCommit() {
-    if (autoCommitEnabled && !ApplicationManager.getApplication()!!.isUnitTestMode()) {
+    if (autoCommitEnabled && !ApplicationManager.getApplication()!!.isUnitTestMode) {
       commitAlarm.cancelAndRequest()
     }
   }
@@ -127,30 +125,17 @@ class IcsManager(dir: File) {
     }
   }
 
-  private fun registerProjectLevelProviders(project: Project) {
-    val storageManager = project.stateStore.getStateStorageManager()
-    val projectId = storageManager.getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED).getState(ProjectId(), "IcsProjectId", javaClass<ProjectId>())
-    if (projectId == null || projectId.uid == null) {
-      // not mapped, if user wants, he can map explicitly, we don't suggest
-      // we cannot suggest "map to ICS" for any project that user opens, it will be annoying
-      return
-    }
-
-//    storageManager.setStreamProvider(ProjectLevelProvider(projectId.uid!!))
-    // updateStoragesFromStreamProvider(storageManager, storageManager.getStorageFileNames())
-  }
-
-  private inner class ProjectLevelProvider(projectId: String) : IcsStreamProvider(projectId) {
-    override fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = !isProjectOrModuleFile(fileSpec)
-
-    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
-      if (isProjectOrModuleFile(fileSpec)) {
-        // applicable only if file was committed to Settings Server explicitly
-        return repositoryManager.has(buildPath(fileSpec, roamingType, this.projectId))
-      }
-      return settings.shareProjectWorkspace || fileSpec != StoragePathMacros.WORKSPACE_FILE
-    }
-  }
+//  private inner class ProjectLevelProvider(projectId: String) : IcsStreamProvider(projectId) {
+//    override fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = !isProjectOrModuleFile(fileSpec)
+//
+//    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
+//      if (isProjectOrModuleFile(fileSpec)) {
+//        // applicable only if file was committed to Settings Server explicitly
+//        return repositoryManager.has(buildPath(fileSpec, roamingType, this.projectId))
+//      }
+//      return settings.shareProjectWorkspace || fileSpec != StoragePathMacros.WORKSPACE_FILE
+//    }
+//  }
 
   fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null) = syncManager.sync(syncType, project, localRepositoryInitializer)
 
@@ -175,13 +160,13 @@ class IcsManager(dir: File) {
   fun beforeApplicationLoaded(application: Application) {
     repositoryActive = repositoryManager.isRepositoryExists()
 
-    (application.stateStore.getStateStorageManager() as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
+    (application.stateStore.stateStorageManager as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
 
     autoSyncManager.registerListeners(application)
 
-    application.getMessageBus().connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener.Adapter() {
+    application.messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener.Adapter() {
       override fun beforeProjectLoaded(project: Project) {
-        if (project.isDefault()) {
+        if (project.isDefault) {
           return
         }
 
@@ -238,7 +223,7 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
     private set
 
   override fun beforeApplicationLoaded(application: Application, configPath: String) {
-    if (application.isUnitTestMode()) {
+    if (application.isUnitTestMode) {
       return
     }
 
@@ -278,7 +263,7 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
         Pair("_unknown/\$APP_CONFIG$", "_unknown")
       ))) {
         // schedule push to avoid merge conflicts
-        application.invokeLater(Runnable { icsManager.autoSyncManager.autoSync(force = true) })
+        application.invokeLater({ icsManager.autoSyncManager.autoSync(force = true) })
       }
     }
 

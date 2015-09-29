@@ -21,30 +21,28 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.*;
+import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
-import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -446,8 +444,63 @@ public class ExternalSystemApiUtil {
     return null;
   }
 
+  public static void commitChangedModels(boolean synchronous, Project project, List<Library.ModifiableModel> models) {
+    final List<Library.ModifiableModel> changedModels = ContainerUtil.findAll(models, new Condition<Library.ModifiableModel>() {
+      @Override
+      public boolean value(Library.ModifiableModel model) {
+        return model.isChanged();
+      }
+    });
+    if (!changedModels.isEmpty()) {
+      executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
+        @Override
+        public void execute() {
+          for (Library.ModifiableModel modifiableModel : changedModels) {
+            modifiableModel.commit();
+          }
+        }
+      });
+    }
+  }
+
+  public static void disposeModels(@NotNull Collection<ModifiableRootModel> models) {
+    for (ModifiableRootModel model : models) {
+      if (!model.isDisposed()) {
+        model.dispose();
+      }
+    }
+  }
+
+  public static void commitModels(boolean synchronous, Project project, List<ModifiableRootModel> models) {
+    final List<ModifiableRootModel> changedModels = ContainerUtilRt.newArrayList();
+    for (ModifiableRootModel modifiableRootModel : models) {
+      if (modifiableRootModel.isDisposed()) {
+        continue;
+      }
+      if (modifiableRootModel.isChanged()) {
+        changedModels.add(modifiableRootModel);
+      } else {
+        modifiableRootModel.dispose();
+      }
+    }
+    // Commit only if there are changes. #executeProjectChangeAction acquires a write lock
+    if (!changedModels.isEmpty()) {
+      executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
+        @Override
+        public void execute() {
+          for (ModifiableRootModel modifiableRootModel : changedModels) {
+            // double check
+            if (!modifiableRootModel.isDisposed()) {
+              modifiableRootModel.commit();
+            }
+          }
+        }
+      });
+    }
+  }
+
   public static void executeProjectChangeAction(@NotNull final DisposeAwareProjectChange task) {
-    executeProjectChangeAction(false, task);
+    executeProjectChangeAction(true, task);
   }
 
   public static void executeProjectChangeAction(boolean synchronous, @NotNull final DisposeAwareProjectChange task) {
@@ -494,10 +547,19 @@ public class ExternalSystemApiUtil {
     return result.get();
   }
 
-  public static <T> T executeOnEdtUnderWriteAction(@NotNull final Computable<T> task) {
+  public static <T> T doWriteAction(@NotNull final Computable<T> task) {
     return executeOnEdt(new Computable<T>() {
       public T compute() {
         return ApplicationManager.getApplication().runWriteAction(task);
+      }
+    });
+  }
+
+  public static void doWriteAction(@NotNull final Runnable task) {
+    executeOnEdt(true, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(task);
       }
     });
   }
@@ -597,8 +659,7 @@ public class ExternalSystemApiUtil {
     }
     externalModulePaths.remove(linkedExternalProjectPath);
 
-    PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
-    for (Module module : platformFacade.getModules(ideProject)) {
+    for (Module module : ModuleManager.getInstance(ideProject).getModules()) {
       String path = getExternalProjectPath(module);
       if (!StringUtil.isEmpty(path) && !externalModulePaths.remove(path)) {
         return false;
@@ -606,6 +667,8 @@ public class ExternalSystemApiUtil {
     }
     return externalModulePaths.isEmpty();
   }
+
+
 
   public static void storeLastUsedExternalProjectPath(@Nullable String path, @NotNull ProjectSystemId externalSystemId) {
     if (path != null) {

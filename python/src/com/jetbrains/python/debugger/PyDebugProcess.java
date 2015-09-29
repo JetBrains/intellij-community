@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.python.PythonFileType;
@@ -388,8 +387,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   public void startStepIntoMyCode() {
     if (!checkCanPerformCommands()) return;
-    XDebugSessionImpl session = (XDebugSessionImpl)getSession();
-    session.doResume();
+    getSession().sessionResumed();
     passToCurrentThread(ResumeOrStepCommand.Mode.STEP_INTO_MY_CODE);
   }
 

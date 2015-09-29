@@ -197,7 +197,7 @@ public class Main {
     // always delete previous patch copy
     File patchCopy = new File(tempDir, patchFileName + "_copy");
     File log4jCopy = new File(tempDir, "log4j.jar." + platform + "_copy");
-    File jnaUtilsCopy = new File(tempDir, "jna-utils.jar." + platform + "_copy");
+    File jnaUtilsCopy = new File(tempDir, "jna-platform.jar." + platform + "_copy");
     File jnaCopy = new File(tempDir, "jna.jar." + platform + "_copy");
     if (!FileUtilRt.delete(patchCopy) || !FileUtilRt.delete(log4jCopy) || !FileUtilRt.delete(jnaUtilsCopy) || !FileUtilRt.delete(jnaCopy)) {
       throw new IOException("Cannot delete temporary files in " + tempDir);
@@ -209,8 +209,8 @@ public class Main {
     File log4j = new File(PathManager.getLibPath(), "log4j.jar");
     if (!log4j.exists()) throw new IOException("Log4J is missing: " + log4j);
 
-    File jnaUtils = new File(PathManager.getLibPath(), "jna-utils.jar");
-    if (!jnaUtils.exists()) throw new IOException("jna-utils.jar is missing: " + jnaUtils);
+    File jnaUtils = new File(PathManager.getLibPath(), "jna-platform.jar");
+    if (!jnaUtils.exists()) throw new IOException("jna-platform.jar is missing: " + jnaUtils);
 
     File jna = new File(PathManager.getLibPath(), "jna.jar");
     if (!jna.exists()) throw new IOException("jna is missing: " + jna);
@@ -285,7 +285,7 @@ public class Main {
     else {
       message.append("Internal error. Please report to https://");
       boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
-      message.append(studio ? "code.google.com/p/android/issues" : "youtrack.jetbrains.com");
+      message.append(studio ? "code.google.com/p/android/issues" : "intellij-support.jetbrains.com/hc/en-us/requests/new");
       message.append("\n\n");
     }
 

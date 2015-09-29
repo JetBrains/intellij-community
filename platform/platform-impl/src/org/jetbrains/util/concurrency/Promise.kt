@@ -17,51 +17,51 @@ package org.jetbrains.util.concurrency
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.Consumer
-import org.jetbrains.concurrency
+import org.jetbrains.concurrency.Promise as OJCPromise
+import org.jetbrains.concurrency.AsyncPromise as OJCAsyncPromise
 
-public interface Promise<T> {
-  public enum class State {
+interface Promise<T> {
+  enum class State {
     PENDING,
     FULFILLED,
     REJECTED
   }
 
-  public val state: State
+  val state: State
 
-  public fun done(done: (T) -> Unit): Promise<T>
+  fun done(done: (T) -> Unit): Promise<T>
 
-  public fun processed(fulfilled: AsyncPromise<T>): Promise<T>
+  fun rejected(rejected: (Throwable) -> Unit): Promise<T>
 
-  public fun rejected(rejected: (Throwable) -> Unit): Promise<T>
+  fun processed(processed: (T?) -> Unit): Promise<T>
 
-  public fun processed(processed: (T) -> Unit): Promise<T>
+  fun <SUB_RESULT> then(done: (T) -> SUB_RESULT): Promise<SUB_RESULT>
 
-  public fun <SUB_RESULT> then(done: (T) -> SUB_RESULT): Promise<SUB_RESULT>
+  fun <SUB_RESULT> thenAsync(done: (T) -> Promise<SUB_RESULT>): Promise<SUB_RESULT>
 
-  fun notify(child: AsyncPromise<T>)
+  fun notify(child: AsyncPromise<T>): Promise<T>
 
   companion object {
     /**
      * Log error if not message error
      */
-    public fun logError(logger: Logger, e: Throwable) {
-      if (e !is MessageError || ApplicationManager.getApplication().isUnitTestMode()) {
+    fun logError(logger: Logger, e: Throwable) {
+      if (e !is MessageError || ApplicationManager.getApplication().isUnitTestMode) {
         logger.error(e)
       }
     }
 
-    public fun all(promises: Collection<Promise<*>>): Promise<*> = all<Any?>(promises, null)
+    fun all(promises: Collection<Promise<*>>): Promise<*> = all<Any?>(promises, null)
 
-    public fun <T> all(promises: Collection<Promise<*>>, totalResult: T): Promise<T> {
+    fun <T> all(promises: Collection<Promise<*>>, totalResult: T): Promise<T> {
       if (promises.isEmpty()) {
-        @suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST")
         return DONE as Promise<T>
       }
 
       val totalPromise = AsyncPromise<T>()
       val done = CountDownConsumer(promises.size(), totalPromise, totalResult)
-      val rejected = {it: Throwable -> Unit
+      val rejected = {it: Throwable ->
         if (totalPromise.state == Promise.State.PENDING) {
           totalPromise.setError(it)
         }
@@ -80,39 +80,38 @@ public interface Promise<T> {
 private val DONE: Promise<*> = DonePromise(null)
 private val REJECTED: Promise<*> = RejectedPromise<Any>(MessageError("rejected"))
 
-private class MessageError(error: String) : RuntimeException(error) {
-  public synchronized fun fillInStackTrace(): Throwable? = this
+internal class MessageError(error: String) : RuntimeException(error) {
+  @Synchronized fun fillInStackTrace(): Throwable? = this
 }
 
-public fun <T> RejectedPromise(error: String): Promise<T> = RejectedPromise(MessageError(error))
+fun <T> RejectedPromise(error: String): Promise<T> = RejectedPromise(MessageError(error))
 
-public fun ResolvedPromise(): Promise<*> = DONE
+fun ResolvedPromise(): Promise<*> = DONE
 
-public fun <T> ResolvedPromise(result: T): Promise<T> = DonePromise(result)
+fun <T> ResolvedPromise(result: T): Promise<T> = DonePromise(result)
 
-public fun <T> concurrency.Promise<T>.toPromise(): AsyncPromise<T> {
+fun <T> OJCPromise<T>.toPromise(): AsyncPromise<T> {
   val promise = AsyncPromise<T>()
-  done(object : Consumer<T> {
-    override fun consume(value: T) {
-      promise.setResult(value)
-    }
-  })
-    .rejected(object : Consumer<Throwable> {
-      override fun consume(throwable: Throwable) {
-        promise.setError(throwable)
-      }
-    })
+  val oldPromise = this
+  done({ promise.setResult(it) })
+    .rejected({ promise.setError(it) })
+
+  if (oldPromise is OJCAsyncPromise) {
+    promise
+      .done { oldPromise.setResult(it) }
+      .rejected { oldPromise.setError(it) }
+  }
   return promise
 }
 
-public fun <T> Promise<T>.toPromise(): concurrency.AsyncPromise<T> {
-  val promise = concurrency.AsyncPromise<T>()
+fun <T> Promise<T>.toPromise(): OJCAsyncPromise<T> {
+  val promise = OJCAsyncPromise<T>()
   done { promise.setResult(it) }
     .rejected { promise.setError(it) }
   return promise
 }
 
-private class CountDownConsumer<T>(private volatile var countDown: Int, private val promise: AsyncPromise<T>, private val totalResult: T) : (T) -> Unit {
+private class CountDownConsumer<T>(private @field:Volatile var countDown: Int, private val promise: AsyncPromise<T>, private val totalResult: T) : (T) -> Unit {
   override fun invoke(p1: T) {
     if (--countDown == 0) {
       promise.setResult(totalResult)
@@ -120,5 +119,8 @@ private class CountDownConsumer<T>(private volatile var countDown: Int, private 
   }
 }
 
-public val Promise<*>.pending: Boolean
+val Promise<*>.isPending: Boolean
   get() = state == Promise.State.PENDING
+
+val Promise<*>.isRejected: Boolean
+  get() = state == Promise.State.REJECTED

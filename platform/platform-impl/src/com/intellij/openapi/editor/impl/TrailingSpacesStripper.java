@@ -130,9 +130,10 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     if (settings == null) return;
 
     boolean enabled = !Boolean.TRUE.equals(DISABLE_FOR_FILE_KEY.get(FileDocumentManager.getInstance().getFile(document)));
+    if (!enabled) return;
     String stripTrailingSpaces = settings.getStripTrailingSpaces();
-    final boolean doStrip = enabled && !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
-    final boolean inChangedLinesOnly = enabled && !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+    final boolean doStrip = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+    final boolean inChangedLinesOnly = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
 
     int[] caretLines;
     if (activeEditor != null && inChangedLinesOnly && doStrip && !isVirtualSpaceEnabled) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ import javax.swing.*;
 public class PsiIconUtil {
 
   @Nullable
-  public static Icon getProvidersIcon(PsiElement element, @Iconable.IconFlags int flags) {
+  public static Icon getProvidersIcon(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
     final boolean dumb = DumbService.getInstance(element.getProject()).isDumb();
     for (final IconProvider iconProvider : getIconProviders()) {
       if (dumb && !DumbService.isDumbAware(iconProvider)) {

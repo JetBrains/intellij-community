@@ -36,7 +36,7 @@ class LinearBekTest {
   |/        |
   7         7
   */
-  Test fun simpleGraphTest() = runTest({
+  @Test fun simpleGraphTest() = runTest({
     0(4, 1)
     1(2)
     2(3)
@@ -71,7 +71,7 @@ class LinearBekTest {
   |/          |
   6           6
    */
-  Test fun twoSectionsGraphTest() = runTest({
+  @Test fun twoSectionsGraphTest() = runTest({
     0(2, 1)
     1(3)
     2(3)
@@ -104,7 +104,7 @@ class LinearBekTest {
   |/             |
   6              6
    */
-  Test fun recursiveSectionsTest() = runTest({
+  @Test fun recursiveSectionsTest() = runTest({
     0(5, 1)
     1(3, 2)
     2(4)
@@ -135,7 +135,7 @@ class LinearBekTest {
   |/            |
   5             5
    */
-  Test fun diagonalTest() = runTest({
+  @Test fun diagonalTest() = runTest({
     0(2, 1)
     1(3)
     2(4, 3)
@@ -160,7 +160,7 @@ class LinearBekTest {
   \|            :
   3             3
    */
-  Test fun differentDiagonalTest() = runTest({
+  @Test fun differentDiagonalTest() = runTest({
     0(2, 1)
     1(2, 3)
     2(3)
@@ -193,7 +193,7 @@ class LinearBekTest {
   |/               |
   9                9
    */
-  Test fun complicatedBranchesTest() = runTest({
+  @Test fun complicatedBranchesTest() = runTest({
     0(5, 1)
     1(2, 3)
     2(4, 3)
@@ -234,7 +234,7 @@ class LinearBekTest {
   |/               :
   8                8
    */
-  Test fun interestingTest() = runTest({
+  @Test fun interestingTest() = runTest({
     0(6, 1)
     1(4, 2)
     2(3)
@@ -276,7 +276,7 @@ class LinearBekTest {
     |/               |
     9                9
      */
-  Test fun interestingTest2() = runTest({
+  @Test fun interestingTest2() = runTest({
     0(7, 1)
     1(5, 2)
     2(4, 3)
@@ -314,7 +314,7 @@ class LinearBekTest {
   \/               |
   6                6
    */
-  Test fun smallRecursiveBranchesTest() = runTest({
+  @Test fun smallRecursiveBranchesTest() = runTest({
     0(3, 1)
     1(5, 2)
     2(6)
@@ -352,7 +352,7 @@ class LinearBekTest {
   10 /             10
   11               11
    */
-  Test fun twoTailsBranchTest() = runTest({
+  @Test fun twoTailsBranchTest() = runTest({
     0(8, 1)
     1(2)
     2(6, 3)
@@ -391,7 +391,7 @@ class LinearBekTest {
   |/               |
   5                5
    */
-  Test fun incomingEdgeTest() = runTest({
+  @Test fun incomingEdgeTest() = runTest({
     0(4, 2)
     1(3)
     2(3)
@@ -423,7 +423,7 @@ class LinearBekTest {
   |/               |
   6                6
    */
-  Test fun hiddenIncomingEdges() = runTest({
+  @Test fun hiddenIncomingEdges() = runTest({
     0(2, 1)
     1(3, 4)
     2(3)
@@ -455,7 +455,7 @@ class LinearBekTest {
   6                6
   7                7
    */
-  Test fun testMergeWithOldCommit() = runTest({
+  @Test fun testMergeWithOldCommit() = runTest({
     0(5, 1)
     1(5, 2)
     2(3)
@@ -486,7 +486,7 @@ class LinearBekTest {
   |/               :
   5                5
   */
-  Test fun testHeadsOrder1() = runTest({
+  @Test fun testHeadsOrder1() = runTest({
     0(2)
     1(4)
     2(5, 3)
@@ -513,7 +513,7 @@ class LinearBekTest {
    |/              :
    5               5
    */
-  Test fun testHeadsOrder2() = runTest({
+  @Test fun testHeadsOrder2() = runTest({
     0(4)
     1(2)
     2(5, 3)
@@ -537,7 +537,7 @@ class LinearBekTest {
   |/               :
   3                3
   */
-  Test fun testKatisha() = runTest({
+  @Test fun testKatisha() = runTest({
     0(1, 3)
     1(2)
     2(3)
@@ -556,7 +556,7 @@ class LinearBekTest {
   | 2              | 2
   3                3
    */
-  Test fun testInitialImport() = runTest({
+  @Test fun testInitialImport() = runTest({
     0(3, 1)
     1(2)
     2()
@@ -575,7 +575,7 @@ class LinearBekTest {
     |/             :
     2              2
      */
-  Test fun testTriangle() = runTest({
+  @Test fun testTriangle() = runTest({
     0(2, 1)
     1(2)
     2()
@@ -598,7 +598,7 @@ class LinearBekTest {
   |/
   6
    */
-  Test fun reversedParentsTest() = runTest({
+  @Test fun reversedParentsTest() = runTest({
     0(1, 4)
     1(2)
     2(3, 4)
@@ -629,7 +629,7 @@ class LinearBekTest {
   |/              |
   5               5
    */
-  Test fun crossedTailsTest() = runTest({
+  @Test fun crossedTailsTest() = runTest({
     0(4, 1)
     1(3, 2)
     2(4)

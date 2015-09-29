@@ -117,7 +117,7 @@ public abstract class InspectionsFilter {
       return false;
     }
 
-    if (myAvailableOnlyForAnalyze != isAvailableOnlyForAnalyze(tools)) {
+    if (myAvailableOnlyForAnalyze && !isAvailableOnlyForAnalyze(tools)) {
       return false;
     }
 

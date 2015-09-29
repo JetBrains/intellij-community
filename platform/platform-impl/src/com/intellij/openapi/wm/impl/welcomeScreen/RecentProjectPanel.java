@@ -24,6 +24,7 @@ import com.intellij.ide.ProjectGroup;
 import com.intellij.ide.ProjectGroupActionGroup;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.ReopenProjectAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -36,7 +37,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
@@ -93,7 +93,7 @@ public class RecentProjectPanel extends JPanel {
     return rectInListCoordinates.contains(p);
   }
 
-  public RecentProjectPanel(WelcomeScreen screen) {
+  public RecentProjectPanel(@Nullable Disposable parentDisposable) {
     super(new BorderLayout());
 
     final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false, isUseGroups());
@@ -173,7 +173,7 @@ public class RecentProjectPanel extends JPanel {
         e.getPresentation().setEnabled(!ListWithFilter.isSearchActive(myList));
       }
     };
-    removeRecentProjectAction.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), myList, screen);
+    removeRecentProjectAction.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), myList, parentDisposable);
 
     addMouseMotionListener();
 

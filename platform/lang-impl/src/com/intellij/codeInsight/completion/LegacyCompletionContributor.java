@@ -55,7 +55,7 @@ public class LegacyCompletionContributor extends CompletionContributor {
     final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
     PsiFile file = parameters.getOriginalFile();
     completionData.addKeywordVariants(keywordVariants, insertedElement, file);
-    completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), file);
+    completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement);
     result.addAllElements(lookupSet);
   }
 
@@ -70,10 +70,13 @@ public class LegacyCompletionContributor extends CompletionContributor {
       @Override
       public void consume(final PsiReference reference, final CompletionResultSet resultSet) {
         final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
-        completionData
-          .completeReference(reference, lookupSet, parameters.getPosition(), parameters.getOriginalFile(), parameters.getOffset());
+        completionData.completeReference(reference, lookupSet, parameters.getPosition(), parameters.getOriginalFile());
         for (final LookupElement item : lookupSet) {
           if (resultSet.getPrefixMatcher().prefixMatches(item)) {
+            if (!item.isValid()) {
+              LOG.error(completionData + " has returned an invalid lookup element " + item + " of " + item.getClass() +
+                        " in " + parameters.getOriginalFile() + " of " + parameters.getOriginalFile().getClass());
+            }
             hasVariants.set(true);
             resultSet.addElement(item);
           }

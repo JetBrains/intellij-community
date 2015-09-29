@@ -15,17 +15,14 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
-import com.intellij.formatting.*;
-import com.intellij.lang.LanguageFormatting;
+import com.intellij.formatting.ASTBlock;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.Indent;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.formatter.common.NewLineBlocksIterator;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,70 +35,97 @@ import java.util.List;
 public class FormatterBasedLineIndentInfoBuilder {
   private static final int MAX_NEW_LINE_BLOCKS_TO_PROCESS = 500;
 
-  private final PsiFile myFile;
   private final Document myDocument;
   private final CharSequence myText;
-  private final CodeStyleSettings mySettings;
-  private final FormattingModelBuilder myFormattingModelBuilder;
+  private final Block myRootBlock;
 
-  public FormatterBasedLineIndentInfoBuilder(@NotNull PsiFile file) {
-    Project project = file.getProject();
-
-    myFile = file;
-    myDocument = PsiDocumentManager.getInstance(project).getDocument(file);
-    myText = myDocument != null ? myDocument.getCharsSequence() : null;
-    mySettings = CodeStyleSettingsManager.getSettings(project);
-    myFormattingModelBuilder = LanguageFormatting.INSTANCE.forContext(myFile);
+  public FormatterBasedLineIndentInfoBuilder(@NotNull Document document, @NotNull Block rootBlock) {
+    myDocument = document;
+    myText = myDocument.getCharsSequence();
+    myRootBlock = rootBlock;
   }
 
   public List<LineIndentInfo> build() {
-    if (myText == null || myFormattingModelBuilder == null) return null;
-
-    List<Block> normallyIndentedBlocks = ContainerUtil.filter(getBlocksStartingNewLine(), new Condition<Block>() {
-      @Override
-      public boolean value(Block block) {
-        return hasTotallyNormalOrNoneIndent(block);
-      }
-    });
-
-    return ContainerUtil.map(normallyIndentedBlocks, new Function<Block, LineIndentInfo>() {
+    List<Block> newLineBlocks = getBlocksStartingNewLine();
+    
+    return ContainerUtil.map(newLineBlocks, new Function<Block, LineIndentInfo>() {
       @Override
       public LineIndentInfo fun(Block newLineBlock) {
         int blockStartOffset = newLineBlock.getTextRange().getStartOffset();
-        int lineStartOffset = myDocument.getLineStartOffset(myDocument.getLineNumber(blockStartOffset));
-        return createLineIndentInfo(lineStartOffset, blockStartOffset);
+        int line = myDocument.getLineNumber(blockStartOffset);
+        int lineStartOffset = myDocument.getLineStartOffset(line);
+
+        if (rangeHasTabs(lineStartOffset, blockStartOffset)) {
+          return LineIndentInfo.LINE_WITH_TABS;
+        }
+        
+        if (hasNormalIndent(newLineBlock)) {
+          return LineIndentInfo.newNormalIndent(blockStartOffset - lineStartOffset);
+        }
+        else {
+          return LineIndentInfo.LINE_WITH_NOT_COUNTABLE_INDENT; 
+        }
       }
     });
   }
   
-  private static boolean hasTotallyNormalOrNoneIndent(Block block) {
+  private static boolean hasNormalIndent(Block block) {
     final TextRange range = block.getTextRange();
     final int startOffset = range.getStartOffset();
-    
-    boolean startOffsetAlreadyHasNormalIndent = false;
-    
-    while (block != null && range.getStartOffset() == startOffset) {
-      Indent.Type type = block.getIndent() != null ? block.getIndent().getType() : null;
-      
-      if (type == Indent.Type.NONE || type == Indent.Type.NORMAL && !startOffsetAlreadyHasNormalIndent) {
-        startOffsetAlreadyHasNormalIndent = true;
+  
+    List<Indent.Type> allIndents = getIndentOnStartOffset(block, range, startOffset);
+
+    if (hasOnlyNormalOrNoneIndents(allIndents)) {
+      int normalIndents = ContainerUtil.filter(allIndents, new Condition<Indent.Type>() {
+      @Override
+      public boolean value(Indent.Type type) {
+        return type == Indent.Type.NORMAL;
       }
-      else {
+    }).size();
+      return normalIndents < 2;
+    }
+    
+    return false;
+  }
+
+  private static boolean hasOnlyNormalOrNoneIndents(List<Indent.Type> indents) {
+    Indent.Type outerMostIndent = indents.get(0);
+    if (outerMostIndent != Indent.Type.NONE && outerMostIndent != Indent.Type.NORMAL) {
+      return false;
+    }
+
+    List<Indent.Type> innerIndents = indents.subList(1, indents.size());
+    for (Indent.Type indent : innerIndents) {
+      if (indent != Indent.Type.NONE && indent != Indent.Type.NORMAL 
+          && indent != Indent.Type.CONTINUATION_WITHOUT_FIRST) {
+        //continuation without first here because it is CONTINUATION only if it's owner is not the first child
         return false;
       }
+    }
+
+    return true;
+  }
+
+  private static List<Indent.Type> getIndentOnStartOffset(Block block, TextRange range, int startOffset) {
+    List<Indent.Type> indentsOnStartOffset = new ArrayList<Indent.Type>();
+    
+    while (block != null && range.getStartOffset() == startOffset) {
+      Indent.Type type = block.getIndent() != null ? block.getIndent().getType() : Indent.Type.CONTINUATION_WITHOUT_FIRST;
+      indentsOnStartOffset.add(type);
       
+      if (block instanceof AbstractBlock) {
+        ((AbstractBlock)block).setBuildIndentsOnly(true);
+      }
       List<Block> subBlocks = block.getSubBlocks();
       block = subBlocks.isEmpty() ? null : subBlocks.get(0);
     }
     
-    return true;
+    return indentsOnStartOffset;
   }
 
   @NotNull
   private List<Block> getBlocksStartingNewLine() {
-    FormattingModel model = myFormattingModelBuilder.createModel(myFile, mySettings);
-    Block root = model.getRootBlock();
-    NewLineBlocksIterator newLineBlocksIterator = new NewLineBlocksIterator(root, myDocument);
+    NewLineBlocksIterator newLineBlocksIterator = new NewLineBlocksIterator(myRootBlock, myDocument);
 
     List<Block> newLineBlocks = new ArrayList<Block>();
     int currentLine = 0;
@@ -116,13 +140,8 @@ public class FormatterBasedLineIndentInfoBuilder {
 
     return newLineBlocks;
   }
-
-  @NotNull
-  private LineIndentInfo createLineIndentInfo(int lineStartOffset, int textStartOffset) {
-    if (CharArrayUtil.indexOf(myText, "\t", lineStartOffset, textStartOffset) > 0) {
-      return LineIndentInfo.LINE_WITH_TABS;
-    }
-    return LineIndentInfo.newWhiteSpaceIndent(textStartOffset - lineStartOffset);
+  
+  private boolean rangeHasTabs(int lineStartOffset, int textStartOffset) {
+    return CharArrayUtil.indexOf(myText, "\t", lineStartOffset, textStartOffset) > 0;
   }
-
 }

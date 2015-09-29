@@ -32,9 +32,6 @@ public interface StateStorageManager {
   @NotNull
   StateStorage getStateStorage(@NotNull Storage storageSpec);
 
-  @NotNull
-  StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType);
-
   /**
    * Rename file
    * @param path System-independent full old path (/project/bar.iml or collapse $MODULE_FILE$)
@@ -50,12 +47,6 @@ public interface StateStorageManager {
 
   @NotNull
   String expandMacros(@NotNull String path);
-
-  @NotNull
-  /**
-   * @param path System-independent path.
-   */
-  String collapseMacros(@NotNull String path);
 
   interface ExternalizationSession {
     void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state);

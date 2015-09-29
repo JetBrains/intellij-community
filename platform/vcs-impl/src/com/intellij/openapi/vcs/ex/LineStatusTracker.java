@@ -752,6 +752,7 @@ public class LineStatusTracker {
 
   private void markLinesUnchanged(int startLine, int endLine) {
     if (myDocument.getTextLength() == 0) return; // empty document has no lines
+    if (startLine == endLine) return;
     ((DocumentImpl)myDocument).clearLineModificationFlags(startLine, endLine);
   }
 

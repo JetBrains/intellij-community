@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
@@ -1003,6 +1004,20 @@ public class XmlTagTest extends LightCodeInsightTestCase {
         final XmlTag tag2 = XmlElementFactory.getInstance(getProject()).createTagFromText("<foo><boo/></foo>");
         tag2.collapseIfEmpty();
         assertEquals("<foo><boo/></foo>", tag2.getText());
+      }
+    });
+  }
+
+  public void testSetName() {
+    XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("dummy.xml", XmlFileType.INSTANCE, "<fooBarGoo>1</fooBarGoo>", 0, true);
+    final XmlTag tag = file.getDocument().getRootTag();
+    final Document document = file.getViewProvider().getDocument();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        tag.setName("xxx");
+        assertEquals("<xxx>1</xxx>", tag.getText());
+        assertEquals("<xxx>1</xxx>", document.getText());
       }
     });
   }

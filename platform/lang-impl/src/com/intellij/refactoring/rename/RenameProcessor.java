@@ -230,9 +230,12 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   private boolean findRenamedVariables(final List<UsageInfo> variableUsages) {
-    for (final AutomaticRenamer automaticVariableRenamer : myRenamers) {
+    for (Iterator<AutomaticRenamer> iterator = myRenamers.iterator(); iterator.hasNext(); ) {
+      AutomaticRenamer automaticVariableRenamer = iterator.next();
       if (!automaticVariableRenamer.hasAnythingToRename()) continue;
-      if (!showAutomaticRenamingDialog(automaticVariableRenamer)) return false;
+      if (!showAutomaticRenamingDialog(automaticVariableRenamer)) {
+        iterator.remove();
+      }
     }
 
     final Runnable runnable = new Runnable() {
@@ -297,6 +300,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < elements.size(); i++) {
       PsiElement element = elements.get(i);
+      LOG.assertTrue(element != null);
       final String newName = myAllRenames.get(element);
       final UsageInfo[] usages = RenameUtil.findUsages(element, newName, mySearchInComments, mySearchTextOccurrences, myAllRenames);
       final List<UsageInfo> usagesList = Arrays.asList(usages);

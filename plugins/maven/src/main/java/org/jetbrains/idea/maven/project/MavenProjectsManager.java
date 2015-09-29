@@ -27,6 +27,8 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -55,9 +57,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
-import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
@@ -813,6 +813,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return promise;
   }
 
+  /**
+   * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
+   * if project is closed)
+   */
   public Promise<List<Module>> scheduleImportAndResolve() {
     AsyncPromise<List<Module>> promise = scheduleResolve();// scheduleImport will be called after the scheduleResolve process has finished
     fireImportAndResolveScheduled();
@@ -838,6 +842,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
             public void run() {
               if (hasScheduledProjects()) {
                 scheduleImport().processed(result);
+              }
+              else {
+                result.setResult(Collections.<Module>emptyList());
               }
             }
           };
@@ -1123,10 +1130,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public List<Module> importProjects() {
-    return importProjects(new MavenDefaultModifiableModelsProvider(myProject));
+    return importProjects(new IdeModifiableModelsProviderImpl(myProject));
   }
 
-  public List<Module> importProjects(final MavenModifiableModelsProvider modelsProvider) {
+  public List<Module> importProjects(final IdeModifiableModelsProvider modelsProvider) {
     final Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges;
     final boolean importModuleGroupsRequired;
     synchronized (myImportingDataLock) {
@@ -1143,7 +1150,17 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       public void run() {
         MavenProjectImporter projectImporter = new MavenProjectImporter(myProject,
                                                                         myProjectsTree,
-                                                                        getFileToModuleMapping(modelsProvider),
+                                                                        getFileToModuleMapping(new MavenModelsProvider() {
+                                                                          @Override
+                                                                          public Module[] getModules() {
+                                                                            return modelsProvider.getModules();
+                                                                          }
+
+                                                                          @Override
+                                                                          public VirtualFile[] getContentRoots(Module module) {
+                                                                            return modelsProvider.getContentRoots(module);
+                                                                          }
+                                                                        }),
                                                                         projectsToImportWithChanges,
                                                                         importModuleGroupsRequired,
                                                                         modelsProvider,

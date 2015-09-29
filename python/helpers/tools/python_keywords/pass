@@ -1,0 +1,14 @@
+<div class="section" id="the-pass-statement">
+<span id="pass"></span><h2>The <a class="reference internal" href="#pass"><tt class="xref std std-keyword docutils literal"><span class="pre">pass</span></tt></a> statement</h2>
+<pre id="index-17">
+<strong id="grammar-token-pass_stmt">pass_stmt</strong> ::=  &quot;pass&quot;
+</pre>
+<p><a class="reference internal" href="#pass"><tt class="xref std std-keyword docutils literal"><span class="pre">pass</span></tt></a> is a null operation &#8212; when it is executed, nothing happens.
+It is useful as a placeholder when a statement is required syntactically, but no
+code needs to be executed, for example:</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span> <span class="k">pass</span>    <span class="c"># a function that does nothing (yet)</span>
+
+<span class="k">class</span> <span class="nc">C</span><span class="p">:</span> <span class="k">pass</span>       <span class="c"># a class with no methods (yet)</span>
+</pre></div>
+</div>
+</div>

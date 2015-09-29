@@ -1,6 +1,6 @@
 def foo(a, b):
   """
 
-  :rtype : object
+  :rtype: object
   """
   b = 1

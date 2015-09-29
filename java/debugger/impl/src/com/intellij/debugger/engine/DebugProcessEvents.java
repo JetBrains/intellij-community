@@ -414,7 +414,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
     final Project project = getProject();
     if (hint != null) {
       final int nextStepDepth = hint.getNextStepDepth(suspendContext);
-      if (nextStepDepth != RequestHint.STOP) {
+      if (nextStepDepth == RequestHint.RESUME) {
+        getSession().resetIgnoreStepFiltersFlag();
+        getSession().clearSteppingThrough();
+        shouldResume = true;
+      }
+      else if (nextStepDepth != RequestHint.STOP) {
         final ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
         doStep(suspendContext, threadProxy, hint.getSize(), nextStepDepth, hint);
         shouldResume = true;

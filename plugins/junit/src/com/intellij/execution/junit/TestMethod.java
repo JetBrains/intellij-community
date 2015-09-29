@@ -51,8 +51,7 @@ class TestMethod extends TestObject {
 
   protected void addJUnit3Parameter(JavaParameters javaParameters, final JUnitConfiguration.Data data, Project project) throws ExecutionException {
     final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, data.getMainClassName(), GlobalSearchScope.allScope(project));
-    LOG.assertTrue(psiClass != null);
-    if (JUnitUtil.isJUnit4TestClass(psiClass)) {
+    if (psiClass == null || JUnitUtil.isJUnit4TestClass(psiClass)) {
       return;
     }
     final String methodName = data.getMethodName();

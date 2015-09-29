@@ -198,11 +198,20 @@ final class Key {
   final Method method;
   final Direction direction;
   final boolean stable;
+  final boolean negated;
 
   Key(Method method, Direction direction, boolean stable) {
     this.method = method;
     this.direction = direction;
     this.stable = stable;
+    this.negated = false;
+  }
+
+  Key(Method method, Direction direction, boolean stable, boolean negated) {
+    this.method = method;
+    this.direction = direction;
+    this.stable = stable;
+    this.negated = negated;
   }
 
   @Override

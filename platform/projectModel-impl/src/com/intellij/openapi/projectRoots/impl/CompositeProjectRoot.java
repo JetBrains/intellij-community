@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.ex.ProjectRoot;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -104,17 +102,15 @@ class CompositeProjectRoot implements ProjectRoot {
     myRoots.clear();
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    final List children = element.getChildren();
-    for (Object aChildren : children) {
-      Element e = (Element)aChildren;
-      myRoots.add(ProjectRootUtil.read(e));
+  public void readExternal(Element element) {
+    for (Element child : element.getChildren()) {
+      myRoots.add(ProjectRootUtil.read(child));
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     for (ProjectRoot root : myRoots) {
-      final Element e = ProjectRootUtil.write(root);
+      Element e = ProjectRootUtil.write(root);
       if (e != null) {
         element.addContent(e);
       }
@@ -127,5 +123,4 @@ class CompositeProjectRoot implements ProjectRoot {
       root.update();
     }
   }
-
 }

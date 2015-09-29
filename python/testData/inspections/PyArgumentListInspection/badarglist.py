@@ -40,9 +40,9 @@ def f3(a, b):
 f3(1, 2)
 f3(1, 2, <warning descr="Unexpected argument">3</warning>)
 f3(b=2, a=1)
-f3(b=1, <warning descr="Duplicate argument">b=2</warning>, a=1)
+f3(b=1, <error descr="Keyword argument repeated">b=2</error>, a=1)
 f3(1, b=2)
-f3(a=1, <error descr="Cannot appear past keyword arguments or *arg or **kwarg">2</error><warning descr="Parameter 'b' unfilled">)</warning>
+f3(a=1, <error descr="Positional argument after keyword argument">2</error><warning descr="Parameter 'b' unfilled">)</warning>
 
 def f4(a, *b):
     pass
@@ -52,4 +52,4 @@ f4(1, 2)
 f4(1, 2, 3)
 f4(1, *(2, 3))
 f4(*(1,2,3))
-f4(a=1, <error descr="Cannot appear past keyword arguments or *arg or **kwarg">2</error>, <error descr="Cannot appear past keyword arguments or *arg or **kwarg">3</error>)
+f4(a=1, <error descr="Positional argument after keyword argument">2</error>, <error descr="Positional argument after keyword argument">3</error>)

@@ -107,6 +107,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   
   private ActionCallback myLastAction;
   private DocumentationComponent myTestDocumentationComponent;
+  
+  private AnAction myRestorePopupAction;
 
   @Override
   protected String getToolwindowId() {
@@ -136,10 +138,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   @NotNull
   @Override
   protected AnAction createRestorePopupAction() {
-    AnAction restorePopupAction = super.createRestorePopupAction();
-    ShortcutSet quickDocShortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC).getShortcutSet();
-    restorePopupAction.registerCustomShortcutSet(quickDocShortcut, null);
-    return restorePopupAction;
+    myRestorePopupAction = super.createRestorePopupAction();
+    return myRestorePopupAction;
   }
 
   @Override
@@ -157,6 +157,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     if (myToolWindow != null) {
       myToolWindow.getComponent().putClientProperty(ChooseByNameBase.TEMPORARILY_FOCUSABLE_COMPONENT_KEY, Boolean.TRUE);
+      
+      if (myRestorePopupAction != null) {
+        ShortcutSet quickDocShortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC).getShortcutSet();
+        myRestorePopupAction.registerCustomShortcutSet(quickDocShortcut, myToolWindow.getComponent());
+        myRestorePopupAction = null;
+      }
     }
   }
 

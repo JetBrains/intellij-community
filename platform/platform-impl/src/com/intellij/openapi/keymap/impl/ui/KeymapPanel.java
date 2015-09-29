@@ -530,8 +530,17 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private void addKeyboardShortcut(@NotNull String actionId, @Nullable Shortcut shortcut) {
     Keymap keymap = createKeymapCopyIfNeeded();
+    addKeyboardShortcut(actionId, shortcut, keymap, this, myQuickLists);
+    repaintLists();
+    currentKeymapChanged();
+  }
 
-    KeyboardShortcutDialog dialog = new KeyboardShortcutDialog(this, actionId, myQuickLists);
+  public static void addKeyboardShortcut(@NotNull String actionId,
+                                         @Nullable Shortcut shortcut,
+                                         @NotNull Keymap keymap,
+                                         @NotNull Component parent,
+                                         @NotNull QuickList[] quickLists) {
+    KeyboardShortcutDialog dialog = new KeyboardShortcutDialog(parent, actionId, quickLists);
     dialog.setData(keymap, shortcut instanceof KeyboardShortcut ? (KeyboardShortcut)shortcut : null);
     if (!dialog.showAndGet()) {
       return;
@@ -545,7 +554,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     Map<String, ArrayList<KeyboardShortcut>> conflicts = keymap.getConflicts(actionId, keyboardShortcut);
     if (!conflicts.isEmpty()) {
       int result = Messages.showYesNoCancelDialog(
-        this,
+        parent, 
         KeyMapBundle.message("conflict.shortcut.dialog.message"),
         KeyMapBundle.message("conflict.shortcut.dialog.title"),
         KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
@@ -577,9 +586,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     if (StringUtil.startsWithChar(actionId, '$')) {
       keymap.addShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), keyboardShortcut);
     }
-
-    repaintLists();
-    currentKeymapChanged();
   }
 
   private void addMouseShortcut(Shortcut shortcut, ShortcutRestrictions restrictions) {

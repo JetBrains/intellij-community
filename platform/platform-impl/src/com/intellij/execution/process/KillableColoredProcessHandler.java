@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,39 +19,67 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 
 /**
+ * This process handler supports ANSI coloring and "soft-kill" feature.
+ * At first "stop" button send SIGINT signal to process, if it still hangs user can terminate it recursively with SIGKILL signal.
+ * <p>
+ * Soft kill works on Unix, and also on Windows if a mediator process was used.
+ *
  * @author Roman.Chernyatchik
- *         <p/>
- *         This process handler supports ANSI coloring and soft-kill feature. Soft kill works only on Unix.
- *         At first "stop" button send SIGINT signal to process, if it still hangs user can termintate it recursively with SIGKILL signal.
- *         <p/>
- *         P.S: probably OSProcessHandler is better place for this feature but it can affect other run configurations and should be tested
  */
 public class KillableColoredProcessHandler extends ColoredProcessHandler implements KillableProcess {
-  private static final Logger LOG = Logger.getInstance(KillableColoredProcessHandler .class);
+  private static final Logger LOG = Logger.getInstance(KillableColoredProcessHandler.class);
+  private static final Key<Boolean> MEDIATOR_KEY = Key.create("KillableColoredProcessHandler.Mediator.Process");
 
   private boolean myShouldKillProcessSoftly = true;
+  private boolean myMediatedProcess = false;
 
   public KillableColoredProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
   }
 
-  public KillableColoredProcessHandler(final Process process, final String commandLine, @NotNull final Charset charset) {
+  /**
+   * Starts a process with a {@link RunnerMediator mediator} when {@code withMediator} is set to {@code true} and the platform is Windows.
+   */
+  public KillableColoredProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
+    super(mediate(commandLine, withMediator));
+    myMediatedProcess = withMediator && MEDIATOR_KEY.get(commandLine) == Boolean.TRUE;
+  }
+
+  public KillableColoredProcessHandler(@NotNull Process process, @Nullable String commandLine) {
+    super(process, commandLine);
+  }
+
+  public KillableColoredProcessHandler(@NotNull Process process, @Nullable String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);
   }
 
-  public KillableColoredProcessHandler(final Process process, final String commandLine) {
-    super(process, commandLine);
+  private static GeneralCommandLine mediate(GeneralCommandLine commandLine, boolean withMediator) {
+    if (withMediator && SystemInfo.isWindows) {
+      boolean mediatorInjected = RunnerMediator.injectRunnerCommand(commandLine);
+      MEDIATOR_KEY.set(commandLine, mediatorInjected);
+    }
+    return commandLine;
+  }
+
+  /**
+   * @return true, if graceful process termination should be attempted first
+   */
+  protected boolean shouldKillProcessSoftly() {
+    return myShouldKillProcessSoftly;
   }
 
   /**
    * Sets whether the process will be terminated gracefully.
+   *
    * @param shouldKillProcessSoftly true, if graceful process termination should be attempted first (i.e. soft kill)
    */
   public void setShouldKillProcessSoftly(boolean shouldKillProcessSoftly) {
@@ -60,14 +88,12 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
 
   /**
    * This method shouldn't be overridden, see shouldKillProcessSoftly
-   *
-   * @return
    */
   private boolean canKillProcessSoftly() {
     if (processCanBeKilledByOS(myProcess)) {
       if (SystemInfo.isWindows) {
         // runnerw.exe can send Ctrl+C events to a wrapped process
-        return myProcess instanceof RunnerWinProcess;
+        return myMediatedProcess;
       }
       else if (SystemInfo.isUnix) {
         // 'kill -SIGINT <pid>' will be executed
@@ -104,10 +130,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
 
   @Override
   protected void doDestroyProcess() {
-    boolean gracefulTerminationAttempted = false;
-    if (canKillProcessSoftly() && shouldKillProcessSoftly()) {
-      gracefulTerminationAttempted = destroyProcessGracefully();
-    }
+    boolean gracefulTerminationAttempted = shouldKillProcessSoftly() && canKillProcessSoftly() && destroyProcessGracefully();
     if (!gracefulTerminationAttempted) {
       // execute default process destroy
       super.doDestroyProcess();
@@ -115,24 +138,13 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   }
 
   protected boolean destroyProcessGracefully() {
-    if (SystemInfo.isWindows) {
-      if (myProcess instanceof RunnerWinProcess) {
-        RunnerWinProcess runnerWinProcess = (RunnerWinProcess) myProcess;
-        runnerWinProcess.destroyGracefully(true);
-        return true;
-      }
+    if (SystemInfo.isWindows && myMediatedProcess) {
+      return RunnerMediator.destroyProcess(myProcess, true);
     }
     else if (SystemInfo.isUnix) {
       return UnixProcessManager.sendSigIntToProcessTree(myProcess);
     }
     return false;
-  }
-
-  /**
-   * @return true, if graceful process termination should be attempted first
-   */
-  protected boolean shouldKillProcessSoftly() {
-    return myShouldKillProcessSoftly;
   }
 
   @Override
@@ -146,18 +158,9 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
     killProcessTree(getProcess());
   }
 
-  @NotNull
+  /** @deprecated use {@link #KillableColoredProcessHandler(GeneralCommandLine, boolean)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public static KillableColoredProcessHandler create(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    final Process process;
-    if (SystemInfo.isWindows) {
-      process = RunnerWinProcess.create(commandLine);
-    }
-    else {
-      process = commandLine.createProcess();
-    }
-    return new KillableColoredProcessHandler(process,
-                                             commandLine.getCommandLineString(),
-                                             commandLine.getCharset());
+    return new KillableColoredProcessHandler(commandLine, true);
   }
-
 }

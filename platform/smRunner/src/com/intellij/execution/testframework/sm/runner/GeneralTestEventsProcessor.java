@@ -15,18 +15,17 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.TransferToEDTQueue;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,21 +43,24 @@ import java.util.List;
  * @author: Roman Chernyatchik
  */
 public abstract class GeneralTestEventsProcessor implements Disposable {
+  private static final Logger LOG = Logger.getInstance(GeneralTestEventsProcessor.class.getName());
   protected final SMTRunnerEventsListener myEventPublisher;
+  private final String myTestFrameworkName;
   private final Project myProject;
-  private TransferToEDTQueue<Runnable> myTransferToEDTQueue =
-    new TransferToEDTQueue<Runnable>("SM queue", new Processor<Runnable>() {
+  private TransferToEDTQueue<Runnable> myTransferToEDTQueue;
+  protected List<SMTRunnerEventsListener> myListenerAdapters = new ArrayList<SMTRunnerEventsListener>();
+
+  public GeneralTestEventsProcessor(Project project, @NotNull String testFrameworkName) {
+    myProject = project;
+    myEventPublisher = project.getMessageBus().syncPublisher(SMTRunnerEventsListener.TEST_STATUS);
+    myTestFrameworkName = testFrameworkName;
+    myTransferToEDTQueue = new TransferToEDTQueue<Runnable>("SM queue", new Processor<Runnable>() {
       @Override
       public boolean process(Runnable runnable) {
         runnable.run();
         return true;
       }
-    }, getDisposedCondition(), 300);
-  protected List<SMTRunnerEventsListener> myListenerAdapters = new ArrayList<SMTRunnerEventsListener>();
-
-  public GeneralTestEventsProcessor(Project project) {
-    myProject = project;
-    myEventPublisher = project.getMessageBus().syncPublisher(SMTRunnerEventsListener.TEST_STATUS);
+    }, project.getDisposed(), 300);
   }
   // tree construction events
 
@@ -236,7 +238,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public Condition getDisposedCondition() {
-    return Conditions.alwaysFalse();
+    return Condition.FALSE;
   }
 
   public void addToInvokeLater(final Runnable runnable) {
@@ -273,5 +275,31 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
       }
     }
     return true;
+  }
+
+  protected void logProblem(final String msg) {
+    logProblem(LOG, msg, myTestFrameworkName);
+  }
+  
+  protected void logProblem(String msg, boolean throwError) {
+    logProblem(LOG, msg, throwError, myTestFrameworkName);
+  }
+
+  public static String getTFrameworkPrefix(final String testFrameworkName) {
+    return "[" + testFrameworkName + "]: ";
+  }
+
+  public static void logProblem(final Logger log, final String msg, final String testFrameworkName) {
+    logProblem(log, msg, SMTestRunnerConnectionUtil.isInDebugMode(), testFrameworkName);
+  }
+
+  public static void logProblem(final Logger log, final String msg, boolean throwError, final String testFrameworkName) {
+    final String text = getTFrameworkPrefix(testFrameworkName) + msg;
+    if (throwError) {
+      log.error(text);
+    }
+    else {
+      log.warn(text);
+    }
   }
 }

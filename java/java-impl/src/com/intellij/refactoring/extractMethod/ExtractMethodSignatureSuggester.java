@@ -345,7 +345,8 @@ public class ExtractMethodSignatureSuggester {
         copies.add(myElementFactory.createExpressionFromText(expr.getText(), body));
 
         final SuggestedNameInfo info = JavaCodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, null, expr, null);
-        name = uniqueNameGenerator.generateUniqueName(info.names[0]);
+        final String paramName = info.names.length > 0 ? info.names[0] : "p";
+        name = uniqueNameGenerator.generateUniqueName(paramName);
 
         final PsiParameter parameter = (PsiParameter)myExtractedMethod.getParameterList().add(myElementFactory.createParameter(name, type));
         inputVariables.add(parameter);

@@ -42,6 +42,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -222,7 +223,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   }
 
   // used only from tests => no need for complex synchronization
-  private final Set<MultiHostInjector> myManualInjectors = Collections.synchronizedSet(new LinkedHashSet<MultiHostInjector>());  
+  private final Set<MultiHostInjector> myManualInjectors = Collections.synchronizedSet(new LinkedHashSet<MultiHostInjector>());
   private volatile ClassMapCachingNulls<MultiHostInjector> cachedInjectors;
 
   public void processInjectableElements(Collection<PsiElement> in, Processor<PsiElement> processor) {
@@ -247,7 +248,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     if (LanguageInjector.EXTENSION_POINT_NAME.getExtensions().length > 0) {
       allInjectors.add(PsiManagerRegisteredInjectorsAdapter.INSTANCE);
     }
-    
+
     for (MultiHostInjector injector : allInjectors) {
       for (Class<? extends PsiElement> place : injector.elementsToInjectIn()) {
         LOG.assertTrue(place != null, injector);
@@ -260,7 +261,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     cachedInjectors = result;
     return result;
   }
-  
+
   private void clearInjectorCache() {
     cachedInjectors = null;
   }
@@ -270,7 +271,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     myManualInjectors.add(injector);
     clearInjectorCache();
   }
-  
+
   @Override
   public boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector) {
     try {
@@ -388,6 +389,36 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
                           boolean probeUp,
                           @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     InjectedLanguageUtil.enumerate(host, containingFile, probeUp, visitor);
+  }
+
+  @NotNull
+  @Override
+  public List<TextRange> getNonEditableFragments(@NotNull DocumentWindow window) {
+    List<TextRange> result = ContainerUtil.newArrayList();
+    int offset = 0;
+    for (PsiLanguageInjectionHost.Shred shred : ((DocumentWindowImpl)window).getShreds()) {
+      Segment hostRange = shred.getHostRangeMarker();
+      if (hostRange == null) continue;
+
+      offset = appendRange(result, offset, shred.getPrefix().length());
+      offset += hostRange.getEndOffset() - hostRange.getStartOffset();
+      offset = appendRange(result, offset, shred.getSuffix().length());
+    }
+
+    return result;
+  }
+
+  private static int appendRange(List<TextRange> result, int start, int length) {
+    if (length > 0) {
+      int lastIndex = result.size() - 1;
+      TextRange lastRange = lastIndex >= 0 ? result.get(lastIndex) : null;
+      if (lastRange != null && lastRange.getEndOffset() == start) {
+        result.set(lastIndex, lastRange.grown(length));
+      } else {
+        result.add(TextRange.from(start, length));
+      }
+    }
+    return start + length;
   }
 
   private final Map<Class,MultiHostInjector[]> myInjectorsClone = new HashMap<Class, MultiHostInjector[]>();

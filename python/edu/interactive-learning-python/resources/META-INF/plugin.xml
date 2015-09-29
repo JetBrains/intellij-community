@@ -8,6 +8,7 @@
       Educational plugin for students. This plugin allows to learn Python
        using intelligent PyCharm IDE.
       ]]></description>
+  <vendor>JetBrains</vendor>
 
   <change-notes><![CDATA[
 
@@ -22,8 +23,9 @@
     <directoryProjectGenerator implementation="com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator"/>
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
-    <visitorFilter language="Python" implementationClass="com.jetbrains.edu.learning.highlighting.PyStudyVisitorFilter"/>
+    <inspectionExtension implementation="com.jetbrains.edu.learning.highlighting.PyStudyInspectionExtension"/>
     <pyReferenceResolveProvider implementation="com.jetbrains.edu.learning.PyStudyReferenceResolveProvider"/>
+    <importResolver implementation="com.jetbrains.edu.learning.PyStudyImportResolver"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
     <StudyExecutor implementationClass="com.jetbrains.edu.learning.PyStudyExecutor" language="Python"/>

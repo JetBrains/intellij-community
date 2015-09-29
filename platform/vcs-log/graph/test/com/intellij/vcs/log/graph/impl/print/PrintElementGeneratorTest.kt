@@ -16,23 +16,21 @@
 package com.intellij.vcs.log.graph.impl.print
 
 import com.intellij.util.NotNullFunction
-import com.intellij.vcs.log.graph.*
+import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.elements.GraphNode
 import com.intellij.vcs.log.graph.api.printer.PrintElementManager
+import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 import com.intellij.vcs.log.graph.parser.LinearGraphParser
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import org.junit.Assert.assertEquals
 import org.junit.Test
-
-import java.io.IOException
 import java.util.Comparator
 
-import org.junit.Assert.assertEquals
-
-public class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGenerator") {
+public open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGenerator") {
 
   class TestPrintElementManager(private val myGraphElementComparator: Comparator<GraphElement>) : PrintElementManager {
 
@@ -61,6 +59,10 @@ public class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGen
   }
 
   override fun runTest(`in`: String, out: String) {
+    runTest(`in`, out, 7, 2, 10)
+  }
+
+  private fun runTest(`in`: String, out: String, longEdgeSize: Int, visiblePartSize: Int, edgeWithArrowSize: Int) {
     val graph = LinearGraphParser.parse(`in`)
     val graphLayout = GraphLayoutBuilder.build(graph, object : Comparator<Int> {
       override fun compare(o1: Int, o2: Int): Int {
@@ -73,28 +75,41 @@ public class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGen
       }
     })
     val elementManager = TestPrintElementManager(graphElementComparator)
-    val printElementGenerator = PrintElementGeneratorImpl(graph, elementManager, 7, 2, 10)
+    val printElementGenerator = PrintElementGeneratorImpl(graph, elementManager, longEdgeSize, visiblePartSize, edgeWithArrowSize)
     val actual = printElementGenerator.asString(graph.nodesCount())
     assertEquals(out, actual)
   }
 
-  Test
+  @Test
   public fun oneNode() {
     doTest("oneNode")
   }
 
-  Test
+  @Test
   public fun manyNodes() {
     doTest("manyNodes")
   }
 
-  Test
+  @Test
   public fun longEdges() {
     doTest("longEdges")
   }
 
-  Test
+  @Test
   public fun specialElements() {
     doTest("specialElements")
+  }
+
+//  oneUpOneDown tests were created in order to investigate some arrow behavior in upsource
+  @Test
+  public fun oneUpOneDown1() {
+    val testName = "oneUpOneDown1"
+    runTest(loadText(testName + AbstractTestWithTwoTextFile.IN_POSTFIX), loadText(testName + AbstractTestWithTwoTextFile.OUT_POSTFIX), 7, 1, 10)
+  }
+
+  @Test
+  public fun oneUpOneDown2() {
+    val testName = "oneUpOneDown2"
+    runTest(loadText(testName + AbstractTestWithTwoTextFile.IN_POSTFIX), loadText(testName + AbstractTestWithTwoTextFile.OUT_POSTFIX), 10, 1, 10)
   }
 }

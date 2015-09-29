@@ -33,6 +33,7 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
 import com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurable;
 import com.intellij.ui.*;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,7 +203,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     return FormBuilder.createFormBuilder()
       .addLabeledComponent("Server:", myServerComboBox)
       .addLabeledComponent("Deployment:", mySourceComboBox)
-      .addComponent(myDeploymentSettingsComponent)
+      .addComponentFillVertically(myDeploymentSettingsComponent, UIUtil.DEFAULT_VGAP)
       .getPanel();
   }
 }

@@ -59,6 +59,11 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   }
 
   @Override
+  public Iterable<? extends ScopeToolState> getTools(Tools tools) {
+    return Collections.singletonList(tools.getDefaultState());
+  }
+
+  @Override
   @Nullable
   public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
     final TreePath[] treePaths = tree.getSelectionPaths();

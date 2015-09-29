@@ -133,9 +133,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     List<UIManager.LookAndFeelInfo> lafList = ContainerUtil.newArrayList();
 
     if (SystemInfo.isMac) {
-      lafList.add(new UIManager.LookAndFeelInfo("Default", UIManager.getSystemLookAndFeelClassName()));
       if (Registry.is("ide.mac.yosemite.laf") && isIntelliJLafEnabled()) {
-        lafList.add(new IntelliJLookAndFeelInfo());
+        lafList.add(new UIManager.LookAndFeelInfo("Default", IntelliJLaf.class.getName()));
+      } else {
+        lafList.add(new UIManager.LookAndFeelInfo("Default", UIManager.getSystemLookAndFeelClassName()));
       }
     }
     else {
@@ -157,9 +158,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }
     }
 
-    if (Registry.is("dark.laf.available")) {
-      lafList.add(new DarculaLookAndFeelInfo());
-    }
+    lafList.add(new DarculaLookAndFeelInfo());
 
     myLaFs = lafList.toArray(new UIManager.LookAndFeelInfo[lafList.size()]);
 
@@ -321,7 +320,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
     final String systemLafClassName = UIManager.getSystemLookAndFeelClassName();
     if (SystemInfo.isMac) {
-      UIManager.LookAndFeelInfo laf = findLaf(systemLafClassName);
+      UIManager.LookAndFeelInfo laf = findLaf(Registry.is("ide.mac.yosemite.laf") ? IntelliJLaf.class.getName() : systemLafClassName);
       LOG.assertTrue(laf != null);
       return laf;
     }

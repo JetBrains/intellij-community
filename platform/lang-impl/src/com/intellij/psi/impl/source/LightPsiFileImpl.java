@@ -40,6 +40,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.LightPsiFileImpl");
   private PsiFile myOriginalFile = null;
   private boolean myExplicitlySetAsValid = false;
+  private boolean myInvalidated = false;
   private final FileViewProvider myViewProvider;
   private final PsiManagerImpl myManager;
   private final Language myLanguage;
@@ -62,6 +63,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   @Override
   public boolean isValid() {
+    if (myInvalidated) return false;
     if (!getViewProvider().isPhysical() || myExplicitlySetAsValid) return true; // "dummy" file
     return getViewProvider().getVirtualFile().isValid();
   }
@@ -377,5 +379,10 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   @Override
   public PsiElement getContext() {
     return FileContextUtil.getFileContext(this);
+  }
+
+  @Override
+  public void markInvalidated() {
+    myInvalidated = true;
   }
 }

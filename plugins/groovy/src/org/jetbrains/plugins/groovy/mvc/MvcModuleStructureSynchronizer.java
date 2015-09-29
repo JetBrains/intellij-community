@@ -241,7 +241,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     queue(SyncAction.CreateAppStructureIfNeeded, myProject);
   }
 
-  private void queue(SyncAction action, Object on) {
+  public void queue(SyncAction action, Object on) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return;
 
@@ -276,7 +276,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       @Override
       public void computeInReadAction(@NotNull ProgressIndicator indicator) {
         if (!isUpToDate()) {
-          indicator.cancel();
+          scheduleRunActions();
           return;
         }
 
@@ -386,7 +386,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     return rawActions;
   }
 
-  private enum SyncAction {
+  public enum SyncAction {
     SyncLibrariesInPluginsModule {
       @Override
       void doAction(Module module, MvcFramework framework) {

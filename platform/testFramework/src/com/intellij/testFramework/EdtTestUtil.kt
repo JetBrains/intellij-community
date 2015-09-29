@@ -18,18 +18,21 @@ package com.intellij.testFramework
 import com.intellij.util.ThrowableRunnable
 import java.lang.reflect.InvocationTargetException
 import javax.swing.SwingUtilities
-import kotlin.platform.platformStatic
 
 class EdtTestUtil {
   companion object {
-    public platformStatic fun runInEdtAndWait(runnable: ThrowableRunnable<Throwable>) {
+    @JvmStatic fun runInEdtAndWait(runnable: ThrowableRunnable<Throwable>) {
+      runInEdtAndWait({ runnable.run() })
+    }
+
+    @JvmStatic fun runInEdtAndWait(runnable: Runnable) {
       runInEdtAndWait({ runnable.run() })
     }
 
     // Test only because in production you must use Application.invokeAndWait(Runnable, ModalityState).
     // The problem is - Application logs errors, but not throws. But in tests must be thrown.
     // In any case name "runInEdtAndWait" is better than "invokeAndWait".
-    public platformStatic fun runInEdtAndWait(runnable: () -> Unit) {
+    @JvmStatic fun runInEdtAndWait(runnable: () -> Unit) {
       if (SwingUtilities.isEventDispatchThread()) {
         runnable()
       }

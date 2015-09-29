@@ -323,7 +323,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       }
       String name = map.nameByType(longTypeName);
       if (name != null && isIdentifier(name)) {
-        return new String[]{name};
+        return getSuggestionsByName(name, variableKind, type instanceof PsiArrayType, correctKeywords);
       }
     }
 
@@ -413,7 +413,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   @Nullable
-  private static String getTypeName(@NotNull PsiType type) {
+  public static String getTypeName(@NotNull PsiType type) {
     return getTypeName(type, true);
   }
 

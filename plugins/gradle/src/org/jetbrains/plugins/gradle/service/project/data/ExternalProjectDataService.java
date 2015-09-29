@@ -16,8 +16,13 @@
 package org.jetbrains.plugins.gradle.service.project.data;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.model.*;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -42,7 +47,7 @@ import java.util.Map;
  * @since 7/17/2014
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public class ExternalProjectDataService implements ProjectDataService<ExternalProject, Project> {
+public class ExternalProjectDataService extends AbstractProjectDataService<ExternalProject, Project> {
   private static final Logger LOG = Logger.getInstance(ExternalProjectDataService.class);
 
   @NotNull public static final Key<ExternalProject> KEY = Key.create(ExternalProject.class, ProjectKeys.TASK.getProcessingWeight() + 1);
@@ -78,18 +83,15 @@ public class ExternalProjectDataService implements ProjectDataService<ExternalPr
   }
 
   public void importData(@NotNull final Collection<DataNode<ExternalProject>> toImport,
+                         @Nullable ProjectData projectData,
                          @NotNull final Project project,
-                         final boolean synchronous) {
+                         @NotNull IdeModifiableModelsProvider modelsProvider) {
     if(toImport.isEmpty()) return;
     if (toImport.size() != 1) {
       throw new IllegalArgumentException(
         String.format("Expected to get a single external project but got %d: %s", toImport.size(), toImport));
     }
     saveExternalProject(toImport.iterator().next().getData());
-  }
-
-  @Override
-  public void removeData(@NotNull final Collection<? extends Project> modules, @NotNull Project project, boolean synchronous) {
   }
 
   @Nullable

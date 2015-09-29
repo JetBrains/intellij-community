@@ -31,8 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Set;
 
-public class FieldAccessedSynchronizedAndUnsynchronizedInspection
-  extends BaseInspection {
+public class FieldAccessedSynchronizedAndUnsynchronizedInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField
@@ -77,19 +76,16 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection
     return new FieldAccessedSynchronizedAndUnsynchronizedVisitor();
   }
 
-  private class FieldAccessedSynchronizedAndUnsynchronizedVisitor
-    extends BaseInspectionVisitor {
+  private class FieldAccessedSynchronizedAndUnsynchronizedVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       if (!containsSynchronization(aClass)) {
         return;
       }
-      final VariableAccessVisitor visitor =
-        new VariableAccessVisitor(aClass, countGettersAndSetters);
+      final VariableAccessVisitor visitor = new VariableAccessVisitor(aClass, countGettersAndSetters);
       aClass.accept(visitor);
-      final Set<PsiField> fields =
-        visitor.getInappropriatelyAccessedFields();
+      final Set<PsiField> fields = visitor.getInappropriatelyAccessedFields();
       for (final PsiField field : fields) {
         if (field.hasModifierProperty(PsiModifier.FINAL) ||
             field.hasModifierProperty(PsiModifier.VOLATILE)) {

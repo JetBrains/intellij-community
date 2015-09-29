@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -86,7 +87,8 @@ public class BreakpointEditor {
       @Override
       public void update(AnActionEvent e) {
         super.update(e);
-        boolean lookup = LookupManager.getInstance(getEventProject(e)).getActiveLookup() != null;
+        Project project = getEventProject(e);
+        boolean lookup = project != null && LookupManager.getInstance(project).getActiveLookup() != null;
         Editor editor = e.getData(CommonDataKeys.EDITOR);
         final Component owner = IdeFocusManager.findInstance().getFocusOwner();
         if (owner != null) {

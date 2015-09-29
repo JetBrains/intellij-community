@@ -83,7 +83,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
     busConnection.subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
       @Override
       public void updateFinished(@NotNull Document doc) {
-        documentCommitThread.queueCommit(project, doc, "Bulk update finished", ApplicationManager.getApplication().getCurrentModalityState());
+        documentCommitThread.queueCommit(project, doc, "Bulk update finished", ApplicationManager.getApplication().getDefaultModalityState());
       }
     });
   }
@@ -154,7 +154,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
     if (doc instanceof DocumentWindow) doc = ((DocumentWindow)doc).getDelegate();
     final PostprocessReformattingAspect component = myProject.getComponent(PostprocessReformattingAspect.class);
     final FileViewProvider viewProvider = getCachedViewProvider(doc);
-    if (viewProvider != null) component.doPostponedFormatting(viewProvider);
+    if (viewProvider != null && component != null) component.doPostponedFormatting(viewProvider);
   }
 
   @Override

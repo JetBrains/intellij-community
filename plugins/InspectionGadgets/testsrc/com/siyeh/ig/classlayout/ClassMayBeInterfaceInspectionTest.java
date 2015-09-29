@@ -46,6 +46,17 @@ public class ClassMayBeInterfaceInspectionTest extends LightInspectionTestCase {
            "    public class A {}\n" +
            "}");
   }
+
+  public void testMethodCantBeDefault() {
+    doTest("class Issue {\n" +
+           "    public abstract class Inner {\n" +
+           "        public Issue getParent() {\n" +
+           "            return Issue.this;\n" +
+           "        }\n" +
+           "    }\n" +
+           "}");
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     final ClassMayBeInterfaceInspection inspection = new ClassMayBeInterfaceInspection();

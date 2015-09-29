@@ -38,6 +38,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.LightColors;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.GradientViewport;
@@ -64,7 +65,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final String MACINTOSH_STRING = ApplicationBundle.message("combobox.crlf.mac");
   private final List<GeneralCodeStyleOptionsProvider> myAdditionalOptions;
 
-  private JSpinner myRightMarginSpinner;
+  private JTextField myRightMarginField;
+  private int myDefaultRightMargin;
+  private Color myInitialRightMarginFieldColor;
+
   private JComboBox myLineSeparatorCombo;
   private JPanel myPanel;
   private JCheckBox myCbWrapWhenTypingReachesRightMargin;
@@ -87,13 +91,19 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   public GeneralCodeStylePanel(CodeStyleSettings settings) {
     super(settings);
 
+    //noinspection unchecked
     myLineSeparatorCombo.addItem(SYSTEM_DEPENDANT_STRING);
+    //noinspection unchecked
     myLineSeparatorCombo.addItem(UNIX_STRING);
+    //noinspection unchecked
     myLineSeparatorCombo.addItem(WINDOWS_STRING);
+    //noinspection unchecked
     myLineSeparatorCombo.addItem(MACINTOSH_STRING);
     addPanelToWatch(myPanel);
 
-    myRightMarginSpinner.setModel(new SpinnerNumberModel(settings.getDefaultRightMargin(), 1, 1000000, 1));
+    myDefaultRightMargin = settings.getDefaultRightMargin();
+    myRightMarginField.setHorizontalAlignment(SwingConstants.RIGHT);
+    myInitialRightMarginFieldColor = myRightMarginField.getBackground();
 
     myEnableFormatterTags.addActionListener(new ActionListener() {
       @Override
@@ -129,7 +139,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myAdditionalSettingsPanel.removeAll();
     myAdditionalOptions = ConfigurableWrapper.createConfigurables(GeneralCodeStyleOptionsProviderEP.EP_NAME);
     for (GeneralCodeStyleOptionsProvider provider : myAdditionalOptions) {
-      myAdditionalSettingsPanel.add(provider.createComponent());
+      JComponent generalSettingsComponent = provider.createComponent();
+      if (generalSettingsComponent != null) {
+        myAdditionalSettingsPanel.add(generalSettingsComponent);
+      }
     }
   }
 
@@ -141,7 +154,21 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Override
   protected int getRightMargin() {
-    return ((Number) myRightMarginSpinner.getValue()).intValue();
+    String text = myRightMarginField.getText();
+    int rightMargin;
+    myRightMarginField.setBackground(myInitialRightMarginFieldColor);
+    try {
+      rightMargin = Integer.parseInt(text);
+      if (rightMargin < 1 || rightMargin > CodeStyleSettings.MAX_RIGHT_MARGIN) {
+        rightMargin = myDefaultRightMargin;
+        myRightMarginField.setBackground(LightColors.RED);
+      }
+    }
+    catch (NumberFormatException nfe) {
+      myRightMarginField.setBackground(LightColors.RED);
+      rightMargin = myDefaultRightMargin;
+    }
+    return rightMargin;
   }
 
   @Override
@@ -160,7 +187,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   public void apply(CodeStyleSettings settings) {
     settings.LINE_SEPARATOR = getSelectedLineSeparator();
 
-    settings.setDefaultRightMargin(((Number)myRightMarginSpinner.getValue()).intValue());
+    settings.setDefaultRightMargin(getRightMargin());
     settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myCbWrapWhenTypingReachesRightMargin.isSelected();
 
     settings.FORMATTER_TAGS_ENABLED = myEnableFormatterTags.isSelected();
@@ -228,7 +255,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    if (!Comparing.equal(myRightMarginSpinner.getValue(), settings.getDefaultRightMargin())) return true;
+    if (getRightMargin() != settings.getDefaultRightMargin()) return true;
 
     if (myEnableFormatterTags.isSelected()) {
       if (
@@ -278,7 +305,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       myLineSeparatorCombo.setSelectedItem(SYSTEM_DEPENDANT_STRING);
     }
 
-    myRightMarginSpinner.setValue(settings.getDefaultRightMargin());
+    myRightMarginField.setText(String.valueOf(settings.getDefaultRightMargin()));
     myCbWrapWhenTypingReachesRightMargin.setSelected(settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN);
 
     myAcceptRegularExpressionsCheckBox.setSelected(settings.FORMATTER_TAGS_ACCEPT_REGEXP);

@@ -39,7 +39,7 @@ fun updateSyncButtonState(url: String?, syncActions: Array<Action>) {
   }
 
   for (syncAction in syncActions) {
-    syncAction.setEnabled(enabled);
+    syncAction.isEnabled = enabled;
   }
 }
 
@@ -55,7 +55,7 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
     val syncType = syncTypes[it]
     object : AbstractAction(IcsBundle.message("action.${if (syncType == SyncType.MERGE) "Merge" else (if (syncType == SyncType.OVERWRITE_LOCAL) "ResetToTheirs" else "ResetToMy")}Settings.text")) {
       private fun saveRemoteRepositoryUrl(): Boolean {
-        val url = StringUtil.nullize(urlTextField.getText())
+        val url = StringUtil.nullize(urlTextField.text)
         if (url != null && !icsManager.repositoryService.checkUrl(url, dialogParent)) {
           return false
         }

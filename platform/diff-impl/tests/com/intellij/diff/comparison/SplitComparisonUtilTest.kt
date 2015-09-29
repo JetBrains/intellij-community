@@ -15,33 +15,143 @@
  */
 package com.intellij.diff.comparison
 
-// TODO
 public class SplitComparisonUtilTest : ComparisonUtilTestBase() {
   public fun testSplitter() {
-    split {
+    splitter {
       ("x" - "z")
       default(mod(0, 0, 1, 1))
       testAll()
     }
-    split {
+    splitter {
       ("x_y" - "a_b")
       default(mod(0, 0, 2, 2))
       testAll()
     }
-    split {
+    splitter {
       ("x_y" - "a_b y")
       default(mod(0, 0, 1, 1), mod(1, 1, 1, 1))
       testAll()
     }
+    splitter {
+      ("x y" - "x a_b y")
+      default(mod(0, 0, 1, 2))
+      testAll()
+    }
+    splitter {
+      ("x_y" - "x a_y b")
+      default(mod(0, 0, 1, 1), mod(1, 1, 1, 1))
+      testAll()
+    }
 
-    split {
+    splitter {
+      ("x_" - "x a_...")
+      default(mod(0, 0, 2, 2))
+      testAll()
+    }
+    splitter {
+      ("x_y_" - "a_b_")
+      default(mod(0, 0, 2, 2))
+      testAll()
+    }
+    splitter {
+      ("x_y" - " x _ y ")
+      default(mod(0, 0, 2, 2))
+      testDefault()
+    }
+    splitter {
+      ("x_y" - " x _ y.")
+      default(mod(0, 0, 1, 1), mod(1, 1, 1, 1))
+      testDefault()
+    }
+
+    splitter {
       ("a_x_b_" - " x_")
       default(del(0, 0, 1), mod(1, 0, 1, 1), del(2, 1, 1))
       testDefault()
     }
-    split {
+    splitter {
       ("a_x_b_" - "!x_")
       default(del(0, 0, 1), mod(1, 0, 1, 1), del(2, 1, 1))
+      testAll()
+    }
+  }
+
+  public fun testSquash() {
+    splitter(squash = true) {
+      ("x" - "z")
+      default(mod(0, 0, 1, 1))
+      testAll()
+    }
+    splitter(squash = true) {
+      ("x_y" - "a_b")
+      default(mod(0, 0, 2, 2))
+      testAll()
+    }
+    splitter(squash = true) {
+      ("x_y" - "a_b y")
+      default(mod(0, 0, 2, 2))
+      testAll()
+    }
+
+    splitter(squash = true) {
+      ("a_x_b_" - " x_")
+      default(mod(0, 0, 3, 1))
+      testDefault()
+    }
+    splitter(squash = true) {
+      ("a_x_b_" - "!x_")
+      default(mod(0, 0, 3, 1))
+      testAll()
+    }
+  }
+
+  public fun testTrim() {
+    splitter(trim = true) {
+      ("_" - "     _    ")
+      default(mod(0, 0, 2, 2))
+      trim()
+      testAll()
+    }
+
+    splitter(trim = true) {
+      ("" - "     _    ")
+      default(mod(0, 0, 1, 2))
+      trim(ins(1, 1, 1))
+      ignore()
+      testAll()
+    }
+
+    splitter(trim = true) {
+      ("     _    " - "")
+      default(mod(0, 0, 2, 1))
+      trim(del(1, 1, 1))
+      ignore()
+      testAll()
+    }
+
+    splitter(trim = true) {
+      ("x_y" - "z_ ")
+      default(mod(0, 0, 2, 2))
+      testAll()
+    }
+
+    splitter(trim = true) {
+      ("z" - "z_ ")
+      default(ins(1, 1, 1))
+      ignore()
+      testAll()
+    }
+
+    splitter(trim = true) {
+      ("z_ x" - "z_ w")
+      default(mod(1, 1, 1, 1))
+      testAll()
+    }
+
+    splitter(trim = true) {
+      ("__z__" - "z")
+      default(del(0, 0, 2), del(3, 1, 2))
+      ignore()
       testAll()
     }
   }

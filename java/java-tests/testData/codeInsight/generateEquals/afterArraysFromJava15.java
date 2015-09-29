@@ -20,9 +20,9 @@ class Test {
     }
 
     public int hashCode() {
-        int result = myOs != null ? Arrays.hashCode(myOs) : 0;
-        result = 31 * result + (myIIs != null ? Arrays.deepHashCode(myIIs) : 0);
-        result = 31 * result + (myIs != null ? Arrays.hashCode(myIs) : 0);
+        int result = Arrays.hashCode(myOs);
+        result = 31 * result + Arrays.deepHashCode(myIIs);
+        result = 31 * result + Arrays.hashCode(myIs);
         return result;
     }
 }

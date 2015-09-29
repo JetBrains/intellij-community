@@ -11,3 +11,14 @@ class Outer {
   public static class B extends A {}
   public static class C extends A {}
 }
+
+class An {
+  private class B {}
+  public static void foo(B... x){}
+}
+
+class C {
+  {
+    An.foo<error descr="Formal varargs element type  is inaccessible here">()</error>;
+  }
+}

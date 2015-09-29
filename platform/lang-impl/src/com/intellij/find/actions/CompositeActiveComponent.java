@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ class CompositeActiveComponent implements ActiveComponent {
   public CompositeActiveComponent(@NotNull ActiveComponent... components) {
     myComponents = components;
 
-    myComponent = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
+    myComponent = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 4));
     myComponent.setBorder(null);
     myComponent.setOpaque(false);
     for (ActiveComponent component : components) {

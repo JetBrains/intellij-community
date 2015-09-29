@@ -25,7 +25,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -36,6 +38,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -51,6 +54,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiDocumentManagerImplTest extends PlatformTestCase {
@@ -221,7 +226,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     final Document document = getPsiDocumentManager().getDocument(file);
 
     File temp = createTempDirectory();
-    final Project alienProject = createProject(new File(temp, "alien.ipr"), DebugUtil.currentStackTrace());
+    final Project alienProject = createProject(temp + "/alien.ipr", DebugUtil.currentStackTrace());
     boolean succ2 = ProjectManagerEx.getInstanceEx().openProject(alienProject);
     assertTrue(succ2);
     UIUtil.dispatchAllInvocationEvents(); // startup activities
@@ -363,7 +368,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     final Document document = getPsiDocumentManager().getDocument(file);
 
     File temp = createTempDirectory();
-    final Project alienProject = createProject(new File(temp, "alien.ipr"), DebugUtil.currentStackTrace());
+    final Project alienProject = createProject(temp + "/alien.ipr", DebugUtil.currentStackTrace());
     boolean succ2 = ProjectManagerEx.getInstanceEx().openProject(alienProject);
     assertTrue(succ2);
     UIUtil.dispatchAllInvocationEvents(); // startup activities
@@ -558,5 +563,30 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     assertTrue(getPsiDocumentManager().isCommitted(document));
     LaterInvocator.leaveModal(dialog);
+  }
+  
+  public void testReparseDoesNotModifyDocument() throws Exception {
+    VirtualFile file = createTempFile("txt", null, "1\n2\n3\n", Charset.forName("UTF-8"));
+    file.putUserData(TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY, EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED);
+    final Document document = FileDocumentManager.getInstance().getDocument(file);
+    assertNotNull(document);
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(document.getTextLength(), " ");
+      }
+    });
+    
+    PsiDocumentManager.getInstance(myProject).reparseFiles(Collections.singleton(file), false);
+    assertEquals("1\n2\n3\n ", VfsUtilCore.loadText(file));
+
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(0, "-");
+      }
+    });
+    FileDocumentManager.getInstance().saveDocument(document);
+    assertEquals("-1\n2\n3\n", VfsUtilCore.loadText(file));
   }
 }

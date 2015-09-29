@@ -12,7 +12,9 @@ import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelPr
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Proxy;
@@ -101,6 +103,14 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
       return provider.getModifiableModel();
     }
     return LibraryTablesRegistrar.getInstance().getLibraryTable(project).getModifiableModel();
+  }
+
+  @Override
+  public void disposeLibraryTableModifiableModel(LibraryTable.ModifiableModel model) {
+    //IDEA should dispose this model instead of us, because it is was given from StructureConfigurableContext
+    if (!(model instanceof LibrariesModifiableModel)) {
+      Disposer.dispose(model);
+    }
   }
 
   @Nullable

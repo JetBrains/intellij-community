@@ -91,7 +91,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     
     final String templatePresentationText = "Apply Fixes";
     final SequentialModalProgressTask progressTask =
-      new SequentialModalProgressTask(project, templatePresentationText, false);
+      new SequentialModalProgressTask(project, templatePresentationText, true);
     final PerformFixesTask fixesTask = new PerformFixesTask(project, descriptions.toArray(new CommonProblemDescriptor[descriptions.size()]), progressTask);
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override

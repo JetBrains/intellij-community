@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.WriteExternalException;
@@ -38,7 +38,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   protected final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> mySchemesManager;
 
   public CodeStyleSchemesImpl(@NotNull SchemesManagerFactory schemesManagerFactory) {
-    mySchemesManager = schemesManagerFactory.create(CODE_STYLES_DIR_PATH, new BaseSchemeProcessor<CodeStyleSchemeImpl>() {
+    mySchemesManager = schemesManagerFactory.create(CODE_STYLES_DIR_PATH, new SchemeProcessor<CodeStyleSchemeImpl>() {
       @NotNull
       @Override
       public CodeStyleSchemeImpl readScheme(@NotNull Element element) {

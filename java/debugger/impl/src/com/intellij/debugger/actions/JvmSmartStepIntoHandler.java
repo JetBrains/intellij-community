@@ -16,17 +16,15 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.AnonymousClassMethodFilter;
-import com.intellij.debugger.engine.BasicStepMethodFilter;
-import com.intellij.debugger.engine.LambdaMethodFilter;
-import com.intellij.debugger.engine.MethodFilter;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -63,12 +61,14 @@ public abstract class JvmSmartStepIntoHandler {
     if (!targets.isEmpty()) {
       final SmartStepTarget firstTarget = targets.get(0);
       if (targets.size() == 1) {
+        session.sessionResumed();
         session.stepInto(true, createMethodFilter(firstTarget));
       }
       else {
         final Editor editor = fileEditor.getEditor();
         final PsiMethodListPopupStep popupStep = new PsiMethodListPopupStep(editor, targets, new PsiMethodListPopupStep.OnChooseRunnable() {
           public void execute(SmartStepTarget chosenTarget) {
+            session.sessionResumed();
             session.stepInto(true, createMethodFilter(chosenTarget));
           }
         });
@@ -87,8 +87,7 @@ public abstract class JvmSmartStepIntoHandler {
           }
         });
         highlightTarget(popupStep, firstTarget);
-        final RelativePoint point = DebuggerUIUtil.calcPopupLocation(editor, position.getLine());
-        popup.show(point);
+        DebuggerUIUtil.showPopupForEditorLine(popup, editor, position.getLine());
       }
       return true;
     }
@@ -112,8 +111,14 @@ public abstract class JvmSmartStepIntoHandler {
   protected MethodFilter createMethodFilter(SmartStepTarget stepTarget) {
     if (stepTarget instanceof MethodSmartStepTarget) {
       final PsiMethod method = ((MethodSmartStepTarget)stepTarget).getMethod();
-      return stepTarget.needsBreakpointRequest()? new AnonymousClassMethodFilter(method, stepTarget.getCallingExpressionLines()) :
-             new BasicStepMethodFilter(method, stepTarget.getCallingExpressionLines());
+      if (stepTarget.needsBreakpointRequest()) {
+        return Registry.is("debugger.async.smart.step.into") && method.getContainingClass() instanceof PsiAnonymousClass
+               ? new ClassInstanceMethodFilter(method, stepTarget.getCallingExpressionLines())
+               : new AnonymousClassMethodFilter(method, stepTarget.getCallingExpressionLines());
+      }
+      else {
+        return new BasicStepMethodFilter(method, stepTarget.getCallingExpressionLines());
+      }
     }
     if (stepTarget instanceof LambdaSmartStepTarget) {
       final LambdaSmartStepTarget lambdaTarget = (LambdaSmartStepTarget)stepTarget;

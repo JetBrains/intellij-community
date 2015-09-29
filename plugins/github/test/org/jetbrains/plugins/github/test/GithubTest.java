@@ -206,4 +206,9 @@ public abstract class GithubTest extends GitPlatformTest {
 
   protected void afterTest() throws Exception {
   }
+
+  @Override
+  protected boolean isRunInEdt() {
+    return true;
+  }
 }

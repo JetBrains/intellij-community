@@ -81,7 +81,9 @@ public class MavenResourceCompilerConfigurationGenerator {
 
     ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
 
-    final int crc = myProjectsTree.getFilterConfigCrc(fileIndex) + (int)projectRootManager.getModificationCount();
+    final int projectRootModificationCount = (int)projectRootManager.getModificationCount();
+    final int mavenConfigCrc = myProjectsTree.getFilterConfigCrc(fileIndex);
+    final int crc = mavenConfigCrc + projectRootModificationCount;
 
     final File crcFile = new File(mavenConfigFile.getParent(), "configuration.crc");
 
@@ -89,14 +91,19 @@ public class MavenResourceCompilerConfigurationGenerator {
       try {
         DataInputStream crcInput = new DataInputStream(new FileInputStream(crcFile));
         try {
-          if (crcInput.readInt() == crc) return; // Project had not change since last config generation.
+          final int lastCrc = crcInput.readInt();
+          if (lastCrc == crc) return; // Project had not change since last config generation.
+
+          LOG.debug(String.format(
+            "project configuration changed: lastCrc = %d, currentCrc = %d, projectRootModificationCount = %d, mavenConfigCrc = %d",
+            lastCrc, crc, projectRootModificationCount, mavenConfigCrc));
         }
         finally {
           crcInput.close();
         }
       }
       catch (IOException ignored) {
-        // // Config file is not generated.
+        LOG.debug("Unable to read or find config file: " + ignored.getMessage());
       }
     }
 
@@ -186,6 +193,7 @@ public class MavenResourceCompilerConfigurationGenerator {
           }
         }
         catch (IOException e) {
+          LOG.debug("Unable to write config file", e);
           throw new RuntimeException(e);
         }
       }

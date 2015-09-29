@@ -18,6 +18,8 @@ package com.intellij.execution.testframework.sm.runner.history.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
@@ -28,6 +30,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
@@ -101,6 +104,10 @@ public abstract class AbstractImportTestsAction extends AnAction {
         final Executor executor = properties != null ? properties.getExecutor() 
                                                      : ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
         ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.create(project, executor, profile);
+        ExecutionTarget target = profile.getTarget();
+        if (target != null) {
+          builder = builder.target(target);
+        }
         final RunConfiguration initialConfiguration = profile.getInitialConfiguration();
         final ProgramRunner runner =
           initialConfiguration != null ? RunnerRegistry.getInstance().getRunner(executor.getId(), initialConfiguration) : null;
@@ -139,6 +146,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
     private RunConfiguration myConfiguration;
     private boolean myImported;
     private SMTRunnerConsoleProperties myProperties;
+    private String myTargetId;
 
     public ImportRunProfile(VirtualFile file, Project project) {
       myFile = file;
@@ -163,10 +171,30 @@ public abstract class AbstractImportTestsAction extends AnAction {
               }
             }
           }
+          myTargetId = config.getAttributeValue("target");
         }
       }
       catch (Exception ignore) {
       }
+    }
+
+    public ExecutionTarget getTarget() {
+      if (myTargetId != null) {
+        if (DefaultExecutionTarget.INSTANCE.getId().equals(myTargetId)) {
+          return DefaultExecutionTarget.INSTANCE;
+        }
+        final RunnerAndConfigurationSettingsImpl settings = 
+          new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), myConfiguration, false);
+        for (ExecutionTargetProvider provider : Extensions.getExtensions(ExecutionTargetProvider.EXTENSION_NAME)) {
+          for (ExecutionTarget target : provider.getTargets(myProject, settings)) {
+            if (myTargetId.equals(target.getId())) {
+              return target;
+            }
+          }
+        }
+        return null;
+      }
+      return DefaultExecutionTarget.INSTANCE;
     }
 
     @Nullable
@@ -181,6 +209,10 @@ public abstract class AbstractImportTestsAction extends AnAction {
           return myConfiguration.getState(executor, environment);
         }
         catch (Throwable e) {
+          if (myTargetId != null && getTarget() == null) {
+            throw new ExecutionException("The target " + myTargetId + " does not exist");
+          }
+
           LOG.info(e);
           throw new ExecutionException("Unable to run the configuration: settings are corrupted");
         }

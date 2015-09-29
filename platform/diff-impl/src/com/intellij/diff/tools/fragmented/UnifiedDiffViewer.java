@@ -30,7 +30,6 @@ import com.intellij.diff.tools.util.base.*;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -220,11 +219,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     List<AnAction> group = new ArrayList<AnAction>();
 
     group.add(new ReplaceSelectedChangesAction(Side.LEFT, false));
-    group.add(new AppendSelectedChangesAction(Side.LEFT, false));
     group.add(new ReplaceSelectedChangesAction(Side.RIGHT, false));
+    group.add(new AppendSelectedChangesAction(Side.LEFT, false));
     group.add(new AppendSelectedChangesAction(Side.RIGHT, false));
-    group.add(new RevertSelectedChangesAction(Side.LEFT));
-    group.add(new RevertSelectedChangesAction(Side.RIGHT));
 
     group.add(Separator.getInstance());
     group.addAll(TextDiffViewerUtil.createEditorPopupActions());
@@ -383,7 +380,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
 
         clearDiffPresentation();
-        if (isEqual) myPanel.addNotification(DiffNotifications.EQUAL_CONTENTS);
+        if (isEqual) myPanel.addNotification(DiffNotifications.createEqualContents());
 
         TIntFunction separatorLines = myFoldingModel.getLineNumberConvertor();
         myEditor.getGutterComponentEx().setLineNumberConvertor(mergeConverters(data.getLineConvertor1(), separatorLines),
@@ -459,7 +456,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
    * This convertor returns -1 if exact matching is impossible
    */
   @CalledInAwt
-  protected int transferLineToOnesideStrict(@NotNull Side side, int line) {
+  public int transferLineToOnesideStrict(@NotNull Side side, int line) {
     if (myChangedBlockData == null) return -1;
 
     LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
@@ -470,7 +467,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
    * This convertor returns -1 if exact matching is impossible
    */
   @CalledInAwt
-  protected int transferLineFromOnesideStrict(@NotNull Side side, int line) {
+  public int transferLineFromOnesideStrict(@NotNull Side side, int line) {
     if (myChangedBlockData == null) return -1;
 
     LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
@@ -481,7 +478,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
   @CalledInAwt
-  protected int transferLineToOneside(@NotNull Side side, int line) {
+  public int transferLineToOneside(@NotNull Side side, int line) {
     if (myChangedBlockData == null) return line;
 
     LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
@@ -493,7 +490,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
    */
   @CalledInAwt
   @NotNull
-  protected Pair<int[], Side> transferLineFromOneside(int line) {
+  public Pair<int[], Side> transferLineFromOneside(int line) {
     int[] lines = new int[2];
 
     if (myChangedBlockData == null) {
@@ -648,7 +645,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   private abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
     @NotNull protected final Side myModifiedSide;
-    private final boolean myShortcut;
+    protected final boolean myShortcut;
 
     public ApplySelectedChangesActionBase(@NotNull Side modifiedSide, boolean shortcut) {
       myModifiedSide = modifiedSide;
@@ -674,6 +671,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         return;
       }
 
+      e.getPresentation().setText(getText());
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(isSomeChangeSelected());
     }
@@ -714,6 +712,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       return false;
     }
 
+    @NotNull
+    public abstract String getText();
+
     @CalledWithWriteLock
     protected abstract void apply(@NotNull List<UnifiedDiffChange> changes);
   }
@@ -723,8 +724,19 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       super(focusedSide.other(), shortcut);
 
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
-      getTemplatePresentation().setText("Replace");
-      getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.ArrowRight, AllIcons.Diff.Arrow));
+      getTemplatePresentation().setIcon(DiffUtil.getArrowIcon(focusedSide));
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      boolean bothEditable = isEditable(Side.LEFT, true) && isEditable(Side.RIGHT, true);
+      if (bothEditable) {
+        return myModifiedSide.select("Apply After", "Apply Before");
+      }
+      else {
+        return "Apply";
+      }
     }
 
     @Override
@@ -740,29 +752,25 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       super(focusedSide.other(), shortcut);
 
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")).getShortcutSet());
-      getTemplatePresentation().setText("Insert");
-      getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.ArrowRightDown, AllIcons.Diff.ArrowLeftDown));
+      getTemplatePresentation().setIcon(DiffUtil.getArrowDownIcon(focusedSide));
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      boolean bothEditable = isEditable(Side.LEFT, true) && isEditable(Side.RIGHT, true);
+      if (bothEditable) {
+        return myModifiedSide.select("Append Right Side", "Append Left Side");
+      }
+      else {
+        return "Append";
+      }
     }
 
     @Override
     protected void apply(@NotNull List<UnifiedDiffChange> changes) {
       for (UnifiedDiffChange change : changes) {
         appendChange(change, myModifiedSide.other());
-      }
-    }
-  }
-
-  private class RevertSelectedChangesAction extends ApplySelectedChangesActionBase {
-    public RevertSelectedChangesAction(@NotNull Side focusedSide) {
-      super(focusedSide, false);
-      getTemplatePresentation().setText("Revert");
-      getTemplatePresentation().setIcon(AllIcons.Diff.Remove);
-    }
-
-    @Override
-    protected void apply(@NotNull List<UnifiedDiffChange> changes) {
-      for (UnifiedDiffChange change : changes) {
-        replaceChange(change, myModifiedSide.other());
       }
     }
   }
@@ -838,6 +846,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   //
   // Getters
   //
+
+
+  @NotNull
+  public Side getMasterSide() {
+    return myMasterSide;
+  }
 
   @NotNull
   public EditorEx getEditor() {

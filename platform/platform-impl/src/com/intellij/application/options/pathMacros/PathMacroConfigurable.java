@@ -16,7 +16,6 @@
 package com.intellij.application.options.pathMacros;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -48,7 +47,7 @@ public class PathMacroConfigurable implements SearchableConfigurable, Configurab
     myEditor.commit();
 
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      StorageUtil.checkUnknownMacros(ComponentsPackage.getStateStore(project), project, false);
+      StorageUtil.checkUnknownMacros(project, false);
     }
   }
 

@@ -160,6 +160,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   @Nullable("null means unable to open the editor")
   protected static Editor positionCursor(@NotNull Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
     TextRange range = element.getTextRange();
+    LOG.assertTrue(range != null, element.getClass());
     int textOffset = range.getStartOffset();
     VirtualFile file = targetFile.getVirtualFile();
     if (file == null) {

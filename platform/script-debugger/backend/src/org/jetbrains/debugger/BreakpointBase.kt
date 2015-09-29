@@ -15,7 +15,6 @@
  */
 package org.jetbrains.debugger
 
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.util.concurrency.Promise
 
@@ -30,7 +29,7 @@ public abstract class BreakpointBase<L : Any>(override val target: BreakpointTar
    * Whether the breakpoint data have changed with respect
    * to the JavaScript VM data
    */
-  protected volatile var dirty: Boolean = false
+  protected @Volatile var dirty: Boolean = false
 
   override val isResolved: Boolean
     get() = !actualLocations.isEmpty()
@@ -38,7 +37,7 @@ public abstract class BreakpointBase<L : Any>(override val target: BreakpointTar
   override var condition: String? = condition
     set(value: String?) {
       if (condition != value) {
-        condition = value
+        $condition = value
         dirty = true
       }
   }
@@ -46,7 +45,7 @@ public abstract class BreakpointBase<L : Any>(override val target: BreakpointTar
   override var enabled: Boolean = enabled
     set(value: Boolean) {
       if (value != enabled) {
-        enabled = value
+        $enabled = value
         dirty = true
       }
     }

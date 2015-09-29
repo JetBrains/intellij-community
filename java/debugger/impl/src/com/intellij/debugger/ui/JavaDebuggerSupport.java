@@ -15,34 +15,24 @@
  */
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.actions.JavaMarkObjectActionHandler;
 import com.intellij.debugger.actions.JvmSmartStepIntoActionHandler;
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.xdebugger.AbstractDebuggerSession;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
-import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
-import com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler;
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.Collection;
 
 /**
@@ -62,133 +52,14 @@ public class JavaDebuggerSupport extends DebuggerSupport {
 
   @Override
   @NotNull
-  public DebuggerActionHandler getStepOverHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-  @Override
-  @NotNull
-  public DebuggerActionHandler getStepIntoHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-  @Override
-  @NotNull
   public DebuggerActionHandler getSmartStepIntoHandler() {
     return mySmartStepIntoHandler;
-  }
-
-  @Override
-  @NotNull
-  public DebuggerActionHandler getStepOutHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-  @Override
-  @NotNull
-  public DebuggerActionHandler getForceStepOverHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-  @Override
-  @NotNull
-  public DebuggerActionHandler getForceStepIntoHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-  @Override
-  @NotNull
-  public DebuggerActionHandler getRunToCursorHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-  @Override
-  @NotNull
-  public DebuggerActionHandler getForceRunToCursorHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-  @Override
-  @NotNull
-  public DebuggerActionHandler getResumeActionHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-  @Override
-  @NotNull
-  public DebuggerActionHandler getPauseHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-  @Override
-  @NotNull
-  public DebuggerActionHandler getToggleLineBreakpointHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-  @NotNull
-  @Override
-  public DebuggerActionHandler getToggleTemporaryLineBreakpointHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-  @Override
-  @NotNull
-  public DebuggerActionHandler getShowExecutionPointHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-  @Override
-  @NotNull
-  public DebuggerActionHandler getEvaluateHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-  @NotNull
-  @Override
-  public DebuggerActionHandler getAddToWatchesActionHandler() {
-    return DisabledActionHandler.INSTANCE;
-  }
-
-
-  private static final DebuggerToggleActionHandler DISABLED_TOGGLE_HANDLER = new DebuggerToggleActionHandler() {
-    @Override
-    public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
-      return false;
-    }
-
-    @Override
-    public boolean isSelected(@NotNull Project project, AnActionEvent event) {
-      return false;
-    }
-
-    @Override
-    public void setSelected(@NotNull Project project, AnActionEvent event, boolean state) {
-    }
-  };
-
-  @Override
-  @NotNull
-  public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
-    return DISABLED_TOGGLE_HANDLER;
   }
 
   @NotNull
   @Override
   public MarkObjectActionHandler getMarkObjectHandler() {
     return myMarkObjectActionHandler;
-  }
-
-  @Override
-  public AbstractDebuggerSession getCurrentSession(@NotNull Project project) {
-    final DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
-    return context != null ? context.getDebuggerSession() : null;
-  }
-
-  @NotNull
-  @Override
-  public EditBreakpointActionHandler getEditBreakpointAction() {
-    return X_EDIT;
   }
 
   private static class JavaBreakpointPanelProvider extends BreakpointPanelProvider<Breakpoint> {
@@ -264,44 +135,6 @@ public class JavaDebuggerSupport extends DebuggerSupport {
       //  }
       //}
     }
-
-    //private static class AddJavaBreakpointAction extends AnAction {
-    //  private BreakpointFactory myBreakpointFactory;
-    //
-    //  public AddJavaBreakpointAction(BreakpointFactory breakpointFactory) {
-    //    myBreakpointFactory = breakpointFactory;
-    //    Presentation p = getTemplatePresentation();
-    //    p.setIcon(myBreakpointFactory.getIcon());
-    //    p.setText(breakpointFactory.getDisplayName());
-    //  }
-    //
-    //  @Override
-    //  public void update(AnActionEvent e) {
-    //    e.getPresentation().setVisible(myBreakpointFactory.canAddBreakpoints());
-    //  }
-    //
-    //  @Override
-    //  public void actionPerformed(AnActionEvent e) {
-    //    myBreakpointFactory.addBreakpoint(getEventProject(e));
-    //  }
-    //}
-
-    //private static class MyBreakpointManagerListener implements BreakpointManagerListener {
-    //
-    //  private final BreakpointsListener myListener;
-    //  public BreakpointManager myBreakpointManager;
-    //
-    //
-    //  public MyBreakpointManagerListener(BreakpointsListener listener, BreakpointManager breakpointManager) {
-    //    myListener = listener;
-    //    myBreakpointManager = breakpointManager;
-    //  }
-    //
-    //  @Override
-    //  public void breakpointsChanged() {
-    //    myListener.breakpointsChanged();
-    //  }
-    //}
   }
 
   public static Project getContextProjectForEditorFieldsInDebuggerConfigurables() {
@@ -312,16 +145,4 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     }
     return ProjectManager.getInstance().getDefaultProject();
   }
-
-  private static final EditBreakpointActionHandler X_EDIT = new EditBreakpointActionHandler() {
-    @Override
-    protected void doShowPopup(Project project, JComponent component, Point whereToShow, Object breakpoint) {
-      DebuggerUIUtil.showXBreakpointEditorBalloon(project, whereToShow, component, false, (XBreakpoint)breakpoint);
-    }
-
-    @Override
-    public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
-      return false;
-    }
-  };
 }

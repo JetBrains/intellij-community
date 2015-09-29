@@ -400,17 +400,22 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @Override
-  public long getLength(@NotNull final VirtualFile file) {
+  public long getLength(@NotNull VirtualFile file) {
     long len;
     if (mustReloadContent(file)) {
       len = reloadLengthFromDelegate(file, getDelegate(file));
     }
     else {
-      final int id = getFileId(file);
-      len = FSRecords.getLength(id);
+      len = getLastRecordedLength(file);
     }
 
     return len;
+  }
+
+  @Override
+  public long getLastRecordedLength(@NotNull VirtualFile file) {
+    int id = getFileId(file);
+    return FSRecords.getLength(id);
   }
 
   @NotNull
@@ -908,14 +913,14 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       try {
         VfsData.initFile(rootId, segment, -1, directoryData);
       }
-      catch (AssertionError e) {
+      catch (VfsData.FileAlreadyCreatedException e) {
         for (Map.Entry<String, VirtualFileSystemEntry> entry : myRoots.entrySet()) {
           final VirtualFileSystemEntry existingRoot = entry.getValue();
           if (Math.abs(existingRoot.getId()) == rootId) {
             throw new RuntimeException("Duplicate FS roots: " + rootUrl + " and " + entry.getKey() + ", id=" + rootId + ", valid=" + existingRoot.isValid(), e);
           }
         }
-        throw new RuntimeException("No root duplication, roots" + Arrays.toString(FSRecords.listAll(1)), e);
+        throw new RuntimeException("No root duplication, roots=" + Arrays.toString(FSRecords.listAll(1)), e);
       }
       incStructuralModificationCount();
       mark = writeAttributesToRecord(rootId, 0, newRoot, fs, attributes);
@@ -1061,7 +1066,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         else if (VirtualFile.PROP_WRITABLE.equals(propertyChangeEvent.getPropertyName())) {
           executeSetWritable(file, ((Boolean)newValue).booleanValue());
           if (LOG.isDebugEnabled()) {
-            LOG.debug("File " + file + " writable=" + file.isWritable());
+            LOG.debug("File " + file + " writable=" + file.isWritable() + " id=" + getFileId(file));
           }
         }
         else if (VirtualFile.PROP_HIDDEN.equals(propertyChangeEvent.getPropertyName())) {

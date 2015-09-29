@@ -32,7 +32,7 @@ public class IpnbPyParser extends PyParser {
     builder.setTokenTypeRemapper(statementParser);
 
     while (!builder.eof()) {
-      statementParser.parseStatement(context.emptyParsingScope());
+      statementParser.parseStatement();
     }
     rootMarker.done(root);
     return builder.getTreeBuilt();

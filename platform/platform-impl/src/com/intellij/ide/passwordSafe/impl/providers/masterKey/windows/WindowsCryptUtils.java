@@ -24,7 +24,9 @@ import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIFunctionMapper;
 import com.sun.jna.win32.W32APITypeMapper;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.sun.jna.Library.OPTION_FUNCTION_MAPPER;
@@ -123,8 +125,15 @@ public class WindowsCryptUtils {
                                DATA_BLOB pDataOut);
 
     class DATA_BLOB extends Structure implements Structure.ByReference {
+      private static final List __FIELDS = Arrays.asList("cbData", "pbData");
+
       public W32API.DWORD cbData;
       public Pointer pbData;
+
+      @Override
+      protected List getFieldOrder() {
+        return __FIELDS;
+      }
     }
   }
 

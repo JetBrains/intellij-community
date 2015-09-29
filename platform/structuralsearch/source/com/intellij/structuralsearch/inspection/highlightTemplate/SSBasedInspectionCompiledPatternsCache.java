@@ -2,6 +2,7 @@ package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Key;
@@ -24,7 +25,12 @@ public class SSBasedInspectionCompiledPatternsCache implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull final Project project) {
-     precompileConfigurations(project, null);
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        precompileConfigurations(project, null);
+      }
+    });
   }
 
   static void precompileConfigurations(final Project project, @Nullable final SSBasedInspection ssBasedInspection) {

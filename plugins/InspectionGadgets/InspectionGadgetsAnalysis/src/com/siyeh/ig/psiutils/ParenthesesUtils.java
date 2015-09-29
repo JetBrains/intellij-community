@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,13 @@ public class ParenthesesUtils {
     s_binaryOperatorPrecedence.put(JavaTokenType.LE, RELATIONAL_PRECEDENCE);
     s_binaryOperatorPrecedence.put(JavaTokenType.EQEQ, EQUALITY_PRECEDENCE);
     s_binaryOperatorPrecedence.put(JavaTokenType.NE, EQUALITY_PRECEDENCE);
+  }
+
+  public static String getText(@NotNull PsiExpression expression, int precedence) {
+    if (getPrecedence(expression) >= precedence) {
+      return '(' + expression.getText() + ')';
+    }
+    return expression.getText();
   }
 
   @Nullable public static PsiElement getParentSkipParentheses(PsiElement element) {

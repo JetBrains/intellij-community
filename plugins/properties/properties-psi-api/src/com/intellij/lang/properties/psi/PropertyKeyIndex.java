@@ -19,9 +19,14 @@
  */
 package com.intellij.lang.properties.psi;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
+import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 public class PropertyKeyIndex extends StringStubIndexExtension<Property> {
   public static final StubIndexKey<String, Property> KEY = StubIndexKey.createIndexKey("properties.index");
@@ -35,5 +40,10 @@ public class PropertyKeyIndex extends StringStubIndexExtension<Property> {
   @NotNull
   public StubIndexKey<String, Property> getKey() {
     return KEY;
+  }
+
+  @Override
+  public Collection<Property> get(@NotNull String s, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    return StubIndex.getElements(getKey(), s, project, scope, Property.class);
   }
 }

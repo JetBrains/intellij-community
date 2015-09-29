@@ -117,23 +117,18 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     }
     myOriginalToEditedMap.clear();
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
-              myManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
-            }
-            myManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
-            for (FileNameMatcher matcher : myReassigned.keySet()) {
-              myManager.getRemovedMappings().put(matcher, Pair.create(myReassigned.get(matcher), true));
-            }
+        if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
+          myManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
+        }
+        myManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
+        for (FileNameMatcher matcher : myReassigned.keySet()) {
+          myManager.getRemovedMappings().put(matcher, Pair.create(myReassigned.get(matcher), true));
+        }
 
-            TemplateDataLanguagePatterns.getInstance().setAssocTable(myTempTemplateDataLanguages);
-          }
-        });
+        TemplateDataLanguagePatterns.getInstance().setAssocTable(myTempTemplateDataLanguages);
       }
     });
   }

@@ -103,4 +103,9 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
     }
     return ok;
   }
+
+  @Override
+  protected boolean acceptLocalVariable() {
+    return false;
+  }
 }

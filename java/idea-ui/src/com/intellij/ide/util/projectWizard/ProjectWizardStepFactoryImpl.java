@@ -40,19 +40,8 @@ import javax.swing.*;
 public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   private static final Key<ProjectJdkStep> PROJECT_JDK_STEP_KEY = Key.create("ProjectJdkStep");
 
-  public ModuleWizardStep createNameAndLocationStep(WizardContext wizardContext, JavaModuleBuilder builder, ModulesProvider modulesProvider, Icon icon, String helpId) {
-    return new NameLocationStep(wizardContext, builder, modulesProvider, icon, helpId);
-  }
-
   public ModuleWizardStep createNameAndLocationStep(final WizardContext wizardContext) {
     return new ProjectNameStep(wizardContext);
-  }
-
-  /**
-   * @deprecated
-   */
-  public ModuleWizardStep createOutputPathPathsStep(ModuleWizardStep nameAndLocationStep, JavaModuleBuilder builder, Icon icon, String helpId) {
-    return new OutputPathsStep((NameLocationStep)nameAndLocationStep, builder, icon, helpId);
   }
 
   public ModuleWizardStep createSourcePathsStep(ModuleWizardStep nameAndLocationStep, SourcePathsBuilder builder, Icon icon, String helpId) {

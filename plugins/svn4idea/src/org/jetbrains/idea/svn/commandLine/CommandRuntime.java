@@ -80,6 +80,10 @@ public class CommandRuntime {
 
   @NotNull
   public CommandExecutor runLocal(@NotNull Command command, int timeout) throws SvnBindException {
+    if (command.getWorkingDirectory() == null) {
+      command.setWorkingDirectory(CommandParametersResolutionModule.getDefaultWorkingDirectory(myVcs.getProject()));
+    }
+
     CommandExecutor executor = newExecutor(command);
 
     executor.run(timeout);

@@ -159,11 +159,15 @@ public abstract class Change {
         CommandProcessor.getInstance().executeCommand(change.getProject(), new Runnable() {
           @Override
           public void run() {
-            change.apply(fromSide);
+            doApply(change, fromSide);
           }
         }, null, DiffBundle.message("save.merge.result.command.name"));
       }
     });
+  }
+
+  public static void doApply(final Change change, final FragmentSide fromSide) {
+    change.apply(fromSide);
   }
 
   public void updateMarkup() {

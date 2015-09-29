@@ -15,35 +15,38 @@
  */
 package com.intellij.openapi.vcs.update;
 
-import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.*;
+import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
+import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.chains.DiffRequestProducer;
+import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.history.ByteContent;
 import com.intellij.history.Label;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
-import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.lang.ref.SoftReference;
-import java.util.Iterator;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
   @Override
@@ -62,179 +65,154 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
   }
 
   private boolean isEnabled(final DataContext dc) {
-    final Iterable<Pair<VirtualFilePointer,FileStatus>> iterable = VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.getData(dc);
+    final Iterable<Pair<VirtualFilePointer, FileStatus>> iterable = VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.getData(dc);
     return iterable != null;
   }
 
   public void actionPerformed(AnActionEvent e) {
     final DataContext dc = e.getDataContext();
-    if ((! isVisible(dc)) || (! isEnabled(dc))) return;
+    if ((!isVisible(dc)) || (!isEnabled(dc))) return;
 
     final Project project = CommonDataKeys.PROJECT.getData(dc);
-    final Iterable<Pair<VirtualFilePointer, FileStatus>> iterable = VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.getData(dc);
-    final Label before = (Label) VcsDataKeys.LABEL_BEFORE.getData(dc);
-    final Label after = (Label) VcsDataKeys.LABEL_AFTER.getData(dc);
-
+    final Iterable<Pair<VirtualFilePointer, FileStatus>> iterable = e.getRequiredData(VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE);
+    final Label before = (Label)e.getRequiredData(VcsDataKeys.LABEL_BEFORE);
+    final Label after = (Label)e.getRequiredData(VcsDataKeys.LABEL_AFTER);
     final String selectedUrl = VcsDataKeys.UPDATE_VIEW_SELECTED_PATH.getData(dc);
 
-    Iterable<Change> changes = new MyIterableWrapper(iterable.iterator(), before, after, project);
-    Condition<Change> selection = new MySelectionMarker(selectedUrl);
-    ShowDiffAction.showDiffForChange(project, changes, selection, new ShowDiffContext(DiffDialogHints.FRAME));
+    MyDiffRequestChain requestChain = new MyDiffRequestChain(project, iterable, before, after, selectedUrl);
+    DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.FRAME);
   }
 
-  private static class MySelectionMarker implements Condition<Change> {
-    private final String mySelectedPath;
-    private boolean myFirstSelected;
+  private static class MyDiffRequestChain extends UserDataHolderBase implements DiffRequestChain, GoToChangePopupBuilder.Chain {
+    @Nullable private final Project myProject;
+    @NotNull private final Label myBefore;
+    @NotNull private final Label myAfter;
+    @NotNull private final List<MyDiffRequestProducer> myRequests = new ArrayList<MyDiffRequestProducer>();
 
-    public MySelectionMarker(String selectedPath) {
-      mySelectedPath = selectedPath;
-    }
+    private int myIndex;
 
-    public boolean value(Change change) {
-      if (mySelectedPath == null) {
-        if (myFirstSelected) {
-          myFirstSelected = true;
-          return true;
-        }
-        return false;
-      }
-      final MyCheckpointContentRevision revision = (MyCheckpointContentRevision)(change.getBeforeRevision() == null ? change.getAfterRevision() : change.getBeforeRevision());
-      final String url = revision.getUrl();
-      return mySelectedPath.equals(url);
-    }
-  }
-
-  private static class MyIterableWrapper implements Iterable<Change> {
-    private final Iterator<Pair<VirtualFilePointer, FileStatus>> myVfIterator;
-    private final Label myBefore;
-    private final Label myAfter;
-    @NotNull private final Project myProject;
-
-    private MyIterableWrapper(Iterator<Pair<VirtualFilePointer, FileStatus>> vfIterator,
-                              final Label before,
-                              final Label after,
-                              @NotNull Project project) {
-      myVfIterator = vfIterator;
+    public MyDiffRequestChain(@Nullable Project project,
+                              @NotNull Iterable<Pair<VirtualFilePointer, FileStatus>> iterable,
+                              @NotNull Label before,
+                              @NotNull Label after,
+                              @Nullable String selectedUrl) {
+      myProject = project;
       myBefore = before;
       myAfter = after;
-      myProject = project;
-    }
 
-    public Iterator<Change> iterator() {
-      return new MyIteratorWrapper(myVfIterator, myBefore, myAfter, myProject);
-    }
-  }
-
-  private static class MyLoader {
-    private final Label myLabel;
-
-    private MyLoader(Label label) {
-      myLabel = label;
-    }
-
-    @Nullable
-    public String convert(final VirtualFilePointer pointer, @NotNull Project project) {
-      if (pointer == null) return null;
-      final String path = pointer.getPresentableUrl();
-      final ByteContent byteContent = myLabel.getByteContent(FileUtil.toSystemIndependentName(path));
-      if (byteContent == null || byteContent.isDirectory() || byteContent.getBytes() == null) {
-        return null;
+      int selected = -1;
+      for (Pair<VirtualFilePointer, FileStatus> pair : iterable) {
+        if (selected == -1 && pair.first.getUrl().equals(selectedUrl)) selected = myRequests.size();
+        myRequests.add(new MyDiffRequestProducer(pair.first, pair.second));
       }
-      final VirtualFile vf = pointer.getFile();
-      if (vf == null) {
-        return LoadTextUtil.getTextByBinaryPresentation(byteContent.getBytes(), EncodingProjectManager.getInstance(project).getDefaultCharset()).toString();
-      }
-      else {
-        return LoadTextUtil.getTextByBinaryPresentation(byteContent.getBytes(), vf).toString();
-      }
-    }
-  }
-
-  private static class MyCheckpointContentRevision implements ContentRevision {
-    private SoftReference<String> myContent;
-    private final MyLoader myLoader;
-    private final VirtualFilePointer myPointer;
-    private final boolean myBefore;
-    @NotNull private final Project myProject;
-
-    private MyCheckpointContentRevision(final VirtualFilePointer pointer, final MyLoader loader, final boolean before, @NotNull Project project) {
-      myLoader = loader;
-      myPointer = pointer;
-      myBefore = before;
-      myProject = project;
-    }
-
-    public String getContent() throws VcsException {
-      final String s = com.intellij.reference.SoftReference.dereference(myContent);
-      if (s != null) {
-        return s;
-      }
-
-      final String loaded = myLoader.convert(myPointer, myProject);
-      myContent = new SoftReference<String>(loaded);
-
-      return loaded;
-    }
-
-    public String getUrl() {
-      return myPointer.getUrl();
+      if (selected != -1) myIndex = selected;
     }
 
     @NotNull
-    public FilePath getFile() {
-      return VcsUtil.getFilePath(myPointer.getPresentableUrl(), false);
+    @Override
+    public List<MyDiffRequestProducer> getRequests() {
+      return myRequests;
+    }
+
+    @Override
+    public int getIndex() {
+      return myIndex;
+    }
+
+    @Override
+    public void setIndex(int index) {
+      myIndex = index;
     }
 
     @NotNull
-    public VcsRevisionNumber getRevisionNumber() {
-      return new VcsRevisionNumber() {
-        public String asString() {
-          return myBefore ? "Before update" : "After update";
+    @Override
+    public AnAction createGoToChangeAction(@NotNull Consumer<Integer> onSelected) {
+      return new ChangeGoToChangePopupAction.Fake<MyDiffRequestChain>(this, myIndex, onSelected) {
+        @NotNull
+        @Override
+        protected FilePath getFilePath(int index) {
+          return myRequests.get(index).getFilePath();
         }
 
-        public int compareTo(VcsRevisionNumber o) {
-          return myBefore ? -1 : 1;
+        @NotNull
+        @Override
+        protected FileStatus getFileStatus(int index) {
+          return myRequests.get(index).getFileStatus();
         }
       };
     }
-  }
 
-  private static class MyIteratorWrapper implements Iterator<Change> {
-    private final MyLoader myBeforeLoader;
-    private final MyLoader myAfterLoader;
-    private final Iterator<Pair<VirtualFilePointer, FileStatus>> myVfIterator;
-    @NotNull private final Project myProject;
+    private class MyDiffRequestProducer implements DiffRequestProducer {
+      @NotNull private final VirtualFilePointer myFilePointer;
+      @NotNull private final FileStatus myFileStatus;
+      @NotNull private final FilePath myFilePath;
 
-    public MyIteratorWrapper(final Iterator<Pair<VirtualFilePointer, FileStatus>> vfIterator,
-                             final Label before,
-                             final Label after,
-                             @NotNull Project project) {
-      myVfIterator = vfIterator;
-      myProject = project;
-      myBeforeLoader = new MyLoader(before);
-      myAfterLoader = new MyLoader(after);
-    }
+      public MyDiffRequestProducer(@NotNull VirtualFilePointer filePointer, @NotNull FileStatus fileStatus) {
+        myFilePointer = filePointer;
+        myFileStatus = fileStatus;
 
-    public boolean hasNext() {
-      return myVfIterator.hasNext();
-    }
-
-    public Change next() {
-      final Pair<VirtualFilePointer, FileStatus> pair = myVfIterator.next();
-      final VirtualFilePointer pointer = pair.getFirst();
-
-      MyCheckpointContentRevision before = new MyCheckpointContentRevision(pointer, myBeforeLoader, true, myProject);
-      MyCheckpointContentRevision after = new MyCheckpointContentRevision(pointer, myAfterLoader, false, myProject);
-      if (FileStatus.ADDED.equals(pair.getSecond())) {
-        before = null;
-      } else if (FileStatus.DELETED.equals(pair.getSecond())) {
-        after = null;
+        myFilePath = VcsUtil.getFilePath(myFilePointer.getPresentableUrl(), false);
       }
-      return new Change(before, after, pair.getSecond());
+
+      @NotNull
+      @Override
+      public String getName() {
+        return myFilePointer.getUrl();
+      }
+
+      @NotNull
+      public FilePath getFilePath() {
+        return myFilePath;
+      }
+
+      @NotNull
+      public FileStatus getFileStatus() {
+        return myFileStatus;
+      }
+
+      @NotNull
+      @Override
+      public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
+        throws DiffRequestProducerException, ProcessCanceledException {
+        try {
+          DiffContent content1;
+          DiffContent content2;
+
+          if (FileStatus.ADDED.equals(myFileStatus)) {
+            content1 = DiffContentFactory.getInstance().createEmpty();
+          }
+          else {
+            byte[] bytes1 = loadContent(myFilePointer, myBefore);
+            content1 = DiffContentFactoryImpl.getInstanceImpl().createFromBytes(myProject, myFilePath, bytes1);
+          }
+
+          if (FileStatus.DELETED.equals(myFileStatus)) {
+            content2 = DiffContentFactory.getInstance().createEmpty();
+          }
+          else {
+            byte[] bytes2 = loadContent(myFilePointer, myAfter);
+            content2 = DiffContentFactoryImpl.getInstanceImpl().createFromBytes(myProject, myFilePath, bytes2);
+          }
+
+          String title = DiffRequestFactoryImpl.getContentTitle(myFilePath);
+          return new SimpleDiffRequest(title, content1, content2, "Before update", "After update");
+        }
+        catch (IOException e) {
+          throw new DiffRequestProducerException("Can't load content", e);
+        }
+      }
     }
 
-    public void remove() {
-      throw new UnsupportedOperationException();
+    @NotNull
+    private static byte[] loadContent(@NotNull VirtualFilePointer filePointer, @NotNull Label label) throws DiffRequestProducerException {
+      String path = filePointer.getPresentableUrl();
+      ByteContent byteContent = label.getByteContent(FileUtil.toSystemIndependentName(path));
+
+      if (byteContent == null || byteContent.isDirectory() || byteContent.getBytes() == null) {
+        throw new DiffRequestProducerException("Can't load content");
+      }
+
+      return byteContent.getBytes();
     }
   }
 }

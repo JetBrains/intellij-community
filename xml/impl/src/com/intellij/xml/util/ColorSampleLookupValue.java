@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.LookupValueWithPriority;
 import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
@@ -141,7 +142,8 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
   @Override
   @Nullable
   public String getTypeHint() {
-    return myValue != null && myValue.charAt(0) == '#' ? myValue : null;
+    return myName != null && !StringUtil.startsWithChar(myName, '#') 
+           && myValue != null && StringUtil.startsWithChar(myValue, '#') ? myValue : null;
   }
 
   @Override

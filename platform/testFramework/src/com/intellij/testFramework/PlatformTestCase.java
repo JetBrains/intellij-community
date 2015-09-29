@@ -22,6 +22,7 @@ import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -63,11 +64,15 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DocumentCommitThread;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.IndexedRootsProvider;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -88,6 +93,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -125,7 +131,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
    * If a temp directory is reused from some previous test run, there might be cached children in its VFS.
    * Ensure they're removed
    */
-  public static void synchronizeTempDirVfs(VirtualFile tempDir) {
+  public static void synchronizeTempDirVfs(@NotNull VirtualFile tempDir) {
     tempDir.getChildren();
     tempDir.refresh(false, true);
   }
@@ -146,7 +152,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   private static final String[] PREFIX_CANDIDATES = {
-    "AppCode", "CLion", "CidrCommon", 
+    "AppCode", "CLion", "CidrCommon",
     "Python", "PyCharmCore", "Ruby", "UltimateLangXml", "Idea", "PlatformLangXml" };
 
   /**
@@ -213,7 +219,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     UIUtil.dispatchAllInvocationEvents();
   }
 
-  public Project getProject() {
+  public final Project getProject() {
     return myProject;
   }
 
@@ -235,7 +241,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     myProjectManager.openTestProject(myProject);
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
-    myProjectManager.openTestProject(myProject);
     setUpModule();
 
     setUpJdk();
@@ -246,15 +251,22 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
-  protected Project doCreateProject(File projectFile) throws Exception {
+  protected Project doCreateProject(@NotNull File projectFile) throws Exception {
     return createProject(projectFile, getClass().getName() + "." + getName());
   }
 
   @NotNull
   public static Project createProject(File projectFile, String creationPlace) {
+    return createProject(projectFile.getPath(), creationPlace);
+  }
+
+  @NotNull
+  public static Project createProject(@NotNull String path, String creationPlace) {
+    String fileName = PathUtilRt.getFileName(path);
+
     try {
-      Project project =
-        ProjectManagerEx.getInstanceEx().newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
+      String projectName = FileUtilRt.getNameWithoutExtension(fileName);
+      Project project = ProjectManagerEx.getInstanceEx().newProject(projectName, path, false, false);
       assert project != null;
 
       project.putUserData(CREATION_PLACE, creationPlace);
@@ -351,13 +363,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
       ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
 
-      ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().cleanupForNextTest();
+      ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
     }
 
     ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
     if (projectManager.isDefaultProjectInitialized()) {
       Project defaultProject = projectManager.getDefaultProject();
-      ((PsiManagerEx)PsiManager.getInstance(defaultProject)).getFileManager().cleanupForNextTest();
+      ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
     }
 
     LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
@@ -410,32 +422,32 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @Override
   protected void tearDown() throws Exception {
-    CompositeException result = new CompositeException();
-    if (myProject != null) {
+    List<Throwable> exceptions = new SmartList<Throwable>();
+    Project project = myProject;
+    if (project != null) {
       try {
-        LightPlatformTestCase.doTearDown(getProject(), ourApplication, false);
+        LightPlatformTestCase.doTearDown(project, ourApplication, false, exceptions);
       }
       catch (Throwable e) {
-        result.add(e);
+        exceptions.add(e);
       }
+
+      disposeProject(exceptions);
     }
 
     try {
-      result.addAll(checkForSettingsDamage());
+      checkForSettingsDamage(exceptions);
     }
     catch (Throwable e) {
-      result.add(e);
+      exceptions.add(e);
     }
     try {
-      Project project = getProject();
-      disposeProject(result);
-
       if (project != null) {
         try {
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
         }
         catch (AssertionError e) {
-          result.add(e);
+          exceptions.add(e);
         }
       }
       try {
@@ -445,12 +457,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
       }
       catch (Throwable e) {
-        result.add(e);
+        exceptions.add(e);
       }
 
       if (!myAssertionsInTestDetected) {
         if (IdeaLogger.ourErrorsOccurred != null) {
-          result.add(IdeaLogger.ourErrorsOccurred);
+          exceptions.add(IdeaLogger.ourErrorsOccurred);
         }
       }
 
@@ -458,7 +470,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         super.tearDown();
       }
       catch (Throwable e) {
-        result.add(e);
+        exceptions.add(e);
       }
 
       try {
@@ -467,7 +479,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         }
       }
       catch (AssertionError error) {
-        result.add(error);
+        exceptions.add(error);
       }
       try {
         if (myThreadTracker != null) {
@@ -475,13 +487,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         }
       }
       catch (AssertionError error) {
-        result.add(error);
+        exceptions.add(error);
       }
       try {
-        LightPlatformTestCase.checkEditorsReleased();
+        LightPlatformTestCase.checkEditorsReleased(exceptions);
       }
       catch (Throwable error) {
-        result.add(error);
+        exceptions.add(error);
       }
     }
     finally {
@@ -492,11 +504,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       myEditorListenerTracker = null;
       myThreadTracker = null;
       ourTestCase = null;
+
+      CompoundRuntimeException.throwIfNotEmpty(exceptions);
     }
-    if (!result.isEmpty()) throw result;
   }
 
-  private void disposeProject(@NotNull CompositeException result) /* throws nothing */ {
+  private void disposeProject(@NotNull List<Throwable> exceptions) {
     try {
       DocumentCommitThread.getInstance().clearQueue();
       // sometimes SwingUtilities maybe confused about EDT at this point
@@ -504,39 +517,54 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         UIUtil.dispatchAllInvocationEvents();
       }
     }
-    catch (Exception e) {
-      result.add(e);
+    catch (Throwable e) {
+      exceptions.add(e);
     }
+
+    Project project = myProject;
+    if (project == null) {
+      return;
+    }
+
+    closeAndDisposeProjectAndCheckThatNoOpenProjects(project, exceptions);
+    myProject = null;
+  }
+
+  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) {
+    List<Throwable> exceptions = new SmartList<Throwable>();
+    closeAndDisposeProjectAndCheckThatNoOpenProjects(projectToClose, exceptions);
+    CompoundRuntimeException.throwIfNotEmpty(exceptions);
+  }
+
+  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose, @NotNull List<Throwable> exceptions) {
     try {
-      if (myProject != null) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-            if (projectManager instanceof ProjectManagerImpl) {
-              Collection<Project> projectsStillOpen = projectManager.closeTestProject(myProject);
-              if (!projectsStillOpen.isEmpty()) {
-                Project project = projectsStillOpen.iterator().next();
-                String message = "Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project);
-                try {
-                  projectManager.closeAndDispose(project);
-                }
-                catch (Exception e) {
-                  // ignore, we already have something to throw
-                }
-                throw new AssertionError(message);
-              }
-            }
-            Disposer.dispose(myProject);
+      ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+      if (projectManager instanceof ProjectManagerImpl) {
+        for (Project project : projectManager.closeTestProject(projectToClose)) {
+          exceptions.add(new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project)));
+          try {
+            ((ProjectManagerImpl)projectManager).closeProject(project, false, true, false);
           }
-        });
+          catch (Throwable e) {
+            exceptions.add(e);
+          }
+        }
       }
     }
-    catch (Exception e) {
-      result.add(e);
+    catch (Throwable e) {
+      exceptions.add(e);
     }
     finally {
-      myProject = null;
+      AccessToken token = WriteAction.start();
+      try {
+        Disposer.dispose(projectToClose);
+      }
+      catch (Throwable e) {
+        exceptions.add(e);
+      }
+      finally {
+        token.finish();
+      }
     }
   }
 
@@ -613,10 +641,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   private void runBareImpl() throws Throwable {
-    final Throwable[] throwables = new Throwable[1];
-    Runnable runnable = new Runnable() {
+    ThrowableRunnable<Throwable> runnable = new ThrowableRunnable<Throwable>() {
       @Override
-      public void run() {
+      public void run() throws Throwable {
         ourTestThread = Thread.currentThread();
         ourTestTime = getTimeRequired();
         try {
@@ -624,31 +651,37 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
             setUp();
           }
           catch (Throwable e) {
-            CompositeException result = new CompositeException(e);
             try {
               tearDown();
             }
-            catch (Throwable th) {
-              result.add(th);
+            catch (Throwable ignored) {
             }
-            throw result;
+
+            throw e;
           }
+
+          Throwable exception = null;
           try {
             myAssertionsInTestDetected = true;
             runTest();
             myAssertionsInTestDetected = false;
           }
           catch (Throwable e) {
-            throwables[0] = e;
-            throw e;
+            exception = e;
           }
           finally {
-            tearDown();
+            try {
+              tearDown();
+            }
+            catch (Throwable e) {
+              if (exception == null) {
+                exception = e;
+              }
+            }
           }
-        }
-        catch (Throwable throwable) {
-          if (throwables[0] == null) {  // report tearDown() problems if only no exceptions thrown from runTest()
-            throwables[0] = throwable;
+
+          if (exception != null) {
+            throw exception;
           }
         }
         finally {
@@ -661,10 +694,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     if (IdeaLogger.ourErrorsOccurred != null) {
       throw IdeaLogger.ourErrorsOccurred;
-    }
-
-    if (throwables[0] != null) {
-      throw throwables[0];
     }
 
     // just to make sure all deferred Runnable's to finish
@@ -697,9 +726,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return true;
   }
 
-  protected void runBareRunnable(Runnable runnable) throws Throwable {
+  protected void runBareRunnable(ThrowableRunnable<Throwable> runnable) throws Throwable {
     if (isRunInEdt()) {
-      SwingUtilities.invokeAndWait(runnable);
+      EdtTestUtil.runInEdtAndWait(runnable);
     }
     else {
       runnable.run();
@@ -877,14 +906,14 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected static void delete(@NotNull final VirtualFile file) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         try {
           file.delete(null);
         }
         catch (IOException e) {
-          fail();
+          throw new RuntimeException(e);
         }
       }
     });
@@ -918,6 +947,17 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }.execute().throwException();
     return copy[0];
+  }
+
+  public static void copyDirContentsTo(@NotNull final VirtualFile vTestRoot, @NotNull final VirtualFile toDir) {
+    new WriteCommandAction.Simple(null) {
+      @Override
+      protected void run() throws Throwable {
+        for (VirtualFile file : vTestRoot.getChildren()) {
+          VfsUtil.copy(this, file, toDir);
+        }
+      }
+    }.execute().throwException();
   }
 
   public static void setFileText(@NotNull final VirtualFile file, @NotNull final String text) throws IOException {

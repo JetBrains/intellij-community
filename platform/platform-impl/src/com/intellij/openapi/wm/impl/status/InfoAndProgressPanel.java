@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -376,45 +375,42 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myRefreshAndInfoPanel.revalidate();
     myRefreshAndInfoPanel.repaint();
 
-    UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.PRESENTATION_MODE || !uiSettings.SHOW_STATUS_BAR && Registry.is("ide.show.progress.without.status.bar")) {
-      final JRootPane pane = myInfoPanel.getRootPane();
-      assert pane != null;
-      final PresentationModeProgressPanel panel = new PresentationModeProgressPanel(inline);
-      final MyInlineProgressIndicator delegate = new MyInlineProgressIndicator(true, inline.getInfo(), inline) {
-        @Override
-        protected void updateProgress() {
-          super.updateProgress();
-          panel.update();
-        }
-      };
+    final JRootPane pane = myInfoPanel.getRootPane();
+    assert pane != null;
+    final PresentationModeProgressPanel panel = new PresentationModeProgressPanel(inline);
+    MyInlineProgressIndicator delegate = new MyInlineProgressIndicator(true, inline.getInfo(), inline) {
+      @Override
+      protected void updateProgress() {
+        super.updateProgress();
+        panel.update();
+      }
+    };
 
-      Disposer.register(inline, delegate);
+    Disposer.register(inline, delegate);
 
-      final Component anchor = getAnchor(pane);
+    Component anchor = getAnchor(pane);
 
-      JBPopupFactory.getInstance().createBalloonBuilder(panel.getProgressPanel())
-        .setFadeoutTime(0)
-        .setFillColor(Gray.TRANSPARENT)
-        .setShowCallout(false)
-        .setBorderColor(Gray.TRANSPARENT)
-        .setBorderInsets(JBUI.emptyInsets())
-        .setAnimationCycle(0)
-        .setCloseButtonEnabled(false)
-        .setHideOnClickOutside(false)
-        .setDisposable(inline)
-        .setHideOnFrameResize(false)
-        .setHideOnKeyOutside(false)
-        .setBlockClicksThroughBalloon(true)
-        .setHideOnAction(false)
-        .createBalloon().show(new PositionTracker<Balloon>(anchor) {
-        @Override
-        public RelativePoint recalculateLocation(Balloon object) {
-          Component c = getAnchor(pane);
-          return new RelativePoint(c, new Point(c.getWidth() - 150, c.getHeight() - 45));
-        }
-      }, Balloon.Position.above);
-    }
+    JBPopupFactory.getInstance().createBalloonBuilder(panel.getProgressPanel())
+      .setFadeoutTime(0)
+      .setFillColor(Gray.TRANSPARENT)
+      .setShowCallout(false)
+      .setBorderColor(Gray.TRANSPARENT)
+      .setBorderInsets(JBUI.emptyInsets())
+      .setAnimationCycle(0)
+      .setCloseButtonEnabled(false)
+      .setHideOnClickOutside(false)
+      .setDisposable(inline)
+      .setHideOnFrameResize(false)
+      .setHideOnKeyOutside(false)
+      .setBlockClicksThroughBalloon(true)
+      .setHideOnAction(false)
+      .createBalloon().show(new PositionTracker<Balloon>(anchor) {
+      @Override
+      public RelativePoint recalculateLocation(Balloon object) {
+        Component c = getAnchor(pane);
+        return new RelativePoint(c, new Point(c.getWidth() - 150, c.getHeight() - 45));
+      }
+    }, Balloon.Position.above);
   }
 
   @NotNull

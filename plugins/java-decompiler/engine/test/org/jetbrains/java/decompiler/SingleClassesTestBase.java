@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.junit.After;
 import org.junit.Before;
 
@@ -28,7 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqual;
 import static org.junit.Assert.assertTrue;
 
 public abstract class SingleClassesTestBase {
@@ -50,26 +49,31 @@ public abstract class SingleClassesTestBase {
     return Collections.emptyMap();
   }
 
-  protected void doTest(String testFile) {
-    try {
-      File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
-      assertTrue(classFile.isFile());
-      String testName = classFile.getName().substring(0, classFile.getName().length() - 6);
+  protected void doTest(String testFile, String... companionFiles) {
+    ConsoleDecompiler decompiler = fixture.getDecompiler();
 
-      ConsoleDecompiler decompiler = fixture.getDecompiler();
-
-      for (File file : collectClasses(classFile)) decompiler.addSpace(file, true);
-      decompiler.decompileContext();
-
-      File decompiledFile = new File(fixture.getTargetDir(), testName + ".java");
-      assertTrue(decompiledFile.isFile());
-      File referenceFile = new File(fixture.getTestDataDir(), "results/" + testName + ".dec");
-      assertTrue(referenceFile.isFile());
-      compareContent(decompiledFile, referenceFile);
+    File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
+    assertTrue(classFile.isFile());
+    for (File file : collectClasses(classFile)) {
+      decompiler.addSpace(file, true);
     }
-    catch (Exception e) {
-      throw new RuntimeException(e);
+
+    for (String companionFile : companionFiles) {
+      File companionClassFile = new File(fixture.getTestDataDir(), "/classes/" + companionFile + ".class");
+      assertTrue(companionClassFile.isFile());
+      for (File file : collectClasses(companionClassFile)) {
+        decompiler.addSpace(file, true);
+      }
     }
+
+    decompiler.decompileContext();
+
+    String testName = classFile.getName().substring(0, classFile.getName().length() - 6);
+    File decompiledFile = new File(fixture.getTargetDir(), testName + ".java");
+    assertTrue(decompiledFile.isFile());
+    File referenceFile = new File(fixture.getTestDataDir(), "results/" + testName + ".dec");
+    assertTrue(referenceFile.isFile());
+    assertFilesEqual(referenceFile, decompiledFile);
   }
 
   private static List<File> collectClasses(File classFile) {
@@ -89,16 +93,5 @@ public abstract class SingleClassesTestBase {
     }
 
     return files;
-  }
-
-  private static void compareContent(File decompiledFile, File referenceFile) throws IOException {
-    String decompiledContent = new String(InterpreterUtil.getBytes(decompiledFile), "UTF-8");
-
-    String referenceContent = new String(InterpreterUtil.getBytes(referenceFile), "UTF-8");
-    if (InterpreterUtil.IS_WINDOWS && !referenceContent.contains("\r\n")) {
-      referenceContent = referenceContent.replace("\n", "\r\n");  // fix for broken Git checkout on Windows
-    }
-
-    assertEquals(referenceContent, decompiledContent);
   }
 }

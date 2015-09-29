@@ -31,7 +31,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.WeakestTypeFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,8 +92,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
     return new DeclareCollectionAsInterfaceFix((String)infos[0]);
   }
 
-  private static class DeclareCollectionAsInterfaceFix
-    extends InspectionGadgetsFix {
+  private static class DeclareCollectionAsInterfaceFix extends InspectionGadgetsFix {
 
     private final String typeString;
 
@@ -124,42 +122,18 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
         return;
       }
       final StringBuilder newElementText = new StringBuilder(typeString);
-      final PsiJavaCodeReferenceElement referenceElement =
-        (PsiJavaCodeReferenceElement)parent;
-      final PsiReferenceParameterList parameterList =
-        referenceElement.getParameterList();
+      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)parent;
+      final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
       if (parameterList != null) {
-        final PsiTypeElement[] typeParameterElements =
-          parameterList.getTypeParameterElements();
-        if (typeParameterElements.length > 0) {
-          newElementText.append('<');
-          final PsiTypeElement typeParameterElement1 =
-            typeParameterElements[0];
-          newElementText.append(typeParameterElement1.getText());
-          for (int i = 1; i < typeParameterElements.length; i++) {
-            newElementText.append(',');
-            final PsiTypeElement typeParameterElement =
-              typeParameterElements[i];
-            newElementText.append(typeParameterElement.getText());
-          }
-          newElementText.append('>');
-        }
+        newElementText.append(parameterList.getText());
       }
       final PsiElement grandParent = parent.getParent();
       if (!(grandParent instanceof PsiTypeElement)) {
         return;
       }
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-      final PsiElementFactory factory = facade.getElementFactory();
-      final PsiType type = factory.createTypeFromText(
-        newElementText.toString(), element);
-      final PsiTypeElement newTypeElement = factory.createTypeElement(
-        type);
-      final PsiElement insertedElement =
-        grandParent.replace(newTypeElement);
-      final JavaCodeStyleManager styleManager =
-        JavaCodeStyleManager.getInstance(project);
-      styleManager.shortenClassReferences(insertedElement);
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      final PsiTypeElement newTypeElement = factory.createTypeElementFromText(newElementText.toString(), element);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(grandParent.replace(newTypeElement));
     }
   }
 
@@ -168,8 +142,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
     return new DeclareCollectionAsInterfaceVisitor();
   }
 
-  private class DeclareCollectionAsInterfaceVisitor
-    extends BaseInspectionVisitor {
+  private class DeclareCollectionAsInterfaceVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {
@@ -205,40 +178,8 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
       if (!CollectionUtils.isConcreteCollectionClass(type) || LibraryUtil.isOverrideOfLibraryMethodParameter(variable)) {
         return;
       }
-      final PsiTypeElement typeElement = variable.getTypeElement();
-      if (typeElement == null) {
-        return;
-      }
-      final PsiJavaCodeReferenceElement reference =
-        typeElement.getInnermostComponentReferenceElement();
-      if (reference == null) {
-        return;
-      }
-      final PsiElement nameElement = reference.getReferenceNameElement();
-      if (nameElement == null) {
-        return;
-      }
-      final Collection<PsiClass> weaklings =
-        WeakestTypeFinder.calculateWeakestClassesNecessary(variable,
-                                                           false, true);
-      if (weaklings.isEmpty()) {
-        return;
-      }
-      final List<PsiClass> weaklingList = new ArrayList(weaklings);
-      final PsiClassType javaLangObject = TypeUtils.getObjectType(variable);
-      final PsiClass objectClass = javaLangObject.resolve();
-      weaklingList.remove(objectClass);
-      if (weaklingList.isEmpty()) {
-        final String typeText = type.getCanonicalText();
-        final String interfaceText =
-          CollectionUtils.getInterfaceForClass(typeText);
-        registerError(nameElement, interfaceText);
-      }
-      else {
-        final PsiClass weakling = weaklingList.get(0);
-        final String qualifiedName = weakling.getQualifiedName();
-        registerError(nameElement, qualifiedName);
-      }
+
+      checkToWeaken(type, variable.getTypeElement(), variable);
     }
 
     @Override
@@ -252,34 +193,31 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
         return;
       }
       final PsiType type = method.getReturnType();
-      if (!CollectionUtils.isConcreteCollectionClass(type)) {
+      if (!CollectionUtils.isConcreteCollectionClass(type) || LibraryUtil.isOverrideOfLibraryMethod(method)) {
         return;
       }
-      if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
-        return;
-      }
-      final PsiTypeElement typeElement = method.getReturnTypeElement();
+
+      checkToWeaken(type, method.getReturnTypeElement(), method);
+    }
+
+    private void checkToWeaken(PsiType type, PsiTypeElement typeElement, PsiElement variable) {
       if (typeElement == null) {
         return;
       }
-      final PsiJavaCodeReferenceElement referenceElement =
-        typeElement.getInnermostComponentReferenceElement();
-      if (referenceElement == null) {
+      final PsiJavaCodeReferenceElement reference = typeElement.getInnermostComponentReferenceElement();
+      if (reference == null) {
         return;
       }
-      final PsiElement nameElement =
-        referenceElement.getReferenceNameElement();
+      final PsiElement nameElement = reference.getReferenceNameElement();
       if (nameElement == null) {
         return;
       }
-      final Collection<PsiClass> weaklings =
-        WeakestTypeFinder.calculateWeakestClassesNecessary(method,
-                                                           false, true);
+      final Collection<PsiClass> weaklings = WeakestTypeFinder.calculateWeakestClassesNecessary(variable, false, true);
       if (weaklings.isEmpty()) {
         return;
       }
-      final List<PsiClass> weaklingList = new ArrayList(weaklings);
-      final PsiClassType javaLangObject = TypeUtils.getObjectType(method);
+      final PsiClassType javaLangObject = PsiType.getJavaLangObject(nameElement.getManager(), nameElement.getResolveScope());
+      final List<PsiClass> weaklingList = new ArrayList<PsiClass>(weaklings);
       final PsiClass objectClass = javaLangObject.resolve();
       weaklingList.remove(objectClass);
       if (weaklingList.isEmpty()) {
@@ -292,7 +230,8 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
       }
       else {
         final PsiClass weakling = weaklingList.get(0);
-        registerError(nameElement, weakling.getQualifiedName());
+        final String qualifiedName = weakling.getQualifiedName();
+        registerError(nameElement, qualifiedName);
       }
     }
 

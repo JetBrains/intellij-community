@@ -1090,9 +1090,6 @@ public class Switcher extends AnAction implements DumbAware {
 
       @Override
       public void propertyChange(@NotNull PropertyChangeEvent evt) {
-        final JBList list = getSelectedList();
-        final Object value = list.getSelectedValue();
-
         if (project.isDisposed()) {
           myPopup.cancel();
           return;
@@ -1106,11 +1103,6 @@ public class Switcher extends AnAction implements DumbAware {
         else {
           files.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
           toolWindows.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
-        }
-        files.repaint();
-        toolWindows.repaint();
-        if (value != null) {
-          ScrollingUtil.ensureSelectionExists(getSelectedList(list));
         }
       }
     }

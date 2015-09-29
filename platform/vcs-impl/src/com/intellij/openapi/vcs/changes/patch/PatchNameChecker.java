@@ -19,6 +19,7 @@ import java.io.File;
 
 public class PatchNameChecker {
   public final static int MAX = 100;
+  private final static int MAX_PATH = 255; // Windows path len restrictions
   private final String myName;
   private boolean myPreventsOk;
   private String myError;
@@ -35,8 +36,8 @@ public class PatchNameChecker {
       myError = "File name cannot be empty";
       myPreventsOk = true;
       return false;
-    } else if (myName.length() > MAX) {
-      myError = "File name length cannot exceed " + MAX + " characters";
+    } else if (myPath.length() > MAX_PATH) {
+      myError = "File path should not be too long.";
       myPreventsOk = true;
       return false;
     } else if (new File(myPath).exists()) {

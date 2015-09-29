@@ -332,6 +332,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   public void onEntityInitialized(RefElement refElement, PsiElement psiElement) {
+    if (myRefManager.isOfflineView()) return;
     if (isEntryPoint(refElement)) {
       getEntryPointsManager().addEntryPoint(refElement, false);
     }
@@ -493,6 +494,12 @@ public class RefJavaManagerImpl extends RefJavaManager {
     public void visitVariable(PsiVariable variable) {
       super.visitVariable(variable);
       myRefUtil.addTypeReference(variable, variable.getType(), myRefManager);
+      if (variable instanceof PsiParameter) {
+        final RefElement reference = myRefManager.getReference(variable);
+        if (reference instanceof RefParameterImpl) {
+          ((RefParameterImpl)reference).buildReferences();
+        }
+      }
     }
 
     @Override

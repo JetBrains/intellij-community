@@ -102,7 +102,7 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
             if (!brokenOff) {
               final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
               try {
-                final PsiType targetParam = elementFactory.createTypeFromText(myNewType, typeElement);
+                final PsiType targetParam = elementFactory.createTypeFromText(myNewType, aClass);
                 if (!(targetParam instanceof PsiClassType)) {
                   HintManager.getInstance().showErrorHint(editor,
                                                           JavaErrorMessages.message("generics.type.argument.cannot.be.of.primitive.type"));

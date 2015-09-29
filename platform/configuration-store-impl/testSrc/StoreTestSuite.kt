@@ -19,13 +19,14 @@ import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
 // All in package is very slow, so, we have to use Suite to speedup
-RunWith(Suite::class)
-Suite.SuiteClasses(
+@RunWith(Suite::class)
+@Suite.SuiteClasses(
   ApplicationStoreTest::class,
   ProjectStoreTest::class, DefaultProjectStoreTest::class,
   ModuleStoreTest::class, ModuleStoreRenameTest::class,
   StorageManagerTest::class,
   SchemeManagerTest::class,
-  XmlElementStorageTest::class
+  XmlElementStorageTest::class,
+  DirectoryBasedStorageTest::class
 )
 class StoreTestSuite

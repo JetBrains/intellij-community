@@ -16,7 +16,7 @@ import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
 
-public class RestApiTest {
+class RestApiTest {
   companion object {
     @ClassRule val projectRule = ProjectRule()
   }
@@ -25,29 +25,29 @@ public class RestApiTest {
   private val manager = TestManager(projectRule, tempDirManager)
 
   private val ruleChain = RuleChain(tempDirManager, manager)
-  public Rule fun getChain(): RuleChain = ruleChain
+  @Rule fun getChain() = ruleChain
 
-  Test(timeout = 60000)
-  TestDescriptor(filePath = "", status = 400)
-  public fun fileEmptyRequest() {
+  @Test(timeout = 60000)
+  @TestDescriptor(filePath = "", status = 400)
+  fun fileEmptyRequest() {
     doTest()
   }
 
-  Test(timeout = 60000)
-  TestDescriptor(filePath = "foo.txt", relativeToProject = true, status = 200)
-  public fun relativeToProject() {
+  @Test(timeout = 60000)
+  @TestDescriptor(filePath = "foo.txt", relativeToProject = true, status = 200)
+  fun relativeToProject() {
     doTest()
   }
 
-  Test(timeout = 60000)
-  TestDescriptor(filePath = "foo.txt", relativeToProject = true, line = 1, status = 200)
-  public fun relativeToProjectWithLine() {
+  @Test(timeout = 60000)
+  @TestDescriptor(filePath = "foo.txt", relativeToProject = true, line = 1, status = 200)
+  fun relativeToProjectWithLine() {
     doTest()
   }
 
-  Test(timeout = 60000)
-  TestDescriptor(filePath = "foo.txt", relativeToProject = true, line = 1, column = 13, status = 200)
-  public fun relativeToProjectWithLineAndColumn() {
+  @Test(timeout = 60000)
+  @TestDescriptor(filePath = "foo.txt", relativeToProject = true, line = 1, column = 13, status = 200)
+  fun relativeToProjectWithLineAndColumn() {
     doTest()
   }
 
@@ -57,26 +57,26 @@ public class RestApiTest {
     doTest()
   }
 
-  Test(timeout = 60000)
-  TestDescriptor(filePath = "bar/42/foo.txt", doNotCreate = true, status = 404)
-  public fun relativeNonExistent() {
+  @Test(timeout = 60000)
+  @TestDescriptor(filePath = "bar/42/foo.txt", doNotCreate = true, status = 404)
+  fun relativeNonExistent() {
     doTest()
   }
 
-  Test(timeout = 60000)
-  TestDescriptor(filePath = "_tmp_", doNotCreate = true, status = 404)
-  public fun absoluteNonExistent() {
+  @Test(timeout = 60000)
+  @TestDescriptor(filePath = "_tmp_", doNotCreate = true, status = 404)
+  fun absoluteNonExistent() {
     doTest()
   }
 
-  Test(timeout = 60000)
-  TestDescriptor(filePath = "_tmp_", status = 200)
-  public fun absolute() {
+  @Test(timeout = 60000)
+  @TestDescriptor(filePath = "_tmp_", status = 200)
+  fun absolute() {
     doTest()
   }
 
   private fun doTest() {
-    val serviceUrl = "http://localhost:" + BuiltInServerManager.getInstance().getPort() + "/api/file"
+    val serviceUrl = "http://localhost:${BuiltInServerManager.getInstance().port}/api/file"
     var url = serviceUrl + (if (manager.filePath == null) "" else ("/${manager.filePath}"))
     val line = manager.annotation?.line ?: -1
     if (line != -1) {
@@ -89,21 +89,21 @@ public class RestApiTest {
 
     var connection = URL(url).openConnection() as HttpURLConnection
     val expectedStatus = HttpResponseStatus.valueOf(manager.annotation?.status ?: 200)
-    assertThat(HttpResponseStatus.valueOf(connection.getResponseCode())).isEqualTo(expectedStatus)
+    assertThat(HttpResponseStatus.valueOf(connection.responseCode)).isEqualTo(expectedStatus)
 
     connection = URL("$serviceUrl?file=${manager.filePath ?: ""}&line=$line&column=$column").openConnection() as HttpURLConnection
-    assertThat(HttpResponseStatus.valueOf(connection.getResponseCode())).isEqualTo(expectedStatus)
+    assertThat(HttpResponseStatus.valueOf(connection.responseCode)).isEqualTo(expectedStatus)
 
     connection = URL("$serviceUrl").openConnection() as HttpURLConnection
-    connection.setRequestMethod("POST")
-    connection.setDoOutput(true)
-    val writer = JsonWriter(OutputStreamWriter(BufferedOutputStream(connection.getOutputStream()), CharsetToolkit.UTF8_CHARSET))
+    connection.requestMethod = "POST"
+    connection.doOutput = true
+    val writer = JsonWriter(OutputStreamWriter(BufferedOutputStream(connection.outputStream), CharsetToolkit.UTF8_CHARSET))
     writer.beginObject()
     writer.name("file").value(manager.filePath)
     writer.name("line").value(line)
     writer.name("column").value(column)
     writer.endObject()
     writer.close()
-    assertThat(HttpResponseStatus.valueOf(connection.getResponseCode())).isEqualTo(expectedStatus)
+    assertThat(HttpResponseStatus.valueOf(connection.responseCode)).isEqualTo(expectedStatus)
   }
 }

@@ -27,6 +27,11 @@ public class HtmlFileStructureTest extends FileStructureTestBase {
   public void setUp() throws Exception {
     super.setUp();
     myHtml5OutlineModeDefault = PropertiesComponent.getInstance().getBoolean(getHtml5OutlineModePropertyName());
+  }
+
+  @Override
+  protected void configureDefault() {
+    super.configureDefault();
     setHtml5OutlineMode(true);
   }
 

@@ -462,12 +462,16 @@ public class JavaKeywordCompletion {
     if (prevLeaf == null || !(prevLeaf instanceof PsiIdentifier || prevLeaf.textMatches(">"))) return;
 
     PsiClass psiClass = null;
-    if (prevLeaf instanceof PsiIdentifier && prevLeaf.getParent() instanceof PsiClass) {
-      psiClass = (PsiClass)prevLeaf.getParent();
+    PsiElement prevParent = prevLeaf.getParent();
+    if (prevLeaf instanceof PsiIdentifier && prevParent instanceof PsiClass) {
+      psiClass = (PsiClass)prevParent;
     } else {
       PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(prevLeaf, PsiReferenceList.class);
       if (referenceList != null && referenceList.getParent() instanceof PsiClass) {
         psiClass = (PsiClass)referenceList.getParent();
+      }
+      else if (prevParent instanceof PsiTypeParameterList && prevParent.getParent() instanceof PsiClass) {
+        psiClass = (PsiClass)prevParent.getParent();
       }
     }
 

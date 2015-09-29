@@ -115,7 +115,7 @@ public abstract class BaseCompleteMacro extends Macro {
           templateState.nextTab();
         }
         else if (caret > range.getEndOffset()) {
-          templateState.cancelTemplate();
+          templateState.gotoEnd(true);
         }
       }
     }

@@ -86,6 +86,7 @@ public class ApplyPatchMergeTool implements MergeTool {
       return myViewer.getPreferredFocusedComponent();
     }
 
+    @NotNull
     @Override
     public ToolbarComponents init() {
       final Project project = myMergeContext.getProject();
@@ -113,7 +114,7 @@ public class ApplyPatchMergeTool implements MergeTool {
       components.closeHandler = new BooleanGetter() {
         @Override
         public boolean get() {
-          return MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext);
+          return MergeUtil.showExitWithoutApplyingChangesDialog(MyViewer.this, myMergeRequest, myMergeContext);
         }
       };
       return components;
@@ -129,7 +130,7 @@ public class ApplyPatchMergeTool implements MergeTool {
         @Override
         public void actionPerformed(ActionEvent e) {
           if (result == MergeResult.CANCEL &&
-              !MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext)) {
+              !MergeUtil.showExitWithoutApplyingChangesDialog(MyViewer.this, myMergeRequest, myMergeContext)) {
             return;
           }
           myMergeContext.finishMerge(result);

@@ -23,12 +23,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public abstract class ApplicationStarterBase extends ApplicationStarterEx {
@@ -78,7 +82,7 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
   @Override
   public void premain(String[] args) {
     if (!checkArguments(args)) {
-      System.err.println(getUsageMessage());
+      System.out.println(getUsageMessage());
       System.exit(1);
     }
   }
@@ -101,6 +105,25 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
     }
 
     System.exit(0);
+  }
+
+  @NotNull
+  public static List<VirtualFile> findFiles(@NotNull List<String> filePaths, @Nullable String currentDirectory) throws Exception {
+    List<VirtualFile> files = new ArrayList<VirtualFile>();
+
+    for (String path : filePaths) {
+      VirtualFile virtualFile = findFile(path, currentDirectory);
+      if (virtualFile == null) throw new Exception("Can't find file " + path);
+      files.add(virtualFile);
+    }
+
+    VfsUtil.markDirtyAndRefresh(false, false, false, VfsUtilCore.toVirtualFileArray(files));
+
+    for (int i = 0; i < filePaths.size(); i++) {
+      if (!files.get(i).isValid()) throw new Exception("Can't find file " + filePaths.get(i));
+    }
+
+    return files;
   }
 
   @Nullable

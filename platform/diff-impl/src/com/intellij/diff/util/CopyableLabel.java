@@ -18,7 +18,6 @@ package com.intellij.diff.util;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,7 +62,7 @@ public class CopyableLabel extends JTextArea {
     setOpaque(false);
     setText(StringUtil.stripHtml(text, false));
     setCaretPosition(0);
-    UIUtil.putClientProperty(this, JBSwingUtilities.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ELLIPSIS_LABEL));
+    UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ELLIPSIS_LABEL));
   }
 
   @Override

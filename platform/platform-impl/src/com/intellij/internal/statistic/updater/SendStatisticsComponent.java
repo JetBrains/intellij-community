@@ -15,18 +15,20 @@
  */
 package com.intellij.internal.statistic.updater;
 
-import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.FrameStateListener;
+import com.intellij.ide.FrameStateManager;
 import com.intellij.internal.statistic.StatisticsUploadAssistant;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.connect.StatisticsServiceEP;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +42,9 @@ public class SendStatisticsComponent implements ApplicationComponent {
 
   private final Alarm myAlarm;
 
-  public SendStatisticsComponent() {
+  private final FrameStateManager myFrameStateManager;
+
+  public SendStatisticsComponent(@NotNull FrameStateManager frameStateManager) {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
 
     NotificationsConfigurationImpl.remove("SendUsagesStatistics");
@@ -48,22 +52,26 @@ public class SendStatisticsComponent implements ApplicationComponent {
       StatisticsNotificationManager.GROUP_DISPLAY_ID,
       NotificationDisplayType.STICKY_BALLOON,
       false);
+
+    myFrameStateManager = frameStateManager;
   }
 
   private void runStatisticsService() {
     final StatisticsService statisticsService = StatisticsUploadAssistant.getStatisticsService();
 
-    if (StatisticsUploadAssistant.showNotification()) {
-      Application app = ApplicationManager.getApplication();
-      app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    if (StatisticsUploadAssistant.isShouldShowNotification()) {
+      myFrameStateManager.addListener(new FrameStateListener.Adapter() {
         @Override
-        public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
-          myAlarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              StatisticsNotificationManager.showNotification(statisticsService);
-            }
-          }, 30 * 1000);
+        public void onFrameActivated() {
+          if (((WindowManagerEx)WindowManager.getInstance()).getMostRecentFocusedWindow() instanceof IdeFrameImpl) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                StatisticsNotificationManager.showNotification(statisticsService);
+              }
+            });
+            myFrameStateManager.removeListener(this);
+          }
         }
       });
     }

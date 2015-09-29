@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,11 @@ import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.configurations.JavaCommandLineState;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -53,17 +51,9 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @NotNull
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
-    OSProcessHandler handler;
-    if (SystemInfo.isWindows) {
-      handler = super.startProcess();
-    }
-    else {
-      handler = KillableColoredProcessHandler.create(createCommandLine());
-      ProcessTerminatedListener.attach(handler);
-    }
-
-    RunnerSettings runnerSettings = getRunnerSettings();
-    JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, runnerSettings);
+    OSProcessHandler handler = new KillableColoredProcessHandler(createCommandLine());
+    ProcessTerminatedListener.attach(handler);
+    JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;
   }
 

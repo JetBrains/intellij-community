@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.util.lang;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.misc.Resource;
 
 import java.io.*;
 import java.net.URL;
@@ -86,13 +85,13 @@ class FileLoader extends Loader {
 
       file = new File(myRootDir, name.replace('/', File.separatorChar));
       if (!check || file.exists()) {     // check means we load or process resource so we check its existence via old way
-        return new MyResource(name, url, file, !check);
+        return new MyResource(url, file, !check);
       }
     }
     catch (Exception exception) {
       if (!check && file != null && file.exists()) {
         try {   // we can not open the file if it is directory, Resource still can be created
-          return new MyResource(name, url, file, false);
+          return new MyResource(url, file, false);
         }
         catch (IOException ex) {}
       }
@@ -253,21 +252,14 @@ class FileLoader extends Loader {
     return loaderData;
   }
 
-  private class MyResource extends Resource {
-    private final String myName;
+  private static class MyResource extends Resource {
     private final URL myUrl;
     private final File myFile;
 
-    public MyResource(String name, URL url, File file, boolean willLoadBytes) throws IOException {
-      myName = name;
+    public MyResource(URL url, File file, boolean willLoadBytes) throws IOException {
       myUrl = url;
       myFile = file;
-      if (willLoadBytes) getByteBuffer(); // check for existence by creating cached file input stream
-    }
-
-    @Override
-    public String getName() {
-      return myName;
+      if (willLoadBytes) getInputStream().close(); // check file existence
     }
 
     @Override
@@ -276,25 +268,17 @@ class FileLoader extends Loader {
     }
 
     @Override
-    public URL getCodeSourceURL() {
-      return getBaseURL();
-    }
-
-    @Override
     public InputStream getInputStream() throws IOException {
       return new BufferedInputStream(new FileInputStream(myFile));
     }
 
     @Override
-    public int getContentLength() throws IOException {
-      return -1;
-    }
-
-    public String toString() {
-      return myFile.getAbsolutePath();
+    public byte[] getBytes() throws IOException {
+      return FileUtil.loadFileBytes(myFile);
     }
   }
 
+  @Override
   public String toString() {
     return "FileLoader [" + myRootDir + "]";
   }

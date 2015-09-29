@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.webcore.packaging.PackageManagementService;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,4 +33,6 @@ public abstract class PyPackageManagers {
 
   @NotNull
   public abstract PyPackageManager forSdk(Sdk sdk);
+
+  public abstract PackageManagementService getManagementService(Project project, Sdk sdk);
 }

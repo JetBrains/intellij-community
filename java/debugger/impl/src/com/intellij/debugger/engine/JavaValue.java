@@ -310,11 +310,12 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     @NotNull
     @Override
     public String getSeparator() {
+      boolean emptyAfterSeparator = !myValueDescriptor.isShowIdLabel() && StringUtil.isEmpty(myValue);
       String declaredType = myValueDescriptor.getDeclaredTypeLabel();
       if (!StringUtil.isEmpty(declaredType)) {
-        return declaredType + " " + DEFAULT_SEPARATOR;
+        return emptyAfterSeparator ? declaredType : declaredType + " " + DEFAULT_SEPARATOR;
       }
-      return DEFAULT_SEPARATOR;
+      return emptyAfterSeparator ? "" : DEFAULT_SEPARATOR;
     }
 
     @Override

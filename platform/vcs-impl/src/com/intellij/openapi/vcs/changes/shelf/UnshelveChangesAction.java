@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.google.common.primitives.Ints;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,13 +32,18 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class UnshelveChangesAction extends DumbAwareAction {
@@ -64,6 +70,9 @@ public class UnshelveChangesAction extends DumbAwareAction {
       if (sameNamedList != null) {
         list = sameNamedList;
       }
+      else {
+        list = tryToMatchWithExistingChangelist(changeListManager, defaultName);
+      }
     }
     if (list == null) {
       list = changeListManager.getDefaultChangeList();
@@ -78,13 +87,31 @@ public class UnshelveChangesAction extends DumbAwareAction {
 
     final List<ShelvedBinaryFile> finalBinaryFiles = binaryFiles;
     final List<ShelvedChange> finalChanges = changes;
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Unshelve changes", true, BackgroundFromStartOption.getInstance()) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Unshelve Changes", true, BackgroundFromStartOption.getInstance()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (ShelvedChangeList changeList : changeLists) {
           ShelveChangesManager.getInstance(project)
             .unshelveChangeList(changeList, finalChanges, finalBinaryFiles, chooser.getSelectedList(), true);
         }
+      }
+    });
+  }
+
+  @Nullable
+  private static LocalChangeList tryToMatchWithExistingChangelist(@NotNull ChangeListManager changeListManager,
+                                                                  @NotNull final String defaultName) {
+    List<LocalChangeList> matched = ContainerUtil.findAll(changeListManager.getChangeListsCopy(), new Condition<LocalChangeList>() {
+      @Override
+      public boolean value(LocalChangeList list) {
+        return defaultName.contains(list.getName().trim());
+      }
+    });
+
+    return matched.isEmpty() ? null : Collections.max(matched, new Comparator<LocalChangeList>() {
+      @Override
+      public int compare(LocalChangeList o1, LocalChangeList o2) {
+        return Ints.compare(o1.getName().trim().length(), o2.getName().trim().length());
       }
     });
   }

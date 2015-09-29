@@ -17,20 +17,19 @@ package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -44,7 +43,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 6/13/13 5:42 PM
  */
-public class DetachExternalProjectAction extends ExternalSystemNodeAction<ProjectData> implements DumbAware {
+public class DetachExternalProjectAction extends ExternalSystemNodeAction<ProjectData> {
 
   public DetachExternalProjectAction() {
     super(ProjectData.class);
@@ -79,9 +78,8 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
     ExternalProjectsManager.getInstance(project).forgetExternalProjectData(projectSystemId, projectData.getLinkedExternalProjectPath());
 
     // Process orphan modules.
-    PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
     List<Module> orphanModules = ContainerUtilRt.newArrayList();
-    for (Module module : platformFacade.getModules(project)) {
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (!ExternalSystemApiUtil.isExternalSystemAwareModule(projectSystemId, module)) continue;
 
       String path = ExternalSystemApiUtil.getExternalRootProjectPath(module);

@@ -42,10 +42,6 @@ class TryWithMultipleResourcesPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiTryStatement tryStatement = (PsiTryStatement)parent;
-    final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-    if (finallyBlock != null) {
-      return false;
-    }
     final PsiResourceList resourceList = tryStatement.getResourceList();
     if (resourceList == null) {
       return false;

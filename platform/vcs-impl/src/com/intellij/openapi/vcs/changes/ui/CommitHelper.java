@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -257,6 +258,9 @@ public class CommitHelper {
       processor.doBeforeRefresh();
 
       AbstractVcsHelper.getInstance(myProject).showErrors(processor.getVcsExceptions(), myActionName);
+    }
+    catch (ProcessCanceledException pce) {
+      throw pce;
     }
     catch (RuntimeException e) {
       LOG.error(e);

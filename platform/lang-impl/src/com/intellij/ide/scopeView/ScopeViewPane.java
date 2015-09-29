@@ -56,15 +56,14 @@ import java.util.List;
  */
 public class ScopeViewPane extends AbstractProjectViewPane {
   @NonNls public static final String ID = "Scope";
-  private final ProjectView myProjectView;
   private ScopeTreeViewPanel myViewPanel;
   private final DependencyValidationManager myDependencyValidationManager;
   private final NamedScopeManager myNamedScopeManager;
   private final NamedScopesHolder.ScopeListener myScopeListener;
 
-  public ScopeViewPane(final Project project, ProjectView projectView, DependencyValidationManager dependencyValidationManager, NamedScopeManager namedScopeManager) {
+  public ScopeViewPane(@NotNull Project project, DependencyValidationManager dependencyValidationManager, NamedScopeManager namedScopeManager) {
     super(project);
-    myProjectView = projectView;
+
     myDependencyValidationManager = dependencyValidationManager;
     myNamedScopeManager = namedScopeManager;
     myScopeListener = new NamedScopesHolder.ScopeListener() {
@@ -76,16 +75,21 @@ public class ScopeViewPane extends AbstractProjectViewPane {
         refreshProjectViewAlarm.addRequest(new Runnable(){
           @Override
           public void run() {
-            if (myProject.isDisposed()) return;
+            if (myProject.isDisposed()) {
+              return;
+            }
+
             final String subId = getSubId();
-            final String id = myProjectView.getCurrentViewId();
-            myProjectView.removeProjectPane(ScopeViewPane.this);
-            myProjectView.addProjectPane(ScopeViewPane.this);
+            ProjectView projectView = ProjectView.getInstance(myProject);
+            final String id = projectView.getCurrentViewId();
+            projectView.removeProjectPane(ScopeViewPane.this);
+            projectView.addProjectPane(ScopeViewPane.this);
             if (id != null) {
               if (Comparing.strEqual(id, getId())) {
-                myProjectView.changeView(id, subId);
-              } else {
-                myProjectView.changeView(id);
+                projectView.changeView(id, subId);
+              }
+              else {
+                projectView.changeView(id);
               }
             }
           }
@@ -225,15 +229,13 @@ public class ScopeViewPane extends AbstractProjectViewPane {
         (psiFileSystemItem instanceof PsiFile && packageSet.contains((PsiFile)psiFileSystemItem, holder))) {
       if (!name.equals(getSubId())) {
         if (!requestFocus) return true;
-        myProjectView.changeView(getId(), name);
+        ProjectView.getInstance(myProject).changeView(getId(), name);
       }
       myViewPanel.selectNode(element, psiFileSystemItem, requestFocus);
       return true;
     }
     return false;
   }
-
-
 
   @Override
   public int getWeight() {

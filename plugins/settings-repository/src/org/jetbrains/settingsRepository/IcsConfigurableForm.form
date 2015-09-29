@@ -16,7 +16,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="etched" title="Read Only Sources"/>
+        <border type="etched" title="Read-only sources"/>
         <children/>
       </grid>
       <component id="7e36f" class="javax.swing.JCheckBox" binding="autoSyncCheckBox">

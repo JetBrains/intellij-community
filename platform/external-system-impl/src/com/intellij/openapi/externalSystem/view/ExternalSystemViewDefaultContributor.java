@@ -17,14 +17,13 @@ package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
-import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -41,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -245,7 +243,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
       if (data == null) return null;
       final Project project = getProject();
       if (project == null) return null;
-      return ServiceManager.getService(ProjectStructureHelper.class).findIdeModuleOrderEntry(data, project);
+      return new IdeModifiableModelsProviderImpl(project).findIdeModuleOrderEntry(data);
     }
   }
 }

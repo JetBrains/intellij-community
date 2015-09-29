@@ -93,7 +93,7 @@ class OpenFileHttpService extends RestService {
   @Nullable
   @Override
   public String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
-    final boolean keepAlive = HttpHeaderUtil.isKeepAlive(request);
+    final boolean keepAlive = HttpUtil.isKeepAlive(request);
     final Channel channel = context.channel();
 
     OpenFileRequest apiRequest;
@@ -218,7 +218,7 @@ class OpenFileHttpService extends RestService {
       }
 
       if (virtualFile == null) {
-        virtualFile = WebServerPathToFileManager.getInstance(openedProject).get(path);
+        virtualFile = WebServerPathToFileManager.getInstance(openedProject).findVirtualFile(path);
       }
       if (virtualFile != null) {
         project = openedProject;

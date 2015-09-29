@@ -62,7 +62,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myScope = scope;
     myDelegateMessageHandler = delegateMessageHandler;
   }
-                    // todo: add timestamp-setting code
+
   @Override
   public long getCompilationStartStamp(BuildTarget<?> target) {
     synchronized (myCompilationStartStamp) {

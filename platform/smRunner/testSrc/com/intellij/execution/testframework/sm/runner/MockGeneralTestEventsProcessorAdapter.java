@@ -27,8 +27,8 @@ import org.jetbrains.annotations.Nullable;
 public class MockGeneralTestEventsProcessorAdapter extends GeneralTestEventsProcessor {
   private final StringBuilder myOutputBuffer = new StringBuilder();
 
-  public MockGeneralTestEventsProcessorAdapter(Project project) {
-    super(project);
+  public MockGeneralTestEventsProcessorAdapter(Project project, String testFrameworkName) {
+    super(project, testFrameworkName);
   }
 
   @Override

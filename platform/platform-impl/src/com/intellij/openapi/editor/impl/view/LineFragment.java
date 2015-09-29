@@ -34,7 +34,9 @@ interface LineFragment {
   int getVisualColumnCount(float startX);
   
   int offsetToLogicalColumn(int startColumn, int offset);
-  
+
+  int logicalColumnToOffset(int startColumn, int column);
+
   // columns are visual
   int logicalToVisualColumn(float startX, int startColumn, int column);
 

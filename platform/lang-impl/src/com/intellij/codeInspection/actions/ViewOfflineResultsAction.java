@@ -224,7 +224,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
     context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
     final InspectionResultsView view = new InspectionResultsView(project, inspectionProfile, scope, context,
                                                                  new OfflineInspectionRVContentProvider(resMap, project));
-    ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
+    ((RefManagerImpl)context.getRefManager()).startOfflineView();
     view.update();
     TreeUtil.selectFirstNode(view.getTree());
     context.addView(view, title);

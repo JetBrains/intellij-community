@@ -4,7 +4,6 @@ import com.intellij.ProjectTopics
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.ModifiableModuleModel
@@ -24,12 +23,15 @@ import org.junit.Test
 import org.junit.rules.ExternalResource
 import java.io.File
 import java.nio.file.Paths
-import java.util.UUID
+import java.util.*
 import kotlin.properties.Delegates
 
-class ModuleStoreRenameTest {
+internal class ModuleStoreRenameTest {
   companion object {
     @ClassRule val projectRule = ProjectRule()
+
+    private val Module.storage: FileBasedStorage
+      get() = (stateStore.stateStorageManager as StateStorageManagerImpl).getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)).first()
   }
 
   var module: Module by Delegates.notNull()
@@ -47,7 +49,7 @@ class ModuleStoreRenameTest {
           module = projectRule.createModule(tempDirManager.newPath().resolve("m.iml"))
         }
 
-        module.getMessageBus().connect().subscribe(ProjectTopics.MODULES, object : ModuleAdapter() {
+        module.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleAdapter() {
           override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
             assertThat(modules).containsOnly(module)
             oldModuleNames.add(oldNameProvider.`fun`(module))
@@ -57,7 +59,7 @@ class ModuleStoreRenameTest {
 
       // should be invoked after project tearDown
       override fun after() {
-        (ApplicationManager.getApplication().stateStore.getStateStorageManager() as StateStorageManagerImpl).getVirtualFileTracker()!!.remove {
+        (ApplicationManager.getApplication().stateStore.stateStorageManager as StateStorageManagerImpl).getVirtualFileTracker()!!.remove {
           if (it.storageManager.componentManager == module) {
             throw AssertionError("Storage manager is not disposed, module $module, storage $it")
           }
@@ -68,11 +70,11 @@ class ModuleStoreRenameTest {
     DisposeModulesRule(projectRule)
   )
 
-  public Rule fun getChain(): RuleChain = ruleChain
+  @Rule fun getChain() = ruleChain
 
   fun changeModule(task: ModifiableModuleModel.() -> Unit) {
     runInEdtAndWait {
-      val model = ModuleManager.getInstance(projectRule.project).getModifiableModel()
+      val model = ModuleManager.getInstance(projectRule.project).modifiableModel
       runWriteAction {
         model.task()
         model.commit()
@@ -83,11 +85,11 @@ class ModuleStoreRenameTest {
   // project structure
   @Test fun `rename module using model`() {
     runInEdtAndWait { module.saveStore() }
-    val storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT) as FileBasedStorage
+    val storage = module.storage
     val oldFile = storage.file
     assertThat(oldFile).isFile()
 
-    val oldName = module.getName()
+    val oldName = module.name
     val newName = "foo"
     changeModule { renameModule(module, newName) }
     assertRename(newName, oldFile)
@@ -97,11 +99,11 @@ class ModuleStoreRenameTest {
   // project view
   @Test fun `rename module using rename virtual file`() {
     runInEdtAndWait { module.saveStore() }
-    var storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT) as FileBasedStorage
+    var storage = module.storage
     val oldFile = storage.file
     assertThat(oldFile).isFile()
 
-    val oldName = module.getName()
+    val oldName = module.name
     val newName = "foo"
     runInEdtAndWait { runWriteAction { LocalFileSystem.getInstance().refreshAndFindFileByIoFile(oldFile)!!.rename(null, "$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}") } }
     assertRename(newName, oldFile)
@@ -111,31 +113,28 @@ class ModuleStoreRenameTest {
   // we cannot test external rename yet, because it is not supported - ModuleImpl doesn't support delete and create events (in case of external change we don't get move event, but get "delete old" and "create new")
 
   private fun assertRename(newName: String, oldFile: File) {
-    val storageManager = module.stateStore.getStateStorageManager()
-    val newFile = (storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT) as FileBasedStorage).file
-    assertThat(newFile.getName()).isEqualTo("$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+    val newFile = module.storage.file
+    assertThat(newFile.name).isEqualTo("$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     assertThat(oldFile)
       .doesNotExist()
       .isNotEqualTo(newFile)
     assertThat(newFile).isFile()
 
     // ensure that macro value updated
-    assertThat(storageManager.expandMacros(StoragePathMacros.MODULE_FILE)).isEqualTo(newFile.systemIndependentPath)
+    assertThat(module.stateStore.stateStorageManager.expandMacros(StoragePathMacros.MODULE_FILE)).isEqualTo(newFile.systemIndependentPath)
   }
 
   @Test fun `rename module parent virtual dir`() {
     runInEdtAndWait { module.saveStore() }
-    val storageManager = module.stateStore.getStateStorageManager()
-    val storage = storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT) as FileBasedStorage
-
+    val storage = module.storage
     val oldFile = storage.file
-    val parentVirtualDir = storage.getVirtualFile()!!.getParent()
+    val parentVirtualDir = storage.getVirtualFile()!!.parent
     runInEdtAndWait { runWriteAction { parentVirtualDir.rename(null, UUID.randomUUID().toString()) } }
 
-    val newFile = Paths.get(parentVirtualDir.getPath(), "${module.getName()}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+    val newFile = Paths.get(parentVirtualDir.getPath(), "${module.name}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     try {
       assertThat(newFile).isRegularFile()
-      assertRename(module.getName(), oldFile)
+      assertRename(module.name, oldFile)
       assertThat(oldModuleNames).isEmpty()
     }
     finally {

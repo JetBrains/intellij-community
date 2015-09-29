@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -304,8 +304,12 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return null;
   }
 
+  public void showPopup(String searchText) {
+    manageSearchPopup(new SearchPopup(searchText));
+  }
+
   public void showPopup() {
-    manageSearchPopup(new SearchPopup(""));
+    showPopup("");
   }
 
   public void hidePopup() {
@@ -324,7 +328,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (!UIUtil.isReallyTypedEvent(e)) return;
 
       char c = e.getKeyChar();
-      if (Character.isLetterOrDigit(c) || c == '_' || c == '*' || c == '/' || c == ':' || c == '.' || c == '#') {
+      if (Character.isLetterOrDigit(c) || c == '_' || c == '*' || c == '/' || c == ':' || c == '.' || c == '#' || c == '$') {
         manageSearchPopup(new SearchPopup(String.valueOf(c)));
         e.consume();
       }

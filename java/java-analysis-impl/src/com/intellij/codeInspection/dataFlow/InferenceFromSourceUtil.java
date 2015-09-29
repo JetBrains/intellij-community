@@ -20,8 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,14 +28,24 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class InferenceFromSourceUtil {
-  static boolean shouldInferFromSource(@NotNull PsiMethod method) {
+  static boolean shouldInferFromSource(@NotNull final PsiMethod method) {
+    return CachedValuesManager.getCachedValue(method, new CachedValueProvider<Boolean>() {
+      @Nullable
+      @Override
+      public Result<Boolean> compute() {
+        return Result.create(calcShouldInferFromSource(method), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+    });
+  }
+
+  private static boolean calcShouldInferFromSource(@NotNull PsiMethod method) {
     if (isLibraryCode(method) ||
         method.hasModifierProperty(PsiModifier.ABSTRACT) ||
         PsiUtil.canBeOverriden(method) ||
         method.getBody() == null) {
       return false;
     }
-    
+
     if (method.hasModifierProperty(PsiModifier.STATIC)) return true;
 
     return !isUnusedInAnonymousClass(method);
@@ -54,7 +63,7 @@ public class InferenceFromSourceUtil {
       // references outside anonymous class can still resolve to this method, see com.intellij.psi.scope.util.PsiScopesUtil.setupAndRunProcessor()
       return false;
     }
-    
+
     return MethodReferencesSearch.search(method, new LocalSearchScope(containingClass), false).findFirst() == null;
   }
 

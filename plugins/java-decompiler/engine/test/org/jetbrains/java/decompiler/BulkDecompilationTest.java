@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.java.decompiler;
 
-import org.hamcrest.Matchers;
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.junit.After;
@@ -27,7 +26,7 @@ import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static org.junit.Assert.assertThat;
+import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqual;
 import static org.junit.Assert.assertTrue;
 
 public class BulkDecompilationTest {
@@ -54,7 +53,7 @@ public class BulkDecompilationTest {
     decompiler.addSpace(classes, true);
     decompiler.decompileContext();
 
-    compareDirectories(new File(fixture.getTestDataDir(), "bulk"), fixture.getTargetDir());
+    assertFilesEqual(new File(fixture.getTestDataDir(), "bulk"), fixture.getTargetDir());
   }
 
   @Test
@@ -66,7 +65,7 @@ public class BulkDecompilationTest {
     File unpacked = new File(fixture.getTempDir(), "unpacked");
     unpack(new File(fixture.getTargetDir(), "bulk.jar"), unpacked);
 
-    compareDirectories(new File(fixture.getTestDataDir(), "bulk"), unpacked);
+    assertFilesEqual(new File(fixture.getTestDataDir(), "bulk"), unpacked);
   }
 
   private static void unpack(File archive, File targetDir) {
@@ -93,18 +92,6 @@ public class BulkDecompilationTest {
     }
     catch (IOException e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  private static void compareDirectories(File expected, File actual) {
-    String[] expectedList = expected.list();
-    String[] actualList = actual.list();
-    assertThat(actualList, Matchers.arrayContainingInAnyOrder(expectedList));
-    for (String name : expectedList) {
-      File child = new File(expected, name);
-      if (child.isDirectory()) {
-        compareDirectories(child, new File(actual, name));
-      }
     }
   }
 }

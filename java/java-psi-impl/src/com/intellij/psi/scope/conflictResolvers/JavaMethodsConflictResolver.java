@@ -110,6 +110,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     checkParametersNumber(conflicts, getActualParametersLength(), false);
     if (conflicts.size() == 1) return conflicts.get(0);
+    
+    checkStaticMethodsOfInterfaces(conflicts);
+    if (conflicts.size() == 1) return conflicts.get(0);
 
     final int applicabilityLevel = checkApplicability(conflicts);
     if (conflicts.size() == 1) return conflicts.get(0);
@@ -355,6 +358,52 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
   private static boolean areTypeParametersAgree(@NotNull CandidateInfo info) {
     return ((MethodCandidateInfo)info).getPertinentApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
+  }
+
+  /**
+   * choose to accept static interface methods during search to get "Static interface methods must be invoked on containing interface class only" error
+   * instead of non clear javac message that symbol not found
+   * 
+   * but these methods should be ignored during overload resolution if another methods are present
+   */
+  private void checkStaticMethodsOfInterfaces(@NotNull List<CandidateInfo> conflicts) {
+    if (!(myArgumentsList instanceof PsiExpressionList)) return;
+    PsiClass qualifierClass = null;
+    for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
+      CandidateInfo conflict = iterator.next();
+      if (!(conflict instanceof MethodCandidateInfo)) continue;
+      final PsiMethod method = ((MethodCandidateInfo)conflict).getElement();
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        if (conflict.getCurrentFileResolveScope() instanceof PsiImportStaticStatement) continue;
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null && containingClass.isInterface()) {
+          if (qualifierClass == null) {
+            qualifierClass = getQualifiedClass(method);
+            if (qualifierClass == null) return;
+          }
+          if (!containingClass.getManager().areElementsEquivalent(containingClass, qualifierClass)) {
+            iterator.remove();
+          }
+        }
+      }
+    }
+  }
+
+  private PsiClass getQualifiedClass(PsiMethod method) {
+    final PsiElement parent = myArgumentsList.getParent();
+    if (parent instanceof PsiMethodCallExpression) {
+      final PsiExpression expression = ((PsiMethodCallExpression)parent).getMethodExpression().getQualifierExpression();
+      if (expression instanceof PsiReferenceExpression) {
+        final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
+        if (resolve instanceof PsiClass) {
+          return (PsiClass)resolve;
+        }
+      }
+      else if (expression == null && !ImportsUtil.hasStaticImportOn(parent, method, true)) {
+        return PsiTreeUtil.getParentOfType(parent, PsiClass.class);
+      }
+    }
+    return null;
   }
 
   public boolean checkParametersNumber(@NotNull List<CandidateInfo> conflicts,

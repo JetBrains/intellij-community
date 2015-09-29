@@ -18,6 +18,8 @@ package com.intellij.openapi.diagnostic;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -30,6 +32,13 @@ public class FrequentEventDetector {
 
   private long myStartedCounting = System.currentTimeMillis();
   private final AtomicInteger myEventsPosted = new AtomicInteger();
+  private final AtomicInteger myLastTraceId = new AtomicInteger();
+  private final Map<String, Integer> myRecentTraces = new LinkedHashMap<String, Integer>() {
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<String, Integer> eldest) {
+      return size() > 50;
+    }
+  };
   private final int myEventCountThreshold;
   private final int myTimeSpanMs;
   private final Level myLevel;
@@ -58,7 +67,20 @@ public class FrequentEventDetector {
       }
 
       if (shouldLog) {
-        String message = "Too many events posted\n" + ExceptionUtil.getThrowableText(new Throwable());
+        String trace = ExceptionUtil.getThrowableText(new Throwable());
+        boolean logTrace;
+        int traceId;
+        synchronized (myEventsPosted) {
+          Integer existingTraceId = myRecentTraces.get(trace);
+          logTrace = existingTraceId == null;
+          if (logTrace) {
+            myRecentTraces.put(trace, traceId = myLastTraceId.incrementAndGet());
+          } else {
+            traceId = existingTraceId;
+          }
+        }
+
+        String message = "Too many events posted, #" + traceId  + (logTrace ? "\n" + trace : "");
         if (myLevel == Level.INFO) {
           LOG.info(message);
         }

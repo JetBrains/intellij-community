@@ -56,7 +56,7 @@ public class PyConsoleParser extends PyParser{
     builder.setTokenTypeRemapper(stmt_parser); // must be done before touching the caching lexer with eof() call.
 
     while (!builder.eof()) {
-      stmt_parser.parseStatement(context.emptyParsingScope());
+      stmt_parser.parseStatement();
     }
     rootMarker.done(root);
     return builder.getTreeBuilt();

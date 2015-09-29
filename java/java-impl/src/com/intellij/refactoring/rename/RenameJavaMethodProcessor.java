@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.rename;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -126,6 +127,13 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     }
     qualifyOuterMemberReferences(outerHides);
     qualifyStaticImportReferences(staticImportHides);
+    
+    if (method.findDeepestSuperMethods().length == 0) {
+      PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_OVERRIDE);
+      if (annotation != null && annotation.isPhysical()) {
+        annotation.delete();
+      }
+    }
   }
 
   /**

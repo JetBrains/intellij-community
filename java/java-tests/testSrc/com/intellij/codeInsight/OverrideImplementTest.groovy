@@ -39,6 +39,7 @@ class OverrideImplementTest extends LightCodeInsightFixtureTestCase {
   public void testSkipUnknownAnnotations() { doTest(true) }
   public void testMultipleInheritedThrows() { doTest(false) }
   public void testOverrideInInterface() { doTest(false) }
+  public void testMultipleInheritanceWithThrowables() { doTest(true) }
 
   public void testImplementInInterface() {
     myFixture.addClass """\

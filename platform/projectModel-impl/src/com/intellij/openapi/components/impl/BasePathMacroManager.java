@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -217,7 +216,7 @@ public class BasePathMacroManager extends PathMacroManager {
 
     @NotNull
     @Override
-    public Collection<String> getComponents(@NotNull Collection<String> macros) {
+    public Set<String> getComponents(@NotNull Collection<String> macros) {
       synchronized (myLock) {
         Set<String> result = new SmartHashSet<String>();
         for (String macro : macros) {
@@ -229,10 +228,10 @@ public class BasePathMacroManager extends PathMacroManager {
 
     @NotNull
     @Override
-    public Collection<String> getUnknownMacros(@Nullable String componentName) {
+    public Set<String> getUnknownMacros(@Nullable String componentName) {
       synchronized (myLock) {
-        Collection<String> list = componentName == null ? myMacroToComponentNames.keySet() : myComponentNameToMacros.get(componentName);
-        return ContainerUtil.isEmpty(list) ? Collections.<String>emptyList() : new THashSet<String>(list);
+        Set<String> list = componentName == null ? myMacroToComponentNames.keySet() : (Set<String>)myComponentNameToMacros.get(componentName);
+        return ContainerUtil.isEmpty(list) ? Collections.<String>emptySet() : Collections.unmodifiableSet(list);
       }
     }
 

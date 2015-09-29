@@ -11,6 +11,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.ProjectBundle;
+import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesDialog;
+import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
 
 public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
   private final Module module;
@@ -35,13 +37,23 @@ public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
 
   @Override
   public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
-    RepositoryLibrarySupportInModuleConfigurable
-      mavenSupport = new RepositoryLibrarySupportInModuleConfigurable(module.getProject(), libraryDescription);
-    if (mavenSupport.showEditorAndGet()) {
-      IdeaModifiableModelsProvider modifiableModelsProvider = new IdeaModifiableModelsProvider();
-      final ModifiableRootModel modifiableModel = modifiableModelsProvider.getModuleModifiableModel(module);
-      assert modifiableModel != null;
-      mavenSupport.addSupport(
+    RepositoryLibraryPropertiesModel model = new RepositoryLibraryPropertiesModel(
+      RepositoryUtils.DefaultVersionId,
+      false,
+      false);
+    RepositoryLibraryPropertiesDialog dialog = new RepositoryLibraryPropertiesDialog(
+      project,
+      model,
+      libraryDescription,
+      false);
+    if (!dialog.showAndGet()) {
+      return;
+    }
+    IdeaModifiableModelsProvider modifiableModelsProvider = new IdeaModifiableModelsProvider();
+    final ModifiableRootModel modifiableModel = modifiableModelsProvider.getModuleModifiableModel(module);
+    RepositoryLibrarySupport librarySupport = new RepositoryLibrarySupport(project, libraryDescription, model);
+    assert modifiableModel != null;
+    librarySupport.addSupport(
         module,
         modifiableModel,
         modifiableModelsProvider);
@@ -51,6 +63,5 @@ public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
           modifiableModel.commit();
         }
       });
-    }
   }
 }

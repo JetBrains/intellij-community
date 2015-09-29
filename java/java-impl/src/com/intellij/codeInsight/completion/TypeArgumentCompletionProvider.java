@@ -27,6 +27,7 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -48,6 +49,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 * @author peter
 */
 class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
+  static final ElementPattern<PsiElement> IN_TYPE_ARGS = psiElement().inside(PsiReferenceParameterList.class);
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.TypeArgumentCompletionProvider");
   private final boolean mySmart;
   @Nullable private final InheritorsHolder myInheritors;
@@ -92,7 +94,6 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
     final PsiClass expectedClass = expectedType.getElement();
 
     if (!InheritanceUtil.isInheritorOrSelf(actualClass, expectedClass, true)) return;
-    assert expectedClass != null;
 
     final PsiSubstitutor currentSubstitutor = TypeConversionUtil.getClassSubstitutor(expectedClass, actualClass, PsiSubstitutor.EMPTY);
     assert currentSubstitutor != null;
@@ -204,7 +205,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
       myLookupString = StringUtil.join(myTypeItems, new Function<PsiTypeLookupItem, String>() {
         @Override
         public String fun(PsiTypeLookupItem item) {
-          return item.getLookupString();
+          return item.getType().getPresentableText();
         }
       }, ", ");
     }
@@ -220,7 +221,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
         PsiType type = myTypeItems.get(0).getType();
         PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
         if (aClass != null && !aClass.hasTypeParameters()) {
-          JavaCompletionUtil.setShowFQN(myTypeItems.get(0));
+          myTypeItems.get(0).setShowPackage();
           inheritors.registerClass(aClass);
         }
       }
@@ -244,7 +245,15 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
 
     @Override
     public void handleInsert(InsertionContext context) {
-      context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
+      context.commitDocument();
+      PsiReferenceParameterList list = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiReferenceParameterList.class, false);
+      PsiTypeElement[] typeElements = list != null ? list.getTypeParameterElements() : PsiTypeElement.EMPTY_ARRAY;
+      if (typeElements.length == 0) {
+        return;
+      }
+      int listEnd = typeElements[typeElements.length - 1].getTextRange().getEndOffset();
+      context.setTailOffset(listEnd);
+      context.getDocument().deleteString(context.getStartOffset(), listEnd);
       for (int i = 0; i < myTypeItems.size(); i++) {
         PsiTypeLookupItem typeItem = myTypeItems.get(i);
         CompletionUtil.emulateInsertion(context, context.getTailOffset(), typeItem);

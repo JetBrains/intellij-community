@@ -23,18 +23,21 @@ import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import java.io.File
-import kotlin.properties.Delegates
 
-class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+internal class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
   companion object {
     val FILE_SPEC = "${StoragePathMacros.APP_CONFIG}/project.default.xml"
   }
+
+  // see note about default state in project store
+  override val loadPolicy: StateLoadPolicy
+    get() = if (ApplicationManager.getApplication().isUnitTestMode) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
 
   init {
     service<DefaultProjectExportableAndSaveTrigger>().project = project
   }
 
-  private val storage by Delegates.lazy { DefaultProjectStorage(File(ApplicationManager.getApplication().stateStore.getStateStorageManager().expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
+  private val storage by lazy { DefaultProjectStorage(File(ApplicationManager.getApplication().stateStore.stateStorageManager.expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
 
   private class DefaultProjectStorage(file: File, fileSpec: String, pathMacroManager: PathMacroManager) : FileBasedStorage(file, fileSpec, "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED) {
     override public fun loadLocalData(): Element? {
@@ -63,8 +66,6 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 
     override fun getStateStorage(storageSpec: Storage) = storage
 
-    override fun getStateStorage(fileSpec: String, roamingType: RoamingType) = storage
-
     override fun startExternalization(): StateStorageManager.ExternalizationSession? {
       val externalizationSession = storage.startExternalization()
       return if (externalizationSession == null) null else MyExternalizationSession(externalizationSession)
@@ -72,10 +73,10 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 
     override fun expandMacros(file: String) = throw UnsupportedOperationException("Method expandMacros not implemented in " + javaClass)
 
-    override fun collapseMacros(path: String) = throw UnsupportedOperationException("Method collapseMacros not implemented in " + javaClass)
-
     override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
   }
+
+  override fun isUseLoadedStateAsExisting(storage: StateStorage) = false
 
   // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock (currently we store loaded archived state in memory, but later implementation can be changed)
   fun getStateCopy() = storage.loadLocalData()
@@ -101,9 +102,9 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 }
 
 // ExportSettingsAction checks only "State" annotation presence, but doesn't require PersistentStateComponent implementation, so, we can just specify annotation
-State(name = "ProjectManager", storages = arrayOf(Storage(file = DefaultProjectStoreImpl.FILE_SPEC)))
+@State(name = "ProjectManager", storages = arrayOf(Storage(file = DefaultProjectStoreImpl.FILE_SPEC)))
 private class DefaultProjectExportableAndSaveTrigger : SettingsSavingComponent {
-  volatile var project: Project? = null;
+  @Volatile var project: Project? = null;
 
   override fun save() {
     // we must trigger save

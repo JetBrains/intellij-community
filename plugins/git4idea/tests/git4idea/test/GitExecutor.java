@@ -15,14 +15,18 @@
  */
 package git4idea.test;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.Executor;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.junit.Assert.assertFalse;
 
 /**
  *
@@ -117,6 +121,12 @@ public class GitExecutor extends Executor {
   }
 
   @NotNull
+  public static String tac(@NotNull String file) {
+    touch(file, "content" + Math.random());
+    return addCommit("touched " + file);
+  }
+
+  @NotNull
   public static String last() {
     return git("log -1 --pretty=%H");
   }
@@ -141,4 +151,56 @@ public class GitExecutor extends Executor {
     }
   }
 
+  @NotNull
+  public static TestFile file(@NotNull String fileName) {
+    File f = child(fileName);
+    return new TestFile(f);
+  }
+
+  public static class TestFile {
+    @NotNull private final File myFile;
+
+    private TestFile(@NotNull File file) {
+      myFile = file;
+    }
+
+    public TestFile append(@NotNull String content) throws IOException {
+      FileUtil.writeToFile(myFile, content.getBytes(), true);
+      return this;
+    }
+
+    public TestFile write(@NotNull String content) throws IOException {
+      FileUtil.writeToFile(myFile, content.getBytes(), false);
+      return this;
+    }
+
+    public TestFile create(@NotNull String content) throws IOException {
+      assertNotExists();
+      FileUtil.writeToFile(myFile, content.getBytes(), false);
+      return this;
+    }
+
+    public TestFile assertNotExists() {
+      assertFalse(myFile.exists());
+      return this;
+    }
+
+    public TestFile add() {
+      GitExecutor.add(myFile.getPath());
+      return this;
+    }
+
+    public TestFile commit() {
+      return commit("Some message");
+    }
+
+    public TestFile commit(String message) {
+      GitExecutor.commit(message);
+      return this;
+    }
+
+    public boolean exists() {
+      return myFile.exists();
+    }
+  }
 }

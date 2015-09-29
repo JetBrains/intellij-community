@@ -115,8 +115,6 @@ public class SheetController {
     int defaultButtonIndex = -1;
     int focusedButtonIndex = -1;
 
-    boolean moveFocusedToTheLeft = defaultButtonTitle != null && defaultButtonTitle.equals(focusedButtonTitle);
-
     for (int i = 0; i < buttons.length; i++) {
       String buttonTitle = buttonTitles[i];
 
@@ -128,22 +126,18 @@ public class SheetController {
         defaultButtonIndex = i;
       }
 
-      if (buttonTitle.equals("Cancel")) {
-        moveFocusedToTheLeft = true;
-      }
-
-      if (buttonTitle.equals(focusedButtonTitle)) {
-        focusedButtonIndex = moveFocusedToTheLeft ?  buttons.length - 1 : i;
+      if (buttonTitle.equals(focusedButtonTitle) && !focusedButtonTitle.equals("Cancel")) {
+        focusedButtonIndex = i;
       }
     }
 
     defaultButtonIndex = (focusedButtonIndex == defaultButtonIndex) || defaultButtonTitle == null ? 0 : defaultButtonIndex;
 
-    if (focusedButtonIndex != -1 && !moveFocusedToTheLeft) {
+    if (focusedButtonIndex != -1 && defaultButtonIndex != focusedButtonIndex) {
       myFocusedComponent = buttons[focusedButtonIndex];
     } else if (doNotAskOption != null) {
       myFocusedComponent = doNotAskCheckBox;
-    } else {
+    } else if (buttons.length > 1) {
       myFocusedComponent = buttons[buttons.length - 1];
     }
 
@@ -193,7 +187,11 @@ public class SheetController {
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
       @Override
       public void run() {
-        myFocusedComponent.requestFocus();
+        if (myFocusedComponent != null) {
+          myFocusedComponent.requestFocus();
+        } else {
+          LOG.debug("My focused component is null for the next message: " + messageTextPane.getText());
+        }
       }
     });
   }

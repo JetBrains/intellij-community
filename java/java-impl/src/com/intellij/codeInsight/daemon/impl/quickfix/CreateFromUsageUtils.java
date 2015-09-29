@@ -138,8 +138,7 @@ public class CreateFromUsageUtils {
     JVMElementFactory factory = JVMElementFactories.getFactory(aClass.getLanguage(), aClass.getProject());
 
     LOG.assertTrue(!aClass.isInterface() ||
-                   method.hasModifierProperty(PsiModifier.DEFAULT) ||
-                   method.hasModifierProperty(PsiModifier.STATIC) ||
+                   PsiUtil.isLanguageLevel8OrHigher(method) ||
                    method.getLanguage() != JavaLanguage.INSTANCE, "Interface bodies should be already set up");
 
     FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(template.getExtension());

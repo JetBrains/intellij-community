@@ -19,6 +19,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
@@ -31,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper;
@@ -99,9 +99,9 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     EclipseModuleManagerImpl.getInstance(module).setDocumentSet(null);
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public ClasspathConverter createConverter(Module module) {
+  public ClasspathConverter createConverter(@NotNull Module module) {
     return new EclipseClasspathConverter(module);
   }
 
@@ -133,7 +133,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       fileCache.register(EclipseXml.CLASSPATH_FILE, storageRoot);
       fileCache.register(EclipseXml.PROJECT_FILE, storageRoot);
       fileCache.register(EclipseXml.PLUGIN_XML_FILE, storageRoot);
-      fileCache.register(module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX, ClasspathStorage.getModuleDir(module));
+      fileCache.register(module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX, ModuleUtilCore.getModuleDirPath(module));
     }
     return fileCache;
   }
@@ -142,7 +142,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   public void moduleRenamed(@NotNull Module module, @NotNull String oldName, @NotNull String newName) {
     try {
       CachedXmlDocumentSet fileSet = getFileCache(module);
-      VirtualFile root = LocalFileSystem.getInstance().findFileByPath(ClasspathStorage.getModuleDir(module));
+      VirtualFile root = LocalFileSystem.getInstance().findFileByPath(ModuleUtilCore.getModuleDirPath(module));
       VirtualFile source = root == null ? null : root.findChild(oldName + EclipseXml.IDEA_SETTINGS_POSTFIX);
       if (source != null && source.isValid()) {
         AccessToken token = WriteAction.start();
@@ -156,7 +156,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
 
       DotProjectFileHelper.saveDotProjectFile(module, fileSet.getParent(EclipseXml.PROJECT_FILE));
       fileSet.unregister(oldName + EclipseXml.IDEA_SETTINGS_POSTFIX);
-      fileSet.register(newName + EclipseXml.IDEA_SETTINGS_POSTFIX, ClasspathStorage.getModuleDir(module));
+      fileSet.register(newName + EclipseXml.IDEA_SETTINGS_POSTFIX, ModuleUtilCore.getModuleDirPath(module));
     }
     catch (IOException e) {
       EclipseClasspathWriter.LOG.warn(e);

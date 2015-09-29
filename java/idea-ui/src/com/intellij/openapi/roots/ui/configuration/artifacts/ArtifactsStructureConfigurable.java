@@ -296,23 +296,18 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     checkForEmptyAndDuplicatedNames("Artifact", CommonBundle.getErrorTitle(), ArtifactConfigurableBase.class);
     super.apply();
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        myPackagingEditorContext.getManifestFilesInfo().saveManifestFiles();
-        final ModifiableArtifactModel modifiableModel = myPackagingEditorContext.getActualModifiableModel();
-        if (modifiableModel != null) {
-          new WriteAction() {
-            @Override
-            protected void run(@NotNull final Result result) {
-              modifiableModel.commit();
-            }
-          }.execute();
-          myPackagingEditorContext.resetModifiableModel();
+    myPackagingEditorContext.getManifestFilesInfo().saveManifestFiles();
+    final ModifiableArtifactModel modifiableModel = myPackagingEditorContext.getActualModifiableModel();
+    if (modifiableModel != null) {
+      new WriteAction() {
+        @Override
+        protected void run(@NotNull final Result result) {
+          modifiableModel.commit();
         }
-      }
-    });
-    
+      }.execute();
+      myPackagingEditorContext.resetModifiableModel();
+    }
+
 
     reset(); // TODO: fix to not reset on apply!
   }

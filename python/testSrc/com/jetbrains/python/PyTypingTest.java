@@ -340,6 +340,18 @@ public class PyTypingTest extends PyTestCase {
                          "        pass\n");
   }
 
+  // PY-16125
+  public void testIterableForLoop() {
+    doTest("int",
+           "from typing import Iterable\n" +
+           "\n" +
+           "def foo() -> Iterable[int]:\n" +
+           "    passs\n" +
+           "\n" +
+           "for expr in foo():\n" +
+           "    pass\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

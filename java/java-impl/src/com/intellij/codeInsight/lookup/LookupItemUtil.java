@@ -18,8 +18,6 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
-import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -40,13 +38,11 @@ import java.util.Collection;
 public class LookupItemUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.LookupItemUtil");
 
+  /**
+   * @deprecated to remove in IDEA 16
+   */
   @Nullable
   public static LookupElement addLookupItem(Collection<LookupElement> set, @NotNull Object object) {
-    return addLookupItem(set, object, new CamelHumpMatcher(""));
-  }
-
-  @Nullable
-  public static LookupElement addLookupItem(Collection<LookupElement> set, @NotNull Object object, PrefixMatcher matcher) {
     if (object instanceof PsiType) {
       PsiType psiType = (PsiType)object;
       for (final LookupElement lookupItem : set) {
@@ -61,10 +57,7 @@ public class LookupItemUtil{
       if(lookupItem.getObject().equals(lookupItem)) return null;
     }
     LookupElement item = objectToLookupItem(object);
-    if (matcher.prefixMatches(item)) {
-      return set.add(item) ? item : null;
-    }
-    return null;
+    return set.add(item) ? item : null;
   }
 
   /**

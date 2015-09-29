@@ -16,11 +16,17 @@
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListPopupStepEx;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +35,7 @@ import java.awt.*;
 
 public class PopupListElementRenderer extends GroupedItemsListRenderer {
   private final ListPopupImpl myPopup;
+  private JLabel myShortcutLabel;
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
     super(new ListItemDescriptorAdapter() {
@@ -61,6 +68,19 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
       }
     });
     myPopup = aPopup;
+  }
+
+  @Override
+  protected JComponent createItemComponent() {
+    JPanel panel = new JPanel(new BorderLayout());
+    createLabel();
+    panel.add(myTextLabel, BorderLayout.CENTER);
+    myShortcutLabel = new JLabel();
+    myShortcutLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 3));
+    Color color = UIManager.getColor("MenuItem.acceleratorForeground");
+    myShortcutLabel.setForeground(color);
+    panel.add(myShortcutLabel, BorderLayout.EAST);
+    return layoutComponent(panel);
   }
 
   @Override
@@ -100,13 +120,22 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
       //myNextStepLabel.setIcon(PopupIcons.EMPTY_ICON);
     }
 
-    if (isSelected) {
-      setSelected(myNextStepLabel);
-    }
-    else {
-      setDeselected(myNextStepLabel);
+    setSelected(myNextStepLabel, isSelected);
+
+
+    if (myShortcutLabel != null) {
+      myShortcutLabel.setText("");
+      if (value instanceof ShortcutProvider) {
+        ShortcutSet set = ((ShortcutProvider)value).getShortcut();
+        if (set != null) {
+          Shortcut shortcut = ArrayUtil.getFirstElement(set.getShortcuts());
+          if (shortcut != null) {
+            myShortcutLabel.setText("     " + KeymapUtil.getShortcutText(shortcut));
+          }
+        }
+      }
+      setSelected(myShortcutLabel, isSelected);
+      myShortcutLabel.setForeground(isSelected ? UIManager.getColor("MenuItem.acceleratorSelectionForeground") : UIManager.getColor("MenuItem.acceleratorForeground"));
     }
   }
-
-
 }

@@ -94,7 +94,15 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   // We're guessing style of references in javadoc by bytecode version of library class file
   // but displaying quick doc should work even if javadoc was generated using a JDK not corresponding to bytecode version
   public void testReferenceStyleDoesntMatchBytecodeVersion() throws Exception {
-    String actualText = getDocumentationText("@com.jetbrains.TestAnnotation(<caret>param = \"foo\") class Foo {}");
+    doTest("@com.jetbrains.TestAnnotation(<caret>param = \"foo\") class Foo {}");
+  }
+
+  public void testLinkWithReference() throws Exception {
+    doTest("class Foo { com.jetbrains.<caret>ClassWithRefLink field;}");
+  }
+
+  private void doTest(String text) throws Exception {
+    String actualText = getDocumentationText(text);
     String expectedText = StringUtil.convertLineSeparators(FileUtil.loadFile(getDataFile(getTestName(false) + ".html")));
     assertEquals(expectedText, replaceBaseUrlWithPlaceholder(actualText));
   }

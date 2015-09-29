@@ -29,6 +29,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.memory.InnerClassReferenceVisitor;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -209,6 +211,13 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
       }
       if (!mayBeInterface(aClass)) {
         return;
+      }
+      if (ClassUtils.isInnerClass(aClass)) {
+        final InnerClassReferenceVisitor visitor = new InnerClassReferenceVisitor(aClass);
+        aClass.accept(visitor);
+        if (!visitor.canInnerClassBeStatic()) {
+          return;
+        }
       }
       registerClassError(aClass);
     }

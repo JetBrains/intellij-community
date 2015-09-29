@@ -26,6 +26,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -37,29 +38,37 @@ import static com.jetbrains.python.psi.PyCallExpression.PyMarkedCallee;
 /**
  * @author dcheryasov
  */
-public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, CallArgumentsMapping> {
+public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, PyCallExpression.PyArgumentsMapping> {
   private static  final String NO_PARAMS_MSG = CodeInsightBundle.message("parameter.info.no.parameters");
 
+  @Override
   public boolean couldShowInLookup() {
     return true;
   }
+
+  @Override
   public Object[] getParametersForLookup(final LookupElement item, final ParameterInfoContext context) {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;  // we don't
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  public Object[] getParametersForDocumentation(final CallArgumentsMapping p, final ParameterInfoContext context) {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;  // we don't
+  @Override
+  public Object[] getParametersForDocumentation(final PyCallExpression.PyArgumentsMapping p, final ParameterInfoContext context) {
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public PyArgumentList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
-    PyArgumentList arglist = findArgumentList(context);
-    if (arglist != null) {
-      final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(arglist.getProject(), arglist.getContainingFile());
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
-      CallArgumentsMapping result = arglist.analyzeCall(resolveContext);
-      if (result.getMarkedCallee() != null) {
-        context.setItemsToShow(new Object[] { result });
-        return arglist;
+    PyArgumentList argumentList = findArgumentList(context);
+    if (argumentList != null) {
+      final PyCallExpression callExpr = argumentList.getCallExpression();
+      if (callExpr != null) {
+        final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(argumentList.getProject(), argumentList.getContainingFile());
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
+        final PyCallExpression.PyArgumentsMapping mapping = callExpr.mapArguments(resolveContext);
+        if (mapping.getMarkedCallee() != null) {
+          context.setItemsToShow(new Object[] { mapping });
+          return argumentList;
+        }
       }
     }
     return null;
@@ -69,10 +78,12 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     return ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PyArgumentList.class);
   }
 
+  @Override
   public void showParameterInfo(@NotNull final PyArgumentList element, @NotNull final CreateParameterInfoContext context) {
     context.showHint(element, element.getTextOffset(), this);
   }
 
+  @Override
   public PyArgumentList findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
     return findArgumentList(context);
   }
@@ -82,17 +93,17 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
    We cannot store an index since we cannot determine what is an argument until we actually map arguments to parameters.
    This is because a tuple in arguments may be a whole argument or map to a tuple parameter.
    */
-  public void updateParameterInfo(@NotNull final PyArgumentList arglist, @NotNull final UpdateParameterInfoContext context) {
-    if (context.getParameterOwner() != arglist) {
+  public void updateParameterInfo(@NotNull final PyArgumentList argumentList, @NotNull final UpdateParameterInfoContext context) {
+    if (context.getParameterOwner() != argumentList) {
       context.removeHint();
       return;
     }
     // align offset to nearest expression; context may point to a space, etc.
-    List<PyExpression> flat_args = PyUtil.flattenedParensAndLists(arglist.getArguments());
+    List<PyExpression> flat_args = PyUtil.flattenedParensAndLists(argumentList.getArguments());
     int alleged_cursor_offset = context.getOffset(); // this is already shifted backwards to skip spaces
 
-    final TextRange argListTextRange = arglist.getTextRange();
-    if (!argListTextRange.contains(alleged_cursor_offset) && arglist.getText().endsWith(")")) {
+    final TextRange argListTextRange = argumentList.getTextRange();
+    if (!argListTextRange.contains(alleged_cursor_offset) && argumentList.getText().endsWith(")")) {
       context.removeHint();
       return;
     }
@@ -125,15 +136,15 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   }
 
   @Override
-  public void updateUI(final CallArgumentsMapping prevResult, @NotNull final ParameterInfoUIContext context) {
-    if (prevResult == null) return;
-    final PyArgumentList argList = prevResult.getArgumentList();
-    if (!argList.isValid()) return;
+  public void updateUI(final PyCallExpression.PyArgumentsMapping oldMapping, @NotNull final ParameterInfoUIContext context) {
+    if (oldMapping == null) return;
+    final PyCallExpression callExpression = oldMapping.getCallExpression();
+    if (!callExpression.isValid()) return;
     // really we need to redo analysis every UI update; findElementForParameterInfo isn't called while typing
-    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(argList.getProject(), argList.getContainingFile());
+    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(callExpression.getProject(), callExpression.getContainingFile());
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
-    final CallArgumentsMapping argumentsMapping = argList.analyzeCall(resolveContext);
-    final PyMarkedCallee marked = argumentsMapping.getMarkedCallee();
+    final PyCallExpression.PyArgumentsMapping mapping = callExpression.mapArguments(resolveContext);
+    final PyMarkedCallee marked = mapping.getMarkedCallee();
     if (marked == null) return; // resolution failed
     final PyCallable callable = marked.getCallable();
 
@@ -154,8 +165,8 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       hintFlags.get(parameterToIndex.get(namedParameters.get(i))).add(ParameterInfoUIContextEx.Flag.DISABLE); // show but mark as absent
     }
 
-    final List<PyExpression> flattenedArgs = PyUtil.flattenedParensAndLists(argList.getArguments());
-    int lastParamIndex = collectHighlights(argumentsMapping, parameterList, parameterToIndex, hintFlags, flattenedArgs, currentParamOffset);
+    final List<PyExpression> flattenedArgs = PyUtil.flattenedParensAndLists(callExpression.getArguments());
+    int lastParamIndex = collectHighlights(mapping, parameterList, parameterToIndex, hintFlags, flattenedArgs, currentParamOffset);
 
     highlightNext(marked, parameterList, namedParameters, parameterToIndex, hintFlags, flattenedArgs.isEmpty(), lastParamIndex);
 
@@ -227,54 +238,67 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
    *
    * @return index of last parameter
    */
-  private static int collectHighlights(@NotNull final CallArgumentsMapping argumentsMapping,
+  private static int collectHighlights(@NotNull final PyCallExpression.PyArgumentsMapping mapping,
                                        @NotNull final List<PyParameter> parameterList,
                                        @NotNull final Map<PyNamedParameter, Integer> parameterToIndex,
                                        @NotNull final Map<Integer, EnumSet<ParameterInfoUIContextEx.Flag>> hintFlags,
                                        @NotNull final List<PyExpression> flatArgs, int currentParamOffset) {
-    final PyMarkedCallee callee = argumentsMapping.getMarkedCallee();
+    final PyMarkedCallee callee = mapping.getMarkedCallee();
     assert callee != null;
     int lastParamIndex = callee.getImplicitOffset();
+    final Map<PyExpression, PyNamedParameter> mappedParameters = mapping.getMappedParameters();
+    final Map<PyExpression, PyTupleParameter> mappedTupleParameters = mapping.getMappedTupleParameters();
     for (PyExpression arg : flatArgs) {
       final boolean mustHighlight = arg.getTextRange().contains(currentParamOffset);
       PsiElement seeker = arg;
-      while (!(seeker instanceof PyArgumentList) && seeker instanceof PyExpression && !argumentsMapping.getPlainMappedParams().containsKey(seeker)) {
-        seeker = seeker.getParent(); // flattener may have flattened a tuple arg that is mapped to a plain param; find it.
+      // An argument tuple may have been flattened; find it
+      while (!(seeker instanceof PyArgumentList) && seeker instanceof PyExpression && !mappedParameters.containsKey(seeker)) {
+        seeker = seeker.getParent();
       }
       if (seeker instanceof PyExpression) {
-        final PyNamedParameter parameter = argumentsMapping.getPlainMappedParams().get((PyExpression)seeker);
+        final PyNamedParameter parameter = mappedParameters.get((PyExpression)seeker);
         lastParamIndex = Math.max(lastParamIndex, parameterList.indexOf(parameter));
         if (parameter != null) {
           highlightParameter(parameter, parameterToIndex, hintFlags, mustHighlight);
         }
       }
-      else if (arg == argumentsMapping.getTupleArg()) {
-        // mark all params that map to *arg
-        for (PyNamedParameter parameter : argumentsMapping.getTupleMappedParams()) {
+      else if (PyCallExpressionHelper.isVariadicPositionalArgument(arg)) {
+        for (PyNamedParameter parameter : mapping.getParametersMappedToVariadicPositionalArguments()) {
           lastParamIndex = Math.max(lastParamIndex, parameterList.indexOf(parameter));
           highlightParameter(parameter, parameterToIndex, hintFlags, mustHighlight);
         }
       }
-      else if (arg == argumentsMapping.getKwdArg()) {
-        // mark all n_params that map to **arg
-        for (PyNamedParameter parameter : argumentsMapping.getKwdMappedParams()) {
+      else if (PyCallExpressionHelper.isVariadicKeywordArgument(arg)) {
+        for (PyNamedParameter parameter : mapping.getParametersMappedToVariadicKeywordArguments()) {
           lastParamIndex = Math.max(lastParamIndex, parameterList.indexOf(parameter));
           highlightParameter(parameter, parameterToIndex, hintFlags, mustHighlight);
         }
       }
       else {
-        // maybe it's mapped to a nested tuple?
-        final List<PyNamedParameter> namedParameters = argumentsMapping.getNestedMappedParams().get(arg);
-        if (namedParameters != null) {
-          for (PyNamedParameter parameter : namedParameters) {
+        final PyTupleParameter tupleParameter = mappedTupleParameters.get(arg);
+        if (tupleParameter != null) {
+          for (PyNamedParameter parameter : getFlattenedTupleParameterComponents(tupleParameter)) {
             lastParamIndex = Math.max(lastParamIndex, parameterList.indexOf(parameter));
             highlightParameter(parameter, parameterToIndex, hintFlags, mustHighlight);
           }
         }
       }
-      // else: stay unhighlighted
     }
     return lastParamIndex;
+  }
+
+  @NotNull
+  private static List<PyNamedParameter> getFlattenedTupleParameterComponents(@NotNull PyTupleParameter parameter) {
+    final List<PyNamedParameter> results = new ArrayList<PyNamedParameter>();
+    for (PyParameter component : parameter.getContents()) {
+      if (component instanceof PyNamedParameter) {
+        results.add((PyNamedParameter)component);
+      }
+      else if (component instanceof PyTupleParameter) {
+        results.addAll(getFlattenedTupleParameterComponents((PyTupleParameter)component));
+      }
+    }
+    return results;
   }
 
   private static void highlightParameter(@NotNull final PyNamedParameter parameter,

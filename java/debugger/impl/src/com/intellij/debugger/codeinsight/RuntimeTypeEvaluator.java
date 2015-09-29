@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -33,7 +34,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.ClassType;
 import com.sun.jdi.InterfaceType;
 import com.sun.jdi.Type;
@@ -43,13 +43,13 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiClass> {
+public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiType> {
   public RuntimeTypeEvaluator(@Nullable Editor editor, PsiElement expression, DebuggerContextImpl context, final ProgressIndicator indicator) {
     super(editor, expression, context, indicator);
   }
 
   public void threadAction() {
-    PsiClass type = null;
+    PsiType type = null;
     try {
       type = evaluate();
     }
@@ -62,10 +62,10 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiCl
     }
   }
 
-  protected abstract void typeCalculationFinished(@Nullable PsiClass type);
+  protected abstract void typeCalculationFinished(@Nullable PsiType type);
 
   @Nullable
-  protected PsiClass evaluate(final EvaluationContextImpl evaluationContext) throws EvaluateException {
+  protected PsiType evaluate(final EvaluationContextImpl evaluationContext) throws EvaluateException {
     final Project project = evaluationContext.getProject();
 
     ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
@@ -82,36 +82,37 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiCl
     throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.surrounded.expression.null"));
   }
 
-  public static PsiClass getCastableRuntimeType(Project project, Value value) {
+  @Nullable
+  public static PsiType getCastableRuntimeType(Project project, Value value) {
     Type type = value.type();
-    PsiClass psiClass = findPsiClass(project, type);
-    if (psiClass != null) {
-      return psiClass;
+    PsiType psiType = findPsiType(project, type);
+    if (psiType != null) {
+      return psiType;
     }
 
     if (type instanceof ClassType) {
       ClassType superclass = ((ClassType)type).superclass();
       if (superclass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(superclass.name())) {
-        psiClass = findPsiClass(project, superclass);
-        if (psiClass != null) {
-          return psiClass;
+        psiType = findPsiType(project, superclass);
+        if (psiType != null) {
+          return psiType;
         }
       }
 
       for (InterfaceType interfaceType : ((ClassType)type).interfaces()) {
-        psiClass = findPsiClass(project, interfaceType);
-        if (psiClass != null) {
-          return psiClass;
+        psiType = findPsiType(project, interfaceType);
+        if (psiType != null) {
+          return psiType;
         }
       }
     }
     return null;
   }
 
-  private static PsiClass findPsiClass(Project project, Type type) {
+  private static PsiType findPsiType(Project project, Type type) {
     AccessToken token = ReadAction.start();
     try {
-      return JavaPsiFacade.getInstance(project).findClass(type.name().replace('$', '.'), GlobalSearchScope.allScope(project));
+      return DebuggerUtils.getType(type.name().replace('$', '.'), project);
     }
     finally {
       token.finish();

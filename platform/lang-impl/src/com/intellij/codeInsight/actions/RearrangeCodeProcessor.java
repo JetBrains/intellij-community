@@ -80,8 +80,9 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
           Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
 
           if (document != null && Rearranger.EXTENSION.forLanguage(file.getLanguage()) != null) {
-            Runnable command = prepareRearrangeCommand(file, ranges);
             PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(document);
+            PsiDocumentManager.getInstance(myProject).commitDocument(document);
+            Runnable command = prepareRearrangeCommand(file, ranges);
             try {
               CommandProcessor.getInstance().executeCommand(myProject, command, COMMAND_NAME, null);
             }

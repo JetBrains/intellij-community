@@ -24,6 +24,8 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.HelperPackage;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +37,6 @@ import java.util.List;
  */
 public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
   private final PyTestRunConfiguration myConfiguration;
-  private static final String PYTESTRUNNER_PY = "pycharm/pytestrunner.py";
 
   public PyTestCommandLineState(PyTestRunConfiguration configuration, ExecutionEnvironment env) {
     super(configuration, env);
@@ -43,15 +44,15 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
   }
 
   @Override
-  protected void addBeforeParameters(GeneralCommandLine cmd) throws ExecutionException {
+  protected void addBeforeParameters(GeneralCommandLine cmd) {
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert script_params != null;
     script_params.addParameters("-p", "pytest_teamcity");
   }
 
   @Override
-  protected String getRunner() {
-    return PYTESTRUNNER_PY;
+  protected HelperPackage getRunner() {
+    return PythonHelper.PYTEST;
   }
 
   @Override
@@ -62,7 +63,7 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
   }
 
   @Override
-  protected void addAfterParameters(GeneralCommandLine cmd) throws ExecutionException {
+  protected void addAfterParameters(GeneralCommandLine cmd)  {
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert script_params != null;
     String params = myConfiguration.getParams();

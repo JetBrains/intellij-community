@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,22 +90,22 @@ public class Standalone {
     }
 
     final String projectPath = (new File(projectPaths.get(0))).getAbsolutePath();
-    instance.loadAndRunBuild(FileUtil.toCanonicalPath(projectPath));
-    System.exit(0);
+    int exitCode = instance.loadAndRunBuild(FileUtil.toCanonicalPath(projectPath));
+    System.exit(exitCode);
   }
 
   private static void printUsageAndExit() {
     Args.usage(System.err, new Standalone());
-    System.exit(0);
+    System.exit(1);
   }
 
-  public void loadAndRunBuild(final String projectPath) {
+  public int loadAndRunBuild(final String projectPath) {
     String globalOptionsPath = null;
     if (configPath != null) {
       File optionsDir = new File(configPath, "options");
       if (!optionsDir.isDirectory()) {
         System.err.println("'" + configPath + "' is not valid config path: " + optionsDir.getAbsolutePath() + " not found");
-        return;
+        return 1;
       }
       globalOptionsPath = optionsDir.getAbsolutePath();
     }
@@ -116,14 +116,14 @@ public class Standalone {
       File scriptFile = new File(scriptPath);
       if (!scriptFile.isFile()) {
         System.err.println("Script '" + scriptPath + "' not found");
-        return;
+        return 1;
       }
       initializer = new GroovyModelInitializer(scriptFile);
     }
 
     if (modules.length == 0 && artifacts.length == 0 && !allModules && !allArtifacts) {
       System.err.println("Nothing to compile: at least one of --modules, --artifacts, --all-modules or --all-artifacts parameters must be specified");
-      return;
+      return 1;
     }
 
     JpsModelLoaderImpl loader = new JpsModelLoaderImpl(projectPath, globalOptionsPath, initializer);
@@ -138,18 +138,21 @@ public class Standalone {
     }
     if (dataStorageRoot == null) {
       System.err.println("Error: Cannot determine build data storage root for project " + projectPath);
-      return;
+      return 1;
     }
 
+    ConsoleMessageHandler consoleMessageHandler = new ConsoleMessageHandler();
     long start = System.currentTimeMillis();
     try {
-      runBuild(loader, dataStorageRoot, !incremental, modulesSet, allModules, artifactsList, allArtifacts, true, new ConsoleMessageHandler());
+      runBuild(loader, dataStorageRoot, !incremental, modulesSet, allModules, artifactsList, allArtifacts, true,
+               consoleMessageHandler);
     }
     catch (Throwable t) {
       System.err.println("Internal error: " + t.getMessage());
       t.printStackTrace();
     }
     System.out.println("Build finished in " + Utils.formatDuration(System.currentTimeMillis() - start));
+    return consoleMessageHandler.hasErrors() ? 1 : 0;
   }
 
   @Deprecated
@@ -207,16 +210,23 @@ public class Standalone {
   }
 
   private static class ConsoleMessageHandler implements MessageHandler {
+    private boolean hasErrors = false;
+
     @Override
     public void processMessage(BuildMessage msg) {
       String messageText = msg.getMessageText();
       if (messageText.isEmpty()) return;
       if (msg.getKind() == BuildMessage.Kind.ERROR) {
         System.err.println("Error: " + messageText);
+        hasErrors = true;
       }
       else if (msg.getKind() != BuildMessage.Kind.PROGRESS || !messageText.startsWith("Compiled") && !messageText.startsWith("Copying")) {
         System.out.println(messageText);
       }
+    }
+
+    public boolean hasErrors() {
+      return hasErrors;
     }
   }
 }

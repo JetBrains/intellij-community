@@ -149,7 +149,7 @@ public abstract class DebuggerUtils {
   }
 
   @Nullable
-  public static Method findMethod(ReferenceType refType, @NonNls String methodName, @NonNls String methodSignature) {
+  public static Method findMethod(@NotNull ReferenceType refType, @NonNls String methodName, @NonNls String methodSignature) {
     if (refType instanceof ArrayType) {
       // for array types methodByName() in JDI always returns empty list
       final Method method = findMethod(refType.virtualMachine().classesByName(CommonClassNames.JAVA_LANG_OBJECT).get(0), methodName, methodSignature);
@@ -266,8 +266,11 @@ public abstract class DebuggerUtils {
     return false;
   }
 
-  public static Type getSuperType(Type subType, String superType) {
-    if(CommonClassNames.JAVA_LANG_OBJECT.equals(superType)) {
+  @Nullable
+  public static Type getSuperType(@Nullable Type subType, @NotNull String superType) {
+    if (subType == null) return null;
+
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(superType)) {
       List list = subType.virtualMachine().classesByName(CommonClassNames.JAVA_LANG_OBJECT);
       if(list.size() > 0) {
         return (ReferenceType)list.get(0);
@@ -278,7 +281,7 @@ public abstract class DebuggerUtils {
     return getSuperTypeInt(subType, superType);
   }
 
-  private static boolean typeEquals(Type type, String typeName) {
+  private static boolean typeEquals(@NotNull Type type, @NotNull String typeName) {
     int genericPos = typeName.indexOf('<');
     if (genericPos > -1) {
       typeName = typeName.substring(0, genericPos);
@@ -286,19 +289,15 @@ public abstract class DebuggerUtils {
     return type.name().replace('$', '.').equals(typeName.replace('$', '.'));
   }
 
-  private static Type getSuperTypeInt(Type subType, String superType) {
-    Type result;
-    if (subType == null) {
-      return null;
-    }
-
+  private static Type getSuperTypeInt(@NotNull Type subType, @NotNull String superType) {
     if (typeEquals(subType, superType)) {
       return subType;
     }
 
+    Type result;
     if (subType instanceof ClassType) {
       try {
-        final ClassType clsType = (ClassType)subType;
+        ClassType clsType = (ClassType)subType;
         result = getSuperType(clsType.superclass(), superType);
         if (result != null) {
           return result;
@@ -358,7 +357,7 @@ public abstract class DebuggerUtils {
     return null;
   }
 
-  public static boolean instanceOf(Type subType, String superType) {
+  public static boolean instanceOf(@Nullable Type subType, @NotNull String superType) {
     return getSuperType(subType, superType) != null;
   }
 

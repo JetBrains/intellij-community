@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
@@ -98,7 +99,7 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
         final PsiPackage aPackage = directoryService.getPackage(directory);
         if (aPackage != null) {
           final String qualifiedName = aPackage.getQualifiedName();
-          if (com.intellij.openapi.util.text.StringUtil.isEmpty(qualifiedName) || nameHelper.isQualifiedName(qualifiedName)) {
+          if (StringUtil.isEmpty(qualifiedName) || nameHelper.isQualifiedName(qualifiedName)) {
             return true;
           }
         }
@@ -112,12 +113,6 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
   @Override
   public AttributesDefaults getAttributesDefaults(DataContext dataContext) {
     return new AttributesDefaults(FileTemplateUtil.INTERNAL_PACKAGE_INFO_TEMPLATE_NAME).withFixedName(true);
-  }
-
-  @Nullable
-  @Override
-  protected AnAction getReplacedAction(FileTemplate selectedTemplate) {
-    return null;
   }
 
   @Override

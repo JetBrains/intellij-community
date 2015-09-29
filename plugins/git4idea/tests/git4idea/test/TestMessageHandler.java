@@ -17,6 +17,7 @@ package git4idea.test;
 
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
 public interface TestMessageHandler {
   int handleMessage(@NotNull String description);
 }

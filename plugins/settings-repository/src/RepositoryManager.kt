@@ -54,8 +54,10 @@ public interface RepositoryManager {
    * Not all implementations support progress indicator (will not be updated on progress).
    *
    * syncType will be passed if called before sync.
+   *
+   * If fixStateIfCannotCommit, repository state will be fixed before commit.
    */
-  public fun commit(indicator: ProgressIndicator? = null, syncType: SyncType? = null): Boolean
+  public fun commit(indicator: ProgressIndicator? = null, syncType: SyncType? = null, fixStateIfCannotCommit: Boolean = true): Boolean
 
   public fun getAheadCommitsCount(): Int
 

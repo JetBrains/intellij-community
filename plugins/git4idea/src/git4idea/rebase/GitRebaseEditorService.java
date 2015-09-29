@@ -18,7 +18,6 @@ package git4idea.rebase;
 import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.components.ServiceManager;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
 import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
@@ -179,14 +178,7 @@ public class GitRebaseEditorService {
     @SuppressWarnings({"UnusedDeclaration"})
     public int editCommits(int handlerNo, String path) {
       GitRebaseEditorHandler editor = getHandler(handlerNo);
-      GitHandler handler = editor.getHandler();
-      handler.suspendWriteLock();
-      try {
-        return editor.editCommits(path);
-      }
-      finally {
-        handler.resumeWriteLock();
-      }
+      return editor.editCommits(path);
     }
   }
 }

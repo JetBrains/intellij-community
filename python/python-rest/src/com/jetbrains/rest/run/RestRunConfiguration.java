@@ -21,12 +21,13 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.run.DebugAwareConfiguration;
 import org.jdom.Element;
 
 /**
  * User : catherine
  */
-public abstract class RestRunConfiguration extends AbstractPythonRunConfiguration {
+public abstract class RestRunConfiguration extends AbstractPythonRunConfiguration implements DebugAwareConfiguration {
   private String myInputFile = "";
   private String myOutputFile = "";
   private String myParams = "";
@@ -108,5 +109,10 @@ public abstract class RestRunConfiguration extends AbstractPythonRunConfiguratio
   @Override
   public boolean canRunWithCoverage() {
     return false;
+  }
+
+  @Override
+  public final boolean canRunUnderDebug() {
+    return false; // Rest configuration can't be run under debug
   }
 }

@@ -21,19 +21,10 @@ import com.intellij.psi.PsiElement;
  * @author spleaner
  */
 public class TextContainFilter extends XmlTextFilter {
-  public TextContainFilter(String[] values){
-    super(values);
-  }
-
-  public TextContainFilter(String value1, String value2){
-    super(value1, value2);
-  }
 
   public TextContainFilter(String value){
     super(value);
   }
-
-  public TextContainFilter(){}
 
   @Override
   public boolean isAcceptable(Object element, PsiElement context){

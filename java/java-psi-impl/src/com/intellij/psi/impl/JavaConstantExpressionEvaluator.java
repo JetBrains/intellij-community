@@ -117,6 +117,10 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
                                                  final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
     if (expression == null) return null;
 
+    if (expression instanceof PsiLiteralExpression) {
+      return ((PsiLiteralExpression)expression).getValue(); // don't bother with caching etc
+    }
+
     JavaConstantExpressionEvaluator evaluator = new JavaConstantExpressionEvaluator(visitedVars, throwExceptionOnOverflow, expression.getProject(), auxEvaluator);
 
     if (expression instanceof PsiCompiledElement) {

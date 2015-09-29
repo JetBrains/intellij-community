@@ -115,7 +115,7 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
   private PsiDirectory getOrCreateDirectoryForSource(final VirtualFile file)
     throws IncorrectOperationException {
     final VirtualFile sourceRoot = myFileIndex.getSourceRootForFile(file);
-    LOG.assertTrue(sourceRoot != null);
+    LOG.assertTrue(sourceRoot != null, file.getPath());
     return RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, sourceRoot);
   }
 }

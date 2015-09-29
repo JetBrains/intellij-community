@@ -30,12 +30,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightTypeElement;
+import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -282,12 +280,14 @@ public class GenerateMembersUtil {
       final List<PsiClassType> thrownTypes = ExceptionUtil.collectSubstituted(collisionResolvedSubstitutor, sourceMethod.getThrowsList().getReferencedTypes(),
                                                                               scope);
       if (target instanceof PsiClass) {
-        final PsiClass[] supers = ((PsiClass)target).getSupers();
-        for (PsiClass aSuper : supers) {
-          final PsiMethod psiMethod = aSuper.findMethodBySignature(sourceMethod, true);
+        final PsiMethod[] methods = ((PsiClass)target).findMethodsBySignature(sourceMethod, true);
+        for (PsiMethod psiMethod : methods) {
           if (psiMethod != null && psiMethod != sourceMethod) {
-            PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(aSuper, (PsiClass)target, PsiSubstitutor.EMPTY);
-            ExceptionUtil.retainExceptions(thrownTypes, ExceptionUtil.collectSubstituted(superClassSubstitutor, psiMethod.getThrowsList().getReferencedTypes(), scope));
+            PsiClass aSuper = psiMethod.getContainingClass();
+            if (aSuper != null && aSuper != target) {
+              PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(aSuper, (PsiClass)target, PsiSubstitutor.EMPTY);
+              ExceptionUtil.retainExceptions(thrownTypes, ExceptionUtil.collectSubstituted(superClassSubstitutor, psiMethod.getThrowsList().getReferencedTypes(), scope));
+            }
           }
         }
       }
@@ -505,7 +505,12 @@ public class GenerateMembersUtil {
   }
 
   private static boolean isBaseNameGenerated(JavaCodeStyleManager csManager, PsiType parameterType, String paramName) {
-    return Arrays.asList(csManager.suggestVariableName(VariableKind.PARAMETER, null, null, parameterType).names).contains(paramName);
+    if (Arrays.asList(csManager.suggestVariableName(VariableKind.PARAMETER, null, null, parameterType).names).contains(paramName)) {
+      return true;
+    }
+    final String typeName = JavaCodeStyleManagerImpl.getTypeName(parameterType);
+    return typeName != null && 
+           NameUtil.getSuggestionsByName(typeName, "", "", false, false, parameterType instanceof PsiArrayType).contains(paramName);
   }
 
   private static PsiType substituteType(final PsiSubstitutor substitutor, final PsiType type, @NotNull PsiTypeParameterListOwner owner) {

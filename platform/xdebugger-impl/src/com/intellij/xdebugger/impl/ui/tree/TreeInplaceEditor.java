@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -254,7 +254,8 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     final Editor editor = getEditor();
     if (editor == null) return;
 
-    final LookupImpl activeLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).getActiveLookup();
+    Project project = editor.getProject();
+    LookupImpl activeLookup = project != null ? (LookupImpl)LookupManager.getInstance(project).getActiveLookup() : null;
     if (activeLookup != null){
       final Point lookupPoint = SwingUtilities.convertPoint(sourceComponent, originalPoint, activeLookup.getComponent());
       if (activeLookup.getComponent().getBounds().contains(lookupPoint)){

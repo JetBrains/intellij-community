@@ -21,11 +21,6 @@ class RejectedPromise<T>(private val error: Throwable) : Promise<T> {
 
   override fun done(done: (T) -> Unit) = this
 
-  override fun processed(fulfilled: AsyncPromise<T>): Promise<T> {
-    fulfilled.setError(error)
-    return this
-  }
-
   override fun rejected(rejected: (Throwable) -> Unit): Promise<T> {
     if (!rejected.isObsolete()) {
       rejected(error)
@@ -33,17 +28,23 @@ class RejectedPromise<T>(private val error: Throwable) : Promise<T> {
     return this
   }
 
-  override fun processed(processed: (T) -> Unit): RejectedPromise<T> {
+  override fun processed(processed: (T?) -> Unit): RejectedPromise<T> {
     processed(null)
     return this
   }
 
   override fun <SUB_RESULT> then(done: (T) -> SUB_RESULT): Promise<SUB_RESULT> {
-    @suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST")
     return this as Promise<SUB_RESULT>
   }
 
-  override fun notify(child: AsyncPromise<T>) {
+  override fun <SUB_RESULT> thenAsync(done: (T) -> Promise<SUB_RESULT>): Promise<SUB_RESULT> {
+    @Suppress("UNCHECKED_CAST")
+    return this as Promise<SUB_RESULT>
+  }
+
+  override fun notify(child: AsyncPromise<T>): Promise<T> {
     child.setError(error)
+    return this
   }
 }

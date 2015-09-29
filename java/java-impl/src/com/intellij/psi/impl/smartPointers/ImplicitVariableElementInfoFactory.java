@@ -19,16 +19,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.psi.ImplicitVariable;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ImplicitVariableElementInfoFactory implements SmartPointerElementInfoFactory {
+public class ImplicitVariableElementInfoFactory extends SmartPointerElementInfoFactory {
   @Override
   @Nullable
-  public SmartPointerElementInfo createElementInfo(@NotNull final PsiElement element) {
-    if (element instanceof ImplicitVariable && element.isValid()) {
-      return new ImplicitVariableInfo((ImplicitVariable) element, element.getProject());
+  public SmartPointerElementInfo createElementInfo(@NotNull final PsiElement element, @NotNull PsiFile containingFile) {
+    if (element instanceof ImplicitVariable) {
+      return new ImplicitVariableInfo((ImplicitVariable) element, containingFile.getProject());
     }
     return null;
   }

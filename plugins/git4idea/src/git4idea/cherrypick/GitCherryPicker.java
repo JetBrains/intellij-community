@@ -48,7 +48,7 @@ import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector;
 import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
-import git4idea.util.UntrackedFilesNotifier;
+import git4idea.util.GitUntrackedFilesHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +78,6 @@ public class GitCherryPicker extends VcsCherryPicker {
   private static final String CHERRY_PICK_HEAD_FILE = "CHERRY_PICK_HEAD";
 
   private static final Logger LOG = Logger.getInstance(GitCherryPicker.class);
-  private static final String NAME = "Cherry-Pick";
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
@@ -164,8 +163,8 @@ public class GitCherryPicker extends VcsCherryPicker {
                              "Please move, remove or add them before you can cherry-pick. <a href='view'>View them</a>";
         description += getSuccessfulCommitDetailsIfAny(successfulCommits);
 
-        UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, repository.getRoot(),
-                                                                 untrackedFilesDetector.getRelativeFilePaths(), "cherry-pick", description);
+        GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, repository.getRoot(),
+                                                                  untrackedFilesDetector.getRelativeFilePaths(), "cherry-pick", description);
         return false;
       }
       else if (localChangesOverwrittenDetector.hasHappened()) {
@@ -521,7 +520,7 @@ public class GitCherryPicker extends VcsCherryPicker {
   @NotNull
   @Override
   public String getActionTitle() {
-    return isAutoCommit() ? NAME : NAME + "...";
+    return "Cherry-Pick";
   }
 
   private boolean isAutoCommit() {

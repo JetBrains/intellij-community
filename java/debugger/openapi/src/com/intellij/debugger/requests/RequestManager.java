@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.sun.jdi.request.ClassPrepareRequest;
 import com.sun.jdi.request.EventRequest;
+import org.jetbrains.annotations.Nullable;
 
 public interface RequestManager {
   void callbackOnPrepareClasses(ClassPrepareRequestor requestor, String classOrPatternToBeLoaded);
   void callbackOnPrepareClasses(ClassPrepareRequestor requestor, SourcePosition classPosition) throws EvaluateException;
 
+  @Nullable
   ClassPrepareRequest createClassPrepareRequest(ClassPrepareRequestor requestor, String pattern);  
 
   void enableRequest(EventRequest request);

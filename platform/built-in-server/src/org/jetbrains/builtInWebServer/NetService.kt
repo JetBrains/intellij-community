@@ -18,15 +18,13 @@ import com.intellij.util.net.NetUtils
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.AsyncValueLoader
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.util.concurrency
+import org.jetbrains.util.concurrency.AsyncPromise as OJUCAsyncPromise
 import org.jetbrains.util.concurrency.toPromise
 import javax.swing.Icon
 
-public abstract class NetService @jvmOverloads protected constructor(protected val project: Project, private val consoleManager: ConsoleManager = ConsoleManager()) : Disposable {
-  companion object {
-    protected val LOG: Logger = Logger.getInstance(javaClass<NetService>())
-  }
+val LOG: Logger = Logger.getInstance(NetService::class.java)
 
+public abstract class NetService @JvmOverloads protected constructor(protected val project: Project, private val consoleManager: ConsoleManager = ConsoleManager()) : Disposable {
   protected val processHandler: AsyncValueLoader<OSProcessHandler> = object : AsyncValueLoader<OSProcessHandler>() {
     override fun isCancelOnReject() = true
 
@@ -48,24 +46,22 @@ public abstract class NetService @jvmOverloads protected constructor(protected v
         return promise
       }
 
-      promise.rejected(object : Consumer<Throwable> {
-        override fun consume(error: Throwable) {
-          processHandler.destroyProcess()
-          Promise.logError(LOG, error)
-        }
+      promise.rejected(Consumer {
+        processHandler.destroyProcess()
+        Promise.logError(LOG, it)
       })
 
       val processListener = MyProcessAdapter()
       processHandler.addProcessListener(processListener)
       processHandler.startNotify()
 
-      if (promise.getState() === Promise.State.REJECTED) {
+      if (promise.getState() == Promise.State.REJECTED) {
         return promise
       }
 
       ApplicationManager.getApplication().executeOnPooledThread(object : Runnable {
         override fun run() {
-          if (promise.getState() !== Promise.State.REJECTED) {
+          if (promise.getState() != Promise.State.REJECTED) {
             try {
               connectToProcess(promise.toPromise(), port, processHandler, processListener)
             }
@@ -90,10 +86,10 @@ public abstract class NetService @jvmOverloads protected constructor(protected v
     }
   }
 
-  throws(ExecutionException::class)
+  @Throws(ExecutionException::class)
   protected abstract fun createProcessHandler(project: Project, port: Int): OSProcessHandler?
 
-  protected open fun connectToProcess(promise: concurrency.AsyncPromise<OSProcessHandler>, port: Int, processHandler: OSProcessHandler, errorOutputConsumer: Consumer<String>) {
+  protected open fun connectToProcess(promise: OJUCAsyncPromise<OSProcessHandler>, port: Int, processHandler: OSProcessHandler, errorOutputConsumer: Consumer<String>) {
     promise.setResult(processHandler)
   }
 

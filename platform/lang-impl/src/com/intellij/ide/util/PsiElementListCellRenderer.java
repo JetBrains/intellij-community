@@ -43,11 +43,15 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
 
 public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer, MatcherHolder {
+
+  private static final String LEFT = BorderLayout.WEST;
 
   private Matcher myMatcher;
   private boolean myFocusBorderEnabled = true;
@@ -55,6 +59,25 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   protected PsiElementListCellRenderer() {
     super(new BorderLayout());
+  }
+
+  private class MyAccessibleContext extends JPanel.AccessibleJPanel {
+    @Override
+    public String getAccessibleName() {
+      LayoutManager lm = PsiElementListCellRenderer.this.getLayout();
+      assert lm instanceof BorderLayout;
+      Component leftCellRendererComp = ((BorderLayout)lm).getLayoutComponent(LEFT);
+      return leftCellRendererComp instanceof Accessible ?
+             leftCellRendererComp.getAccessibleContext().getAccessibleName() : super.getAccessibleName();
+    }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new MyAccessibleContext();
+    }
+    return accessibleContext;
   }
 
   @Override
@@ -153,7 +176,6 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       }
       setBackground(selected ? UIUtil.getListSelectionBackground() : bgColor);
     }
-
   }
 
   @Nullable
@@ -191,7 +213,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
     ListCellRenderer leftRenderer = new LeftRenderer(null, myMatcher);
     final Component leftCellRendererComponent = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    add(leftCellRendererComponent, BorderLayout.WEST);
+    add(leftCellRendererComponent, LEFT);
     final Color bg = isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground();
     setBackground(bg);
     if (rightCellRendererComponent != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.util.concurrency.Semaphore;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -117,7 +118,7 @@ public class TransferToEDTQueue<T> {
   }
 
   public boolean offerIfAbsent(@NotNull T thing) {
-    return offerIfAbsent(thing, Equality.CANONICAL);
+    return offerIfAbsent(thing, ContainerUtil.<T>canonicalStrategy());
   }
 
   public boolean offerIfAbsent(@NotNull final T thing, @NotNull final Equality<T> equality) {
@@ -143,6 +144,7 @@ public class TransferToEDTQueue<T> {
   }
 
   protected void schedule(@NotNull Runnable updateRunnable) {
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(updateRunnable);
   }
 
@@ -159,6 +161,8 @@ public class TransferToEDTQueue<T> {
     }
   }
 
+  @TestOnly
+  @NotNull
   public Collection<T> dump() {
     synchronized (myQueue) {
       return myQueue.toList();
@@ -168,11 +172,9 @@ public class TransferToEDTQueue<T> {
   // process all queue in current thread
   public void drain() {
     int processed = 0;
-    long start = System.currentTimeMillis();
     while (processNext()) {
       processed++;
     }
-    long finish = System.currentTimeMillis();
   }
 
   // blocks until all elements in the queue are processed
@@ -187,5 +189,4 @@ public class TransferToEDTQueue<T> {
     });
     semaphore.waitFor();
   }
-
 }

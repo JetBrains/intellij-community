@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package com.intellij.testFramework.fixtures
-
 import com.intellij.codeInsight.completion.CompletionPhase
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
@@ -22,15 +21,19 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ui.UIUtil
+import groovy.transform.CompileStatic
 
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 /**
  * @author peter
  */
+@CompileStatic
 class CompletionAutoPopupTester {
   private final CodeInsightTestFixture myFixture
 
@@ -54,7 +57,7 @@ class CompletionAutoPopupTester {
     waitPhase { !(it instanceof CompletionPhase.CommittingDocuments || it instanceof CompletionPhase.Synchronous || it instanceof CompletionPhase.BgCalculation) }
   }
 
-  private void waitPhase(Closure condition) {
+  private static void waitPhase(Closure condition) {
     for (j in 1..1000) {
       def phase = null
       UsefulTestCase.edt { phase = CompletionServiceImpl.completionPhase }
@@ -64,6 +67,16 @@ class CompletionAutoPopupTester {
       if (j >= 400 && j % 100 == 0) {
         println "Free memory: " + Runtime.runtime.freeMemory() + " of " + Runtime.runtime.totalMemory() + "\n"
         UsefulTestCase.printThreadDump()
+        println "\n\n----------------------------\n\n"
+        if (SystemInfo.isLinux) {
+          try {
+            Process process = new ProcessBuilder().command(["top", "-b", "-n", "1"] as String[]).redirectErrorStream(true).start();
+            println FileUtil.loadTextAndClose(process.getInputStream())
+          }
+          catch (IOException e) {
+            e.printStackTrace()
+          }
+        }
         println "\n\n----------------------------\n\n"
       }
       Thread.sleep(10)

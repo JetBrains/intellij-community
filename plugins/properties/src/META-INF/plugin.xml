@@ -70,7 +70,8 @@
                      key="unused.property.inspection.display.name"
                      groupKey="properties.files.inspection.group.display.name" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.unused.UnusedPropertyInspection"/>
-    <globalInspection shortName="DuplicatePropertyInspection" bundle="messages.InspectionsBundle" key="duplicate.property.display.name"
+    <globalInspection language="Properties" shortName="DuplicatePropertyInspection" bundle="messages.InspectionsBundle"
+                      key="duplicate.property.display.name"
                       groupKey="group.names.properties.files" enabledByDefault="false" level="WARNING"
                       implementationClass="com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection"/>
     <localInspection language="Properties" shortName="TrailingSpacesInProperty" bundle="messages.PropertiesBundle"
@@ -105,6 +106,13 @@
     <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoPropertyDeclarationsProvider"/>
 
     <codeStyleSettingsProvider implementation="com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettingsProvider"/>
+
+    <projectConfigurable groupId="tools"
+                         groupWeight="10"
+                         provider="com.intellij.lang.properties.ResourceBundleEditorConfigurable$Provider"
+                         id="resource.bundle.editor.highlighting.settings"
+                         displayName="Resource Bundle Editor"/>
+    <projectService serviceImplementation="com.intellij.lang.properties.editor.IgnoredPropertiesFilesSuffixesManager"/>
 
     <internalFileTemplate name="XML Properties File.xml"/>
     <refactoring.copyHandler implementation="com.intellij.lang.properties.editor.PropertiesCopyHandler"/>

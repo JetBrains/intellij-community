@@ -46,6 +46,8 @@ public class DocumentEventImpl extends DocumentEvent {
 
   private int myOptimizedOldLineShift = -1;
   private boolean myOptimizedOldLineShiftCalculated;
+  private final int myInitialStartOffset;
+  private final int myInitialOldLength;
 
   public DocumentEventImpl(@NotNull Document document,
                            int offset,
@@ -53,6 +55,16 @@ public class DocumentEventImpl extends DocumentEvent {
                            CharSequence newString,
                            long oldTimeStamp,
                            boolean wholeTextReplaced) {
+    this(document, offset, oldString, newString, oldTimeStamp, wholeTextReplaced, offset, oldString == null ? 0 : oldString.length());
+  }
+  public DocumentEventImpl(@NotNull Document document,
+                           int offset,
+                           CharSequence oldString,
+                           CharSequence newString,
+                           long oldTimeStamp,
+                           boolean wholeTextReplaced,
+                           int initialStartOffset,
+                           int initialOldLength) {
     super(document);
     myOffset = offset;
 
@@ -61,6 +73,9 @@ public class DocumentEventImpl extends DocumentEvent {
 
     myNewString = newString == null ? "" : newString;
     myNewLength = myNewString.length();
+
+    myInitialStartOffset = initialStartOffset;
+    myInitialOldLength = initialOldLength;
 
     myOldTimeStamp = oldTimeStamp;
 
@@ -105,6 +120,22 @@ public class DocumentEventImpl extends DocumentEvent {
   @NotNull
   public Document getDocument() {
     return (Document)getSource();
+  }
+
+  /**
+   * @return initial start offset as requested in {@link Document#replaceString(int, int, CharSequence)} call, before common prefix and
+   * suffix were removed from the changed range.
+   */
+  public int getInitialStartOffset() {
+    return myInitialStartOffset;
+  }
+
+  /**
+   * @return initial "old fragment" length (endOffset - startOffset) as requested in {@link Document#replaceString(int, int, CharSequence)} call, before common prefix and
+   * suffix were removed from the changed range.
+   */
+  public int getInitialOldLength() {
+    return myInitialOldLength;
   }
 
   public int getStartOldIndex() {
