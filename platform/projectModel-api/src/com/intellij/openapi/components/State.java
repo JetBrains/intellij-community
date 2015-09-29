@@ -36,6 +36,9 @@ public @interface State {
    */
   boolean defaultStateAsResource() default false;
 
+  /**
+   * Additional export path (relative to application-level configuration root directory).
+   */
   String additionalExportFile() default "";
 
   Class<? extends NameGetter> presentableName() default NameGetter.class;

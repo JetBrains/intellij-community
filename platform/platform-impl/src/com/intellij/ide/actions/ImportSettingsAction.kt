@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationEx
-import com.intellij.openapi.components.ExportableComponent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
@@ -91,7 +90,7 @@ private class ImportSettingsAction : AnAction(), DumbAware {
     val chosenComponents = dialog.exportableComponents
     val relativeNamesToExtract = THashSet<String>()
     for (chosenComponent in chosenComponents) {
-      for (exportFile in chosenComponent.exportFiles) {
+      for (exportFile in chosenComponent.files) {
         relativeNamesToExtract.add(FileUtil.toSystemIndependentName(FileUtilRt.getRelativePath(File(PathManager.getConfigPath()), exportFile)!!))
       }
     }
@@ -124,7 +123,7 @@ private class ImportSettingsAction : AnAction(), DumbAware {
 
   private fun promptLocationMessage() = IdeBundle.message("message.please.ensure.correct.settings")
 
-  private fun getComponentsStored(settings: File, registeredComponents: Collection<ExportableComponent>): List<ExportableComponent> {
+  private fun getComponentsStored(settings: File, registeredComponents: Collection<ExportableItem>): List<ExportableItem> {
     val zipEntries = THashSet<String>()
     ZipFile(settings).use {
       val enumeration = it.entries()
@@ -134,9 +133,9 @@ private class ImportSettingsAction : AnAction(), DumbAware {
     }
 
     val configPath = File(PathManager.getConfigPath())
-    val components = ArrayList<ExportableComponent>()
+    val components = ArrayList<ExportableItem>()
     for (component in registeredComponents) {
-      for (exportFile in component.exportFiles) {
+      for (exportFile in component.files) {
         var relativePath = FileUtilRt.getRelativePath(configPath, exportFile)!!
         relativePath = FileUtilRt.toSystemIndependentName(relativePath)
         if (exportFile.name.indexOf('.') == -1 && !exportFile.isFile) {

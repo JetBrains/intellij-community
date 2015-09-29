@@ -15,6 +15,8 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.ide.actions.ExportableItem
+import com.intellij.ide.actions.getExportableComponentsMap
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.vfs.CharsetToolkit
@@ -33,6 +35,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.ByteArrayInputStream
+import java.io.File
 import java.io.InputStream
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -107,6 +110,17 @@ internal class ApplicationStoreTest {
     saveStore()
 
     assertThat(oldFile).doesNotExist()
+  }
+
+  @Test fun `export settings`() {
+    val storageManager = ApplicationManager.getApplication().stateStore.stateStorageManager
+    val optionsPath = storageManager.expandMacros(StoragePathMacros.APP_CONFIG)
+    val rootConfigPath = storageManager.expandMacros(ROOT_CONFIG)
+    val map = getExportableComponentsMap(false, true, storageManager)
+    assertThat(map.size()).isNotEqualTo(0)
+
+    val key = File(optionsPath, "filetypes.xml")
+    assertThat(map.get(key)).containsExactly(ExportableItem(listOf(key, File(rootConfigPath, "filetypes")), "File types", RoamingType.DEFAULT))
   }
 
   private fun createComponentData(foo: String) = """<component name="A" foo="$foo" />"""

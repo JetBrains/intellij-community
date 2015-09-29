@@ -17,10 +17,11 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.ROOT_CONFIG
 import com.intellij.configurationStore.StateStorageManagerImpl
-import com.intellij.ide.actions.ExportableComponentItem
+import com.intellij.ide.actions.ExportableItem
 import com.intellij.ide.actions.getExportableComponentsMap
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import java.io.File
@@ -68,20 +69,20 @@ private fun saveDirectory(parent: File, parentFileSpec: String, roamingType: Roa
   }
 }
 
-private fun getRoamingType(components: Collection<ExportableComponent>): RoamingType {
+private fun getRoamingType(components: Collection<ExportableItem>): RoamingType {
   for (component in components) {
-    if (component is ExportableComponentItem) {
+    if (component is ExportableItem) {
       return component.roamingType
     }
-    else if (component is PersistentStateComponent<*>) {
-      val stateAnnotation = component.javaClass.getAnnotation(State::class.java)
-      if (stateAnnotation != null) {
-        val storages = stateAnnotation.storages
-        if (!storages.isEmpty()) {
-          return storages[0].roamingType
-        }
-      }
-    }
+//    else if (component is PersistentStateComponent<*>) {
+//      val stateAnnotation = component.javaClass.getAnnotation(State::class.java)
+//      if (stateAnnotation != null) {
+//        val storages = stateAnnotation.storages
+//        if (!storages.isEmpty()) {
+//          return storages[0].roamingType
+//        }
+//      }
+//    }
   }
   return RoamingType.DEFAULT
 }
