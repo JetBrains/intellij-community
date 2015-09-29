@@ -171,8 +171,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   @NotNull
   public static String createVirtualEnv(@NotNull String destinationDir, String version) throws ExecutionException {
-    final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
-    final String condaExecutable = PyCondaPackageService.getCondaExecutable(condaName);
+    final String condaExecutable = PyCondaPackageService.getCondaExecutable();
     if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.<String>emptyList(), new ProcessOutput());
 
     final ArrayList<String> parameters = Lists.newArrayList(condaExecutable, "create", "-p", destinationDir,
