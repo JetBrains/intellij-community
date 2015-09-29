@@ -124,7 +124,14 @@ public abstract class MavenRemoteManager<Result, Argument, RemoteTask extends Ma
     new Task.Backgroundable(myProject, "Maven", false) {
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setText(item.getTask().getName(item.getArgument()));
-        Result result = item.getTask().execute(item.getArgument(), indicator);
+        Result result = null;
+        try {
+          result = item.getTask().execute(item.getArgument(), indicator);
+        }
+        catch (Exception exc) {
+          LOG.error("Exception during maven remote task", exc);
+        }
+
         MavenRemoteTask.ResultProcessor<Result> resultProcessor = item.getResultProcessor();
         if (resultProcessor != null) {
           resultProcessor.process(result);
