@@ -160,6 +160,7 @@ public class TestStateStorage implements Disposable {
         }
         catch (IOException ignore) {
         }
+        IOUtil.deleteAllFilesStartingWith(myFile);
       }
       myMap = initializeMap();
       LOG.error("Repaired after crash", e);
