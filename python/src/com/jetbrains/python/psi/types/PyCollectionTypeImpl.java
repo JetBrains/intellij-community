@@ -15,9 +15,9 @@
  */
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.PyPsiFacade;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,9 +41,11 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
   }
 
   @Nullable
-  public static PyCollectionTypeImpl createTypeByQName(@NotNull Project project, String classQualifiedName, boolean isDefinition,
-                                                       @NotNull List<PyType> elementTypes) {
-    final PyClass pyClass = PyClassNameIndex.findClass(classQualifiedName, project);
+  public static PyCollectionTypeImpl createTypeByQName(@NotNull final PsiElement anchor,
+                                                       @NotNull final String classQualifiedName,
+                                                       final boolean isDefinition,
+                                                       @NotNull final List<PyType> elementTypes) {
+    final PyClass pyClass = PyPsiFacade.getInstance(anchor.getProject()).createClassByQName(classQualifiedName, anchor);
     if (pyClass == null) {
       return null;
     }
