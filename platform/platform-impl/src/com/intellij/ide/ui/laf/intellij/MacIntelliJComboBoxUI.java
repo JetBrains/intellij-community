@@ -264,10 +264,10 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
         };
       }
 
-      class ComboBoxRendererWraper implements ListCellRenderer {
+      class ComboBoxRendererWrapper implements ListCellRenderer {
         private final ListCellRenderer myRenderer;
 
-        public ComboBoxRendererWraper(@NotNull ListCellRenderer renderer) {
+        public ComboBoxRendererWrapper(@NotNull ListCellRenderer renderer) {
           myRenderer = renderer;
         }
 
@@ -282,8 +282,8 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
 
       private void wrapRenderer() {
         ListCellRenderer renderer = list.getCellRenderer();
-        if (!(renderer instanceof ComboBoxRendererWraper) && renderer != null) {
-          list.setCellRenderer(new ComboBoxRendererWraper(renderer));
+        if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {
+          list.setCellRenderer(new ComboBoxRendererWrapper(renderer));
         }
       }
     };
