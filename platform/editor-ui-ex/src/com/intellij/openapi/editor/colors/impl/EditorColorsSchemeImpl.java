@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.Nullable;
@@ -82,11 +81,5 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     copyTo(newScheme);
     newScheme.setName(getName());
     return newScheme;
-  }
-
-  @Override
-  @Nullable
-  public ExternalInfo getExternalInfo() {
-    return null;
   }
 }
