@@ -17,7 +17,8 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.ROOT_CONFIG
 import com.intellij.configurationStore.StateStorageManagerImpl
-import com.intellij.ide.actions.ExportSettingsAction
+import com.intellij.ide.actions.ExportableComponentItem
+import com.intellij.ide.actions.getExportableComponentsMap
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.io.FileUtil
@@ -27,7 +28,7 @@ import java.io.File
 fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager.getApplication()!!.stateStore.stateStorageManager as StateStorageManagerImpl) {
   val streamProvider = storageManager.streamProvider!! as IcsManager.IcsStreamProvider
 
-  val fileToComponents = ExportSettingsAction.getExportableComponentsMap(true, false, storageManager)
+  val fileToComponents = getExportableComponentsMap(true, false, storageManager)
   for (file in fileToComponents.keySet()) {
     val absolutePath = FileUtilRt.toSystemIndependentName(file.absolutePath)
     var fileSpec = storageManager.collapseMacros(absolutePath)
@@ -69,7 +70,7 @@ private fun saveDirectory(parent: File, parentFileSpec: String, roamingType: Roa
 
 private fun getRoamingType(components: Collection<ExportableComponent>): RoamingType {
   for (component in components) {
-    if (component is ExportSettingsAction.ExportableComponentItem) {
+    if (component is ExportableComponentItem) {
       return component.roamingType
     }
     else if (component is PersistentStateComponent<*>) {
