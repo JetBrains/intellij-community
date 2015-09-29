@@ -15,7 +15,7 @@
  */
 package com.intellij.find.editorHeaderActions;
 
-import com.intellij.find.SearchReplaceComponent;
+import com.intellij.find.SearchSession;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,28 +25,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class PrevNextOccurrenceAction extends DumbAwareAction implements ContextAwareShortcutProvider {
-  private final Handler myHandler;
-
-  PrevNextOccurrenceAction(@NotNull String templateActionId, @NotNull Handler handler) {
+  PrevNextOccurrenceAction(@NotNull String templateActionId) {
     copyFrom(ActionManager.getInstance().getAction(templateActionId));
-    myHandler = handler;
   }
 
   @Override
   public final void update(AnActionEvent e) {
-    myHandler.update(e);
-  }
-
-  @Override
-  public final void actionPerformed(AnActionEvent e) {
-    myHandler.actionPerformed(e);
+    SearchSession search = e.getData(SearchSession.KEY);
+    e.getPresentation().setEnabled(search != null && search.hasMatches());
   }
 
   @Nullable
   @Override
   public final ShortcutSet getShortcut(@NotNull DataContext context) {
-    SearchReplaceComponent searchComponent = SearchReplaceComponent.COMPONENT_KEY.getData(context);
-    boolean singleLine = searchComponent != null && !searchComponent.isMultiline();
+    SearchSession search = SearchSession.KEY.getData(context);
+    boolean singleLine = search != null && !search.getFindModel().isMultiline();
     return Utils.shortcutSetOf(singleLine ? ContainerUtil.concat(getDefaultShortcuts(), getSingleLineShortcuts()) : getDefaultShortcuts());
   }
 
@@ -55,11 +48,4 @@ public abstract class PrevNextOccurrenceAction extends DumbAwareAction implement
 
   @NotNull
   protected abstract List<Shortcut> getSingleLineShortcuts();
-
-
-  public interface Handler {
-    void update(AnActionEvent e);
-
-    void actionPerformed(AnActionEvent e);
-  }
 }

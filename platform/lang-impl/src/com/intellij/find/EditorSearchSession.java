@@ -51,7 +51,8 @@ import java.util.regex.Pattern;
 /**
  * @author max, andrey.zaytsev
  */
-public class EditorSearchSession implements DataProvider,
+public class EditorSearchSession implements SearchSession,
+                                            DataProvider,
                                             SelectionListener,
                                             SearchResults.SearchResultsListener,
                                             SearchReplaceComponent.Listener {
@@ -87,8 +88,8 @@ public class EditorSearchSession implements DataProvider,
 
     myComponent = SearchReplaceComponent
       .buildFor(project, myEditor.getContentComponent())
-      .addPrimarySearchActions(createPrevOccurrenceAction(),
-                               createNextOccurrenceAction(),
+      .addPrimarySearchActions(new PrevOccurrenceAction(),
+                               new NextOccurrenceAction(),
                                new FindAllAction(),
                                new Separator(),
                                new AddOccurrenceAction(),
@@ -111,8 +112,8 @@ public class EditorSearchSession implements DataProvider,
                                 new ExcludeAction())
       .addExtraReplaceAction(new TogglePreserveCaseAction(),
                              new ToggleSelectionOnlyAction())
-      .addReplaceFieldActions(createPrevOccurrenceAction(),
-                              createNextOccurrenceAction())
+      .addReplaceFieldActions(new PrevOccurrenceAction(),
+                              new NextOccurrenceAction())
       .withDataProvider(this)
       .withCloseAction(new Runnable() {
         @Override
@@ -160,7 +161,7 @@ public class EditorSearchSession implements DataProvider,
         }
         updateUIWithFindModel();
         updateResults(true);
-        syncFindModels(FindManager.getInstance(getProject()).getFindInFileModel(), myFindModel);
+        FindUtil.updateFindInFileModel(getProject(), myFindModel);
       }
     });
 
@@ -194,6 +195,7 @@ public class EditorSearchSession implements DataProvider,
   }
 
   @NotNull
+  @Override
   public SearchReplaceComponent getComponent() {
     return myComponent;
   }
@@ -219,6 +221,9 @@ public class EditorSearchSession implements DataProvider,
   @Override
   @Nullable
   public Object getData(@NonNls final String dataId) {
+    if (SearchSession.KEY.is(dataId)) {
+      return this;
+    }
     if (SESSION_KEY.is(dataId)) {
       return this;
     }
@@ -289,18 +294,27 @@ public class EditorSearchSession implements DataProvider,
     myFindModel.setMultiline(myComponent.isMultiline());
   }
 
+  @NotNull
+  @Override
   public FindModel getFindModel() {
     return myFindModel;
   }
 
-  private static void syncFindModels(FindModel to, FindModel from) {
-    to.setCaseSensitive(from.isCaseSensitive());
-    to.setWholeWordsOnly(from.isWholeWordsOnly());
-    to.setRegularExpressions(from.isRegularExpressions());
-    to.setSearchContext(from.getSearchContext());
-    if (from.isReplaceState()) {
-      to.setPreserveCase(from.isPreserveCase());
-    }
+  @Override
+  public boolean hasMatches() {
+    return mySearchResults != null && mySearchResults.hasMatches();
+  }
+
+  @Override
+  public void searchForward() {
+    moveCursor(SearchResults.Direction.DOWN);
+    addTextToRecent(myComponent.getSearchTextComponent());
+  }
+
+  @Override
+  public void searchBackward() {
+    moveCursor(SearchResults.Direction.UP);
+    addTextToRecent(myComponent.getSearchTextComponent());
   }
 
   public void updateUIWithFindModel() {
@@ -332,16 +346,6 @@ public class EditorSearchSession implements DataProvider,
     }
   }
 
-  public void searchBackward() {
-    moveCursor(SearchResults.Direction.UP);
-    addTextToRecent(myComponent.getSearchTextComponent());
-  }
-
-  public void searchForward() {
-    moveCursor(SearchResults.Direction.DOWN);
-    addTextToRecent(myComponent.getSearchTextComponent());
-  }
-
   public void addTextToRecent(JTextComponent textField) {
     myComponent.addTextToRecent(textField);
   }
@@ -355,6 +359,7 @@ public class EditorSearchSession implements DataProvider,
     myLivePreviewController.moveCursor(direction);
   }
 
+  @Override
   public void close() {
     IdeFocusManager.getInstance(getProject()).requestFocus(myEditor.getContentComponent(), false);
 
@@ -388,7 +393,7 @@ public class EditorSearchSession implements DataProvider,
           myComponent.setNotFoundBackground();
           myClickToHighlightLabel.setVisible(false);
           mySearchResults.clear();
-          myComponent.setStatusText("Incorrect regular expression");
+          myComponent.setStatusText(INCORRECT_REGEX_MESSAGE);
           return;
         }
       }
@@ -430,10 +435,6 @@ public class EditorSearchSession implements DataProvider,
     myFindModel.setStringToFind(text);
   }
 
-  public boolean hasMatches() {
-    return mySearchResults != null && mySearchResults.hasMatches();
-  }
-
   public void selectAllOccurrences() {
     FindUtil.selectSearchResultsInEditor(myEditor, mySearchResults.getOccurrences().iterator(), -1);
   }
@@ -448,27 +449,6 @@ public class EditorSearchSession implements DataProvider,
 
   public void clearUndoInTextFields() {
     myComponent.resetUndoRedoActions();
-  }
-
-
-  @NotNull
-  static NextOccurrenceAction createNextOccurrenceAction() {
-    return new NextOccurrenceAction(new PrevNextActionHandler() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        e.getRequiredData(SESSION_KEY).searchForward();
-      }
-    });
-  }
-
-  @NotNull
-  static PrevOccurrenceAction createPrevOccurrenceAction() {
-    return new PrevOccurrenceAction(new PrevNextActionHandler() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        e.getRequiredData(SESSION_KEY).searchBackward();
-      }
-    });
   }
 
 
@@ -563,14 +543,6 @@ public class EditorSearchSession implements DataProvider,
     protected void onClick() {
       myLivePreviewController.exclude();
       moveCursor(SearchResults.Direction.DOWN);
-    }
-  }
-
-  private static abstract class PrevNextActionHandler implements PrevNextOccurrenceAction.Handler {
-    @Override
-    public void update(AnActionEvent e) {
-      EditorSearchSession search = e.getData(SESSION_KEY);
-      e.getPresentation().setEnabled(search != null && search.hasMatches());
     }
   }
 }
