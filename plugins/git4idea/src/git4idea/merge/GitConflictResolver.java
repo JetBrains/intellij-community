@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -322,7 +323,13 @@ public class GitConflictResolver {
           return new File(root.getPath(), path);
         }
       });
-      return ContainerUtil.sorted(RefreshVFsSynchronously.refreshFiles(files), GitUtil.VIRTUAL_FILE_COMPARATOR);
+      RefreshVFsSynchronously.refreshFiles(files);
+      return ContainerUtil.sorted(ContainerUtil.mapNotNull(files, new Function<File, VirtualFile>() {
+        @Override
+        public VirtualFile fun(File file) {
+          return VfsUtil.findFileByIoFile(file, false);
+        }
+      }), GitUtil.VIRTUAL_FILE_COMPARATOR);
     }
   }
 

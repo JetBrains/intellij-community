@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -31,6 +32,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class RefreshVFsSynchronously {
+  private static final Logger LOG = Logger.getInstance(RefreshVFsSynchronously.class);
+
   private RefreshVFsSynchronously() {
   }
 
@@ -42,8 +45,7 @@ public class RefreshVFsSynchronously {
     refreshFiles(callback.getToRefresh());
   }
 
-  @NotNull
-  public static Collection<VirtualFile> refreshFiles(@NotNull Collection<File> files) {
+  public static void refreshFiles(@NotNull Collection<File> files) {
     Collection<VirtualFile> filesToRefresh = ContainerUtil.newHashSet();
     for (File file : files) {
       VirtualFile vf = findFirstValidVirtualParent(file);
@@ -52,7 +54,6 @@ public class RefreshVFsSynchronously {
       }
     }
     VfsUtil.markDirtyAndRefresh(false, false, false, ArrayUtil.toObjectArray(filesToRefresh, VirtualFile.class));
-    return filesToRefresh;
   }
 
   private static void refreshDeletedOrReplaced(@NotNull Collection<File> deletedOrReplaced) {
