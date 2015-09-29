@@ -926,6 +926,7 @@
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateCompletionContributor"/>
 
     <projectService serviceInterface="com.intellij.execution.ExecutionManager" serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
+    <projectService serviceInterface="com.intellij.execution.ui.RunContentManager" serviceImplementation="com.intellij.execution.ui.RunContentManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager" serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
     <applicationService serviceInterface="com.intellij.execution.actions.RunListPopupFactory"
                         serviceImplementation="com.intellij.execution.actions.RunListPopupFactoryImpl"/>
