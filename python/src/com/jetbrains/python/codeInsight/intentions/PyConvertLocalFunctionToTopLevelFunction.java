@@ -22,6 +22,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -116,7 +118,7 @@ public class PyConvertLocalFunctionToTopLevelFunction extends BaseIntentionActio
     for (ScopeOwner owner : scopeOwners) {
       final AnalysisResult scope = findReadsFromEnclosingScope(owner, function, context);
       if (!scope.nonlocalWritesToEnclosingScope.isEmpty()) {
-        PyUtil.showBalloon(project, PyBundle.message("INTN.convert.local.function.to.top.level.function.nonlocal"), MessageType.WARNING);
+        showErrorBalloon(editor, PyBundle.message("INTN.convert.local.function.to.top.level.function.nonlocal"));
         return;
       }
       for (PsiElement element : scope.readFromEnclosingScope) {
@@ -210,5 +212,13 @@ public class PyConvertLocalFunctionToTopLevelFunction extends BaseIntentionActio
 
   private static boolean isFromEnclosingScope(@NotNull PsiElement element, @NotNull PyFunction targetFunction) {
     return !PsiTreeUtil.isAncestor(targetFunction, element, false) && !(ScopeUtil.getScopeOwner(element) instanceof PsiFile);
+  }
+
+  private static void showErrorBalloon(@NotNull Editor editor, @NotNull String message) {
+    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+    popupFactory.createHtmlTextBalloonBuilder(message, MessageType.ERROR, null)
+                .setDisposable(editor.getProject())
+                .createBalloon()
+                .show(popupFactory.guessBestPopupLocation(editor), Balloon.Position.below);
   }
 }
