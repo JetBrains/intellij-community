@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.codeInsight.intentions;
+package com.jetbrains.python.refactoring.convertTopLevelFunction;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,8 +43,8 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.PyBaseRefactoringAction;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,34 +55,32 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
-public class PyConvertLocalFunctionToTopLevelFunction extends BaseIntentionAction {
-  public PyConvertLocalFunctionToTopLevelFunction() {
-    setText(PyBundle.message("INTN.convert.local.function.to.top.level.function"));
-  }
+public class PyConvertLocalFunctionToTopLevelFunctionAction extends PyBaseRefactoringAction {
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
-    return PyBundle.message("INTN.convert.local.function.to.top.level.function");
+  protected boolean isAvailableInEditorOnly() {
+    return true;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PyFunction nestedFunction = findNestedFunctionUnderCaret(editor, file);
-    return nestedFunction != null;
+  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+    return elements.length == 1 && findNestedFunction(elements[0]) != null;
+  }
+
+  @VisibleForTesting
+  @Override
+  public boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
+                                                        @NotNull Editor editor,
+                                                        @NotNull PsiFile file,
+                                                        @NotNull DataContext context) {
+    return findNestedFunction(element) != null;
   }
 
   @Nullable
-  private static PyFunction findNestedFunctionUnderCaret(Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) return null;
-    final PsiElement element = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
-    if (element == null) {
-      return null;
-    }
+  private static PyFunction findNestedFunction(@NotNull PsiElement element) {
     PyFunction result = null;
-    if (isLocalFunction(element.getParent()) && ((PyFunction)element.getParent()).getNameIdentifier() == element) {
-      result = (PyFunction)element.getParent();
+    if (isLocalFunction(element)) {
+      result = (PyFunction)element;
     }
     else {
       final PyReferenceExpression refExpr = PsiTreeUtil.getParentOfType(element, PyReferenceExpression.class);
@@ -92,13 +92,35 @@ public class PyConvertLocalFunctionToTopLevelFunction extends BaseIntentionActio
         result = (PyFunction)resolved;
       }
     }
-    if (result != null) {
-      final VirtualFile virtualFile = result.getContainingFile().getVirtualFile();
-      if (virtualFile != null && ProjectRootManager.getInstance(file.getProject()).getFileIndex().isInLibraryClasses(virtualFile)) {
-        return null;
-      }
-    }
+    //if (result != null) {
+    //  final VirtualFile virtualFile = result.getContainingFile().getVirtualFile();
+    //  if (virtualFile != null && ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInLibraryClasses(virtualFile)) {
+    //    return null;
+    //  }
+    //}
     return result;
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
+    return new RefactoringActionHandler() {
+      @Override
+      public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
+        final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+        if (element != null) {
+          escalateFunction(project, file, editor, element);
+        }
+      }
+
+      @Override
+      public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+        final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+        if (editor != null && elements.length == 1) {
+          escalateFunction(project, elements[0].getContainingFile(), editor, elements[0]);
+        }
+      }
+    };
   }
 
   private static boolean isLocalFunction(@Nullable PsiElement resolved) {
@@ -108,12 +130,15 @@ public class PyConvertLocalFunctionToTopLevelFunction extends BaseIntentionActio
     return false;
   }
 
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  @VisibleForTesting
+  public void escalateFunction(@NotNull Project project,
+                               @NotNull PsiFile file,
+                               @NotNull final Editor editor,
+                               @NotNull PsiElement targetElement) throws IncorrectOperationException {
     final PyResolveContext context = PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.userInitiated(project, file));
-    final PyFunction function = findNestedFunctionUnderCaret(editor, file);
+    final PyFunction function = findNestedFunction(targetElement);
     assert function != null;
-    final Set<String> enclosingScopeReads = new LinkedHashSet<String>(); 
+    final Set<String> enclosingScopeReads = new LinkedHashSet<String>();
     final Collection<ScopeOwner> scopeOwners = PsiTreeUtil.collectElementsOfType(function, ScopeOwner.class);
     for (ScopeOwner owner : scopeOwners) {
       final AnalysisResult scope = findReadsFromEnclosingScope(owner, function, context);
@@ -127,11 +152,24 @@ public class PyConvertLocalFunctionToTopLevelFunction extends BaseIntentionActio
         }
       }
     }
+
+    WriteCommandAction.runWriteCommandAction(project, new Runnable() {
+      @Override
+      public void run() {
+        updateUsagesAndFunction(editor, function, enclosingScopeReads);
+      }
+    });
+  }
+
+  private static void updateUsagesAndFunction(@NotNull Editor editor, 
+                                              @NotNull PyFunction targetFunction,
+                                              @NotNull Set<String> enclosingScopeReads) {
     final String commaSeparatedNames = StringUtil.join(enclosingScopeReads, ", ");
+    final Project project = targetFunction.getProject();
 
     // Update existing usages
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    for (UsageInfo usage : PyRefactoringUtil.findUsages(function, false)) {
+    for (UsageInfo usage : PyRefactoringUtil.findUsages(targetFunction, false)) {
       final PsiElement element = usage.getElement();
       if (element != null) {
         final PyCallExpression parentCall = as(element.getParent(), PyCallExpression.class);
@@ -147,18 +185,19 @@ public class PyConvertLocalFunctionToTopLevelFunction extends BaseIntentionActio
     }
 
     // Replace function
-    PyFunction copiedFunction = (PyFunction)function.copy();
+    PyFunction copiedFunction = (PyFunction)targetFunction.copy();
     final PyParameterList paramList = copiedFunction.getParameterList();
     final StringBuilder paramListText = new StringBuilder(paramList.getText());
     paramListText.insert(1, commaSeparatedNames + (paramList.getParameters().length > 0 ? ", " : ""));
-    paramList.replace(elementGenerator.createParameterList(LanguageLevel.forElement(function), paramListText.toString()));
+    paramList.replace(elementGenerator.createParameterList(LanguageLevel.forElement(targetFunction), paramListText.toString()));
 
     // See AddImportHelper.getFileInsertPosition()
-    final PsiElement anchor = PyPsiUtils.getParentRightBefore(function, file);
+    final PsiFile file = targetFunction.getContainingFile();
+    final PsiElement anchor = PyPsiUtils.getParentRightBefore(targetFunction, file);
 
     copiedFunction = (PyFunction)file.addAfter(copiedFunction, anchor);
-    function.delete();
-    
+    targetFunction.delete();
+
     editor.getSelectionModel().removeSelection();
     editor.getCaretModel().moveToOffset(copiedFunction.getTextOffset());
   }
@@ -199,7 +238,7 @@ public class PyConvertLocalFunctionToTopLevelFunction extends BaseIntentionActio
     }
     return new AnalysisResult(readFromEnclosingScope, nonlocalWrites); 
   }
-  
+
   private static class AnalysisResult {
     final List<PsiElement> readFromEnclosingScope;
     final List<PyTargetExpression> nonlocalWritesToEnclosingScope;
