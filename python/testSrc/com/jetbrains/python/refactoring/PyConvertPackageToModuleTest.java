@@ -5,7 +5,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.refactoring.convert.PyConvertPackageToModuleAction;
+import com.jetbrains.python.refactoring.convertModulePackage.PyConvertPackageToModuleAction;
 
 /**
  * @author Mikhail Golubev

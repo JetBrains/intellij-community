@@ -1,4 +1,4 @@
-package com.jetbrains.python.refactoring.convert;
+package com.jetbrains.python.refactoring.convertModulePackage;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -29,7 +29,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
-public class PyConvertPackageToModuleAction extends PyBaseConvertRefactoringAction {
+public class PyConvertPackageToModuleAction extends PyBaseConvertModulePackageAction {
   private static final Logger LOG = Logger.getInstance(PyConvertPackageToModuleAction.class);
   private static final String ID = "py.refactoring.convert.package.to.module";
 
