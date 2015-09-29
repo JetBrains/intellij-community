@@ -757,21 +757,25 @@ public class LineStatusTracker {
   }
 
   public void rollbackChanges(@NotNull Range range) {
-    myApplication.assertWriteAccessAllowed();
-
-    synchronized (myLock) {
-      if (myBulkUpdate) return;
-
-      if (!range.isValid()) {
-        LOG.warn("Rollback of invalid range");
-        return;
-      }
-
-      doRollbackRange(range);
-    }
+    rollbackChanges(Collections.singletonList(range));
   }
 
   public void rollbackChanges(@NotNull final BitSet lines) {
+    List<Range> toRollback = new ArrayList<Range>();
+    for (Range range : myRanges) {
+      boolean check = DiffUtil.isSelectedByLine(lines, range.getLine1(), range.getLine2());
+      if (check) {
+        toRollback.add(range);
+      }
+    }
+
+    rollbackChanges(toRollback);
+  }
+
+  /**
+   * @param ranges - sorted list of ranges to rollback
+   */
+  private void rollbackChanges(@NotNull final List<Range> ranges) {
     runBulkRollback(new Runnable() {
       @Override
       public void run() {
@@ -779,27 +783,23 @@ public class LineStatusTracker {
         Range last = null;
 
         int shift = 0;
-        for (Range range : myRanges) {
+        for (Range range : ranges) {
           if (!range.isValid()) {
             LOG.warn("Rollback of invalid range");
             break;
           }
 
-          boolean check = DiffUtil.isSelectedByLine(lines, range.getLine1(), range.getLine2());
-
-          if (check) {
-            if (first == null) {
-              first = range;
-            }
-            last = range;
-
-            Range shiftedRange = new Range(range);
-            shiftedRange.shift(shift);
-
-            doRollbackRange(shiftedRange);
-
-            shift += (range.getVcsLine2() - range.getVcsLine1()) - (range.getLine2() - range.getLine1());
+          if (first == null) {
+            first = range;
           }
+          last = range;
+
+          Range shiftedRange = new Range(range);
+          shiftedRange.shift(shift);
+
+          doRollbackRange(shiftedRange);
+
+          shift += (range.getVcsLine2() - range.getVcsLine1()) - (range.getLine2() - range.getLine1());
         }
 
         if (first != null) {
