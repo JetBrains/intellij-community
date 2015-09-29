@@ -211,7 +211,7 @@ class AsyncPromise<T> : Promise<T> {
     }
   }
 
-  fun setError(error: String): Boolean = setError(MessageError(error))
+  fun setError(error: String) = setError(MessageError(error))
 
   fun setError(error: Throwable): Boolean {
     if (state != Promise.State.PENDING) {

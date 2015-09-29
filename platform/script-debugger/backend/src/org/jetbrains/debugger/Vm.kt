@@ -18,27 +18,27 @@ package org.jetbrains.debugger
 import org.jetbrains.util.concurrency.Promise
 import org.jetbrains.util.concurrency.ResolvedPromise
 
-public interface AttachStateManager {
-  public fun detach(): Promise<*> = ResolvedPromise()
+interface AttachStateManager {
+  fun detach() = ResolvedPromise()
 
-  public fun isAttached(): Boolean = true
+  fun isAttached() = true
 }
 
-public interface Vm {
-  public val debugListener: DebugEventListener
+interface Vm {
+  val debugListener: DebugEventListener
 
-  public val attachStateManager: AttachStateManager
+  val attachStateManager: AttachStateManager
 
-  public val evaluateContext: EvaluateContext?
+  val evaluateContext: EvaluateContext?
 
-  public fun getScriptManager(): ScriptManager
+  fun getScriptManager(): ScriptManager
 
-  public fun getBreakpointManager(): BreakpointManager
+  fun getBreakpointManager(): BreakpointManager
 
-  public fun getSuspendContextManager(): SuspendContextManager<out CallFrame>
+  fun getSuspendContextManager(): SuspendContextManager<out CallFrame>
 
   /**
    * Controls whether VM stops on exceptions
    */
-  public fun setBreakOnException(catchMode: ExceptionCatchMode): Promise<*>
+  fun setBreakOnException(catchMode: ExceptionCatchMode): Promise<*>
 }

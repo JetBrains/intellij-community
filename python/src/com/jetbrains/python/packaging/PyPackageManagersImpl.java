@@ -15,7 +15,10 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.jetbrains.python.packaging.ui.PyCondaManagementService;
+import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +32,6 @@ public class PyPackageManagersImpl extends PyPackageManagers {
   private final Map<String, PyPackageManagerImpl> myInstances = new HashMap<String, PyPackageManagerImpl>();
 
   @NotNull
-  @Override
   public synchronized PyPackageManager forSdk(Sdk sdk) {
     final String name = sdk.getName();
     PyPackageManagerImpl manager = myInstances.get(name);
@@ -37,11 +39,21 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       if (PythonSdkType.isRemote(sdk)) {
         manager = new PyRemotePackageManagerImpl(sdk);
       }
+      else if (PyCondaPackageManagerImpl.findCondaExecutable(sdk) != null) {
+        manager = new PyCondaPackageManagerImpl(sdk);
+      }
       else {
         manager = new PyPackageManagerImpl(sdk);
       }
       myInstances.put(name, manager);
     }
     return manager;
+  }
+
+  public PyPackageManagementService getManagementService(Project project, Sdk sdk) {
+    if (PyCondaPackageManagerImpl.findCondaExecutable(sdk) != null) {
+      return new PyCondaManagementService(project, sdk);
+    }
+    return new PyPackageManagementService(project, sdk);
   }
 }

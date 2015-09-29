@@ -72,6 +72,7 @@ public class MvcUpgradeAction extends MvcActionBase {
 
   @Override
   protected void updateView(AnActionEvent event, @NotNull MvcFramework framework, @NotNull Module module) {
+    event.getPresentation().setEnabledAndVisible(framework.isUpgradeActionSupported(module));
     event.getPresentation().setIcon(framework.getIcon());
   }
 }

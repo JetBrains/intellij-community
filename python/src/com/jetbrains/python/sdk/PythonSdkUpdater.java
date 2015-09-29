@@ -195,6 +195,7 @@ public class PythonSdkUpdater implements StartupActivity {
    * Updates SDK based on sys.path and cleans legacy information up.
    */
   private static void updateSdkPath(@NotNull PySdkUpdater sdkUpdater, @NotNull List<String> sysPath) {
+    if (getInstance().isAlreadyUpdated(sdkUpdater.getHomePath())) return;
     addNewSysPathEntries(sdkUpdater, sysPath);
     removeSourceRoots(sdkUpdater);
     removeDuplicateClassRoots(sdkUpdater);
@@ -302,5 +303,13 @@ public class PythonSdkUpdater implements StartupActivity {
       return oldRoots.contains(rootFile);
     }
     return false;
+  }
+
+  public void clearAlreadyUpdated() {
+    myAlreadyUpdated.clear();
+  }
+
+  public boolean isAlreadyUpdated(String path) {
+    return myAlreadyUpdated.contains(path);
   }
 }

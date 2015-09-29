@@ -192,10 +192,9 @@ public class FindUtil {
     model.setCaseSensitive(true);
     model.setWholeWordsOnly(!editor.getSelectionModel().hasSelection());
 
-    final JComponent header = editor.getHeaderComponent();
-    if (header instanceof EditorSearchComponent) {
-      final EditorSearchComponent searchComponent = (EditorSearchComponent)header;
-      searchComponent.setTextInField(model.getStringToFind());
+    EditorSearchSession searchSession = EditorSearchSession.get(editor);
+    if (searchSession != null) {
+      searchSession.setTextInField(model.getStringToFind());
     }
 
     findManager.setFindNextModel(model);

@@ -102,8 +102,9 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
                                                  searchInNonJavaFiles, false, null) {
       @Override
       public TargetDirectoryWrapper getTargetDirectory(final PsiDirectory dir) {
-        final VirtualFile sourceRoot = index.getSourceRootForFile(dir.getVirtualFile());
-        LOG.assertTrue(sourceRoot != null);
+        final VirtualFile vFile = dir.getVirtualFile();
+        final VirtualFile sourceRoot = index.getSourceRootForFile(vFile);
+        LOG.assertTrue(sourceRoot != null, vFile.getPath());
         return new TargetDirectoryWrapper(dir.getManager().findDirectory(sourceRoot), newName.replaceAll("\\.", "\\/"));
       }
 

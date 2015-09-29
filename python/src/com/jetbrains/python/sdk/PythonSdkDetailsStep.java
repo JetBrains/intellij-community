@@ -37,8 +37,10 @@ import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.packaging.PyCondaPackageService;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +63,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   private static final String LOCAL = PyBundle.message("sdk.details.step.add.local");
   private static final String REMOTE = PyBundle.message("sdk.details.step.add.remote");
   private static final String VIRTUALENV = PyBundle.message("sdk.details.step.create.virtual.env");
+  private static final String CONDA = PyBundle.message("sdk.details.step.create.conda.env");
   private static final String MORE = PyBundle.message("sdk.details.step.show.more");
   private boolean myNewProject;
 
@@ -107,6 +110,10 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
       options.add(REMOTE);
     }
     options.add(VIRTUALENV);
+    final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
+    if (PyCondaPackageService.getCondaExecutable(condaName) != null) {
+      options.add(CONDA);
+    }
 
     if (showMore) {
       options.add(MORE);
@@ -131,6 +138,9 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     }
     else if (VIRTUALENV.equals(selectedValue)) {
       createVirtualEnvSdk();
+    }
+    else if (CONDA.equals(selectedValue)) {
+      createCondaEnvSdk();
     }
     else if (myMore != null) {
       myMore.show();
@@ -176,26 +186,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   }
 
   private void createVirtualEnvSdk() {
-    CreateVirtualEnvDialog.VirtualEnvCallback callback = new CreateVirtualEnvDialog.VirtualEnvCallback() {
-      @Override
-      public void virtualEnvCreated(Sdk sdk, boolean associateWithProject) {
-        PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
-        if (associateWithProject) {
-          SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
-          if (additionalData == null) {
-            additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk.getHomePath()));
-            ((ProjectJdkImpl)sdk).setSdkAdditionalData(additionalData);
-          }
-          if (myNewProject) {
-            ((PythonSdkAdditionalData)additionalData).associateWithNewProject();
-          }
-          else {
-            ((PythonSdkAdditionalData)additionalData).associateWithProject(myProject);
-          }
-        }
-        myCallback.consume(sdk);
-      }
-    };
+    AbstractCreateVirtualEnvDialog.VirtualEnvCallback callback = getVEnvCallback();
 
     final CreateVirtualEnvDialog dialog;
     final List<Sdk> allSdks = Lists.newArrayList(myExistingSdks);
@@ -217,10 +208,49 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
       allSdks.add(new PyDetectedSdk(string));
     }
     if (myProject != null) {
-      dialog = new CreateVirtualEnvDialog(myProject, allSdks, null);
+      dialog = new CreateVirtualEnvDialog(myProject, allSdks);
     }
     else {
-      dialog = new CreateVirtualEnvDialog(myOwnerComponent, allSdks, null);
+      dialog = new CreateVirtualEnvDialog(myOwnerComponent, allSdks);
+    }
+    if (dialog.showAndGet()) {
+      dialog.createVirtualEnv(callback);
+    }
+  }
+
+  @NotNull
+  private AbstractCreateVirtualEnvDialog.VirtualEnvCallback getVEnvCallback() {
+    return new CreateVirtualEnvDialog.VirtualEnvCallback() {
+        @Override
+        public void virtualEnvCreated(Sdk sdk, boolean associateWithProject) {
+          PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
+          if (associateWithProject) {
+            SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
+            if (additionalData == null) {
+              additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk.getHomePath()));
+              ((ProjectJdkImpl)sdk).setSdkAdditionalData(additionalData);
+            }
+            if (myNewProject) {
+              ((PythonSdkAdditionalData)additionalData).associateWithNewProject();
+            }
+            else {
+              ((PythonSdkAdditionalData)additionalData).associateWithProject(myProject);
+            }
+          }
+          myCallback.consume(sdk);
+        }
+      };
+  }
+
+  private void createCondaEnvSdk() {
+    AbstractCreateVirtualEnvDialog.VirtualEnvCallback callback = getVEnvCallback();
+
+    final CreateCondaEnvDialog dialog;
+    if (myProject != null) {
+      dialog = new CreateCondaEnvDialog(myProject);
+    }
+    else {
+      dialog = new CreateCondaEnvDialog(myOwnerComponent);
     }
     if (dialog.showAndGet()) {
       dialog.createVirtualEnv(callback);

@@ -155,8 +155,17 @@ public class TestData implements Cloneable
   }
 
   @Override
-  public Object clone() throws CloneNotSupportedException {
-    TestData data = (TestData) super.clone();
+  public TestData clone() {
+    TestData data;
+    try {
+      data = (TestData)super.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      //can't happen right?
+      //noinspection CallToPrintStackTrace
+      e.printStackTrace();
+      data = new TestData();
+    }
     data.TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
 
     data.TEST_PROPERTIES = new HashMap<String, String>();
