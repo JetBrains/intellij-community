@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,26 @@
  */
 package com.intellij.openapi.roots.ui.util;
 
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 
-public class HttpUrlCellAppearance extends ValidFileCellAppearance {
-  public HttpUrlCellAppearance(VirtualFile file) {
+public class JarSubfileCellAppearance extends ValidFileCellAppearance {
+  public JarSubfileCellAppearance(VirtualFile file) {
     super(file);
   }
 
   @Override
   protected Icon getIcon() {
-    return PlatformIcons.WEB_ICON;
+    return FileTypes.ARCHIVE.getIcon();
+  }
+
+  @Override
+  protected int getSplitUrlIndex(String url) {
+    int jarNameEnd = url.lastIndexOf(JarFileSystem.JAR_SEPARATOR.charAt(0));
+    String jarUrl = jarNameEnd >= 0 ? url.substring(0, jarNameEnd) : url;
+    return super.getSplitUrlIndex(jarUrl);
   }
 }
