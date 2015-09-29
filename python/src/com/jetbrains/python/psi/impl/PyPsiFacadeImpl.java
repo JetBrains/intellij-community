@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyPsiFacade;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolverImpl;
@@ -79,6 +80,13 @@ public class PyPsiFacadeImpl extends PyPsiFacade {
   @Override
   public PyType parseTypeAnnotation(@NotNull String annotation, @NotNull PsiElement anchor) {
     return PyTypeParser.getTypeByName(anchor, annotation);
+  }
+
+  @Nullable
+  @Override
+  public final PyClass createClassByQName(@NotNull final String qName, @NotNull final PsiElement anchor) {
+    final PyClassType classType = PyUtil.as(parseTypeAnnotation(qName, anchor), PyClassType.class);
+    return (classType != null ? classType.getPyClass() : null);
   }
 
   @Nullable
