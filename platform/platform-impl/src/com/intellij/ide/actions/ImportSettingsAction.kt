@@ -125,11 +125,15 @@ private class ImportSettingsAction : AnAction(), DumbAware {
 
   private fun getComponentsStored(settings: File, registeredComponents: Collection<ExportableItem>): List<ExportableItem> {
     val zipEntries = THashSet<String>()
-    ZipFile(settings).use {
-      val enumeration = it.entries()
+    val zipFile = ZipFile(settings)
+    try {
+      val enumeration = zipFile.entries()
       while (enumeration.hasMoreElements()) {
         zipEntries.add(enumeration.nextElement().name)
       }
+    }
+    finally {
+      zipFile.close()
     }
 
     val configPath = File(PathManager.getConfigPath())
