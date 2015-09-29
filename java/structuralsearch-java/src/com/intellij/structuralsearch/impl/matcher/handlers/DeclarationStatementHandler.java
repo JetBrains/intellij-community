@@ -22,6 +22,7 @@ import java.util.List;
 public class DeclarationStatementHandler extends MatchingHandler {
   private MatchingHandler myCommentHandler;
 
+  @Override
   public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
     if (patternNode instanceof PsiComment) {
         return myCommentHandler.match(patternNode, matchedNode, context);
@@ -59,7 +60,7 @@ public class DeclarationStatementHandler extends MatchingHandler {
       node = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace.class);
       while (PsiUtil.isJavaToken(node, JavaTokenType.COMMA)) {
         node = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace.class);
-        if (node != null) {
+        if (node instanceof PsiField) {
           matchNodes.add(node);
         }
         node = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace.class);
@@ -89,6 +90,7 @@ public class DeclarationStatementHandler extends MatchingHandler {
     return false;
   }
 
+  @Override
   public boolean shouldAdvanceTheMatchFor(PsiElement patternElement, PsiElement matchedElement) {
     if (patternElement instanceof PsiComment &&
         ( matchedElement instanceof PsiField ||
