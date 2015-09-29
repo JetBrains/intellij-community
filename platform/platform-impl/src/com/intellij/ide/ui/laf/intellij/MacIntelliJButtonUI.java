@@ -109,7 +109,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   }
 
   private static Icon getIcon(String suffix, AbstractButton button) {
-    boolean isDefault = button instanceof JButton && ((JButton)button).isDefaultButton();
+    boolean isDefault = isDefaultButton(button);
     boolean isFocused = button.hasFocus();
     boolean combo = button.getClientProperty("styleCombo") == Boolean.TRUE;
     String comboPrefix = combo ? "Combo" : "";
@@ -145,5 +145,17 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
     return new Dimension(size.width + 16, 27);
+  }
+
+  @Override
+  protected void paintDisabledText(Graphics g, String text, JComponent c, Rectangle textRect, FontMetrics metrics) {
+    int x = textRect.x + getTextShiftOffset();
+    int y = textRect.y + metrics.getAscent() + getTextShiftOffset();
+    if (isDefaultButton(c)) {
+     g.setColor(Gray.xCC);
+    } else {
+      g.setColor(UIManager.getColor("Button.disabledText"));
+    }
+    SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1, x, y);
   }
 }
