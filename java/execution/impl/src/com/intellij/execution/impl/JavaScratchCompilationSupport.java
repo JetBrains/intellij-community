@@ -28,6 +28,8 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,19 +65,21 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
     if (scratchUrl == null) {
       return true;
     }
-    final Module configModule = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
-    if (configModule == null) {
-      context.addMessage(CompilerMessageCategory.ERROR, "A module must be specified for the run configuration", scratchUrl, -1, -1);
-      return true;
-    }
-    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(configModule);
-    final Sdk targetSdk = moduleRootManager.getSdk();
+    @Nullable
+    final Module module = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
+    final Sdk targetSdk = module != null? ModuleRootManager.getInstance(module).getSdk() : ProjectRootManager.getInstance(project).getProjectSdk();
     if (targetSdk == null) {
-      context.addMessage(CompilerMessageCategory.ERROR, "Cannot find associated SDK for run configuration module \"" + configModule.getName() + "\".\nPlease check project settings.", scratchUrl, -1, -1);
+      final String message = module != null?
+                             "Cannot find associated SDK for run configuration module \"" + module.getName() + "\".\nPlease check project settings." :
+                             "Cannot find associated project SDK for the run configuration.\nPlease check project settings.";
+      context.addMessage(CompilerMessageCategory.ERROR, message, scratchUrl, -1, -1);
       return true;
     }
     if (!(targetSdk.getSdkType() instanceof JavaSdkType)) {
-      context.addMessage(CompilerMessageCategory.ERROR, "Expected Java SDK for run configuration module \"" + configModule.getName() + "\".\nPlease check project settings.", scratchUrl, -1, -1);
+      final String message = module != null?
+                             "Expected Java SDK for run configuration module \"" + module.getName() + "\".\nPlease check project settings." :
+                             "Expected Java SDK for project \"" + project.getName() + "\".\nPlease check project settings.";
+      context.addMessage(CompilerMessageCategory.ERROR, message, scratchUrl, -1, -1);
       return true;
     }
 
@@ -131,11 +136,24 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
       final Collection<File> files = Collections.singleton(srcFile);
 
       final Set<File> cp = new LinkedHashSet<File>();
-      for (String s : moduleRootManager.orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
+      final List<File> platformCp = new ArrayList<File>();
+
+      final Computable<OrderEnumerator> orderEnumerator = module != null ? new Computable<OrderEnumerator>() {
+        @Override
+        public OrderEnumerator compute() {
+          return ModuleRootManager.getInstance(module).orderEntries();
+        }
+      } : new Computable<OrderEnumerator>() {
+        @Override
+        public OrderEnumerator compute() {
+          return ProjectRootManager.getInstance(project).orderEntries();
+        }
+      };
+
+      for (String s : orderEnumerator.compute().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
         cp.add(new File(s));
       }
-      final List<File> platformCp = new ArrayList<File>();
-      for (String s : moduleRootManager.orderEntries().compileOnly().sdkOnly().getPathsList().getPathList()) {
+      for (String s : orderEnumerator.compute().compileOnly().sdkOnly().getPathsList().getPathList()) {
         platformCp.add(new File(s));
       }
 
