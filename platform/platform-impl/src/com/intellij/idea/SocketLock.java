@@ -15,10 +15,6 @@
  */
 package com.intellij.idea;
 
-import com.intellij.CommonBundle;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -39,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.MessageDecoder;
 
-import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.Collection;
@@ -52,8 +47,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author mike
  */
 public final class SocketLock {
-  private static final Logger LOG = Logger.getInstance(SocketLock.class);
-
   public enum ActivateStatus {ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE}
 
   private static final String PORT_FILE = "port";
@@ -75,9 +68,7 @@ public final class SocketLock {
   }
 
   public void dispose() {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: destroyProcess()");
-    }
+    log("enter: dispose()");
 
     BuiltInServer server = myServer;
     if (server == null) return;
@@ -96,8 +87,8 @@ public final class SocketLock {
           }
         });
       }
-      catch (Throwable e) {
-        logError(e);
+      catch (Exception e) {
+        Logger.getInstance(SocketLock.class).warn(e);
       }
     }
   }
@@ -114,9 +105,7 @@ public final class SocketLock {
 
   @Nullable
   public ActivateStatus lock(@NotNull final String[] args) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: lock(configPath='" + myConfigPath + "', systemPath='" + mySystemPath + "')");
-    }
+    log("enter: lock(config=%s system=%s)", myConfigPath, mySystemPath);
 
     try {
       return underLocks(new Callable<ActivateStatus>() {
@@ -153,23 +142,8 @@ public final class SocketLock {
         }
       });
     }
-    catch (Throwable e) {
-      logError(e);
-
-      if (Main.isHeadless()) {
-        Main.showMessage("Cannot lock system folders", e);
-      }
-      else {
-        String pathToLogFile = PathManager.getLogPath() + "/idea.log file".replace('/', File.separatorChar);
-        JOptionPane.showMessageDialog(
-          JOptionPane.getRootFrame(),
-          CommonBundle.message("cannot.start.other.instance.is.running.error.message", ApplicationNamesInfo.getInstance().getProductName(),
-                               pathToLogFile),
-          CommonBundle.message("title.warning"),
-          JOptionPane.WARNING_MESSAGE
-        );
-      }
-
+    catch (Exception e) {
+      Main.showMessage("Cannot lock system folders", e);
       return null;
     }
   }
@@ -197,20 +171,10 @@ public final class SocketLock {
       try {
         portToPath.putValue(Integer.parseInt(FileUtilRt.loadFile(portMarker)), path);
       }
-      catch (Throwable e) {
-        LOG.debug(e);
+      catch (Exception e) {
+        log(e);
         // don't delete - we overwrite it on write in any case
       }
-    }
-  }
-
-  private static void logError(@NotNull Throwable e) {
-    // default logger throws AssertionError and it leads to startup failure without error message dialog
-    if (LOG instanceof DefaultLogger) {
-      LOG.warn(e);
-    }
-    else {
-      LOG.error(e);
     }
   }
 
@@ -246,7 +210,7 @@ public final class SocketLock {
             }
           }
           catch (IOException e) {
-            LOG.info(e);
+            log(e);
           }
 
           return ActivateStatus.CANNOT_ACTIVATE;
@@ -257,7 +221,7 @@ public final class SocketLock {
       }
     }
     catch (IOException e) {
-      LOG.debug(e);
+      log(e);
     }
 
     return ActivateStatus.NO_INSTANCE;
@@ -346,6 +310,17 @@ public final class SocketLock {
     }
     catch (IOException ignore) {
       return configPath;
+    }
+  }
+
+  private static void log(Exception e) {
+    Logger.getInstance(SocketLock.class).debug(e);
+  }
+
+  private static void log(String format, Object... args) {
+    Logger logger = Logger.getInstance(SocketLock.class);
+    if (logger.isDebugEnabled()) {
+      logger.debug(String.format(format, args));
     }
   }
 }
