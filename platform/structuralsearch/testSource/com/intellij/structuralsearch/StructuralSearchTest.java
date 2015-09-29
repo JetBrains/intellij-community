@@ -3291,5 +3291,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find declarations with only one field", 1, findMatchesCount(source, "int '_a;"));
     assertEquals("find all declarations", 4, findMatchesCount(source, "int '_a+;"));
     assertEquals("find all fields", 9, findMatchesCount(source, "int 'a+;"));
+
+    String source2 = "class ABC {" +
+                     "    String u;" +
+                     "    String s,t," +
+                     "    void m() {}" +
+                     "}";
+    assertEquals("find incomplete code", 1, findMatchesCount(source2, "'_a '_b{2,100};"));
   }
 }
