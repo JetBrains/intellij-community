@@ -148,11 +148,11 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
   }
 
   private void nextOccurrence() {
-    executeHeaderAction(EditorSearchSession.createNextOccurrenceAction());
+    executeHeaderAction(new NextOccurrenceAction());
   }
 
   private void prevOccurrence() {
-    executeHeaderAction(EditorSearchSession.createPrevOccurrenceAction());
+    executeHeaderAction(new PrevOccurrenceAction());
   }
 
   private void addOccurrence() {

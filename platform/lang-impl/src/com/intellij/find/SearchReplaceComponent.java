@@ -57,9 +57,6 @@ import java.util.EventListener;
 import java.util.List;
 
 public class SearchReplaceComponent extends EditorHeaderComponent implements DataProvider {
-  public static final DataKey<SearchReplaceComponent> COMPONENT_KEY = DataKey.create("search-replace-component");
-  public static final DataKey<String> STATUS_TEXT_KEY = DataKey.create("search-replace-status-text");
-
   private final EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
 
   private final MyTextComponentWrapper mySearchFieldWrapper;
@@ -90,7 +87,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   private final DataProvider myDataProviderDelegate;
 
   private boolean myMultilineMode;
-  private String myStatusText;
+  private String myStatusText = "";
 
   @NotNull
   public static Builder buildFor(@Nullable Project project, @NotNull JComponent component) {
@@ -225,6 +222,11 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     myStatusText = status;
   }
 
+  @NotNull
+  public String getStatusText() {
+    return myStatusText;
+  }
+
   public void replace() {
     if (myReplaceAction != null) {
       myReplaceAction.run();
@@ -258,12 +260,6 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (STATUS_TEXT_KEY.is(dataId)) {
-      return myStatusText;
-    }
-    if (COMPONENT_KEY.is(dataId)) {
-      return this;
-    }
     if (SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.is(dataId)) {
       return mySearchTextComponent.getText();
     }
