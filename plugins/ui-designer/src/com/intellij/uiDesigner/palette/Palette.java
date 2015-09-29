@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,16 +136,17 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
     }
   }
 
+  @Override
   public Element getState() {
     final Element e = new Element("state");
     writeExternal(e);
     return e;
   }
 
+  @Override
   public void loadState(Element state) {
     readExternal(state);
   }
-
 
   /**Adds specified listener.*/
   public void addListener(@NotNull final Listener l){
@@ -710,6 +711,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
           Condition<RadComponent> filter = null;
           if (name.equals(SwingProperties.LABEL_FOR)) {
             filter = new Condition<RadComponent>() {
+              @Override
               public boolean value(final RadComponent t) {
                 ComponentItem item = getItem(t.getComponentClassName());
                 return item != null && item.isCanAttachLabel();
@@ -811,6 +813,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
       }
     }
 
+    @Override
     public void lookAndFeelChanged(final LafManager source) {
       for (final IntrospectedProperty[] properties : myClass2Properties.values()) {
         LOG.assertTrue(properties != null);
@@ -821,7 +824,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
     }
   }
 
-  static interface Listener{
+  interface Listener{
     void groupsChanged(Palette palette);
   }
 }
