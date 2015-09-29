@@ -85,7 +85,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           String msg = "acquireReadActionLock(" + l2 + "ms) vs runReadAction(" + l1 + "ms). Ratio: " + ratioPercent + "%";
           System.out.println(msg);
           if (Math.abs(ratioPercent) > 20) {
-            return "Suspiciously different times for " + msg;
+            return "Suspiciously different times for " + msg +" (in "+(ratioPercent<0 ? "my" : "Maxim's") +" favor)";
           }
         }
         catch (Throwable e) {
@@ -415,7 +415,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           assertFalse(application.tryRunReadAction(EmptyRunnable.getInstance()));
           assertTrue(application.isWriteActionInProgress());
           assertFalse(application.isWriteAccessAllowed());
-          assertTrue(application.isWriteActionPending());
+          assertFalse(application.isWriteActionPending());
         }
 
         holdWrite.set(false);
@@ -453,7 +453,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       while (holdWrite.get() && ok()) {
         assertTrue(application.isWriteActionInProgress());
         assertTrue(application.isWriteAccessAllowed());
-        //assertTrue(application.isWriteActionPending());   depends on how you look at it, so leave it for now
+        assertFalse(application.isWriteActionPending());
       }
     }
     finally {
