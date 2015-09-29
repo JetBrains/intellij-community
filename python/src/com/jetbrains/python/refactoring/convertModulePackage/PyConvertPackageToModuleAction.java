@@ -34,7 +34,7 @@ public class PyConvertPackageToModuleAction extends PyBaseConvertModulePackageAc
   private static final String ID = "py.refactoring.convert.package.to.module";
 
   @Override
-  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  protected boolean isEnabledOnElementsOutsideEditor(@NotNull PsiElement[] elements) {
     if (elements.length == 1) {
       final PsiDirectory pyPackage = getPackageDir(elements[0]);
       return pyPackage != null && !isSpecialDirectory(pyPackage);

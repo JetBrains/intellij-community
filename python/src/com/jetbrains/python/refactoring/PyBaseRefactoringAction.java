@@ -16,14 +16,38 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.jetbrains.python.PythonLanguage;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
 public abstract class PyBaseRefactoringAction extends BaseRefactoringAction {
+
+  protected abstract boolean isEnabledOnElementInsideEditor(@NotNull PsiElement element,
+                                                            @NotNull Editor editor,
+                                                            @NotNull PsiFile file,
+                                                            @NotNull DataContext context);
+
+  @Override
+  protected final boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
+                                                              @NotNull Editor editor,
+                                                              @NotNull PsiFile file,
+                                                              @NotNull DataContext context) {
+    return isEnabledOnElementInsideEditor(element, editor, file, context);
+  }
+
+  protected abstract boolean isEnabledOnElementsOutsideEditor(@NotNull PsiElement[] elements);
+
+  @Override
+  protected final boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+    return isEnabledOnElementsOutsideEditor(elements);
+  }
 
   @Override
   protected final boolean isAvailableForLanguage(Language language) {
