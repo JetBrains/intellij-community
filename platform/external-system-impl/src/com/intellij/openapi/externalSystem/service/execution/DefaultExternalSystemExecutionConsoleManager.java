@@ -17,7 +17,7 @@ package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.filters.TextConsoleBuilderImpl;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
@@ -53,7 +53,7 @@ public class DefaultExternalSystemExecutionConsoleManager implements ExternalSys
                                                  @NotNull ExecutionEnvironment env,
                                                  @NotNull ProcessHandler processHandler) throws ExecutionException {
     myProcessHandler = processHandler;
-    ConsoleView executionConsole = new TextConsoleBuilderImpl(project).getConsole();
+    ConsoleView executionConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
     executionConsole.attachToProcess(processHandler);
     return executionConsole;
   }
