@@ -34,7 +34,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
@@ -43,10 +42,10 @@ import org.jetbrains.io.MessageDecoder;
 import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -55,24 +54,24 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class SocketLock {
   private static final Logger LOG = Logger.getInstance(SocketLock.class);
 
-  @NonNls private static final String ACTIVATE_COMMAND = "activate ";
-
-  private final String configPath;
-  private final String systemPath;
-
   public enum ActivateStatus {ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE}
 
-  private final AtomicReference<Consumer<List<String>>> activateListener = new AtomicReference<Consumer<List<String>>>();
+  private static final String PORT_FILE = "port";
+  private static final String ACTIVATE_COMMAND = "activate ";
+  private static final String PORT_LOCK_FILE = "port.lock";
 
-  private BuiltInServer server;
+  private final String myConfigPath;
+  private final String mySystemPath;
+  private final AtomicReference<Consumer<List<String>>> myActivateListener = new AtomicReference<Consumer<List<String>>>();
+  private BuiltInServer myServer;
 
   public SocketLock(@NotNull String configPath, @NotNull String systemPath) {
-    this.configPath = canonicalPath(configPath);
-    this.systemPath = canonicalPath(systemPath);
+    myConfigPath = canonicalPath(configPath);
+    mySystemPath = canonicalPath(systemPath);
   }
 
   public void setExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
-    activateListener.set(consumer);
+    myActivateListener.set(consumer);
   }
 
   public void dispose() {
@@ -80,57 +79,32 @@ public final class SocketLock {
       LOG.debug("enter: destroyProcess()");
     }
 
-    BuiltInServer server = this.server;
-    boolean doRemovePortMarker = server != null;
+    BuiltInServer server = myServer;
+    if (server == null) return;
+
     try {
-      if (server != null) {
-        Disposer.dispose(server);
-      }
+      Disposer.dispose(server);
     }
     finally {
-      if (doRemovePortMarker) {
-        try {
-          executeAndClose(new Executor<Void>() {
-            @Override
-            public Void execute(@NotNull List<Closeable> closeables) throws IOException {
-              File config = new File(configPath);
-              File system = new File(systemPath);
-              lockPortMarker(config, closeables);
-              lockPortMarker(system, closeables);
-              FileUtil.delete(new File(config, "port"));
-              FileUtil.delete(new File(system, "port"));
-              return null;
-            }
-          });
-        }
-        catch (Throwable e) {
-          logError(e);
-        }
+      try {
+        underLocks(new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            FileUtil.delete(new File(myConfigPath, PORT_FILE));
+            FileUtil.delete(new File(mySystemPath, PORT_FILE));
+            return null;
+          }
+        });
+      }
+      catch (Throwable e) {
+        logError(e);
       }
     }
   }
 
   @Nullable
   public BuiltInServer getServer() {
-    return server;
-  }
-
-  private static void lockPortMarker(@NotNull File parent, @NotNull List<Closeable> list) throws IOException {
-    FileUtilRt.createDirectory(parent);
-    FileOutputStream stream = new FileOutputStream(new File(parent, "port.lock"), true);
-    list.add(stream);
-  }
-
-  private static void addExistingPort(@NotNull File portMarker, @NotNull String path, @NotNull MultiMap<Integer, String> portToPath) {
-    if (portMarker.exists()) {
-      try {
-        portToPath.putValue(Integer.parseInt(FileUtilRt.loadFile(portMarker)), path);
-      }
-      catch (Throwable e) {
-        LOG.debug(e);
-        // don't delete - we overwrite it on write in any case
-      }
-    }
+    return myServer;
   }
 
   @Nullable
@@ -141,22 +115,19 @@ public final class SocketLock {
   @Nullable
   public ActivateStatus lock(@NotNull final String[] args) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: lock(configPath='" + configPath + "', systemPath='" + systemPath + "')");
+      LOG.debug("enter: lock(configPath='" + myConfigPath + "', systemPath='" + mySystemPath + "')");
     }
 
     try {
-      final File config = new File(configPath);
-      final File system = new File(systemPath);
-      final File portMarkerC = new File(config, "port");
-      final File portMarkerS = new File(system, "port");
-      return executeAndClose(new Executor<ActivateStatus>() {
+      return underLocks(new Callable<ActivateStatus>() {
         @Override
-        public ActivateStatus execute(@NotNull List<Closeable> closeables) throws Throwable {
-          lockPortMarker(config, closeables);
-          lockPortMarker(system, closeables);
+        public ActivateStatus call() throws Exception {
+          File portMarkerC = new File(myConfigPath, PORT_FILE);
+          File portMarkerS = new File(mySystemPath, PORT_FILE);
+
           MultiMap<Integer, String> portToPath = MultiMap.createSmart();
-          addExistingPort(portMarkerC, configPath, portToPath);
-          addExistingPort(portMarkerS, systemPath, portToPath);
+          addExistingPort(portMarkerC, myConfigPath, portToPath);
+          addExistingPort(portMarkerS, mySystemPath, portToPath);
           if (!portToPath.isEmpty()) {
             for (Map.Entry<Integer, Collection<String>> entry : portToPath.entrySet()) {
               ActivateStatus status = tryActivate(entry.getKey(), entry.getValue(), args);
@@ -166,16 +137,16 @@ public final class SocketLock {
             }
           }
 
-          final String[] lockedPaths = {configPath, systemPath};
-          server = BuiltInServer.start(1, 6942, 50, false, new NotNullProducer<ChannelHandler>() {
+          final String[] lockedPaths = {myConfigPath, mySystemPath};
+          myServer = BuiltInServer.start(1, 6942, 50, false, new NotNullProducer<ChannelHandler>() {
             @NotNull
             @Override
             public ChannelHandler produce() {
-              return new MyChannelInboundHandler(lockedPaths, activateListener);
+              return new MyChannelInboundHandler(lockedPaths, myActivateListener);
             }
           });
 
-          byte[] portBytes = Integer.toString(server.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
+          byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
           FileUtil.writeToFile(portMarkerC, portBytes);
           FileUtil.writeToFile(portMarkerS, portBytes);
           return ActivateStatus.NO_INSTANCE;
@@ -198,27 +169,37 @@ public final class SocketLock {
           JOptionPane.WARNING_MESSAGE
         );
       }
+
       return null;
     }
   }
 
-  private interface Executor<T> {
-    T execute(@NotNull List<Closeable> closeables) throws Throwable;
-  }
-
-  private static <T> T executeAndClose(@NotNull Executor<T> executor) throws Throwable {
-    List<Closeable> closeables = new ArrayList<Closeable>();
+  private <V> V underLocks(@NotNull Callable<V> action) throws Exception {
+    FileUtilRt.createDirectory(new File(myConfigPath));
+    FileOutputStream lock1 = new FileOutputStream(new File(myConfigPath, PORT_LOCK_FILE), true);
     try {
-      return executor.execute(closeables);
+      FileUtilRt.createDirectory(new File(mySystemPath));
+      FileOutputStream lock2 = new FileOutputStream(new File(mySystemPath, PORT_LOCK_FILE), true);
+      try {
+        return action.call();
+      }
+      finally {
+        lock2.close();
+      }
     }
     finally {
-      for (Closeable closeable : closeables) {
-        try {
-          closeable.close();
-        }
-        catch (Throwable e) {
-          logError(e);
-        }
+      lock1.close();
+    }
+  }
+
+  private static void addExistingPort(@NotNull File portMarker, @NotNull String path, @NotNull MultiMap<Integer, String> portToPath) {
+    if (portMarker.exists()) {
+      try {
+        portToPath.putValue(Integer.parseInt(FileUtilRt.loadFile(portMarker)), path);
+      }
+      catch (Throwable e) {
+        LOG.debug(e);
+        // don't delete - we overwrite it on write in any case
       }
     }
   }
@@ -233,82 +214,74 @@ public final class SocketLock {
     }
   }
 
-  @SuppressWarnings({"SocketOpenedButNotSafelyClosed", "IOResourceOpenedButNotSafelyClosed"})
   @NotNull
   private static ActivateStatus tryActivate(int portNumber, @NotNull Collection<String> paths, @NotNull String[] args) {
-    Socket socket = null;
     try {
-      socket = new Socket(NetUtils.getLoopbackAddress(), portNumber);
-      socket.setSoTimeout(300);
+      Socket socket = new Socket(NetUtils.getLoopbackAddress(), portNumber);
+      try {
+        socket.setSoTimeout(300);
 
-      boolean result = false;
-      DataInputStream in = new DataInputStream(socket.getInputStream());
-      while (true) {
-        try {
-          String path = in.readUTF();
-          if (paths.contains(path)) {
-            result = true;
-            // don't break - read all input
+        boolean result = false;
+        @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataInputStream in = new DataInputStream(socket.getInputStream());
+        while (true) {
+          try {
+            String path = in.readUTF();
+            if (paths.contains(path)) {
+              result = true;  // don't break - read all input
+            }
+          }
+          catch (IOException ignored) {
+            break;
           }
         }
-        catch (IOException ignored) {
-          break;
+
+        if (result) {
+          try {
+            @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+            out.writeUTF(ACTIVATE_COMMAND + new File(".").getAbsolutePath() + "\0" + StringUtil.join(args, "\0"));
+            out.flush();
+            String response = in.readUTF();
+            if (response.equals("ok")) {
+              return ActivateStatus.ACTIVATED;
+            }
+          }
+          catch (IOException e) {
+            LOG.info(e);
+          }
+
+          return ActivateStatus.CANNOT_ACTIVATE;
         }
       }
-
-      if (result) {
-        try {
-          DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-          out.writeUTF(ACTIVATE_COMMAND + new File(".").getAbsolutePath() + "\0" + StringUtil.join(args, "\0"));
-          out.flush();
-          String response = in.readUTF();
-          if (response.equals("ok")) {
-            return ActivateStatus.ACTIVATED;
-          }
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
-        return ActivateStatus.CANNOT_ACTIVATE;
+      finally {
+        socket.close();
       }
     }
     catch (IOException e) {
       LOG.debug(e);
-    }
-    finally {
-      if (socket != null) {
-        try {
-          socket.close();
-        }
-        catch (IOException e) {
-          LOG.debug(e);
-        }
-      }
     }
 
     return ActivateStatus.NO_INSTANCE;
   }
 
   private static class MyChannelInboundHandler extends MessageDecoder {
-    private final String[] lockedPaths;
-    private State state = State.HEADER;
-    private final AtomicReference<Consumer<List<String>>> activateListener;
-
-    public MyChannelInboundHandler(@NotNull String[] lockedPaths, @NotNull AtomicReference<Consumer<List<String>>> activateListener) {
-      this.lockedPaths = lockedPaths;
-      this.activateListener = activateListener;
-    }
-
     private enum State {HEADER, CONTENT}
 
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    private final String[] myLockedPaths;
+    private final AtomicReference<Consumer<List<String>>> myActivateListener;
+    private State myState = State.HEADER;
+
+    public MyChannelInboundHandler(@NotNull String[] lockedPaths, @NotNull AtomicReference<Consumer<List<String>>> activateListener) {
+      myLockedPaths = lockedPaths;
+      myActivateListener = activateListener;
+    }
+
     @Override
     public void channelActive(ChannelHandlerContext context) throws Exception {
       ByteBuf buffer = context.alloc().ioBuffer(1024);
       boolean success = false;
       try {
         ByteBufOutputStream out = new ByteBufOutputStream(buffer);
-        for (String path : lockedPaths) {
+        for (String path : myLockedPaths) {
           if (path != null) {
             out.writeUTF(path);
           }
@@ -324,11 +297,10 @@ public final class SocketLock {
       context.writeAndFlush(buffer);
     }
 
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     @Override
     protected void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf input) throws Exception {
       while (true) {
-        switch (state) {
+        switch (myState) {
           case HEADER: {
             ByteBuf buffer = getBufferIfSufficient(input, 2, context);
             if (buffer == null) {
@@ -336,7 +308,7 @@ public final class SocketLock {
             }
 
             contentLength = buffer.readUnsignedShort();
-            state = State.CONTENT;
+            myState = State.CONTENT;
           }
           break;
 
@@ -348,7 +320,7 @@ public final class SocketLock {
 
             if (StringUtil.startsWith(command, ACTIVATE_COMMAND)) {
               List<String> args = StringUtil.split(command.subSequence(ACTIVATE_COMMAND.length(), command.length()).toString(), "\0");
-              Consumer<List<String>> listener = activateListener.get();
+              Consumer<List<String>> listener = myActivateListener.get();
               if (listener != null) {
                 listener.consume(args);
               }
@@ -371,7 +343,8 @@ public final class SocketLock {
   private static String canonicalPath(@NotNull String configPath) {
     try {
       return new File(configPath).getCanonicalPath();
-    } catch (IOException ignore) {
+    }
+    catch (IOException ignore) {
       return configPath;
     }
   }
