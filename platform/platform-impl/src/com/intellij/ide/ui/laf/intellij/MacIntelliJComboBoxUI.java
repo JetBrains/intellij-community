@@ -19,6 +19,7 @@ import com.intellij.ui.Gray;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -266,25 +267,22 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
       class ComboBoxRendererWraper implements ListCellRenderer {
         private final ListCellRenderer myRenderer;
 
-        public ComboBoxRendererWraper(ListCellRenderer renderer) {
+        public ComboBoxRendererWraper(@NotNull ListCellRenderer renderer) {
           myRenderer = renderer;
         }
-
-        BorderLayoutPanel myPanel = JBUI.Panels.simplePanel().withBorder(JBUI.Borders.empty(0, 8));
 
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
           Component c = myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          myPanel.removeAll();
-          myPanel.add(c);
-          myPanel.setBackground(c.getBackground());
-          return myPanel;
+          BorderLayoutPanel panel = JBUI.Panels.simplePanel(c).withBorder(JBUI.Borders.empty(0, 8));
+          panel.setBackground(c.getBackground());
+          return panel;
         }
       }
 
       private void wrapRenderer() {
         ListCellRenderer renderer = list.getCellRenderer();
-        if (!(renderer instanceof ComboBoxRendererWraper)) {
+        if (!(renderer instanceof ComboBoxRendererWraper) && renderer != null) {
           list.setCellRenderer(new ComboBoxRendererWraper(renderer));
         }
       }
