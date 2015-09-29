@@ -375,9 +375,6 @@ data class TestScheme(@field:Attribute private var name: String = "", @field:Att
   override @Transient fun setName(newName: String) {
     name = newName
   }
-
-  @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
-  override fun getExternalInfo() = null
 }
 
 open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme>() {
