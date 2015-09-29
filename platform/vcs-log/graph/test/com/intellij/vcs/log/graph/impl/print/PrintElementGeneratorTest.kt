@@ -16,21 +16,19 @@
 package com.intellij.vcs.log.graph.impl.print
 
 import com.intellij.util.NotNullFunction
-import com.intellij.vcs.log.graph.*
+import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.elements.GraphNode
 import com.intellij.vcs.log.graph.api.printer.PrintElementManager
+import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 import com.intellij.vcs.log.graph.parser.LinearGraphParser
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
-import org.junit.Test
-
-import java.io.IOException
-import java.util.Comparator
-
 import org.junit.Assert.assertEquals
+import org.junit.Test
+import java.util.*
 
 public class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGenerator") {
 
@@ -78,22 +76,22 @@ public class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGen
     assertEquals(out, actual)
   }
 
-  Test
+  @Test
   public fun oneNode() {
     doTest("oneNode")
   }
 
-  Test
+  @Test
   public fun manyNodes() {
     doTest("manyNodes")
   }
 
-  Test
+  @Test
   public fun longEdges() {
     doTest("longEdges")
   }
 
-  Test
+  @Test
   public fun specialElements() {
     doTest("specialElements")
   }

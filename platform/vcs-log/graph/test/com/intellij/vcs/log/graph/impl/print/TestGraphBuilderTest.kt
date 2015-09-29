@@ -15,13 +15,11 @@
  */
 package com.intellij.vcs.log.graph.impl.print
 
-import com.intellij.vcs.log.graph.*
+import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile
+import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.parser.LinearGraphParser
-import org.junit.Test
-
-import java.io.IOException
-
 import org.junit.Assert.assertEquals
+import org.junit.Test
 
 public class TestGraphBuilderTest : AbstractTestWithTwoTextFile("testParser") {
 
@@ -30,17 +28,17 @@ public class TestGraphBuilderTest : AbstractTestWithTwoTextFile("testParser") {
     assertEquals(out, graph.asString(false))
   }
 
-  Test
+  @Test
   public fun specialElements() {
     doTest("specialElements")
   }
 
-  Test
+  @Test
   public fun manyNodes() {
     doTest("manyNodes")
   }
 
-  Test
+  @Test
   public fun notLoadNode() {
     doTest("notLoadNode")
   }
