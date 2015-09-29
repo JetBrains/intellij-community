@@ -302,7 +302,9 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   @Override
   protected Editor createEditor(@NotNull VirtualFile file) {
-    allowTreeAccessForFile(file);
+    if (myVirtualFileFilter instanceof FileTreeAccessFilter) {
+      allowTreeAccessForFile(file);
+    }
     return super.createEditor(file);
   }
 
