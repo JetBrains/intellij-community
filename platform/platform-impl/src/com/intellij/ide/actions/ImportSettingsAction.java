@@ -13,168 +13,141 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.ide.actions
 
-/**
- * @author cdr
- */
-package com.intellij.ide.actions;
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.startup.StartupActionScriptManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.components.ExportableComponent
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.updateSettings.impl.UpdateSettings
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.util.Consumer
+import gnu.trove.THashSet
+import java.io.File
+import java.io.IOException
+import java.util.*
+import java.util.zip.ZipException
+import java.util.zip.ZipFile
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.components.ExportableComponent;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.Consumer;
-import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
-import java.util.zip.ZipFile;
-
-public class ImportSettingsAction extends AnAction implements DumbAware {
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-    ChooseComponentsToExportDialog.chooseSettingsFile(PathManager.getConfigPath(), component, IdeBundle.message("title.import.file.location"), IdeBundle.message("prompt.choose.import.file.path")).doWhenDone(new Consumer<String>() {
-      @Override
-      public void consume(String path) {
-        File saveFile = new File(path);
+private class ImportSettingsAction : AnAction(), DumbAware {
+  override fun actionPerformed(e: AnActionEvent) {
+    val dataContext = e.dataContext
+    val component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext)
+    ChooseComponentsToExportDialog.chooseSettingsFile(PathManager.getConfigPath(), component, IdeBundle.message("title.import.file.location"), IdeBundle.message("prompt.choose.import.file.path")).doWhenDone(object : Consumer<String> {
+      override fun consume(path: String) {
+        val saveFile = File(path)
         try {
-          doImport(saveFile);
+          doImport(saveFile)
         }
-        catch (ZipException e1) {
+        catch (e1: ZipException) {
           Messages.showErrorDialog(
             IdeBundle.message("error.reading.settings.file", presentableFileName(saveFile), e1.getMessage(), promptLocationMessage()),
-            IdeBundle.message("title.invalid.file"));
+            IdeBundle.message("title.invalid.file"))
         }
-        catch (IOException e1) {
+        catch (e1: IOException) {
           Messages.showErrorDialog(IdeBundle.message("error.reading.settings.file.2", presentableFileName(saveFile), e1.getMessage()),
-                                   IdeBundle.message("title.error.reading.file"));
+            IdeBundle.message("title.error.reading.file"))
         }
       }
-    });
+    })
   }
 
-  private static void doImport(@NotNull File saveFile) throws IOException {
+  private fun doImport(saveFile: File) {
     if (!saveFile.exists()) {
       Messages.showErrorDialog(IdeBundle.message("error.cannot.find.file", presentableFileName(saveFile)),
-                               IdeBundle.message("title.file.not.found"));
-      return;
+        IdeBundle.message("title.file.not.found"))
+      return
     }
 
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    final ZipEntry magicEntry = new ZipFile(saveFile).getEntry(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER);
+    val magicEntry = ZipFile(saveFile).getEntry(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)
     if (magicEntry == null) {
       Messages.showErrorDialog(
         IdeBundle.message("error.file.contains.no.settings.to.import", presentableFileName(saveFile), promptLocationMessage()),
-        IdeBundle.message("title.invalid.file"));
-      return;
+        IdeBundle.message("title.invalid.file"))
+      return
     }
 
-    MultiMap<File, ExportableComponent> fileToComponents = ExportSettingsAction.getExportableComponentsMap(false, true);
-    List<ExportableComponent> components = getComponentsStored(saveFile, fileToComponents.values());
-    fileToComponents.values().retainAll(components);
-    final ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(fileToComponents, false,
-                                                                                     IdeBundle.message("title.select.components.to.import"),
-                                                                                     IdeBundle.message("prompt.check.components.to.import"));
+    val fileToComponents = getExportableComponentsMap(false, true)
+    val components = getComponentsStored(saveFile, fileToComponents.values())
+    fileToComponents.values().retainAll(components)
+    val dialog = ChooseComponentsToExportDialog(fileToComponents, false,
+      IdeBundle.message("title.select.components.to.import"),
+      IdeBundle.message("prompt.check.components.to.import"))
     if (!dialog.showAndGet()) {
-      return;
+      return
     }
 
-    final Set<ExportableComponent> chosenComponents = dialog.getExportableComponents();
-    Set<String> relativeNamesToExtract = new THashSet<String>();
-    for (ExportableComponent chosenComponent : chosenComponents) {
-      for (File exportFile : chosenComponent.getExportFiles()) {
-        String rPath = FileUtilRt.getRelativePath(new File(PathManager.getConfigPath()), exportFile);
-        assert rPath != null;
-        relativeNamesToExtract.add(FileUtil.toSystemIndependentName(rPath));
+    val chosenComponents = dialog.exportableComponents
+    val relativeNamesToExtract = THashSet<String>()
+    for (chosenComponent in chosenComponents) {
+      for (exportFile in chosenComponent.exportFiles) {
+        relativeNamesToExtract.add(FileUtil.toSystemIndependentName(FileUtilRt.getRelativePath(File(PathManager.getConfigPath()), exportFile)!!))
       }
     }
 
-    relativeNamesToExtract.add(PluginManager.INSTALLED_TXT);
+    relativeNamesToExtract.add(PluginManager.INSTALLED_TXT)
 
-    final File tempFile = new File(PathManager.getPluginTempPath() + "/" + saveFile.getName());
-    FileUtil.copy(saveFile, tempFile);
-    File outDir = new File(PathManager.getConfigPath());
-    final ImportSettingsFilenameFilter filenameFilter = new ImportSettingsFilenameFilter(relativeNamesToExtract);
-    StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.UnzipCommand(tempFile, outDir, filenameFilter));
+    val tempFile = File(PathManager.getPluginTempPath(), saveFile.name)
+    FileUtil.copy(saveFile, tempFile)
+    val outDir = File(PathManager.getConfigPath())
+    val filenameFilter = ImportSettingsFilenameFilter(relativeNamesToExtract)
+    StartupActionScriptManager.addActionCommand(StartupActionScriptManager.UnzipCommand(tempFile, outDir, filenameFilter))
     // remove temp file
-    StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(tempFile));
+    StartupActionScriptManager.addActionCommand(StartupActionScriptManager.DeleteCommand(tempFile))
 
-    UpdateSettings.getInstance().forceCheckForUpdateAfterRestart();
+    UpdateSettings.getInstance().forceCheckForUpdateAfterRestart()
 
-    String key = ApplicationManager.getApplication().isRestartCapable()
-                 ? "message.settings.imported.successfully.restart"
-                 : "message.settings.imported.successfully";
+    val key = if (ApplicationManager.getApplication().isRestartCapable)
+      "message.settings.imported.successfully.restart"
+    else
+      "message.settings.imported.successfully"
     if (Messages.showOkCancelDialog(IdeBundle.message(key,
-                                                      ApplicationNamesInfo.getInstance().getProductName(),
-                                                      ApplicationNamesInfo.getInstance().getFullProductName()),
-                                    IdeBundle.message("title.restart.needed"), Messages.getQuestionIcon()) == Messages.OK) {
-      ((ApplicationEx)ApplicationManager.getApplication()).restart(true);
+      ApplicationNamesInfo.getInstance().productName,
+      ApplicationNamesInfo.getInstance().fullProductName),
+      IdeBundle.message("title.restart.needed"), Messages.getQuestionIcon()) == Messages.OK) {
+      (ApplicationManager.getApplication() as ApplicationEx).restart(true)
     }
   }
 
-  private static String presentableFileName(@NotNull File file) {
-    return "'" + FileUtil.toSystemDependentName(file.getPath()) + "'";
-  }
+  private fun presentableFileName(file: File) = "'" + FileUtil.toSystemDependentName(file.path) + "'"
 
-  private static String promptLocationMessage() {
-    return IdeBundle.message("message.please.ensure.correct.settings");
-  }
+  private fun promptLocationMessage() = IdeBundle.message("message.please.ensure.correct.settings")
 
-  @NotNull
-  private static List<ExportableComponent> getComponentsStored(@NotNull File settings,
-                                                               @NotNull Collection<? extends ExportableComponent> registeredComponents) throws IOException {
-    THashSet<String> zipEntries = new THashSet<String>();
-    ZipFile zip = new ZipFile(settings);
-    try {
-      Enumeration enumeration = zip.entries();
+  private fun getComponentsStored(settings: File, registeredComponents: Collection<ExportableComponent>): List<ExportableComponent> {
+    val zipEntries = THashSet<String>()
+    ZipFile(settings).use {
+      val enumeration = it.entries()
       while (enumeration.hasMoreElements()) {
-        ZipEntry zipEntry = (ZipEntry)enumeration.nextElement();
-        zipEntries.add(zipEntry.getName());
+        zipEntries.add(enumeration.nextElement().name)
       }
     }
-    finally {
-      zip.close();
-    }
 
-    File configPath = new File(PathManager.getConfigPath());
-    List<ExportableComponent> components = new ArrayList<ExportableComponent>();
-
-    for (ExportableComponent component : registeredComponents) {
-      for (File exportFile : component.getExportFiles()) {
-        String relativePath = FileUtilRt.getRelativePath(configPath, exportFile);
-        assert relativePath != null;
-        relativePath = FileUtilRt.toSystemIndependentName(relativePath);
-        if (exportFile.getName().indexOf('.') == -1 && !exportFile.isFile()) {
-          relativePath += '/';
+    val configPath = File(PathManager.getConfigPath())
+    val components = ArrayList<ExportableComponent>()
+    for (component in registeredComponents) {
+      for (exportFile in component.exportFiles) {
+        var relativePath = FileUtilRt.getRelativePath(configPath, exportFile)!!
+        relativePath = FileUtilRt.toSystemIndependentName(relativePath)
+        if (exportFile.name.indexOf('.') == -1 && !exportFile.isFile) {
+          relativePath += '/'
         }
         if (zipEntries.contains(relativePath)) {
-          components.add(component);
-          break;
+          components.add(component)
+          break
         }
       }
     }
-    return components;
+    return components
   }
 }
