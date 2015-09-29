@@ -39,7 +39,7 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       if (PythonSdkType.isRemote(sdk)) {
         manager = new PyRemotePackageManagerImpl(sdk);
       }
-      else if (PyCondaPackageManagerImpl.findCondaExecutable(sdk) != null) {
+      else if (PyCondaPackageManagerImpl.isCondaVEnv(sdk)) {
         manager = new PyCondaPackageManagerImpl(sdk);
       }
       else {
@@ -51,7 +51,7 @@ public class PyPackageManagersImpl extends PyPackageManagers {
   }
 
   public PyPackageManagementService getManagementService(Project project, Sdk sdk) {
-    if (PyCondaPackageManagerImpl.findCondaExecutable(sdk) != null) {
+    if (PyCondaPackageManagerImpl.isCondaVEnv(sdk)) {
       return new PyCondaManagementService(project, sdk);
     }
     return new PyPackageManagementService(project, sdk);
