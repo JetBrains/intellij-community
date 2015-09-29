@@ -45,6 +45,10 @@ public class DarculaButtonUI extends BasicButtonUI {
     return c instanceof JButton && "square".equals(((JButton)c).getClientProperty("JButton.buttonType"));
   }
 
+  public static boolean isDefaultButton(JComponent c) {
+    return c instanceof JButton && ((JButton)c).isDefaultButton();
+  }
+
   @Override
   public void paint(Graphics g, JComponent c) {
     int w = c.getWidth();
@@ -64,7 +68,7 @@ public class DarculaButtonUI extends BasicButtonUI {
         final Insets ins = border.getBorderInsets(c);
         final int yOff = (ins.top + ins.bottom) / 4;
         if (!square) {
-          if (c instanceof JButton && ((JButton)c).isDefaultButton()) {
+          if (isDefaultButton(c)) {
             ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, h, getSelectedButtonColor2()));
           }
           else {
@@ -87,7 +91,7 @@ public class DarculaButtonUI extends BasicButtonUI {
     AbstractButton button = (AbstractButton)c;
     ButtonModel model = button.getModel();
     Color fg = button.getForeground();
-    if (fg instanceof UIResource && button instanceof JButton && ((JButton)button).isDefaultButton()) {
+    if (fg instanceof UIResource && isDefaultButton(button)) {
       final Color selectedFg = UIManager.getColor("Button.darcula.selectedButtonForeground");
       if (selectedFg != null) {
         fg = selectedFg;
@@ -104,17 +108,19 @@ public class DarculaButtonUI extends BasicButtonUI {
                                                 textRect.y + metrics.getAscent() + getTextShiftOffset());
     }
     else {
-      g.setColor(UIManager.getColor("Button.darcula.disabledText.shadow"));
-      SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1,
-                                                textRect.x + getTextShiftOffset()+1,
-                                                textRect.y + metrics.getAscent() + getTextShiftOffset()+1);
-      g.setColor(UIManager.getColor("Button.disabledText"));
-      SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1,
-                                                textRect.x + getTextShiftOffset(),
-                                                textRect.y + metrics.getAscent() + getTextShiftOffset());
-
-
+      paintDisabledText(g, text, c, textRect, metrics);
     }
+  }
+
+  protected void paintDisabledText(Graphics g, String text, JComponent c, Rectangle textRect, FontMetrics metrics) {
+    g.setColor(UIManager.getColor("Button.darcula.disabledText.shadow"));
+    SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1,
+                                              textRect.x + getTextShiftOffset()+1,
+                                              textRect.y + metrics.getAscent() + getTextShiftOffset()+1);
+    g.setColor(UIManager.getColor("Button.disabledText"));
+    SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1,
+                                              textRect.x + getTextShiftOffset(),
+                                              textRect.y + metrics.getAscent() + getTextShiftOffset());
   }
 
   @Override
@@ -137,7 +143,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   @Override
   public void update(Graphics g, JComponent c) {
     super.update(g, c);
-    if (c instanceof JButton && ((JButton)c).isDefaultButton() && !SystemInfo.isMac) {
+    if (isDefaultButton(c) && !SystemInfo.isMac) {
       if (!c.getFont().isBold()) {
        c.setFont(c.getFont().deriveFont(Font.BOLD));
       }
