@@ -18,6 +18,7 @@ package com.intellij.idea;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -42,7 +43,10 @@ import org.jetbrains.io.MessageDecoder;
 import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -100,7 +104,7 @@ public final class SocketLock {
           });
         }
         catch (Throwable e) {
-          LOG.error(e);
+          logError(e);
         }
       }
     }
@@ -179,7 +183,7 @@ public final class SocketLock {
       });
     }
     catch (Throwable e) {
-      LOG.error(e);
+      logError(e);
 
       if (Main.isHeadless()) {
         Main.showMessage("Cannot lock system folders", e);
@@ -213,9 +217,19 @@ public final class SocketLock {
           closeable.close();
         }
         catch (Throwable e) {
-          LOG.error(e);
+          logError(e);
         }
       }
+    }
+  }
+
+  private static void logError(@NotNull Throwable e) {
+    // default logger throws AssertionError and it leads to startup failure without error message dialog
+    if (LOG instanceof DefaultLogger) {
+      LOG.warn(e);
+    }
+    else {
+      LOG.error(e);
     }
   }
 
