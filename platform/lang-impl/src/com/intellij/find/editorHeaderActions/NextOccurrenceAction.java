@@ -15,6 +15,8 @@
  */
 package com.intellij.find.editorHeaderActions;
 
+import com.intellij.find.SearchSession;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -24,8 +26,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public final class NextOccurrenceAction extends PrevNextOccurrenceAction {
-  public NextOccurrenceAction(@NotNull Handler handler) {
-    super(IdeActions.ACTION_NEXT_OCCURENCE, handler);
+  public NextOccurrenceAction() {
+    super(IdeActions.ACTION_NEXT_OCCURENCE);
+  }
+
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    e.getRequiredData(SearchSession.KEY).searchForward();
   }
 
   @NotNull

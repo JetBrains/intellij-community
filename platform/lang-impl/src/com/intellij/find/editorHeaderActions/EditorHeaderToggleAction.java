@@ -1,6 +1,6 @@
 package com.intellij.find.editorHeaderActions;
 
-import com.intellij.find.EditorSearchSession;
+import com.intellij.find.SearchSession;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -34,19 +34,19 @@ public abstract class EditorHeaderToggleAction extends CheckboxAction implements
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    EditorSearchSession search = e.getData(EditorSearchSession.SESSION_KEY);
+    SearchSession search = e.getData(SearchSession.KEY);
     return search != null && isSelected(search);
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean selected) {
-    EditorSearchSession search = e.getData(EditorSearchSession.SESSION_KEY);
+    SearchSession search = e.getData(SearchSession.KEY);
     if (search != null) {
       setSelected(search, selected);
     }
   }
 
-  protected abstract boolean isSelected(@NotNull EditorSearchSession session);
+  protected abstract boolean isSelected(@NotNull SearchSession session);
 
-  protected abstract void setSelected(@NotNull EditorSearchSession session, boolean selected);
+  protected abstract void setSelected(@NotNull SearchSession session, boolean selected);
 }

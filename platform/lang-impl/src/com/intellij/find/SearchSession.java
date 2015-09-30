@@ -13,10 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.options;
+package com.intellij.find;
 
+import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.NotNull;
 
-public interface ExternalizableScheme extends Scheme {
-  void setName(@NotNull String newName);
+public interface SearchSession {
+  DataKey<SearchSession> KEY = DataKey.create("search.replace.session");
+  String INCORRECT_REGEX_MESSAGE = "Incorrect regular expression";
+
+  @NotNull
+  FindModel getFindModel();
+
+  @NotNull
+  SearchReplaceComponent getComponent();
+
+  boolean hasMatches();
+
+  void searchForward();
+
+  void searchBackward();
+
+  void close();
 }

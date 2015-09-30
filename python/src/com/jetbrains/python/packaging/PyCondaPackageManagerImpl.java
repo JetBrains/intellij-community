@@ -50,7 +50,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   @Override
   public boolean hasManagement(boolean cachedOnly) throws ExecutionException {
-    return findCondaExecutable(mySdk) != null;
+    return isCondaVEnv(mySdk);
   }
 
   @Override
@@ -74,7 +74,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   }
 
   private ProcessOutput getCondaOutput(@NotNull final String command, List<String> arguments) throws ExecutionException {
-    final String condaExecutable = findCondaExecutable(mySdk);
+    final String condaExecutable = PyCondaPackageService.getCondaExecutable();
 
     final String path = getCondaDirectory();
     if (path == null) throw new PyExecutionException("Empty conda name for " + mySdk, command, arguments);
@@ -109,6 +109,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   private String getCondaDirectory() {
     final VirtualFile homeDirectory = mySdk.getHomeDirectory();
     if (homeDirectory == null) return null;
+    if (SystemInfo.isWindows) return homeDirectory.getParent().getPath();
     return homeDirectory.getParent().getParent().getPath();
   }
 
@@ -147,7 +148,6 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
       }
       final String name = fields.get(0);
       final String version = fields.get(1);
-      final String location = fields.get(2);
       final List<PyRequirement> requirements = new ArrayList<PyRequirement>();
       if (fields.size() >= 4) {
         final String requiresLine = fields.get(3);
@@ -155,25 +155,24 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
         requirements.addAll(PyRequirement.parse(requiresSpec));
       }
       if (!"Python".equals(name)) {
-        packages.add(new PyPackage(name, version, location, requirements));
+        packages.add(new PyPackage(name, version, "", requirements));
       }
     }
     return packages;
   }
 
-  @Nullable
-  public static String findCondaExecutable(Sdk sdk) {
-    final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
+  public static boolean isCondaVEnv(Sdk sdk) {
+    final String condaName = "conda-meta";
     final VirtualFile homeDirectory = sdk.getHomeDirectory();
-    if (homeDirectory == null) return null;
-    final VirtualFile condaExecutable = homeDirectory.getParent().findChild(condaName);
-    return condaExecutable != null ? condaExecutable.getPath() : null;
+    if (homeDirectory == null) return false;
+    final VirtualFile condaExecutable = SystemInfo.isWindows ? homeDirectory.getParent().findChild(condaName) :
+                                        homeDirectory.getParent().getParent().findChild(condaName);
+    return condaExecutable != null;
   }
 
   @NotNull
   public static String createVirtualEnv(@NotNull String destinationDir, String version) throws ExecutionException {
-    final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
-    final String condaExecutable = PyCondaPackageService.getCondaExecutable(condaName);
+    final String condaExecutable = PyCondaPackageService.getCondaExecutable();
     if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.<String>emptyList(), new ProcessOutput());
 
     final ArrayList<String> parameters = Lists.newArrayList(condaExecutable, "create", "-p", destinationDir,

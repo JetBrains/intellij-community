@@ -37,7 +37,6 @@ import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyCondaPackageService;
@@ -110,8 +109,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
       options.add(REMOTE);
     }
     options.add(VIRTUALENV);
-    final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
-    if (PyCondaPackageService.getCondaExecutable(condaName) != null) {
+    if (PyCondaPackageService.getCondaExecutable() != null) {
       options.add(CONDA);
     }
 
