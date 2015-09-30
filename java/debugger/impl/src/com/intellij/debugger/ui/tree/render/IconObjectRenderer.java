@@ -53,11 +53,6 @@ class IconObjectRenderer extends ToStringBasedRenderer implements FullValueEvalu
 
     debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
       @Override
-      public Priority getPriority() {
-        return Priority.LOW;
-      }
-
-      @Override
       public void contextAction() throws Exception {
         String getterName = AllIcons.Debugger.Value.getIconHeight() <= 16 ? "iconToBytesPreviewNormal" : "iconToBytesPreviewRetina";
         descriptor.setValueIcon(ImageObjectRenderer.getIcon(evaluationContext, descriptor.getValue(), getterName));
