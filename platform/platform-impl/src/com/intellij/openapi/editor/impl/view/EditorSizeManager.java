@@ -210,18 +210,28 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   }
 
   void lineLayoutCreated(int logicalLine) {
-    int startVisualLine = myView.offsetToVisualLine(myDocument.getLineStartOffset(logicalLine), false);
-    int endVisualLine = myView.offsetToVisualLine(myDocument.getLineEndOffset(logicalLine), false);
-    boolean sizeInvalidated = false;
-    for (int i = startVisualLine; i <= endVisualLine; i++) {
-      if (myLineWidths.get(i) < 0) {
-        myLineWidths.set(i, UNKNOWN_WIDTH);
-        sizeInvalidated = true;
+    boolean purePaintingMode = myEditor.isPurePaintingMode();
+    boolean foldingEnabled = myEditor.getFoldingModel().isFoldingEnabled();
+    myEditor.setPurePaintingMode(false);
+    myEditor.getFoldingModel().setFoldingEnabled(true);
+    try {
+      int startVisualLine = myView.offsetToVisualLine(myDocument.getLineStartOffset(logicalLine), false);
+      int endVisualLine = myView.offsetToVisualLine(myDocument.getLineEndOffset(logicalLine), false);
+      boolean sizeInvalidated = false;
+      for (int i = startVisualLine; i <= endVisualLine; i++) {
+        if (myLineWidths.get(i) < 0) {
+          myLineWidths.set(i, UNKNOWN_WIDTH);
+          sizeInvalidated = true;
+        }
+      }
+      if (sizeInvalidated) {
+        myWidthInPixels = -1;
+        myEditor.getContentComponent().revalidate();
       }
     }
-    if (sizeInvalidated) {
-      myWidthInPixels = -1;
-      myEditor.getContentComponent().revalidate();
+    finally {
+      myEditor.setPurePaintingMode(purePaintingMode);
+      myEditor.getFoldingModel().setFoldingEnabled(foldingEnabled);
     }
   }
 }
