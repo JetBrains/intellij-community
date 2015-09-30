@@ -124,7 +124,7 @@ public class JavaParametersUtil {
                                      JavaParameters parameters,
                                      @MagicConstant(valuesFromClass = JavaParameters.class) int classPathType,
                                      @Nullable String jreHome) throws CantRunException {
-    parameters.configureByModule(module, classPathType, createModuleJdk(module, jreHome));
+    parameters.configureByModule(module, classPathType, createModuleJdk(module, (classPathType & JavaParameters.TESTS_ONLY) == 0, jreHome));
   }
 
   public static void configureProject(Project project,
@@ -134,8 +134,8 @@ public class JavaParametersUtil {
     parameters.configureByProject(project, classPathType, createProjectJdk(project, jreHome));
   }
 
-  private static Sdk createModuleJdk(final Module module, @Nullable String jreHome) throws CantRunException {
-    return jreHome == null ? JavaParameters.getModuleJdk(module) : createAlternativeJdk(jreHome);
+  private static Sdk createModuleJdk(final Module module, boolean productionOnly, @Nullable String jreHome) throws CantRunException {
+    return jreHome == null ? JavaParameters.getValidJdkToRunModule(module, productionOnly) : createAlternativeJdk(jreHome);
   }
 
   public static Sdk createProjectJdk(final Project project, @Nullable String jreHome) throws CantRunException {
