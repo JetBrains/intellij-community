@@ -368,7 +368,7 @@ public final class IconLoader {
         if (icon != null) return icon;
       }
 
-      Image image = ImageUtil.filter(ImageLoader.loadFromUrl(myUrl), filter);
+      Image image = ImageLoader.loadFromUrl(myUrl, true, filter);
       icon = checkIcon(image, myUrl);
 
       if (icon != null) {
@@ -418,7 +418,7 @@ public final class IconLoader {
         return result;
       }
 
-      final Image image = ImageUtil.filter(ImageLoader.loadFromUrl(myUrl, UIUtil.isUnderDarcula(), scaleFactor >= 1.5f), filter);
+      final Image image = ImageLoader.loadFromUrl(myUrl, UIUtil.isUnderDarcula(), scaleFactor >= 1.5f, filter);
       if (image != null) {
         int width = (int)(getIconWidth() * scaleFactor);
         int height = (int)(getIconHeight() * scaleFactor);

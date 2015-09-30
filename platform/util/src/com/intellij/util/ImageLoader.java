@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.ImageFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -68,6 +69,11 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling) {
+    return loadFromUrl(url, allowFloatScaling, null);
+  }
+
+  @Nullable
+  public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling, ImageFilter filter) {
     final float scaleFactor = allowFloatScaling ? JBUI.scale(1f) : JBUI.scale(1f) > 1.5f ? 2f : 1f;
     assert scaleFactor >= 1.0f : "By design, only scale factors >= 1.0 are supported";
 
@@ -82,7 +88,7 @@ public class ImageLoader implements Serializable {
 
     for (Pair<String, Integer> each : getFileNames(url.toString(), UIUtil.isUnderDarcula(), loadRetinaImages)) {
       try {
-        Image image = loadFromStream(URLUtil.openStream(new URL(each.first)), each.second);
+        Image image = loadFromStream(URLUtil.openStream(new URL(each.first)), each.second, filter);
         if (image != null && scaleImages) {
           if (each.first.contains("@2x"))
             image = scaleImage(image, scaleFactor / 2.0f);  // divide by 2.0 as Retina images are 2x the resolution.
@@ -110,9 +116,14 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromUrl(URL url, boolean dark, boolean retina) {
+    return loadFromUrl(url, dark, retina, null);
+  }
+
+  @Nullable
+  public static Image loadFromUrl(URL url, boolean dark, boolean retina, ImageFilter filter) {
     for (Pair<String, Integer> each : getFileNames(url.toString(), dark, retina || JBUI.isHiDPI())) {
       try {
-        return loadFromStream(URLUtil.openStream(new URL(each.first)), each.second);
+        return loadFromStream(URLUtil.openStream(new URL(each.first)), each.second, filter);
       }
       catch (IOException ignore) {
       }
@@ -173,6 +184,10 @@ public class ImageLoader implements Serializable {
   }
 
   public static Image loadFromStream(@NotNull final InputStream inputStream, final int scale) {
+    return loadFromStream(inputStream, scale, null);
+  }
+
+  public static Image loadFromStream(@NotNull final InputStream inputStream, final int scale, ImageFilter filter) {
     if (scale <= 0) throw new IllegalArgumentException("Scale must 1 or more");
     try {
       BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
@@ -192,6 +207,7 @@ public class ImageLoader implements Serializable {
 
       waitForImage(image);
 
+      image = ImageUtil.filter(image, filter);
       if (UIUtil.isRetina() && scale > 1) {
         image = RetinaImage.createFrom(image, scale, ourComponent);
       }
