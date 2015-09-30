@@ -79,9 +79,14 @@ public class PyConvertLocalFunctionToTopLevelFunctionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
       @Override
       public void run() {
-        doTest(true, PyBundle.message("refactoring.make.method.top.level.error.nonlocal.writes"));
+        doTest(true, PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes"));
       }
     });
+  }
+
+  // PY-6637
+  public void testReferenceToSelf() {
+    doTest(true, PyBundle.message("refactoring.make.function.top.level.error.self.reads", "self"));
   }
 
   // PY-6637

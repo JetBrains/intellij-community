@@ -117,11 +117,15 @@ public class PyMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
     final Set<String> enclosingScopeReads = new LinkedHashSet<String>();
     final Collection<ScopeOwner> scopeOwners = PsiTreeUtil.collectElementsOfType(myFunction, ScopeOwner.class);
     for (ScopeOwner owner : scopeOwners) {
-      final PyMakeFunctionTopLevelProcessor.AnalysisResult scope = findReadsFromEnclosingScope(owner);
+      final PyMakeFunctionTopLevelProcessor.AnalysisResult scope = analyseScope(owner);
       if (!scope.nonlocalWritesToEnclosingScope.isEmpty()) {
-        throw new IncorrectOperationException(PyBundle.message("refactoring.make.method.top.level.error.nonlocal.writes"));
+        throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes"));
       }
-      for (PsiElement element : scope.readFromEnclosingScope) {
+      if (!scope.readsOfSelfParametersFromEnclosingScope.isEmpty()) {
+        final String paramName = scope.readsOfSelfParametersFromEnclosingScope.get(0).getName();
+        throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.self.reads", paramName));
+      }
+      for (PsiElement element : scope.readsFromEnclosingScope) {
         if (element instanceof PyElement) {
           ContainerUtil.addIfNotNull(enclosingScopeReads, ((PyElement)element).getName());
         }
@@ -129,10 +133,10 @@ public class PyMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
     }
 
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
-    updateLocalFunctionAndUsages(myEditor, enclosingScopeReads, usages);
+    updateLocalFunctionAndUsages(enclosingScopeReads, usages);
   }
 
-  private void updateLocalFunctionAndUsages(@NotNull Editor editor, @NotNull Set<String> enclosingScopeReads, UsageInfo[] usages) {
+  private void updateLocalFunctionAndUsages(@NotNull Set<String> enclosingScopeReads, UsageInfo[] usages) {
     final String commaSeparatedNames = StringUtil.join(enclosingScopeReads, ", ");
     final Project project = myFunction.getProject();
 
@@ -167,15 +171,14 @@ public class PyMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
     copiedFunction = (PyFunction)file.addAfter(copiedFunction, anchor);
     myFunction.delete();
 
-    editor.getSelectionModel().removeSelection();
-    editor.getCaretModel().moveToOffset(copiedFunction.getTextOffset());
+    myEditor.getSelectionModel().removeSelection();
+    myEditor.getCaretModel().moveToOffset(copiedFunction.getTextOffset());
   }
 
   @NotNull
-  private AnalysisResult findReadsFromEnclosingScope(@NotNull ScopeOwner owner) {
+  private AnalysisResult analyseScope(@NotNull ScopeOwner owner) {
     final ControlFlow controlFlow = ControlFlowCache.getControlFlow(owner);
-    final List<PsiElement> readFromEnclosingScope = new ArrayList<PsiElement>();
-    final List<PyTargetExpression> nonlocalWrites = new ArrayList<PyTargetExpression>();
+    final AnalysisResult result = new AnalysisResult();
     for (Instruction instruction : controlFlow.getInstructions()) {
       if (instruction instanceof ReadWriteInstruction) {
         final ReadWriteInstruction readWriteInstruction = (ReadWriteInstruction)instruction;
@@ -185,9 +188,18 @@ public class PyMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
         }
         if (readWriteInstruction.getAccess().isReadAccess()) {
           for (PsiElement resolved : PyUtil.multiResolveTopPriority(element, myContext)) {
-            if (resolved != null && isFromEnclosingScope(resolved)) {
-              readFromEnclosingScope.add(element);
-              break;
+            if (resolved != null) {
+              if (isFromEnclosingScope(resolved)) {
+                result.readsFromEnclosingScope.add(element);
+              }
+              if (resolved instanceof PyParameter && ((PyParameter)resolved).isSelf()) {
+                if (PsiTreeUtil.getParentOfType(resolved, PyFunction.class) == myFunction) {
+                  result.readsOfSelfParameter.add((PyParameter)resolved);
+                }
+                else if (!PsiTreeUtil.isAncestor(myFunction, resolved, true)) {
+                  result.readsOfSelfParametersFromEnclosingScope.add((PyParameter)resolved);
+                }
+              }
             }
           }
         }
@@ -195,15 +207,14 @@ public class PyMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
           if (element instanceof PyTargetExpression && element.getParent() instanceof PyNonlocalStatement) {
             for (PsiElement resolved : PyUtil.multiResolveTopPriority(element, myContext)) {
               if (resolved != null && isFromEnclosingScope(resolved)) {
-                nonlocalWrites.add((PyTargetExpression)element);
-                break;
+                result.nonlocalWritesToEnclosingScope.add((PyTargetExpression)element);
               }
             }
           }
         }
       }
     }
-    return new AnalysisResult(readFromEnclosingScope, nonlocalWrites);
+    return result;
   }
 
   private boolean isFromEnclosingScope(@NotNull PsiElement element) {
@@ -211,12 +222,9 @@ public class PyMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
   }
 
   static class AnalysisResult {
-    final List<PsiElement> readFromEnclosingScope;
-    final List<PyTargetExpression> nonlocalWritesToEnclosingScope;
-
-    public AnalysisResult(@NotNull List<PsiElement> readFromEnclosingScope, @NotNull List<PyTargetExpression> nonlocalWrites) {
-      this.readFromEnclosingScope = readFromEnclosingScope;
-      this.nonlocalWritesToEnclosingScope = nonlocalWrites;
-    }
+    final List<PsiElement> readsFromEnclosingScope = new ArrayList<PsiElement>();
+    final List<PyTargetExpression> nonlocalWritesToEnclosingScope = new ArrayList<PyTargetExpression>();
+    final List<PyParameter> readsOfSelfParametersFromEnclosingScope = new ArrayList<PyParameter>();
+    final List<PyParameter> readsOfSelfParameter = new ArrayList<PyParameter>();
   }
 }
