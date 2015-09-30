@@ -10,15 +10,9 @@ import java.util.List;
 /**
  * @author traff
  */
-public interface RemoteProcessHandlerBase {
+public interface RemoteProcessControl {
   @NotNull
   PathMapper getMappingSettings();
-
-  /**
-   * @deprecated use {@link #getRemoteSocket(int)}
-   */
-  @Deprecated
-  Pair<String, Integer> obtainRemoteSocket() throws RemoteSdkException;
 
   /**
    * @deprecated use {@link #getRemoteSocket(int)}
