@@ -956,7 +956,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     if (!ContainerUtil.process(methods, processor)) return false;
     if (inherited) {
       for (PyClass ancestor : getAncestorClasses(context)) {
-        // TODO: Why there is FALSE here? We support only one level of inheritance?
         if (!ancestor.visitClassAttributes(processor, false, context)) {
           return false;
         }
