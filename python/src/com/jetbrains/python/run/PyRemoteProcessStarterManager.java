@@ -17,11 +17,11 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.remote.PyRemotePathMapper;
+import com.jetbrains.python.remote.PyRemoteProcessHandlerBase;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +36,11 @@ public interface PyRemoteProcessStarterManager {
   boolean supports(@NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData);
 
   @NotNull
-  ProcessHandler startRemoteProcess(@Nullable Project project,
-                                    @NotNull GeneralCommandLine commandLine,
-                                    @NotNull PythonRemoteInterpreterManager manager,
-                                    @NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData,
-                                    @NotNull PyRemotePathMapper pathMapper) throws ExecutionException, InterruptedException;
+  PyRemoteProcessHandlerBase startRemoteProcess(@Nullable Project project,
+                                                @NotNull GeneralCommandLine commandLine,
+                                                @NotNull PythonRemoteInterpreterManager manager,
+                                                @NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData,
+                                                @NotNull PyRemotePathMapper pathMapper) throws ExecutionException, InterruptedException;
 
   @NotNull
   ProcessOutput executeRemoteProcess(@Nullable Project project,
