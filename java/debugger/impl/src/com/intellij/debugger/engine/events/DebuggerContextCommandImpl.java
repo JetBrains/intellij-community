@@ -41,15 +41,6 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
     myCustomThread = customThread;
   }
 
-  @Nullable
-  @Override
-  public SuspendContextImpl getSuspendContext() {
-    if (myCustomThread != null) {
-      return SuspendManagerUtil.getSuspendingContext(myDebuggerContext.getDebugProcess().getSuspendManager(), myCustomThread);
-    }
-    return super.getSuspendContext();
-  }
-
   private ThreadReferenceProxyImpl getThread() {
     return myCustomThread != null ? myCustomThread : myDebuggerContext.getThreadProxy();
   }
