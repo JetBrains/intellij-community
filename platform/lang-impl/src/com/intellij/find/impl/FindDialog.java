@@ -360,7 +360,7 @@ public class FindDialog extends DialogWrapper {
             navigateToSelectedUsage(myResultsPreviewTable);
           }
         }
-      }.registerCustomShortcutSet(CommonShortcuts.getEditSource(), comboBox);
+      }.registerCustomShortcutSet(CommonShortcuts.getEditSource(), comboBox, myDisposable);
     }
   }
 
