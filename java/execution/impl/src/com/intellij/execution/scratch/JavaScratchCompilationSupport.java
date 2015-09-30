@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.impl;
+package com.intellij.execution.scratch;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
@@ -53,20 +52,34 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
     compileManager.addAfterTask(this);
   }
 
+  @Nullable
+  public static File getScratchOutputDirectory(Project project) {
+    final File root = CompilerManager.getInstance(project).getJavacCompilerWorkingDir();
+    return root != null? new File(root, "scratches/out") : null;
+  }
+
+  @Nullable
+  public static File getScratchTempDirectory(Project project) {
+    final File root = CompilerManager.getInstance(project).getJavacCompilerWorkingDir();
+    return root != null? new File(root, "scratches/src") : null;
+  }
+
   @Override
   public boolean execute(CompileContext context) {
     final Project project = context.getProject();
 
     final RunConfiguration configuration = CompileStepBeforeRun.getRunConfiguration(context);
-    if (!(configuration instanceof ModuleBasedConfiguration)) {
+    if (!(configuration instanceof JavaScratchConfiguration)) {
       return true;
     }
-    final String scratchUrl = JavaScratchRunConfigurationExtension.getScratchFileUrl(configuration);
+    final JavaScratchConfiguration scratchConfig = (JavaScratchConfiguration)configuration;
+    final String scratchUrl = scratchConfig.getScratchFileUrl();
     if (scratchUrl == null) {
-      return true;
+      context.addMessage(CompilerMessageCategory.ERROR, "Associated scratch file not found", null, -1, -1);
+      return false;
     }
     @Nullable
-    final Module module = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
+    final Module module = scratchConfig.getConfigurationModule().getModule();
     final Sdk targetSdk = module != null? ModuleRootManager.getInstance(module).getSdk() : ProjectRootManager.getInstance(project).getProjectSdk();
     if (targetSdk == null) {
       final String message = module != null?
@@ -83,7 +96,7 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
       return true;
     }
 
-    final File outputDir = JavaScratchRunConfigurationExtension.getScratchOutputDirectory(project);
+    final File outputDir = getScratchOutputDirectory(project);
     if (outputDir == null) { // should not happen for normal projects
       return true;
     }
@@ -94,7 +107,7 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
       File srcFile = scratchFile;
       if (!StringUtil.endsWith(srcFile.getName(), ".java")) {
 
-        final File srcDir = JavaScratchRunConfigurationExtension.getScratchTempDirectory(project);
+        final File srcDir = getScratchTempDirectory(project);
         if (srcDir == null) { // should not happen for normal projects
           return true;
         }
@@ -150,12 +163,17 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
         }
       };
 
-      for (String s : orderEnumerator.compute().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
-        cp.add(new File(s));
-      }
-      for (String s : orderEnumerator.compute().compileOnly().sdkOnly().getPathsList().getPathList()) {
-        platformCp.add(new File(s));
-      }
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          for (String s : orderEnumerator.compute().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
+            cp.add(new File(s));
+          }
+          for (String s : orderEnumerator.compute().compileOnly().sdkOnly().getPathsList().getPathList()) {
+            platformCp.add(new File(s));
+          }
+        }
+      });
 
       final List<String> options = new ArrayList<String>();
       options.add("-g"); // always compile with debug info
