@@ -147,8 +147,20 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   @Override
-  public boolean isWatched(@NotNull VirtualFile canonicalFile) {
-    return isOperational() && !checkWatchable(canonicalFile.getPresentableUrl(), true, true).isEmpty();
+  public boolean isIgnored(@NotNull VirtualFile canonicalFile) {
+    if (!isOperational()) {
+      return true;
+    }
+
+    // Manual watch roots appear to be used recursively (See uses of FileWatcher.getManualWatchRoots()). This seems like a bug but for
+    // consistency, this code will also follow that pattern
+    String path = canonicalFile.getPath();
+    for (String root : myManualWatchRoots) {
+      if (!FileUtil.isAncestor(root, path, false /* strict */)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /* internal stuff */
@@ -309,7 +321,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
   @NotNull
   @SuppressWarnings("Duplicates")
-  private Collection<String> checkWatchable(String reportedPath, boolean isExact, boolean fastPath) {
+  private Collection<String> getRemappedFiles(@Nullable String reportedPath) {
     if (reportedPath == null) return Collections.emptyList();
 
     List<String> flatWatchRoots = myFlatWatchRoots;
@@ -327,41 +339,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       }
     }
 
-    Collection<String> changedPaths = new SmartList<String>();
-    ext:
-    for (String path : affectedPaths) {
-      if (fastPath && !changedPaths.isEmpty()) break;
-
-      for (String root : flatWatchRoots) {
-        if (FileUtil.namesEqual(path, root)) {
-          changedPaths.add(path);
-          continue ext;
-        }
-        if (isExact) {
-          String parentPath = new File(path).getParent();
-          if (parentPath != null && FileUtil.namesEqual(parentPath, root)) {
-            changedPaths.add(path);
-            continue ext;
-          }
-        }
-      }
-
-      for (String root : recursiveWatchRoots) {
-        if (FileUtil.startsWith(path, root)) {
-          changedPaths.add(path);
-          continue ext;
-        }
-        if (!isExact) {
-          String parentPath = new File(root).getParent();
-          if (parentPath != null && FileUtil.namesEqual(path, parentPath)) {
-            changedPaths.add(root);
-            continue ext;
-          }
-        }
-      }
-    }
-
-    return changedPaths;
+    return affectedPaths;
   }
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -510,8 +488,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
       int length = path.length();
       if (length > 1 && path.charAt(length - 1) == '/') path = path.substring(0, length - 1);
-      boolean exactPath = op != WatcherOp.DIRTY && op != WatcherOp.RECDIRTY;
-      Collection<String> paths = checkWatchable(path, exactPath, false);
+      Collection<String> paths = getRemappedFiles(path);
 
       if (paths.isEmpty()) {
         if (LOG.isDebugEnabled()) {

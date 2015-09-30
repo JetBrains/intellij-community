@@ -41,6 +41,10 @@ public final class CanonicalFileMap extends CanonicalFileMapper {
 
   private final MultiMap<String, OriginalWatchPath> canonicalPathToOriginalPath = MultiMap.createSet();
 
+  // This is for the special case where we create/delete a file inside the root of a recursive watch. It comes from the old code in
+  // the native file watcher.
+  private final MultiMap<String, OriginalWatchPath> recursiveRootParents = MultiMap.createSet();
+
   /**
    * @return the canonical path for {@param file}
    */
@@ -54,6 +58,14 @@ public final class CanonicalFileMap extends CanonicalFileMapper {
     }
     Collection<OriginalWatchPath> possibleOriginalPaths = canonicalPathToOriginalPath.getModifiable(canonicalFilePath);
     possibleOriginalPaths.add(new OriginalWatchPath(file.getPath(), mappingType));
+
+    if (mappingType == MappingType.RECURSIVE) {
+      File parentFile = file.getParentFile();
+      if (parentFile != null) {
+        Collection<OriginalWatchPath> originalWatchPaths = recursiveRootParents.getModifiable(symLinkToRealPath(parentFile));
+        originalWatchPaths.add(new OriginalWatchPath(parentFile.getPath(), MappingType.RECURSIVE));
+      }
+    }
     return canonicalFilePath;
   }
 
@@ -64,8 +76,8 @@ public final class CanonicalFileMap extends CanonicalFileMapper {
     List<String> originalPathsToFile = Lists.newArrayList();
 
     // The first position will always be the root
-    File runningPath = new File(pathComponents.get(0) + File.separator);
-    for (int i = 1; i < pathComponents.size(); ++i) {
+    File runningPath = null;
+    for (int i = 0; i < pathComponents.size(); ++i) {
       runningPath = new File(runningPath, pathComponents.get(i));
       Collection<OriginalWatchPath> possibleOriginalPaths = canonicalPathToOriginalPath.get(runningPath.getPath());
       for (OriginalWatchPath possibleOriginalPath : possibleOriginalPaths) {
@@ -76,6 +88,14 @@ public final class CanonicalFileMap extends CanonicalFileMapper {
         } else if (i == (pathComponents.size() - 1)) {
           originalPathsToFile.add(possibleOriginalPath.path);
         }
+      }
+    }
+
+    // Special case for recursive roots that comes from old native file watcher
+    if (runningPath != null) {
+      Collection<OriginalWatchPath> originalWatchPaths = recursiveRootParents.get(runningPath.getPath());
+      for (OriginalWatchPath originalWatchPath : originalWatchPaths) {
+        originalPathsToFile.add(originalWatchPath.path);
       }
     }
     return originalPathsToFile;

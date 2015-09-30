@@ -54,10 +54,15 @@ public abstract class PluggableFileWatcher {
   public abstract void setWatchRoots(@NotNull List<String> recursiveCanonicalPaths, @NotNull List<String> flatCanonicalPaths);
 
   /**
+   * Each file watcher should only need to keep track of local state, so it is reasonable for them to keep track of files they are actively
+   * ignoring. If this method returns false, it does not mean that this watcher is watching the file. If
+   * {@link com.intellij.openapi.vfs.impl.local.FileWatcher#isUnderWatchRoot} returns true AND this method returns false, then this watcher
+   * is watching the file.
+   *
    * @param canonicalFile a canonical file
-   * @return true if the file is being watched by this file watcher, false otherwise
+   * @return true if the file is being ignored by this file watcher, false otherwise
    */
-  public abstract boolean isWatched(@NotNull VirtualFile canonicalFile);
+  public abstract boolean isIgnored(@NotNull VirtualFile canonicalFile);
 
   public abstract void resetChangedPaths();
 

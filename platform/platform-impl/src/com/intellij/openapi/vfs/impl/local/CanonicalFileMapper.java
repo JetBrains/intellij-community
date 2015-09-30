@@ -31,7 +31,7 @@ public abstract class CanonicalFileMapper {
   public enum MappingType {FLAT, RECURSIVE}
 
   public static CanonicalFileMapper create() {
-    return new CanonicalFileTrie();
+    return new CanonicalFileMap();
   }
 
   /**

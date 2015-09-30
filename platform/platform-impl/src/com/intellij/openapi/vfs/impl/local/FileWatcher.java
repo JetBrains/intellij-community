@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
+import com.google.common.collect.Lists;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -56,6 +57,8 @@ public class FileWatcher {
   private final Object myLock = new Object();
   private final PluggableFileWatcher[] myWatchers;
   private CanonicalFileMapper myCanonicalFileMapper;
+  @NotNull private List<String> recursiveCanonicalWatchRoots = Lists.newArrayList();
+  @NotNull private List<String> flatCanonicalWatchRoots = Lists.newArrayList();
 
   public static class DirtyPaths {
     public final List<String> dirtyPaths = newArrayList();
@@ -142,29 +145,40 @@ public class FileWatcher {
   }
 
   public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
-    List<String> recursiveCanonical;
-    List<String> flatCanonical;
     synchronized (myLock) {
       // Clear out our old canonical path -> symbolic link map
       myCanonicalFileMapper = CanonicalFileMapper.create();
 
-      recursiveCanonical = myCanonicalFileMapper.addMappings(recursive, CanonicalFileMapper.MappingType.RECURSIVE);
-      flatCanonical = myCanonicalFileMapper.addMappings(flat, CanonicalFileMapper.MappingType.FLAT);
+      recursiveCanonicalWatchRoots = myCanonicalFileMapper.addMappings(recursive, CanonicalFileMapper.MappingType.RECURSIVE);
+      flatCanonicalWatchRoots = myCanonicalFileMapper.addMappings(flat, CanonicalFileMapper.MappingType.FLAT);
     }
     for (PluggableFileWatcher watcher : myWatchers) {
-      watcher.setWatchRoots(recursiveCanonical, flatCanonical);
+      watcher.setWatchRoots(recursiveCanonicalWatchRoots, flatCanonicalWatchRoots);
     }
   }
 
+  /**
+   * @return true if the file is under a watch root and at least one {@link PluggableFileWatcher} is not ignoring it.
+   */
   public boolean isWatched(@NotNull VirtualFile file) {
     VirtualFile canonicalFile = file.getCanonicalFile();
+    if (canonicalFile == null) {
+      return false;
+    }
+    if (!isUnderWatchRoot(file)) {
+      return false;
+    }
+
     for (PluggableFileWatcher watcher : myWatchers) {
-      if (canonicalFile == null) {
-        return false;
+      if (!watcher.isIgnored(canonicalFile)) {
+        return true;
       }
-      if (watcher.isWatched(canonicalFile)) return true;
     }
     return false;
+  }
+
+  private boolean isUnderWatchRoot(@NotNull VirtualFile canonicalFile) {
+    return !myCanonicalFileMapper.getMapping(canonicalFile.getPath()).isEmpty();
   }
 
   public void notifyOnFailure(final String cause, @Nullable final NotificationListener listener) {
