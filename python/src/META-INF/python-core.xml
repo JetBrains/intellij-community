@@ -803,9 +803,9 @@
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
     </action>
 
-    <action id="PyConvertLocalFunctionToTopLevelFunctionAction" class="com.jetbrains.python.refactoring.convertTopLevelFunction.PyConvertLocalFunctionToTopLevelFunctionAction"
-            text="Convert local function to top-level function"
-            description="Convert local function to top-level function, transforming names from enclosing scope into parameters">
+    <action id="PyConvertLocalFunctionToTopLevelFunctionAction" class="com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeFunctionTopLevelRefactoring"
+            text="Make top-level function"
+            description="Convert local function or method to top-level function, transforming names from enclosing scope and instance attributes into parameters">
       <add-to-group group-id="RefactoringMenu"/>
     </action>
 

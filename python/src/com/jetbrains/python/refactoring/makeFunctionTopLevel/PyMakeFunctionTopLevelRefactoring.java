@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.refactoring.convertTopLevelFunction;
+package com.jetbrains.python.refactoring.makeFunctionTopLevel;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mikhail Golubev
  */
-public class PyConvertLocalFunctionToTopLevelFunctionAction extends PyBaseRefactoringAction {
+public class PyMakeFunctionTopLevelRefactoring extends PyBaseRefactoringAction {
   public static final String ID = "py.make.function.top.level";
 
   @Override
