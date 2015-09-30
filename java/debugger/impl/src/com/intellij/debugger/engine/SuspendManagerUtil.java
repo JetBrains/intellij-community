@@ -18,10 +18,10 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.SmartHashSet;
+import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class SuspendManagerUtil {
@@ -38,7 +38,7 @@ public class SuspendManagerUtil {
 
   public static SuspendContextImpl findContextByThread(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
     for (SuspendContextImpl context : ((SuspendManagerImpl)suspendManager).getPausedContexts()) {
-      if (context.getThread() == thread) {
+      if (context.getThread() == thread || context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
         return context;
       }
     }
