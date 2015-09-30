@@ -25,6 +25,7 @@ import com.intellij.diff.util.BackgroundTaskUtil;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -45,9 +46,11 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction;
 import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -198,7 +201,7 @@ public class LineStatusTrackerDrawing {
         final JComponent comp = (JComponent)e.getComponent(); // shall be EditorGutterComponent, cast is safe.
         final JLayeredPane layeredPane = comp.getRootPane().getLayeredPane();
         final Point point = SwingUtilities.convertPoint(comp, ((EditorEx)editor).getGutterComponentEx().getWidth(), e.getY(), layeredPane);
-        showActiveHint(range, editor, point, tracker);
+        showActiveHint(range, editor, tracker, point);
       }
 
       public boolean canDoAction(final MouseEvent e) {
@@ -210,8 +213,8 @@ public class LineStatusTrackerDrawing {
 
   public static void showActiveHint(@NotNull Range range,
                                     @NotNull Editor editor,
-                                    @Nullable Point mousePosition,
-                                    @NotNull LineStatusTracker tracker) {
+                                    @NotNull LineStatusTracker tracker,
+                                    @Nullable Point mousePosition) {
     final Disposable disposable = Disposer.newDisposable();
 
     List<DiffFragment> wordDiff = computeWordDiff(range, tracker);
@@ -219,7 +222,7 @@ public class LineStatusTrackerDrawing {
     installEditorHighlighters(range, editor, tracker, wordDiff, disposable);
     Pair<JComponent, Integer> editorComponent = createEditorComponent(range, editor, tracker, wordDiff);
 
-    ActionToolbar toolbar = buildToolbar(range, editor, tracker, disposable);
+    ActionToolbar toolbar = buildToolbar(range, editor, tracker, mousePosition, disposable);
     toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
 
     PopupPanel popupPanel = new PopupPanel(editor, toolbar, editorComponent.first, editorComponent.second);
@@ -252,6 +255,7 @@ public class LineStatusTrackerDrawing {
 
   @Nullable
   private static List<DiffFragment> computeWordDiff(@NotNull Range range, @NotNull LineStatusTracker tracker) {
+    if (!VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES) return null;
     if (range.getType() != Range.MODIFIED) return null;
 
     final CharSequence vcsContent = tracker.getVcsContent(range);
@@ -269,6 +273,7 @@ public class LineStatusTrackerDrawing {
   private static ActionToolbar buildToolbar(@NotNull Range range,
                                             @NotNull Editor editor,
                                             @NotNull LineStatusTracker tracker,
+                                            @Nullable Point mousePosition,
                                             @NotNull Disposable parentDisposable) {
     final DefaultActionGroup group = new DefaultActionGroup();
 
@@ -277,12 +282,14 @@ public class LineStatusTrackerDrawing {
     final RollbackLineStatusRangeAction rollback = new RollbackLineStatusRangeAction(tracker, range, editor);
     final ShowLineStatusRangeDiffAction showDiff = new ShowLineStatusRangeDiffAction(tracker, range, editor);
     final CopyLineStatusRangeAction copyRange = new CopyLineStatusRangeAction(tracker, range);
+    final ToggleByWordDiffAction toggleWordDiff = new ToggleByWordDiffAction(range, editor, tracker, mousePosition);
 
     group.add(localShowPrevAction);
     group.add(localShowNextAction);
     group.add(rollback);
     group.add(showDiff);
     group.add(copyRange);
+    group.add(toggleWordDiff);
 
     JComponent editorComponent = editor.getComponent();
     EmptyAction.setupAction(localShowPrevAction, "VcsShowPrevChangeMarker", editorComponent);
@@ -390,7 +397,7 @@ public class LineStatusTrackerDrawing {
   public static void showHint(final Range range, final Editor editor, final LineStatusTracker tracker) {
     editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
       public void run() {
-        showActiveHint(range, editor, null, tracker);
+        showActiveHint(range, editor, tracker, null);
       }
     });
   }
@@ -450,6 +457,35 @@ public class LineStatusTrackerDrawing {
   private static Color getDiffGutterBorderColor() {
     final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     return globalScheme.getColor(EditorColors.BORDER_LINES_COLOR);
+  }
+
+  private static class ToggleByWordDiffAction extends ToggleAction implements DumbAware {
+    @NotNull private final Range myRange;
+    @NotNull private final Editor myEditor;
+    @NotNull private final LineStatusTracker myTracker;
+    @Nullable private final Point myMousePosition;
+
+    public ToggleByWordDiffAction(@NotNull Range range,
+                                  @NotNull Editor editor,
+                                  @NotNull LineStatusTracker tracker,
+                                  @Nullable Point mousePosition) {
+      super("Show Detailed Differences", null, AllIcons.Actions.PreviewDetails);
+      myRange = range;
+      myEditor = editor;
+      myTracker = tracker;
+      myMousePosition = mousePosition;
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES = state;
+      showActiveHint(myRange, myEditor, myTracker, myMousePosition);
+    }
   }
 
   private static class PopupPanel extends JPanel {
