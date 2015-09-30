@@ -570,14 +570,14 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertTrue(created);
 
 
-    doVfsRefresh();
+    doVfsRefresh(tempDir);
 
     assertTrue(pointer.isValid());
 
     boolean deleted = file.delete();
     assertTrue(deleted);
 
-    doVfsRefresh();
+    doVfsRefresh(tempDir);
     assertFalse(pointer.isValid());
   }
 
@@ -594,13 +594,8 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     }).cpuBound().assertTiming();
   }
 
-  private static void doVfsRefresh() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        LocalFileSystem.getInstance().refresh(false);
-      }
-    });
+  private static void doVfsRefresh(File dir) {
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir).refresh(false, true);
   }
 
   public void testDoubleDispose() throws IOException {
@@ -651,7 +646,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     ioPtr.getParentFile().mkdirs();
     ioPtr.createNewFile();
 
-    doVfsRefresh();
+    doVfsRefresh(ioTempDir);
     final VirtualFilePointer pointer = createPointerByFile(ioPtr, null);
     assertTrue(pointer.isValid());
     final VirtualFile virtualFile = pointer.getFile();
@@ -677,7 +672,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
       for (int i=0;i< N;i++) {
         assertNotNull(pointer.getFile());
         FileUtil.delete(ioPtrBase);
-        doVfsRefresh();
+        doVfsRefresh(ioTempDir);
 
         // ptr is now null, cached as map
 
@@ -696,7 +691,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
         assertTrue(ioPtr.createNewFile());
 
         stressRead(pointer, reads);
-        doVfsRefresh();
+        doVfsRefresh(ioTempDir);
       }
     }
     finally {
