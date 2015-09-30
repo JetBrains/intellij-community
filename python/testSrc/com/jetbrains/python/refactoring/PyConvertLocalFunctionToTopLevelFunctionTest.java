@@ -34,6 +34,15 @@ public class PyConvertLocalFunctionToTopLevelFunctionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-6637
+  public void testLocalFunctionDetection() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    moveByText("func");
+    assertFalse(myFixture.testAction(new PyConvertLocalFunctionToTopLevelFunctionAction()).isEnabled());
+    moveByText("local");
+    assertTrue(myFixture.testAction(new PyConvertLocalFunctionToTopLevelFunctionAction()).isEnabled());
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/refactoring/convertTopLevel/";
