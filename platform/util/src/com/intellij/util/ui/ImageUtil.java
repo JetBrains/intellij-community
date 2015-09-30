@@ -40,6 +40,6 @@ public class ImageUtil {
   public static Image filter(Image image, ImageFilter filter) {
     if (image == null || filter == null) return image;
     return Toolkit.getDefaultToolkit().createImage(
-      new FilteredImageSource(image.getSource(), filter));
+      new FilteredImageSource(toBufferedImage(image).getSource(), filter));
   }
 }
