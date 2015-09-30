@@ -18,6 +18,7 @@ package com.intellij.refactoring.typeMigration.inspections;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.psi.*;
@@ -26,6 +27,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.refactoring.typeMigration.rules.guava.BaseGuavaTypeConversionRule;
+import com.intellij.refactoring.typeMigration.rules.guava.GuavaFunctionConversionRule;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +64,10 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
                 final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
                 final PsiClass targetClass = javaPsiFacade.findClass(toClass, GlobalSearchScope.allScope(project));
 
-                map.put(fromClass, targetClass);
+                if (targetClass != null) {
+                  map.put(fromClass, targetClass);
+                }
+
               }
             }
             return map;
