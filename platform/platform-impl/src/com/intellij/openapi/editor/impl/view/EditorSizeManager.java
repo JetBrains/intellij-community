@@ -31,6 +31,8 @@ import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentPa
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.TIntArrayList;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -55,6 +57,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   private int myWidestLineWithExtension;
   
   private boolean myApproximateWidthCalculated;
+  private final TIntHashSet myLinesWithCreatedLayout = new TIntHashSet();
 
   private final SoftWrapAwareDocumentParsingListenerAdapter mySoftWrapChangeListener = new SoftWrapAwareDocumentParsingListenerAdapter() {
     @Override
@@ -109,6 +112,15 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     }
     foldingChangeStartOffset = Integer.MAX_VALUE;
     foldingChangeEndOffset = Integer.MIN_VALUE;
+    
+    myLinesWithCreatedLayout.forEach(new TIntProcedure() {
+      @Override
+      public boolean execute(int logicalLine) {
+        onLineLayoutCreated(logicalLine);
+        return true;
+      }
+    });
+    myLinesWithCreatedLayout.clear();
   }
 
   private void onSoftWrapRecalculationEnd(IncrementalCacheUpdateEvent event) {
@@ -210,6 +222,15 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   }
 
   void lineLayoutCreated(int logicalLine) {
+    if (myEditor.getFoldingModel().isInBatchFoldingOperation()) {
+      myLinesWithCreatedLayout.add(logicalLine);
+    }
+    else {
+      onLineLayoutCreated(logicalLine);
+    }
+  }
+
+  private void onLineLayoutCreated(int logicalLine) {
     boolean purePaintingMode = myEditor.isPurePaintingMode();
     boolean foldingEnabled = myEditor.getFoldingModel().isFoldingEnabled();
     myEditor.setPurePaintingMode(false);
