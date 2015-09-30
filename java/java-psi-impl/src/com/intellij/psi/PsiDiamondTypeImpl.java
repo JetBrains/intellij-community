@@ -155,7 +155,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final PsiSubstitutor inferredSubstitutor = ourDiamondGuard.doPreventingRecursion(context, false, new Computable<PsiSubstitutor>() {
       @Override
       public PsiSubstitutor compute() {
-        final MethodCandidateInfo staticFactoryCandidateInfo = CachedValuesManager.getCachedValue(newExpression,
+        final MethodCandidateInfo staticFactoryCandidateInfo = CachedValuesManager.getCachedValue(context,
                                                                                                   new CachedValueProvider<MethodCandidateInfo>() {
                                                                                                     @Nullable
                                                                                                     @Override

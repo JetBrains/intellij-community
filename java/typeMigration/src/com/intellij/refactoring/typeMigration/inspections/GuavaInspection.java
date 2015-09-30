@@ -16,7 +16,9 @@
 package com.intellij.refactoring.typeMigration.inspections;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.psi.*;
@@ -25,10 +27,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.refactoring.typeMigration.rules.guava.BaseGuavaTypeConversionRule;
+import com.intellij.refactoring.typeMigration.rules.guava.GuavaFunctionConversionRule;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Dmitry Batkovich
@@ -44,21 +49,30 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
-      private final AtomicNotNullLazyValue<Map<String, String>> myGuavaClassConversions = new AtomicNotNullLazyValue<Map<String, String>>() {
-        @NotNull
-        @Override
-        protected Map<String, String> compute() {
-          Map<String, String> map = new HashMap<String, String>();
-          for (TypeConversionRule rule : TypeConversionRule.EP_NAME.getExtensions()) {
-            if (rule instanceof BaseGuavaTypeConversionRule) {
-              final String fromClass = ((BaseGuavaTypeConversionRule)rule).ruleFromClass();
-              final String toClass = ((BaseGuavaTypeConversionRule)rule).ruleToClass();
-              map.put(fromClass, toClass);
+      private final AtomicNotNullLazyValue<Map<String, PsiClass>> myGuavaClassConversions =
+        new AtomicNotNullLazyValue<Map<String, PsiClass>>() {
+          @NotNull
+          @Override
+          protected Map<String, PsiClass> compute() {
+            Map<String, PsiClass> map = new HashMap<String, PsiClass>();
+            for (TypeConversionRule rule : TypeConversionRule.EP_NAME.getExtensions()) {
+              if (rule instanceof BaseGuavaTypeConversionRule) {
+                final String fromClass = ((BaseGuavaTypeConversionRule)rule).ruleFromClass();
+                final String toClass = ((BaseGuavaTypeConversionRule)rule).ruleToClass();
+
+                final Project project = holder.getProject();
+                final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+                final PsiClass targetClass = javaPsiFacade.findClass(toClass, GlobalSearchScope.allScope(project));
+
+                if (targetClass != null) {
+                  map.put(fromClass, targetClass);
+                }
+
+              }
             }
+            return map;
           }
-          return map;
-        }
-      };
+        };
 
       @Override
       public void visitVariable(PsiVariable variable) {
@@ -68,19 +82,13 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
           final PsiClass psiClass = resolveResult.getElement();
           if (psiClass != null) {
             final String qName = psiClass.getQualifiedName();
-            final String toQName = myGuavaClassConversions.getValue().get(qName);
-            if (toQName != null) {
-
-              final Project project = holder.getProject();
-              final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
-              final PsiClass targetClass = javaPsiFacade.findClass(toQName, GlobalSearchScope.allScope(project));
-              if (targetClass != null) {
-                final Collection<PsiType> typeParameters = resolveResult.getSubstitutor().getSubstitutionMap().values();
-                final PsiClassType targetType =
-                  javaPsiFacade.getElementFactory().createType(targetClass, typeParameters.toArray(new PsiType[typeParameters.size()]));
-                final VariableTypeFix fix = TypeMigrationVariableTypeFixProvider.createTypeMigrationFix(variable, targetType);
-                holder.registerProblem(variable, PROBLEM_DESCRIPTION, fix);
-              }
+            final PsiClass targetClass = myGuavaClassConversions.getValue().get(qName);
+            if (targetClass != null) {
+              final Collection<PsiType> typeParameters = resolveResult.getSubstitutor().getSubstitutionMap().values();
+              final PsiClassType targetType =
+                JavaPsiFacade.getElementFactory(holder.getProject()).createType(targetClass, typeParameters.toArray(new PsiType[typeParameters.size()]));
+              final VariableTypeFix fix = TypeMigrationVariableTypeFixProvider.createTypeMigrationFix(variable, targetType);
+              holder.registerProblem(variable, PROBLEM_DESCRIPTION, fix);
             }
           }
         }

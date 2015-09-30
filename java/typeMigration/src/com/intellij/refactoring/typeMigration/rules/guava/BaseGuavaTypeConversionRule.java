@@ -80,7 +80,7 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
       return findConversionForMethod(from, to, method, methodName, context, labeler);
     } else if (context instanceof PsiNewExpression) {
       final PsiAnonymousClass anonymousClass = ((PsiNewExpression)context).getAnonymousClass();
-      if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, false)) {
+      if (anonymousClass != null && AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, false)) {
         return new TypeConversionDescriptorBase() {
           @Override
           public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {

@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.typeMigration.rules.guava;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
@@ -29,6 +30,8 @@ import java.util.Map;
  * @author Dmitry Batkovich
  */
 public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
+  private final static Logger LOG = Logger.getInstance(GuavaOptionalConversionRule.class);
+
   public final static String GUAVA_OPTIONAL = "com.google.common.base.Optional";
 
   @Nullable
@@ -49,15 +52,11 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
         final PsiClass aClass = PsiTypesUtil.getPsiClass(parameters[0].getType());
         if (aClass != null) {
           final String qName = aClass.getQualifiedName();
-          if (GUAVA_OPTIONAL.equals(qName)) {
-            return new TypeConversionDescriptor("$expr$", "java.util.Optional.ofNullable($expr$.get())");
-          }
-          else if ("com.google.common.bas.Supplier".equals(qName)) {
-            return new TypeConversionDescriptor("$expr$", "java.util.Optional.ofNullable($expr$)");
-          }
-          else {
-            return new TypeConversionDescriptor("$expr$", "java.util.Optional.ofNullable($expr$)");
-          }
+          String pattern =
+            GUAVA_OPTIONAL.equals(qName) ? "java.util.Optional.ofNullable($expr$.get())" : "com.google.common.bas.Supplier".equals(qName)
+                                                                                           ? "java.util.Optional.ofNullable($expr$)"
+                                                                                           : "java.util.Optional.ofNullable($expr$)";
+          return new TypeConversionDescriptor("$expr$", pattern);
         }
         return null;
       } else if (context.getParent() instanceof PsiMethodCallExpression) {
@@ -76,12 +75,8 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
         if (GUAVA_OPTIONAL.equals(qName)) {
           return new TypeConversionDescriptor("$val$.or($other$)", "java.util.Optional.ofNullable($val$.orElseGet($other$::get))", to);
         }
-        else if ("com.google.common.bas.Supplier".equals(qName)) {
-          return new TypeConversionDescriptor("$val$.or($other$)", "$val$.orElseGet($other$::get)");
-        }
-        else {
-          return new TypeConversionDescriptor("$val$.or($other$)", "$val$.orElse($other$)");
-        }
+        String pattern = "com.google.common.bas.Supplier".equals(qName) ? "$val$.orElseGet($other$::get)" : "$val$.orElse($other$)";
+        return new TypeConversionDescriptor("$val$.or($other$)", pattern);
       }
       return null;
     }
@@ -93,7 +88,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
     descriptorsMap.put("absent", new TypeConversionDescriptor("Optional.absent()", "java.util.Optional.empty()") {
       @Override
       public PsiExpression replace(PsiExpression expression) {
-        assert expression instanceof PsiMethodCallExpression;
+        LOG.assertTrue(expression instanceof PsiMethodCallExpression);
 
         final PsiReferenceParameterList typeArguments = ((PsiMethodCallExpression)expression).getTypeArgumentList();
         PsiReferenceParameterList typeArgumentsCopy =

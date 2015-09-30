@@ -414,8 +414,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       // suspend policy to match the suspend policy of the context:
       // if all threads were suspended, then during stepping all the threads must be suspended
       // if only event thread were suspended, then only this particular thread must be suspended during stepping
-      stepRequest.setSuspendPolicy(Registry.is("debugger.step.resumes.one.thread") ? EventRequest.SUSPEND_EVENT_THREAD
-                                                                                   : suspendContext.getSuspendPolicy());
+      stepRequest.setSuspendPolicy(suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD
+                                   ? EventRequest.SUSPEND_EVENT_THREAD
+                                   : EventRequest.SUSPEND_ALL);
 
       if (hint != null) {
         //noinspection HardCodedStringLiteral
@@ -709,6 +710,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return myExecutionResult;
   }
 
+  @NotNull
   @Override
   public Project getProject() {
     return myProject;
@@ -1647,7 +1649,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     @Override
     protected void resumeAction() {
       SuspendContextImpl context = getSuspendContext();
-      if (context != null && context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD) {
+      if (context != null &&
+          (context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD || Registry.is("debugger.step.resumes.one.thread"))) {
         myThreadBlockedMonitor.startWatching(myContextThread);
       }
       if (context != null
@@ -1739,7 +1742,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       final Set<SuspendContextImpl> suspendingContexts = SuspendManagerUtil.getSuspendingContexts(getSuspendManager(), myThread);
       for (SuspendContextImpl suspendContext : suspendingContexts) {
-        if (suspendContext.getThread() == myThread) {
+        if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && suspendContext.getThread() == myThread) {
           getSession().getXDebugSession().sessionResumed();
           getManagerThread().invoke(createResumeCommand(suspendContext));
         }
