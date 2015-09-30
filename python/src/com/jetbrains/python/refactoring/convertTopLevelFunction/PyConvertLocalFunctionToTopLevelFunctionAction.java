@@ -17,6 +17,7 @@ package com.jetbrains.python.refactoring.convertTopLevelFunction;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -97,6 +98,9 @@ public class PyConvertLocalFunctionToTopLevelFunctionAction extends PyBaseRefact
               new PyMakeFunctionTopLevelProcessor(function, editor).run();
             }
             catch (IncorrectOperationException e) {
+              if (ApplicationManager.getApplication().isUnitTestMode()) {
+                throw e;
+              }
               CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(), ID, project);
             }
           }
