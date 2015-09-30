@@ -52,7 +52,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
   }
 
   public String toString() {
-    return "Property:" + getKey();
+    return "Property{ key = " + getKey() + ", value = " + getValue() + "}";
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {

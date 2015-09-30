@@ -513,7 +513,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        updateEditorsFromProperties();
+        updateEditorsFromProperties(true);
       }
     });
   }
@@ -529,7 +529,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     }
   }
 
-  private void updateEditorsFromProperties() {
+  private void updateEditorsFromProperties(final boolean checkIsUnderUndoRedoAction) {
     String propertyName = getSelectedPropertyName();
     ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, propertyName == null ? NO_PROPERTY_SELECTED : VALUES);
     if (propertyName == null) return;
@@ -546,7 +546,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
             @Override
             public void run() {
               final UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(myProject);
-              if (!undoManager.isActive() || !(undoManager.isRedoInProgress() || undoManager.isUndoInProgress())) {
+              if (!checkIsUnderUndoRedoAction || !undoManager.isActive() || !(undoManager.isRedoInProgress() || undoManager.isUndoInProgress())) {
                 updateDocumentFromPropertyValue(getPropertyEditorValue(property), document, propertiesFile);
               }
             }
@@ -590,7 +590,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
             recreateEditorsPanel();
           }
           else {
-            updateEditorsFromProperties();
+            updateEditorsFromProperties(true);
           }
         }
       }
@@ -611,6 +611,21 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           }
         }
       }
+
+      @Override
+      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
+        final PsiFile file = event.getFile();
+        final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
+        if (propertiesFile != null) {
+          final ResourceBundle bundle = propertiesFile.getResourceBundle();
+          if (bundle.equals(myResourceBundle) && myEditors.containsKey(propertiesFile)) {
+            final IProperty property = PropertiesImplUtil.getProperty(event.getParent());
+            if (property != null && Comparing.equal(property.getName(), getSelectedPropertyName())) {
+              updateEditorsFromProperties(false);
+            }
+          }
+        }
+      }
     };
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiTreeChangeAdapter, this);
   }
@@ -619,7 +634,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        updateEditorsFromProperties();
+        updateEditorsFromProperties(true);
         final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
         if (statusBar != null) {
           statusBar.setInfo("Selected property: " + getSelectedPropertyName());
