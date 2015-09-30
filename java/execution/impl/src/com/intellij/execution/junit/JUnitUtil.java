@@ -16,6 +16,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.*;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.SourceScope;
@@ -29,6 +30,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,6 +79,10 @@ public class JUnitUtil {
   }
 
   public static boolean isTestMethod(final Location<? extends PsiMethod> location, boolean checkAbstract) {
+    return isTestMethod(location, checkAbstract, true);
+  }
+
+  public static boolean isTestMethod(final Location<? extends PsiMethod> location, boolean checkAbstract, boolean checkRunWith) {
     final PsiMethod psiMethod = location.getPsiElement();
     final PsiClass aClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() : psiMethod.getContainingClass();
     if (aClass == null || !isTestClass(aClass, checkAbstract, true)) return false;
@@ -85,7 +91,7 @@ public class JUnitUtil {
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
     if (AnnotationUtil.isAnnotated(psiMethod, CONFIGURATIONS_ANNOTATION_NAME, false)) return false;
-    if (AnnotationUtil.isAnnotated(aClass, RUN_WITH, true)) return true;
+    if (checkRunWith && AnnotationUtil.isAnnotated(aClass, RUN_WITH, true)) return true;
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.STATIC) && SUITE_METHOD_NAME.equals(psiMethod.getName())) return false;
     if (!psiMethod.getName().startsWith("test")) return false;
@@ -273,13 +279,17 @@ public class JUnitUtil {
 
   public static class  TestMethodFilter implements Condition<PsiMethod> {
     private final PsiClass myClass;
+    private final TestFramework framework;
 
     public TestMethodFilter(final PsiClass aClass) {
       myClass = aClass;
+      framework = TestFrameworks.detectFramework(aClass);
     }
 
     public boolean value(final PsiMethod method) {
-      return isTestMethod(MethodLocation.elementInClass(method, myClass));
+      return framework != null
+             ? framework.isTestMethod(method)
+             : isTestMethod(MethodLocation.elementInClass(method, myClass));
     }
   }
 
@@ -309,16 +319,22 @@ public class JUnitUtil {
     }
     return null;
   }
-   public static PsiMethod getTestMethod(final PsiElement element) {
-     return getTestMethod(element, true);
-   }
+
+  public static PsiMethod getTestMethod(final PsiElement element) {
+    return getTestMethod(element, true);
+  }
+
 
   public static PsiMethod getTestMethod(final PsiElement element, boolean checkAbstract) {
+    return getTestMethod(element, checkAbstract, true);
+  }
+
+  public static PsiMethod getTestMethod(final PsiElement element, boolean checkAbstract, boolean checkRunWith) {
     final PsiManager manager = element.getManager();
     final Location<PsiElement> location = PsiLocation.fromPsiElement(manager.getProject(), element);
     for (Iterator<Location<PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext();) {
       final Location<? extends PsiMethod> methodLocation = iterator.next();
-      if (isTestMethod(methodLocation, checkAbstract)) return methodLocation.getPsiElement();
+      if (isTestMethod(methodLocation, checkAbstract, checkRunWith)) return methodLocation.getPsiElement();
     }
     return null;
   }
