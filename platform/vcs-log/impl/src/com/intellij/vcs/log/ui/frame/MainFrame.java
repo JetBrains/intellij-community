@@ -304,10 +304,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       sink.put(key, myLogDataHolder);
     }
     else if (VcsDataKeys.CHANGES == key || VcsDataKeys.SELECTED_CHANGES == key) {
-      List<Change> selectedChanges = myGraphTable.getSelectedChanges(MAX_SELECTED_COMMITS);
-      if (selectedChanges != null) {
-        sink.put(key, ArrayUtil.toObjectArray(selectedChanges, Change.class));
-      }
+      sink.put(key, ArrayUtil.toObjectArray(myChangesBrowser.getCurrentDisplayedChanges(), Change.class));
     }
     else if (VcsDataKeys.CHANGE_LISTS == key) {
       List<VcsFullCommitDetails> details = myUI.getVcsLog().getSelectedDetails();

@@ -5,14 +5,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
-import com.intellij.vcs.log.data.LoadingDetails;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.GraphCommit;
@@ -202,26 +203,6 @@ public class GraphTableModel extends AbstractTableModel {
    */
   public boolean canRequestMore() {
     return !myMoreRequested && myDataPack.canRequestMore();
-  }
-
-  /**
-   * Returns Changes for commits at selected rows.<br/>
-   * Rows are given in the order as they appear in the table, i. e. in reverse chronological order. <br/>
-   * Changes can be returned as-is, i.e. with duplicate changes for a single file.
-   *
-   * @return Changes selected in all rows, or null if this data is not ready yet.
-   */
-  @Nullable
-  public List<Change> getSelectedChanges(@NotNull List<Integer> selectedRows) {
-    List<Change> changes = new ArrayList<Change>();
-    for (int row : selectedRows) {
-      VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(row, this);
-      if (commitData instanceof LoadingDetails) {
-        return null;
-      }
-      changes.addAll(commitData.getChanges());
-    }
-    return changes;
   }
 
   @Override

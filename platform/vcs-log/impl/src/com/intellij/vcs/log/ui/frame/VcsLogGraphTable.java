@@ -260,26 +260,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     }
   }
 
-  @Nullable
-  public List<Change> getSelectedChanges(int maxChanges) {
-    TableModel model = getModel();
-    if (!(model instanceof GraphTableModel)) {
-      return null;
-    }
-
-    int[] selectedRows = getSelectedRows();
-    if (selectedRows.length > maxChanges) return null;
-
-    List<Integer> rows = ContainerUtil.newArrayList();
-    for (int row : selectedRows) {
-      rows.add(row);
-    }
-    Collections.sort(rows, Collections.reverseOrder());
-
-    List<Change> changes = ((GraphTableModel)model).getSelectedChanges(rows);
-    return changes == null ? null : CommittedChangesTreeBrowser.zipChanges(changes);
-  }
-
   @Override
   public void calcData(DataKey key, DataSink sink) {
     if (PlatformDataKeys.COPY_PROVIDER == key) {
