@@ -142,15 +142,17 @@ public class FileWatcher {
   }
 
   public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
+    List<String> recursiveCanonical;
+    List<String> flatCanonical;
     synchronized (myLock) {
       // Clear out our old canonical path -> symbolic link map
       myCanonicalFileMapper = CanonicalFileMapper.create();
 
-      List<String> recursiveCanonical = myCanonicalFileMapper.addMappings(recursive, CanonicalFileMapper.MappingType.RECURSIVE);
-      List<String> flatCanonical = myCanonicalFileMapper.addMappings(flat, CanonicalFileMapper.MappingType.FLAT);
-      for (PluggableFileWatcher watcher : myWatchers) {
-        watcher.setWatchRoots(recursiveCanonical, flatCanonical);
-      }
+      recursiveCanonical = myCanonicalFileMapper.addMappings(recursive, CanonicalFileMapper.MappingType.RECURSIVE);
+      flatCanonical = myCanonicalFileMapper.addMappings(flat, CanonicalFileMapper.MappingType.FLAT);
+    }
+    for (PluggableFileWatcher watcher : myWatchers) {
+      watcher.setWatchRoots(recursiveCanonical, flatCanonical);
     }
   }
 
