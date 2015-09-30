@@ -16,15 +16,19 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -60,6 +64,16 @@ public class StringComboboxEditor extends EditorComboBoxEditor {
     }
 
     super.setItem(document);
+  }
+
+  @Override
+  protected void onEditorCreate(final EditorEx editor) {
+    Disposer.register(((EditorImpl)editor).getDisposable(), new Disposable() {
+      @Override
+      public void dispose() {
+        editor.getDocument().putUserData(COMBO_BOX_KEY, null);
+      }
+    });
   }
 
   @Override
