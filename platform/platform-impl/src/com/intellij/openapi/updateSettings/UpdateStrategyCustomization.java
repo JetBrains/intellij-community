@@ -18,7 +18,7 @@ package com.intellij.openapi.updateSettings;
 import com.intellij.openapi.components.ServiceManager;
 
 /**
- * Override this service in your IDE to customize update behavior. It isn't supposed to be overriden in plugins.
+ * Override this service in your IDE to customize update behavior. It isn't supposed to be overridden in plugins.
  */
 public class UpdateStrategyCustomization {
   public static UpdateStrategyCustomization getInstance() {

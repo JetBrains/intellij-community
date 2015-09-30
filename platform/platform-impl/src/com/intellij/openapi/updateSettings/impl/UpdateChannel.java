@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.updateSettings.impl;
 
 import org.jdom.Element;
@@ -26,7 +22,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author max
+ */
 public class UpdateChannel {
+  public static final String LICENSING_EAP = "eap";
+  public static final String LICENSING_PRODUCTION = "production";
+
   private final String myId;
   private final String myName;
   private final ChannelStatus myStatus;
@@ -37,9 +39,6 @@ public class UpdateChannel {
   private final List<BuildInfo> myBuilds;
   private final int myEvalDays;
 
-  public static final String LICENSING_EAP = "eap";
-  public static final String LICENSING_PRODUCTION = "production";
-
   public UpdateChannel(@NotNull Element node) {
     myId = node.getAttributeValue("id");
     myName = node.getAttributeValue("name");
@@ -49,9 +48,6 @@ public class UpdateChannel {
     String majorVersion = node.getAttributeValue("majorVersion");
     myMajorVersion = majorVersion != null ? Integer.parseInt(majorVersion) : -1;
 
-    String evalDays = node.getAttributeValue("evalDays");
-    myEvalDays = evalDays != null ? Integer.parseInt(evalDays) : 30;
-
     myHomePageUrl = node.getAttributeValue("url");
     myFeedbackUrl = node.getAttributeValue("feedback");
 
@@ -59,6 +55,9 @@ public class UpdateChannel {
     for (Element child : node.getChildren("build")) {
       myBuilds.add(new BuildInfo(child));
     }
+
+    String evalDays = node.getAttributeValue("evalDays");
+    myEvalDays = evalDays != null ? Integer.parseInt(evalDays) : 30;
   }
 
   @Nullable

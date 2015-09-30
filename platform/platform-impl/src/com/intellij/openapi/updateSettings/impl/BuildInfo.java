@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -38,16 +37,9 @@ public class BuildInfo implements Comparable<BuildInfo> {
   private final BuildNumber myApiVersion;
   private final String myVersion;
   private final String myMessage;
-  /**
-   * Initialized from 'releaseDate' attribute in update.xml. 
-   * It is the same date as the 'majorReleaseDate' in ApplicationInfo.xml and in the same format "yyyyMMdd" 
-   */
-  @Nullable
-  private final Date myReleaseDate;
+  private final Date myReleaseDate;  // same as the 'majorReleaseDate' in ApplicationInfo.xml
   private final List<PatchInfo> myPatches;
   private final List<ButtonInfo> myButtons;
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.BuildInfo");
 
   public BuildInfo(Element node) {
     myNumber = BuildNumber.fromString(node.getAttributeValue("number"));
@@ -62,6 +54,9 @@ public class BuildInfo implements Comparable<BuildInfo> {
 
     myVersion = node.getAttributeValue("version");
 
+    Element messageTag = node.getChild("message");
+    myMessage = messageTag != null ? messageTag.getValue() : "";
+
     Date releaseDate = null;
     final String date = node.getAttributeValue("releaseDate");
     if (date != null) {
@@ -69,7 +64,7 @@ public class BuildInfo implements Comparable<BuildInfo> {
         releaseDate = new SimpleDateFormat("yyyyMMdd", Locale.US).parse(date);
       }
       catch (ParseException e) {
-        LOG.info("Failed to parse build release date " + date);
+        Logger.getInstance(BuildInfo.class).info("Failed to parse build release date " + date);
       }
     }
     myReleaseDate = releaseDate;
@@ -83,11 +78,9 @@ public class BuildInfo implements Comparable<BuildInfo> {
     for (Object buttonNode : node.getChildren("button")) {
       myButtons.add(new ButtonInfo((Element) buttonNode));
     }
-
-    Element messageTag = node.getChild("message");
-    myMessage = messageTag != null ? messageTag.getValue() : "";
   }
 
+  @Override
   public int compareTo(BuildInfo o) {
     return myNumber.compareTo(o.myNumber);
   }
@@ -121,8 +114,7 @@ public class BuildInfo implements Comparable<BuildInfo> {
         }
       }
     }
-    catch (NumberFormatException ignored) {
-    }
+    catch (NumberFormatException ignored) { }
     return -1;
   }
   
@@ -139,8 +131,9 @@ public class BuildInfo implements Comparable<BuildInfo> {
   @Nullable
   public PatchInfo findPatchForBuild(BuildNumber currentBuild) {
     for (PatchInfo each : myPatches) {
-      if (each.isAvailable() && each.getFromBuild().asStringWithoutProductCode().equals(currentBuild.asStringWithoutProductCode()))
+      if (each.isAvailable() && each.getFromBuild().asStringWithoutProductCode().equals(currentBuild.asStringWithoutProductCode())) {
         return each;
+      }
     }
     return null;
   }
