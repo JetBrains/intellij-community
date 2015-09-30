@@ -20,17 +20,17 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.refactoring.convertTopLevelFunction.PyConvertLocalFunctionToTopLevelFunctionAction;
+import com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeFunctionTopLevelRefactoring;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
-public class PyConvertLocalFunctionToTopLevelFunctionTest extends PyTestCase {
+public class PyMakeFunctionTopLevelTest extends PyTestCase {
 
   public void doTest(boolean enabled, @Nullable String message) {
     myFixture.configureByFile(getTestName(true) + ".py");
-    final PyConvertLocalFunctionToTopLevelFunctionAction action = new PyConvertLocalFunctionToTopLevelFunctionAction();
+    final PyMakeFunctionTopLevelRefactoring action = new PyMakeFunctionTopLevelRefactoring();
     // Similar to com.intellij.testFramework.fixtures.CodeInsightTestFixture.testAction()
     final TestActionEvent event = new TestActionEvent(action);
     action.beforeActionPerformedUpdate(event);
@@ -53,15 +53,15 @@ public class PyConvertLocalFunctionToTopLevelFunctionTest extends PyTestCase {
     doTest(true, null);
   }
 
-  public boolean isActionEnabled() {
-    final PyConvertLocalFunctionToTopLevelFunctionAction action = new PyConvertLocalFunctionToTopLevelFunctionAction();
+  private static boolean isActionEnabled() {
+    final PyMakeFunctionTopLevelRefactoring action = new PyMakeFunctionTopLevelRefactoring();
     final TestActionEvent event = new TestActionEvent(action);
     action.beforeActionPerformedUpdate(event);
     return event.getPresentation().isEnabled(); 
   }
 
   // PY-6637
-  public void testSimple() {
+  public void testLocalFunctionSimple() {
     doTest();
   }
 
@@ -75,7 +75,7 @@ public class PyConvertLocalFunctionToTopLevelFunctionTest extends PyTestCase {
   }
 
   // PY-6637
-  public void testNonlocalReferenceToOuterScope() {
+  public void testLocalFunctionNonlocalReferenceToOuterScope() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
       @Override
       public void run() {
@@ -85,12 +85,12 @@ public class PyConvertLocalFunctionToTopLevelFunctionTest extends PyTestCase {
   }
 
   // PY-6637
-  public void testReferenceToSelf() {
+  public void testLocalFunctionReferenceToSelf() {
     doTest(true, PyBundle.message("refactoring.make.function.top.level.error.self.reads", "self"));
   }
 
   // PY-6637
-  public void testNonlocalReferencesInInnerFunction() {
+  public void testLocalFunctionNonlocalReferencesInInnerFunction() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
       @Override
       public void run() {
