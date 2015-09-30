@@ -64,7 +64,7 @@ public class PyStudyInitialConfigurator {
           }
         }
         copyCourse(file, newCourses);
-        propertiesComponent.setValue(CONFIGURED_V11, "true");
+        propertiesComponent.setValue(CONFIGURED_V2, "true");
       }
       catch (IOException e) {
         LOG.warn("Couldn't copy bundled courses " + e);
