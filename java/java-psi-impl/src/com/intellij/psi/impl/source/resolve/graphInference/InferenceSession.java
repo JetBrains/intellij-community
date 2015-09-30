@@ -442,16 +442,22 @@ public class InferenceSession {
            : PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, false, computableResolve);
   }
 
-  public static JavaResolveResult getResolveResult(PsiCall callExpression, PsiExpressionList argumentList) {
+  public static JavaResolveResult getResolveResult(final PsiCall callExpression, final PsiExpressionList argumentList) {
     if (callExpression instanceof PsiNewExpression) {
       final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)callExpression).getClassOrAnonymousClassReference();
       final JavaResolveResult resolveResult = classReference != null ? classReference.advancedResolve(false) : null;
       final PsiElement psiClass = resolveResult != null ? resolveResult.getElement() : null;
       if (psiClass instanceof PsiClass) {
-        final JavaPsiFacade facade = JavaPsiFacade.getInstance(callExpression.getProject());
-        final JavaResolveResult constructor = facade.getResolveHelper()
-          .resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(), argumentList, callExpression);
-        return constructor.getElement() == null ? resolveResult : constructor;
+        return CachedValuesManager.getCachedValue(classReference, new CachedValueProvider<JavaResolveResult>() {
+          @Nullable
+          @Override
+          public Result<JavaResolveResult> compute() {
+            final JavaPsiFacade facade = JavaPsiFacade.getInstance(callExpression.getProject());
+            final JavaResolveResult constructor = facade.getResolveHelper()
+              .resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(), argumentList, callExpression);
+            return new Result<JavaResolveResult>(constructor.getElement() == null ? resolveResult : constructor, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          }
+        });
       }
       else {
         return JavaResolveResult.EMPTY;
