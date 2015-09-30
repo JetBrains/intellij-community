@@ -91,7 +91,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-public class ResourceBundleEditor extends UserDataHolderBase implements FileEditor {
+public class ResourceBundleEditor extends UserDataHolderBase implements DocumentsEditor {
   private static final         Logger LOG                  =
     Logger.getInstance("#com.intellij.lang.properties.editor.ResourceBundleEditor");
   @NonNls private static final String VALUES               = "values";
@@ -916,6 +916,17 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   public void setKeepEmptyProperties(boolean keepEmptyProperties) {
     myKeepEmptyProperties = keepEmptyProperties;
+  }
+
+  @Override
+  public Document[] getDocuments() {
+    return ContainerUtil.map2Array(myEditors.keySet(), new Document[myEditors.size()], new Function<PropertiesFile, Document>() {
+      @Override
+      public Document fun(PropertiesFile propertiesFile) {
+        final PsiFile file = propertiesFile.getContainingFile();
+        return FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
+      }
+    });
   }
 
   public static class ResourceBundleEditorState implements FileEditorState {
