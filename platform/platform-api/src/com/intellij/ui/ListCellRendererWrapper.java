@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,17 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.FList;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import java.awt.*;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * Please use this wrapper in case you need simple cell renderer with text and icon.
@@ -41,6 +46,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
   private Color myForeground;
   private Color myBackground;
   private Font myFont;
+  private FList<Pair<Object, Object>> myProperties = FList.emptyList();
 
   @SuppressWarnings("UndesirableClassUsage")
   public ListCellRendererWrapper() {
@@ -60,6 +66,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
     myBackground = null;
     myFont = null;
     myToolTipText = null;
+    myProperties = FList.emptyList();
 
     @SuppressWarnings("unchecked") final T t = (T)value;
     customize(list, t, index, isSelected, cellHasFocus);
@@ -85,13 +92,16 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
       if (myBackground != null && !isSelected) label.setBackground(myBackground);
       if (myFont != null) label.setFont(myFont);
       label.setToolTipText(myToolTipText);
+      for (Pair<Object, Object> pair : myProperties) {
+        label.putClientProperty(pair.first, pair.second);
+      }
     }
     return component;
   }
 
   /**
    * Implement this method to configure text and icon for given value.
-   * Use {@link #setIcon(javax.swing.Icon)} and {@link #setText(String)} methods.
+   * Use {@link #setIcon(Icon)} and {@link #setText(String)} methods.
    *
    * @param list     The JList we're painting.
    * @param value    The value returned by list.getModel().getElementAt(index).
@@ -127,5 +137,9 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
 
   public final void setFont(@Nullable final Font font) {
     myFont = font;
+  }
+
+  public final void setClientProperty(@NotNull final Object key, @Nullable final Object value) {
+    myProperties = myProperties.prepend(pair(key, value));
   }
 }
