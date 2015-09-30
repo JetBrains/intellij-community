@@ -26,10 +26,7 @@ import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.execution.ui.AlternativeJREPanel;
-import com.intellij.execution.ui.ClassBrowser;
-import com.intellij.execution.ui.CommonJavaParametersPanel;
-import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageChooserDialog;
@@ -98,7 +95,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private JRadioButton mySingleModuleScope;
   private JRadioButton myModuleWDScope;
   private TextFieldWithBrowseButton myPatternTextField;
-  private AlternativeJREPanel myAlternativeJREPanel;
+  private JrePathEditor myJrePathEditor;
   private JComboBox myForkCb;
   private JBLabel myTestLabel;
   private JComboBox myTypeChooser;
@@ -113,6 +110,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myProject = project;
     myModel = new JUnitConfigurationModel(project);
     myModuleSelector = new ConfigurationModuleSelector(project, getModulesComponent());
+    myJrePathEditor.setDefaultJreSelector(DefaultJreSelector.fromModuleDependencies(getModulesComponent(), false));
     myCommonJavaParameters.setModuleContext(myModuleSelector.getModule());
     myCommonJavaParameters.setHasModuleMacro();
     myModule.getComponent().addActionListener(new ActionListener() {
@@ -247,7 +245,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     UIUtil.setEnabled(myCommonJavaParameters.getProgramParametersComponent(), false, true);
 
     setAnchor(mySearchForTestsLabel);
-    myAlternativeJREPanel.setAnchor(myModule.getLabel());
+    myJrePathEditor.setAnchor(myModule.getLabel());
     myCommonJavaParameters.setAnchor(myModule.getLabel());
   }
 
@@ -273,8 +271,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     else if (myModuleWDScope.isSelected()) {
       data.setScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
     }
-    configuration.setAlternativeJrePath(myAlternativeJREPanel.getPath());
-    configuration.setAlternativeJrePathEnabled(myAlternativeJREPanel.isPathEnabled());
+    configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
+    configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
 
     myCommonJavaParameters.applyTo(configuration);
     configuration.setForkMode((String)myForkCb.getSelectedItem());
@@ -301,7 +299,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     else {
       myWholeProjectScope.setSelected(true);
     }
-    myAlternativeJREPanel.init(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
+    myJrePathEditor
+      .setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
     myForkCb.setSelectedItem(configuration.getForkMode());
     final int count = configuration.getRepeatCount();
     myRepeatCountField.setText(String.valueOf(count));

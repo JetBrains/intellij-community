@@ -18,7 +18,8 @@ package com.intellij.execution.applet;
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.CheckableRunConfigurationEditor;
-import com.intellij.execution.ui.AlternativeJREPanel;
+import com.intellij.execution.ui.DefaultJreSelector;
+import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.execution.ui.ClassBrowser;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -64,7 +65,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   private JBLabel myClassNameLabel;
   private JBLabel myWidthLabel;
   private JLabel myHeightLabel;
-  private AlternativeJREPanel myAlternativeJREPanel;
+  private JrePathEditor myJrePathEditor;
   private final ButtonGroup myAppletRadioButtonGroup;
   private JComponent anchor;
 
@@ -116,6 +117,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
 
 
     myModuleSelector = new ConfigurationModuleSelector(project, getModuleComponent());
+    myJrePathEditor.setDefaultJreSelector(DefaultJreSelector.fromModuleDependencies(getModuleComponent(), true));
     myTablePlace.setLayout(new BorderLayout());
     myParameters = new ListTableModel<AppletConfiguration.AppletParameter>(PARAMETER_COLUMNS);
     myTable = new TableView(myParameters);
@@ -241,7 +243,8 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
       myParameters.setItems(cloneParameters(Arrays.asList(appletParameters)));
     }
     myModuleSelector.reset(configuration);
-    myAlternativeJREPanel.init(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
+    myJrePathEditor
+      .setPathOrName(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
   }
 
   private RawCommandLineEditor getVMParametersComponent() {
@@ -275,8 +278,8 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     catch (NumberFormatException e) {
     }
     configuration.HTML_USED = myURL.isSelected();
-    configuration.ALTERNATIVE_JRE_PATH = myAlternativeJREPanel.getPath();
-    configuration.ALTERNATIVE_JRE_PATH_ENABLED = myAlternativeJREPanel.isPathEnabled();
+    configuration.ALTERNATIVE_JRE_PATH = myJrePathEditor.getJrePathOrName();
+    configuration.ALTERNATIVE_JRE_PATH_ENABLED = myJrePathEditor.isAlternativeJreSelected();
   }
 
   private void createUIComponents() {
@@ -294,7 +297,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     myModule.setAnchor(anchor);
     myPolicyFile.setAnchor(anchor);
     myVMParameters.setAnchor(anchor);
-    myAlternativeJREPanel.setAnchor(anchor);
+    myJrePathEditor.setAnchor(anchor);
     myHtmlFileLabel.setAnchor(anchor);
   }
 
