@@ -34,20 +34,6 @@ public class GuavaFunctionConversionRule extends BaseGuavaTypeConversionRule {
     descriptorsMap.put("apply", new TypeConversionDescriptorBase());
   }
 
-  @Nullable
-  @Override
-  protected TypeConversionDescriptorBase findConversionForMethod(@NotNull PsiType from,
-                                                                 @NotNull PsiType to,
-                                                                 @NotNull PsiMethod method,
-                                                                 String methodName,
-                                                                 PsiExpression context,
-                                                                 TypeMigrationLabeler labeler) {
-    if (method.isConstructor()) {
-      System.out.println("123");
-    }
-    return null;
-  }
-
   @NotNull
   @Override
   public String ruleFromClass() {
