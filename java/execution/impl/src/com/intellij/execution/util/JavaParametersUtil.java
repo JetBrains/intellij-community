@@ -73,29 +73,40 @@ public class JavaParametersUtil {
                                      final boolean classMustHaveSource) throws CantRunException {
     final Module module = configurationModule.getModule();
     if (module == null) throw CantRunException.noModuleConfigured(configurationModule.getModuleName());
-    final PsiClass psiClass = JavaExecutionUtil.findMainClass(module, mainClassName);
-    if (psiClass == null) {
-      if (!classMustHaveSource) return JavaParameters.JDK_AND_CLASSES_AND_TESTS;
+    Boolean inProduction = isClassInProductionSources(mainClassName, module);
+    if (inProduction == null) {
+      if (!classMustHaveSource) {
+        return JavaParameters.JDK_AND_CLASSES_AND_TESTS;
+      }
       throw CantRunException.classNotFound(mainClassName, module);
     }
+
+    return inProduction ? JavaParameters.JDK_AND_CLASSES : JavaParameters.JDK_AND_CLASSES_AND_TESTS;
+  }
+
+  @Nullable("null if class not found")
+  public static Boolean isClassInProductionSources(@NotNull String mainClassName, @NotNull Module module) {
+    final PsiClass psiClass = JavaExecutionUtil.findMainClass(module, mainClassName);
+    if (psiClass == null) {
+      return null;
+    }
     final PsiFile psiFile = psiClass.getContainingFile();
-    if (psiFile == null) throw CantRunException.classNotFound(mainClassName, module);
+    if (psiFile == null) return null;
     final VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null) throw CantRunException.classNotFound(mainClassName, module);
+    if (virtualFile == null) return null;
     Module classModule = psiClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(psiClass) : null;
     if (classModule == null) classModule = module;
     ModuleFileIndex fileIndex = ModuleRootManager.getInstance(classModule).getFileIndex();
     if (fileIndex.isInSourceContent(virtualFile)) {
-      return fileIndex.
-        isInTestSourceContent(virtualFile) ? JavaParameters.JDK_AND_CLASSES_AND_TESTS : JavaParameters.JDK_AND_CLASSES;
+      return !fileIndex.isInTestSourceContent(virtualFile);
     }
     final List<OrderEntry> entriesForFile = fileIndex.getOrderEntriesForFile(virtualFile);
     for (OrderEntry entry : entriesForFile) {
       if (entry instanceof ExportableOrderEntry && ((ExportableOrderEntry)entry).getScope() == DependencyScope.TEST) {
-        return JavaParameters.JDK_AND_CLASSES_AND_TESTS;
+        return false;
       }
     }
-    return JavaParameters.JDK_AND_CLASSES;
+    return true;
   }
 
   public static void configureModule(final RunConfigurationModule runConfigurationModule,
