@@ -155,14 +155,16 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final PsiSubstitutor inferredSubstitutor = ourDiamondGuard.doPreventingRecursion(context, false, new Computable<PsiSubstitutor>() {
       @Override
       public PsiSubstitutor compute() {
-        final MethodCandidateInfo staticFactoryCandidateInfo = CachedValuesManager.getCachedValue(context,
+        final MethodCandidateInfo staticFactoryCandidateInfo = context == newExpression ?
+                                                               CachedValuesManager.getCachedValue(context,
                                                                                                   new CachedValueProvider<MethodCandidateInfo>() {
                                                                                                     @Nullable
                                                                                                     @Override
                                                                                                     public Result<MethodCandidateInfo> compute() {
-                                                                                                      return new Result<MethodCandidateInfo>(getStaticFactoryCandidateInfo(psiClass, newExpression, context, argumentList), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+                                                                                                      return new Result<MethodCandidateInfo>(getStaticFactoryCandidateInfo(psiClass, newExpression, newExpression, argumentList), PsiModificationTracker.MODIFICATION_COUNT);
                                                                                                     }
-                                                                                                  });
+                                                                                                  }) 
+                                                                                        : getStaticFactoryCandidateInfo(psiClass, newExpression, context, argumentList);
         staticFactoryRef.set(staticFactoryCandidateInfo);
         return staticFactoryCandidateInfo != null ? staticFactoryCandidateInfo.getSubstitutor() : null;
       }
