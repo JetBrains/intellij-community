@@ -115,10 +115,10 @@ public class EnvironmentVariablesData {
     parent.addContent(envsElement);
   }
 
-  public void configureCommandLine(@NotNull GeneralCommandLine commandLine, boolean shellParentEnvs) {
+  public void configureCommandLine(@NotNull GeneralCommandLine commandLine, boolean consoleParentEnvs) {
     if (myPassParentEnvs) {
-      commandLine.withParentEnvironmentType(shellParentEnvs ? GeneralCommandLine.ParentEnvironmentType.CONSOLE
-                                                            : GeneralCommandLine.ParentEnvironmentType.SYSTEM);
+      commandLine.withParentEnvironmentType(consoleParentEnvs ? GeneralCommandLine.ParentEnvironmentType.CONSOLE
+                                                              : GeneralCommandLine.ParentEnvironmentType.SYSTEM);
     }
     else {
       commandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.NONE);

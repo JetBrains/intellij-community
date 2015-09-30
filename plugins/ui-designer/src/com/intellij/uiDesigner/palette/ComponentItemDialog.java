@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Vladimir Kondratyev
@@ -114,6 +114,7 @@ public final class ComponentItemDialog extends DialogWrapper {
     updateEnabledTextField();
 
     myTfClassName.getChildComponent().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+      @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         updateOKAction();
       }
@@ -128,12 +129,14 @@ public final class ComponentItemDialog extends DialogWrapper {
                                                                   UIDesignerBundle.message("add.component.choose.icon")));
 
     myTfNestedForm.addActionListener(new MyChooseFileActionListener(project, new TreeFileChooser.PsiFileFilter() {
+      @Override
       public boolean accept(PsiFile file) {
         return file.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM);
       }
     }, myTfNestedForm, UIDesignerBundle.message("add.component.choose.form")));
 
     myTfNestedForm.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         updateOKAction();
       }
@@ -181,10 +184,11 @@ public final class ComponentItemDialog extends DialogWrapper {
   void showGroupChooser(GroupItem defaultGroup) {
     myGroupLabel.setVisible(true);
     myGroupComboBox.setVisible(true);
-    final ArrayList<GroupItem> groups = Palette.getInstance(myProject).getGroups();
+    List<GroupItem> groups = Palette.getInstance(myProject).getGroups();
     myGroupComboBox.setModel(new DefaultComboBoxModel(groups.toArray()));
     myGroupComboBox.setSelectedItem(defaultGroup);
     myGroupComboBox.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         updateOKAction();
       }
@@ -205,15 +209,18 @@ public final class ComponentItemDialog extends DialogWrapper {
     updateOKAction();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("reference.dialogs.addEditPaletteComponent");
   }
 
+  @Override
   protected void doOKAction() {
     // TODO[vova] implement validation
     if (myClassRadioButton.isSelected()) {
@@ -294,6 +301,7 @@ public final class ComponentItemDialog extends DialogWrapper {
     return true;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     if (myOneOff) {
       return "#com.intellij.uiDesigner.palette.ComponentItemDialog.OneOff";
@@ -301,10 +309,12 @@ public final class ComponentItemDialog extends DialogWrapper {
     return "#com.intellij.uiDesigner.palette.ComponentItemDialog";
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTfClassName.getChildComponent();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }
@@ -365,6 +375,7 @@ public final class ComponentItemDialog extends DialogWrapper {
       myProject = project;
     }
 
+    @Override
     public void actionPerformed(final ActionEvent e) {
       final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
       final TreeClassChooser chooser = factory.createInheritanceClassChooser(UIDesignerBundle.message("title.choose.component.class"),
@@ -394,6 +405,7 @@ public final class ComponentItemDialog extends DialogWrapper {
       myTitle = title;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
       PsiFile formFile = null;
@@ -413,6 +425,7 @@ public final class ComponentItemDialog extends DialogWrapper {
   }
 
   private class MyRadioChangeListener implements ChangeListener {
+    @Override
     public void stateChanged(ChangeEvent e) {
       updateEnabledTextField();
     }

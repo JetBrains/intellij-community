@@ -16,16 +16,9 @@
 package com.intellij.openapi.options;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class ExternalizableSchemeAdapter implements ExternalizableScheme {
   protected String myName;
-
-  @Override
-  @Nullable
-  public final ExternalInfo getExternalInfo() {
-    return null;
-  }
 
   @Override
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,17 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.uiDesigner.UIDesignerBundle;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class EditGroupAction extends AnAction {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     GroupItem groupToBeEdited = GroupItem.DATA_KEY.getData(e.getDataContext());
@@ -45,14 +45,14 @@ public class EditGroupAction extends AnAction {
       groupToBeEdited.getName(),
       null
     );
-    if(groupName == null || groupName.equals(groupToBeEdited.getName())){
+    if (groupName == null || groupName.equals(groupToBeEdited.getName())) {
       return;
     }
 
     Palette palette = Palette.getInstance(project);
-    final ArrayList<GroupItem> groups = palette.getGroups();
-    for(int i = groups.size() - 1; i >= 0; i--){
-      if(groupName.equals(groups.get(i).getName())){
+    List<GroupItem> groups = palette.getGroups();
+    for (int i = groups.size() - 1; i >= 0; i--) {
+      if (groupName.equals(groups.get(i).getName())) {
         Messages.showErrorDialog(project, UIDesignerBundle.message("error.group.name.unique"),
                                  CommonBundle.getErrorTitle());
         return;
@@ -63,7 +63,8 @@ public class EditGroupAction extends AnAction {
     palette.fireGroupsChanged();
   }
 
-  @Override public void update(AnActionEvent e) {
+  @Override
+  public void update(AnActionEvent e) {
     Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     GroupItem groupItem = GroupItem.DATA_KEY.getData(e.getDataContext());
     e.getPresentation().setEnabled(project != null && groupItem != null && !groupItem.isReadOnly());

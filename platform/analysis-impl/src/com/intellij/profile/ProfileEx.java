@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.intellij.profile;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.SmartSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -30,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
  * Date: 01-Dec-2005
  */
 public abstract class ProfileEx implements Profile {
-  private static final Logger LOG = Logger.getInstance(ProfileEx.class);
-
   public static final String SCOPE = "scope";
   public static final String NAME = "name";
 
@@ -68,17 +63,9 @@ public abstract class ProfileEx implements Profile {
 
   @Override
   public void copyFrom(@NotNull Profile profile) {
-    try {
-      Element config = new Element("config");
-      profile.writeExternal(config);
-      readExternal(config);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
+    Element config = new Element("config");
+    profile.writeExternal(config);
+    readExternal(config);
   }
 
   @Override
@@ -121,7 +108,7 @@ public abstract class ProfileEx implements Profile {
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(Element element) {
     mySerializer.readExternal(this, element);
   }
 
@@ -130,7 +117,7 @@ public abstract class ProfileEx implements Profile {
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     serializeInto(element, true);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package com.jetbrains.python.remote;
 
-import com.jetbrains.python.debugger.PositionConverterProvider;
+import com.intellij.remote.RemoteProcessControl;
 
 /**
- * @author yole
+ * @author traff
  */
-public interface RemoteDebuggableProcessHandler extends PyRemoteProcessControl, PositionConverterProvider{
+public interface PyRemoteProcessControl extends RemoteProcessControl {
+
+  PyRemoteSocketToLocalHostProvider getRemoteSocketToLocalHostProvider();
 }

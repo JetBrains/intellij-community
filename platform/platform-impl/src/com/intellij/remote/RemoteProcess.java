@@ -24,4 +24,15 @@ public abstract class RemoteProcess extends Process implements SelfKiller {
   public abstract boolean killProcessTree();
 
   public abstract boolean isDisconnected();
+
+  /**
+   * Makes host:localPort server which is available on local side available on remote side as localhost:remotePort.
+   */
+  public abstract void addRemoteTunnel(int remotePort, String host, int localPort) throws RemoteSdkException;
+
+  /**
+   * Makes host:remotePort server which is available on remote side available on local side as localhost:localPort.
+   */
+  public abstract void addLocalTunnel(int localPort, String host, int remotePort) throws RemoteSdkException;
+
 }

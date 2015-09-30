@@ -4,7 +4,7 @@ QuerySet is parametrized with model object
 class QuerySet(object):
     def __init__(self, model=None, query=None, using=None, hints=None):
         """
-        :rtype: django.db.models.QuerySet[T]
+        :rtype: django.db.models.query.QuerySet[T]
         """
         pass
 

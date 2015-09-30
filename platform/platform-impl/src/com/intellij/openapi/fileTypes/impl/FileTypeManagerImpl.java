@@ -71,7 +71,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @State(
   name = "FileTypeManager",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/filetypes.xml"),
+  storages = @Storage(file = "filetypes.xml"),
   additionalExportFile = FileTypeManagerImpl.FILE_SPEC
 )
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, ApplicationComponent, Disposable {

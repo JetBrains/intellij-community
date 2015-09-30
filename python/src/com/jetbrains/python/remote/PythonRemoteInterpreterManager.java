@@ -73,10 +73,10 @@ public abstract class PythonRemoteInterpreterManager {
    * @deprecated use {@link com.jetbrains.python.run.PyRemoteProcessStarterManager#startRemoteProcess(Project, GeneralCommandLine, PythonRemoteInterpreterManager, PyRemoteSdkAdditionalDataBase, PyRemotePathMapper)}
    */
   @Deprecated
-  public abstract ProcessHandler startRemoteProcessWithPid(@Nullable Project project,
-                                                           @NotNull PyRemoteSdkCredentials data,
-                                                           @NotNull GeneralCommandLine commandLine,
-                                                           @NotNull PyRemotePathMapper pathMapper)
+  public abstract PyRemoteProcessHandlerBase startRemoteProcessWithPid(@Nullable Project project,
+                                                                   @NotNull PyRemoteSdkCredentials data,
+                                                                   @NotNull GeneralCommandLine commandLine,
+                                                                   @NotNull PyRemotePathMapper pathMapper)
     throws RemoteSdkException;
 
   public abstract void addRemoteSdk(Project project, Component parentComponent, Collection<Sdk> existingSdks,
@@ -169,12 +169,11 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);
 
-  public abstract PyConsoleProcessHandler createConsoleProcessHandler(Process process,
-                                                                      PyRemoteSdkCredentials data,
-                                                                      PythonConsoleView view,
-                                                                      PydevConsoleCommunication consoleCommunication,
-                                                                      String commandLine, Charset charset, PyRemotePathMapper pathMapper);
-
+  public abstract PyConsoleProcessHandler createConsoleProcessHandler(RemoteProcess process,
+                                                             PythonConsoleView view,
+                                                             PydevConsoleCommunication consoleCommunication,
+                                                             String commandLine,
+                                                             Charset charset, PyRemotePathMapper pathMapper, PyRemoteSocketToLocalHostProvider remoteSocketProvider);
   @NotNull
   public abstract RemoteSdkCredentialsProducer<PyRemoteSdkCredentials> getRemoteSdkCredentialsProducer(Function<RemoteCredentials, PyRemoteSdkCredentials> credentialsTransformer,
                                                                                                        RemoteConnectionCredentialsWrapper connectionWrapper);

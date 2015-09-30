@@ -17,6 +17,7 @@ package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
+import com.intellij.diff.actions.ProxyUndoRedoAction;
 import com.intellij.diff.comparison.ByLine;
 import com.intellij.diff.comparison.ComparisonMergeUtil;
 import com.intellij.diff.comparison.ComparisonPolicy;
@@ -44,8 +45,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -225,10 +224,7 @@ public class TextMergeTool implements MergeTool {
         DiffUtil.registerAction(new IgnoreSelectedChangesAction(Side.LEFT, true), myPanel);
         DiffUtil.registerAction(new IgnoreSelectedChangesAction(Side.RIGHT, true), myPanel);
 
-        if (myUndoManager != null) {
-          new UndoRedoAction(true).register();
-          new UndoRedoAction(false).register();
-        }
+        ProxyUndoRedoAction.register(getProject(), getEditor(ThreeSide.BASE), myContentPanel);
       }
 
       @Override
@@ -1160,43 +1156,6 @@ public class TextMergeTool implements MergeTool {
       //
       // Helpers
       //
-
-      private class UndoRedoAction extends DumbAwareAction {
-        private final boolean myUndo;
-
-        public UndoRedoAction(boolean undo) {
-          myUndo = undo;
-        }
-
-        public void register() {
-          EmptyAction.setupAction(this, myUndo ? IdeActions.ACTION_UNDO : IdeActions.ACTION_REDO, myContentPanel);
-        }
-
-        @Override
-        public void update(AnActionEvent e) {
-          assert myUndoManager != null;
-          TextEditor textEditor = getTextEditor();
-          e.getPresentation().setEnabled(myUndo ? myUndoManager.isUndoAvailable(textEditor) : myUndoManager.isRedoAvailable(textEditor));
-        }
-
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          assert myUndoManager != null;
-          TextEditor textEditor = getTextEditor();
-          if (myUndo) {
-            myUndoManager.undo(textEditor);
-          }
-          else {
-            myUndoManager.redo(textEditor);
-          }
-        }
-
-        @NotNull
-        private TextEditor getTextEditor() {
-          EditorEx editor = getEditor(ThreeSide.BASE);
-          return TextEditorProvider.getInstance().getTextEditor(editor);
-        }
-      }
 
       private class MyDividerPaintable implements DiffDividerDrawUtil.DividerPaintable {
         @NotNull private final Side mySide;
