@@ -27,7 +27,12 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
 
   @NotNull
   public IntentionAction[] getFixes(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
-    return new IntentionAction[]{new VariableTypeFix(variable, toReturn) {
+    return new IntentionAction[]{createTypeMigrationFix(variable, toReturn)};
+  }
+
+  @NotNull
+  public static VariableTypeFix createTypeMigrationFix(@NotNull final PsiVariable variable, @NotNull final PsiType toReturn) {
+    return new VariableTypeFix(variable, toReturn) {
       @NotNull
       @Override
       public String getText() {
@@ -61,6 +66,6 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
       public boolean startInWriteAction() {
         return true;
       }
-    }};
+    };
   }
 }

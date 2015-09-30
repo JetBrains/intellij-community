@@ -331,6 +331,10 @@ public class TypeMigrationLabeler {
       }
 
     }
+    else if (expr instanceof PsiLambdaExpression) {
+      //TODO conversion of lambda expression now works incorrectly [Dmitry Batkovich]
+      return;
+    }
     
     convertExpression(expr, migrationType, originalType, isCovariant);
   }

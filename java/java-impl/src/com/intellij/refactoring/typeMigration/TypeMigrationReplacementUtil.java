@@ -40,7 +40,11 @@ public class TypeMigrationReplacementUtil {
 
   public static void replaceExpression(PsiExpression expression, final Project project, Object conversion) {
     if (conversion instanceof TypeConversionDescriptorBase) {
-      ((TypeConversionDescriptorBase)conversion).replace(expression);
+      try {
+        ((TypeConversionDescriptorBase)conversion).replace(expression);
+      } catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
     } else if (conversion instanceof String) {
       String replacement = (String)conversion;
       try {
