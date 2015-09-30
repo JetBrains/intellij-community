@@ -19,7 +19,6 @@ import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -104,44 +103,21 @@ public class PyMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
-    if (isForMethod()) {
-      // TODO escalate method
-    }
-    else {
-      escalateLocalFunction(usages);
-    }
-
-  }
-
-  private void escalateLocalFunction(@NotNull UsageInfo[] usages) {
-    final Set<String> enclosingScopeReads = new LinkedHashSet<String>();
-    final Collection<ScopeOwner> scopeOwners = PsiTreeUtil.collectElementsOfType(myFunction, ScopeOwner.class);
-    for (ScopeOwner owner : scopeOwners) {
-      final PyMakeFunctionTopLevelProcessor.AnalysisResult scope = analyseScope(owner);
-      if (!scope.nonlocalWritesToEnclosingScope.isEmpty()) {
-        throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes"));
-      }
-      if (!scope.readsOfSelfParametersFromEnclosingScope.isEmpty()) {
-        final String paramName = scope.readsOfSelfParametersFromEnclosingScope.get(0).getName();
-        throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.self.reads", paramName));
-      }
-      for (PsiElement element : scope.readsFromEnclosingScope) {
-        if (element instanceof PyElement) {
-          ContainerUtil.addIfNotNull(enclosingScopeReads, ((PyElement)element).getName());
-        }
-      }
-    }
+    final Set<String> newParameters = collectNewParameterNames();
 
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
-    updateLocalFunctionAndUsages(enclosingScopeReads, usages);
+
+    updateExistingFunctionUsages(newParameters, usages);
+    final PyFunction newFunction = insertNewFunction(createNewFunction(newParameters));
+    myFunction.delete();
+
+    myEditor.getSelectionModel().removeSelection();
+    myEditor.getCaretModel().moveToOffset(newFunction.getTextOffset());
   }
 
-  private void updateLocalFunctionAndUsages(@NotNull Set<String> enclosingScopeReads, UsageInfo[] usages) {
-    final String commaSeparatedNames = StringUtil.join(enclosingScopeReads, ", ");
-    final Project project = myFunction.getProject();
-
-    // Update existing usages
-    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+  protected void updateExistingFunctionUsages(@NotNull Collection<String> newParamNames, @NotNull UsageInfo[] usages) {
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(myProject);
+    final String commaSeparatedNames = StringUtil.join(newParamNames, ", ");
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
       if (element != null) {
@@ -156,23 +132,47 @@ public class PyMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
         }
       }
     }
+  }
 
-    // Replace function
-    PyFunction copiedFunction = (PyFunction)myFunction.copy();
+  @NotNull
+  protected PyFunction createNewFunction(@NotNull Collection<String> newParamNames) {
+    final String commaSeparatedNames = StringUtil.join(newParamNames, ", ");
+    final PyFunction copiedFunction = (PyFunction)myFunction.copy();
     final PyParameterList paramList = copiedFunction.getParameterList();
     final StringBuilder paramListText = new StringBuilder(paramList.getText());
     paramListText.insert(1, commaSeparatedNames + (paramList.getParameters().length > 0 ? ", " : ""));
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(myProject);
     paramList.replace(elementGenerator.createParameterList(LanguageLevel.forElement(myFunction), paramListText.toString()));
+    return copiedFunction;
+  }
 
-    // See AddImportHelper.getFileInsertPosition()
+  @NotNull
+  protected Set<String> collectNewParameterNames() {
+    final Set<String> enclosingScopeReads = new LinkedHashSet<String>();
+    for (ScopeOwner owner : PsiTreeUtil.collectElementsOfType(myFunction, ScopeOwner.class)) {
+      final AnalysisResult result = analyseScope(owner);
+      if (!result.nonlocalWritesToEnclosingScope.isEmpty()) {
+        throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes"));
+      }
+      if (!result.readsOfSelfParametersFromEnclosingScope.isEmpty()) {
+        final String paramName = result.readsOfSelfParametersFromEnclosingScope.get(0).getName();
+        throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.self.reads", paramName));
+      }
+      for (PsiElement element : result.readsFromEnclosingScope) {
+        if (element instanceof PyElement) {
+          ContainerUtil.addIfNotNull(enclosingScopeReads, ((PyElement)element).getName());
+        }
+      }
+    }
+    return enclosingScopeReads;
+  }
+
+  @NotNull
+  private PyFunction insertNewFunction(@NotNull PyFunction newFunction) {
     final PsiFile file = myFunction.getContainingFile();
     final PsiElement anchor = PyPsiUtils.getParentRightBefore(myFunction, file);
 
-    copiedFunction = (PyFunction)file.addAfter(copiedFunction, anchor);
-    myFunction.delete();
-
-    myEditor.getSelectionModel().removeSelection();
-    myEditor.getCaretModel().moveToOffset(copiedFunction.getTextOffset());
+    return (PyFunction)file.addAfter(newFunction, anchor);
   }
 
   @NotNull
