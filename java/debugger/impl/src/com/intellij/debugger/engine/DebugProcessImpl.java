@@ -709,6 +709,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return myExecutionResult;
   }
 
+  @NotNull
   @Override
   public Project getProject() {
     return myProject;
