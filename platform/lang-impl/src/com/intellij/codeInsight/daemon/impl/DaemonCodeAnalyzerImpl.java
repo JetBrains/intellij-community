@@ -820,9 +820,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
           submitPassesRunnable.run();
         }
         else {
-          ((PsiDocumentManagerBase)myPsiDocumentManager).cancelAndRunWhenAllCommitted("start daemon when all committed",
-                                                                                      submitPassesRunnable);
+          ((PsiDocumentManagerBase)myPsiDocumentManager).cancelAndRunWhenAllCommitted("start daemon when all committed", submitPassesRunnable);
         }
+      }
+
+      @Override
+      public String toString() {
+        return "Daemon update runnable";
       }
     };
   }
