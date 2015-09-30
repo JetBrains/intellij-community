@@ -1684,7 +1684,7 @@ public class FindDialog extends DialogWrapper {
           }
         });
         //anAction.registerCustomShortcutSet(CommonShortcuts.ENTER, component);
-        anAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), component);
+        anAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), component, myDisposable);
       }
     }
   }
