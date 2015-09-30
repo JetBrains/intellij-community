@@ -186,6 +186,8 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    *
    * @param context context to use for this process
    * @return list of attrs.
+   *
+   * TODO: Replace it and {@link #getClassAttributes()} with a single getClassAttributes(@NotNull TypeEvalContext context, boolean inherited)
    */
   @NotNull
   List<PyTargetExpression> getClassAttributesInherited(@NotNull TypeEvalContext context);
