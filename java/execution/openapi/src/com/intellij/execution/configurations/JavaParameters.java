@@ -27,11 +27,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathsList;
+import com.intellij.util.Processor;
+import com.intellij.util.text.VersionComparatorUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class JavaParameters extends SimpleJavaParameters {
   private static final Logger LOG = Logger.getInstance(JavaParameters.class);
@@ -53,7 +57,7 @@ public class JavaParameters extends SimpleJavaParameters {
 
   public static final int JDK_ONLY = 0x1;
   public static final int CLASSES_ONLY = 0x2;
-  private static final int TESTS_ONLY = 0x4;
+  public static final int TESTS_ONLY = 0x4;
   public static final int JDK_AND_CLASSES = JDK_ONLY | CLASSES_ONLY;
   public static final int JDK_AND_CLASSES_AND_TESTS = JDK_ONLY | CLASSES_ONLY | TESTS_ONLY;
   public static final int CLASSES_AND_TESTS = CLASSES_ONLY | TESTS_ONLY;
@@ -112,11 +116,19 @@ public class JavaParameters extends SimpleJavaParameters {
 
   public void configureByModule(final Module module,
                                 @MagicConstant(valuesFromClass = JavaParameters.class) final int classPathType) throws CantRunException {
-    configureByModule(module, classPathType, getModuleJdk(module));
+    configureByModule(module, classPathType, getValidJdkToRunModule(module, (classPathType & TESTS_ONLY) == 0));
   }
 
+  /**
+   * @deprecated use {@link #getValidJdkToRunModule(Module, boolean)} instead
+   */
   public static Sdk getModuleJdk(final Module module) throws CantRunException {
-    final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
+    return getValidJdkToRunModule(module, false);
+  }
+
+  @NotNull
+  public static Sdk getValidJdkToRunModule(final Module module, boolean productionOnly) throws CantRunException {
+    Sdk jdk = getJdkToRunModule(module, productionOnly);
     if (jdk == null) {
       throw CantRunException.noJdkForModule(module);
     }
@@ -125,6 +137,42 @@ public class JavaParameters extends SimpleJavaParameters {
       throw CantRunException.jdkMisconfigured(jdk, module);
     }
     return jdk;
+  }
+
+  @Nullable
+  public static Sdk getJdkToRunModule(Module module, boolean productionOnly) {
+    final Sdk moduleSdk = ModuleRootManager.getInstance(module).getSdk();
+    if (moduleSdk == null) {
+      return null;
+    }
+
+    final Set<Sdk> sdksFromDependencies = new LinkedHashSet<Sdk>();
+    OrderEnumerator enumerator = OrderEnumerator.orderEntries(module).runtimeOnly().recursively();
+    if (productionOnly) {
+      enumerator = enumerator.productionOnly();
+    }
+    enumerator.forEachModule(new Processor<Module>() {
+      @Override
+      public boolean process(Module module) {
+        Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+        if (sdk != null && sdk.getSdkType().equals(moduleSdk.getSdkType())) {
+          sdksFromDependencies.add(sdk);
+        }
+        return true;
+      }
+    });
+    return findLatestVersion(moduleSdk, sdksFromDependencies);
+  }
+
+  @NotNull
+  private static Sdk findLatestVersion(@NotNull Sdk mainSdk, @NotNull Set<Sdk> sdks) {
+    Sdk result = mainSdk;
+    for (Sdk sdk : sdks) {
+      if (VersionComparatorUtil.compare(result.getVersionString(), sdk.getVersionString()) < 0) {
+        result = sdk;
+      }
+    }
+    return result;
   }
 
   public void configureByProject(final Project project, @MagicConstant(valuesFromClass = JavaParameters.class) final int classPathType, final Sdk jdk) throws CantRunException {
