@@ -534,6 +534,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, propertyName == null ? NO_PROPERTY_SELECTED : VALUES);
     if (propertyName == null) return;
 
+    final UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(myProject);
     for (final PropertiesFile propertiesFile : myResourceBundle.getPropertiesFiles()) {
       final EditorEx editor = (EditorEx)myEditors.get(propertiesFile);
       if (editor == null) continue;
@@ -545,19 +546,20 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
             public void run() {
-              final UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(myProject);
-              if (!checkIsUnderUndoRedoAction || !undoManager.isActive() || !(undoManager.isRedoInProgress() || undoManager.isUndoInProgress())) {
+              if (!checkIsUnderUndoRedoAction ||
+                  !undoManager.isActive() ||
+                  !(undoManager.isRedoInProgress() || undoManager.isUndoInProgress())) {
                 updateDocumentFromPropertyValue(getPropertyEditorValue(property), document, propertiesFile);
               }
             }
           });
         }
       }, "", this);
-
       JPanel titledPanel = myTitledPanels.get(propertiesFile);
       ((TitledBorder)titledPanel.getBorder()).setTitleColor(property == null ? JBColor.RED : UIUtil.getLabelTextForeground());
       titledPanel.repaint();
     }
+    undoManager.flushCurrentCommandMerger();
   }
 
   private void installPropertiesChangeListeners() {
