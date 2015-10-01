@@ -17,6 +17,7 @@ package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindModel;
+import com.intellij.find.SearchSession;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,12 +36,12 @@ public class TogglePreserveCaseAction extends EditorHeaderToggleAction {
   }
 
   @Override
-  protected boolean isSelected(@NotNull EditorSearchSession session) {
+  protected boolean isSelected(@NotNull SearchSession session) {
     return session.getFindModel().isPreserveCase();
   }
 
   @Override
-  protected void setSelected(@NotNull EditorSearchSession session, boolean selected) {
+  protected void setSelected(@NotNull SearchSession session, boolean selected) {
     session.getFindModel().setPreserveCase(selected);
   }
 }

@@ -15,7 +15,7 @@
  */
 package com.intellij.find.editorHeaderActions;
 
-import com.intellij.find.SearchReplaceComponent;
+import com.intellij.find.SearchSession;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -29,10 +29,11 @@ import java.awt.*;
 public class StatusTextAction extends DumbAwareAction implements CustomComponentAction {
   @Override
   public void update(AnActionEvent e) {
-    String statusText = e.getData(SearchReplaceComponent.STATUS_TEXT_KEY);
+    SearchSession search = e.getData(SearchSession.KEY);
+    String statusText = search == null ? "" : search.getComponent().getStatusText();
     JLabel label = (JLabel)e.getPresentation().getClientProperty(CUSTOM_COMPONENT_PROPERTY);
     if (label != null) {
-      label.setText(StringUtil.notNullize(statusText));
+      label.setText(statusText);
       label.setVisible(StringUtil.isNotEmpty(statusText));
     }
   }
