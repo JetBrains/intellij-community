@@ -34,6 +34,9 @@ boolean maySkipAndroidPlugin() {
   return isDefined("productProperties") && productProperties.maySkipAndroidPlugin
 }
 
+boolean setPluginAndIDEVersionInPluginXml() {
+  return !isDefined("productProperties") || productProperties.setPluginAndIDEVersionInPluginXml
+}
 
 String appInfoModule() {
   return isDefined("productProperties") ? productProperties.appInfoModule : "community-resources"
@@ -696,7 +699,9 @@ def layoutPlugin(String pluginName, String moduleName, String jarName, Closure c
     return
   }
 
-  setPluginVersionAndSince(moduleName, requireProperty("buildNumber", requireProperty("build.number", snapshot)))
+  if (setPluginAndIDEVersionInPluginXml()) {
+    setPluginVersionAndSince(moduleName, requireProperty("buildNumber", requireProperty("build.number", snapshot)))
+  }
 
   dir(pluginName) {
     dir("lib") {
