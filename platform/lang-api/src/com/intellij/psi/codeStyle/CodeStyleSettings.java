@@ -519,7 +519,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     myCommonSettingsManager.readExternal(element);
 
     if (USE_SAME_INDENTS) IGNORE_SAME_INDENTS_FOR_LANGUAGES = true;
-    OTHER_INDENT_OPTIONS.SMART_TABS = false;
   }
 
 
