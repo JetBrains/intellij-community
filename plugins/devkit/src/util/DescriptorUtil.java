@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -79,7 +80,12 @@ public class DescriptorUtil {
     if (pluginXml == null) {
       return null;
     }
-    return getIdeaPlugin(pluginXml).getRootElement().getPluginId();
+    final DomFileElement<IdeaPlugin> ideaPlugin = getIdeaPlugin(pluginXml);
+    if (ideaPlugin == null) {
+      return null;
+    }
+
+    return ideaPlugin.getRootElement().getPluginId();
   }
 
   public static boolean isPluginXml(PsiFile file) {
@@ -87,7 +93,8 @@ public class DescriptorUtil {
     return getIdeaPlugin((XmlFile)file) != null;
   }
 
-  public static DomFileElement<IdeaPlugin> getIdeaPlugin(XmlFile file) {
+  @Nullable
+  public static DomFileElement<IdeaPlugin> getIdeaPlugin(@NotNull XmlFile file) {
     return DomManager.getDomManager(file.getProject()).getFileElement(file, IdeaPlugin.class);
   }
 }
