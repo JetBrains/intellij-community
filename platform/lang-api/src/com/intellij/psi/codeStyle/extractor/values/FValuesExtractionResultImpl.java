@@ -15,21 +15,23 @@
  */
 package com.intellij.psi.codeStyle.extractor.values;
 
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Roman.Shein
  * @since 04.08.2015.
  */
-public class FValuesContainerImpl implements FValuesContainer {
+public class FValuesExtractionResultImpl implements FValuesExtractionResult {
   @NotNull
   protected final List<FValue> myValues;
 
-  public FValuesContainerImpl(@NotNull List<FValue> values) {
+  public FValuesExtractionResultImpl(@NotNull List<FValue> values) {
     myValues = values;
   }
 
@@ -46,8 +48,20 @@ public class FValuesContainerImpl implements FValuesContainer {
     }
   }
 
+  @Override
+  public void applyConditioned(Condition<FValue> c, Map<FValue, Object> backup) {
+    for (FValue value: myValues) {
+      if (c.value(value)) {
+        value.write(false);
+      } else {
+        value.value = backup.get(value);
+        value.write(false);
+      }
+    }
+  }
+
   @Contract("false -> null")
-  public FValuesContainer apply(boolean retPrevValue) {
+  public FValuesExtractionResult apply(boolean retPrevValue) {
     if (retPrevValue) {
       final ArrayList<FValue> orig = new ArrayList<FValue>();
       for (FValue value : myValues) {

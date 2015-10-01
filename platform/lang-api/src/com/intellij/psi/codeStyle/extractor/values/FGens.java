@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FGens extends FValuesContainerImpl {
+public class FGens extends FValuesExtractionResultImpl {
 
   public FGens(@NotNull List<FValue> values) {
     super(values);

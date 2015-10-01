@@ -15,20 +15,24 @@
  */
 package com.intellij.psi.codeStyle.extractor.values;
 
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Roman.Shein
  * @since 04.08.2015.
  */
-public interface FValuesContainer {
+public interface FValuesExtractionResult {
 
   @NotNull
   List<FValue> getValues();
 
   void applySelected();
 
-  FValuesContainer apply(boolean retPrevValue);
+  void applyConditioned(Condition<FValue> c, Map<FValue, Object> backup);
+
+  FValuesExtractionResult apply(boolean retPrevValue);
 }

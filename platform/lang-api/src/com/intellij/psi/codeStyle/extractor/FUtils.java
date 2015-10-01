@@ -26,7 +26,7 @@ import com.intellij.psi.codeStyle.extractor.differ.FDiffer;
 import com.intellij.psi.codeStyle.extractor.values.FGeneration;
 import com.intellij.psi.codeStyle.extractor.values.FGens;
 import com.intellij.psi.codeStyle.extractor.values.FValue;
-import com.intellij.psi.codeStyle.extractor.values.FValuesContainer;
+import com.intellij.psi.codeStyle.extractor.values.FValuesExtractionResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,7 +118,7 @@ public class FUtils {
   }
 
   public static void adjustValuesMin(
-    @NotNull FValuesContainer gens,
+    @NotNull FValuesExtractionResult gens,
     @NotNull FDiffer differ,
     @Nullable ProgressIndicator indicator) {
 

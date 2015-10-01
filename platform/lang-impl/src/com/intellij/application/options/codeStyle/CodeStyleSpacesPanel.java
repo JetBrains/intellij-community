@@ -20,8 +20,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettingRepresentation;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
   public CodeStyleSpacesPanel(CodeStyleSettings settings) {
@@ -36,9 +36,9 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
 
   @Override
   protected void initTables() {
-    Map<CodeStyleSettingRepresentation.SettingsGroup, Set<CodeStyleSettingRepresentation>> settingsMap = CodeStyleSettingRepresentation.getStandardSettings(getSettingsType());
+    Map<CodeStyleSettingRepresentation.SettingsGroup, List<CodeStyleSettingRepresentation>> settingsMap = CodeStyleSettingRepresentation.getStandardSettings(getSettingsType());
 
-    for (Map.Entry<CodeStyleSettingRepresentation.SettingsGroup, Set<CodeStyleSettingRepresentation>> entry: settingsMap.entrySet()) {
+    for (Map.Entry<CodeStyleSettingRepresentation.SettingsGroup, List<CodeStyleSettingRepresentation>> entry: settingsMap.entrySet()) {
       String groupName = entry.getKey().name;
       for (CodeStyleSettingRepresentation setting: entry.getValue()) {
         initBooleanField(setting.getFieldName(), setting.getUiName(), groupName);

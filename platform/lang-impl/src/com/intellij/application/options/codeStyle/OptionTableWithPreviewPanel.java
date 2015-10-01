@@ -279,7 +279,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     return result == null ? defaultName : result;
   }
 
-  private static void expandTree(final JTree tree) {
+  public static void expandTree(final JTree tree) {
     int oldRowCount = 0;
     do {
       int rowCount = tree.getRowCount();

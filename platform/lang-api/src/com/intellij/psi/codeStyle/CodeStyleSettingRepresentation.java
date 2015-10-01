@@ -21,8 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.*;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Roman.Shein
@@ -98,25 +98,27 @@ public class CodeStyleSettingRepresentation {
     return myFieldName.hashCode();
   }
 
-  protected static void putGroupTop(@NotNull Map<SettingsGroup, Set<CodeStyleSettingRepresentation>> result, @NotNull String fieldName,
+  protected static void putGroupTop(@NotNull Map<SettingsGroup, List<CodeStyleSettingRepresentation>> result, @NotNull String fieldName,
                                     @NotNull String uiName, int[] values, String[] valueUiNames) {
-    result.put(new SettingsGroup(null), ContainerUtil.<CodeStyleSettingRepresentation>newLinkedHashSet(
+    result.put(new SettingsGroup(null), ContainerUtil.<CodeStyleSettingRepresentation>newLinkedList(
       new CodeStyleSelectSettingRepresentation(fieldName, uiName, values, valueUiNames)
     ));
   }
 
   @NotNull
-  public static Map<SettingsGroup, Set<CodeStyleSettingRepresentation>> getStandardSettings(LanguageCodeStyleSettingsProvider.SettingsType settingsType) {
-    Map<SettingsGroup, Set<CodeStyleSettingRepresentation>> result = ContainerUtil.newLinkedHashMap();
+  public static Map<SettingsGroup, List<CodeStyleSettingRepresentation>> getStandardSettings(LanguageCodeStyleSettingsProvider.SettingsType settingsType) {
+    Map<SettingsGroup, List<CodeStyleSettingRepresentation>> result = ContainerUtil.newLinkedHashMap();
     switch (settingsType) {
       case BLANK_LINES_SETTINGS:
-        result.put(new SettingsGroup(BLANK_LINES_KEEP), ContainerUtil.newLinkedHashSet(
-          new CodeStyleSettingRepresentation("KEEP_BLANK_LINES_IN_DECLARATIONS", ApplicationBundle.message("editbox.keep.blanklines.in.declarations")),
+        result.put(new SettingsGroup(BLANK_LINES_KEEP), ContainerUtil.newLinkedList(
+          new CodeStyleSettingRepresentation("KEEP_BLANK_LINES_IN_DECLARATIONS",
+                                             ApplicationBundle.message("editbox.keep.blanklines.in.declarations")),
           new CodeStyleSettingRepresentation("KEEP_BLANK_LINES_IN_CODE", ApplicationBundle.message("editbox.keep.blanklines.in.code")),
-          new CodeStyleSettingRepresentation("KEEP_BLANK_LINES_BEFORE_RBRACE", ApplicationBundle.message("editbox.keep.blanklines.before.rbrace"))
+          new CodeStyleSettingRepresentation("KEEP_BLANK_LINES_BEFORE_RBRACE",
+                                             ApplicationBundle.message("editbox.keep.blanklines.before.rbrace"))
         ));
         
-        result.put(new SettingsGroup(BLANK_LINES), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(BLANK_LINES), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("BLANK_LINES_BEFORE_PACKAGE",
                                              ApplicationBundle.message("editbox.blanklines.before.package.statement")),
           new CodeStyleSettingRepresentation("BLANK_LINES_AFTER_PACKAGE",
@@ -139,7 +141,7 @@ public class CodeStyleSettingRepresentation {
         ));
         break;
       case SPACING_SETTINGS:
-        result.put(new SettingsGroup(SPACES_BEFORE_PARENTHESES), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(SPACES_BEFORE_PARENTHESES), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("SPACE_BEFORE_METHOD_PARENTHESES",
                                              ApplicationBundle.message("checkbox.spaces.method.declaration.parentheses")),
           new CodeStyleSettingRepresentation("SPACE_BEFORE_METHOD_CALL_PARENTHESES",
@@ -159,7 +161,7 @@ public class CodeStyleSettingRepresentation {
                                              ApplicationBundle.message("checkbox.spaces.annotation.parameters"))
         ));
 
-        result.put(new SettingsGroup(SPACES_AROUND_OPERATORS), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(SPACES_AROUND_OPERATORS), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("SPACE_AROUND_ASSIGNMENT_OPERATORS",
                                              ApplicationBundle.message("checkbox.spaces.assignment.operators")),
           new CodeStyleSettingRepresentation("SPACE_AROUND_LOGICAL_OPERATORS",
@@ -182,7 +184,7 @@ public class CodeStyleSettingRepresentation {
                                              ApplicationBundle.message("checkbox.spaces.around.method.ref.dbl.colon.arrow"))
         ));
 
-        result.put(new SettingsGroup(SPACES_BEFORE_LEFT_BRACE), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(SPACES_BEFORE_LEFT_BRACE), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("SPACE_BEFORE_CLASS_LBRACE", ApplicationBundle.message("checkbox.spaces.class.left.brace")),
           new CodeStyleSettingRepresentation("SPACE_BEFORE_METHOD_LBRACE", ApplicationBundle.message("checkbox.spaces.method.left.brace")),
           new CodeStyleSettingRepresentation("SPACE_BEFORE_IF_LBRACE", ApplicationBundle.message("checkbox.spaces.if.left.brace")),
@@ -203,14 +205,14 @@ public class CodeStyleSettingRepresentation {
                                              ApplicationBundle.message("checkbox.spaces.annotation.array.initializer.left.brace"))
         ));
 
-        result.put(new SettingsGroup(SPACES_BEFORE_KEYWORD), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(SPACES_BEFORE_KEYWORD), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("SPACE_BEFORE_ELSE_KEYWORD", ApplicationBundle.message("checkbox.spaces.else.keyword")),
           new CodeStyleSettingRepresentation("SPACE_BEFORE_WHILE_KEYWORD", ApplicationBundle.message("checkbox.spaces.while.keyword")),
           new CodeStyleSettingRepresentation("SPACE_BEFORE_CATCH_KEYWORD", ApplicationBundle.message("checkbox.spaces.catch.keyword")),
           new CodeStyleSettingRepresentation("SPACE_BEFORE_FINALLY_KEYWORD", ApplicationBundle.message("checkbox.spaces.finally.keyword"))
         ));
 
-        result.put(new SettingsGroup(SPACES_WITHIN), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(SPACES_WITHIN), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("SPACE_WITHIN_BRACES", ApplicationBundle.message("checkbox.spaces.within.braces")),
           new CodeStyleSettingRepresentation("SPACE_WITHIN_BRACKETS", ApplicationBundle.message("checkbox.spaces.within.brackets")),
           new CodeStyleSettingRepresentation("SPACE_WITHIN_ARRAY_INITIALIZER_BRACES",
@@ -243,23 +245,23 @@ public class CodeStyleSettingRepresentation {
                                              ApplicationBundle.message("checkbox.spaces.annotation.parentheses"))
         ));
 
-        result.put(new SettingsGroup(SPACES_IN_TERNARY_OPERATOR), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(SPACES_IN_TERNARY_OPERATOR), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("SPACE_BEFORE_QUEST", ApplicationBundle.message("checkbox.spaces.before.question")),
           new CodeStyleSettingRepresentation("SPACE_AFTER_QUEST", ApplicationBundle.message("checkbox.spaces.after.question")),
           new CodeStyleSettingRepresentation("SPACE_BEFORE_COLON", ApplicationBundle.message("checkbox.spaces.before.colon")),
           new CodeStyleSettingRepresentation("SPACE_AFTER_COLON", ApplicationBundle.message("checkbox.spaces.after.colon"))
         ));
 
-        result.put(new SettingsGroup(SPACES_WITHIN_TYPE_ARGUMENTS), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(SPACES_WITHIN_TYPE_ARGUMENTS), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS",
                                              ApplicationBundle.message("checkbox.spaces.after.comma"))
         ));
 
-        result.put(new SettingsGroup(SPACES_IN_TYPE_ARGUMENTS), ContainerUtil.<CodeStyleSettingRepresentation>newLinkedHashSet());
+        result.put(new SettingsGroup(SPACES_IN_TYPE_ARGUMENTS), ContainerUtil.<CodeStyleSettingRepresentation>newLinkedList());
 
-        result.put(new SettingsGroup(SPACES_IN_TYPE_PARAMETERS), ContainerUtil.<CodeStyleSettingRepresentation>newLinkedHashSet());
+        result.put(new SettingsGroup(SPACES_IN_TYPE_PARAMETERS), ContainerUtil.<CodeStyleSettingRepresentation>newLinkedList());
         
-        result.put(new SettingsGroup(SPACES_OTHER), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(SPACES_OTHER), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("SPACE_BEFORE_COMMA", ApplicationBundle.message("checkbox.spaces.before.comma")),
           new CodeStyleSettingRepresentation("SPACE_AFTER_COMMA", ApplicationBundle.message("checkbox.spaces.after.comma")),
           new CodeStyleSettingRepresentation("SPACE_BEFORE_SEMICOLON", ApplicationBundle.message("checkbox.spaces.before.semicolon")),
@@ -268,7 +270,7 @@ public class CodeStyleSettingRepresentation {
         ));
         break;
       case WRAPPING_AND_BRACES_SETTINGS:
-        result.put(new SettingsGroup(null), ContainerUtil.<CodeStyleSettingRepresentation>newLinkedHashSet(
+        result.put(new SettingsGroup(null), ContainerUtil.<CodeStyleSettingRepresentation>newLinkedList(
           new CodeStyleIntegerSettingRepresentation("RIGHT_MARGIN", ApplicationBundle.message("editbox.right.margin.columns"), 0, 999, -1,
                                                     ApplicationBundle.message("settings.code.style.default.general"))
         ));
@@ -276,7 +278,7 @@ public class CodeStyleSettingRepresentation {
         putGroupTop(result, "WRAP_ON_TYPING", ApplicationBundle.message("wrapping.wrap.on.typing"), WRAP_ON_TYPING_VALUES,
                     WRAP_ON_TYPING_OPTIONS);
 
-        result.put(new SettingsGroup(WRAPPING_KEEP), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_KEEP), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("KEEP_LINE_BREAKS", ApplicationBundle.message("wrapping.keep.line.breaks")),
           new CodeStyleSettingRepresentation("KEEP_FIRST_COLUMN_COMMENT",
                                              ApplicationBundle.message("wrapping.keep.comment.at.first.column")),
@@ -292,15 +294,15 @@ public class CodeStyleSettingRepresentation {
                                              ApplicationBundle.message("wrapping.keep.simple.classes.in.one.line"))
         ));
 
-        result.put(new SettingsGroup(null), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(null), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("WRAP_LONG_LINES", ApplicationBundle.message("wrapping.long.lines"))
         ));
 
-        result.put(new SettingsGroup(WRAPPING_COMMENTS), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_COMMENTS), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("WRAP_COMMENTS", ApplicationBundle.message("wrapping.comments.wrap.at.right.margin"))
         ));
 
-        result.put(new SettingsGroup(WRAPPING_BRACES), ContainerUtil.<CodeStyleSettingRepresentation>newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_BRACES), ContainerUtil.<CodeStyleSettingRepresentation>newLinkedList(
           new CodeStyleSelectSettingRepresentation("CLASS_BRACE_STYLE",
                                                    ApplicationBundle.message("wrapping.brace.placement.class.declaration"),
                                                    BRACE_PLACEMENT_VALUES, BRACE_PLACEMENT_OPTIONS),
@@ -313,14 +315,14 @@ public class CodeStyleSettingRepresentation {
         ));
 
         putGroupTop(result, "EXTENDS_LIST_WRAP", WRAPPING_EXTENDS_LIST, WRAP_VALUES, WRAP_OPTIONS);
-        result.put(new SettingsGroup(WRAPPING_EXTENDS_LIST), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_EXTENDS_LIST), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("ALIGN_MULTILINE_EXTENDS_LIST", ApplicationBundle.message("wrapping.align.when.multiline"))
         ));
 
         putGroupTop(result, "EXTENDS_KEYWORD_WRAP", WRAPPING_EXTENDS_KEYWORD, WRAP_VALUES_FOR_SINGLETON, WRAP_OPTIONS_FOR_SINGLETON);
 
         putGroupTop(result, "THROWS_LIST_WRAP", WRAPPING_THROWS_LIST, WRAP_VALUES, WRAP_OPTIONS);
-        result.put(new SettingsGroup(WRAPPING_THROWS_LIST), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_THROWS_LIST), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("ALIGN_MULTILINE_THROWS_LIST", ApplicationBundle.message("wrapping.align.when.multiline")),
           new CodeStyleSettingRepresentation("ALIGN_THROWS_KEYWORD", ApplicationBundle.message("wrapping.align.throws.keyword"))
         ));
@@ -328,7 +330,7 @@ public class CodeStyleSettingRepresentation {
         putGroupTop(result, "THROWS_KEYWORD_WRAP", WRAPPING_THROWS_KEYWORD, WRAP_VALUES_FOR_SINGLETON, WRAP_OPTIONS_FOR_SINGLETON);
 
         putGroupTop(result, "METHOD_PARAMETERS_WRAP", WRAPPING_METHOD_PARAMETERS, WRAP_VALUES, WRAP_OPTIONS);
-        result.put(new SettingsGroup(WRAPPING_METHOD_PARAMETERS), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_METHOD_PARAMETERS), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("ALIGN_MULTILINE_PARAMETERS", ApplicationBundle.message("wrapping.align.when.multiline")),
           new CodeStyleSettingRepresentation("METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE",
                                              ApplicationBundle.message("wrapping.new.line.after.lpar")),
@@ -337,7 +339,7 @@ public class CodeStyleSettingRepresentation {
         ));
 
         putGroupTop(result, "CALL_PARAMETERS_WRAP", WRAPPING_METHOD_ARGUMENTS_WRAPPING, WRAP_VALUES, WRAP_OPTIONS);
-        result.put(new SettingsGroup(WRAPPING_METHOD_ARGUMENTS_WRAPPING), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_METHOD_ARGUMENTS_WRAPPING), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("ALIGN_MULTILINE_PARAMETERS_IN_CALLS",
                                              ApplicationBundle.message("wrapping.align.when.multiline")),
           new CodeStyleSettingRepresentation("PREFER_PARAMETERS_WRAP",
@@ -347,18 +349,18 @@ public class CodeStyleSettingRepresentation {
           new CodeStyleSettingRepresentation("CALL_PARAMETERS_RPAREN_ON_NEXT_LINE", ApplicationBundle.message("wrapping.rpar.on.new.line"))
         ));
 
-        result.put(new SettingsGroup(WRAPPING_METHOD_PARENTHESES), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_METHOD_PARENTHESES), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("ALIGN_MULTILINE_METHOD_BRACKETS", ApplicationBundle.message("wrapping.align.when.multiline"))
         ));
 
         putGroupTop(result, "METHOD_CALL_CHAIN_WRAP", WRAPPING_CALL_CHAIN, WRAP_VALUES, WRAP_OPTIONS);
-        result.put(new SettingsGroup(WRAPPING_CALL_CHAIN), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_CALL_CHAIN), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("WRAP_FIRST_METHOD_IN_CALL_CHAIN",
                                              ApplicationBundle.message("wrapping.chained.method.call.first.on.new.line")),
           new CodeStyleSettingRepresentation("ALIGN_MULTILINE_CHAINED_METHODS", ApplicationBundle.message("wrapping.align.when.multiline"))
         ));
 
-        result.put(new SettingsGroup(WRAPPING_IF_STATEMENT), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_IF_STATEMENT), ContainerUtil.newLinkedList(
           new CodeStyleSelectSettingRepresentation("IF_BRACE_FORCE", ApplicationBundle.message("wrapping.force.braces"), BRACE_VALUES,
                                                    BRACE_OPTIONS),
           new CodeStyleSettingRepresentation("ELSE_ON_NEW_LINE", ApplicationBundle.message("wrapping.else.on.new.line")),
@@ -367,7 +369,7 @@ public class CodeStyleSettingRepresentation {
         ));
 
         putGroupTop(result, "FOR_STATEMENT_WRAP", WRAPPING_FOR_STATEMENT, WRAP_VALUES, WRAP_OPTIONS);
-        result.put(new SettingsGroup(WRAPPING_FOR_STATEMENT), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_FOR_STATEMENT), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("ALIGN_MULTILINE_FOR", ApplicationBundle.message("wrapping.align.when.multiline")),
           new CodeStyleSettingRepresentation("FOR_STATEMENT_LPAREN_ON_NEXT_LINE",
                                              ApplicationBundle.message("wrapping.new.line.after.lpar")),
@@ -376,37 +378,37 @@ public class CodeStyleSettingRepresentation {
                                                    BRACE_OPTIONS)
         ));
 
-        result.put(new SettingsGroup(WRAPPING_WHILE_STATEMENT), ContainerUtil.<CodeStyleSettingRepresentation>newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_WHILE_STATEMENT), ContainerUtil.<CodeStyleSettingRepresentation>newLinkedList(
           new CodeStyleSelectSettingRepresentation("WHILE_BRACE_FORCE", ApplicationBundle.message("wrapping.force.braces"), BRACE_VALUES,
                                                    BRACE_OPTIONS)
         ));
 
-        result.put(new SettingsGroup(WRAPPING_DOWHILE_STATEMENT), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_DOWHILE_STATEMENT), ContainerUtil.newLinkedList(
           new CodeStyleSelectSettingRepresentation("DOWHILE_BRACE_FORCE", ApplicationBundle.message("wrapping.force.braces"), BRACE_VALUES,
                                                    BRACE_OPTIONS),
           new CodeStyleSettingRepresentation("WHILE_ON_NEW_LINE", ApplicationBundle.message("wrapping.while.on.new.line"))
         ));
 
-        result.put(new SettingsGroup(WRAPPING_SWITCH_STATEMENT), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_SWITCH_STATEMENT), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("INDENT_CASE_FROM_SWITCH", ApplicationBundle.message("wrapping.indent.case.from.switch")),
           new CodeStyleSettingRepresentation("INDENT_BREAK_FROM_CASE", ApplicationBundle.message("wrapping.indent.break.from.case"))
         ));
 
         putGroupTop(result, "RESOURCE_LIST_WRAP", WRAPPING_TRY_RESOURCE_LIST, WRAP_VALUES, WRAP_OPTIONS);
-        result.put(new SettingsGroup(WRAPPING_TRY_RESOURCE_LIST), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_TRY_RESOURCE_LIST), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("ALIGN_MULTILINE_RESOURCES", ApplicationBundle.message("wrapping.align.when.multiline")),
           new CodeStyleSettingRepresentation("RESOURCE_LIST_LPAREN_ON_NEXT_LINE",
                                              ApplicationBundle.message("wrapping.new.line.after.lpar")),
           new CodeStyleSettingRepresentation("RESOURCE_LIST_RPAREN_ON_NEXT_LINE", ApplicationBundle.message("wrapping.rpar.on.new.line"))
         ));
 
-        result.put(new SettingsGroup(WRAPPING_TRY_STATEMENT), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_TRY_STATEMENT), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("CATCH_ON_NEW_LINE", ApplicationBundle.message("wrapping.catch.on.new.line")),
           new CodeStyleSettingRepresentation("FINALLY_ON_NEW_LINE", ApplicationBundle.message("wrapping.finally.on.new.line"))
         ));
 
         putGroupTop(result, "BINARY_OPERATION_WRAP", WRAPPING_BINARY_OPERATION, WRAP_VALUES, WRAP_OPTIONS);
-        result.put(new SettingsGroup(WRAPPING_BINARY_OPERATION), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_BINARY_OPERATION), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("ALIGN_MULTILINE_BINARY_OPERATION",
                                              ApplicationBundle.message("wrapping.align.when.multiline")),
           new CodeStyleSettingRepresentation("BINARY_OPERATION_SIGN_ON_NEXT_LINE",
@@ -419,13 +421,13 @@ public class CodeStyleSettingRepresentation {
         ));
 
         putGroupTop(result, "ASSIGNMENT_WRAP", WRAPPING_ASSIGNMENT, WRAP_VALUES, WRAP_OPTIONS);
-        result.put(new SettingsGroup(WRAPPING_ASSIGNMENT), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_ASSIGNMENT), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("ALIGN_MULTILINE_ASSIGNMENT", ApplicationBundle.message("wrapping.align.when.multiline")),
           new CodeStyleSettingRepresentation("PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE",
                                              ApplicationBundle.message("wrapping.assignment.sign.on.next.line"))
         ));
 
-        result.put(new SettingsGroup(WRAPPING_FIELDS_VARIABLES_GROUPS), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_FIELDS_VARIABLES_GROUPS), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("ALIGN_GROUP_FIELD_DECLARATIONS",
                                              ApplicationBundle.message("wrapping.align.fields.in.columns")),
           new CodeStyleSettingRepresentation("ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS",
@@ -433,7 +435,7 @@ public class CodeStyleSettingRepresentation {
         ));
 
         putGroupTop(result, "TERNARY_OPERATION_WRAP", WRAPPING_TERNARY_OPERATION, WRAP_VALUES, WRAP_OPTIONS);
-        result.put(new SettingsGroup(WRAPPING_TERNARY_OPERATION), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_TERNARY_OPERATION), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("ALIGN_MULTILINE_TERNARY_OPERATION",
                                              ApplicationBundle.message("wrapping.align.when.multiline")),
           new CodeStyleSettingRepresentation("TERNARY_OPERATION_SIGNS_ON_NEXT_LINE",
@@ -441,7 +443,7 @@ public class CodeStyleSettingRepresentation {
         ));
 
         putGroupTop(result, "ARRAY_INITIALIZER_WRAP", WRAPPING_ARRAY_INITIALIZER, WRAP_VALUES, WRAP_OPTIONS);
-        result.put(new SettingsGroup(WRAPPING_ARRAY_INITIALIZER), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_ARRAY_INITIALIZER), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION",
                                              ApplicationBundle.message("wrapping.align.when.multiline")),
           new CodeStyleSettingRepresentation("ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE",
@@ -450,12 +452,12 @@ public class CodeStyleSettingRepresentation {
                                              ApplicationBundle.message("wrapping.rbrace.on.new.line"))
         ));
 
-        result.put(new SettingsGroup(WRAPPING_MODIFIER_LIST), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_MODIFIER_LIST), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("MODIFIER_LIST_WRAP", ApplicationBundle.message("wrapping.after.modifier.list"))
         ));
 
         putGroupTop(result, "ASSERT_STATEMENT_WRAP", WRAPPING_ASSERT_STATEMENT, WRAP_VALUES, WRAP_OPTIONS);
-        result.put(new SettingsGroup(WRAPPING_ASSERT_STATEMENT), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(WRAPPING_ASSERT_STATEMENT), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("ASSERT_STATEMENT_COLON_ON_NEXT_LINE",
                                              ApplicationBundle.message("wrapping.colon.signs.on.next.line"))
         ));
@@ -469,13 +471,13 @@ public class CodeStyleSettingRepresentation {
                     WRAP_OPTIONS);
         break;
       case INDENT_SETTINGS:
-        result.put(new SettingsGroup(null), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(null), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("INDENT_SIZE", ApplicationBundle.message("editbox.indent.indent"))
         ));
-        result.put(new SettingsGroup(null), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(null), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("CONTINUATION_INDENT_SIZE", ApplicationBundle.message("editbox.indent.continuation.indent"))
         ));
-        result.put(new SettingsGroup(null), ContainerUtil.newLinkedHashSet(
+        result.put(new SettingsGroup(null), ContainerUtil.newLinkedList(
           new CodeStyleSettingRepresentation("TAB_SIZE", ApplicationBundle.message("editbox.indent.tab.size"))
         ));
         break;

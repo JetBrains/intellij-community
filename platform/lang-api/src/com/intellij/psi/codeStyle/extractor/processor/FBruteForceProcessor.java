@@ -24,8 +24,8 @@ import com.intellij.psi.codeStyle.extractor.FUtils;
 import com.intellij.psi.codeStyle.extractor.differ.FDiffer;
 import com.intellij.psi.codeStyle.extractor.differ.FLangCodeStyleExtractor;
 import com.intellij.psi.codeStyle.extractor.values.FValue;
-import com.intellij.psi.codeStyle.extractor.values.FValuesContainer;
-import com.intellij.psi.codeStyle.extractor.values.FValuesContainerImpl;
+import com.intellij.psi.codeStyle.extractor.values.FValuesExtractionResult;
+import com.intellij.psi.codeStyle.extractor.values.FValuesExtractionResultImpl;
 
 import java.util.List;
 import java.util.Random;
@@ -41,10 +41,10 @@ public class FBruteForceProcessor extends FCodeStyleDeriveProcessor {
   }
 
   @Override
-  public FValuesContainer runWithProgress(Project project, CodeStyleSettings settings, PsiFile file, ProgressIndicator indicator) {
+  public FValuesExtractionResult runWithProgress(Project project, CodeStyleSettings settings, PsiFile file, ProgressIndicator indicator) {
     List<FValue> values = getFormattingValues(settings, file.getLanguage());
     FDiffer differ = myLangExtractor.getDiffer(project, file, settings);
-    FValuesContainer container = new FValuesContainerImpl(values);
+    FValuesExtractionResult container = new FValuesExtractionResultImpl(values);
     FUtils.adjustValuesMin(container, differ, indicator);
     return container;
   }

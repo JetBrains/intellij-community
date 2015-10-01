@@ -60,7 +60,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
 
     JPanel optionsPanel = new JPanel(new GridBagLayout());
 
-    Map<CodeStyleSettingRepresentation.SettingsGroup, Set<CodeStyleSettingRepresentation>> settings = CodeStyleSettingRepresentation.getStandardSettings(getSettingsType());
+    Map<CodeStyleSettingRepresentation.SettingsGroup, List<CodeStyleSettingRepresentation>> settings = CodeStyleSettingRepresentation.getStandardSettings(getSettingsType());
 
     OptionGroup keepBlankLinesOptionsGroup = createOptionsGroup(BLANK_LINES_KEEP, settings.get(new CodeStyleSettingRepresentation.SettingsGroup(BLANK_LINES_KEEP)));
     OptionGroup blankLinesOptionsGroup = createOptionsGroup(BLANK_LINES, settings.get(new CodeStyleSettingRepresentation.SettingsGroup(BLANK_LINES)));
@@ -109,7 +109,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
   }
 
   @Nullable
-  private OptionGroup createOptionsGroup(@NotNull String groupName, @NotNull Set<CodeStyleSettingRepresentation> settings) {
+  private OptionGroup createOptionsGroup(@NotNull String groupName, @NotNull List<CodeStyleSettingRepresentation> settings) {
     OptionGroup optionGroup = new OptionGroup(groupName);
 
     for (CodeStyleSettingRepresentation setting: settings) {

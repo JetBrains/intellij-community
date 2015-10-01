@@ -224,4 +224,19 @@ public class FValue {
   public String toString() {
     return name + "=" + value + ";";
   }
+
+  @Override
+  public int hashCode() {
+    return name.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof FValue) {
+      FValue other = (FValue) o;
+      return other.name.equals(name) && other.serializer.equals(serializer);
+    } else {
+      return false;
+    }
+  }
 }

@@ -15,10 +15,10 @@
  */
 package com.intellij.psi.codeStyle.extractor.differ;
 
-import com.intellij.psi.codeStyle.extractor.values.FValuesContainer;
+import com.intellij.psi.codeStyle.extractor.values.FValuesExtractionResult;
 
 public interface FDiffer {
   int UGLY_FORMATTING = Integer.MAX_VALUE / 4;
 
-  int getDifference(FValuesContainer values);
+  int getDifference(FValuesExtractionResult values);
 }

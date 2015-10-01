@@ -89,4 +89,19 @@ public class FClassSerializer {
   public String getInstanceName() {
     return myInstanceName;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof FClassSerializer) {
+      FClassSerializer other = (FClassSerializer) o;
+      return other.myInstance.equals(myInstance);
+    } else {
+      return false;
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return myInstance.hashCode();
+  }
 }

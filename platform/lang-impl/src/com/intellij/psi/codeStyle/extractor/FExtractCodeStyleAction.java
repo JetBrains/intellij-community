@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.codeStyle.extractor;
 
-import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.*;
@@ -29,23 +28,23 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.extractor.differ.FLangCodeStyleExtractor;
+import com.intellij.psi.codeStyle.extractor.ui.FExtractedSettingsDialog;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.psi.codeStyle.extractor.processor.FCodeStyleDeriveProcessor;
 import com.intellij.psi.codeStyle.extractor.processor.FGenProcessor;
 import com.intellij.psi.codeStyle.extractor.ui.FCodeStyleSettingsNameProvider;
 import com.intellij.psi.codeStyle.extractor.values.FValue;
-import com.intellij.psi.codeStyle.extractor.values.FValuesContainer;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.codeStyle.extractor.values.FValuesExtractionResult;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -54,6 +53,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.util.List;
+import java.util.Map;
 
 public class FExtractCodeStyleAction extends AnAction implements DumbAware {
 
@@ -63,9 +63,13 @@ public class FExtractCodeStyleAction extends AnAction implements DumbAware {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    if (editor == null) return;
-
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    PsiFile file;
+    if (editor == null && files != null && files.length == 1 && !files[0].isDirectory()) {
+      file = PsiManager.getInstance(project).findFile(files[0]);
+    } else {
+      file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    }
     if (file == null) return;
 
     Language language = file.getLanguage();
@@ -77,15 +81,18 @@ public class FExtractCodeStyleAction extends AnAction implements DumbAware {
 
     final FCodeStyleDeriveProcessor genProcessor = new FGenProcessor(extractor);
 
+    final PsiFile finalFile = file;
     final Task.Backgroundable task = new Task.Backgroundable(project, "Code style extractor", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           CodeStyleSettings cloneSettings = settings.clone();
 
-          FValuesContainer res = genProcessor.runWithProgress(project, cloneSettings, file, indicator);
+          Map<FValue, Object> backup = genProcessor.backupValues(cloneSettings, finalFile.getLanguage());
 
-          reportResult(res, project, cloneSettings, file);
+          FValuesExtractionResult res = genProcessor.runWithProgress(project, cloneSettings, finalFile, indicator);
+
+          reportResult(res, project, cloneSettings, finalFile, backup);
         }
         catch (ProcessCanceledException e) {
           FUtils.logError("Code extraction was canceled");
@@ -98,7 +105,8 @@ public class FExtractCodeStyleAction extends AnAction implements DumbAware {
     ProgressManager.getInstance().run(task);
   }
 
-  public void reportResult(final FValuesContainer forSelection, final Project project, final CodeStyleSettings cloneSettings, final PsiFile file) {
+  public void reportResult(final FValuesExtractionResult forSelection, final Project project,
+                           final CodeStyleSettings cloneSettings, final PsiFile file, final Map<FValue, Object> backup) {
     final Balloon balloon = JBPopupFactory.getInstance()
         .createHtmlTextBalloonBuilder(
             "Formatting Options were extracted<br/><a href=\"apply\">Apply</a> <a href=\"details\">Details...</a>",
@@ -108,10 +116,12 @@ public class FExtractCodeStyleAction extends AnAction implements DumbAware {
               public void hyperlinkUpdate(HyperlinkEvent e) {
                 if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                   boolean apply = "apply".equals(e.getDescription());
+                  FExtractedSettingsDialog myDialog = null;
                   if (!apply) {
-                    @NonNls StringBuilder descriptions = new StringBuilder("<html>Set formatting options:");
+                    //@NonNls StringBuilder descriptions = new StringBuilder("<html>Set formatting options:");
                     final List<FValue> values = forSelection.getValues();
-                    final LanguageCodeStyleSettingsProvider[] providers = Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME);
+                    final LanguageCodeStyleSettingsProvider[] providers = Extensions.getExtensions(
+                      LanguageCodeStyleSettingsProvider.EP_NAME);
                     Language language = file.getLanguage();
                     FCodeStyleSettingsNameProvider nameProvider = new FCodeStyleSettingsNameProvider();
                     for (final LanguageCodeStyleSettingsProvider provider : providers) {
@@ -119,19 +129,21 @@ public class FExtractCodeStyleAction extends AnAction implements DumbAware {
                       if (target.equals(language)) {
                         //this is our language
                         nameProvider.addSettings(provider);
-                        descriptions.append(nameProvider.getSettings(values));
+                        myDialog = new FExtractedSettingsDialog(project, nameProvider, values);
+                        apply = myDialog.showAndGet();
                         break;
                       }
                     }
-                    descriptions.append("</html>");
-                    apply = (Messages.YES == Messages.showYesNoCancelDialog(descriptions.toString(),
-                            "Extracted Formatted Options",
-                            "Apply", "Ignore", "Cancel",
-                            Messages.getInformationIcon()));
                     }
-                    if (apply) {
+                    if (apply && myDialog != null) {
                       //create new settings named after the file
-                      forSelection.applySelected();
+                      final FExtractedSettingsDialog finalMyDialog = myDialog;
+                      forSelection.applyConditioned(new Condition<FValue>() {
+                        @Override
+                        public boolean value(FValue value) {
+                          return finalMyDialog.valueIsSelectedInTree(value);
+                        }
+                      }, backup);
                       CodeStyleScheme derivedScheme = CodeStyleSchemes.getInstance().createNewScheme("Derived from " + file.getName(), null);
                       derivedScheme.getCodeStyleSettings().copyFrom(cloneSettings);
                       CodeStyleSchemes.getInstance().addScheme(derivedScheme);
@@ -139,6 +151,7 @@ public class FExtractCodeStyleAction extends AnAction implements DumbAware {
                       CodeStyleSettingsManager.getInstance(project).PREFERRED_PROJECT_CODE_STYLE = derivedScheme.getName();
                     }
                   }
+
                 }
               }
               ).setDisposable(ApplicationManager.getApplication()).setShowCallout(false).setFadeoutTime(0).
@@ -179,18 +192,23 @@ public class FExtractCodeStyleAction extends AnAction implements DumbAware {
 
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
+      PsiFile file = null;
       if (editor != null){
-        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-        if (file == null || file.getVirtualFile() == null) {
-          presentation.setEnabled(false);
-          return;
-        }
-
-        if (LanguageFormatting.INSTANCE.forContext(file)  != null) {
-          presentation.setEnabled(true);
-        }
+        file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       } else {
+        final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+        if (files != null && files.length == 1 && !files[0].isDirectory()) {
+          file = PsiManager.getInstance(project).findFile(files[0]);
+        }
+      }
+
+      if (file == null || file.getVirtualFile() == null) {
         presentation.setEnabled(false);
+        return;
+      }
+
+      if (LanguageFormatting.INSTANCE.forContext(file) != null) {
+        presentation.setEnabled(true);
       }
     }
   }

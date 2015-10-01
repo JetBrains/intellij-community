@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.extractor.FUtils;
-import com.intellij.psi.codeStyle.extractor.values.FValuesContainer;
+import com.intellij.psi.codeStyle.extractor.values.FValuesExtractionResult;
 
 /**
  * @author Roman.Shein
@@ -41,8 +41,8 @@ public abstract class FDifferBase implements FDiffer {
   public abstract String reformattedText();
 
   @Override
-  public int getDifference(FValuesContainer container) {
-    final FValuesContainer orig = container.apply(true);
+  public int getDifference(FValuesExtractionResult container) {
+    final FValuesExtractionResult orig = container.apply(true);
     String newText = reformattedText();
     int result = FUtils.getDiff(mySettings.getCommonSettings(myFile.getLanguage()).getIndentOptions(), myOrigText, newText);
     orig.apply(false);

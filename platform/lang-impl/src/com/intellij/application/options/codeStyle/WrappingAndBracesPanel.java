@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -59,7 +60,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
   @Override
   protected void initTables() {
-    for (Map.Entry<CodeStyleSettingRepresentation.SettingsGroup, Set<CodeStyleSettingRepresentation>> entry:
+    for (Map.Entry<CodeStyleSettingRepresentation.SettingsGroup, List<CodeStyleSettingRepresentation>> entry:
       CodeStyleSettingRepresentation.getStandardSettings(getSettingsType()).entrySet()) {
       CodeStyleSettingRepresentation.SettingsGroup group = entry.getKey();
       for (CodeStyleSettingRepresentation setting: entry.getValue()) {
@@ -73,7 +74,6 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
             defaultValue));
         } else if (setting instanceof CodeStyleSelectSettingRepresentation) {
           CodeStyleSelectSettingRepresentation selectSetting = (CodeStyleSelectSettingRepresentation) setting;
-          addOption("CLASS_BRACE_STYLE", ApplicationBundle.message("wrapping.brace.placement.class.declaration"), WRAPPING_BRACES, BRACE_PLACEMENT_OPTIONS, BRACE_PLACEMENT_VALUES);
           addOption(fieldName, uiName, group.name, selectSetting.getOptions(), selectSetting.getValues());
         } else {
           addOption(fieldName, uiName, group.name);

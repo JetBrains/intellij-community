@@ -26,7 +26,8 @@ import com.intellij.psi.codeStyle.extractor.FUtils;
 import com.intellij.psi.codeStyle.extractor.differ.FLangCodeStyleExtractor;
 import com.intellij.psi.codeStyle.extractor.values.FClassSerializer;
 import com.intellij.psi.codeStyle.extractor.values.FValue;
-import com.intellij.psi.codeStyle.extractor.values.FValuesContainer;
+import com.intellij.psi.codeStyle.extractor.values.FValuesExtractionResult;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
@@ -44,8 +45,17 @@ public abstract class FCodeStyleDeriveProcessor {
     myLangExtractor = langExtractor;
   }
 
-  public abstract FValuesContainer runWithProgress(Project project, CodeStyleSettings settings, PsiFile file,
+  public abstract FValuesExtractionResult runWithProgress(Project project, CodeStyleSettings settings, PsiFile file,
                                     ProgressIndicator indicator);
+
+  public Map<FValue, Object> backupValues(CodeStyleSettings settings, Language language) {
+    List<FValue> baseValues = getFormattingValues(settings, language);
+    Map<FValue, Object> res = ContainerUtil.newHashMap();
+    for (FValue baseValue: baseValues) {
+      res.put(baseValue, baseValue.value);
+    }
+    return res;
+  }
 
   @NotNull
   private Collection<FValue.VAR_KIND> getVarKinds() {
