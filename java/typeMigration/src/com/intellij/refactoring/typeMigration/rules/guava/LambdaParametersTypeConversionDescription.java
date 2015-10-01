@@ -27,20 +27,28 @@ import org.jetbrains.annotations.NonNls;
 public class LambdaParametersTypeConversionDescription extends TypeConversionDescriptor {
   private static final Logger LOG = Logger.getInstance(LambdaParametersTypeConversionDescription.class);
 
+  public LambdaParametersTypeConversionDescription(@NonNls String stringToReplace, @NonNls String replaceByString, PsiType conversionType) {
+    super(stringToReplace, replaceByString, conversionType);
+  }
+
   public LambdaParametersTypeConversionDescription(@NonNls String stringToReplace, @NonNls String replaceByString) {
     super(stringToReplace, replaceByString);
   }
 
   @Override
-  public PsiExpression replace(PsiExpression expression) {
+  public final PsiExpression replace(PsiExpression expression) {
     LOG.assertTrue(expression instanceof PsiMethodCallExpression);
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
     final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
     if (arguments.length == 1) {
       final PsiExpression functionArg = arguments[0];
-      convertParameter(functionArg);
+      customizeParameter(convertParameter(functionArg));
     }
     return super.replace(expression);
+  }
+
+  protected void customizeParameter(PsiExpression parameter) {
+
   }
 
   private static PsiExpression addApplyReference(final PsiExpression expression) {
@@ -52,7 +60,7 @@ public class LambdaParametersTypeConversionDescription extends TypeConversionDes
       final PsiAnonymousClass anonymousClass = ((PsiNewExpression)expression).getAnonymousClass();
       if (anonymousClass != null) {
         if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, true)) {
-          AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(expression, true);
+          AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(expression, true, true);
         }
       }
       else {

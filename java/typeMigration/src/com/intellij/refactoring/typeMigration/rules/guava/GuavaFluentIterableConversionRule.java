@@ -16,9 +16,13 @@
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.java18StreamApi.StreamApiConstants;
+import com.intellij.psi.*;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
+import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -26,42 +30,57 @@ import java.util.Map;
  * @author Dmitry Batkovich
  */
 public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRule {
+  private static final Map<String, TypeConversionDescriptorBase> DESCRIPTORS_MAP = new HashMap<String, TypeConversionDescriptorBase>();
 
+  public static final String FLUENT_ITERABLE = "com.google.common.collect.FluentIterable";
+
+  static {
+    DESCRIPTORS_MAP.put("contains",
+                        new TypeConversionDescriptor("$it$.contains($o$)", "$it$.anyMatch(e -> e != null && e.equals(%s))"));
+    DESCRIPTORS_MAP.put("from", new TypeConversionDescriptor("FluentIterable.from($it$)", "$it$.stream()"));
+    DESCRIPTORS_MAP.put("isEmpty", new TypeConversionDescriptor("$q$.isEmpty()", "$q$.findAny().isPresent()"));
+    DESCRIPTORS_MAP.put("skip", new TypeConversionDescriptor("$q$.skip($p$)", "$q$.skip($p$)"));
+    DESCRIPTORS_MAP.put("limit", new TypeConversionDescriptor("$q$.limit($p$)", "$q$.limit($p$)"));
+    DESCRIPTORS_MAP.put("first", new TypeConversionDescriptor("$q$.first()", "$q$.findFirst()"));
+    DESCRIPTORS_MAP.put("transform", new LambdaParametersTypeConversionDescription("$q$.transform($params$)", "$q$.map($params$)"));
+    //TODO support
+    //DESCRIPTORS_MAP.put("transformAndConcat", new TransformAndConcatDescriptorBase("$q$.transformAndConcat($params$)", "$q$.flatMap($params$)"));
+
+    DESCRIPTORS_MAP.put("allMatch", new LambdaParametersTypeConversionDescription("$it$.allMatch($c$)", "$it$." + StreamApiConstants.ALL_MATCH + "($c$)"));
+    DESCRIPTORS_MAP.put("anyMatch", new LambdaParametersTypeConversionDescription("$it$.anyMatch($c$)", "$it$." + StreamApiConstants.ANY_MATCH + "($c$)"));
+
+    //TODO add another filter processor
+    DESCRIPTORS_MAP.put("filter", new LambdaParametersTypeConversionDescription("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "($p$)"));
+    DESCRIPTORS_MAP.put("first", new TypeConversionDescriptor("$it$.first()", "$it$." + StreamApiConstants.FIND_FIRST + "()"));
+    DESCRIPTORS_MAP.put("firstMatch", new LambdaParametersTypeConversionDescription("$it$.firstMatch($p$)", "$it$.filter($p$).findFirst()"));
+    DESCRIPTORS_MAP.put("get", new TypeConversionDescriptor("$it$.get($p$)", "$it$.collect(java.util.stream.Collectors.toList()).get($p$)"));
+    DESCRIPTORS_MAP.put("size", new TypeConversionDescriptor("$it$.size()", "$it$.collect(java.util.stream.Collectors.toList()).size()"));
+
+    DESCRIPTORS_MAP.put("toMap", new TypeConversionDescriptor("$it$.toMap($f$)",
+                                                              "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))"));
+    DESCRIPTORS_MAP.put("toList", new TypeConversionDescriptor("$it$.toList()", "$it$.collect(java.util.stream.Collectors.toList())"));
+    DESCRIPTORS_MAP.put("toSet", new TypeConversionDescriptor("$it$.toSet()", "$it$.collect(java.util.stream.Collectors.toSet())"));
+    DESCRIPTORS_MAP.put("toSortedList", new TypeConversionDescriptor("$it$.toSortedList($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toList())"));
+    DESCRIPTORS_MAP.put("toSortedSet", new TypeConversionDescriptor("$it$.toSortedSet($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toSet())"));
+
+  }
+
+  @Nullable
   @Override
-  protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {
-    descriptorsMap.put("contains",
-                       new TypeConversionDescriptor("$it$.contains($o$)", "$it$.anyMatch(e -> e != null && e.equals(%s))"));
-    descriptorsMap.put("from", new TypeConversionDescriptor("FluentIterable.from($it$)", "$it$.stream()"));
-    descriptorsMap.put("isEmpty", new TypeConversionDescriptor("$q$.isEmpty()", "$q$.findAny().isPresent()"));
-    descriptorsMap.put("skip", new TypeConversionDescriptorBase());
-    descriptorsMap.put("limit", new TypeConversionDescriptorBase());
-    descriptorsMap.put("transform", new LambdaParametersTypeConversionDescription("$q$.transform($params$)", "$q$.map($params$)"));
-    descriptorsMap.put("transformAndConcat",
-                       new LambdaParametersTypeConversionDescription("$q$.transformAndConcat($params$)", "$q$.flatMap($params$)"));
-    descriptorsMap.put("first", new TypeConversionDescriptor("$q$.first()", "$q$.findFirst()"));
-
-    descriptorsMap.put("allMatch", new TypeConversionDescriptor("$it$.allMatch($c$)", "$it$." + StreamApiConstants.ALL_MATCH + "($c$)"));
-    descriptorsMap.put("anyMatch", new TypeConversionDescriptor("$it$.anyMatch($c$)", "$it$." + StreamApiConstants.ANY_MATCH + "($c$)"));
-
-    descriptorsMap.put("filter", new TypeConversionDescriptor("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "($p$)"));
-    descriptorsMap.put("first", new TypeConversionDescriptor("$it$.first()", "$it$." + StreamApiConstants.FIND_FIRST + "()"));
-    descriptorsMap.put("firstMatch", new TypeConversionDescriptor("$it$.firstMatch($p$)", "$it$.filter($p$).findFirst()"));
-    descriptorsMap.put("get", new TypeConversionDescriptor("$it$.get($p$)", "$it$.collect(java.util.stream.Collectors.toList()).get($p$)"));
-    descriptorsMap.put("size", new TypeConversionDescriptor("$it$.size()", "$it$.collect(java.util.stream.Collectors.toList()).size()"));
-
-    descriptorsMap.put("toMap", new TypeConversionDescriptor("$it$.toMap($f$)",
-                                                             "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))"));
-    descriptorsMap.put("toList", new TypeConversionDescriptor("$it$.toList()", "$it$.collect(java.util.stream.Collectors.toList())"));
-    descriptorsMap.put("toSet", new TypeConversionDescriptor("$it$.toSet()", "$it$.collect(java.util.stream.Collectors.toSet())"));
-    descriptorsMap.put("toSortedList", new TypeConversionDescriptor("$it$.toSortedList($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toList())"));
-    descriptorsMap.put("toSortedSet", new TypeConversionDescriptor("$it$.toSortedSet($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toSet())"));
-
+  protected TypeConversionDescriptorBase findConversionForMethod(@NotNull PsiType from,
+                                                                 @NotNull PsiType to,
+                                                                 @NotNull PsiMethod method,
+                                                                 String methodName,
+                                                                 PsiExpression context,
+                                                                 TypeMigrationLabeler labeler) {
+    final TypeConversionDescriptorBase base = DESCRIPTORS_MAP.get(methodName);
+    return base instanceof TypeConversionDescriptor ? ((TypeConversionDescriptor)base).withConversionType(to) : null;
   }
 
   @NotNull
   @Override
   public String ruleFromClass() {
-    return "com.google.common.collect.FluentIterable";
+    return FLUENT_ITERABLE;
   }
 
   @NotNull

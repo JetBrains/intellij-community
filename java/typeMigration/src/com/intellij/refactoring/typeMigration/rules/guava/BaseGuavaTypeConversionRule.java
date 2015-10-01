@@ -42,7 +42,7 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
     }
   };
 
-  protected abstract void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap);
+  protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {};
 
   @Nullable
   protected TypeConversionDescriptorBase findConversionForMethod(@NotNull PsiType from,
@@ -84,7 +84,7 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
         return new TypeConversionDescriptorBase() {
           @Override
           public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
-            return AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(expression, false);
+            return AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(expression, false, true);
           };
         };
       }
