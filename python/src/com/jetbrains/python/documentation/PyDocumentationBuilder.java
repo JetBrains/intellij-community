@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.documentation;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -106,9 +107,11 @@ public class PyDocumentationBuilder {
       PythonDocumentationProvider.describeExpressionTypeWithLinks(myBody, (PyReferenceExpression)outerElement, context);
     }
 
-    if (elementDefinition != null &&
-        PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(elementDefinition.getNode().getElementType())) {
-      buildForKeyword(elementDefinition.getText());
+    if (elementDefinition != null) {
+      final ASTNode node = elementDefinition.getNode();
+      if (node != null && PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(node.getElementType())) {
+        buildForKeyword(elementDefinition.getText());
+      }
     }
     final String url = PythonDocumentationProvider.getUrlFor(myElement, myOriginalElement, true);
     if (url != null) {
