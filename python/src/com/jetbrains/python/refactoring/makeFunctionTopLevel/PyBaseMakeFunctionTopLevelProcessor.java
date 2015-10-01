@@ -28,9 +28,6 @@ import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -42,34 +39,30 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-
-import static com.jetbrains.python.psi.PyUtil.as;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Mikhail Golubev
  */
-public class PyMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
-  private final PyFunction myFunction;
-  private final PyResolveContext myContext;
-  private final Editor myEditor;
+public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
+  protected final PyFunction myFunction;
+  protected final PyResolveContext myContext;
+  protected final Editor myEditor;
 
-  protected PyMakeFunctionTopLevelProcessor(@NotNull PyFunction targetFunction, @NotNull Editor editor) {
+  public PyBaseMakeFunctionTopLevelProcessor(@NotNull PyFunction targetFunction, @NotNull Editor editor) {
     super(targetFunction.getProject());
     myFunction = targetFunction;
     myEditor = editor;
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(myProject, targetFunction.getContainingFile());
     myContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
-    setPreviewUsages(isForMethod());
-  }
-
-  private boolean isForMethod() {
-    return myFunction.getContainingClass() != null;
   }
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected final UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new UsageViewDescriptorAdapter() {
       @NotNull
       @Override
@@ -86,23 +79,17 @@ public class PyMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   @Override
-  protected UsageInfo[] findUsages() {
+  protected final UsageInfo[] findUsages() {
     return ArrayUtil.toObjectArray(PyRefactoringUtil.findUsages(myFunction, false), UsageInfo.class);
   }
 
   @Override
-  protected String getCommandName() {
+  protected final String getCommandName() {
     return getRefactoringName();
   }
 
-  @NotNull
-  private String getRefactoringName() {
-    return isForMethod() ? PyBundle.message("refactoring.make.method.top.level")
-                         : PyBundle.message("refactoring.make.local.function.top.level");
-  }
-
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected final void performRefactoring(@NotNull UsageInfo[] usages) {
     final Set<String> newParameters = collectNewParameterNames();
 
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
@@ -115,29 +102,17 @@ public class PyMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
     myEditor.getCaretModel().moveToOffset(newFunction.getTextOffset());
   }
 
-  protected void updateExistingFunctionUsages(@NotNull Collection<String> newParamNames, @NotNull UsageInfo[] usages) {
-    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(myProject);
-    final String commaSeparatedNames = StringUtil.join(newParamNames, ", ");
-    for (UsageInfo usage : usages) {
-      final PsiElement element = usage.getElement();
-      if (element != null) {
-        final PyCallExpression parentCall = as(element.getParent(), PyCallExpression.class);
-        if (parentCall != null) {
-          final PyArgumentList argList = parentCall.getArgumentList();
-          if (argList != null) {
-            final StringBuilder argListText = new StringBuilder(argList.getText());
-            argListText.insert(1, commaSeparatedNames + (argList.getArguments().length > 0 ? ", " : ""));
-            argList.replace(elementGenerator.createArgumentList(LanguageLevel.forElement(element), argListText.toString()));
-          }
-        }
-      }
-    }
-  }
+  @NotNull
+  protected abstract String getRefactoringName();
+
+  protected abstract void updateExistingFunctionUsages(@NotNull Collection<String> newParamNames, @NotNull UsageInfo[] usages);
 
   @NotNull
-  protected PyFunction createNewFunction(@NotNull Collection<String> newParamNames) {
+  protected abstract PyFunction createNewFunction(@NotNull Collection<String> newParamNames);
+
+  @NotNull
+  protected final PyFunction addParameters(PyFunction copiedFunction, @NotNull Collection<String> newParamNames) {
     final String commaSeparatedNames = StringUtil.join(newParamNames, ", ");
-    final PyFunction copiedFunction = (PyFunction)myFunction.copy();
     final PyParameterList paramList = copiedFunction.getParameterList();
     final StringBuilder paramListText = new StringBuilder(paramList.getText());
     paramListText.insert(1, commaSeparatedNames + (paramList.getParameters().length > 0 ? ", " : ""));
@@ -147,28 +122,10 @@ public class PyMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
   }
 
   @NotNull
-  protected Set<String> collectNewParameterNames() {
-    final Set<String> enclosingScopeReads = new LinkedHashSet<String>();
-    for (ScopeOwner owner : PsiTreeUtil.collectElementsOfType(myFunction, ScopeOwner.class)) {
-      final AnalysisResult result = analyseScope(owner);
-      if (!result.nonlocalWritesToEnclosingScope.isEmpty()) {
-        throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes"));
-      }
-      if (!result.readsOfSelfParametersFromEnclosingScope.isEmpty()) {
-        final String paramName = result.readsOfSelfParametersFromEnclosingScope.get(0).getName();
-        throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.self.reads", paramName));
-      }
-      for (PsiElement element : result.readsFromEnclosingScope) {
-        if (element instanceof PyElement) {
-          ContainerUtil.addIfNotNull(enclosingScopeReads, ((PyElement)element).getName());
-        }
-      }
-    }
-    return enclosingScopeReads;
-  }
+  protected abstract Set<String> collectNewParameterNames();
 
   @NotNull
-  private PyFunction insertNewFunction(@NotNull PyFunction newFunction) {
+  protected PyFunction insertNewFunction(@NotNull PyFunction newFunction) {
     final PsiFile file = myFunction.getContainingFile();
     final PsiElement anchor = PyPsiUtils.getParentRightBefore(myFunction, file);
 
@@ -176,7 +133,7 @@ public class PyMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
   }
 
   @NotNull
-  private AnalysisResult analyseScope(@NotNull ScopeOwner owner) {
+  protected AnalysisResult analyseScope(@NotNull ScopeOwner owner) {
     final ControlFlow controlFlow = ControlFlowCache.getControlFlow(owner);
     final AnalysisResult result = new AnalysisResult();
     for (Instruction instruction : controlFlow.getInstructions()) {
@@ -194,20 +151,24 @@ public class PyMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
               }
               if (resolved instanceof PyParameter && ((PyParameter)resolved).isSelf()) {
                 if (PsiTreeUtil.getParentOfType(resolved, PyFunction.class) == myFunction) {
-                  result.readsOfSelfParameter.add((PyParameter)resolved);
+                  result.readsOfSelfParameter.add(element);
                 }
                 else if (!PsiTreeUtil.isAncestor(myFunction, resolved, true)) {
-                  result.readsOfSelfParametersFromEnclosingScope.add((PyParameter)resolved);
+                  result.readsOfSelfParametersFromEnclosingScope.add(element);
                 }
               }
             }
           }
         }
-        if (readWriteInstruction.getAccess().isWriteAccess()) {
-          if (element instanceof PyTargetExpression && element.getParent() instanceof PyNonlocalStatement) {
-            for (PsiElement resolved : PyUtil.multiResolveTopPriority(element, myContext)) {
-              if (resolved != null && isFromEnclosingScope(resolved)) {
+        if (readWriteInstruction.getAccess().isWriteAccess() && element instanceof PyTargetExpression) {
+          for (PsiElement resolved : PyUtil.multiResolveTopPriority(element, myContext)) {
+            if (resolved != null) {
+              if (element.getParent() instanceof PyNonlocalStatement && isFromEnclosingScope(resolved)) {
                 result.nonlocalWritesToEnclosingScope.add((PyTargetExpression)element);
+              }
+              if (resolved instanceof PyParameter && ((PyParameter)resolved).isSelf() && 
+                  PsiTreeUtil.getParentOfType(resolved, PyFunction.class) == myFunction) {
+                result.writesToSelfParameter.add((PyTargetExpression)element);
               }
             }
           }
@@ -218,13 +179,17 @@ public class PyMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
   }
 
   private boolean isFromEnclosingScope(@NotNull PsiElement element) {
-    return !PsiTreeUtil.isAncestor(myFunction, element, false) && !(ScopeUtil.getScopeOwner(element) instanceof PsiFile);
+    return element.getContainingFile() == myFunction.getContainingFile() &&
+           !PsiTreeUtil.isAncestor(myFunction, element, false) &&
+           !(ScopeUtil.getScopeOwner(element) instanceof PsiFile); 
   }
 
-  static class AnalysisResult {
+  protected static class AnalysisResult {
     final List<PsiElement> readsFromEnclosingScope = new ArrayList<PsiElement>();
     final List<PyTargetExpression> nonlocalWritesToEnclosingScope = new ArrayList<PyTargetExpression>();
-    final List<PyParameter> readsOfSelfParametersFromEnclosingScope = new ArrayList<PyParameter>();
-    final List<PyParameter> readsOfSelfParameter = new ArrayList<PyParameter>();
+    final List<PsiElement> readsOfSelfParametersFromEnclosingScope = new ArrayList<PsiElement>();
+    final List<PsiElement> readsOfSelfParameter = new ArrayList<PsiElement>();
+    // No one writes to "self", but handle this case too just to be sure
+    final List<PyTargetExpression> writesToSelfParameter = new ArrayList<PyTargetExpression>();
   }
 }

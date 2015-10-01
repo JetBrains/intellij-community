@@ -30,9 +30,12 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.refactoring.PyBaseRefactoringAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author Mikhail Golubev
@@ -60,28 +63,31 @@ public class PyMakeFunctionTopLevelRefactoring extends PyBaseRefactoringAction {
 
   @Nullable
   private static PyFunction findTargetFunction(@NotNull PsiElement element) {
-    PyFunction result = null;
-    if (isLocalFunction(element)) {
-      result = (PyFunction)element;
+    if (isLocalFunction(element) || isInstanceMethod(element)) {
+      return (PyFunction)element;
     }
-    else {
-      final PyReferenceExpression refExpr = PsiTreeUtil.getParentOfType(element, PyReferenceExpression.class);
-      if (refExpr == null) {
-        return null;
-      }
-      final PsiElement resolved = refExpr.getReference().resolve();
-      if (isLocalFunction(resolved)) {
-        result = (PyFunction)resolved;
-      }
+    final PyReferenceExpression refExpr = PsiTreeUtil.getParentOfType(element, PyReferenceExpression.class);
+    if (refExpr == null) {
+      return null;
     }
-    return result;
+    final PsiElement resolved = refExpr.getReference().resolve();
+    if (isLocalFunction(resolved) || isInstanceMethod(resolved)) {
+      return (PyFunction)resolved;
+    }
+    return null;
+  }
+
+  private static boolean isInstanceMethod(@Nullable PsiElement element) {
+    final PyFunction function = as(element, PyFunction.class);
+    if (function == null) {
+      return false;
+    }
+    final PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(function);
+    return flags != null && flags.isInstanceMethod();
   }
 
   private static boolean isLocalFunction(@Nullable PsiElement resolved) {
-    if (resolved instanceof PyFunction && PsiTreeUtil.getParentOfType(resolved, ScopeOwner.class, true) instanceof PyFunction) {
-      return true;
-    }
-    return false;
+    return resolved instanceof PyFunction && PsiTreeUtil.getParentOfType(resolved, ScopeOwner.class, true) instanceof PyFunction;
   }
 
   @Nullable
@@ -94,8 +100,15 @@ public class PyMakeFunctionTopLevelRefactoring extends PyBaseRefactoringAction {
         if (element != null) {
           final PyFunction function = findTargetFunction(element);
           if (function != null) {
+            final PyBaseMakeFunctionTopLevelProcessor processor;
+            if (isInstanceMethod(function)) {
+              processor = new PyMakeMethodTopLevelProcessor(function, editor);
+            }
+            else {
+              processor = new PyMakeLocalFunctionTopLevelProcessor(function, editor);
+            }
             try {
-              new PyMakeFunctionTopLevelProcessor(function, editor).run();
+              processor.run();
             }
             catch (IncorrectOperationException e) {
               if (ApplicationManager.getApplication().isUnitTestMode()) {

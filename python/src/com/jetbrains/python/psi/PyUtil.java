@@ -1099,7 +1099,7 @@ public class PyUtil {
    * @param name
    * @return true iff the name looks like a class-private one, starting with two underscores but not ending with two underscores.
    */
-  public static boolean isClassPrivateName(String name) {
+  public static boolean isClassPrivateName(@NotNull String name) {
     return name.startsWith("__") && !name.endsWith("__");
   }
 
