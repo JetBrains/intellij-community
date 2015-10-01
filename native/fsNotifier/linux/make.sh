@@ -1,5 +1,5 @@
 #!/bin/sh
-CC_FLAGS="-O3 -Wall -std=c99 -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=500"
+CC_FLAGS="-O3 -Wall -std=c99 -D_DEFAULT_SOURCE"
 
 if [ -f "/usr/include/gnu/stubs-32.h" ] ; then
   echo "compiling 32-bit version"
