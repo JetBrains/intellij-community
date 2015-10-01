@@ -54,6 +54,7 @@ public class StatementEffectIntroduceVariableQuickFix implements LocalQuickFix {
       expression = expression.replace(assignment);
       if (expression == null) return;
       expression = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(expression);
+      if (expression == null) return;
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(expression);
       final PyExpression leftHandSideExpression = ((PyAssignmentStatement)expression).getLeftHandSideExpression();
       assert leftHandSideExpression != null;
