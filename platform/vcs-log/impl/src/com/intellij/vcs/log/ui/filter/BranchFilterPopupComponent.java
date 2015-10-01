@@ -15,11 +15,14 @@
  */
 package com.intellij.vcs.log.ui.filter;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBranchFilter;
@@ -82,6 +85,14 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   @Override
   protected boolean supportsNegativeValues() {
     return true;
+  }
+
+  @NotNull
+  @Override
+  protected ListPopup createPopupMenu() {
+    return new PopupFactoryImpl.ActionGroupPopup(null, createActionGroup(), DataManager.getInstance().getDataContext(this),
+                                                 false, false, false, false,
+                                                 null, -1, null, null);
   }
 
   @Override
