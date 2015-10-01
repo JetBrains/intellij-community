@@ -3072,6 +3072,21 @@ public class UIUtil {
     return null;
   }
 
+  public static int getLcdContrastValue() {
+    int lcdContrastValue  = Registry.get("lcd.contrast.value").asInteger();
+
+    // Evaluate the value depending on our current theme
+    if (lcdContrastValue == 0) {
+      lcdContrastValue = UIUtil.isUnderDarcula() ? 100 : 250;
+    }
+
+    if (lcdContrastValue < 100 || lcdContrastValue > 250) {
+      // the default value
+      lcdContrastValue = 140;
+    }
+    return lcdContrastValue;
+  }
+
   /**
    * Adds the specified border to the specified component.
    * If the component already has a border it will be preserved.
