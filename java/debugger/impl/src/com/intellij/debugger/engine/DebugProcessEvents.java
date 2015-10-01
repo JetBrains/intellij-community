@@ -148,9 +148,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
             final boolean methodWatcherActive = myReturnValueWatcher != null && myReturnValueWatcher.isEnabled();
             int processed = 0;
-            for (EventIterator eventIterator = eventSet.eventIterator(); eventIterator.hasNext();) {
-              final Event event = eventIterator.nextEvent();
-
+            for (Event event : eventSet) {
               if (methodWatcherActive) {
                 if (event instanceof MethodExitEvent) {
                   if (myReturnValueWatcher.processMethodExitEvent((MethodExitEvent)event)) {
