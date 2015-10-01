@@ -145,7 +145,7 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
   }
 
   private JreComboBoxItem getSelectedJre() {
-    return (JreComboBoxItem)myPathField.getComboBox().getSelectedItem();
+    return (JreComboBoxItem)myPathField.getComboBox().getEditor().getItem();
   }
 
   public void setDefaultJreSelector(DefaultJreSelector defaultJreSelector) {
