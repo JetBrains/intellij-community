@@ -599,13 +599,6 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   @Override
-  public final void markDirty() throws IOException {
-    synchronized (myEnumerator) {
-      myEnumerator.markDirty(true);
-    }
-  }
-
-  @Override
   public final void force() {
     if(myDoTrace) LOG.info("Forcing " + myStorageFile);
     synchronized (myEnumerator) {
