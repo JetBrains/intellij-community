@@ -37,15 +37,19 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PairProcessor
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.containers.MultiMap
+import com.intellij.util.SmartList
 import com.intellij.util.io.ZipUtil
 import gnu.trove.THashSet
-import java.io.*
+import java.io.File
+import java.io.IOException
+import java.io.OutputStream
+import java.io.OutputStreamWriter
 import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -80,32 +84,36 @@ private class ExportSettingsAction : AnAction(), DumbAware {
         return
       }
 
-      val zipOut = MyZipOutputStream(BufferedOutputStream(FileOutputStream(saveFile)))
-      try {
-        val writtenItemRelativePaths = THashSet<String>()
-        val configRoot = FileUtilRt.toSystemIndependentName(PathManager.getConfigPath())
-        for (file in exportFiles) {
-          if (file.exists()) {
-            val relativePath = FileUtilRt.getRelativePath(configRoot, FileUtilRt.toSystemIndependentName(file.absolutePath), '/')!!
-            ZipUtil.addFileOrDirRecursively(zipOut, null, file, relativePath, null, writtenItemRelativePaths)
-          }
-        }
-
-        exportInstalledPlugins(zipOut)
-
-        val zipEntry = ZipEntry(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)
-        zipOut.putNextEntry(zipEntry)
-        zipOut.closeEntry()
-      }
-      finally {
-        zipOut.doClose()
-      }
+      exportSettings(exportFiles, saveFile.outputStream().buffered(), FileUtilRt.toSystemIndependentName(PathManager.getConfigPath()))
       ShowFilePathAction.showDialog(AnAction.getEventProject(e), IdeBundle.message("message.settings.exported.successfully"),
         IdeBundle.message("title.export.successful"), saveFile, null)
     }
     catch (e1: IOException) {
       Messages.showErrorDialog(IdeBundle.message("error.writing.settings", e1.toString()), IdeBundle.message("title.error.writing.file"))
     }
+  }
+}
+
+// not internal only to test
+fun exportSettings(exportFiles: Set<File>, out: OutputStream, configPath: String) {
+  val zipOut = MyZipOutputStream(out)
+  try {
+    val writtenItemRelativePaths = THashSet<String>()
+    for (file in exportFiles) {
+      if (file.exists()) {
+        val relativePath = FileUtilRt.getRelativePath(configPath, FileUtilRt.toSystemIndependentName(file.absolutePath), '/')!!
+        ZipUtil.addFileOrDirRecursively(zipOut, null, file, relativePath, null, writtenItemRelativePaths)
+      }
+    }
+
+    exportInstalledPlugins(zipOut)
+
+    val zipEntry = ZipEntry(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)
+    zipOut.putNextEntry(zipEntry)
+    zipOut.closeEntry()
+  }
+  finally {
+    zipOut.doClose()
   }
 }
 
@@ -118,7 +126,7 @@ private class MyZipOutputStream(out: OutputStream) : ZipOutputStream(out) {
   }
 }
 
-data class ExportableItem(val files: List<File>, val presentableName: String, val roamingType: RoamingType)
+data class ExportableItem(val files: List<File>, val presentableName: String, val roamingType: RoamingType = RoamingType.DEFAULT)
 
 private val LOG = Logger.getInstance(ExportSettingsAction::class.java)
 
@@ -143,8 +151,23 @@ private fun exportInstalledPlugins(zipOut: MyZipOutputStream) {
   }
 }
 
-fun getExportableComponentsMap(onlyExisting: Boolean, computePresentableNames: Boolean, storageManager: StateStorageManager = ApplicationManager.getApplication().stateStore.stateStorageManager): MultiMap<File, ExportableItem> {
-  val result = MultiMap.createLinkedSet<File, ExportableItem>()
+fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
+  var list = get(key)
+  if (list == null) {
+    list = SmartList<V>(value)
+    put(key, list)
+  }
+  else {
+    list.add(value)
+  }
+}
+
+// onlyPaths - include only specified paths (relative to config dir, ends with "/" if directory)
+fun getExportableComponentsMap(onlyExisting: Boolean,
+                               computePresentableNames: Boolean,
+                               storageManager: StateStorageManager = ApplicationManager.getApplication().stateStore.stateStorageManager,
+                               onlyPaths: Set<String>? = null): Map<File, List<ExportableItem>> {
+  val result = LinkedHashMap<File, MutableList<ExportableItem>>()
   val processor = { component: ExportableComponent ->
     val item = ExportableItem(component.exportFiles.toList(), component.presentableName, RoamingType.DEFAULT)
     for (exportFile in item.files) {
@@ -156,10 +179,27 @@ fun getExportableComponentsMap(onlyExisting: Boolean, computePresentableNames: B
   ApplicationManager.getApplication().getComponents(ExportableApplicationComponent::class.java).forEach(processor)
   ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent::class.java).forEach(processor)
 
-  if (onlyExisting) {
+  @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
+  val configPath = storageManager.expandMacros(StoragePathMacros.ROOT_CONFIG)
+
+  fun isSkipFile(file: File): Boolean {
+    if (onlyPaths != null) {
+      var relativePath = FileUtilRt.getRelativePath(configPath, file.systemIndependentPath, '/')!!
+      if (!file.name.contains('.') && !file.isFile) {
+        relativePath += '/'
+      }
+      if (!onlyPaths.contains(relativePath)) {
+        return true
+      }
+    }
+
+    return onlyExisting && !file.exists()
+  }
+
+  if (onlyExisting || onlyPaths != null) {
     val it = result.keySet().iterator()
     while (it.hasNext()) {
-      if (!it.next().exists()) {
+      if (isSkipFile(it.next())) {
         it.remove()
       }
     }
@@ -183,30 +223,32 @@ fun getExportableComponentsMap(onlyExisting: Boolean, computePresentableNames: B
         }
 
         val storage = storages[storageIndex]
-        if (storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && storage.scheme == StorageScheme.DEFAULT && !storage.file.isNullOrEmpty()) {
-          var additionalExportFile: File? = null
-          var additionalExportPath = stateAnnotation.additionalExportFile
-          if (additionalExportPath.isNotEmpty()) {
-            // backward compatibility - path can contain macro
-            @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
-            if (additionalExportPath[0] != '$') {
-              additionalExportPath = StoragePathMacros.ROOT_CONFIG + "/" + additionalExportPath
-            }
-            additionalExportFile = File(storageManager.expandMacros(additionalExportPath))
-            if (onlyExisting && !additionalExportFile.exists()) {
-              additionalExportFile = null
-            }
-          }
+        if (!(storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && storage.scheme == StorageScheme.DEFAULT && !storage.file.isNullOrEmpty())) {
+          return true
+        }
 
-          val file = File(storageManager.expandMacros(storage.file))
-          val fileExists = !onlyExisting || file.exists()
-          if (fileExists || additionalExportFile != null) {
-            val files = if (additionalExportFile == null) listOf(file) else if (fileExists) listOf(file, additionalExportFile) else listOf(additionalExportFile)
-            val item = ExportableItem(files, if (computePresentableNames) getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor) else "", storage.roamingType)
-            result.putValue(file, item)
-            if (additionalExportFile != null) {
-              result.putValue(additionalExportFile, item)
-            }
+        var additionalExportFile: File? = null
+        var additionalExportPath = stateAnnotation.additionalExportFile
+        if (additionalExportPath.isNotEmpty()) {
+          // backward compatibility - path can contain macro
+          @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
+          if (additionalExportPath[0] != '$') {
+            additionalExportPath = StoragePathMacros.ROOT_CONFIG + "/" + additionalExportPath
+          }
+          additionalExportFile = File(storageManager.expandMacros(additionalExportPath))
+          if (isSkipFile(additionalExportFile)) {
+            additionalExportFile = null
+          }
+        }
+
+        val file = File(storageManager.expandMacros(storage.file))
+        val isFileIncluded = !isSkipFile(file)
+        if (isFileIncluded || additionalExportFile != null) {
+          val files = if (additionalExportFile == null) listOf(file) else if (isFileIncluded) listOf(file, additionalExportFile) else listOf(additionalExportFile)
+          val item = ExportableItem(files, if (computePresentableNames) getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor) else "", storage.roamingType)
+          result.putValue(file, item)
+          if (additionalExportFile != null) {
+            result.putValue(additionalExportFile, item)
           }
         }
       }

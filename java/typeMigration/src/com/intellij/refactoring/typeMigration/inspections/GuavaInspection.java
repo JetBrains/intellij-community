@@ -16,8 +16,7 @@
 package com.intellij.refactoring.typeMigration.inspections;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
@@ -32,7 +31,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,7 +40,9 @@ import java.util.Map;
  */
 @SuppressWarnings("DialogTitleCapitalization")
 public class GuavaInspection extends BaseJavaLocalInspectionTool {
-  private final static String PROBLEM_DESCRIPTION = "Guava's functional primitives can be replaced by Java API";
+  private final static Logger LOG = Logger.getInstance(GuavaInspection.class);
+
+  private final static String PROBLEM_DESCRIPTION_FOR_VARIABLE = "Guava's functional primitives can be replaced by Java API";
 
   @NotNull
   @Override
@@ -84,13 +86,26 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
             final String qName = psiClass.getQualifiedName();
             final PsiClass targetClass = myGuavaClassConversions.getValue().get(qName);
             if (targetClass != null) {
-              final Collection<PsiType> typeParameters = resolveResult.getSubstitutor().getSubstitutionMap().values();
-              final PsiClassType targetType =
-                JavaPsiFacade.getElementFactory(holder.getProject()).createType(targetClass, typeParameters.toArray(new PsiType[typeParameters.size()]));
-              final VariableTypeFix fix = TypeMigrationVariableTypeFixProvider.createTypeMigrationFix(variable, targetType);
-              holder.registerProblem(variable, PROBLEM_DESCRIPTION, fix);
+              final VariableTypeFix fix = TypeMigrationVariableTypeFixProvider.createTypeMigrationFix(variable, addTypeParameters(type, resolveResult, targetClass));
+              holder.registerProblem(variable, PROBLEM_DESCRIPTION_FOR_VARIABLE, fix);
             }
           }
+        }
+      }
+
+      private PsiClassType addTypeParameters(PsiType currentType, PsiClassType.ClassResolveResult currentTypeResolveResult, PsiClass targetClass) {
+        final Map<PsiTypeParameter, PsiType> substitutionMap = currentTypeResolveResult.getSubstitutor().getSubstitutionMap();
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(holder.getProject());
+        if (substitutionMap.size() == 1) {
+          return elementFactory.createType(targetClass, ContainerUtil.getFirstItem(substitutionMap.values()));
+        } else {
+          LOG.assertTrue(substitutionMap.size() == 2);
+          LOG.assertTrue(GuavaFunctionConversionRule.JAVA_UTIL_FUNCTION_FUNCTION.equals(targetClass.getQualifiedName()));
+          final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(currentType);
+          final List<PsiType> types = new ArrayList<PsiType>(substitutionMap.values());
+          types.remove(returnType);
+          final PsiType parameterType = types.get(0);
+          return elementFactory.createType(targetClass, parameterType, returnType);
         }
       }
     };

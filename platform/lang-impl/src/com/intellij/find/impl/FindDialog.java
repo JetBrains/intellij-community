@@ -25,6 +25,7 @@ import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -296,7 +297,7 @@ public class FindDialog extends DialogWrapper {
       }
     });
 
-    Component editorComponent = comboBox.getEditor().getEditorComponent();
+    final Component editorComponent = comboBox.getEditor().getEditorComponent();
 
     if (editorComponent instanceof EditorTextField) {
       final EditorTextField etf = (EditorTextField) editorComponent;
@@ -319,6 +320,15 @@ public class FindDialog extends DialogWrapper {
           }
         }
       );
+      Disposer.register(myDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          final KeyListener[] listeners = editorComponent.getKeyListeners();
+          for (KeyListener listener : listeners) {
+            editorComponent.removeKeyListener(listener);
+          }
+        }
+      });
     }
 
     if (!myModel.isReplaceState()) {
@@ -1684,7 +1694,7 @@ public class FindDialog extends DialogWrapper {
           }
         });
         //anAction.registerCustomShortcutSet(CommonShortcuts.ENTER, component);
-        anAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), component);
+        anAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), component, myDisposable);
       }
     }
   }

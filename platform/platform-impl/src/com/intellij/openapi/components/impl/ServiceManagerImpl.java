@@ -40,6 +40,7 @@ import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
+import org.picocontainer.defaults.InstanceComponentAdapter;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -142,17 +143,18 @@ public class ServiceManagerImpl implements BaseComponent {
         }
       }
       else if (o instanceof ComponentAdapter && !(o instanceof ExtensionComponentAdapter)) {
-        try {
-          aClass = ((ComponentAdapter)o).getComponentImplementation();
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-          continue;
-        }
+        PluginId pluginId = componentManager.getConfig((ComponentAdapter)o);
+        // allow InstanceComponentAdapter without pluginId to test
+        if (pluginId != null || o instanceof InstanceComponentAdapter) {
+          try {
+            aClass = ((ComponentAdapter)o).getComponentImplementation();
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+            continue;
+          }
 
-        PluginId pluginId = componentManager.getConfig(aClass);
-        if (pluginId != null) {
-          processor.process(aClass, PluginManager.getPlugin(pluginId));
+          processor.process(aClass, pluginId == null ? null : PluginManager.getPlugin(pluginId));
         }
       }
     }

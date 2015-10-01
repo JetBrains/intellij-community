@@ -18,7 +18,8 @@ package org.jetbrains.idea.devkit.run;
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.LogFileOptions;
-import com.intellij.execution.ui.AlternativeJREPanel;
+import com.intellij.execution.ui.DefaultJreSelector;
+import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -53,7 +54,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   private final LabeledComponent<RawCommandLineEditor> myVMParameters = new LabeledComponent<RawCommandLineEditor>();
   private final LabeledComponent<RawCommandLineEditor> myProgramParameters = new LabeledComponent<RawCommandLineEditor>();
   private JComponent anchor;
-  private final AlternativeJREPanel myAlternativeJREPanel = new AlternativeJREPanel();
+  private final JrePathEditor myJrePathEditor;
 
   @NonNls private final JCheckBox myShowLogs = new JCheckBox(DevKitBundle.message("show.smth", "idea.log"));
 
@@ -98,6 +99,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     });
 
     setAnchor(myModuleLabel);
+    myJrePathEditor = new JrePathEditor(DefaultJreSelector.fromModuleDependencies(myModules, true));
   }
 
   @Override
@@ -131,7 +133,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     myModules.setSelectedModule(prc.getModule());
     getVMParameters().setText(prc.VM_PARAMETERS);
     getProgramParameters().setText(prc.PROGRAM_PARAMETERS);
-    myAlternativeJREPanel.init(prc.getAlternativeJrePath(), prc.isAlternativeJreEnabled());
+    myJrePathEditor.setPathOrName(prc.getAlternativeJrePath(), prc.isAlternativeJreEnabled());
   }
 
 
@@ -140,8 +142,8 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     prc.setModule(myModules.getSelectedModule());
     prc.VM_PARAMETERS = getVMParameters().getText();
     prc.PROGRAM_PARAMETERS = getProgramParameters().getText();
-    prc.setAlternativeJrePath(myAlternativeJREPanel.getPath());
-    prc.setAlternativeJreEnabled(myAlternativeJREPanel.isPathEnabled());
+    prc.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
+    prc.setAlternativeJreEnabled(myJrePathEditor.isAlternativeJreSelected());
   }
 
   @Override
@@ -174,7 +176,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     gc.gridy = 4;
     gc.gridwidth = 2;
 
-    wholePanel.add(myAlternativeJREPanel, gc);
+    wholePanel.add(myJrePathEditor, gc);
     gc.gridy = 5;
     wholePanel.add(myShowLogs, gc);
     return wholePanel;

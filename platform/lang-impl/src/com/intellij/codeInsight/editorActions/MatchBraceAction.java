@@ -76,6 +76,7 @@ public class MatchBraceAction extends EditorAction {
 
       while (!BraceMatchingUtil.isLBraceToken(iterator, text, fileType) &&
              !BraceMatchingUtil.isRBraceToken(iterator, text, fileType)) {
+        if (iterator.getStart() == 0) return;
         iterator.retreat();
         offset = iterator.getStart();
       }

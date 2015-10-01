@@ -203,7 +203,7 @@ public final class UpdateChecker {
 
   @NotNull
   private static CheckForUpdateResult checkPlatformUpdate(@NotNull UpdateSettings settings) {
-    UpdatesInfo info;
+    UpdatesInfo updateInfo;
     try {
       URIBuilder uriBuilder = new URIBuilder(getUpdateUrl());
       if (!URLUtil.FILE_PROTOCOL.equals(uriBuilder.getScheme())) {
@@ -212,7 +212,7 @@ public final class UpdateChecker {
       String updateUrl = uriBuilder.build().toString();
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl);
 
-      info = HttpRequests.request(updateUrl).forceHttps(settings.canUseSecureConnection()).connect(new HttpRequests.RequestProcessor<UpdatesInfo>() {
+      updateInfo = HttpRequests.request(updateUrl).forceHttps(settings.canUseSecureConnection()).connect(new HttpRequests.RequestProcessor<UpdatesInfo>() {
         @Override
         public UpdatesInfo process(@NotNull HttpRequests.Request request) throws IOException {
           try {
@@ -232,13 +232,13 @@ public final class UpdateChecker {
     catch (IOException e) {
       return new CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e);
     }
-    if (info == null) {
-      return new CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED);
+    if (updateInfo == null) {
+      return new CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null);
     }
 
     ApplicationInfo appInfo = ApplicationInfo.getInstance();
     int majorVersion = Integer.parseInt(appInfo.getMajorVersion());
-    UpdateStrategy strategy = new UpdateStrategy(majorVersion, appInfo.getBuild(), info, settings);
+    UpdateStrategy strategy = new UpdateStrategy(majorVersion, appInfo.getBuild(), updateInfo, settings);
     return strategy.checkForUpdates();
   }
 
@@ -269,6 +269,8 @@ public final class UpdateChecker {
       catch (IOException e) {
         LOG.error(onceInstalled.getPath(), e);
       }
+
+      //noinspection SSBasedInspection
       onceInstalled.deleteOnExit();
     }
 
@@ -449,10 +451,6 @@ public final class UpdateChecker {
     else if (alwaysShowResults) {
       new NoUpdatesDialog(enableLink).show();
     }
-  }
-
-  private static void showNotification(@Nullable Project project, String message, boolean error, @Nullable final Runnable runnable) {
-    showNotification(project, message, error, runnable, null);
   }
 
   private static void showNotification(@Nullable Project project,

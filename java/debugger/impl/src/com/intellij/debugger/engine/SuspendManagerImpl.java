@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.InternalException;
@@ -309,9 +309,9 @@ public class SuspendManagerImpl implements SuspendManager {
     if(suspendContext.myVotesToVote == 0) {
       if(suspendContext.myIsVotedForResume) {
         // resume in a separate request to allow other requests be processed (e.g. dependent bpts enable)
-        myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+        myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
           @Override
-          protected void action() throws Exception {
+          public void contextAction() throws Exception {
             resume(suspendContext);
           }
 

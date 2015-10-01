@@ -68,7 +68,7 @@ public abstract class DocumentCommitProcessor {
     @NotNull final Object reason;
     @NotNull final ModalityState myCreationModalityState;
     private final CharSequence myLastCommittedText;
-    public boolean removed; // task marked as removed, should be ignored.
+    public boolean removed; // task marked as removed should be ignored.
 
     public CommitTask(@NotNull Document document,
                       @NotNull Project project,

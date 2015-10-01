@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
  * @author traff
  */
 public class PyConsoleParser extends PyParser{
-  private LanguageLevel myLanguageLevel;
   private StatementParsing.FUTURE myFutureFlag;
   private PythonConsoleData myPythonConsoleData;
   private boolean myIPythonStartSymbol;
@@ -37,10 +36,6 @@ public class PyConsoleParser extends PyParser{
   public PyConsoleParser(PythonConsoleData pythonConsoleData) {
     myPythonConsoleData = pythonConsoleData;
     myLanguageLevel = LanguageLevel.getDefault();
-  }
-
-  public void setLanguageLevel(LanguageLevel languageLevel) {
-    myLanguageLevel = languageLevel;
   }
 
   @NotNull

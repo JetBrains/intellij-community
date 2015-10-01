@@ -17,9 +17,20 @@ package com.intellij.openapi.util.io
 
 import java.io.File
 
-public val File.systemIndependentPath: String
-  get() = getPath().replace(File.separatorChar, '/')
+val File.systemIndependentPath: String
+  get() = path.replace(File.separatorChar, '/')
 
-
-public val File.parentSystemIndependentPath: String
+val File.parentSystemIndependentPath: String
   get() = getParent().replace(File.separatorChar, '/')
+
+val String.parentPath: String?
+  get() {
+    if (isEmpty()) {
+      return null
+    }
+    var end = Math.max(lastIndexOf('/'), lastIndexOf('\\'))
+    if (end == length() - 1) {
+      end = Math.max(lastIndexOf('/', end - 1), lastIndexOf('\\', end - 1))
+    }
+    return if (end == -1) null else substring(0, end)
+  }

@@ -84,6 +84,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   protected void resume(){
     assertNotResumed();
+    LOG.assertTrue(!isEvaluating(), "resuming context while evaluating");
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {

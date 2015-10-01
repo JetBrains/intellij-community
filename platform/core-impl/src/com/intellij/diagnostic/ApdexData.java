@@ -40,8 +40,8 @@ class ApdexData {
 
   ApdexData withEvent(long requiredTime, long actualTime) {
     boolean satisfied = actualTime < requiredTime;
-    boolean tolerable = !satisfied && actualTime < requiredTime * 4;
-    return new ApdexData(myTotalCount + 1, mySatisfiedCount + (satisfied ? 1 : 0), mySluggishCount + (tolerable ? 1 : 0));
+    boolean sluggish = !satisfied && actualTime < requiredTime * 4;
+    return new ApdexData(myTotalCount + 1, mySatisfiedCount + (satisfied ? 1 : 0), mySluggishCount + (sluggish ? 1 : 0));
   }
 
   private long getSlowCount() {
