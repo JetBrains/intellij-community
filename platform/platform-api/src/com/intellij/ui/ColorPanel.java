@@ -34,8 +34,9 @@ import static java.beans.EventHandler.create;
 import static java.util.Locale.ENGLISH;
 
 public class ColorPanel extends JComponent {
+  private static final RelativeFont MONOSPACED_FONT = RelativeFont.SMALL.family(Font.MONOSPACED);
   private final List<ActionListener> myListeners = new CopyOnWriteArrayList<ActionListener>();
-  private final JTextField myTextField = new JTextField();
+  private final JTextField myTextField = new JTextField(8);
   private boolean myEditable;
   private ActionEvent myEvent;
   private Color myColor;
@@ -47,7 +48,7 @@ public class ColorPanel extends JComponent {
     myTextField.addMouseListener(create(MouseListener.class, this, "onPressed", null, "mousePressed"));
     myTextField.addKeyListener(create(KeyListener.class, this, "onPressed", "keyCode", "keyPressed"));
     myTextField.setEditable(false);
-    RelativeFont.TINY.install(myTextField);
+    MONOSPACED_FONT.install(myTextField);
     Painter.BACKGROUND.install(myTextField, true);
   }
 
@@ -90,14 +91,7 @@ public class ColorPanel extends JComponent {
     if (isPreferredSizeSet()) {
       return super.getPreferredSize();
     }
-    Dimension size = new Dimension();
-    Font font = myTextField.getFont();
-    if (font != null) {
-      FontMetrics fm = myTextField.getFontMetrics(font);
-      size.width = fm.stringWidth(" 000000 ");
-      size.height = fm.getHeight();
-    }
-    JBInsets.addTo(size, myTextField.getInsets());
+    Dimension size = myTextField.getPreferredSize();
     JBInsets.addTo(size, getInsets());
     return size;
   }
