@@ -384,6 +384,8 @@ public class TypeMigrationLabeler {
       return false;
     }
 
+    type = JavaPsiFacade.getElementFactory(element.getProject()).createTypeFromText(type.getCanonicalText(), element);
+
     if (resolved instanceof PsiMethod) {
       final PsiMethod method = ((PsiMethod)resolved);
       final PsiMethod[] methods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);

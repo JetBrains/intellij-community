@@ -15,7 +15,7 @@ class A {
 
   List<String> main(String[] args) {
     ArrayList<String> strings = new ArrayList<String>();
-    FluentIterable<String> it = FluentIterable.from(strings);
+    FluentIterable<String> i<caret>t = FluentIterable.from(strings);
     it = it.transform(input -> input.intern());
     it = it.transform(String::trim);
     it = it.transform(new Function<String, String>() {

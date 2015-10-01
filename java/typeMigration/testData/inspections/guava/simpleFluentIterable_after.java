@@ -20,8 +20,8 @@ class A {
     it = it.map(input -> input.intern());
     it = it.map(String::trim);
     it = it.map(input -> {
-      System.out.println("do some action on " + input);
-      return input.substring(0, 10);
+        System.out.println("do some action on " + input);
+        return input.substring(0, 10);
     });
     it = it.map(myFunction::apply);
     return it.collect(Collectors.toList());

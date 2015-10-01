@@ -39,7 +39,7 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
     myExpression = expression;
   }
 
-  public TypeConversionDescriptor(String stringToReplace, String replaceByString, PsiType conversionType) {
+  public TypeConversionDescriptor(@NonNls final String stringToReplace, @NonNls final String replaceByString, PsiType conversionType) {
     this(stringToReplace, replaceByString);
     myConversionType = conversionType;
   }

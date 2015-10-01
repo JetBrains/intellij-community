@@ -21,6 +21,7 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.util.containers.hash.HashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,38 +31,69 @@ import java.util.Map;
  * @author Dmitry Batkovich
  */
 public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRule {
-  private static final Map<String, TypeConversionDescriptorBase> DESCRIPTORS_MAP = new HashMap<String, TypeConversionDescriptorBase>();
+  private static final Map<String, TypeConversionDescriptorFactory> DESCRIPTORS_MAP =
+    new HashMap<String, TypeConversionDescriptorFactory>();
 
   public static final String FLUENT_ITERABLE = "com.google.common.collect.FluentIterable";
 
+  private static class TypeConversionDescriptorFactory {
+    private final String myStringToReplace;
+    private final String myReplaceByString;
+    private final boolean myWithLambdaParameter;
+    private final boolean myChainedMethod;
+
+    public TypeConversionDescriptorFactory(String stringToReplace, String replaceByString, boolean withLambdaParameter) {
+      this(stringToReplace, replaceByString, withLambdaParameter, false);
+    }
+
+    public TypeConversionDescriptorFactory(@NonNls final String stringToReplace,
+                                           @NonNls final String replaceByString,
+                                           boolean withLambdaParameter,
+                                           boolean chainedMethod) {
+      myStringToReplace = stringToReplace;
+      myReplaceByString = replaceByString;
+      myWithLambdaParameter = withLambdaParameter;
+      myChainedMethod = chainedMethod;
+    }
+
+    public TypeConversionDescriptor create() {
+      return myWithLambdaParameter ? new LambdaParametersTypeConversionDescription(myStringToReplace, myReplaceByString)
+                                   : new TypeConversionDescriptor(myStringToReplace, myReplaceByString);
+    }
+
+    public boolean isChainedMethod() {
+      return myChainedMethod;
+    }
+  }
+
   static {
     DESCRIPTORS_MAP.put("contains",
-                        new TypeConversionDescriptor("$it$.contains($o$)", "$it$.anyMatch(e -> e != null && e.equals(%s))"));
-    DESCRIPTORS_MAP.put("from", new TypeConversionDescriptor("FluentIterable.from($it$)", "$it$.stream()"));
-    DESCRIPTORS_MAP.put("isEmpty", new TypeConversionDescriptor("$q$.isEmpty()", "$q$.findAny().isPresent()"));
-    DESCRIPTORS_MAP.put("skip", new TypeConversionDescriptor("$q$.skip($p$)", "$q$.skip($p$)"));
-    DESCRIPTORS_MAP.put("limit", new TypeConversionDescriptor("$q$.limit($p$)", "$q$.limit($p$)"));
-    DESCRIPTORS_MAP.put("first", new TypeConversionDescriptor("$q$.first()", "$q$.findFirst()"));
-    DESCRIPTORS_MAP.put("transform", new LambdaParametersTypeConversionDescription("$q$.transform($params$)", "$q$.map($params$)"));
+                        new TypeConversionDescriptorFactory("$it$.contains($o$)", "$it$.anyMatch(e -> e != null && e.equals($o$))", false));
+    DESCRIPTORS_MAP.put("from", new TypeConversionDescriptorFactory("FluentIterable.from($it$)", "$it$.stream()", false, true));
+    DESCRIPTORS_MAP.put("isEmpty", new TypeConversionDescriptorFactory("$q$.isEmpty()", "$q$.findAny().isPresent()", false));
+    DESCRIPTORS_MAP.put("skip", new TypeConversionDescriptorFactory("$q$.skip($p$)", "$q$.skip($p$)", false, true));
+    DESCRIPTORS_MAP.put("limit", new TypeConversionDescriptorFactory("$q$.limit($p$)", "$q$.limit($p$)", false, true));
+    DESCRIPTORS_MAP.put("first", new TypeConversionDescriptorFactory("$q$.first()", "$q$.findFirst()", false));
+    DESCRIPTORS_MAP.put("transform", new TypeConversionDescriptorFactory("$q$.transform($params$)", "$q$.map($params$)", true, true));
     //TODO support
     //DESCRIPTORS_MAP.put("transformAndConcat", new TransformAndConcatDescriptorBase("$q$.transformAndConcat($params$)", "$q$.flatMap($params$)"));
 
-    DESCRIPTORS_MAP.put("allMatch", new LambdaParametersTypeConversionDescription("$it$.allMatch($c$)", "$it$." + StreamApiConstants.ALL_MATCH + "($c$)"));
-    DESCRIPTORS_MAP.put("anyMatch", new LambdaParametersTypeConversionDescription("$it$.anyMatch($c$)", "$it$." + StreamApiConstants.ANY_MATCH + "($c$)"));
+    DESCRIPTORS_MAP.put("allMatch", new TypeConversionDescriptorFactory("$it$.allMatch($c$)", "$it$." + StreamApiConstants.ALL_MATCH + "($c$)", true));
+    DESCRIPTORS_MAP.put("anyMatch", new TypeConversionDescriptorFactory("$it$.anyMatch($c$)", "$it$." + StreamApiConstants.ANY_MATCH + "($c$)", true));
 
     //TODO add another filter processor
-    DESCRIPTORS_MAP.put("filter", new LambdaParametersTypeConversionDescription("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "($p$)"));
-    DESCRIPTORS_MAP.put("first", new TypeConversionDescriptor("$it$.first()", "$it$." + StreamApiConstants.FIND_FIRST + "()"));
-    DESCRIPTORS_MAP.put("firstMatch", new LambdaParametersTypeConversionDescription("$it$.firstMatch($p$)", "$it$.filter($p$).findFirst()"));
-    DESCRIPTORS_MAP.put("get", new TypeConversionDescriptor("$it$.get($p$)", "$it$.collect(java.util.stream.Collectors.toList()).get($p$)"));
-    DESCRIPTORS_MAP.put("size", new TypeConversionDescriptor("$it$.size()", "$it$.collect(java.util.stream.Collectors.toList()).size()"));
+    DESCRIPTORS_MAP.put("filter", new TypeConversionDescriptorFactory("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "($p$)", true, true));
+    DESCRIPTORS_MAP.put("first", new TypeConversionDescriptorFactory("$it$.first()", "$it$." + StreamApiConstants.FIND_FIRST + "()", false));
+    DESCRIPTORS_MAP.put("firstMatch", new TypeConversionDescriptorFactory("$it$.firstMatch($p$)", "$it$.filter($p$).findFirst()", true));
+    DESCRIPTORS_MAP.put("get", new TypeConversionDescriptorFactory("$it$.get($p$)", "$it$.collect(java.util.stream.Collectors.toList()).get($p$)", false));
+    DESCRIPTORS_MAP.put("size", new TypeConversionDescriptorFactory("$it$.size()", "$it$.collect(java.util.stream.Collectors.toList()).size()", false));
 
-    DESCRIPTORS_MAP.put("toMap", new TypeConversionDescriptor("$it$.toMap($f$)",
-                                                              "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))"));
-    DESCRIPTORS_MAP.put("toList", new TypeConversionDescriptor("$it$.toList()", "$it$.collect(java.util.stream.Collectors.toList())"));
-    DESCRIPTORS_MAP.put("toSet", new TypeConversionDescriptor("$it$.toSet()", "$it$.collect(java.util.stream.Collectors.toSet())"));
-    DESCRIPTORS_MAP.put("toSortedList", new TypeConversionDescriptor("$it$.toSortedList($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toList())"));
-    DESCRIPTORS_MAP.put("toSortedSet", new TypeConversionDescriptor("$it$.toSortedSet($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toSet())"));
+    DESCRIPTORS_MAP.put("toMap", new TypeConversionDescriptorFactory("$it$.toMap($f$)",
+                                                              "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))", false));
+    DESCRIPTORS_MAP.put("toList", new TypeConversionDescriptorFactory("$it$.toList()", "$it$.collect(java.util.stream.Collectors.toList())", false));
+    DESCRIPTORS_MAP.put("toSet", new TypeConversionDescriptorFactory("$it$.toSet()", "$it$.collect(java.util.stream.Collectors.toSet())", false));
+    DESCRIPTORS_MAP.put("toSortedList", new TypeConversionDescriptorFactory("$it$.toSortedList($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toList())", false));
+    DESCRIPTORS_MAP.put("toSortedSet", new TypeConversionDescriptorFactory("$it$.toSortedSet($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toSet())", false));
 
   }
 
@@ -73,8 +105,17 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
                                                                  String methodName,
                                                                  PsiExpression context,
                                                                  TypeMigrationLabeler labeler) {
-    final TypeConversionDescriptorBase base = DESCRIPTORS_MAP.get(methodName);
-    return base instanceof TypeConversionDescriptor ? ((TypeConversionDescriptor)base).withConversionType(to) : null;
+    final TypeConversionDescriptorFactory base = DESCRIPTORS_MAP.get(methodName);
+    if (base != null) {
+      final TypeConversionDescriptor descriptor = base.create();
+      if (base.isChainedMethod()) {
+        descriptor.withConversionType(to);
+      }
+      return descriptor;
+    }
+    else {
+      return null;
+    }
   }
 
   @NotNull
