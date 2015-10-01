@@ -120,7 +120,10 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     PsiMethodCallExpression call = getMethodCall();
     if (call == null) return Collections.emptyList();
     for (PsiClass target : targets) {
-      if (target.isInterface() && shouldCreateStaticMember(call.getMethodExpression(), target) && !PsiUtil.isLanguageLevel8OrHigher(target)) continue;
+      if (shouldCreateStaticMember(call.getMethodExpression(), target)){
+        if (target.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(target)) continue;
+        if (target.getContainingClass() != null && !target.hasModifierProperty(PsiModifier.STATIC)) continue;
+      }
       if (!isMethodSignatureExists(call, target)) {
         result.add(target);
       }

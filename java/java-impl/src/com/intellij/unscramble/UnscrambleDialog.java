@@ -57,6 +57,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.ar;
+
 /**
  * @author cdr
  */
@@ -70,6 +72,7 @@ public class UnscrambleDialog extends DialogWrapper {
       return state.isDeadlocked();
     }
   };
+  private static final String[] IMPORTANT_THREAD_DUMP_WORDS = ar("tid", "nid", "wait", "parking", "prio", "os_prio", "java");
 
   private final Project myProject;
   private JPanel myEditorPanel;
@@ -300,7 +303,7 @@ public class UnscrambleDialog extends DialogWrapper {
 
     boolean first = true;
     boolean inAuxInfo = false;
-    for (String line : lines) {
+    for (final String line : lines) {
       //noinspection HardCodedStringLiteral
       if (!inAuxInfo && (line.startsWith("JNI global references") || line.trim().equals("Heap"))) {
         builder.append("\n");
@@ -321,7 +324,17 @@ public class UnscrambleDialog extends DialogWrapper {
       first = false;
       int i = builder.lastIndexOf("\n");
       CharSequence lastLine = i == -1 ? builder : builder.subSequence(i + 1, builder.length());
-      if (lastLine.toString().matches("\\s*at") && !line.matches("\\s+.*")) builder.append(" "); // separate 'at' from file name
+      if (!line.matches("\\s+.*") && lastLine.length() > 0) {
+        if (lastLine.toString().matches("\\s*at") //separate 'at' from filename
+            || ContainerUtil.or(IMPORTANT_THREAD_DUMP_WORDS, new Condition<String>() {
+          @Override
+          public boolean value(String word) {
+            return line.startsWith(word);
+          }
+        })) {
+          builder.append(" ");
+        }
+      }
       builder.append(trimSuffix(line));
     }
     return builder.toString();

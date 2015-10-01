@@ -216,6 +216,9 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
     }
     if (isPreview) {
+      for (UsageInfo usage : usages) {
+        LOG.assertTrue(usage != null, getClass());
+      }
       previewRefactoring(usages);
     }
     else {

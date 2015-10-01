@@ -20,34 +20,37 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationUtil;
-import com.intellij.execution.impl.JavaScratchRunConfigurationExtension;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class ApplicationConfigurationProducer extends JavaRunConfigurationProducerBase<ApplicationConfiguration> {
+public class ApplicationConfigurationProducer<T extends ApplicationConfiguration> extends JavaRunConfigurationProducerBase<T> {
 
-  public ApplicationConfigurationProducer() {
-    super(ApplicationConfigurationType.getInstance());
+  public ApplicationConfigurationProducer(final ApplicationConfigurationType configurationType) {
+    super(configurationType);
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(ApplicationConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
-    Location location = JavaExecutionUtil.stepIntoSingleClass(context.getLocation());
-    if (location == null) return false;
+  protected boolean setupConfigurationFromContext(T configuration, ConfigurationContext context, Ref<PsiElement> sourceElement) {
+    final Location contextLocation = context.getLocation();
+    if (contextLocation == null) {
+      return false;
+    }
+    final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
+    if (location == null) {
+      return false;
+    }
     final PsiElement element = location.getPsiElement();
-    if (!element.isPhysical()) return false;
+    if (!element.isPhysical()) {
+      return false;
+    }
     PsiElement currentElement = element;
     PsiMethod method;
     while ((method = findMain(currentElement)) != null) {
@@ -60,15 +63,15 @@ public class ApplicationConfigurationProducer extends JavaRunConfigurationProduc
       currentElement = method.getParent();
     }
     final PsiClass aClass = ApplicationConfigurationType.getMainClass(element);
-    if (aClass == null) return false;
+    if (aClass == null) {
+      return false;
+    }
     sourceElement.set(aClass);
     setupConfiguration(configuration, aClass, context);
     return true;
   }
 
-  private void setupConfiguration(ApplicationConfiguration configuration,
-                                  final PsiClass aClass,
-                                  final ConfigurationContext context) {
+  private void setupConfiguration(T configuration, final PsiClass aClass, final ConfigurationContext context) {
     configuration.MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(aClass);
     configuration.setGeneratedName();
     setupConfigurationModule(context, configuration);
@@ -85,22 +88,13 @@ public class ApplicationConfigurationProducer extends JavaRunConfigurationProduc
   }
 
   @Override
-  public boolean isConfigurationFromContext(ApplicationConfiguration appConfiguration, ConfigurationContext context) {
+  public boolean isConfigurationFromContext(T appConfiguration, ConfigurationContext context) {
     final PsiElement location = context.getPsiLocation();
     final PsiClass aClass = ApplicationConfigurationType.getMainClass(location);
     if (aClass != null && Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.MAIN_CLASS_NAME)) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(location, PsiMethod.class, false);
       if (method != null && TestFrameworks.getInstance().isTestMethod(method)) {
         return false;
-      }
-
-      // for scratches it is enough to check that the configuration is associated with the same scratch file
-      final VirtualFile scratchFile = JavaScratchRunConfigurationExtension.getScratchVirtualFile(appConfiguration);
-      if (scratchFile != null) {
-        final PsiFile containingFile = aClass.getContainingFile();
-        if (containingFile != null && scratchFile.equals(containingFile.getVirtualFile())) {
-          return true;
-        }
       }
 
       final Module configurationModule = appConfiguration.getConfigurationModule().getModule();

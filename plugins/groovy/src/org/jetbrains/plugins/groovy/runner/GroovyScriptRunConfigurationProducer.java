@@ -22,6 +22,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.application.ApplicationConfigurationProducer;
+import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
@@ -75,7 +76,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     }
 
     if (file.getText().contains("@Grab")) {
-      ApplicationConfigurationProducer producer = new ApplicationConfigurationProducer();
+      ApplicationConfigurationProducer producer = new ApplicationConfigurationProducer(ApplicationConfigurationType.getInstance());
       ConfigurationFromContext settings = producer.createConfigurationFromContext(context);
       if (settings != null) {
         PsiElement src = settings.getSourceElement();

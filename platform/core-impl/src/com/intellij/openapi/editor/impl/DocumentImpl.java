@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -118,6 +119,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     this(chars, false);
   }
 
+  /**
+   * NOTE: if client sets forUseInNonAWTThread to true it's supposed that client will completely control document and its listeners.
+   * The noticable peculiarity of DocumentImpl behavior in this mode is that DocumentImpl will survive after ProcessCancelledException 
+   * thrown from listeners during changedUpdate event, the exception will be rethrown and rest of the listeners WON'T be notified.
+   */
   public DocumentImpl(@NotNull CharSequence chars, boolean forUseInNonAWTThread) {
     this(chars, false, forUseInNonAWTThread);
   }
@@ -755,6 +761,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         for (DocumentListener listener : listeners) {
           try {
             listener.documentChanged(event);
+          }
+          catch (ProcessCanceledException e) {
+            if (!myAssertThreading) {
+              throw e;
+            }
+            else {
+              LOG.error("ProceeCanceledException shouldn't be thrown from document listeners on real document");
+            }
           }
           catch (Throwable e) {
             LOG.error(e);
