@@ -160,6 +160,6 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
   @Override
   public String toString() {
-    return myS.getPresentableText() + " < " + myT.getPresentableText();
+    return myT.getPresentableText() + " < " + myS.getPresentableText();
   }
 }
