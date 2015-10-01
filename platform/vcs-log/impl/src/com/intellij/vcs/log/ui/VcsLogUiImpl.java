@@ -104,7 +104,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   public void setVisiblePack(@NotNull VisiblePack pack) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    boolean permGraphChanged = myVisiblePack.getPermanentGraph() != pack.getPermanentGraph();
+    boolean permGraphChanged = myVisiblePack.getDataPack() != pack.getDataPack();
 
     myVisiblePack = pack;
 

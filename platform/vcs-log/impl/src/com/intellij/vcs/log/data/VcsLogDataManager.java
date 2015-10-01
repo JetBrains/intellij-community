@@ -133,7 +133,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        consumer.consume(myRefresher.requestCurrentData());
+        consumer.consume(myRefresher.getCurrentDataPack());
       }
     });
   }
@@ -146,7 +146,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
 
   @NotNull
   public DataPack getDataPack() {
-    return myRefresher.requestCurrentData();
+    return myRefresher.getCurrentDataPack();
   }
 
   @NotNull

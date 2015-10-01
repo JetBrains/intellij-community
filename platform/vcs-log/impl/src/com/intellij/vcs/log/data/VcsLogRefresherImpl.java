@@ -97,7 +97,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   }
 
   @NotNull
-  public DataPack requestCurrentData() {
+  public DataPack getCurrentDataPack() {
     return myDataPack;
   }
 

@@ -1,14 +1,11 @@
 package com.intellij.vcs.log.ui.tables;
 
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.*;
@@ -20,7 +17,6 @@ import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.data.*;
-import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
@@ -31,12 +27,8 @@ import javax.swing.table.AbstractTableModel;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.*;
 
 public class GraphTableModel extends AbstractTableModel {
-
-  private static final Logger LOG = Logger.getInstance(GraphTableModel.class);
-
   public static final int ROOT_COLUMN = 0;
   public static final int COMMIT_COLUMN = 1;
   public static final int AUTHOR_COLUMN = 2;
@@ -67,8 +59,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   public VirtualFile getRoot(int rowIndex) {
-    int commit = myDataPack.getVisibleGraph().getRowInfo(rowIndex).getCommit();
-    return myLogDataManager.getCommitId(commit).getRoot();
+    return myDataPack.getRoot(rowIndex);
   }
 
   @NotNull

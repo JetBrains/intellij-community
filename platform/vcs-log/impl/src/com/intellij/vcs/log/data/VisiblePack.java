@@ -20,11 +20,12 @@ import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefs;
-import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Map;
 
 public class VisiblePack implements VcsLogDataPack {
@@ -48,6 +49,11 @@ public class VisiblePack implements VcsLogDataPack {
     return myVisibleGraph;
   }
 
+  @NotNull
+  public DataPack getDataPack() {
+    return myDataPack;
+  }
+
   public boolean canRequestMore() {
     return myCanRequestMore;
   }
@@ -64,11 +70,6 @@ public class VisiblePack implements VcsLogDataPack {
     return myDataPack.getRefsModel();
   }
 
-  @NotNull
-  public PermanentGraph<Integer> getPermanentGraph() {
-    return myDataPack.getPermanentGraph();
-  }
-
   public boolean isFull() {
     return myDataPack.isFull();
   }
@@ -77,5 +78,11 @@ public class VisiblePack implements VcsLogDataPack {
   @NotNull
   public VcsLogFilterCollection getFilters() {
     return myFilters;
+  }
+
+  public VirtualFile getRoot(int row) {
+    int head = myVisibleGraph.getRowInfo(row).getOneOfHeads();
+    Collection<VcsRef> refs = myDataPack.getRefsModel().refsToHead(head);
+    return refs.iterator().next().getRoot();
   }
 }
