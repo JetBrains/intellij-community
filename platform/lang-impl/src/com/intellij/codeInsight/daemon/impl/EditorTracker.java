@@ -52,7 +52,7 @@ public class EditorTracker extends AbstractProjectComponent {
   private final EditorFactory myEditorFactory;
 
   private final Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<Window, List<Editor>>();
-  private final Map<Window, WindowFocusListener> myWindowToWindowFocusListenerMap = new HashMap<Window, WindowFocusListener>();
+  private final Map<Window, WindowAdapter> myWindowToWindowFocusListenerMap = new HashMap<Window, WindowAdapter>();
   private final Map<Editor, Window> myEditorToWindowMap = new HashMap<Editor, Window>();
   private List<Editor> myActiveEditors = Collections.emptyList(); // accessed in EDT only
 
@@ -128,7 +128,7 @@ public class EditorTracker extends AbstractProjectComponent {
       myWindowToEditorsMap.put(window, list);
 
       if (!(window instanceof IdeFrameImpl)) {
-        WindowFocusListener listener =  new WindowFocusListener() {
+        WindowAdapter listener =  new WindowAdapter() {
           @Override
           public void windowGainedFocus(WindowEvent e) {
             if (LOG.isDebugEnabled()) {
@@ -146,9 +146,19 @@ public class EditorTracker extends AbstractProjectComponent {
 
             setActiveWindow(null);
           }
+
+          @Override
+          public void windowClosed(WindowEvent event) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("windowClosed:" + window);
+            }
+
+            setActiveWindow(null);
+          }
         };
         myWindowToWindowFocusListenerMap.put(window, listener);
         window.addWindowFocusListener(listener);
+        window.addWindowListener(listener);
         if (window.isFocused()) {  // windowGainedFocus is missed; activate by force
           setActiveWindow(window);
         }
@@ -171,8 +181,11 @@ public class EditorTracker extends AbstractProjectComponent {
 
       if (editorsList.isEmpty()) {
         myWindowToEditorsMap.remove(oldWindow);
-        final WindowFocusListener listener = myWindowToWindowFocusListenerMap.remove(oldWindow);
-        if (listener != null) oldWindow.removeWindowFocusListener(listener);
+        final WindowAdapter listener = myWindowToWindowFocusListenerMap.remove(oldWindow);
+        if (listener != null) {
+          oldWindow.removeWindowFocusListener(listener);
+          oldWindow.removeWindowListener(listener);
+        }
       }
     }
   }
