@@ -35,6 +35,13 @@ RM=`which rm`
 CAT=`which cat`
 TR=`which tr`
 
+#Disbale Jayatana on linux
+
+#if [ -n "$JAVA_TOOL_OPTIONS" ]; then
+#  JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS%-javaagent*jayatanaag.jar*}${JAVA_TOOL_OPTIONS#*jayatanaag.jar}
+#  message "Jayatana global menu integration is disabled."
+#fi
+
 if [ -z "$UNAME" -o -z "$GREP" -o -z "$CUT" -o -z "$MKTEMP" -o -z "$RM" -o -z "$CAT" -o -z "$TR" ]; then
   message "Required tools are missing - check beginning of \"$0\" file for details."
   exit 1
