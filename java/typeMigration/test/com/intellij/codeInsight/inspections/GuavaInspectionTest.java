@@ -47,19 +47,19 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 
-  public void testOptional() {
+  public void _testOptional() {
     doTest();
   }
 
-  public void testOptional2() {
+  public void _testOptional2() {
     doTest();
   }
 
-  public void testSimpleFluentIterable() {
+  public void _testSimpleFluentIterable() {
     doTest();
   }
 
-  public void testChainedFluentIterable() {
+  public void _testChainedFluentIterable() {
     doTest();
   }
 
@@ -67,7 +67,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
-  public void testChainedFluentIterableWithChainedInitializer() {
+  public void _testChainedFluentIterableWithChainedInitializer() {
     doTest();
   }
 
