@@ -91,8 +91,9 @@ public class VariableTypeFromCallFix implements IntentionAction {
     PsiMethod method = (PsiMethod) result.getElement();
     final PsiSubstitutor substitutor = result.getSubstitutor();
     PsiExpression[] expressions = list.getExpressions();
-    if (method == null || method.getParameterList().getParametersCount() != expressions.length) return Collections.emptyList();
+    if (method == null) return Collections.emptyList();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length != expressions.length) return Collections.emptyList();
     List<IntentionAction> actions = new ArrayList<IntentionAction>();
     for (int i = 0; i < expressions.length; i++) {
       final PsiExpression expression = expressions[i];

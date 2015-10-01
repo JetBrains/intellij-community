@@ -90,7 +90,17 @@ public final class Urls {
   // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
   @Nullable
   public static Url parseFromIdea(@NotNull CharSequence url) {
-    return StringUtil.contains(url, URLUtil.SCHEME_SEPARATOR) ? parseUrl(url) : newLocalFileUrl(url.toString());
+    for (int i = 0, n = url.length(); i < n; i++) {
+      char c = url.charAt(i);
+      if (c == ':') {
+        // file:// or dart:core/foo
+        return parseUrl(url);
+      }
+      else if (c == '/' || c == '\\') {
+        return newLocalFileUrl(url.toString());
+      }
+    }
+    return newLocalFileUrl(url.toString());
   }
 
   @Nullable

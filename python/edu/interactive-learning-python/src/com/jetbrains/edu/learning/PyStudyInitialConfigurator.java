@@ -30,7 +30,7 @@ public class PyStudyInitialConfigurator {
                                     FileTypeManager fileTypeManager,
                                     final ProjectManagerEx projectManager) {
     final File file = new File(getCoursesRoot(), "Introduction to Python.zip");
-    if (!propertiesComponent.getBoolean(CONFIGURED_V1, false)) {
+    if (!propertiesComponent.getBoolean(CONFIGURED_V1)) {
       final File newCourses = new File(PathManager.getConfigPath(), "courses");
       try {
         FileUtil.createDirectory(newCourses);
@@ -42,7 +42,7 @@ public class PyStudyInitialConfigurator {
         LOG.warn("Couldn't copy bundled courses " + e);
       }
     }
-    if (!propertiesComponent.getBoolean(CONFIGURED_V11, false)) {
+    if (!propertiesComponent.getBoolean(CONFIGURED_V11)) {
       final File newCourses = new File(PathManager.getConfigPath(), "courses");
       if (newCourses.exists()) {
         try {

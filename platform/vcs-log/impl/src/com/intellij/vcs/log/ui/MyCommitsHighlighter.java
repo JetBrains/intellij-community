@@ -57,6 +57,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
+        if (myDataHolder.getProject().isDisposed()) return;
         VcsLogManager logManager = VcsLogContentProvider.findLogManager(myDataHolder.getProject());
         if (logManager != null) {
           VcsLogUiImpl logUi = logManager.getLogUi();

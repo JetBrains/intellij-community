@@ -16,32 +16,30 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A range marker that has to be manually updated with {@link #applyEvent(DocumentEvent)}. Can hold PSI-based range and be updated when the document is committed.
+ * A range marker that has to be manually updated with {@link #getUpdatedRange(DocumentEvent)}.
+ * Can hold PSI-based range and be updated when the document is committed.
  */
 public class ManualRangeMarker {
-  private static int ourCount = 0;
-
-  private ProperTextRange myRange;
-  private boolean myValid = true;
+  private final ProperTextRange myRange;
   private final boolean myGreedyLeft;
   private final boolean myGreedyRight;
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod") private final int myHash = ourCount++;
-  private PersistentRangeMarker.LinesCols myLinesCols;
+  private final PersistentRangeMarker.LinesCols myLinesCols;
 
   public ManualRangeMarker(@NotNull FrozenDocument document, @NotNull ProperTextRange range, boolean greedyLeft, boolean greedyRight, boolean surviveOnExternalChange) {
     this(range, greedyLeft, greedyRight, surviveOnExternalChange ? PersistentRangeMarker.storeLinesAndCols(range, document) : null);
   }
 
-  private ManualRangeMarker(ProperTextRange range,
-                           boolean greedyLeft,
-                           boolean greedyRight,
-                           PersistentRangeMarker.LinesCols linesCols) {
+  private ManualRangeMarker(@NotNull ProperTextRange range,
+                            boolean greedyLeft,
+                            boolean greedyRight,
+                            @Nullable PersistentRangeMarker.LinesCols linesCols) {
     myRange = range;
     myGreedyLeft = greedyLeft;
     myGreedyRight = greedyRight;
@@ -50,49 +48,32 @@ public class ManualRangeMarker {
 
   @Nullable
   public ManualRangeMarker getUpdatedRange(@NotNull DocumentEvent event) {
-    Pair<ProperTextRange, PersistentRangeMarker.LinesCols> pair = getUpdatedState(event);
-    return pair == null ? null : new ManualRangeMarker(pair.first, myGreedyLeft, myGreedyRight, pair.second);
-  }
+    if (event instanceof RetargetRangeMarkers) {
+      int start = ((RetargetRangeMarkers)event).getStartOffset();
+      if (myRange.getStartOffset() >= start && myRange.getEndOffset() <= ((RetargetRangeMarkers)event).getEndOffset()) {
+        ProperTextRange range = myRange.shiftRight(((RetargetRangeMarkers)event).getMoveDestinationOffset() - start);
+        return new ManualRangeMarker(range, myGreedyLeft, myGreedyRight, myLinesCols == null ? null : PersistentRangeMarker.storeLinesAndCols(range, event.getDocument()));
+      }
+    }
 
-  @Nullable
-  private Pair<ProperTextRange, PersistentRangeMarker.LinesCols> getUpdatedState(@NotNull DocumentEvent event) {
     if (myLinesCols != null) {
-      return PersistentRangeMarker
+      Pair<ProperTextRange, PersistentRangeMarker.LinesCols> pair = PersistentRangeMarker
         .applyChange(event, myRange, myRange.getStartOffset(), myRange.getEndOffset(), myGreedyLeft, myGreedyRight, myLinesCols);
+      return pair == null ? null : new ManualRangeMarker(pair.first, myGreedyLeft, myGreedyRight, pair.second);
     }
     
     ProperTextRange range = RangeMarkerImpl.applyChange(event, myRange.getStartOffset(), myRange.getEndOffset(), myGreedyLeft, myGreedyRight);
-    return range == null ? null : new Pair<ProperTextRange, PersistentRangeMarker.LinesCols>(range, null);
+    return range == null ? null : new ManualRangeMarker(range, myGreedyLeft, myGreedyRight, null);
   }
 
-  public void applyEvent(@NotNull DocumentEvent event) {
-    if (!myValid) return;
-
-    Pair<ProperTextRange, PersistentRangeMarker.LinesCols> pair = getUpdatedState(event);
-    if (pair != null) {
-      myRange = pair.first;
-      myLinesCols = pair.second;
-    } else {
-      myValid = false;
-    }
-  }
-
-  @Nullable
+  @NotNull
   public ProperTextRange getRange() {
-    return myValid ? myRange : null;
-  }
-
-  public boolean isValid() {
-    return myValid;
+    return myRange;
   }
 
   @Override
   public String toString() {
-    return "ManualRangeMarker" + (myValid ? myRange.toString() : " invalid");
+    return "ManualRangeMarker" + myRange;
   }
 
-  @Override
-  public int hashCode() {
-    return myHash;
-  }
 }

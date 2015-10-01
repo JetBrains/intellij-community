@@ -30,17 +30,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.RowsDnDSupport;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EditableModel;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.mq.HgQDeleteCommand;
@@ -96,8 +91,10 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     myPatchTable.setFillsViewportHeight(true);
     myPatchTable.getEmptyText().setText("Nothing to show");
     myPatchTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
-    RowsDnDSupport.install(myPatchTable, myPatchTable.getModel());
+    myPatchTable.setDragEnabled(true);
     new TableSpeedSearch(myPatchTable);
+    myPatchTable.setDropMode(DropMode.INSERT_ROWS);
+    myPatchTable.setTransferHandler(new TableRowsTransferHandler(myPatchTable));
 
     add(createToolbar(), BorderLayout.WEST);
 
@@ -201,7 +198,13 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   @NotNull
   @CalledInAwt
   public List<String> getSelectedPatchNames() {
-    return ContainerUtil.map(Ints.asList(myPatchTable.getSelectedRows()), new Function<Integer, String>() {
+    return getPatchNames(myPatchTable.getSelectedRows());
+  }
+
+  @NotNull
+  @CalledInAny
+  private List<String> getPatchNames(int[] rows) {
+    return ContainerUtil.map(Ints.asList(rows), new Function<Integer, String>() {
       @Override
       public String fun(Integer integer) {
         return getPatchName(integer);
@@ -285,7 +288,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     model.updatePatches(myRepository.getUnappliedPatchNames());
   }
 
-  private class MyPatchModel extends AbstractTableModel implements EditableModel {
+  private class MyPatchModel extends AbstractTableModel implements MultiReorderedModel {
 
     @NotNull private final MqPatchDetails.MqPatchEnum[] myColumnNames = MqPatchDetails.MqPatchEnum.values();
     @NotNull private final Map<String, MqPatchDetails> myPatchesWithDetails = ContainerUtil.newHashMap();
@@ -349,36 +352,31 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
       myPatches.set(rowIndex, newPatchName);
     }
 
-    @Override
-    public void addRow() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void exchangeRows(int oldIndex, int newIndex) {
-      String tmp = myPatches.get(oldIndex);
-      myPatches.remove(oldIndex);
-      myPatches.add(newIndex, tmp);
-      myNeedToUpdateFileContent = true;
-      fireTableDataChanged();
-    }
-
-    @Override
-    public boolean canExchangeRows(int oldIndex, int newIndex) {
-      return true;
-    }
-
-    @Override
-    public void removeRow(int idx) {
-      throw new UnsupportedOperationException();
-    }
-
     public void updatePatches(List<String> newNames) {
       myPatches.clear();
       myPatches.addAll(newNames);
       myPatchesWithDetails.clear();
       readMqPatchesDetails();
       fireTableDataChanged();
+    }
+
+    @Override
+    public boolean canMoveRows() {
+      return true;
+    }
+
+    @Override
+    public int[] moveRows(int[] rowsIndexes, int destination) {
+      List<String> names = getPatchNames(rowsIndexes);
+      myPatches.removeAll(ContainerUtil.newArrayList(names));
+      int[] selection = new int[rowsIndexes.length];
+      for (int i = 0; i < rowsIndexes.length; i++) {
+        selection[i] = destination;
+        myPatches.add(destination++, names.get(i));
+      }
+      myNeedToUpdateFileContent = true;
+      fireTableDataChanged();
+      return selection;
     }
   }
 
@@ -393,10 +391,15 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
 
     @Override
     public void editingStopped(ChangeEvent e) {
-      int editingRow = getEditingRow();
-      String oldName = getModel().getPatchName(editingRow);
+      final int editingRow = getEditingRow();
+      final String oldName = getModel().getPatchName(editingRow);
       super.editingStopped(e);
-      HgQRenameCommand.performPatchRename(myRepository, oldName, getModel().getPatchName(editingRow));
+      updatePatchSeriesInBackground(new Runnable() {
+        @Override
+        public void run() {
+          HgQRenameCommand.performPatchRename(myRepository, oldName, getModel().getPatchName(editingRow));
+        }
+      });
     }
   }
 }

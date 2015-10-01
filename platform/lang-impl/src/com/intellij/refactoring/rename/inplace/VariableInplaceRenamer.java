@@ -231,7 +231,8 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
           }
         }.execute();
       }
-      for (AutomaticRenamerFactory renamerFactory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+      AutomaticRenamerFactory[] factories = Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME);
+      for (AutomaticRenamerFactory renamerFactory : factories) {
         if (elementToRename != null && renamerFactory.isApplicable(elementToRename)) {
           final List<UsageInfo> usages = new ArrayList<UsageInfo>();
           final AutomaticRenamer renamer =

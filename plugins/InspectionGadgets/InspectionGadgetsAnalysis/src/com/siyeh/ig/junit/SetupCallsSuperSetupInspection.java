@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,11 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class SetupCallsSuperSetupInspection extends BaseInspection {
@@ -93,44 +91,6 @@ public class SetupCallsSuperSetupInspection extends BaseInspection {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new SetupCallsSuperSetupVisitor();
-  }
-
-  private static class SetupCallsSuperSetupVisitor
-    extends BaseInspectionVisitor {
-
-    @Override
-    public void visitMethod(@NotNull PsiMethod method) {
-      //note: no call to super;
-      @NonNls final String methodName = method.getName();
-      if (!"setUp".equals(methodName)) {
-        return;
-      }
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      if (method.getBody() == null) {
-        return;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0) {
-        return;
-      }
-      final PsiClass targetClass = method.getContainingClass();
-      if (targetClass == null) {
-        return;
-      }
-      if (!InheritanceUtil.isInheritor(targetClass,
-                                       "junit.framework.TestCase")) {
-        return;
-      }
-      final CallToSuperSetupVisitor visitor =
-        new CallToSuperSetupVisitor();
-      method.accept(visitor);
-      if (visitor.isCallToSuperSetupFound()) {
-        return;
-      }
-      registerMethodError(method);
-    }
+    return new TeardownCallsSuperTeardownInspection.TeardownCallsSuperTeardownVisitor("setUp");
   }
 }

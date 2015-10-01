@@ -50,12 +50,12 @@ class A {
     public int hashCode() {
         int result;
         long temp;
-        result = a1 != null ? Arrays.hashCode(a1) : 0;
-        result = 31 * result + (a2 != null ? Arrays.deepHashCode(a2) : 0);
-        result = 31 * result + (a3 != null ? Arrays.hashCode(a3) : 0);
-        result = 31 * result + (a4 != null ? Arrays.deepHashCode(a4) : 0);
-        result = 31 * result + (a5 != null ? Arrays.hashCode(a5) : 0);
-        result = 31 * result + (a6 != null ? Arrays.deepHashCode(a6) : 0);
+        result = Arrays.hashCode(a1);
+        result = 31 * result + Arrays.deepHashCode(a2);
+        result = 31 * result + Arrays.hashCode(a3);
+        result = 31 * result + Arrays.deepHashCode(a4);
+        result = 31 * result + Arrays.hashCode(a5);
+        result = 31 * result + Arrays.deepHashCode(a6);
         result = 31 * result + (int) a7;
         result = 31 * result + (int) a8;
         result = 31 * result + a9;

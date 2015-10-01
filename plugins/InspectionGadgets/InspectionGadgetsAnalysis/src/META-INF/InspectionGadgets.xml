@@ -1052,7 +1052,7 @@
                      groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.inheritance.RedundantMethodOverrideInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RefusedBequest" bundle="com.siyeh.InspectionGadgetsBundle" key="refused.bequest.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.inheritance.RefusedBequestInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StaticInheritance" bundle="com.siyeh.InspectionGadgetsBundle" key="static.inheritance.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues" enabledByDefault="false"
@@ -1436,11 +1436,12 @@
                      key="junit4.test.method.in.class.extending.junit3.testcase.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnit4AnnotatedMethodInJUnit3TestCaseInspection"/>
-    <localInspection shortName="JUnitAbstractTestClassNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
+    <!-- JUnitAbstractTestClassNamingConvention and JUnitTestClassNamingConvention also warn on Groovy code -->
+    <localInspection groupPath="Java" shortName="JUnitAbstractTestClassNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="junit.abstract.test.class.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnitAbstractTestClassNamingConventionInspection"/>
-    <localInspection shortName="JUnitTestClassNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java" shortName="JUnitTestClassNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="junit.test.class.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnitTestClassNamingConventionInspection"/>
@@ -1476,6 +1477,9 @@
     <localInspection groupPath="Java" language="JAVA" suppressId="SuiteNotDeclaredStatic" shortName="StaticSuite" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="static.suite.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.junit.StaticSuiteInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SuperTearDownInFinally" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="super.tear.down.in.finally.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
+                     enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.junit.SuperTearDownInFinallyInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="JUnitTestCaseInProductSource" shortName="TestCaseInProductCode" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="test.case.in.product.code.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
@@ -1857,7 +1861,7 @@
                      implementationClass="com.siyeh.ig.numeric.IntLiteralMayBeLongLiteralInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="LongLiteralEndingWithLowercaseL" shortName="LongLiteralsEndingWithLowercaseL"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="long.literals.ending.with.lowercase.l.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.LongLiteralsEndingWithLowercaseLInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="NonReproducibleMathCall" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="non.reproducible.math.call.display.name" groupBundle="messages.InspectionsBundle"

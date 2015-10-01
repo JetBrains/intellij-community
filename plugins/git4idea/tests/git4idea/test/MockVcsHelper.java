@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.CommitResultHandler;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
@@ -227,4 +228,12 @@ public class MockVcsHelper extends AbstractVcsHelper {
     void showMergeDialog();
   }
 
+  @Override
+  public void loadAndShowCommittedChangesDetails(@NotNull Project project,
+                                                 @NotNull VcsRevisionNumber revision,
+                                                 @NotNull VirtualFile file,
+                                                 @NotNull VcsKey key,
+                                                 @Nullable RepositoryLocation location,
+                                                 boolean local) {
+  }
 }

@@ -145,7 +145,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
         return null;
       }
       final PsiReferenceExpression listLengthExpression = methodCallExpression.getMethodExpression();
-      final PsiExpression qualifier = listLengthExpression.getQualifierExpression();
+      final PsiExpression qualifier = ParenthesesUtils.stripParentheses(listLengthExpression.getQualifierExpression());
       final PsiReferenceExpression listReference;
       if (qualifier instanceof PsiReferenceExpression) {
         listReference = (PsiReferenceExpression)qualifier;

@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
@@ -48,7 +47,6 @@ public class HighlightingSessionImpl implements HighlightingSession {
   @NotNull private final Project myProject;
   private final Document myDocument;
   private final Map<TextRange,RangeMarker> myRanges2markersCache = new THashMap<TextRange, RangeMarker>();
-  private volatile boolean myDisposed;
 
   private HighlightingSessionImpl(@NotNull PsiFile psiFile,
                                   @Nullable Editor editor,
@@ -60,10 +58,6 @@ public class HighlightingSessionImpl implements HighlightingSession {
     myEditorColorsScheme = editorColorsScheme;
     myProject = psiFile.getProject();
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
-    Disposer.register(progressIndicator, this);
-    if (progressIndicator.isCanceled()) {
-      Disposer.dispose(progressIndicator); //dispose both progress indicator and this session in case we managed to register after indicator dispose to avoid mem leaks
-    }
   }
 
   private static final Key<ConcurrentMap<PsiFile, HighlightingSession>> HIGHLIGHTING_SESSION = Key.create("HIGHLIGHTING_SESSION");
@@ -159,7 +153,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
                           @NotNull TextRange priorityRange,
                           @NotNull TextRange restrictedRange,
                           int groupId) {
-    myAddHighlighterInEDTQueue.offer(new Info(info, priorityRange, restrictedRange, groupId));
+    myAddHighlighterInEDTQueue.offer(new Info(info, restrictedRange, groupId));
   }
 
   void queueDisposeHighlighter(@Nullable RangeHighlighterEx highlighter) {
@@ -167,20 +161,13 @@ public class HighlightingSessionImpl implements HighlightingSession {
     myDisposeHighlighterInEDTQueue.offer(highlighter);
   }
 
-  @Override
-  public void dispose() {
-    myDisposed = true;
-  }
-
   private static class Info {
     @NotNull private final HighlightInfo myInfo;
-    @NotNull private final TextRange myPriorityRange;
     @NotNull private final TextRange myRestrictRange;
     private final int myGroupId;
 
-    public Info(@NotNull HighlightInfo info, @NotNull TextRange priorityRange, @NotNull TextRange restrictRange, int groupId) {
+    private Info(@NotNull HighlightInfo info, @NotNull TextRange restrictRange, int groupId) {
       myInfo = info;
-      myPriorityRange = priorityRange;
       myRestrictRange = restrictRange;
       myGroupId = groupId;
     }

@@ -19,6 +19,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
@@ -126,7 +127,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
         }
 
         for (OrderEntry entry : ModuleRootManagerImpl.this.getOrderEntries()) {
-          assert !((RootModelComponentBase)entry).isDisposed();
+          assert !((RootModelComponentBase)entry).isDisposed() : String.format("%s is not disposed!", entry.getPresentableName());
         }
       }
     };
@@ -340,17 +341,12 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   public void loadState(ModuleRootManagerState object) {
-    AccessToken token = ReadAction.start();
-    try {
-      loadState(object, myLoaded || isModuleAdded);
-      myLoaded = true;
-    }
-    finally {
-      token.finish();
-    }
+    loadState(object, myLoaded || isModuleAdded);
+    myLoaded = true;
   }
 
   protected void loadState(ModuleRootManagerState object, boolean throwEvent) {
+    AccessToken token = throwEvent ? WriteAction.start() : ReadAction.start();
     try {
       final RootModelImpl newModel = new RootModelImpl(object.getRootModelElement(), this, myProjectRootManager, myFilePointerManager, throwEvent);
 
@@ -371,6 +367,9 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     }
     catch (InvalidDataException e) {
       LOG.error(e);
+    }
+    finally {
+      token.finish();
     }
   }
 

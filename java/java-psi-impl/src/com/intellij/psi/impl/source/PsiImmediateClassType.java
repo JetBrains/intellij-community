@@ -268,6 +268,10 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
 
   @Override
   public boolean equalsToText(@NotNull String text) {
+    String name = myClass.getName();
+    if (name == null || !text.contains(name)) return false;
+    if (text.equals(getCanonicalText(false))) return true;
+
     PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     final PsiType patternType;
     try {

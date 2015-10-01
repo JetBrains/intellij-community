@@ -19,11 +19,11 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunConfiguration;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
-import com.jetbrains.python.testing.nosetest.PythonNoseTestUrlProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.util.Pair.pair;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Roman.Chernyatchik
@@ -46,9 +46,14 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
   @Nullable
   @Override
   public SMTestLocator getTestLocator() {
-    return new SMTestLocator.Composite(
-      pair(PythonUnitTestTestIdUrlProvider.PROTOCOL_ID, PythonUnitTestTestIdUrlProvider.INSTANCE),
-      pair(PythonNoseTestUrlProvider.PROTOCOL_ID, PythonNoseTestUrlProvider.INSTANCE)
-    );
+    final Map<String, SMTestLocator> locators = new HashMap<String, SMTestLocator>();
+
+    for (final PythonTestLocator locator : PythonTestLocator.EP_NAME.getExtensions()) {
+      locators.put(locator.getProtocolId(), locator);
+    }
+    if (locators.isEmpty()) {
+      return null;
+    }
+    return new SMTestLocator.Composite(locators);
   }
 }

@@ -18,9 +18,7 @@ package com.intellij.codeInspection.java18StreamApi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -42,6 +40,11 @@ public class GuavaFluentIterableMethodConverters {
   private static final Map<String, FluentIterableMethodTransformer> METHOD_INDEX = new HashMap<String, FluentIterableMethodTransformer>();
   private static final Map<String, String> TO_OTHER_COLLECTION_METHODS = new HashMap<String, String>();
   private static final Set<String> STOP_METHODS = new HashSet<String>();
+  private final PsiElementFactory myElementFactory;
+
+  public GuavaFluentIterableMethodConverters(PsiElementFactory elementFactory) {
+    myElementFactory = elementFactory;
+  }
 
   static {
     METHOD_INDEX.put("allMatch", new FluentIterableMethodTransformer.OneParameterMethodTransformer(StreamApiConstants.ALL_MATCH + "(%s)", true));
@@ -86,52 +89,44 @@ public class GuavaFluentIterableMethodConverters {
     return STOP_METHODS.contains(methodName);
   }
 
-  public static void convert(final PsiLocalVariable localVariable,
-                             final PsiElementFactory elementFactory,
-                             final JavaCodeStyleManager codeStyleManager) {
+  public PsiLocalVariable convert(final PsiLocalVariable localVariable) {
     final PsiTypeElement typeElement = localVariable.getTypeElement();
     final PsiReferenceParameterList generics = PsiTreeUtil.findChildOfType(typeElement, PsiReferenceParameterList.class);
-    typeElement.replace(elementFactory.createTypeElementFromText(
+    typeElement.replace(myElementFactory.createTypeElementFromText(
       StreamApiConstants.JAVA_UTIL_STREAM_STREAM + (generics == null ? "" : generics.getText()), null));
 
     final PsiExpression initializer = localVariable.getInitializer();
     if (initializer != null) {
-      PsiMethodCallExpression initializerMethodCall = (PsiMethodCallExpression)initializer;
-      convertMethodCallDeep(elementFactory, initializerMethodCall);
+      convertMethodCallDeep((PsiMethodCallExpression)initializer);
     }
-    codeStyleManager.shortenClassReferences(localVariable);
+    return localVariable;
   }
 
-  public static void convert(PsiExpression expression,
-                             final PsiElementFactory elementFactory,
-                             final JavaCodeStyleManager codeStyleManager) {
+  public PsiElement convert(PsiExpression expression) {
     if (expression instanceof PsiReferenceExpression) {
       final PsiElement expressionParent = expression.getParent();
       if (expressionParent instanceof PsiReturnStatement || isIterableMethodParameter(expressionParent, expression)) {
-        expression = (PsiExpression)expression.replace(
-          elementFactory.createExpressionFromText(expression.getText() + ".collect(java.util.stream.Collectors.toList())", null));
-        codeStyleManager.shortenClassReferences(expression);
+        return addCollectionToList(expression);
       }
-      return;
+      return null;
     }
     final PsiMethodCallExpression parentMethodCall = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
     if (parentMethodCall != null && parentMethodCall.getMethodExpression().getQualifierExpression() == expression) {
       final PsiMethod seqTailMethod = parentMethodCall.resolveMethod();
       if (seqTailMethod == null) {
-        return;
+        return null;
       }
       final PsiClass seqTailMethodClass = seqTailMethod.getContainingClass();
       if (seqTailMethodClass != null && GuavaFluentIterableInspection.GUAVA_OPTIONAL.equals(seqTailMethodClass.getQualifiedName())) {
-        final PsiMethodCallExpression newParentMethodCall =
-          GuavaOptionalConverter.convertGuavaOptionalToJava(parentMethodCall, elementFactory);
+        final PsiMethodCallExpression newParentMethodCall = GuavaOptionalConverter.convertGuavaOptionalToJava(parentMethodCall, myElementFactory);
         expression = newParentMethodCall.getMethodExpression().getQualifierExpression();
       }
     }
     if (expression instanceof PsiMethodCallExpression) {
-      expression = convertMethodCallDeep(elementFactory, (PsiMethodCallExpression)expression);
+      expression = convertMethodCallDeep((PsiMethodCallExpression)expression);
     }
     if (expression == null) {
-      return;
+      return null;
     }
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpressionList) {
@@ -142,26 +137,26 @@ public class GuavaFluentIterableMethodConverters {
       final PsiMethod method = methodCall.resolveMethod();
       LOG.assertTrue(method != null);
       final PsiType parameterType = method.getParameterList().getParameters()[index].getType();
-      expression = addCollectToListIfNeed(expression, parameterType, elementFactory);
-    } else if (parent instanceof PsiReturnStatement) {
+      return addCollectToListIfNeed(expression, parameterType);
+    }
+    else if (parent instanceof PsiReturnStatement) {
       final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
       LOG.assertTrue(containingMethod != null);
       final PsiType returnType = containingMethod.getReturnType();
-      expression = addCollectToListIfNeed(expression, returnType, elementFactory);
-    }
-    codeStyleManager.shortenClassReferences(expression);
-  }
-
-  private static PsiExpression addCollectToListIfNeed(PsiExpression expression, PsiType type, PsiElementFactory elementFactory) {
-    if (type instanceof PsiClassType) {
-      PsiClass resolvedParamClass = ((PsiClassType)type).resolve();
-      if (resolvedParamClass != null && CommonClassNames.JAVA_LANG_ITERABLE.equals(resolvedParamClass.getQualifiedName())) {
-        final PsiExpression newExpression =
-          elementFactory.createExpressionFromText(expression.getText() + ".collect(java.util.stream.Collectors.toList())", null);
-        return (PsiExpression) expression.replace(newExpression);
-      }
+      return addCollectToListIfNeed(expression, returnType);
     }
     return expression;
+  }
+
+  private PsiExpression addCollectToListIfNeed(PsiExpression expression, PsiType type) {
+    if (type instanceof PsiClassType && ((PsiClassType)type).rawType().equalsToText(CommonClassNames.JAVA_LANG_ITERABLE)) {
+      return (PsiExpression)addCollectionToList(expression);
+    }
+    return expression;
+  }
+
+  private PsiElement addCollectionToList(PsiElement expression) {
+    return expression.replace(myElementFactory.createExpressionFromText(expression.getText() + ".collect(java.util.stream.Collectors.toList())", null));
   }
 
   private static boolean isIterableMethodParameter(PsiElement listExpression, PsiExpression parameterExpression) {
@@ -172,28 +167,38 @@ public class GuavaFluentIterableMethodConverters {
       return false;
     }
     final Project project = parameterExpression.getProject();
-    final PsiClass fluentIterable = JavaPsiFacade.getInstance(project)
-      .findClass(GuavaFluentIterableInspection.GUAVA_FLUENT_ITERABLE, GlobalSearchScope.allScope(project));
+    final PsiClass fluentIterable = JavaPsiFacade.getInstance(project).findClass(GuavaFluentIterableInspection.GUAVA_FLUENT_ITERABLE, 
+                                                                                 listExpression.getResolveScope());
     return GuavaFluentIterableInspection.isMethodWithParamAcceptsConversion((PsiMethodCallExpression)listExpression.getParent(), parameterExpression, fluentIterable);
   }
 
   @Nullable
-  private static PsiMethodCallExpression convertMethodCallDeep(PsiElementFactory elementFactory,
-                                                               @NotNull PsiMethodCallExpression methodCall) {
+  private PsiMethodCallExpression convertMethodCallDeep(@NotNull PsiMethodCallExpression methodCall) {
     PsiMethodCallExpression newMethodCall = methodCall;
     PsiMethodCallExpression returnCall = null;
     while (true) {
-      final Pair<PsiMethodCallExpression, Boolean> converted = convertMethodCall(elementFactory, newMethodCall);
-      if (converted.getSecond()) {
+      final PsiReferenceExpression methodExpression = newMethodCall.getMethodExpression();
+      final String name = methodExpression.getReferenceName();
+      PsiMethodCallExpression converted = convertFromMethodCall(newMethodCall);
+      if (converted != null) {
         return returnCall;
       }
+      if (TO_OTHER_COLLECTION_METHODS.containsKey(name)) {
+        converted = convertToCollection(newMethodCall, name);
+      }
+      else {
+        final FluentIterableMethodTransformer transformer = METHOD_INDEX.get(name);
+        LOG.assertTrue(transformer != null, name);
+        converted = transformer.transform(newMethodCall, myElementFactory);
+      }
+      if (converted == null) {
+        return returnCall;
+      }
+
       if (returnCall == null) {
-        returnCall = converted.getFirst();
+        returnCall = converted;
       }
-      if (converted.getFirst() == null) {
-        return returnCall;
-      }
-      newMethodCall = converted.getFirst();
+      newMethodCall = converted;
       final PsiExpression expression = newMethodCall.getMethodExpression().getQualifierExpression();
       if (expression instanceof PsiMethodCallExpression) {
         newMethodCall = (PsiMethodCallExpression)expression;
@@ -203,42 +208,30 @@ public class GuavaFluentIterableMethodConverters {
       }
     }
   }
-
-  public static Pair<PsiMethodCallExpression, Boolean> convertMethodCall(PsiElementFactory elementFactory, PsiMethodCallExpression methodCall) {
-    final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
-    final String name = methodExpression.getReferenceName();
-    if (TO_OTHER_COLLECTION_METHODS.containsKey(name)) {
-      return Pair.create(convertToCollection(methodCall, name, elementFactory), false);
-    }
-    else if (GuavaFluentIterableInspection.FLUENT_ITERABLE_FROM.equals(name)) {
+  
+  private PsiMethodCallExpression convertFromMethodCall(PsiMethodCallExpression methodCall) {
+    if (GuavaFluentIterableInspection.FLUENT_ITERABLE_FROM.equals(methodCall.getMethodExpression().getReferenceName())) {
       final PsiExpression[] argumentList = methodCall.getArgumentList().getExpressions();
       LOG.assertTrue(argumentList.length == 1);
       final PsiExpression expression = argumentList[0];
 
       final PsiType type = expression.getType();
       LOG.assertTrue(type instanceof PsiClassType);
-      final PsiClass resolvedClass = ((PsiClassType)type).resolve();
       final String newExpressionText;
-      if (InheritanceUtil.isInheritor(resolvedClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+      if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION)) {
         newExpressionText = expression.getText() + ".stream()";
       } else {
         newExpressionText = "java.util.stream.StreamSupport.stream(" + expression.getText() + ".spliterator(), false)";
       }
-      return Pair.create((PsiMethodCallExpression)methodCall.replace(elementFactory.createExpressionFromText(newExpressionText, null)), true);
+      return (PsiMethodCallExpression)methodCall.replace(myElementFactory.createExpressionFromText(newExpressionText, null));
     }
-    else {
-      final FluentIterableMethodTransformer transformer = METHOD_INDEX.get(name);
-      LOG.assertTrue(transformer != null, name);
-      final PsiMethodCallExpression transformedExpression = transformer.transform(methodCall, elementFactory);
-      return Pair.create(transformedExpression, false);
-    }
+    return null;
   }
 
-  private static PsiMethodCallExpression convertToCollection(final PsiMethodCallExpression methodCall,
-                                                             final String methodName,
-                                                             final PsiElementFactory elementFactory) {
+  private PsiMethodCallExpression convertToCollection(final PsiMethodCallExpression methodCall,
+                                                      final String methodName) {
     final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
-    assert expressions.length < 2;
+    LOG.assertTrue(expressions.length < 2);
     String template = TO_OTHER_COLLECTION_METHODS.get(methodName);
     if (expressions.length == 1) {
       template = String.format(template, expressions[0].getText());
@@ -247,8 +240,7 @@ public class GuavaFluentIterableMethodConverters {
     if (qualifier == null) {
       return null;
     }
-    final String text = qualifier.getText() + "." + template;
-    final PsiExpression expression = elementFactory.createExpressionFromText(text, null);
+    final PsiExpression expression = myElementFactory.createExpressionFromText(qualifier.getText() + "." + template, null);
     return (PsiMethodCallExpression)methodCall.replace(expression);
   }
 }

@@ -9,37 +9,29 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.jetbrains.edu.EduAnswerPlaceholderPainter;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.io.File;
 
 public class StudyRefreshTaskFileAction extends DumbAwareAction {
   public static final String ACTION_ID = "RefreshTaskAction";
@@ -75,6 +67,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     final Editor editor = studyState.getEditor();
     final TaskFile taskFile = studyState.getTaskFile();
     if (!resetTaskFile(editor.getDocument(), project, taskFile, studyState.getVirtualFile().getName())) {
+      Messages.showInfoMessage("The initial text of task file is unavailable", "Failed to Refresh Task File");
       return;
     }
     WolfTheProblemSolver.getInstance(project).clearProblems(studyState.getVirtualFile());
@@ -96,7 +89,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
                                        @NotNull final Project project,
                                        TaskFile taskFile,
                                        String name) {
-    if (!resetDocument(project, document, taskFile, name)) {
+    if (!resetDocument(document, taskFile, name)) {
       return false;
     }
     resetAnswerPlaceholders(taskFile, project);
@@ -124,31 +117,16 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
   }
 
 
-  private static boolean resetDocument(@NotNull final Project project,
-                                       @NotNull final Document document,
+  private static boolean resetDocument(@NotNull final Document document,
                                        @NotNull final TaskFile taskFile,
                                        String fileName) {
-    StudyUtils.deleteGuardedBlocks(document);
-    taskFile.setTrackChanges(false);
-    clearDocument(document);
-    Task task = taskFile.getTask();
-    String lessonDir = EduNames.LESSON + String.valueOf(task.getLesson().getIndex());
-    String taskDir = EduNames.TASK + String.valueOf(task.getIndex());
-    Course course = task.getLesson().getCourse();
-    File resourceFile = new File(course.getCourseDirectory());
-    if (!resourceFile.exists()) {
-      showBalloon(project, "Course was deleted", MessageType.ERROR);
-      return false;
-    }
-    String patternPath = FileUtil.join(resourceFile.getPath(), lessonDir, taskDir, fileName);
-    VirtualFile patternFile = VfsUtil.findFileByIoFile(new File(patternPath), true);
-    if (patternFile == null) {
-      return false;
-    }
-    final Document patternDocument = FileDocumentManager.getInstance().getDocument(patternFile);
+    final Document patternDocument = StudyUtils.getPatternDocument(taskFile, fileName);
     if (patternDocument == null) {
       return false;
     }
+    StudyUtils.deleteGuardedBlocks(document);
+    taskFile.setTrackChanges(false);
+    clearDocument(document);
     document.setText(patternDocument.getCharsSequence());
     taskFile.setTrackChanges(true);
     return true;

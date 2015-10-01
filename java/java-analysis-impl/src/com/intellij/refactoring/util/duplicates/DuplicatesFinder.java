@@ -376,10 +376,13 @@ public class DuplicatesFinder {
         final PsiClass patternClass = RefactoringChangeUtil.getThisClass(pattern);
         final PsiClass candidateClass = RefactoringChangeUtil.getThisClass(candidate);
         if (resolveResult1 == resolveResult2 &&
-            resolveResult1 instanceof PsiMember &&
-           !InheritanceUtil.isInheritorOrSelf(candidateClass, patternClass, true) &&
-            InheritanceUtil.isInheritorOrSelf(candidateClass, ((PsiMember)resolveResult1).getContainingClass(), true)) {
-          return false;
+            resolveResult1 instanceof PsiMember) {
+          final PsiClass containingClass = ((PsiMember)resolveResult1).getContainingClass();
+          if (!InheritanceUtil.isInheritorOrSelf(candidateClass, patternClass, true) &&
+              InheritanceUtil.isInheritorOrSelf(candidateClass, containingClass, true) &&
+              InheritanceUtil.isInheritorOrSelf(patternClass, containingClass, true)) {
+            return false;
+          }
         }
       }
 

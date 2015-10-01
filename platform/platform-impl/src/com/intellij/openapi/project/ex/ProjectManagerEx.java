@@ -18,9 +18,7 @@ package com.intellij.openapi.project.ex;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -40,7 +38,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public abstract Project newProject(final String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
   @Nullable
-  public abstract Project loadProject(@NotNull String filePath) throws IOException, JDOMException, InvalidDataException;
+  public abstract Project loadProject(@NotNull String filePath) throws IOException;
 
   public abstract boolean openProject(@NotNull Project project);
 

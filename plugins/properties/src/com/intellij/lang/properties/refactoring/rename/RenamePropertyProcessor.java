@@ -16,12 +16,15 @@
 package com.intellij.lang.properties.refactoring.rename;
 
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.refactoring.PropertiesRefactoringSettings;
+import com.intellij.lang.properties.xml.XmlProperty;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
@@ -34,18 +37,18 @@ import java.util.Map;
 
 public class RenamePropertyProcessor extends RenamePsiElementProcessor {
   public boolean canProcessElement(@NotNull final PsiElement element) {
-    return element instanceof IProperty;
+    return element instanceof IProperty ||
+           (element instanceof PomTargetPsiElement && ((PomTargetPsiElement)element).getTarget() instanceof XmlProperty);
   }
 
   public void prepareRenaming(final PsiElement element, final String newName,
                               final Map<PsiElement, String> allRenames) {
-    final Project project = element.getProject();
-    ResourceBundle resourceBundle = ((IProperty) element).getPropertiesFile().getResourceBundle();
+    ResourceBundle resourceBundle = PropertiesImplUtil.getProperty(element).getPropertiesFile().getResourceBundle();
 
     final Map<PsiElement, String> allRenamesCopy = new LinkedHashMap<PsiElement, String>(allRenames);
     allRenames.clear();
     for (final Map.Entry<PsiElement, String> e : allRenamesCopy.entrySet()) {
-      final IProperty property = (IProperty) e.getKey();
+      final IProperty property = PropertiesImplUtil.getProperty(e.getKey());
       final List<IProperty> properties = PropertiesUtil.findAllProperties(resourceBundle, property.getUnescapedKey());
       for (final IProperty toRename : properties) {
         allRenames.put(toRename.getPsiElement(), e.getValue());

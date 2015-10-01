@@ -45,6 +45,10 @@ public class MavenModuleResourceConfiguration {
   @Tag("manifest")
   public String manifest;
 
+  @Nullable
+  @Tag("classpath")
+  public String classpath;
+
   @NotNull
   @Tag("delimiters-pattern")
   public String delimitersPattern;
@@ -110,6 +114,7 @@ public class MavenModuleResourceConfiguration {
     result = 31 * result + (parentId != null ? parentId.hashCode() : 0);
     result = 31 * result + directory.hashCode();
     result = 31 * result + (manifest != null ? manifest.hashCode() : 0);
+    result = 31 * result + (classpath != null ? classpath.hashCode() : 0);
     result = 31 * result + delimitersPattern.hashCode();
     result = 31 * result + modelMap.hashCode();
     result = 31 * result + properties.hashCode();

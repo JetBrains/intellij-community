@@ -18,10 +18,7 @@ package org.zmlx.hg4idea.log;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.RefGroup;
-import com.intellij.vcs.log.VcsLogRefManager;
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.VcsRefType;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,25 +30,19 @@ import java.util.Comparator;
 import java.util.List;
 
 public class HgRefManager implements VcsLogRefManager {
-
-  private static final Color TIP_COLOR = new JBColor(new Color(0xf1ef9e), new Color(113, 111, 64));
-  private static final Color HEAD_COLOR = new JBColor(new Color(0xF10FA9), new Color(0xF10FA9).darker());
-  private static final Color BRANCH_COLOR = new JBColor(new Color(0x75eec7), new Color(0x0D6D4F));
   private static final Color CLOSED_BRANCH_COLOR = new JBColor(new Color(0xee7f8a), new Color(0xee7f8a).darker());
-  private static final Color BOOKMARK_COLOR = new JBColor(new Color(0xbcbcfc), new Color(0xbcbcfc).darker().darker());
-  private static final Color TAG_COLOR = JBColor.WHITE;
   private static final Color LOCAL_TAG_COLOR = JBColor.CYAN;
   private static final Color MQ_TAG_COLOR = new JBColor(new Color(0x1764ff), new Color(0x1764ff).darker());
 
-  public static final VcsRefType TIP = new SimpleRefType(true, TIP_COLOR);
-  public static final VcsRefType HEAD = new SimpleRefType(true, HEAD_COLOR);
-  public static final VcsRefType BRANCH = new SimpleRefType(true, BRANCH_COLOR);
+  public static final VcsRefType TIP = new SimpleRefType(true, VcsLogStandardColors.Refs.TIP);
+  public static final VcsRefType HEAD = new SimpleRefType(true, VcsLogStandardColors.Refs.LEAF);
+  public static final VcsRefType BRANCH = new SimpleRefType(true, VcsLogStandardColors.Refs.BRANCH);
   public static final VcsRefType CLOSED_BRANCH = new SimpleRefType(false, CLOSED_BRANCH_COLOR);
-  public static final VcsRefType BOOKMARK = new SimpleRefType(true, BOOKMARK_COLOR);
-  public static final VcsRefType TAG = new SimpleRefType(false, TAG_COLOR);
+  public static final VcsRefType BOOKMARK = new SimpleRefType(true, VcsLogStandardColors.Refs.BRANCH_REF);
+  public static final VcsRefType TAG = new SimpleRefType(false, VcsLogStandardColors.Refs.TAG);
   public static final VcsRefType LOCAL_TAG = new SimpleRefType(false, LOCAL_TAG_COLOR);
   public static final VcsRefType MQ_APPLIED_TAG = new SimpleRefType(false, MQ_TAG_COLOR);
-
+  
   // first has the highest priority
   private static final List<VcsRefType> REF_TYPE_PRIORITIES = Arrays.asList(TIP, HEAD, BRANCH, BOOKMARK, TAG);
 

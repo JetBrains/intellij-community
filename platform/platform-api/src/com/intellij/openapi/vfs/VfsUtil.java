@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.io.URLUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -277,13 +278,17 @@ public class VfsUtil extends VfsUtilCore {
   public static URI toUri(@NotNull VirtualFile file) {
     String path = file.getPath();
     try {
+      String protocol = file.getFileSystem().getProtocol();
       if (file.isInLocalFileSystem()) {
         if (SystemInfo.isWindows && path.charAt(0) != '/') {
           path = '/' + path;
         }
-        return new URI(file.getFileSystem().getProtocol(), "", path, null, null);
+        return new URI(protocol, "", path, null, null);
       }
-      return new URI(file.getFileSystem().getProtocol(), path, null);
+      if (URLUtil.HTTP_PROTOCOL.equals(protocol)) {
+        return new URI(URLUtil.HTTP_PROTOCOL + URLUtil.SCHEME_SEPARATOR + path);
+      }
+      return new URI(protocol, path, null);
     }
     catch (URISyntaxException e) {
       throw new IllegalArgumentException(e);

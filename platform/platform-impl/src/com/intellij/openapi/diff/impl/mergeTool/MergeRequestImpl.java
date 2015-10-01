@@ -100,6 +100,13 @@ public class MergeRequestImpl extends MergeRequest {
     myDiffContents[0] = left;
     myDiffContents[1] = base;
     myDiffContents[2] = right;
+
+    if (MergeTool.LOG.isDebugEnabled()) {
+      VirtualFile file = base.getFile();
+      MergeTool.LOG.debug(new Throwable(base.getClass() + " - writable: " + base.getDocument().isWritable() + ", contentType: " +
+                                        base.getContentType() + ", file: " + (file != null ? "valid - " + file.isValid() : "null") +
+                                        ", presentation: " + myOkButtonPresentation + "-" + myCancelButtonPresentation));
+    }
   }
 
   @Override

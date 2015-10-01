@@ -58,12 +58,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -439,12 +441,17 @@ public class GroovyBlockGenerator {
   private boolean shouldSkip(boolean classLevel, PsiElement psi) {
     if (psi instanceof PsiComment) {
       PsiElement prev = psi.getPrevSibling();
-      if (prev != null && prev.getNode().getElementType() != GroovyTokenTypes.mNLS || classLevel && !fieldGroupEnded(psi)) {
-        return true;
+      if (prev != null) {
+        if (!classLevel || !PsiUtil.isNewLine(prev) || !fieldGroupEnded(psi)) {
+          return true;
+        }
       }
     }
-    if (psi.getParent() instanceof GrLabeledStatement && !(psi instanceof GrStatement)) {
-      return true;
+    if (psi.getParent() instanceof GrLabeledStatement) {
+      if (psi instanceof GrLiteral && GrStringUtil.isStringLiteral((GrLiteral)psi) //skip string comments at the beginning of spock table
+          || !(psi instanceof GrStatement)) {
+        return true;
+      }
     }
     return false;
   }

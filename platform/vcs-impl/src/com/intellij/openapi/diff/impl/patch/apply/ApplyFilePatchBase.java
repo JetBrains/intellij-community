@@ -45,7 +45,8 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
                       final ApplyPatchContext context,
                       final Project project,
                       FilePath pathBeforeRename,
-                      Getter<CharSequence> baseContents, CommitContext commitContext) throws IOException {
+                      Getter<CharSequence> baseContents,
+                      CommitContext commitContext) throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("apply patch called for : " + fileToPatch.getPath());
     }

@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection.java18StreamApi;
 
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -61,46 +63,45 @@ public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLo
     if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    return new PsiElementVisitor() {
+    return new JavaElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
-        if (element instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
-          String qName = methodCallExpression.getMethodExpression().getQualifiedName();
-          if (qName == null) {
-            return;
+      public void visitMethodCallExpression(PsiMethodCallExpression methodCallExpression) {
+        String qName = methodCallExpression.getMethodExpression().getQualifiedName();
+        if (qName == null) {
+          return;
+        }
+        qName = StringUtil.getShortName(qName);
+        final Collection<StaticPseudoFunctionalStyleMethodOptions.PipelineElement> handlerInfos = myOptions.findElementsByMethodName(qName);
+        if (handlerInfos.isEmpty()) {
+          return;
+        }
+        final PsiMethod method = methodCallExpression.resolveMethod();
+        if (method == null) {
+          return;
+        }
+        final PsiClass aClass = method.getContainingClass();
+        if (aClass == null) {
+          return;
+        }
+        final String classQualifiedName = aClass.getQualifiedName();
+        if (classQualifiedName == null) {
+          return;
+        }
+        StaticPseudoFunctionalStyleMethodOptions.PipelineElement suitableHandler = null;
+        for (StaticPseudoFunctionalStyleMethodOptions.PipelineElement h : handlerInfos) {
+          if (h.getHandlerClass().equals(classQualifiedName)) {
+            suitableHandler = h;
+            break;
           }
-          qName = StringUtil.getShortName(qName);
-          final Collection<StaticPseudoFunctionalStyleMethodOptions.PipelineElement> handlerInfos = myOptions.findElementsByMethodName(qName);
-          if (handlerInfos.isEmpty()) {
-            return;
-          }
-          final PsiMethod method = methodCallExpression.resolveMethod();
-          if (method == null) {
-            return;
-          }
-          final PsiClass aClass = method.getContainingClass();
-          if (aClass == null) {
-            return;
-          }
-          final String classQualifiedName = aClass.getQualifiedName();
-          if (classQualifiedName == null) {
-            return;
-          }
-          StaticPseudoFunctionalStyleMethodOptions.PipelineElement suitableHandler = null;
-          for (StaticPseudoFunctionalStyleMethodOptions.PipelineElement h : handlerInfos) {
-            if (h.getHandlerClass().equals(classQualifiedName)) {
-              suitableHandler = h;
-              break;
-            }
-          }
-          if (suitableHandler == null) {
-            return;
-          }
-          final PseudoLambdaReplaceTemplate.ValidationInfo validationInfo = suitableHandler.getTemplate().validate(methodCallExpression);
-          if (validationInfo != null) {
-            holder.registerProblem(methodCallExpression.getMethodExpression(), "Pseudo functional style code", new ReplacePseudoLambdaWithLambda(suitableHandler));
-          }
+        }
+        if (suitableHandler == null) {
+          return;
+        }
+        final PseudoLambdaReplaceTemplate.ValidationInfo validationInfo = suitableHandler.getTemplate().validate(methodCallExpression);
+        if (validationInfo != null) {
+          holder.registerProblem(methodCallExpression.getMethodExpression(),
+                                 "Pseudo functional style code",
+                                 new ReplacePseudoLambdaWithLambda(suitableHandler));
         }
       }
     };
@@ -128,9 +129,16 @@ public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLo
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
-      LOG.assertTrue(expression != null);
-      myHandler.getTemplate().convertToStream(expression, null, false);
+      final PsiElement psiElement = descriptor.getPsiElement();
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(psiElement)) {
+        return;
+      }
+      if (psiElement instanceof PsiReferenceExpression) {
+        PsiElement parent = psiElement.getParent();
+        if (parent instanceof PsiMethodCallExpression) {
+          myHandler.getTemplate().convertToStream((PsiMethodCallExpression)parent, null, false);
+        }
+      }
     }
   }
 }

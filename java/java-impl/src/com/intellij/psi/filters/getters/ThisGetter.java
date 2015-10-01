@@ -15,9 +15,7 @@
  */
 package com.intellij.psi.filters.getters;
 
-import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ContextGetter;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -30,11 +28,7 @@ import java.util.List;
  * Time: 14:02:59
  * To change this template use Options | File Templates.
  */
-public class ThisGetter implements ContextGetter{
-  @Override
-  public Object[] get(PsiElement context, CompletionContext completionContext) {
-    return getThisExpressionVariants(context).toArray();
-  }
+public class ThisGetter {
 
   public static List<PsiExpression> getThisExpressionVariants(PsiElement context) {
     boolean first = true;

@@ -35,8 +35,13 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
     myItems = new ArrayList<T>(items);
   }
 
+  @SuppressWarnings("UnusedParameters")
+  protected CollectionListModel(@NotNull List<T> items, boolean useListAsIs) {
+    myItems = items;
+  }
+
   public CollectionListModel(@NotNull final List<? extends T> items) {
-    this((Collection<? extends T>)items);
+    myItems = new ArrayList<T>(items);
   }
 
   public CollectionListModel(final T... items) {

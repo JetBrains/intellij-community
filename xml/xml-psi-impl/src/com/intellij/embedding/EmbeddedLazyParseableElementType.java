@@ -41,8 +41,12 @@ public class EmbeddedLazyParseableElementType extends ILazyParseableElementType 
   }
 
   public ASTNode parseAndGetTree(@NotNull PsiBuilder builder) {
-    final PsiParser parser = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage()).createParser(builder.getProject());
+    final PsiParser parser = getParser(builder);
     return parser.parse(this, builder);
+  }
+
+  protected PsiParser getParser(@NotNull PsiBuilder builder) {
+    return LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage()).createParser(builder.getProject());
   }
 
   @Override

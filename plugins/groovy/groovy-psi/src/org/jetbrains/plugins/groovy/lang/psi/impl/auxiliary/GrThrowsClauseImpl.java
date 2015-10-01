@@ -23,26 +23,36 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.light.LightClassReference;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrReferenceListImpl;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 03.04.2007
  */
-public class GrThrowsClauseImpl extends GroovyPsiElementImpl implements GrThrowsClause {
+public class GrThrowsClauseImpl extends GrReferenceListImpl implements GrThrowsClause {
+  public GrThrowsClauseImpl(GrReferenceListStub stub) {
+    super(stub, GroovyElementTypes.THROW_CLAUSE);
+  }
+
+  @Override
+  protected IElementType getKeywordType() {
+    return GroovyTokenTypes.kTHROWS;
+  }
+
   public GrThrowsClauseImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -73,23 +83,6 @@ public class GrThrowsClauseImpl extends GroovyPsiElementImpl implements GrThrows
       }
     }
     return result.toArray(new PsiJavaCodeReferenceElement[result.size()]);
-  }
-
-  @Override
-  @NotNull
-  public PsiClassType[] getReferencedTypes() {
-    List<GrCodeReferenceElement> refs = new ArrayList<GrCodeReferenceElement>();
-    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (cur instanceof GrCodeReferenceElement) refs.add((GrCodeReferenceElement)cur);
-    }
-    if (refs.isEmpty()) return PsiClassType.EMPTY_ARRAY;
-
-    PsiClassType[] result = new PsiClassType[refs.size()];
-    for (int i = 0; i < result.length; i++) {
-      result[i] = new GrClassReferenceType(refs.get(i));
-    }
-
-    return result;
   }
 
   @Override

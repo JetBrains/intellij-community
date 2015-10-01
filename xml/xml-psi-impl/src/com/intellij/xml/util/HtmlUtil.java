@@ -323,7 +323,7 @@ public class HtmlUtil {
       final String tagName = tokenizer.nextToken();
       if (tagName.length() == 0) continue;
 
-      descriptors[index++] = new XmlElementDescriptorImpl(context instanceof XmlTag ? (XmlTag)context : null) {
+      descriptors[index++] = new XmlElementDescriptorImpl(null) {
         @Override
         public String getName(PsiElement context) {
           return tagName;

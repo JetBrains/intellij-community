@@ -18,9 +18,7 @@
     </layout>
   </appender>
 
-  <appender name="FILE" class="org.apache.log4j.RollingFileAppender">
-    <param name="MaxFileSize" value="1Mb"/>
-    <param name="MaxBackupIndex" value="12"/>
+  <appender name="FILE" class="org.apache.log4j.FileAppender">
     <param name="file" value="$LOG_DIR$/idea.log"/>
     <layout class="org.apache.log4j.PatternLayout">
       <param name="ConversionPattern" value="%d [%7r] %6p - %30.30c - %m \n"/>

@@ -63,7 +63,7 @@ public class CommandLineWrapperUtil {
     }
     attributes.put(Attributes.Name.CLASS_PATH, classPathAttribute);
 
-    File jarFile = FileUtil.createTempFile("classpath", ".jar");
+    File jarFile = FileUtil.createTempFile("classpath", ".jar", true);
     ZipOutputStream jarPlugin = null;
     try {
       BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(jarFile));

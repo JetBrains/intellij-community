@@ -15,14 +15,13 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.configurationStore.StateStorageManagerImpl
+import com.intellij.configurationStore.StreamProvider
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.StorageUtil
-import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -106,7 +105,7 @@ class IcsManager(dir: File) {
 
   volatile var repositoryActive = false
 
-  private val autoSyncManager = AutoSyncManager(this)
+  val autoSyncManager = AutoSyncManager(this)
   private val syncManager = SyncManager(this, autoSyncManager)
 
   private fun scheduleCommit() {
@@ -126,32 +125,19 @@ class IcsManager(dir: File) {
     }
   }
 
-  private fun registerProjectLevelProviders(project: Project) {
-    val storageManager = project.stateStore.getStateStorageManager()
-    val projectId = storageManager.getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED).getState(ProjectId(), "IcsProjectId", javaClass<ProjectId>(), null)
-    if (projectId == null || projectId.uid == null) {
-      // not mapped, if user wants, he can map explicitly, we don't suggest
-      // we cannot suggest "map to ICS" for any project that user opens, it will be annoying
-      return
-    }
+//  private inner class ProjectLevelProvider(projectId: String) : IcsStreamProvider(projectId) {
+//    override fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = !isProjectOrModuleFile(fileSpec)
+//
+//    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
+//      if (isProjectOrModuleFile(fileSpec)) {
+//        // applicable only if file was committed to Settings Server explicitly
+//        return repositoryManager.has(buildPath(fileSpec, roamingType, this.projectId))
+//      }
+//      return settings.shareProjectWorkspace || fileSpec != StoragePathMacros.WORKSPACE_FILE
+//    }
+//  }
 
-    storageManager.setStreamProvider(ProjectLevelProvider(projectId.uid!!))
-    // updateStoragesFromStreamProvider(storageManager, storageManager.getStorageFileNames())
-  }
-
-  private inner class ProjectLevelProvider(projectId: String) : IcsStreamProvider(projectId) {
-    override fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = !StorageUtil.isProjectOrModuleFile(fileSpec)
-
-    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
-      if (StorageUtil.isProjectOrModuleFile(fileSpec)) {
-        // applicable only if file was committed to Settings Server explicitly
-        return repositoryManager.has(buildPath(fileSpec, roamingType, this.projectId))
-      }
-      return settings.shareProjectWorkspace || fileSpec != StoragePathMacros.WORKSPACE_FILE
-    }
-  }
-
-  fun sync(syncType: SyncType, project: Project?, localRepositoryInitializer: (() -> Unit)? = null) = syncManager.sync(syncType, project, localRepositoryInitializer)
+  fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null) = syncManager.sync(syncType, project, localRepositoryInitializer)
 
   private fun cancelAndDisableAutoCommit() {
     if (autoCommitEnabled) {
@@ -174,7 +160,7 @@ class IcsManager(dir: File) {
   fun beforeApplicationLoaded(application: Application) {
     repositoryActive = repositoryManager.isRepositoryExists()
 
-    application.stateStore.getStateStorageManager().setStreamProvider(ApplicationLevelProvider())
+    (application.stateStore.getStateStorageManager() as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
 
     autoSyncManager.registerListeners(application)
 
@@ -198,8 +184,6 @@ class IcsManager(dir: File) {
     override val enabled: Boolean
       get() = repositoryActive
 
-    override fun listSubFiles(fileSpec: String, roamingType: RoamingType): MutableCollection<String> = repositoryManager.listSubFileNames(buildPath(fileSpec, roamingType, null)) as MutableCollection<String>
-
     override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) {
       val fullPath = buildPath(path, roamingType, null)
 
@@ -211,25 +195,21 @@ class IcsManager(dir: File) {
       repositoryManager.processChildren(fullPath, filter, { name, input -> processor(name, input, false) })
     }
 
-    override fun saveContent(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
+    override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
       if (syncManager.writeAndDeleteProhibited) {
         throw IllegalStateException("Save is prohibited now")
       }
 
-      doSave(fileSpec, content, size, roamingType)
-
-      if (isAutoCommit(fileSpec, roamingType)) {
+      if (doSave(fileSpec, content, size, roamingType) && isAutoCommit(fileSpec, roamingType)) {
         scheduleCommit()
       }
     }
 
-    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-      repositoryManager.write(buildPath(fileSpec, roamingType, projectId), content, size)
-    }
+    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) = repositoryManager.write(buildPath(fileSpec, roamingType, projectId), content, size)
 
     protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
 
-    override fun loadContent(fileSpec: String, roamingType: RoamingType): InputStream? {
+    override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
       return repositoryManager.read(buildPath(fileSpec, roamingType, projectId))
     }
 
@@ -265,19 +245,28 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
 
     val repositoryManager = icsManager.repositoryManager
     if (repositoryManager.isRepositoryExists() && repositoryManager is GitRepositoryManager) {
-      repositoryManager.renameDirectory(linkedMapOf(
+      if (repositoryManager.renameDirectory(linkedMapOf(
         Pair("\$ROOT_CONFIG$", null),
         Pair("_mac/\$ROOT_CONFIG$", "_mac"),
         Pair("_windows/\$ROOT_CONFIG$", "_windows"),
         Pair("_linux/\$ROOT_CONFIG$", "_linux"),
         Pair("_freebsd/\$ROOT_CONFIG$", "_freebsd"),
         Pair("_unix/\$ROOT_CONFIG$", "_unix"),
-        Pair("_unknown/\$ROOT_CONFIG$", "_unknown")
-      ))
+        Pair("_unknown/\$ROOT_CONFIG$", "_unknown"),
+
+        Pair("\$APP_CONFIG$", null),
+        Pair("_mac/\$APP_CONFIG$", "_mac"),
+        Pair("_windows/\$APP_CONFIG$", "_windows"),
+        Pair("_linux/\$APP_CONFIG$", "_linux"),
+        Pair("_freebsd/\$APP_CONFIG$", "_freebsd"),
+        Pair("_unix/\$APP_CONFIG$", "_unix"),
+        Pair("_unknown/\$APP_CONFIG$", "_unknown")
+      ))) {
+        // schedule push to avoid merge conflicts
+        application.invokeLater(Runnable { icsManager.autoSyncManager.autoSync(force = true) })
+      }
     }
 
     icsManager.beforeApplicationLoaded(application)
   }
 }
-
-class NoRemoteRepositoryException(cause: Throwable) : RuntimeException(cause.getMessage(), cause)

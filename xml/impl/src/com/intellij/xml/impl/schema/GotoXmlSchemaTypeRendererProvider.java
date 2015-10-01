@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.xml.XmlAttribute;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created with IntelliJ IDEA.
@@ -31,7 +32,7 @@ import com.intellij.psi.xml.XmlAttribute;
  */
 public class GotoXmlSchemaTypeRendererProvider implements GotoTargetRendererProvider {
   @Override
-  public PsiElementListCellRenderer getRenderer(PsiElement element, GotoTargetHandler.GotoData gotoData) {
+  public PsiElementListCellRenderer getRenderer(@NotNull PsiElement element, @NotNull GotoTargetHandler.GotoData gotoData) {
     if (element instanceof XmlTagImpl) {
       if (SchemaDefinitionsSearch.isTypeElement((XmlTagImpl)element)) {
         return new MyRenderer("");

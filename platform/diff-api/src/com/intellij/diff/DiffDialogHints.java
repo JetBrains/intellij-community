@@ -32,7 +32,7 @@ public class DiffDialogHints {
   //
 
   @Nullable private final WindowWrapper.Mode myMode;
-  @Nullable private final Component myParent;
+  @Nullable private Component myParent;
 
   public DiffDialogHints(@Nullable WindowWrapper.Mode mode) {
     this(mode, null);
@@ -41,6 +41,10 @@ public class DiffDialogHints {
   public DiffDialogHints(@Nullable WindowWrapper.Mode mode, @Nullable Component parent) {
     myMode = mode;
     myParent = parent;
+  }
+
+  public void setParent(@Nullable Component value) {
+    myParent = value;
   }
 
   //

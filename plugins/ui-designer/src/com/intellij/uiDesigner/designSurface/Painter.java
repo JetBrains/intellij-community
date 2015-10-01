@@ -15,6 +15,8 @@
  */
 package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.SwingProperties;
@@ -457,7 +459,8 @@ public final class Painter {
       Graphics2D g2d = (Graphics2D)g;
       g2d.setColor(PlatformColors.BLUE);
       g2d.fillRect(0, 0, (int)stringBounds.getWidth(), (int)stringBounds.getHeight());
-      g2d.setColor(Color.WHITE);
+      g2d.setColor(JBColor.WHITE);
+      UISettings.setupAntialiasing(g);
       g.drawString(tagBuilder.toString(), 0, g.getFontMetrics().getAscent());
     }
   }

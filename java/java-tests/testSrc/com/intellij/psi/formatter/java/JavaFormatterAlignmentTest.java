@@ -48,7 +48,42 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "        .foo();"
     );
   }
+  
+  public void testChainedMethodWithComments() throws Exception {
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    doMethodTest("AAAAA.b()\n" +
+                 ".c() // comment after line\n" +
+                 ".d()\n" +
+                 ".e();",
 
+                 "AAAAA.b()\n" +
+                 "     .c() // comment after line\n" +
+                 "     .d()\n" +
+                 "     .e();");
+  }
+
+  public void testChainedMethodWithBlockComment() {
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    doTextTest("class X {\n" +
+               "    public void test() {\n" +
+               "        AAAAAA.b()\n" +
+               ".c()\n" +
+               ".d()\n" +
+               "          /* simple block comment */\n" +
+               ".e();\n" +
+               "    }\n" +
+               "}",
+               "class X {\n" +
+               "    public void test() {\n" +
+               "        AAAAAA.b()\n" +
+               "              .c()\n" +
+               "              .d()\n" +
+               "          /* simple block comment */\n" +
+               "              .e();\n" +
+               "    }\n" +
+               "}");
+  }
+  
   public void testMultipleMethodAnnotationsCommentedInTheMiddle() throws Exception {
     getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 1;
     getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
@@ -256,7 +291,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
-  
+
   public void testAnnotatedAndNonAnnotatedFieldsInColumnsAlignment() {
     // Inspired by IDEA-60237
 
@@ -281,10 +316,10 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
-  
+
   public void testAlignThrowsKeyword() throws Exception {
     // Inspired by IDEA-63820
-    
+
     getSettings().ALIGN_THROWS_KEYWORD = true;
     doClassTest(
       "public void test()\n" +
@@ -655,6 +690,82 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "        String sssss = 3;\n" +
       "    }\n" +
       "}"
+    );
+  }
+
+  public void test_Align_ConsecutiveVars_InsideIfBlock() {
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    doMethodTest(
+      "if (a > 2) {\n" +
+      "int a=2;\n" +
+      "String name=\"Yarik\";\n" +
+      "}\n",
+      "if (a > 2) {\n" +
+      "    int    a    = 2;\n" +
+      "    String name = \"Yarik\";\n" +
+      "}\n"
+    );
+  }
+
+  public void test_Align_ConsecutiveVars_InsideForBlock() {
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    doMethodTest(
+      "    for (int i = 0; i < 10; i++) {\n" +
+      "      int a=2;\n" +
+      "      String name=\"Xa\";\n" +
+      "    }\n",
+      "for (int i = 0; i < 10; i++) {\n" +
+      "    int    a    = 2;\n" +
+      "    String name = \"Xa\";\n" +
+      "}\n"
+    );
+  }
+
+  public void test_Align_ConsecutiveVars_InsideTryBlock() {
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    doMethodTest(
+      "    try {\n" +
+      "      int x = getX();\n" +
+      "      String name = \"Ha\";\n" +
+      "    }\n" +
+      "    catch (IOException exception) {\n" +
+      "      int y = 12;\n" +
+      "      String test = \"Test\";\n" +
+      "    }\n" +
+      "    finally {\n" +
+      "      int z = 12;\n" +
+      "      String zzzz = \"pnmhd\";\n" +
+      "    }\n",
+      "try {\n" +
+      "    int    x    = getX();\n" +
+      "    String name = \"Ha\";\n" +
+      "} catch (IOException exception) {\n" +
+      "    int    y    = 12;\n" +
+      "    String test = \"Test\";\n" +
+      "} finally {\n" +
+      "    int    z    = 12;\n" +
+      "    String zzzz = \"pnmhd\";\n" +
+      "}\n"
+    );
+  }
+
+  public void test_Align_ConsecutiveVars_InsideCodeBlock() {
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    doMethodTest(
+      "    System.out.println(\"AAAA\");\n" +
+      "    int a = 2;\n" +
+      "    \n" +
+      "    {\n" +
+      "      int x=2;\n" +
+      "      String name=3;\n" +
+      "    }\n",
+      "System.out.println(\"AAAA\");\n" +
+      "int a = 2;\n" +
+      "\n" +
+      "{\n" +
+      "    int    x    = 2;\n" +
+      "    String name = 3;\n" +
+      "}\n"
     );
   }
 }

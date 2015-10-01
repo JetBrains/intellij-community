@@ -36,7 +36,7 @@ public class WebServerPathToFileManager {
     @Nullable
     @Override
     public VirtualFile fun(String path, VirtualFile parent) {
-      return BuiltInWebServer.findIndexFile(parent);
+      return BuiltInWebServerPackage.findIndexFile(parent);
     }
   };
 

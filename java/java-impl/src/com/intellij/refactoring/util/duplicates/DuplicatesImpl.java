@@ -39,6 +39,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -201,6 +202,7 @@ public class DuplicatesImpl {
         ApplicationNamesInfo.getInstance().getProductName(), duplicates.size()),
         "Process Duplicates", Messages.getQuestionIcon());
       if (answer == Messages.YES) {
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
         invoke(project, editor, provider, hasDuplicates != null);
       }
     }

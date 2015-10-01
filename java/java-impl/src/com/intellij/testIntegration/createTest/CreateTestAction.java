@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,22 +38,26 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class CreateTestAction extends PsiElementBaseIntentionAction {
 
   private static final String CREATE_TEST_IN_THE_SAME_ROOT = "create.test.in.the.same.root";
 
+  @Override
   @NotNull
   public String getText() {
     return CodeInsightBundle.message("intention.create.test");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (!isAvailableForElement(element)) return false;
 
@@ -101,13 +106,13 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     final HashSet<VirtualFile> testFolders = new HashSet<VirtualFile>();
     checkForTestRoots(srcModule, testFolders);
-    if (testFolders.isEmpty() && !propertiesComponent.getBoolean(CREATE_TEST_IN_THE_SAME_ROOT, false)) {
+    if (testFolders.isEmpty() && !propertiesComponent.getBoolean(CREATE_TEST_IN_THE_SAME_ROOT)) {
       if (Messages.showOkCancelDialog(project, "Create test in the same source root?", "No Test Roots Found", Messages.getQuestionIcon()) !=
           Messages.OK) {
         return;
       }
 
-      propertiesComponent.setValue(CREATE_TEST_IN_THE_SAME_ROOT, String.valueOf(true));
+      propertiesComponent.setValue(CREATE_TEST_IN_THE_SAME_ROOT, true);
     }
 
     final CreateTestDialog d = createTestDialog(project, srcModule, srcClass, srcPackage);
@@ -135,7 +140,12 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   }
 
   protected static void checkForTestRoots(Module srcModule, Set<VirtualFile> testFolders) {
-    testFolders.addAll(ModuleRootManager.getInstance(srcModule).getSourceRoots(JavaSourceRootType.TEST_SOURCE));
+    List<VirtualFile> sourceRoots = ModuleRootManager.getInstance(srcModule).getSourceRoots(JavaSourceRootType.TEST_SOURCE);
+    for (VirtualFile sourceRoot : sourceRoots) {
+      if (!JavaProjectRootsUtil.isInGeneratedCode(sourceRoot, srcModule.getProject())) {
+        testFolders.add(sourceRoot);
+      }
+    }
     //create test in the same module
     if (!testFolders.isEmpty()) return;
 
@@ -148,7 +158,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   }
 
   @Nullable
-  private static PsiClass getContainingClass(PsiElement element) {
+  protected static PsiClass getContainingClass(PsiElement element) {
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
     if (psiClass == null) {
       final PsiFile containingFile = element.getContainingFile();
@@ -162,6 +172,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     return psiClass;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

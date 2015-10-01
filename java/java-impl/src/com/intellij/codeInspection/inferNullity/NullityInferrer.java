@@ -157,7 +157,7 @@ public class NullityInferrer {
     }
   }
 
-  static void nothingFoundMessage(final Project project) {
+  public static void nothingFoundMessage(final Project project) {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {

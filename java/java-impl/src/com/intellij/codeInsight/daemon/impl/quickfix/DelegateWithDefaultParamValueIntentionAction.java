@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 
 /**
@@ -58,7 +59,7 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
       if (declarationScope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)declarationScope;
         final PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null && (!containingClass.isInterface() || PsiUtil.isLanguageLevel7OrHigher(method))) {
+        if (containingClass != null && (!containingClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(method))) {
           if (containingClass.findMethodBySignature(generateMethodPrototype(method, parameter), false) != null) {
             return false;
           }
@@ -91,9 +92,18 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
       prototype.getModifierList().setModifierProperty(PsiModifier.DEFAULT, true);
     }
 
-    for (int i = params.length - 1; i >= 0; i--) {
-      PsiParameter param = params[i];
-      final int parameterIndex = method.getParameterList().getParameterIndex(param);
+    final PsiParameterList parameterList = method.getParameterList();
+    Arrays.sort(params, new Comparator<PsiParameter>() {
+      @Override
+      public int compare(PsiParameter p1, PsiParameter p2) {
+        final int parameterIndex1 = parameterList.getParameterIndex(p1);
+        final int parameterIndex2 = parameterList.getParameterIndex(p2);
+        return parameterIndex1 > parameterIndex2 ? -1 : 1;
+      }
+    });
+
+    for (PsiParameter param : params) {
+      final int parameterIndex = parameterList.getParameterIndex(param);
       prototype.getParameterList().getParameters()[parameterIndex].delete();
     }
     return prototype;

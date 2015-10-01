@@ -66,16 +66,16 @@ public class ExecutionEnvironment extends UserDataHolderBase implements Disposab
 
   public ExecutionEnvironment(@NotNull Executor executor,
                               @NotNull ProgramRunner runner,
-                              @NotNull RunnerAndConfigurationSettings configuration,
+                              @NotNull RunnerAndConfigurationSettings settings,
                               @NotNull Project project) {
-    this(configuration.getConfiguration(),
+    this(settings.getConfiguration(),
          executor,
          DefaultExecutionTarget.INSTANCE,
          project,
-         configuration.getRunnerSettings(runner),
-         configuration.getConfigurationSettings(runner),
+         settings.getRunnerSettings(runner),
+         settings.getConfigurationSettings(runner),
          null,
-         null,
+         settings,
          runner);
   }
 

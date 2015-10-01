@@ -26,6 +26,8 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <renameHandler implementation="com.jetbrains.edu.coursecreator.CCRenameHandler"/>
     <renameInputValidator implementation="com.jetbrains.edu.coursecreator.CCRenameInputValidator"/>
+    <refactoring.moveHandler implementation="com.jetbrains.edu.coursecreator.CCLessonMoveHandlerDelegate" order="first"/>
+    <refactoring.moveHandler implementation="com.jetbrains.edu.coursecreator.CCTaskMoveHandlerDelegate" order="first"/>
   </extensions>
 
   <application-components>
@@ -57,6 +59,9 @@
     <action id="CreateTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCCreateTaskFile">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
     </action>
+    <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile" text="Add As Task File">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
+    </action>
     <action id="AddTaskWindow" class="com.jetbrains.edu.coursecreator.actions.CCAddAnswerPlaceholder">
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
     </action>
@@ -71,22 +76,18 @@
       <add-to-group group-id="EditorTabPopupMenu"/>
     </action>
     <action id="PackCourse" class="com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive">
-      <add-to-group group-id="MainToolBar" anchor="last" />
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
       <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
     </action>
     <action id="UnpackCourse" class="com.jetbrains.edu.coursecreator.actions.CCFromCourseArchive">
-      <add-to-group group-id="MainToolBar" anchor="last" />
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
       <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
     </action>
     <action id="PushLesson" class="com.jetbrains.edu.coursecreator.actions.CCPushLesson">
-      <add-to-group group-id="MainToolBar" anchor="last" />
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
       <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
     </action>
     <action id="PushCourse" class="com.jetbrains.edu.coursecreator.actions.CCPushCourse">
-      <add-to-group group-id="MainToolBar" anchor="last" />
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
       <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
     </action>

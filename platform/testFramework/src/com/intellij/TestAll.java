@@ -150,16 +150,28 @@ public class TestAll implements Test {
     else {
       final ClassLoader loader = TestAll.class.getClassLoader();
       if (loader instanceof URLClassLoader) {
-        final URL[] urls = ((URLClassLoader)loader).getURLs();
-        final String[] classLoaderRoots = new String[urls.length];
-        for (int i = 0; i < urls.length; i++) {
-          classLoaderRoots[i] = VfsUtilCore.urlToPath(VfsUtilCore.convertFromUrl(urls[i]));
+        return getClassRoots(((URLClassLoader)loader).getURLs());
+      }
+      final Class<? extends ClassLoader> loaderClass = loader.getClass();
+      if (loaderClass.getName().equals("com.intellij.util.lang.UrlClassLoader")) {
+        try {
+          final Method declaredMethod = loaderClass.getDeclaredMethod("getBaseUrls");
+          final List<URL> urls = (List<URL>)declaredMethod.invoke(loader);
+          return getClassRoots(urls.toArray(new URL[urls.size()]));
         }
-        System.out.println("Collecting tests from " + Arrays.toString(classLoaderRoots));
-        return classLoaderRoots;
+        catch (Throwable ignore) {}
       }
       return System.getProperty("java.class.path").split(File.pathSeparator);
     }
+  }
+
+  private static String[] getClassRoots(URL[] urls) {
+    final String[] classLoaderRoots = new String[urls.length];
+    for (int i = 0; i < urls.length; i++) {
+      classLoaderRoots[i] = VfsUtilCore.urlToPath(VfsUtilCore.convertFromUrl(urls[i]));
+    }
+    System.out.println("Collecting tests from " + Arrays.toString(classLoaderRoots));
+    return classLoaderRoots;
   }
 
   private static Set<String> normalizePaths(String[] array) {

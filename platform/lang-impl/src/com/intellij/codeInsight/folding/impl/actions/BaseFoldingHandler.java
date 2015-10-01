@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public abstract class BaseFoldingHandler extends EditorActionHandler {
     }
     int offset = caret.getOffset();
     FoldRegion rootRegion = FoldingUtil.findFoldRegionStartingAtLine(editor, editor.getDocument().getLineNumber(offset));
-    if (rootRegion == null || rootRegion.isExpanded() != toCollapse) {
+    if (rootRegion == null || toCollapse && !rootRegion.isExpanded()) {
       rootRegion = null;
       FoldRegion[] regions = FoldingUtil.getFoldRegionsAtOffset(editor, offset);
       for (FoldRegion region : regions) {

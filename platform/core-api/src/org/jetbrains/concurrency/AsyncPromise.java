@@ -319,6 +319,10 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
     return consumer instanceof Obsolescent && ((Obsolescent)consumer).isObsolete();
   }
 
+  public boolean setError(@NotNull String error) {
+    return setError(Promise.createError(error));
+  }
+
   public boolean setError(@NotNull Throwable error) {
     if (state != State.PENDING) {
       return false;

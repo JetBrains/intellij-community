@@ -15,26 +15,23 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.formove.PathMerger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.vcs.changes.actions.ChangeDiffRequestPresentable;
 import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
-import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentableProxy;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -163,7 +160,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
            : (myCurrentBase != null) ? VcsUtil.getFilePath(myCurrentBase) : VcsUtil.getFilePath(myIoCurrentBase, false);
   }
 
-  private boolean isConflictingChange() {
+  protected boolean isConflictingChange() {
     if (myConflicts == null) {
       if ((myCurrentBase != null) && (myNewContentRevision instanceof LazyPatchContentRevision)) {
         ((LazyPatchContentRevision)myNewContentRevision).getContent();
@@ -199,36 +196,10 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
     public AbstractFilePatchInProgress getPatchInProgress() {
       return myPatchInProgress;
     }
-
-    @Nullable
-    public DiffRequestPresentable createDiffRequestPresentable(final Project project, final Getter<CharSequence> baseContents) {
-      return new DiffRequestPresentableProxy() {
-        @NotNull
-        @Override
-        public DiffRequestPresentable init() throws VcsException {
-          if (myPatchInProgress.isConflictingChange()) {
-            return myPatchInProgress.diffRequestForConflictingChanges(project, PatchChange.this, baseContents);
-          }
-          else {
-            return new ChangeDiffRequestPresentable(project, PatchChange.this);
-          }
-        }
-
-        @Override
-        public String getPathPresentation() {
-          final File ioCurrentBase = myPatchInProgress.getIoCurrentBase();
-          return ioCurrentBase == null ? myPatchInProgress.getCurrentPath() : ioCurrentBase.getPath();
-        }
-      };
-    }
   }
 
   @NotNull
-  protected DiffRequestPresentable diffRequestForConflictingChanges(@NotNull Project project,
-                                                                    @NotNull PatchChange change,
-                                                                    @NotNull Getter<CharSequence> baseContents) {
-    return new ChangeDiffRequestPresentable(project, change);
-  }
+  public abstract DiffRequestProducer getDiffRequestProducers(Project project, PatchReader baseContents);
 
   public List<VirtualFile> getAutoBasesCopy() {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>(myAutoBases.size() + 1);

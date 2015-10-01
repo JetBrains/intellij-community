@@ -589,7 +589,9 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   public void commit() {
     checkDisposed();
 
-    mySource.commit(this);
+    if (isChanged()) {
+      mySource.commit(this);
+    }
     Disposer.dispose(this);
   }
 

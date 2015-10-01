@@ -26,6 +26,7 @@ import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.internal.runners.SuiteMethod;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
+import org.junit.runners.Parameterized;
 import org.junit.runners.ParentRunner;
 import org.junit.runners.Suite;
 import org.junit.runners.model.InitializationError;
@@ -102,7 +103,7 @@ class IdeaSuite extends Suite {
   }
 
   private static boolean isSuite(Object child) {
-    return child instanceof Suite || child instanceof SuiteMethod;
+    return child instanceof Suite && !(child instanceof Parameterized) || child instanceof SuiteMethod;
   }
 
   private void skipSuiteComponents(Set allNames, Object child) {

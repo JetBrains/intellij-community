@@ -50,8 +50,6 @@ public class ReachableNodes {
       return nodesVisibility;
     }
 
-    assert !headNodeIndexes.isEmpty();
-
     final UnsignedBitSet result = new UnsignedBitSet();
     ReachableNodes getter = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraph));
     getter.walk(headNodeIndexes, new Consumer<Integer>() {

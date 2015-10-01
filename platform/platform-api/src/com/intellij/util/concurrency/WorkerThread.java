@@ -17,6 +17,7 @@ package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -106,13 +107,8 @@ public class WorkerThread implements Runnable, Disposable {
           task = myTasks.removeFirst();
         }
         task.run();
-        try {
-          if (mySleep > 0) {
-            Thread.sleep(mySleep);
-          }
-        }
-        catch (InterruptedException e) {
-          e.printStackTrace();
+        if (mySleep > 0) {
+          TimeoutUtil.sleep(mySleep);
         }
       }
 

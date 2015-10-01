@@ -21,10 +21,8 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.IncorrectOperationException;
@@ -135,7 +133,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
 
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(Element element) {
     myMap.clear();
     myRendererColors.clear();
     for (Element infoElement : element.getChildren(INFO_TAG)) {
@@ -181,7 +179,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     List<HighlightSeverity> list = getOrderAsList(getOrderMap());
     for (HighlightSeverity severity : list) {
       Element info = new Element(INFO_TAG);
@@ -437,7 +435,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
       return myType;
     }
 
-    private void writeExternal(@NotNull Element element) throws WriteExternalException {
+    private void writeExternal(@NotNull Element element) {
       myAttributes.writeExternal(element);
       myType.writeExternal(element);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,8 @@ public abstract class RenamePsiElementProcessor {
 
   @NotNull
   public static RenamePsiElementProcessor forElement(@NotNull PsiElement element) {
-    for(RenamePsiElementProcessor processor: Extensions.getExtensions(EP_NAME)) {
+    RenamePsiElementProcessor[] extensions = Extensions.getExtensions(EP_NAME);
+    for(RenamePsiElementProcessor processor: extensions) {
       if (processor.canProcessElement(element)) {
         return processor;
       }

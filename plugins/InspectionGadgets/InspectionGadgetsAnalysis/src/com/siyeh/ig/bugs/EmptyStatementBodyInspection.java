@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,11 @@ public class EmptyStatementBodyInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return !FileTypeUtils.isInServerPageFile(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new EmptyStatementVisitor();
   }
@@ -106,9 +111,6 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     }
 
     private void checkLoopStatement(PsiLoopStatement statement) {
-      if (FileTypeUtils.isInServerPageFile(statement)) {
-        return;
-      }
       final PsiStatement body = statement.getBody();
       if (body == null || !isEmpty(body)) {
         return;
@@ -119,9 +121,6 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement statement) {
       super.visitIfStatement(statement);
-      if (FileTypeUtils.isInServerPageFile(statement)) {
-        return;
-      }
       final PsiStatement thenBranch = statement.getThenBranch();
       if (thenBranch != null && isEmpty(thenBranch)) {
         registerStatementError(statement);
@@ -140,9 +139,6 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     @Override
     public void visitSwitchStatement(PsiSwitchStatement statement) {
       super.visitSwitchStatement(statement);
-      if (FileTypeUtils.isInServerPageFile(statement)) {
-        return;
-      }
       final PsiCodeBlock body = statement.getBody();
       if (body == null || !isEmpty(body)) {
         return;

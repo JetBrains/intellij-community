@@ -2,7 +2,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <appStarter implementation="com.intellij.diff.applications.DiffApplication"/>
-    <appStarter implementation="com.intellij.openapi.diff.MergeApplication"/>
+    <appStarter implementation="com.intellij.diff.applications.MergeApplication"/>
     <appStarter implementation="com.intellij.ui.win.RecentProjectApplication"/>
     <appStarter implementation="com.intellij.help.impl.KeymapGenerator"/>
 
@@ -134,6 +134,7 @@
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateSettings"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
+    <applicationService serviceImplementation="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"/>
     <applicationService serviceInterface="com.intellij.ide.plugins.InstalledPluginsState"
                         serviceImplementation="com.intellij.ide.plugins.InstalledPluginsState"/>
     <applicationService serviceInterface="com.intellij.featureStatistics.FeatureUsageTracker"
@@ -245,7 +246,7 @@
 
     <projectService serviceInterface="com.intellij.execution.testframework.autotest.AutoTestManager"
                     serviceImplementation="com.intellij.execution.testframework.autotest.AutoTestManager"/>
-    
+
     <projectService serviceInterface="com.intellij.execution.testframework.sm.TestHistoryConfiguration"
                     serviceImplementation="com.intellij.execution.testframework.sm.TestHistoryConfiguration"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.VcsFileListenerContextHelper"
@@ -319,6 +320,8 @@
 
     <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher" serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
+
+    <applicationService serviceImplementation="com.intellij.ide.RemoteDesktopDetector"/>
 
     <projectService serviceImplementation="com.intellij.ui.switcher.SwitchManager"/>
 
@@ -409,5 +412,16 @@
     <ui.suitableFontProvider implementation="com.intellij.ui.SuitableFontProviderImpl"/>
 
     <jbProtocolCommand implementation="com.intellij.openapi.project.impl.JBProtocolOpenProjectCommand"/>
+
+    <intentionAction>
+      <className>com.intellij.openapi.editor.actions.FlipCommaIntention</className>
+    </intentionAction>
+
+
+    <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupLocalConfiguration"/>
+    <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupSharedConfiguration"/>
+    <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupTaskManager"/>
+    <projectConfigurable groupId="tools" instance="com.intellij.execution.startup.ProjectStartupConfigurable"/>
+    <postStartupActivity implementation="com.intellij.execution.startup.ProjectStartupRunner"/>
   </extensions>
 </idea-plugin>

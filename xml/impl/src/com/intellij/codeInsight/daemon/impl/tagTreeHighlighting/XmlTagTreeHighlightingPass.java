@@ -74,7 +74,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     myFile = file;
     myEditor = editor;
     final FileViewProvider viewProvider = file.getManager().findViewProvider(file.getVirtualFile());
-    myInfoProvider = BreadcrumbsXmlWrapper.findInfoProvider(viewProvider, WebEditorOptions.getInstance());
+    myInfoProvider = BreadcrumbsXmlWrapper.findInfoProvider(viewProvider);
   }
 
   @Override
@@ -126,7 +126,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     return type == XmlTokenType.XML_START_TAG_START || type == XmlTokenType.XML_END_TAG_START || type == XmlTokenType.XML_TAG_END;
   }
 
-  @Nullable
+  @NotNull
   private static Pair<TextRange, TextRange> getTagRanges(XmlTag tag) {
     final ASTNode tagNode = tag.getNode();
     return Pair.create(getStartTagRange(tagNode), getEndTagRange(tagNode));
@@ -173,8 +173,10 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
   @Override
   public void doApplyInformationToEditor() {
-    final List<HighlightInfo> infos = getHighlights();
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
+    if (myDocument != null) {
+      final List<HighlightInfo> infos = getHighlights();
+      UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
+    }
   }
 
   public List<HighlightInfo> getHighlights() {
@@ -196,7 +198,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     for (int i = 0; i < count && i < baseColors.length; i++) {
       Pair<TextRange, TextRange> pair = myPairsToHighlight.get(i);
 
-      if (pair == null || pair.first == null && pair.second == null) {
+      if (pair.first == null && pair.second == null) {
         continue;
       }
 
@@ -288,6 +290,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
       g = (int)(tagBackground.getGreen() * (1 - transparency) + g * transparency);
       b = (int)(tagBackground.getBlue() * (1 - transparency) + b * transparency);
 
+      //noinspection UseJBColor
       colors[i] = new Color(r, g, b);
     }
 

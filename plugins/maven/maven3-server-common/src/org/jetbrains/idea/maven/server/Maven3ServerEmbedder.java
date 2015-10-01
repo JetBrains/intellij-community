@@ -26,13 +26,11 @@ import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
-import org.apache.maven.artifact.repository.MavenArtifactRepository;
-import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 
 import java.io.File;
 import java.rmi.RemoteException;
@@ -49,7 +47,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
   public final static boolean USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING = System.getProperty("idea.maven3.use.compat.resolver") != null;
   private final static String MAVEN_VERSION = System.getProperty(MAVEN_EMBEDDER_VERSION);
 
-  public Maven3ServerEmbedder(MavenServerSettings settings) {
+  protected Maven3ServerEmbedder(MavenServerSettings settings) {
     initLog4J(settings);
   }
 
@@ -89,19 +87,18 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
   @NotNull
   @Override
-  public List<String> retrieveAvailableVersions(@NotNull String groupId, @NotNull String artifactId, @NotNull String remoteRepositoryUrl)
+  public List<String> retrieveAvailableVersions(@NotNull String groupId,
+                                                @NotNull String artifactId,
+                                                @NotNull List<MavenRemoteRepository> remoteRepositories)
     throws RemoteException {
     try {
       Artifact artifact =
         new DefaultArtifact(groupId, artifactId, "", Artifact.SCOPE_COMPILE, "pom", null, new DefaultArtifactHandler("pom"));
-      ArtifactRepository remoteRepository = new MavenArtifactRepository(
-        "id",
-        remoteRepositoryUrl,
-        getComponent(ArtifactRepositoryLayout.class),
-        new ArtifactRepositoryPolicy(true, ArtifactRepositoryPolicy.UPDATE_POLICY_DAILY, ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN),
-        new ArtifactRepositoryPolicy(true, ArtifactRepositoryPolicy.UPDATE_POLICY_DAILY, ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN));
       List<ArtifactVersion> versions = getComponent(ArtifactMetadataSource.class)
-        .retrieveAvailableVersions(artifact, getLocalRepository(), Collections.singletonList(remoteRepository));
+        .retrieveAvailableVersions(
+          artifact,
+          getLocalRepository(),
+          convertRepositories(remoteRepositories));
       return Lists.newArrayList(Iterables.transform(versions, new Function<ArtifactVersion, String>() {
         @Override
         public String apply(ArtifactVersion version) {
@@ -115,7 +112,8 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     return Collections.emptyList();
   }
 
-
+  @NotNull
+  protected abstract List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException;
 
   @Nullable
   public String getMavenVersion() {

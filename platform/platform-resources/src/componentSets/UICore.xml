@@ -1,4 +1,4 @@
-<components>
+<idea-plugin>
   <application-components>
     <component>
       <implementation-class>com.intellij.ide.SwingCleanuper</implementation-class>
@@ -33,7 +33,7 @@
     <component>
       <interface-class>com.intellij.ide.SaveAndSyncHandler</interface-class>
       <implementation-class>com.intellij.ide.SaveAndSyncHandlerImpl</implementation-class>
-      <headless-implementation-class/>
+      <headless-implementation-class>com.intellij.ide.SaveAndSyncHandlerStub</headless-implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.ide.FrameStateManager</interface-class>
@@ -63,4 +63,4 @@
       <implementation-class>com.intellij.ide.bookmarks.BookmarkManager</implementation-class>
     </component>
   </project-components>
-</components>
+</idea-plugin>

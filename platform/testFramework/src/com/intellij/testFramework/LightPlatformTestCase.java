@@ -98,6 +98,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.GCUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -120,7 +121,6 @@ import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author yole
@@ -591,18 +591,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       return;
     }
 
-    final AtomicReference<Throwable> throwable = new AtomicReference<Throwable>();
-
-    replaceIdeEventQueueSafely();
-    SwingUtilities.invokeAndWait(new Runnable() {
+    TestRunnerUtil.replaceIdeEventQueueSafely();
+    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
-      public void run() {
+      public void run() throws Throwable {
         try {
           ourTestThread = Thread.currentThread();
           startRunAndTear();
-        }
-        catch (Throwable e) {
-          throwable.set(e);
         }
         finally {
           ourTestThread = null;
@@ -619,10 +614,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
       }
     });
-
-    if (throwable.get() != null) {
-      throw throwable.get();
-    }
 
     // just to make sure all deferred Runnables to finish
     SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
@@ -744,6 +735,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
 
       ProjectManagerEx.getInstanceEx().closeAndDispose(ourProject);
+
+      // project may be disposed but empty folder may still be there
+      if (ourPathToKeep != null) {
+        File parent = new File(ourPathToKeep).getParentFile();
+        if (parent.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
+          parent.delete(); // delete only empty folders
+        }
+      }
 
       ourProject = null;
       ourPathToKeep = null;

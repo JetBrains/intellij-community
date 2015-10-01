@@ -41,17 +41,20 @@ public class EdgePrintElementImpl extends PrintElementWithGraphElement implement
   @NotNull private final Type myType;
   @NotNull private final LineStyle myLineStyle;
   private final int myPositionInOtherRow;
+  private final boolean myHasArrow;
 
   public EdgePrintElementImpl(int rowIndex,
                               int positionInCurrentRow,
                               int positionInOtherRow,
                               @NotNull Type type,
                               @NotNull GraphEdge graphEdge,
+                              @NotNull boolean hasArrow,
                               @NotNull PrintElementManager printElementManager) {
     super(rowIndex, positionInCurrentRow, graphEdge, printElementManager);
     myType = type;
     myLineStyle = convertToLineStyle(graphEdge.getType());
     myPositionInOtherRow = positionInOtherRow;
+    myHasArrow = hasArrow;
   }
 
   @Override
@@ -72,6 +75,11 @@ public class EdgePrintElementImpl extends PrintElementWithGraphElement implement
   }
 
   @Override
+  public boolean hasArrow() {
+    return myHasArrow;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof EdgePrintElement)) return false;
@@ -82,6 +90,7 @@ public class EdgePrintElementImpl extends PrintElementWithGraphElement implement
     if (myPositionInOtherRow != that.getPositionInOtherRow()) return false;
     if (myRowIndex != that.getRowIndex()) return false;
     if (myType != that.getType()) return false;
+    if (myHasArrow != that.hasArrow()) return false;
 
     return true;
   }
@@ -92,6 +101,7 @@ public class EdgePrintElementImpl extends PrintElementWithGraphElement implement
     result = 31 * result + myPositionInCurrentRow;
     result = 31 * result + myPositionInOtherRow;
     result = 37 * result + myType.hashCode();
+    result = 31 * result + (myHasArrow ? 1 : 0);
     return result;
   }
 

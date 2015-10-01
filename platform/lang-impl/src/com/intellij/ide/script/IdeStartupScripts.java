@@ -17,6 +17,7 @@ package com.intellij.ide.script;
 
 import com.intellij.ide.extensionResources.ExtensionsRootType;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -51,12 +52,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class IdeStartupScripts extends ApplicationComponent.Adapter {
   @SuppressWarnings("FieldCanBeLocal")
   private static String SCRIPT_DIR_NAME = "startup";
-  private static String README_FILE_NAME = "readme.txt";
 
   private static Logger LOG = Logger.getInstance(IdeStartupScripts.class);
 
   @Override
   public void initComponent() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     List<VirtualFile> scripts = getScripts();
     if (scripts.isEmpty()) {
       LOG.debug("No startup scripts detected");
@@ -173,7 +177,7 @@ class IdeStartupScripts extends ApplicationComponent.Adapter {
       private final ExtensionsRootType myExtensionsRootType = ExtensionsRootType.getInstance();
       @Override
       public boolean value(VirtualFile file) {
-        return !file.isDirectory() && !myExtensionsRootType.isBackupFile(file) && !README_FILE_NAME.equals(file.getName());
+        return !file.isDirectory() && !myExtensionsRootType.isBackupFile(file);
       }
     });
 

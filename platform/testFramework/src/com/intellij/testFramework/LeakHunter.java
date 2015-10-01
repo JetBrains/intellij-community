@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,12 +47,6 @@ import java.util.Map;
 public class LeakHunter {
   private static final Map<Class, Field[]> allFields = new THashMap<Class, Field[]>();
   private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
-  private static final Processor<Project> NOT_DEFAULT_PROJECT = new Processor<Project>() {
-    @Override
-    public boolean process(Project project) {
-      return !project.isDefault();
-    }
-  };
 
   @NotNull
   private static Field[] getAllFields(@NotNull Class aClass) {
@@ -158,8 +152,14 @@ public class LeakHunter {
   private static final Key<Boolean> REPORTED_LEAKED = Key.create("REPORTED_LEAKED");
   @TestOnly
   public static void checkProjectLeak() throws Exception {
-    checkLeak(ApplicationManager.getApplication(), ProjectImpl.class);
-    checkLeak(Extensions.getRootArea(), ProjectImpl.class, NOT_DEFAULT_PROJECT);
+    Processor<Project> isReallyLeak = new Processor<Project>() {
+      @Override
+      public boolean process(Project project) {
+        return !project.isDefault() && !((ProjectImpl)project).isLight();
+      }
+    };
+    checkLeak(ApplicationManager.getApplication(), ProjectImpl.class, isReallyLeak);
+    checkLeak(Extensions.getRootArea(), ProjectImpl.class, isReallyLeak);
   }
 
   @TestOnly

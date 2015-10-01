@@ -204,4 +204,9 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
     final PsiElement parent = getParent();
     return parent != null ? parent.getManager() : null;
   }
+
+  @Override
+  public boolean isPhysical() {
+    return false;
+  }
 }

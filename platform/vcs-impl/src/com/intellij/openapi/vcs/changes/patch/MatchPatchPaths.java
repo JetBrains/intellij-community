@@ -21,8 +21,11 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ObjectsConvertor;
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -33,6 +36,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -178,11 +182,18 @@ public class MatchPatchPaths {
     }
   }
 
-  private static Collection<VirtualFile> findFilesFromIndex(@NotNull final PatchBaseDirectoryDetector directoryDetector,
-                                                            @NotNull final String fileName) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
+  private Collection<VirtualFile> findFilesFromIndex(@NotNull final PatchBaseDirectoryDetector directoryDetector,
+                                                     @NotNull final String fileName) {
+    Collection<VirtualFile> files = ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
       public Collection<VirtualFile> compute() {
         return directoryDetector.findFiles(fileName);
+      }
+    });
+    final File shelfResourcesDirectory = ShelveChangesManager.getInstance(myProject).getShelfResourcesDirectory();
+    return ContainerUtil.filter(files, new Condition<VirtualFile>() {
+      @Override
+      public boolean value(VirtualFile file) {
+        return !FileUtil.isAncestor(shelfResourcesDirectory, VfsUtilCore.virtualToIoFile(file), false);
       }
     });
   }
@@ -218,7 +229,7 @@ public class MatchPatchPaths {
     return new GenericPatchApplier(text, patch.getPatch().getHunks()).weightContextMatch(100, 5);
   }
 
-  private static class PatchAndVariants {
+  private class PatchAndVariants {
     @NotNull private final List<AbstractFilePatchInProgress> myVariants;
 
     private PatchAndVariants(@NotNull List<AbstractFilePatchInProgress> variants) {
@@ -249,8 +260,15 @@ public class MatchPatchPaths {
       else {
         int stripCounter = Integer.MAX_VALUE;
         for (AbstractFilePatchInProgress variant : myVariants) {
-          if (variant.getCurrentStrip() < stripCounter) {
+          int currentStrip = variant.getCurrentStrip();
+          //the best variant if several match should be project based variant
+          if (currentStrip == 0 && myProject.getBaseDir().equals(variant.getBase())) {
             best = variant;
+            break;
+          }
+          else if (currentStrip < stripCounter) {
+            best = variant;
+            stripCounter = currentStrip;
           }
         }
         putSelected(result, myVariants, best);

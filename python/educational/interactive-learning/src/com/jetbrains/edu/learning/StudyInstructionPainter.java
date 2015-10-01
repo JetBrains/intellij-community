@@ -12,6 +12,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.actions.*;
+import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,6 +22,10 @@ import java.awt.*;
  * data: 7/29/14.
  */
 public class StudyInstructionPainter extends EditorEmptyTextPainter {
+
+  public static final String SHORTCUT_TAG = "<shortcut>";
+  public static final String SHORTCUT_CLOSING_TAG = "</shortcut>";
+
   @Override
   public void paintEmptyText(final JComponent splitters, Graphics g) {
     boolean isDarkBackground = UIUtil.isUnderDarcula();
@@ -31,20 +36,20 @@ public class StudyInstructionPainter extends EditorEmptyTextPainter {
 
     UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.5f);
 
-    painter.appendLine("Educational Edition").underlined(new JBColor(Gray._150, Gray._180));
+    painter.appendLine("PyCharm Edu").underlined(new JBColor(Gray._150, Gray._180));
     addAction(painter, "Navigate to the next answer placeholder", StudyNextWindowAction.ACTION_ID, StudyNextWindowAction.SHORTCUT2, true);
     String shortcut1 = getShortcutText(StudyPrevWindowAction.ACTION_ID, StudyPrevWindowAction.SHORTCUT, false, false);
     String shortcut2 = getShortcutText(StudyNextWindowAction.ACTION_ID, StudyNextWindowAction.SHORTCUT, false, false);
-    String text = "Navigate between answer placeholders with " + shortcut1 +
-                  " and " + shortcut2;
+    String text = "Navigate between answer placeholders with " + SHORTCUT_TAG + shortcut1 +
+                  "/" + shortcut2 + SHORTCUT_CLOSING_TAG;
     painter.appendLine(text).smaller().withBullet();
     shortcut1 = getShortcutText(StudyPreviousStudyTaskAction.ACTION_ID, StudyPreviousStudyTaskAction.SHORTCUT, false, false);
     shortcut2 = getShortcutText(StudyNextStudyTaskAction.ACTION_ID, StudyNextStudyTaskAction.SHORTCUT, false, false);
-    painter.appendLine("Navigate between tasks with " + shortcut1 + " and " + shortcut2).smaller().withBullet();
+    painter.appendLine("Navigate between tasks with " +SHORTCUT_TAG + shortcut1 + "/" + shortcut2 + SHORTCUT_CLOSING_TAG).smaller().withBullet();
     addAction(painter, "Reset current task file", StudyRefreshTaskFileAction.ACTION_ID, StudyRefreshTaskFileAction.SHORTCUT, false);
     addAction(painter, "Check task", StudyCheckAction.ACTION_ID, StudyCheckAction.SHORTCUT, false);
     addAction(painter, "Get hint for the answer placeholder", StudyShowHintAction.ACTION_ID, StudyShowHintAction.SHORTCUT, false);
-    painter.appendLine("To see your progress open the 'Course Description' panel").smaller().withBullet();
+    painter.appendLine("To see your progress open the '" + StudyProgressToolWindowFactory.ID + "' panel").smaller().withBullet();
                        painter.draw(g, new PairFunction<Integer, Integer, Couple<Integer>>() {
                          @Override
                          public Couple<Integer> fun(Integer width, Integer height) {
@@ -72,6 +77,6 @@ public class StudyInstructionPainter extends EditorEmptyTextPainter {
     if (!wrapTag) {
       return shortcut;
     }
-    return "<shortcut>" + shortcut + "</shortcut>";
+    return SHORTCUT_TAG + shortcut + SHORTCUT_CLOSING_TAG;
   }
 }

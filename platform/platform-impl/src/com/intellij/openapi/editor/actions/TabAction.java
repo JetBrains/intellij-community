@@ -71,7 +71,7 @@ public class TabAction extends EditorAction {
     }
   }
 
-  private static void insertTabAtCaret(Editor editor, @NotNull Caret caret, Project project) {
+  private static void insertTabAtCaret(Editor editor, @NotNull Caret caret, @Nullable Project project) {
     MacUIUtil.hideCursor();
     int columnNumber;
     if (caret.hasSelection()) {
@@ -84,7 +84,7 @@ public class TabAction extends EditorAction {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
 
     final Document doc = editor.getDocument();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(doc);
+    PsiFile file = project != null ? PsiDocumentManager.getInstance(project).getPsiFile(doc) : null;
     CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByFile(file);
 
     int tabSize = indentOptions.INDENT_SIZE;

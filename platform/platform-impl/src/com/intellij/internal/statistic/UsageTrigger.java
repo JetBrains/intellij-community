@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,12 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
 
   public static void trigger(@NotNull String feature) {
     getInstance().doTrigger(feature);
+  }
+
+  public static void triggerOnce(@NotNull String feature) {
+    if (!getInstance().myState.myValues.containsKey(feature)) {
+      getInstance().doTrigger(feature);
+    }
   }
 
   private static UsageTrigger getInstance() {

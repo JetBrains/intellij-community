@@ -331,7 +331,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Override
   @NotNull
   public PsiReferenceList getThrowsList() {
-    return (PsiReferenceList)findNotNullChildByType(GroovyElementTypes.THROW_CLAUSE);
+    return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyElementTypes.THROW_CLAUSE));
   }
 
   @Override

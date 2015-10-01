@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.jgit.dirCache
 
 import com.intellij.openapi.util.SystemInfo
@@ -14,7 +29,6 @@ import org.jetbrains.settingsRepository.removeWithParentsIfEmpty
 import java.io.File
 import java.io.FileInputStream
 import java.text.MessageFormat
-import java.util.Collections
 import java.util.Comparator
 
 private val EDIT_CMP = object : Comparator<PathEdit> {
@@ -112,9 +126,13 @@ public class DirCacheEditor(edits: List<PathEdit>, private val repository: Repos
   }
 }
 
-public abstract class PathEdit(val path: ByteArray) {
-  public abstract fun apply(entry: DirCacheEntry, repository: Repository)
+public interface PathEdit {
+  val path: ByteArray
+
+  public fun apply(entry: DirCacheEntry, repository: Repository)
 }
+
+abstract class PathEditBase(override final val path: ByteArray) : PathEdit
 
 private fun encodePath(path: String): ByteArray {
   val bytes = byteBufferToBytes(Constants.CHARSET.encode(path))
@@ -128,7 +146,7 @@ private fun encodePath(path: String): ByteArray {
   return bytes
 }
 
-class AddFile(private val pathString: String) : PathEdit(encodePath(pathString)) {
+class AddFile(private val pathString: String) : PathEditBase(encodePath(pathString)) {
   override fun apply(entry: DirCacheEntry, repository: Repository) {
     val file = File(repository.getWorkTree(), pathString)
     entry.setFileMode(FileMode.REGULAR_FILE)
@@ -149,7 +167,7 @@ class AddFile(private val pathString: String) : PathEdit(encodePath(pathString))
   }
 }
 
-class AddLoadedFile(path: String, private val content: ByteArray, private val size: Int = content.size(), private val lastModified: Long = System.currentTimeMillis()) : PathEdit(encodePath(path)) {
+class AddLoadedFile(path: String, private val content: ByteArray, private val size: Int = content.size(), private val lastModified: Long = System.currentTimeMillis()) : PathEditBase(encodePath(path)) {
   override fun apply(entry: DirCacheEntry, repository: Repository) {
     entry.setFileMode(FileMode.REGULAR_FILE)
     entry.setLength(size)
@@ -168,16 +186,16 @@ class AddLoadedFile(path: String, private val content: ByteArray, private val si
 
 fun DeleteFile(path: String) = DeleteFile(encodePath(path))
 
-public class DeleteFile(path: ByteArray) : PathEdit(path) {
+public class DeleteFile(path: ByteArray) : PathEditBase(path) {
   override fun apply(entry: DirCacheEntry, repository: Repository) = throw UnsupportedOperationException(JGitText.get().noApplyInDelete)
 }
 
-public class DeleteDirectory(entryPath: String) : PathEdit(encodePath(if (entryPath.endsWith('/') || entryPath.isEmpty()) entryPath else "$entryPath/")) {
+public class DeleteDirectory(entryPath: String) : PathEditBase(encodePath(if (entryPath.endsWith('/') || entryPath.isEmpty()) entryPath else "$entryPath/")) {
   override fun apply(entry: DirCacheEntry, repository: Repository) = throw UnsupportedOperationException(JGitText.get().noApplyInDelete)
 }
 
 public fun Repository.edit(edit: PathEdit) {
-  edit(Collections.singletonList(edit))
+  edit(listOf(edit))
 }
 
 public fun Repository.edit(edits: List<PathEdit>) {

@@ -64,7 +64,7 @@ public class TestDiscoverySearchHelper {
               if (classes.length == 0 || TestFrameworks.detectFramework(classes[0]) == null) return;
             }
             try {
-              final List<TextRange> changedTextRanges = FormatChangedTextUtil.getChangedTextRanges(project, psiFile);
+              final List<TextRange> changedTextRanges = FormatChangedTextUtil.getInstance().getChangedTextRanges(project, psiFile);
               for (TextRange textRange : changedTextRanges) {
                 final PsiElement start = psiFile.findElementAt(textRange.getStartOffset());
                 final PsiElement end = psiFile.findElementAt(textRange.getEndOffset());

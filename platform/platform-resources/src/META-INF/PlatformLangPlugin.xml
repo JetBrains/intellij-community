@@ -7,8 +7,8 @@
   <module value="com.intellij.modules.vcs"/>
   <module value="com.intellij.modules.xdebugger"/>
 
-  <xi:include href="/componentSets/PlatformLangComponents.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/idea/PlatformLangActionManager.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="/componentSets/PlatformLangComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/idea/PlatformLangActionManager.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensionPoints>
     <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
@@ -19,8 +19,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <xi:include href="/META-INF/PlatformExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
-    <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
     <xi:include href="/META-INF/LangExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+    <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
 
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.RecentDirectoryProjectsManagerEx"/>

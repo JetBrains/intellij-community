@@ -149,6 +149,12 @@ public abstract class MavenImporter {
                                Map<MavenProject, String> mavenProjectToModuleName,
                                List<MavenProjectsProcessorTask> postTasks);
 
+  public void postProcess(Module module,
+                          MavenProject mavenProject,
+                          MavenProjectChanges changes,
+                          MavenModifiableModelsProvider modifiableModelsProvider) {
+  }
+
   public boolean processChangedModulesOnly() {
     return true;
   }

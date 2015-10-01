@@ -60,7 +60,7 @@ public class CompletionLookupArranger extends LookupArranger {
     public int compare(LookupElement o1, LookupElement o2) {
       String invariant = PRESENTATION_INVARIANT.get(o1);
       assert invariant != null;
-      return invariant.compareToIgnoreCase(PRESENTATION_INVARIANT.get(o2));
+      return StringUtil.naturalCompare(invariant, PRESENTATION_INVARIANT.get(o2));
     }
   };
   static final int MAX_PREFERRED_COUNT = 5;

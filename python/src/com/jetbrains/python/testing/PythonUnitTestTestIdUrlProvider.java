@@ -16,7 +16,6 @@
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,10 +25,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class PythonUnitTestTestIdUrlProvider implements SMTestLocator, DumbAware {
+public class PythonUnitTestTestIdUrlProvider implements PythonTestLocator, DumbAware {
   public static final String PROTOCOL_ID = "python_uttestid";
 
   public static final PythonUnitTestTestIdUrlProvider INSTANCE = new PythonUnitTestTestIdUrlProvider();
+
+  @NotNull
+  @Override
+  public final String getProtocolId() {
+    return PROTOCOL_ID;
+  }
 
   @NotNull
   @Override

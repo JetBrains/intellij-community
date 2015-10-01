@@ -16,40 +16,29 @@
 
 package com.intellij.vcs.log.graph.impl.print.elements;
 
-import com.intellij.vcs.log.graph.SimplePrintElement;
+import com.intellij.vcs.log.graph.NodePrintElement;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
 import org.jetbrains.annotations.NotNull;
 
-public class SimplePrintElementImpl extends PrintElementWithGraphElement implements SimplePrintElement {
-
-  @NotNull private final Type myType;
+public class SimplePrintElementImpl extends PrintElementWithGraphElement implements NodePrintElement {
 
   public SimplePrintElementImpl(int rowIndex,
                                 int positionInCurrentRow,
-                                @NotNull Type type,
                                 @NotNull GraphElement graphElement,
                                 @NotNull PrintElementManager printElementManager) {
     super(rowIndex, positionInCurrentRow, graphElement, printElementManager);
-    myType = type;
-  }
-
-  @NotNull
-  @Override
-  public Type getType() {
-    return myType;
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof SimplePrintElement)) return false;
+    if (!(o instanceof NodePrintElement)) return false;
 
-    SimplePrintElement that = (SimplePrintElement)o;
+    NodePrintElement that = (NodePrintElement)o;
 
     if (myPositionInCurrentRow != that.getPositionInCurrentRow()) return false;
     if (myRowIndex != that.getRowIndex()) return false;
-    if (myType != that.getType()) return false;
 
     return true;
   }
@@ -58,7 +47,6 @@ public class SimplePrintElementImpl extends PrintElementWithGraphElement impleme
   public int hashCode() {
     int result = myRowIndex;
     result = 31 * result + myPositionInCurrentRow;
-    result = 37 * result + myType.hashCode();
     return result;
   }
 

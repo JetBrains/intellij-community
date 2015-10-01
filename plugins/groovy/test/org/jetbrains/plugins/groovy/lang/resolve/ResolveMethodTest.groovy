@@ -733,8 +733,7 @@ class Foo {
   }
 
   void testAutoClone() {
-    def element = resolve('a.groovy')
-    assertInstanceOf element, PsiMethod
+    def element = resolve('a.groovy', PsiMethod)
     assertTrue element.containingClass.name == 'Foo'
     assertSize 1, element.throwsList.referencedTypes
   }
@@ -748,8 +747,7 @@ class Foo {
   }
 
   void testCategoryClassMethod() {
-    def resolved = resolve('a.groovy')
-    assertInstanceOf(resolved, GrReflectedMethod)
+    def resolved = resolve('a.groovy', GrReflectedMethod)
     assertTrue(resolved.modifierList.hasModifierProperty(PsiModifier.STATIC))
   }
 
@@ -881,8 +879,7 @@ i<caret>s(create())
 
 ''')
 
-    def resolved = ref.resolve()
-    assertInstanceOf resolved, PsiMethod
+    def resolved = assertInstanceOf(ref.resolve(), PsiMethod)
     assertEquals 'Other', resolved.containingClass.name
   }
 
@@ -906,8 +903,7 @@ class A {
 
 ''')
 
-    def resolved = ref.resolve()
-    assertInstanceOf resolved, PsiMethod
+    def resolved = assertInstanceOf(ref.resolve(), PsiMethod)
     assertEquals 'A', resolved.containingClass.name
   }
 
@@ -931,8 +927,7 @@ class A {
 
 ''')
 
-    def resolved = ref.resolve()
-    assertInstanceOf resolved, PsiMethod
+    def resolved = assertInstanceOf(ref.resolve(), PsiMethod)
     assertEquals 'A', resolved.containingClass.name
   }
 
@@ -2183,8 +2178,7 @@ trait B {
 class C implements A, B {
     String foo() {exe<caret>c() }
 }
-''', PsiMethod)
-    assertTrue(method instanceof GrTraitMethod)
+''', GrTraitMethod)
     assertEquals("B", method.prototype.containingClass.name)
   }
 
@@ -2228,4 +2222,14 @@ class X {
 ''', PsiMethod)
   }
 
+  void 'test static trait method generic return type'() {
+    def method = resolveByText('''
+trait GenericSourceTrait<E> {
+    static E someOtherStaticMethod() {null}
+}
+class SourceConcrete implements GenericSourceTrait<String> {})
+SourceConcrete.someOtherStatic<caret>Method()
+''', GrTraitMethod)
+    assertEquals "java.lang.String", method.returnType.canonicalText
+  }
 }

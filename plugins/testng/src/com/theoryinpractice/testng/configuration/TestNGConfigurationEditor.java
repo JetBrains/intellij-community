@@ -197,22 +197,21 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
         ((TextFieldWithBrowseButton)field).getTextField().setDocument((PlainDocument)document);
       }
       else if (field instanceof EditorTextFieldWithBrowseButton) {
-        final com.intellij.openapi.editor.Document componentDocument =
-          ((EditorTextFieldWithBrowseButton)field).getChildComponent().getDocument();
-        
-        model.setDocument(i, componentDocument);
+        document = ((EditorTextFieldWithBrowseButton)field).getChildComponent().getDocument();
       }
       else {
         field = myPatternTextField;
         document = new PlainDocument();
         ((TextFieldWithBrowseButton)field).getTextField().setDocument((Document)document);
-        model.setDocument(i, document);
       }
 
       browseListeners[i].setField((ComponentWithBrowseButton)field);
       if (browseListeners[i] instanceof MethodBrowser) {
-        ((MethodBrowser)browseListeners[i]).installCompletion((EditorTextField)((ComponentWithBrowseButton)field).getChildComponent());
+        final EditorTextField childComponent = (EditorTextField)((ComponentWithBrowseButton)field).getChildComponent();
+        ((MethodBrowser)browseListeners[i]).installCompletion(childComponent);
+        document = childComponent.getDocument();
       }
+      model.setDocument(i, document);
     }
     model.setType(TestType.CLASS);
     propertiesFile.getComponent().getTextField().setDocument(model.getPropertiesFileDocument());

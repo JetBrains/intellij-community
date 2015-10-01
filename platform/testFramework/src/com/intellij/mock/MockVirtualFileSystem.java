@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.testFramework.LightVirtualFile;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
 
   @Override
   @NotNull
-  public VirtualFile findFileByPath(@NotNull String path) {
+  public MyVirtualFile findFileByPath(@NotNull String path) {
     path = path.replace(File.separatorChar, '/');
     path = path.replace('/', ':');
     if (StringUtil.startsWithChar(path, ':')) path = path.substring(1);
@@ -43,6 +44,13 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
       file = file.getOrCreate(component);
     }
     return file;
+  }
+
+  @NotNull
+  public MockVirtualFileSystem file(@NotNull String path, @NotNull String data) {
+    MyVirtualFile file = findFileByPath(path);
+    file.setContent(null, data, false);
+    return this;
   }
 
   @NotNull
@@ -66,10 +74,11 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
   }
 
   public class MyVirtualFile extends LightVirtualFile {
-    private final Map<String, MyVirtualFile> myChildren = new THashMap<String, MyVirtualFile>();
+    @Nullable
+    private Map<String, MyVirtualFile> myChildren;
     private final MyVirtualFile myParent;
 
-    public MyVirtualFile(@NotNull String name, @Nullable MyVirtualFile parent) {
+    MyVirtualFile(@NotNull String name, @Nullable MyVirtualFile parent) {
       super(name);
 
       myParent = parent;
@@ -83,8 +92,12 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
 
     @NotNull
     public MyVirtualFile getOrCreate(@NotNull String name) {
-      MyVirtualFile file = myChildren.get(name);
+      MyVirtualFile file = findChild(name);
       if (file == null) {
+        if (myChildren == null) {
+          myChildren = new THashMap<String, MyVirtualFile>();
+        }
+
         file = new MyVirtualFile(name, this);
         myChildren.put(name, file);
       }
@@ -93,7 +106,7 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
 
     @Override
     public boolean isDirectory() {
-      return !myChildren.isEmpty();
+      return myParent == null || (myChildren != null && !myChildren.isEmpty());
     }
 
     @NotNull
@@ -110,8 +123,18 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
 
     @Override
     public VirtualFile[] getChildren() {
+      if (myChildren == null || myChildren.isEmpty()) {
+        return EMPTY_ARRAY;
+      }
+
       Collection<MyVirtualFile> children = myChildren.values();
       return children.toArray(new MyVirtualFile[children.size()]);
+    }
+
+    @Nullable
+    @Override
+    public MyVirtualFile findChild(@NotNull @NonNls String name) {
+      return myChildren == null ? null : myChildren.get(name);
     }
   }
 }

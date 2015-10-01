@@ -61,17 +61,27 @@ public class BidirectionalMultiMap<K, V> {
   public boolean put(K key, V value) {
     Set<K> ks = myValue2Keys.get(value);
     if (ks == null) {
-      ks = new HashSet<K>();
+      ks = createKeysSet();
       myValue2Keys.put(value, ks);
     }
     ks.add(key);
 
     Set<V> vs = myKey2Values.get(key);
     if (vs == null) {
-      vs = new HashSet<V>();
+      vs = createValuesSet();
       myKey2Values.put(key, vs);
     }
     return vs.add(value);
+  }
+
+  @NotNull
+  protected Set<V> createValuesSet() {
+    return new HashSet<V>();
+  }
+
+  @NotNull
+  protected Set<K> createKeysSet() {
+    return new HashSet<K>();
   }
 
   public boolean removeKey(K key) {

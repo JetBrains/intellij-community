@@ -16,13 +16,17 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/expressions";
@@ -40,6 +44,51 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testInfinitiveParameterBoundsCheck() throws Exception {
+    doTestAllMethodCallExpressions();
+  }
+
+  public void testCachedUnresolvedMethods() throws Exception {
+    doTestCachedUnresolved();
+  }
+
+  public void testCacheUnresolvedMethods2() throws Exception {
+    doTestCachedUnresolved();
+  }
+  
+  public void testCacheUnresolvedMethods3() throws Exception {
+    doTestCachedUnresolved();
+  }
+
+  private void doTestCachedUnresolved() {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    PsiMethodCallExpression callExpression =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
+
+    assertNotNull(callExpression);
+    assertNotNull(callExpression.getType());
+
+    final Collection<PsiCallExpression> methodCallExpressions = PsiTreeUtil.findChildrenOfType(getFile(), PsiCallExpression.class);
+    for (PsiCallExpression expression : methodCallExpressions) {
+      assertNotNull("Failed inference for: " + expression.getText(), expression.getType());
+    }
+  }
+
+  public void testIDEA140035() throws Exception {
+    doTestAllMethodCallExpressions();
+    final Collection<PsiParameter> parameterLists = PsiTreeUtil.findChildrenOfType(getFile(), PsiParameter.class);
+    for (PsiParameter parameter : parameterLists) {
+      if (parameter.getTypeElement() != null) continue;
+      getPsiManager().dropResolveCaches();
+      final PsiType type = parameter.getType();
+      assertFalse("Failed inference for: " + parameter.getParent().getText(), type instanceof PsiLambdaParameterType);
+    }
+  }
+
+  public void testAdditionalConstraintsBasedOnLambdaResolution() throws Exception {
+    doTestAllMethodCallExpressions();
+  }
+  
+  public void testAdditionalConstraintsBasedOnLambdaResolutionForNestedLambdas() throws Exception {
     doTestAllMethodCallExpressions();
   }
 

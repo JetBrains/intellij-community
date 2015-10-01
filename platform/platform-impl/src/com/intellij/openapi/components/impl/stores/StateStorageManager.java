@@ -16,13 +16,11 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 
 public interface StateStorageManager {
@@ -33,12 +31,6 @@ public interface StateStorageManager {
 
   @NotNull
   StateStorage getStateStorage(@NotNull Storage storageSpec);
-
-  @NotNull
-  StateStorage getStateStorage(@NotNull String fileSpec, @NotNull RoamingType roamingType);
-
-  @NotNull
-  Couple<Collection<FileStorage>> getCachedFileStateStorages(@NotNull Collection<String> changed, @NotNull Collection<String> deleted);
 
   /**
    * Rename file
@@ -61,11 +53,6 @@ public interface StateStorageManager {
    * @param path System-independent path.
    */
   String collapseMacros(@NotNull String path);
-
-  void setStreamProvider(@Nullable StreamProvider streamProvider);
-
-  @Nullable
-  StreamProvider getStreamProvider();
 
   interface ExternalizationSession {
     void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state);

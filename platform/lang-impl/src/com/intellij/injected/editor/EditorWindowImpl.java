@@ -862,4 +862,15 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   public int getExpectedCaretOffset() {
     return myDocumentWindow.hostToInjected(myDelegate.getExpectedCaretOffset());
   }
+
+  @Override
+  public void setContextMenuGroupId(@Nullable String groupId) {
+    myDelegate.setContextMenuGroupId(groupId);
+  }
+
+  @Nullable
+  @Override
+  public String getContextMenuGroupId() {
+    return myDelegate.getContextMenuGroupId();
+  }
 }

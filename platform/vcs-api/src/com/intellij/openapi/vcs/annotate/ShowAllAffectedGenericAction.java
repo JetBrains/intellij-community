@@ -19,26 +19,14 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
-import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
-import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author irengrig
@@ -72,110 +60,20 @@ public class ShowAllAffectedGenericAction extends AnAction implements DumbAware 
     }
   }
 
-  public static void showSubmittedFiles(final Project project, final VcsRevisionNumber revision, final VirtualFile virtualFile, final VcsKey vcsKey) {
+  public static void showSubmittedFiles(@NotNull Project project,
+                                        @NotNull VcsRevisionNumber revision,
+                                        @NotNull VirtualFile virtualFile,
+                                        @NotNull VcsKey vcsKey) {
     showSubmittedFiles(project, revision, virtualFile, vcsKey, null, false);
   }
 
-  public static void showSubmittedFiles(final Project project, final VcsRevisionNumber revision, final VirtualFile virtualFile,
-                                         final VcsKey vcsKey, final RepositoryLocation location, final boolean isNonLocal) {
-    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName());
-    if (vcs == null) return;
-    if (isNonLocal && ! canPresentNonLocal(project, vcsKey, virtualFile)) return;
-
-    final String title = VcsBundle.message("paths.affected.in.revision",
-                                           revision instanceof ShortVcsRevisionNumber
-                                               ? ((ShortVcsRevisionNumber) revision).toShortString()
-                                               :  revision.asString());
-    final CommittedChangeList[] list = new CommittedChangeList[1];
-    final FilePath[] targetPath = new FilePath[1];
-    final VcsException[] exc = new VcsException[1];
-    Task.Backgroundable task = new Task.Backgroundable(project, title, true, BackgroundFromStartOption.getInstance()) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
-          if (!isNonLocal) {
-            final Pair<CommittedChangeList, FilePath> pair = provider.getOneList(virtualFile, revision);
-            if (pair != null) {
-              list[0] = pair.getFirst();
-              targetPath[0] = pair.getSecond();
-            }
-          }
-          else {
-            if (location != null) {
-              final ChangeBrowserSettings settings = provider.createDefaultSettings();
-              settings.USE_CHANGE_BEFORE_FILTER = true;
-              settings.CHANGE_BEFORE = revision.asString();
-              final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, location, 1);
-              if (changes != null && changes.size() == 1) {
-                list[0] = changes.get(0);
-              }
-              return;
-            }
-            else {
-              list[0] = getRemoteList(vcs, revision, virtualFile);
-              /*final RepositoryLocation local = provider.getForNonLocal(virtualFile);
-              if (local != null) {
-                final String number = revision.asString();
-                final ChangeBrowserSettings settings = provider.createDefaultSettings();
-                final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, local, provider.getUnlimitedCountValue());
-                if (changes != null) {
-                  for (CommittedChangeList change : changes) {
-                    if (number.equals(String.valueOf(change.getNumber()))) {
-                      list[0] = change;
-                    }
-                  }
-                }
-              } */
-            }
-          }
-        }
-        catch (VcsException e) {
-          exc[0] = e;
-        }
-      }
-
-      @Override
-      public void onSuccess() {
-        final AbstractVcsHelper instance = AbstractVcsHelper.getInstance(project);
-        if (exc[0] != null) {
-          instance.showError(exc[0], failedText(virtualFile, revision));
-        }
-        else if (list[0] == null) {
-          Messages.showErrorDialog(project, failedText(virtualFile, revision), getTitle());
-        }
-        else {
-          VirtualFile navigateToFile = targetPath[0] != null ?
-                                       new VcsVirtualFile(targetPath[0].getPath(), null, VcsFileSystem.getInstance()) :
-                                       virtualFile;
-          instance.showChangesListBrowser(list[0], navigateToFile, title);
-        }
-      }
-    };
-    ProgressManager.getInstance().run(task);
-  }
-
-  public static CommittedChangeList getRemoteList(final AbstractVcs vcs, final VcsRevisionNumber revision, final VirtualFile nonLocal)
-    throws VcsException {
-    final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
-    final RepositoryLocation local = provider.getForNonLocal(nonLocal);
-    if (local != null) {
-      final String number = revision.asString();
-      final ChangeBrowserSettings settings = provider.createDefaultSettings();
-      final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, local, provider.getUnlimitedCountValue());
-      if (changes != null) {
-        for (CommittedChangeList change : changes) {
-          if (number.equals(String.valueOf(change.getNumber()))) {
-            return change;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  private static String failedText(VirtualFile virtualFile, VcsRevisionNumber revision) {
-    return "Show all affected files for " + virtualFile.getPath() + " at " + revision.asString() + " failed";
+  public static void showSubmittedFiles(@NotNull Project project,
+                                        @NotNull VcsRevisionNumber revision,
+                                        @NotNull VirtualFile virtualFile,
+                                        @NotNull VcsKey vcsKey,
+                                        @Nullable RepositoryLocation location,
+                                        boolean isNonLocal) {
+    AbstractVcsHelper.getInstance(project).loadAndShowCommittedChangesDetails(project, revision, virtualFile, vcsKey, location, isNonLocal);
   }
 
   @Override

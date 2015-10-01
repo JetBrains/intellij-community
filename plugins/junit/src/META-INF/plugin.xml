@@ -40,7 +40,7 @@
     <deadCode implementation="com.intellij.execution.junit2.inspection.JUnitEntryPoint"/>
     <cantBeStatic implementation="com.intellij.execution.junit2.inspection.JUnitCantBeStaticExtension" />
     <testFramework implementation="com.intellij.execution.junit.JUnit3Framework"/>
-    <testFramework implementation="com.intellij.execution.junit.JUnit4Framework"/>
+    <testFramework implementation="com.intellij.execution.junit.JUnit4Framework" id="junit4"/>
     <configurationType implementation="com.intellij.execution.junit.JUnitConfigurationType"/>
     <library.dependencyScopeSuggester implementation="com.intellij.execution.junit.JUnitDependencyScopeSuggester"/>
 
@@ -78,7 +78,7 @@
     </group>
     <group>
       <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite" text="Add to pattern suite"/>
-      <add-to-group anchor="first" group-id="RunContextGroup"/>
+      <add-to-group anchor="last" group-id="RunContextGroup"/>
     </group>
   </actions>
 </idea-plugin>

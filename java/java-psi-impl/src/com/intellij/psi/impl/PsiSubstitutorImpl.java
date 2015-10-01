@@ -280,7 +280,6 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
 
       @Override
       public PsiType visitType(PsiType type) {
-        LOG.error(type.getInternalCanonicalText());
         return null;
       }
     });

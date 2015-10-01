@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,42 +65,21 @@ public class IdeRepaintManager extends RepaintManager {
     }
   }
 
-  private class DisplayChangeHandler implements sun.awt.DisplayChangedListener, Runnable {
+  private class DisplayChangeHandler implements DisplayChangeDetector.Listener, Runnable {
+    @Override
     public void displayChanged() {
-      EventQueue.invokeLater( this );
+      EventQueue.invokeLater(this);
     }
-
-    public void paletteChanged() {
-      EventQueue.invokeLater( this );
-    }
-
+    @Override
     public void run() {
       clearLeakyImages(true);
     }
   }
-
-  // We must keep a strong reference to the DisplayChangedListener,
-  //  since SunDisplayChanger keeps only a WeakReference to it.
-  private DisplayChangeHandler displayChangeHack;
   
   {
-    try {
-      GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      env.getScreenDevices();    // init
-      Class<?> aClass = Class.forName("sun.awt.DisplayChangedListener"); // might be absent
-      displayChangeHack = new DisplayChangeHandler();
-      
-      if (aClass.isInstance(env)) { // Headless env does not implement sun.awt.DisplayChangedListener (and lacks addDisplayChangedListener)
-        env.getClass()
-          .getMethod("addDisplayChangedListener", new Class[]{aClass})
-          .invoke(env, displayChangeHack);
-      }
-    }
-    catch (Throwable t) {
-      if (!(t instanceof HeadlessException)) LOG.error("Cannot setup display change listener", t);
-    }
+    DisplayChangeDetector.getInstance().addListener(new DisplayChangeHandler());
   }
-  
+
   @Override
   public void validateInvalidComponents() {
     super.validateInvalidComponents();

@@ -23,8 +23,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
-import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInsight.intention.impl.AddNullableNotNullAnnotationFix;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.dataFlow.*;
@@ -1722,7 +1720,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     if (myExtractedMethod != null) {
       final ExtractMethodSignatureSuggester suggester = new ExtractMethodSignatureSuggester(myProject, myExtractedMethod, myMethodCall, myVariableDatum);
-      duplicates = suggester.getDuplicates(myExtractedMethod, myMethodCall);
+      duplicates = suggester.getDuplicates(myExtractedMethod, myMethodCall, myInputVariables.getFolding());
       if (duplicates != null && !duplicates.isEmpty()) {
         myDuplicates      = duplicates;
         myExtractedMethod = suggester.getExtractedMethod();

@@ -131,19 +131,19 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
 
   @Override
   protected void setUserMap(@NotNull KeyFMap map) {
-    mySegment.setUserMap(Math.abs(getId()), map);
+    mySegment.setUserMap(myId, map);
   }
 
   @NotNull
   @Override
   protected KeyFMap getUserMap() {
-    return mySegment.getUserMap(this);
+    return mySegment.getUserMap(this, myId);
   }
 
   @Override
   protected boolean changeUserMap(KeyFMap oldMap, KeyFMap newMap) {
     VirtualDirectoryImpl.checkLeaks(newMap);
-    return mySegment.changeUserMap(Math.abs(getId()), oldMap, UserDataInterner.internUserData(newMap));
+    return mySegment.changeUserMap(myId, oldMap, UserDataInterner.internUserData(newMap));
   }
 
 }

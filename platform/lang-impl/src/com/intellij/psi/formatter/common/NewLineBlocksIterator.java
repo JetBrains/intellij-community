@@ -19,8 +19,10 @@ import com.intellij.formatting.Block;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 
-import java.util.*;
-
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Stack;
 
 public class NewLineBlocksIterator implements Iterator<Block> {
   private final Document myDocument;
@@ -89,7 +91,7 @@ public class NewLineBlocksIterator implements Iterator<Block> {
   private void pushAll(Block current) {
     if (current instanceof AbstractBlock) {
       //building blocks as fast as possible
-      ((AbstractBlock)current).setBuildInjectedBlocks(false);
+      ((AbstractBlock)current).setBuildIndentsOnly(true);
     }
 
     List<Block> blocks = current.getSubBlocks();

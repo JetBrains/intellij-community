@@ -120,6 +120,18 @@ public class IoTestUtil {
     return junctionFile;
   }
 
+  public static void deleteJunction(@NotNull String junction) throws InterruptedException, IOException {
+    assertTrue(SystemInfo.isWindows);
+
+    final File junctionFile = new File(FileUtil.toSystemDependentName(junction));
+
+    final String exePath = getJunctionExePath();
+
+    final ProcessBuilder command = new ProcessBuilder(exePath, "-d",  junctionFile.getPath());
+    final int res = runCommand(command);
+    assertEquals(command.command().toString(), 0, res);
+  }
+
   @NotNull
   public static File createSubst(@NotNull String target) throws InterruptedException, IOException {
     assertTrue(SystemInfo.isWindows);
@@ -194,6 +206,7 @@ public class IoTestUtil {
   }
 
   private static int runCommand(final ProcessBuilder command) throws IOException, InterruptedException {
+    command.redirectErrorStream(true);
     final Process process = command.start();
     new Thread(new Runnable() {
       @Override
@@ -202,7 +215,10 @@ public class IoTestUtil {
           final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
           try {
             //noinspection StatementWithEmptyBody
-            while (reader.readLine() != null);
+            String line;
+            while ((line = reader.readLine()) != null) {
+              System.out.println(line);
+            }
           }
           finally {
             reader.close();

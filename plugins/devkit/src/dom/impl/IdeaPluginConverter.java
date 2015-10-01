@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,13 +118,19 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
       public Result<Collection<IdeaPlugin>> compute() {
         GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project).
           union(ProjectScope.getLibrariesScope(project));
-        List<DomFileElement<IdeaPlugin>> files = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
-        final Collection<IdeaPlugin> pluginList = ContainerUtil.map(files, new Function<DomFileElement<IdeaPlugin>, IdeaPlugin>() {
-          public IdeaPlugin fun(DomFileElement<IdeaPlugin> ideaPluginDomFileElement) {
-            return ideaPluginDomFileElement.getRootElement();
-          }
-        });
-        return Result.create(pluginList, PsiModificationTracker.MODIFICATION_COUNT);
+        return Result.create(getPlugins(project, scope), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      }
+    });
+  }
+
+  @NotNull
+  public static Collection<IdeaPlugin> getPlugins(Project project, GlobalSearchScope scope) {
+    if (DumbService.isDumb(project)) return Collections.emptyList();
+
+    List<DomFileElement<IdeaPlugin>> files = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
+    return ContainerUtil.map(files, new Function<DomFileElement<IdeaPlugin>, IdeaPlugin>() {
+      public IdeaPlugin fun(DomFileElement<IdeaPlugin> ideaPluginDomFileElement) {
+        return ideaPluginDomFileElement.getRootElement();
       }
     });
   }

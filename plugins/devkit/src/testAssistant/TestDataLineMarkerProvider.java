@@ -19,7 +19,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -40,7 +39,7 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
   public static final String CONTENT_ROOT_VARIABLE = "$CONTENT_ROOT";
   public static final String PROJECT_ROOT_VARIABLE = "$PROJECT_ROOT";
 
-  public AnAction getAdditionalAction(@NotNull PsiElement e) {
+  public Info getInfo(@NotNull PsiElement e) {
 
     PsiElement element = e.getParent();
     if (!(e instanceof PsiIdentifier) ||
@@ -58,12 +57,12 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
       return null;
     }
     if (element instanceof PsiMethod) {
-      return ActionManager.getInstance().getAction("TestData.Navigate");
+      return new Info(ActionManager.getInstance().getAction("TestData.Navigate"));
     } else {
       final PsiClass psiClass = (PsiClass)element;
       final String basePath = getTestDataBasePath(psiClass);
       if (basePath != null) {
-        return new GotoTestDataAction(basePath, psiClass.getProject(), AllIcons.Nodes.Folder);
+        return new Info(new GotoTestDataAction(basePath, psiClass.getProject(), AllIcons.Nodes.Folder));
       }
     }
     return null;

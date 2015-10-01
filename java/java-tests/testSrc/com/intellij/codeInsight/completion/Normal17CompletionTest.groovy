@@ -56,4 +56,10 @@ public class Normal17CompletionTest extends LightFixtureCompletionTestCase {
     myFixture.type('\n')
     checkResultByFile(getTestName(false) + "_after.java")
   }
+
+  public void testAfterTryWithResources() {
+    configureByFile(getTestName(false) + ".java")
+    def strings = myFixture.lookupElementStrings
+    assert strings.containsAll(['final', 'finally', 'int', 'Util'])
+  }
 }

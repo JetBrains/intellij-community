@@ -58,6 +58,12 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
   }
 
   @Override
+  protected void onInit() {
+    super.onInit();
+    myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myRequest));
+  }
+
+  @Override
   @CalledInAwt
   protected void onDispose() {
     destroyEditorHolder();

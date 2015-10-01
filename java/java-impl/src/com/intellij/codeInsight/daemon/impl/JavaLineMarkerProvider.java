@@ -184,12 +184,14 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
       boolean canHaveSiblingSuper = !method.hasModifierProperty(PsiModifier.ABSTRACT) && !method.hasModifierProperty(PsiModifier.STATIC) && method.hasModifierProperty(PsiModifier.PUBLIC)&& !method.hasModifierProperty(PsiModifier.FINAL)&& !method.hasModifierProperty(PsiModifier.NATIVE);
       if (!canHaveSiblingSuper) continue;
 
-      PsiMethod siblingInheritedViaSubClass = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method, subClassCache);
+      PsiMethod siblingInheritedViaSubClass = Pair.getFirst(FindSuperElementsHelper.getSiblingInheritedViaSubClass(method, subClassCache));
       if (siblingInheritedViaSubClass == null) {
         continue;
       }
       PsiElement range = getMethodRange(method);
-      LineMarkerInfo info = createSuperMethodLineMarkerInfo(range, AllIcons.Gutter.ImplementingMethod, Pass.UPDATE_OVERRIDEN_MARKERS);
+      ArrowUpLineMarkerInfo upInfo = new ArrowUpLineMarkerInfo(range, AllIcons.Gutter.ImplementingMethod, MarkerType.SIBLING_OVERRIDING_METHOD,
+                                                              Pass.UPDATE_OVERRIDEN_MARKERS);
+      LineMarkerInfo info = NavigateAction.setNavigateAction(upInfo, "Go to super method", IdeActions.ACTION_GOTO_SUPER);
       result.add(info);
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@
  */
 package org.jetbrains.idea.eclipse;
 
+import org.jetbrains.annotations.NotNull;
+
 public class EclipseIml2ModulesTest extends Eclipse2ModulesTest {
 
   @Override
@@ -36,7 +38,7 @@ public class EclipseIml2ModulesTest extends Eclipse2ModulesTest {
   }
 
   @Override
-  protected void doTest(final String workspaceRoot, final String projectRoot) throws Exception {
+  protected void doTest(@NotNull final String workspaceRoot, @NotNull final String projectRoot) throws Exception {
     super.doTest(workspaceRoot, projectRoot);
     EclipseImlTest.doTest("/" + workspaceRoot + "/" + projectRoot, getProject());
   }

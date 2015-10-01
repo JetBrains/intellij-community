@@ -249,7 +249,7 @@ public class CodeInsightUtil {
     }
   }
 
-  public static Editor positionCursor(final Project project, PsiFile targetFile, PsiElement element) {
+  public static Editor positionCursor(final Project project, PsiFile targetFile, @NotNull PsiElement element) {
     TextRange range = element.getTextRange();
     int textOffset = range.getStartOffset();
 

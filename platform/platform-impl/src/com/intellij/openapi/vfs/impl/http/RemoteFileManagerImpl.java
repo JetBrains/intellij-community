@@ -106,14 +106,8 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
   }
 
   @Override
-  public void addFileListener(@NotNull final HttpVirtualFileListener listener, @NotNull final Disposable parentDisposable) {
-    addFileListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeFileListener(listener);
-      }
-    });
+  public void addFileListener(@NotNull HttpVirtualFileListener listener, @NotNull Disposable parentDisposable) {
+    myDispatcher.addListener(listener, parentDisposable);
   }
 
   @Override

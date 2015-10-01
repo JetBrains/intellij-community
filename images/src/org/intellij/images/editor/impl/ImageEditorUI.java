@@ -19,6 +19,7 @@ import com.intellij.ide.CopyPasteSupport;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PsiActionSupportFactory;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.Messages;
@@ -68,7 +69,7 @@ import java.util.Locale;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, ImageComponentDecorator {
+final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, ImageComponentDecorator, Disposable {
   @NonNls
   private static final String IMAGE_PANEL = "image";
   @NonNls
@@ -201,7 +202,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     return imageComponent;
   }
 
-  void dispose() {
+  public void dispose() {
     Options options = OptionsManager.getInstance().getOptions();
     options.removePropertyChangeListener(optionsChangeListener);
 

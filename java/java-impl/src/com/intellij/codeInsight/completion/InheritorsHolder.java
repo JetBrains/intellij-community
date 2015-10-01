@@ -18,7 +18,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,12 +30,10 @@ import java.util.Set;
 * @author peter
 */
 public class InheritorsHolder implements Consumer<LookupElement> {
-  private final PsiElement myPosition;
   private final Set<String> myAddedClasses = new HashSet<String>();
   private final CompletionResultSet myResult;
 
-  public InheritorsHolder(PsiElement position, CompletionResultSet result) {
-    myPosition = position;
+  public InheritorsHolder(CompletionResultSet result) {
     myResult = result;
   }
 
@@ -49,12 +46,12 @@ public class InheritorsHolder implements Consumer<LookupElement> {
     myResult.addElement(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(lookupElement));
   }
 
-  public void registerClass(PsiClass psiClass) {
+  public void registerClass(@NotNull PsiClass psiClass) {
     ContainerUtil.addIfNotNull(myAddedClasses, getClassName(psiClass));
   }
 
   @Nullable
-  private static String getClassName(PsiClass psiClass) {
+  private static String getClassName(@NotNull PsiClass psiClass) {
     String name = psiClass.getQualifiedName();
     return name == null ? psiClass.getName() : name;
   }

@@ -171,7 +171,7 @@ public class DottedFilterEdgesGenerator {
             nearlyDown = Math.min(nearlyDown, downNode);
           }
           else {
-            if (downNode > myDownIndex) nearlyDown = Math.min(nearlyDown, myNumbers.getNumber(downNode));
+            if (downNode <= myDownIndex) nearlyDown = Math.min(nearlyDown, myNumbers.getNumber(downNode));
           }
         }
         myNumbers.setNumber(currentNodeIndex, nearlyDown);

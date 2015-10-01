@@ -129,6 +129,8 @@ public class MavenResourceCompilerConfigurationGenerator {
         }
       }
 
+      addEarModelMapEntries(mavenProject, resourceConfig.modelMap);
+
       Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
 
       resourceConfig.outputDirectory = getResourcesPluginGoalOutputDirectory(mavenProject, pluginConfiguration, "resources");
@@ -190,6 +192,12 @@ public class MavenResourceCompilerConfigurationGenerator {
     });
   }
 
+  private static void addEarModelMapEntries(@NotNull MavenProject mavenProject, @NotNull Map<String, String> modelMap) {
+    Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-ear-plugin");
+    final String skinnyWars = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "skinnyWars", "false");
+    modelMap.put("build.plugin.maven-ear-plugin.skinnyWars", skinnyWars);
+  }
+
   @Nullable
   private static String getResourcesPluginGoalOutputDirectory(@NotNull MavenProject mavenProject,
                                                               @Nullable Element pluginConfiguration,
@@ -234,6 +242,7 @@ public class MavenResourceCompilerConfigurationGenerator {
       finally {
         StreamUtil.closeStream(outputStream);
       }
+      resourceConfig.classpath = ManifestBuilder.getClasspath(mavenProject);
     }
     catch (ManifestBuilder.ManifestBuilderException e) {
       LOG.warn("Unable to generate artifact manifest", e);

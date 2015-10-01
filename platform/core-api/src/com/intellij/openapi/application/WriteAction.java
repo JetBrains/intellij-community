@@ -45,22 +45,13 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
         application.runWriteAction(new Runnable() {
           @Override
           public void run() {
-            try {
-              result.run();
-            }
-            catch (RuntimeException e) {
-              result.setThrowable(e);
-            }
+            result.run();
           }
         });
       }
     }, ModalityState.defaultModalityState());
 
-    final Throwable throwable = result.getThrowable();
-    if (throwable != null && !isSilentExecution()) {
-      throw (RuntimeException)throwable;
-    }
-
+    result.throwException();
     return result;
   }
 

@@ -88,12 +88,6 @@ public class ResourceBundleImpl extends ResourceBundle {
     return myDefaultPropertiesFile.getParent().getVirtualFile();
   }
 
-  @NotNull
-  @Override
-  public Project getProject() {
-    return myDefaultPropertiesFile.getProject();
-  }
-
   public boolean isValid() {
     return myValid;
   }

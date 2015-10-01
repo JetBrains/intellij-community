@@ -30,6 +30,7 @@ public class DataInputOutputUtil {
 
   private DataInputOutputUtil() {}
 
+  @Nullable 
   public static StringRef readNAME(@NotNull DataInput record, @NotNull AbstractStringEnumerator nameStore) throws IOException {
     return StringRef.fromStream(record, nameStore);
   }

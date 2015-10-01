@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ public final class GroovyCommonClassNames {
   @NonNls public static final String GROOVY_TRANSFORM_COMPILE_DYNAMIC = "groovy.transform.CompileDynamic";
   @NonNls public static final String GROOVY_TRANSFORM_STC_CLOSURE_PARAMS = "groovy.transform.stc.ClosureParams";
   @NonNls public static final String GROOVY_TRANSFORM_BASE_SCRIPT = "groovy.transform.BaseScript";
+  @NonNls public static final String IMPLEMENTED_FQN = "org.codehaus.groovy.transform.trait.Traits.Implemented";
 
   public static final Set<String> GROOVY_EXTENSION_CLASSES = Collections.unmodifiableSet(ContainerUtil.newLinkedHashSet(
     "org.codehaus.groovy.runtime.DateGroovyMethods",

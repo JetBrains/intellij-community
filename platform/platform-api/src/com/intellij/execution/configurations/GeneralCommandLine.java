@@ -41,10 +41,13 @@ import java.util.*;
 
 /**
  * OS-independent way of executing external processes with complex parameters.
- * <p/>
+ * <p>
  * Main idea of the class is to accept parameters "as-is", just as they should look to an external process, and quote/escape them
  * as required by the underlying platform.
+ * <p>
+ * Consider setting working directory (if relevant), and take a look at {@link #isStrictParentEnvironment()}.
  *
+ * @see com.intellij.execution.util.ExecUtil
  * @see com.intellij.execution.process.OSProcessHandler
  */
 public class GeneralCommandLine implements UserDataHolder {
@@ -54,6 +57,7 @@ public class GeneralCommandLine implements UserDataHolder {
   private File myWorkDirectory = null;
   private final Map<String, String> myEnvParams = new MyTHashMap();
   private boolean myPassParentEnvironment = true;
+  private boolean myStrictParentEnvironment = PlatformUtils.isAppCode(); //todo revise usages, then set to "false"
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myRedirectErrorStream = false;
@@ -143,12 +147,27 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /**
-   * @return unmodifiable map of the parent environment, that will be passed to the process if isPassParentEnvironment() == true
+   * Determines the scope of a parent environment passed to a child process when {@code isPassParentEnvironment()} is {@code true}.
+   * By default, a shell environment is passed under OS X. Set the option to {@code true} to use stricter GUI environment instead.
+   * <p>
+   * See {@link EnvironmentUtil#getEnvironmentMap()} for distinction between shell/GUI environment on OS X.
+   */
+  public boolean isStrictParentEnvironment() {
+    return myStrictParentEnvironment;
+  }
+
+  @NotNull
+  public GeneralCommandLine withStrictParentEnvironment(boolean strictParentEnvironment) {
+    myStrictParentEnvironment = strictParentEnvironment;
+    return this;
+  }
+
+  /**
+   * Returns an environment that will be passed to a child process if {@link #isPassParentEnvironment()} is {@code true}.
    */
   @NotNull
   public Map<String, String> getParentEnvironment() {
-    return PlatformUtils.isAppCode() ? System.getenv() // Temporarily fix for OC-8606
-                                     : EnvironmentUtil.getEnvironmentMap();
+    return myStrictParentEnvironment ? System.getenv() : EnvironmentUtil.getEnvironmentMap();
   }
 
   public void addParameters(String... parameters) {
@@ -293,11 +312,10 @@ public class GeneralCommandLine implements UserDataHolder {
       return;
     }
     if (!myWorkDirectory.exists()) {
-      throw new ExecutionException(
-        IdeBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory.getAbsolutePath()));
+      throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory));
     }
     if (!myWorkDirectory.isDirectory()) {
-      throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.not.directory"));
+      throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.not.directory", myWorkDirectory));
     }
   }
 
@@ -307,7 +325,7 @@ public class GeneralCommandLine implements UserDataHolder {
     if (myPassParentEnvironment) {
       environment.putAll(getParentEnvironment());
     }
-    
+
     if (!myEnvParams.isEmpty()) {
       if (SystemInfo.isWindows) {
         THashMap<String, String> envVars = new THashMap<String, String>(CaseInsensitiveStringHashingStrategy.INSTANCE);

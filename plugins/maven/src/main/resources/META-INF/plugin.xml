@@ -28,6 +28,7 @@
     <extensionPoint name="pluginDescriptor" beanClass="org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor" />
 
     <extensionPoint name="repositoryProvider" interface="org.jetbrains.idea.maven.indices.MavenRepositoryProvider"/>
+    <extensionPoint name="repositoryLibrary" interface="org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
@@ -179,6 +180,8 @@
 
     <postStartupActivity implementation="org.jetbrains.idea.maven.utils.MavenRehighlighter$MavenRehighlighterPostStartupActivity"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.utils.MavenRehighlighter"/>
+    <projectModelModifier implementation="org.jetbrains.idea.maven.importing.MavenProjectModelModifier"/>
+    <library.dependencyScopeSuggester implementation="org.jetbrains.idea.maven.utils.library.RepositoryLibraryDependencyScopeSuggester"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">

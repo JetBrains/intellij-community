@@ -55,7 +55,7 @@ final class DefaultWebServerPathHandler extends WebServerPathHandler {
           return true;
         }
 
-        result = BuiltInWebServer.findIndexFile(result);
+        result = BuiltInWebServerPackage.findIndexFile(result);
         if (result == null) {
           Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, "Index file doesn't exist.", request);
           return true;

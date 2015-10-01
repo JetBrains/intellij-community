@@ -1,4 +1,4 @@
-<component>
+<idea-plugin>
   <actions>
     <action id="IncrementalSearch" class="com.intellij.codeInsight.navigation.actions.IncrementalSearchAction"/>
     <action id="AddToFavoritesPopup" class="com.intellij.ide.favoritesTreeView.actions.AddToFavoritesPopupAction"/>
@@ -12,6 +12,9 @@
     <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" text="Debug..." description="Choose and debug configuration" icon="AllIcons.General.Debug"/>
 
     <group id="RunContextGroup" popup="false">
+      <!-- A dynamic group filled with executor actions -->
+      <group id="RunContextGroupInner"/>
+      <separator/>
       <action id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
     </group>
     <group id="RunContextPopupGroup" popup="false">
@@ -320,6 +323,7 @@
       </group>
 
       <action id="Inline" class="com.intellij.refactoring.actions.InlineAction"/>
+      <action id="InvertBoolean" class="com.intellij.refactoring.actions.InvertBooleanAction"/>
       <separator/>
       <action id="MembersPullUp" class="com.intellij.refactoring.actions.PullUpAction"/>
       <action id="MemberPushDown" class="com.intellij.refactoring.actions.PushDownAction"/>
@@ -347,11 +351,12 @@
 
       <add-to-group group-id="ToolsMenu" anchor="first"/>
 
-      <action id="NewScratchFile" class="com.intellij.ide.scratch.NewScratchFileAction" />
+      <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" />
       <action id="IdeScriptingConsole" class="com.intellij.execution.console.RunIdeConsoleAction"/>
     </group>
-    <action id="Scratch.ChangeLanguage" class="com.intellij.ide.scratch.NewScratchFileAction$LanguageAction">
-      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ChangeFileEncodingAction"/>
+    <action id="NewScratchBuffer" class="com.intellij.ide.scratch.ScratchFileActions$NewBufferAction"/>
+    <action id="Scratch.ChangeLanguage" class="com.intellij.ide.scratch.ScratchFileActions$LanguageAction">
+      <add-to-group group-id="EditorPopupMenu2"/>
     </action>
 
     <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup">
@@ -440,6 +445,7 @@
 
     <group id="ProjectViewPopupMenuModifyGroup">
       <reference ref="$Delete"/>
+      <reference ref="Scratch.ChangeLanguage"/>
       <group id="MarkFileAs" class="com.intellij.openapi.file.exclude.ui.MarkFileGroup">
         <action id="MarkAsPlainTextAction" class="com.intellij.openapi.file.exclude.ui.MarkAsPlainTextAction"/>
         <action id="MarkAsOriginalTypeAction" class="com.intellij.openapi.file.exclude.ui.MarkAsOriginalTypeAction"/>
@@ -457,7 +463,7 @@
 
     <group id="ProjectViewPopupMenu">
       <reference ref="WeighingNewGroup"/>
-      <action id="AssociateWithFileType" class="com.intellij.ide.actions.AssociateFileType"/>
+      <action id="AssociateWithFileType" class="com.intellij.ide.actions.AssociateFileTypeAction"/>
       <action id="RestoreDefaultExtensionScripts" class="com.intellij.ide.extensionResources.RestoreBundledExtensionsAction"/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
@@ -577,15 +583,13 @@
       <reference ref="CompareTwoFiles"/>
     </group>
 
-    <group id="EditorPopupMenu1">
-      <separator/>
+    <group id="EditorPopupMenu1.FindRefactor">
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="FoldingGroup"/>
-      <separator/>
 
-      <add-to-group group-id="EditorPopupMenu" relative-to-action="EditorToggleColumnMode" anchor="after"/>
+      <add-to-group group-id="EditorPopupMenu1"/>
     </group>
 
     <group id="EditorLangPopupMenu">
@@ -853,7 +857,6 @@
 
     <group id="TestTreePopupMenu">
       <reference ref="RunContextGroup"/>
-      <separator/>
       <reference ref="EditSource"/>
       <reference ref="ViewSource"/>
     </group>
@@ -965,4 +968,4 @@
 
     <action id="SeverityEditorDialog" class="com.intellij.codeInspection.ex.SeverityEditorDialogAction"/>
   </actions>
-</component>
+</idea-plugin>

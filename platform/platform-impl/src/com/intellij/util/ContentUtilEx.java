@@ -42,7 +42,7 @@ public class ContentUtilEx extends ContentsUtil {
   }
 
   public static void addTabbedContent(ContentManager manager, JComponent contentComponent, String groupPrefix, String tabName, boolean select, @Nullable Disposable childDisposable) {
-    if (PropertiesComponent.getInstance().getBoolean(TabbedContent.SPLIT_PROPERTY_PREFIX + groupPrefix, false)) {
+    if (PropertiesComponent.getInstance().getBoolean(TabbedContent.SPLIT_PROPERTY_PREFIX + groupPrefix)) {
       final Content content = ContentFactory.SERVICE.getInstance().createContent(contentComponent, groupPrefix + ": " + tabName, true);
       content.putUserData(Content.TABBED_CONTENT_KEY, Boolean.TRUE);
       content.putUserData(Content.TAB_GROUP_NAME_KEY, groupPrefix);

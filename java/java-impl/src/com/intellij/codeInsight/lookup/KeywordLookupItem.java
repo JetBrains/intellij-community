@@ -24,12 +24,30 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
 */
-public class KeywordLookupItem extends LookupItem<PsiKeyword> implements TypedLookupItem {
+public class KeywordLookupItem extends LookupElement implements TypedLookupItem {
   private final PsiElement myPosition;
+  private final PsiKeyword myKeyword;
 
   public KeywordLookupItem(final PsiKeyword keyword, @NotNull PsiElement position) {
-    super(keyword, keyword.getText());
+    myKeyword = keyword;
     myPosition = position;
+  }
+
+  @NotNull
+  @Override
+  public Object getObject() {
+    return myKeyword;
+  }
+
+  @NotNull
+  @Override
+  public String getLookupString() {
+    return myKeyword.getText();
+  }
+
+  @Override
+  public AutoCompletionPolicy getAutoCompletionPolicy() {
+    return AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE;
   }
 
   @Override

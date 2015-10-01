@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,6 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static com.intellij.openapi.util.text.StringUtil.stripQuotesAroundValue;
-
 public class URLUtil {
   public static final String SCHEME_SEPARATOR = "://";
   public static final String FILE_PROTOCOL = "file";
@@ -45,6 +43,7 @@ public class URLUtil {
   public static final String JAR_SEPARATOR = "!/";
 
   public static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset(?:=|:)[^,;]+)?(;base64)?,(.+)");
+  public static final Pattern URL_PATTERN = Pattern.compile("\\b(mailto:|(news|(ht|f)tp(s?))://|((?<![\\p{L}0-9_.])(www\\.)))[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]");
 
   private URLUtil() { }
 
@@ -202,7 +201,7 @@ public class URLUtil {
    */
   @Nullable
   public static byte[] getBytesFromDataUri(@NotNull String dataUrl) {
-    Matcher matcher = DATA_URI_PATTERN.matcher(stripQuotesAroundValue(dataUrl));
+    Matcher matcher = DATA_URI_PATTERN.matcher(StringUtil.unquoteString(dataUrl));
     if (matcher.matches()) {
       try {
         String content = matcher.group(4);

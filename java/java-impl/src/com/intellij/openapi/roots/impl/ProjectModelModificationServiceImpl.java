@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ProjectModelModificationService;
 import com.intellij.openapi.roots.ProjectModelModifier;
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.Collection;
 
@@ -37,30 +38,36 @@ public class ProjectModelModificationServiceImpl extends ProjectModelModificatio
   }
 
   @Override
-  public void addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope) {
+  public Promise<Void> addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope) {
     for (ProjectModelModifier modifier : getModelModifiers()) {
-      if (modifier.addModuleDependency(from, to, scope)) {
-        return;
+      Promise<Void> promise = modifier.addModuleDependency(from, to, scope);
+      if (promise != null) {
+        return promise;
       }
     }
+    return Promise.REJECTED;
   }
 
   @Override
-  public void addDependency(@NotNull Collection<Module> from, @NotNull ExternalLibraryDescriptor libraryDescriptor, @NotNull DependencyScope scope) {
+  public Promise<Void> addDependency(@NotNull Collection<Module> from, @NotNull ExternalLibraryDescriptor libraryDescriptor, @NotNull DependencyScope scope) {
     for (ProjectModelModifier modifier : getModelModifiers()) {
-      if (modifier.addExternalLibraryDependency(from, libraryDescriptor, scope)) {
-        return;
+      Promise<Void> promise = modifier.addExternalLibraryDependency(from, libraryDescriptor, scope);
+      if (promise != null) {
+        return promise;
       }
     }
+    return Promise.REJECTED;
   }
 
   @Override
-  public void addDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
+  public Promise<Void> addDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
     for (ProjectModelModifier modifier : getModelModifiers()) {
-      if (modifier.addLibraryDependency(from, library, scope)) {
-        return;
+      Promise<Void> promise = modifier.addLibraryDependency(from, library, scope);
+      if (promise != null) {
+        return promise;
       }
     }
+    return Promise.REJECTED;
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,25 @@
  */
 package com.intellij.application.options.editor;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.options.BeanConfigurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.xml.XmlBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 
-/**
- * @author yole
- */
 public class WebEditorAppearanceConfigurable extends BeanConfigurable<WebEditorOptions> implements UnnamedConfigurable {
   public WebEditorAppearanceConfigurable() {
     super(WebEditorOptions.getInstance());
-    checkBox("breadcrumbsEnabled", XmlBundle.message("xml.editor.options.breadcrumbs.title"));
-    checkBox("breadcrumbsEnabledInXml", XmlBundle.message("xml.editor.options.breadcrumbs.for.xml.title"));
     checkBox("showCssColorPreviewInGutter", "Show CSS color preview icon in gutter");
     checkBox("showCssInlineColorPreview", "Show CSS color preview as background");
+  }
+
+  @Override
+  public void apply() throws ConfigurationException {
+    super.apply();
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      DaemonCodeAnalyzer.getInstance(project).restart();
+    }
   }
 }

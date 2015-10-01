@@ -38,6 +38,31 @@ import java.util.*;
 public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
   private Map<LibraryKind, LibraryPresentationProvider<?>> myPresentationProviders;
 
+  public static List<LibraryKind> getLibraryKinds(@NotNull Library library, @Nullable StructureConfigurableContext context) {
+    final List<LibraryKind> result = new SmartList<LibraryKind>();
+    final LibraryKind kind = ((LibraryEx)library).getKind();
+    if (kind != null) {
+      result.add(kind);
+    }
+    final VirtualFile[] files = getLibraryFiles(library, context);
+    LibraryDetectionManager.getInstance().processProperties(Arrays.asList(files), new LibraryDetectionManager.LibraryPropertiesProcessor() {
+      @Override
+      public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind kind, @NotNull P properties) {
+        result.add(kind);
+        return true;
+      }
+    });
+    return result;
+  }
+
+  @NotNull
+  private static VirtualFile[] getLibraryFiles(@NotNull Library library, @Nullable StructureConfigurableContext context) {
+    if (((LibraryEx)library).isDisposed()) {
+      return VirtualFile.EMPTY_ARRAY;
+    }
+    return context != null ? context.getLibraryFiles(library, OrderRootType.CLASSES) : library.getFiles(OrderRootType.CLASSES);
+  }
+
   private <P extends LibraryProperties> LibraryPresentationProvider<P> getPresentationProvider(LibraryKind kind) {
     if (myPresentationProviders == null) {
       final Map<LibraryKind, LibraryPresentationProvider<?>> providers = new HashMap<LibraryKind, LibraryPresentationProvider<?>>();
@@ -62,9 +87,10 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
 
   @Override
   public Icon getCustomIcon(@NotNull Library library, StructureConfigurableContext context) {
-    final LibraryKind kind = ((LibraryEx)library).getKind();
+    LibraryEx libraryEx = (LibraryEx)library;
+    final LibraryKind kind = libraryEx.getKind();
     if (kind != null) {
-      return LibraryType.findByKind(kind).getIcon();
+      return LibraryType.findByKind(kind).getIcon(libraryEx.getProperties());
     }
     final List<Icon> icons = getCustomIcons(library, context);
     if (icons.size() == 1) {
@@ -83,7 +109,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
       public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind kind, @NotNull P properties) {
         final LibraryPresentationProvider<P> provider = getPresentationProvider(kind);
         if (provider != null) {
-          ContainerUtil.addIfNotNull(icons, provider.getIcon());
+          ContainerUtil.addIfNotNull(icons, provider.getIcon(properties));
         }
         return true;
       }
@@ -117,36 +143,11 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
     });
   }
 
-  public static List<LibraryKind> getLibraryKinds(@NotNull Library library, @Nullable StructureConfigurableContext context) {
-    final List<LibraryKind> result = new SmartList<LibraryKind>();
-    final LibraryKind kind = ((LibraryEx)library).getKind();
-    if (kind != null) {
-      result.add(kind);
-    }
-    final VirtualFile[] files = getLibraryFiles(library, context);
-    LibraryDetectionManager.getInstance().processProperties(Arrays.asList(files), new LibraryDetectionManager.LibraryPropertiesProcessor() {
-      @Override
-      public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind kind, @NotNull P properties) {
-        result.add(kind);
-        return true;
-      }
-    });
-    return result;
-  }
-
   @NotNull
   @Override
   public List<String> getDescriptions(@NotNull Library library, StructureConfigurableContext context) {
     final VirtualFile[] files = getLibraryFiles(library, context);
     return getDescriptions(files, Collections.<LibraryKind>emptySet());
-  }
-
-  @NotNull
-  private static VirtualFile[] getLibraryFiles(@NotNull Library library, @Nullable StructureConfigurableContext context) {
-    if (((LibraryEx)library).isDisposed()) {
-      return VirtualFile.EMPTY_ARRAY;
-    }
-    return context != null ? context.getLibraryFiles(library, OrderRootType.CLASSES) : library.getFiles(OrderRootType.CLASSES);
   }
 
   @NotNull

@@ -41,6 +41,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.PathsList;
@@ -85,6 +86,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
   private AnalysisScope myGenerationScope;
   private static final Logger LOGGER = Logger.getInstance("#" + JavadocConfiguration.class.getName());
   public boolean OPTION_INCLUDE_LIBS = false;
+  public boolean OPTION_LINK_TO_JDK_DOCS = false;
 
   public void setGenerationScope(AnalysisScope generationScope) {
     myGenerationScope = generationScope;
@@ -127,6 +129,10 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
+  }
+  
+  public boolean sdkHasJavadocUrls() {
+    return getSdk(myProject).getRootProvider().getFiles(JavadocOrderRootType.getInstance()).length > 0;
   }
 
   public static Sdk getSdk(@NotNull Project project) {
@@ -293,6 +299,14 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
       }
       catch (IOException e) {
         LOGGER.error(e);
+      }
+
+      if (OPTION_LINK_TO_JDK_DOCS) {
+        VirtualFile[] docUrls = jdk.getRootProvider().getFiles(JavadocOrderRootType.getInstance());
+        for (VirtualFile docUrl : docUrls) {
+          parameters.add("-link");
+          parameters.add(VfsUtil.toUri(docUrl).toString());
+        }
       }
 
       final PathsList classPath;

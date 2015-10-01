@@ -2,8 +2,7 @@ package com.jetbrains.env.python.testing;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.ut.PyTestTestTask;
-import com.jetbrains.env.ut.PyUnitTestTask;
+import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
@@ -16,13 +15,17 @@ import java.util.List;
  */
 public class PythonUnitTestingTest extends PyEnvTestCase {
   public void testUTRunner() {
-    runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "test1.py") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test1.py") {
+
 
       @Override
-      public void after() {
-        Assert.assertEquals(2, allTestsCount());
-        Assert.assertEquals(2, passedTestsCount());
-        allTestsPassed();
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        Assert.assertEquals(2, runner.getAllTestsCount());
+        Assert.assertEquals(2, runner.getPassedTestsCount());
+        runner.assertAllTestsPassed();
       }
     });
   }
@@ -31,7 +34,7 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
    * Ensures that skipped and erroneous tests do not lead to suite ignorance
    */
   public void testUTSkippedAndIgnored() {
-    runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "test_with_skips_and_errors.py") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_with_skips_and_errors.py") {
 
       @Override
       public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
@@ -40,23 +43,29 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
       }
 
       @Override
-      public void after() {
-        assertEquals(4, allTestsCount());
-        assertEquals(2, passedTestsCount());
-        assertEquals(2, failedTestsCount());
-        Assert.assertFalse("Suite is not finished", myTestProxy.isInterrupted());
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assertEquals(4, runner.getAllTestsCount());
+        assertEquals(2, runner.getPassedTestsCount());
+        assertEquals(2, runner.getFailedTestsCount());
+        Assert.assertFalse("Suite is not finished", runner.getTestProxy().isInterrupted());
       }
     });
   }
 
   public void testUTRunner2() {
-    runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "test2.py") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test2.py") {
 
       @Override
-      public void after() {
-        assertEquals(3, allTestsCount());
-        assertEquals(1, passedTestsCount());
-        assertEquals(2, failedTestsCount());
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assertEquals(3, runner.getAllTestsCount());
+        assertEquals(1, runner.getPassedTestsCount());
+        assertEquals(2, runner.getFailedTestsCount());
       }
     });
   }
@@ -65,46 +74,59 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
    * Ensures pattern is supported
    */
   public void testUTRunnerByPattern() {
-    runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "_args_separator_*pattern.py") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "./_args_separator_*pattern.py") {
+
 
       @Override
-      public void after() {
-        assertEquals(4, allTestsCount());
-        assertEquals(2, passedTestsCount());
-        assertEquals(2, failedTestsCount());
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assertEquals(4, runner.getAllTestsCount());
+        assertEquals(2, runner.getPassedTestsCount());
+        assertEquals(2, runner.getFailedTestsCount());
       }
     });
   }
 
   public void testClass() {
-    runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "test_file.py::GoodTest") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_file.py::GoodTest") {
 
       @Override
-      public void after() {
-        assertEquals(1, allTestsCount());
-        assertEquals(1, passedTestsCount());
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assertEquals(1, runner.getAllTestsCount());
+        assertEquals(1, runner.getPassedTestsCount());
       }
     });
   }
 
   public void testMethod() {
-    runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "test_file.py::GoodTest::test_passes") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_file.py::GoodTest::test_passes") {
 
       @Override
-      public void after() {
-        assertEquals(1, allTestsCount());
-        assertEquals(1, passedTestsCount());
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assertEquals(1, runner.getAllTestsCount());
+        assertEquals(1, runner.getPassedTestsCount());
       }
     });
   }
 
   public void testFolder() {
-    runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "test_folder/") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_folder/") {
 
       @Override
-      public void after() {
-        assertEquals(5, allTestsCount());
-        assertEquals(3, passedTestsCount());
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assertEquals(5, runner.getAllTestsCount());
+        assertEquals(3, runner.getPassedTestsCount());
       }
     });
   }
@@ -114,46 +136,35 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
    */
   public void testUnitTestFileReferences() {
     final String fileName = "reference_tests.py";
-    runPythonTest(new PyUnitTestTask("/testRunner/env/unit", fileName) {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", fileName) {
 
       @Override
-      public void after() {
-        final List<String> fileNames = getHighlightedStrings().second;
-        Assert.assertThat(String.format("Wrong number of highlighted entries(%s)", StringUtil.join(fileNames, ",")),
-                          fileNames, Matchers.hasSize(3));
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        final List<String> fileNames = runner.getHighlightedStringsInConsole().getSecond();
+        Assert.assertTrue(String.format("Not enough highlighted entries(%s) in the following output: %s",
+                                        StringUtil.join(fileNames, ","),
+                                        runner.getAllConsoleText()),
+                          fileNames.size() >= 3);
         // UnitTest highlights file name
         Assert.assertThat("Bad line highlighted", fileNames, Matchers.everyItem(Matchers.endsWith(fileName)));
       }
     });
   }
 
-  /**
-   * Ensures file references are highlighted for pytest traceback
-   */
-  public void testPyTestFileReferences() {
-    final String fileName = "reference_tests.py";
-    runPythonTest(new PyTestTestTask("/testRunner/env/unit", fileName) {
-
-      @Override
-      public void after() {
-        final List<String> fileNames = getHighlightedStrings().second;
-        Assert.assertThat("No lines highlighted", fileNames, Matchers.not(Matchers.empty()));
-        // PyTest highlights file:line_number
-        Assert.assertTrue("Assert fail not marked", fileNames.contains("reference_tests.py:7"));
-        Assert.assertTrue("Failed test not marked", fileNames.contains("reference_tests.py:12"));
-        Assert.assertTrue("Failed test not marked", fileNames.contains("reference_tests.py"));
-      }
-    });
-  }
-
 
   public void testDependent() {
-    runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "dependentTests/test_my_class.py") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "dependentTests/test_my_class.py") {
 
       @Override
-      public void after() {
-        assertEquals(1, allTestsCount());
-        assertEquals(1, passedTestsCount());
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assertEquals(1, runner.getAllTestsCount());
+        assertEquals(1, runner.getPassedTestsCount());
       }
     });
   }

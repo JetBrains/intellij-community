@@ -183,7 +183,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   public static boolean isPreferStatements() {
-    return Boolean.valueOf(PropertiesComponent.getInstance().getBoolean(PREFER_STATEMENTS_OPTION, false)) || Registry.is(PREFER_STATEMENTS_OPTION, false);
+    return Boolean.valueOf(PropertiesComponent.getInstance().getBoolean(PREFER_STATEMENTS_OPTION)) || Registry.is(PREFER_STATEMENTS_OPTION, false);
   }
 
   public static List<PsiExpression> collectExpressions(final PsiFile file,

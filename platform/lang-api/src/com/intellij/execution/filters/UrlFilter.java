@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,23 @@ package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author yole
  */
 public class UrlFilter implements Filter {
-  public static final Pattern URL_PATTERN = Pattern.compile("\\b(mailto:|(news|(ht|f)tp(s?))://|((?<![\\p{L}0-9_.])(www\\.)))[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]");
-
   @Nullable
   @Override
   public Result applyFilter(String line, int entireLength) {
     int textStartOffset = entireLength - line.length();
-    Matcher m = URL_PATTERN.matcher(line);
+    Matcher m = URLUtil.URL_PATTERN.matcher(line);
     ResultItem item = null;
     List<ResultItem> items = null;
     while (m.find()) {

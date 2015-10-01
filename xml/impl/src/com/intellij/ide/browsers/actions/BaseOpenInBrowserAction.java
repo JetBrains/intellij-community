@@ -211,7 +211,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
         public void run() {
           Url value = (Url)list.getSelectedValue();
           if (value == null) {
-            result.setError(Promise.createError("selected value is null"));
+            result.setError("selected value is null");
           }
           else {
             result.setResult(value);

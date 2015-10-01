@@ -1,3 +1,4 @@
+import org.gradle.api.internal.tasks.testing.TestDescriptorInternal
 /*
  * Copyright 2000-2014 JetBrains s.r.o.
  *
@@ -83,7 +84,7 @@ gradle.taskGraph.beforeTask { Task task ->
   }
 }
 
-Object logTestEvent(def testEventType, def testDescriptor, def testEvent, def testResult) {
+Object logTestEvent(def testEventType, TestDescriptorInternal testDescriptor, def testEvent, def testResult) {
   def writer = new StringWriter()
   def xml = new groovy.xml.MarkupBuilder(writer)
   xml.event(type: testEventType){

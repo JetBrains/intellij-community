@@ -17,14 +17,18 @@
 package com.intellij.openapi.vcs.merge;
 
 import com.intellij.CommonBundle;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.InvalidDiffRequestException;
+import com.intellij.diff.merge.MergeRequest;
+import com.intellij.diff.merge.MergeResult;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diff.ActionButtonPresentation;
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.DiffRequestFactory;
-import com.intellij.openapi.diff.MergeRequest;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.mergeTool.MergeVersion;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -36,13 +40,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
@@ -56,12 +61,15 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.*;
 
 /**
  * @author yole
  */
 public class MultipleFileMergeDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance(MultipleFileMergeDialog.class);
+
   private JPanel myRootPanel;
   private JButton myAcceptYoursButton;
   private JButton myAcceptTheirsButton;
@@ -83,7 +91,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
   public MultipleFileMergeDialog(@Nullable Project project, @NotNull final List<VirtualFile> files, @NotNull final MergeProvider provider,
                                  @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
-    super(project, false);
+    super(project);
 
     myProject = project;
     myProjectManager = ProjectManagerEx.getInstanceEx();
@@ -171,10 +179,6 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     boolean haveSelection = myTable.getSelectedRowCount() > 0;
     boolean haveUnmergeableFiles = false;
     for (VirtualFile file : myTable.getSelection()) {
-      if (myBinaryFiles.contains(file)) {
-        haveUnmergeableFiles = true;
-        break;
-      }
       if (myMergeSession != null) {
         boolean canMerge = myMergeSession.canMerge(file);
         if (!canMerge) {
@@ -214,6 +218,10 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     super.dispose();
   }
 
+  protected boolean beforeResolve(Collection<VirtualFile> files) {
+    return true;
+  }
+
   @Override
   @NonNls
   protected String getDimensionServiceKey() {
@@ -223,6 +231,10 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private void acceptRevision(final boolean isCurrent) {
     FileDocumentManager.getInstance().saveAllDocuments();
     final Collection<VirtualFile> files = myTable.getSelection();
+    if (!beforeResolve(files)) {
+      return;
+    }
+    
     for (final VirtualFile file : files) {
       final Ref<Exception> ex = new Ref<Exception>();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -233,6 +245,9 @@ public class MultipleFileMergeDialog extends DialogWrapper {
             public void run() {
               try {
                 if (!(myProvider instanceof MergeProvider2) || myMergeSession.canMerge(file)) {
+                  if (!DiffUtil.makeWritable(myProject, file)) {
+                    throw new IOException("File is read-only: " + file.getPresentableName());
+                  }
                   MergeData data = myProvider.loadRevisions(file);
                   if (isCurrent) {
                     file.setBinaryContent(data.CURRENT);
@@ -289,7 +304,13 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   }
 
   private void showMergeDialog() {
-    for (VirtualFile file : myTable.getSelection()) {
+    DiffRequestFactory requestFactory = DiffRequestFactory.getInstance();
+    Collection<VirtualFile> files = myTable.getSelection();
+    if (!beforeResolve(files)) {
+      return;
+    }
+    
+    for (final VirtualFile file : files) {
       final MergeData mergeData;
       try {
         mergeData = myProvider.loadRevisions(file);
@@ -304,29 +325,41 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         break;
       }
 
-      String leftText = decodeContent(file, mergeData.CURRENT);
-      String rightText = decodeContent(file, mergeData.LAST);
-      String originalText = decodeContent(file, mergeData.ORIGINAL);
+      String leftTitle = myMergeDialogCustomizer.getLeftPanelTitle(file);
+      String baseTitle = myMergeDialogCustomizer.getCenterPanelTitle(file);
+      String rightTitle = myMergeDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER);
+      String title = myMergeDialogCustomizer.getMergeWindowTitle(file);
 
-      DiffRequestFactory diffRequestFactory = DiffRequestFactory.getInstance();
-      MergeRequest request = diffRequestFactory
-        .createMergeRequest(leftText, rightText, originalText, file, myProject, ActionButtonPresentation.APPLY,
-                            ActionButtonPresentation.CANCEL_WITH_PROMPT);
-      request.setVersionTitles(new String[] {
-        myMergeDialogCustomizer.getLeftPanelTitle(file),
-        myMergeDialogCustomizer.getCenterPanelTitle(file),
-        myMergeDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER)
-      });
-      request.setWindowTitle(myMergeDialogCustomizer.getMergeWindowTitle(file));
+      final List<byte[]> byteContents = ContainerUtil.list(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST);
+      List<String> contentTitles = ContainerUtil.list(leftTitle, baseTitle, rightTitle);
 
-      DiffManager.getInstance().getDiffTool().show(request);
-      if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {
-        markFileProcessed(file, MergeSession.Resolution.Merged);
-        checkMarkModifiedProject(file);
+      Consumer<MergeResult> callback = new Consumer<MergeResult>() {
+        @Override
+        public void consume(MergeResult result) {
+          Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+          if (document != null) FileDocumentManager.getInstance().saveDocument(document);
+          checkMarkModifiedProject(file);
+
+          if (result != MergeResult.CANCEL) markFileProcessed(file, MergeSession.Resolution.Merged);
+        }
+      };
+
+      MergeRequest request;
+      try {
+        if (myProvider.isBinary(file)) { // respect MIME-types in svn
+          request = requestFactory.createBinaryMergeRequest(myProject, file, byteContents, title, contentTitles, callback);
+        }
+        else {
+          request = requestFactory.createMergeRequest(myProject, file, byteContents, title, contentTitles, callback);
+        }
       }
-      else {
-        request.restoreOriginalContent();
+      catch (InvalidDiffRequestException e) {
+        LOG.error(e);
+        Messages.showErrorDialog(myRootPanel, "Can't show merge dialog");
+        break;
       }
+
+      DiffManager.getInstance().showMerge(myProject, request);
     }
     updateModelFromFiles();
   }
@@ -349,10 +382,6 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myTable;
-  }
-
-  private static String decodeContent(final VirtualFile file, final byte[] content) {
-    return StringUtil.convertLineSeparators(CharsetToolkit.bytesToString(content, file.getCharset()));
   }
 
   @NotNull

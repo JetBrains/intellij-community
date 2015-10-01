@@ -85,7 +85,6 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     });
   }
 
-  //null key means project
   private final Map<VirtualFile, Charset> myMapping = ContainerUtil.newConcurrentMap();
   private volatile Charset myProjectCharset;
 
@@ -96,7 +95,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       List<VirtualFile> files = new ArrayList<VirtualFile>(myMapping.keySet());
       ContainerUtil.quickSort(files, new Comparator<VirtualFile>() {
         @Override
-        public int compare(final VirtualFile o1, final VirtualFile o2) {
+        public int compare(@NotNull final VirtualFile o1, @NotNull final VirtualFile o2) {
           return o1.getPath().compareTo(o2.getPath());
         }
       });
@@ -235,9 +234,15 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   @Override
   @NotNull
   public Collection<Charset> getFavorites() {
-    Set<Charset> result = new HashSet<Charset>();
+    Set<Charset> result = widelyKnownCharsets();
     result.addAll(myMapping.values());
     result.add(getDefaultCharset());
+    return result;
+  }
+
+  @NotNull
+  static Set<Charset> widelyKnownCharsets() {
+    Set<Charset> result = new HashSet<Charset>();
     result.add(CharsetToolkit.UTF8_CHARSET);
     result.add(CharsetToolkit.getDefaultSystemCharset());
     result.add(CharsetToolkit.UTF_16_CHARSET);
@@ -245,7 +250,6 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     result.add(CharsetToolkit.forName("US-ASCII"));
     result.add(EncodingManager.getInstance().getDefaultCharset());
     result.add(EncodingManager.getInstance().getDefaultCharsetForPropertiesFiles(null));
-
     result.remove(null);
     return result;
   }

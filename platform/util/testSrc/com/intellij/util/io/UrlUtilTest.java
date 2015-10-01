@@ -24,10 +24,13 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.equalTo;
+import java.util.regex.Matcher;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 public class UrlUtilTest {
@@ -76,8 +79,48 @@ public class UrlUtilTest {
   @Test
   public void testDataUri() {
     byte[] test = "test".getBytes(CharsetToolkit.UTF8_CHARSET);
-    assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset=utf-8;base64,dGVzdA=="), equalTo(test));
+    assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset=utf-8;base64,dGVzdA==")).isEqualTo(test);
     // https://youtrack.jetbrains.com/issue/WEB-14581#comment=27-1014790
-    assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset:utf-8;base64,dGVzdA=="), equalTo(test));
+    assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset:utf-8;base64,dGVzdA==")).isEqualTo(test);
+  }
+  
+  private static void doUrlTest(@NotNull final String line, @Nullable final String expectedUrl) {
+    final Matcher matcher = URLUtil.URL_PATTERN.matcher(line);
+    if (expectedUrl == null) {
+      if (matcher.find()) {
+        fail("No URL expected in [" + line + "], detected: " + matcher.group());
+      }
+      return;
+    }
+
+    assertTrue("Expected URL (" + expectedUrl + ") is not detected in [" + line + "]", matcher.find());
+    assertEquals("Text: [" + line + "]", expectedUrl, matcher.group());
+  }
+
+  @Test
+  public void testUrlParsing() throws Exception {
+    doUrlTest("not detecting jetbrains.com", null);
+    doUrlTest("mailto:admin@jetbrains.com;", "mailto:admin@jetbrains.com");
+    doUrlTest("news://jetbrains.com is good", "news://jetbrains.com");
+    doUrlTest("see http://www.jetbrains.com", "http://www.jetbrains.com");
+    doUrlTest("https://www.jetbrains.com;", "https://www.jetbrains.com");
+    doUrlTest("(ftp://jetbrains.com)", "ftp://jetbrains.com");
+    doUrlTest("[ftps://jetbrains.com]", "ftps://jetbrains.com");
+    doUrlTest("Is it good site:http://jetbrains.com?", "http://jetbrains.com");
+    doUrlTest("And http://jetbrains.com?a=@#/%?=~_|!:,.;&b=20,", "http://jetbrains.com?a=@#/%?=~_|!:,.;&b=20");
+    doUrlTest("site:www.jetbrains.com.", "www.jetbrains.com");
+    doUrlTest("site (www.jetbrains.com)", "www.jetbrains.com");
+    doUrlTest("site [www.jetbrains.com]", "www.jetbrains.com");
+    doUrlTest("site <www.jetbrains.com>", "www.jetbrains.com");
+    doUrlTest("site {www.jetbrains.com}", "www.jetbrains.com");
+    doUrlTest("site 'www.jetbrains.com'", "www.jetbrains.com");
+    doUrlTest("site \"www.jetbrains.com\"", "www.jetbrains.com");
+    doUrlTest("site=www.jetbrains.com!", "www.jetbrains.com");
+    doUrlTest("site *www.jetbrains.com*", "www.jetbrains.com");
+    doUrlTest("site `www.jetbrains.com`", "www.jetbrains.com");
+    doUrlTest("not a site _www.jetbrains.com", null);
+    doUrlTest("not a site 1www.jetbrains.com", null);
+    doUrlTest("not a site wwww.jetbrains.com", null);
+    doUrlTest("not a site xxx.www.jetbrains.com", null);
   }
 }

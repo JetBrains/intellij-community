@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
 
@@ -94,11 +97,16 @@ public abstract class ExecutableValidator {
    * @return true if process with the supplied executable completed without errors and with exit code 0.
    */
   protected boolean isExecutableValid(@NotNull String executable) {
+    return doCheckExecutable(executable, Collections.<String>emptyList());
+  }
+
+  protected static boolean doCheckExecutable(@NotNull String executable, @NotNull List<String> processParameters) {
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine();
       commandLine.setExePath(executable);
+      commandLine.addParameters(processParameters);
       CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
-      ProcessOutput result = handler.runProcess(60 * 1000);
+      ProcessOutput result = handler.runProcess(Registry.intValue("vcs.executable.validator.timeout.sec", 60) * 1000);
       boolean timeout = result.isTimeout();
       int exitCode = result.getExitCode();
       String stderr = result.getStderr();
@@ -106,7 +114,7 @@ public abstract class ExecutableValidator {
         LOG.warn("Validation of " + executable + " failed with a timeout");
       }
       if (exitCode != 0) {
-        LOG.warn("Validation of " + executable + " failed with non-zero exit code: " + exitCode);
+        LOG.warn("Validation of " + executable + " failed with a non-zero exit code: " + exitCode);
       }
       if (!stderr.isEmpty()) {
         LOG.warn("Validation of " + executable + " failed with a non-empty error output: " + stderr);

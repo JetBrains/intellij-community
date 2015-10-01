@@ -16,7 +16,6 @@
 package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.Pair;
@@ -28,6 +27,7 @@ import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport;
 import org.jdom.Element;
+import org.jdom.IllegalDataException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,8 +97,7 @@ public class MethodParameterInjection extends BaseInjection {
     try {
       list.readExternal(e);
     }
-    catch (InvalidDataException e1) {
-      // nothing
+    catch (IllegalDataException ignored) {
     }
     if (list.isEmpty()) return;
     final boolean[] selection = new boolean[list.size()];

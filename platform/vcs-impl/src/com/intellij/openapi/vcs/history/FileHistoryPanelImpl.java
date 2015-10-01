@@ -47,13 +47,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateRevisionActionBase;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
+import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
@@ -1685,7 +1685,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       final VcsVirtualFile vf =
         new VcsVirtualFile(changedRepositoryPath.toPresentableString(), myRevision.getRevision(), VcsFileSystem.getInstance());
       try {
-        myList = ShowAllAffectedGenericAction.getRemoteList(myVcs, myRevision.getRevisionNumber(), vf);
+        myList = AbstractVcsHelperImpl.getRemoteList(myVcs, myRevision.getRevisionNumber(), vf);
         //myList = provider.getOneList(vf, myRevision.getRevisionNumber());
       }
       catch (VcsException e1) {

@@ -90,7 +90,12 @@ public abstract class Client extends UserDataHolderBase {
     public void operationComplete(ChannelFuture future) throws Exception {
       if (!future.isSuccess()) {
         Throwable cause = future.cause();
-        setError(cause == null ? Promise.createError("No success") : cause);
+        if (cause == null) {
+          setError("No success");
+        }
+        else {
+          setError(cause);
+        }
       }
     }
   }

@@ -82,9 +82,6 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
       if (!(expression instanceof PsiReferenceExpression)) {
         return;
       }
-      if (isInStaticMethod(expression)) {
-        return;
-      }
       final PsiElement referent = ((PsiReference)expression).resolve();
       if (referent == null) {
         return;
@@ -93,9 +90,13 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
         return;
       }
       final PsiField fieldReferenced = (PsiField)referent;
-      if (fieldReferenced.hasModifierProperty(PsiModifier.STATIC)) {
-        registerError(expression);
+      if (!fieldReferenced.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
       }
+      if (isInStaticMethod(expression)) {
+        return;
+      }
+      registerError(expression);
     }
 
     private static boolean isInStaticMethod(PsiElement element) {

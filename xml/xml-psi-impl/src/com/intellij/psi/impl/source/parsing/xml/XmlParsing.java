@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.parsing.xml;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.CustomParsingType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
@@ -177,7 +178,7 @@ public class XmlParsing {
     }
 
     final String tagName;
-    if (token() != XML_NAME) {
+    if (token() != XML_NAME || myBuilder.rawLookup(-1) == TokenType.WHITE_SPACE) {
       error(XmlErrorMessages.message("xml.parsing.tag.name.expected"));
       tagName = "";
     }

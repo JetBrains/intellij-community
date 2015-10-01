@@ -107,8 +107,8 @@ public class FormBuilder {
   }
 
   @NotNull
-  public FormBuilder addComponent(@NotNull JComponent component, int topInset, boolean fillVertically) {
-    return addLabeledComponent(null, component, topInset, false, fillVertically);
+  public FormBuilder addComponentFillVertically(@NotNull JComponent component, int topInset) {
+    return addLabeledComponent(null, component, topInset, false, true);
   }
 
   public FormBuilder addSeparator(final int topInset) {

@@ -21,9 +21,9 @@
   <xi:include href="/idea/RichPlatformPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <module value="com.intellij.modules.java"/>
   <module value="com.intellij.modules.all"/>
-  <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/ExternalSystemExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
-  <xi:include href="/componentSets/Debugger.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/Debugger.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/structuralsearch.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
@@ -135,6 +135,8 @@
                     area="IDEA_PROJECT"/>
     <extensionPoint name="debugger.jvmSmartStepIntoHandler"
                     interface="com.intellij.debugger.actions.JvmSmartStepIntoHandler"/>
+    <extensionPoint name="debugger.jvmSteppingCommandProvider"
+                    interface="com.intellij.debugger.impl.JvmSteppingCommandProvider"/>
 
     <extensionPoint name="debugger.frameExtraVarsProvider"
                     interface="com.intellij.debugger.engine.FrameExtraVariablesProvider"/>
@@ -157,6 +159,10 @@
     <extensionPoint name="debugger.sourcePositionHighlighter"
                     interface="com.intellij.debugger.engine.SourcePositionHighlighter"/>
 
+    <extensionPoint name="debugger.nodeNameAdjuster"
+                    interface="com.intellij.debugger.ui.tree.NodeDescriptorNameAdjuster"/>
+
+
     <extensionPoint name="allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="annotatedPackagesSearch" interface="com.intellij.util.QueryExecutor"/>
@@ -168,6 +174,7 @@
     <extensionPoint name="superMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="allClassesSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="functionalExpressionSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint name="classesWithAnnotatedMembersSearch" interface="com.intellij.util.QueryExecutor"/>
 
     <extensionPoint name="compiler.inspectionValidator"
                     interface="com.intellij.openapi.compiler.util.InspectionValidator"
@@ -344,6 +351,7 @@
     <allOverridingMethodsSearch implementation="com.intellij.psi.impl.search.JavaAllOverridingMethodsSearcher"/>
     <methodReferencesSearch implementation="com.intellij.psi.impl.search.MethodUsagesSearcher"/>
     <deepestSuperMethodsSearch implementation="com.intellij.psi.impl.search.MethodDeepestSuperSearcher"/>
+    <classesWithAnnotatedMembersSearch implementation="com.intellij.psi.impl.search.ClassesWithAnnotatedMembersSearcher"/>
 
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.MethodImplementationsSearch"/>
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
@@ -532,9 +540,6 @@
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManagerImpl"/>
 
-    <projectService serviceInterface="com.intellij.codeInsight.ConditionCheckManager"
-                    serviceImplementation="com.intellij.codeInsight.ConditionCheckManager"/>
-
     <projectService serviceInterface="com.intellij.psi.search.PsiShortNamesCache"
                     serviceImplementation="com.intellij.psi.impl.CompositeShortNamesCache"/>
 
@@ -546,6 +551,7 @@
                         serviceImplementation="com.intellij.framework.library.impl.DownloadableLibraryServiceImpl"/>
 
     <projectService serviceImplementation="com.intellij.javadoc.JavadocGenerationManager"/>
+    <projectService serviceImplementation="com.intellij.codeInsight.ProjectCodeInsightSettings"/>
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
 
@@ -827,6 +833,10 @@
       <className>com.intellij.codeInsight.intention.impl.ConvertCompareToToEqualsIntention</className>
       <category>Java/Control Flow</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ConvertEqualsMethodToStaticIntention</className>
+      <category>Java/Control Flow</category>
+    </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction</className>
@@ -1075,6 +1085,8 @@
                           order="before declaration"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.DeclarationMover" id="declaration"
                           order="before xml"/>
+    <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.CaseBlockMover" id="caseBlock"
+                          order="before statement"/>
 
     <fileType.fileViewProviderFactory filetype="CLASS" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
 
@@ -1317,7 +1329,7 @@
     <runConfigurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
 
-    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.execution.application.ApplicationRunLineMarkerProvider"/>
+    <runLineMarkerContributor language="JAVA" implementationClass="com.intellij.execution.application.ApplicationRunLineMarkerProvider"/>
     <pathMacroFilter implementation="com.intellij.execution.configuration.JavaRunConfigurationPathMacroFilter"/>
 
     <javaExpressionSurrounder implementation="com.intellij.debugger.codeinsight.JavaWithRuntimeCastSurrounder"/>
@@ -1491,7 +1503,7 @@
     <testFinder implementation="com.intellij.testIntegration.JavaTestFinder"/>
     <testCreator language="JAVA" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testGenerator language="JAVA" implementationClass="com.intellij.testIntegration.createTest.JavaTestGenerator" />
-    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.testIntegration.TestRunLineMarkerProvider"/>
+    <runLineMarkerContributor language="JAVA" implementationClass="com.intellij.testIntegration.TestRunLineMarkerProvider"/>
 
     <callHierarchyProvider language="JAVA" implementationClass="com.intellij.ide.hierarchy.call.JavaCallHierarchyProvider"/>
     <methodHierarchyProvider language="JAVA" implementationClass="com.intellij.ide.hierarchy.method.JavaMethodHierarchyProvider"/>
@@ -1560,8 +1572,7 @@
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.FileObjectRenderer"/>
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.StackTraceElementObjectRenderer"/>
 
-    <applicationService serviceInterface="com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher"
-                        serviceImplementation="com.intellij.remoteServer.impl.runtime.deployment.debug.JavaDebuggerLauncherImpl"/>
+    <debugger.nodeNameAdjuster implementation="com.intellij.debugger.ui.impl.watch.FieldOuterLocalNameAdjuster"/>
 
     <dom.uiControlsProvider implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent"/>
 
@@ -1674,6 +1685,7 @@
     <lang.inspectionSuppressor language="JAVA" implementationClass="com.intellij.codeInspection.SuppressManagerImpl"/>
     <refactoring.moveInnerClassUsagesHandler language="JAVA" implementationClass="com.intellij.refactoring.move.moveInner.MoveInnerClassJavaUsagesHandler" id="java"/>
     <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
+    <refactoring.invertBoolean implementation="com.intellij.refactoring.invertBoolean.JavaInvertBooleanDelegate"/>
   </extensions>
 
   <actions>

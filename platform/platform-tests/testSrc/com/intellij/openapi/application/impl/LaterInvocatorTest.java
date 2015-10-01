@@ -556,4 +556,28 @@ public class LaterInvocatorTest extends PlatformTestCase {
       }
     }
   }
+
+  public void testInvokeLaterWithNonexistentModalityStateIsInvokedInLowerModalityState() throws Exception {
+    SwingUtilities.invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        LaterInvocator.enterModal(myWindow2);
+        ModalityState window2State = ModalityState.current();
+        LaterInvocator.leaveModal(myWindow2);
+        LaterInvocator.invokeLater(new MyRunnable("1"), window2State);
+
+        LaterInvocator.enterModal(myWindow1);
+        flushSwingQueue();
+        checkOrder(0);
+
+        LaterInvocator.leaveModal(myWindow1);
+        flushSwingQueue();
+        checkOrder(1);
+
+        LaterInvocator.invokeLater(new MyRunnable("2"), window2State);
+        flushSwingQueue();
+        checkOrder(2);
+      }
+    });
+  }
 }

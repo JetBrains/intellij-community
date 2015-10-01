@@ -1,7 +1,6 @@
 package com.jetbrains.edu;
 
 import com.intellij.ide.SaveAndSyncHandler;
-import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,25 +8,29 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.util.Function;
+import com.intellij.util.containers.HashMap;
+import com.jetbrains.edu.courseFormat.*;
+import com.jetbrains.edu.oldCourseFormat.OldCourse;
+import com.jetbrains.edu.oldCourseFormat.TaskWindow;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
 
 public class EduUtils {
@@ -35,39 +38,12 @@ public class EduUtils {
   }
   private static final Logger LOG = Logger.getInstance(EduUtils.class.getName());
 
-  public static void commitAndSaveModel(final ModifiableRootModel model) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model.commit();
-        model.getProject().save();
-      }
-    });
-  }
-
-  @Nullable
-  public static ModifiableRootModel getModel(@NotNull VirtualFile dir, @NotNull Project project) {
-    final Module module = ModuleUtilCore.findModuleForFile(dir, project);
-    if (module == null) {
-      LOG.info("Module for " + dir.getPath() + " was not found");
-      return null;
+  public static Comparator<StudyItem> INDEX_COMPARATOR = new Comparator<StudyItem>() {
+    @Override
+    public int compare(StudyItem o1, StudyItem o2) {
+      return o1.getIndex() - o2.getIndex();
     }
-    return ModuleRootManager.getInstance(module).getModifiableModel();
-  }
-
-  public static void markDirAsSourceRoot(@NotNull final VirtualFile dir, @NotNull final Project project) {
-    final ModifiableRootModel model = getModel(dir, project);
-    if (model == null) {
-      return;
-    }
-    final ContentEntry entry = MarkRootActionBase.findContentEntry(model, dir);
-    if (entry == null) {
-      LOG.info("Content entry for " + dir.getPath() + " was not found");
-      return;
-    }
-    entry.addSourceFolder(dir, false);
-    commitAndSaveModel(model);
-  }
+  };
 
   public static void enableAction(@NotNull final AnActionEvent event, boolean isEnable) {
     final Presentation presentation = event.getPresentation();
@@ -83,10 +59,14 @@ public class EduUtils {
    * @return index of object
    */
   public static int getIndex(@NotNull final String fullName, @NotNull final String logicalName) {
-    if (!fullName.contains(logicalName)) {
+    if (!fullName.startsWith(logicalName)) {
       return -1;
     }
-    return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
+    try {
+      return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
+    } catch(NumberFormatException e) {
+      return -1;
+    }
   }
 
   public static boolean indexIsValid(int index, Collection collection) {
@@ -113,12 +93,12 @@ public class EduUtils {
         fileWindows = taskDir.createChildData(taskFile, name);
         printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
         for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
-          if (!answerPlaceholder.isValid(document)) {
+          int length = useLength ? answerPlaceholder.getLength() : answerPlaceholder.getPossibleAnswerLength();
+          if (!answerPlaceholder.isValid(document, length)) {
             printWriter.println("#educational_plugin_window = ");
             continue;
           }
           int start = answerPlaceholder.getRealStartOffset(document);
-          int length = useLength ? answerPlaceholder.getLength() : answerPlaceholder.getPossibleAnswerLength();
           final String windowDescription = document.getText(new TextRange(start, start + length));
           printWriter.println("#educational_plugin_window = " + windowDescription);
         }
@@ -151,10 +131,8 @@ public class EduUtils {
   public static void createStudentFileFromAnswer(@NotNull final Project project,
                                                  @NotNull final VirtualFile userFileDir,
                                                  @NotNull final VirtualFile answerFileDir,
-                                                 @NotNull final Map.Entry<String, TaskFile> taskFileEntry) {
-    final String name = taskFileEntry.getKey();
-    final TaskFile taskFile = taskFileEntry.getValue();
-    VirtualFile file = userFileDir.findChild(name);
+                                                 @NotNull final String taskFileName, @NotNull final TaskFile taskFile) {
+    VirtualFile file = userFileDir.findChild(taskFileName);
     if (file != null) {
       try {
         file.delete(project);
@@ -163,14 +141,29 @@ public class EduUtils {
         LOG.error(e);
       }
     }
+
+    if (taskFile.getAnswerPlaceholders().isEmpty()) {
+      String extension = FileUtilRt.getExtension(taskFileName);
+      String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(taskFileName);
+      VirtualFile answerFile = answerFileDir.findChild(nameWithoutExtension + ".answer." + extension);
+      if (answerFile != null) {
+        try {
+          answerFile.copy(answerFileDir, userFileDir, taskFileName);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+      return;
+    }
     try {
-      userFileDir.createChildData(project, name);
+      userFileDir.createChildData(project, taskFileName);
     }
     catch (IOException e) {
       LOG.error(e);
     }
 
-    file = userFileDir.findChild(name);
+    file = userFileDir.findChild(taskFileName);
     assert file != null;
     String answerFileName = file.getNameWithoutExtension() + ".answer." + file.getExtension();
     VirtualFile answerFile = answerFileDir.findChild(answerFileName);
@@ -191,6 +184,7 @@ public class EduUtils {
           @Override
           public void run() {
             document.replaceString(0, document.getTextLength(), answerDocument.getCharsSequence());
+            FileDocumentManager.getInstance().saveDocument(document);
           }
         });
       }
@@ -266,5 +260,92 @@ public class EduUtils {
         }
       });
     }
+  }
+
+  @Nullable
+  public static Task getTask(@NotNull final PsiDirectory directory, @NotNull final Course course) {
+    PsiDirectory lessonDir = directory.getParent();
+    if (lessonDir == null) {
+      return null;
+    }
+    Lesson lesson = course.getLesson(lessonDir.getName());
+    if (lesson == null) {
+      return null;
+    }
+    return lesson.getTask(directory.getName());
+  }
+
+  @NotNull
+  public static Course transformOldCourse(@NotNull final OldCourse oldCourse) {
+    return transformOldCourse(oldCourse, null);
+  }
+
+  @NotNull
+  public static Course transformOldCourse(@NotNull final OldCourse oldCourse,
+                                          @Nullable Function<Pair<AnswerPlaceholder, StudyStatus>, Void> setStatus) {
+    Course course = new Course();
+    course.setDescription(oldCourse.description);
+    course.setName(oldCourse.name);
+    course.setAuthors(new String[]{oldCourse.author});
+
+    final ArrayList<Lesson> lessons = new ArrayList<Lesson>();
+    for (com.jetbrains.edu.oldCourseFormat.Lesson oldLesson : oldCourse.lessons) {
+      final Lesson lesson = new Lesson();
+      lesson.setName(oldLesson.name);
+      lesson.setIndex(oldLesson.myIndex);
+
+      final ArrayList<Task> tasks = new ArrayList<Task>();
+      for (com.jetbrains.edu.oldCourseFormat.Task oldTask : oldLesson.taskList) {
+        final Task task = new Task();
+        task.setIndex(oldTask.myIndex);
+        task.setName(oldTask.name);
+        task.setLesson(lesson);
+        final HashMap<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
+        for (Map.Entry<String, com.jetbrains.edu.oldCourseFormat.TaskFile> entry : oldTask.taskFiles.entrySet()) {
+          final TaskFile taskFile = new TaskFile();
+          final com.jetbrains.edu.oldCourseFormat.TaskFile oldTaskFile = entry.getValue();
+          taskFile.setIndex(oldTaskFile.myIndex);
+          taskFile.name = entry.getKey();
+
+          final ArrayList<AnswerPlaceholder> placeholders = new ArrayList<AnswerPlaceholder>();
+          for (TaskWindow window : oldTaskFile.taskWindows) {
+            final AnswerPlaceholder placeholder = new AnswerPlaceholder();
+            placeholder.setIndex(window.myIndex);
+            placeholder.setHint(window.hint);
+            placeholder.setLength(window.length);
+            placeholder.setLine(window.line);
+            placeholder.setPossibleAnswer(window.possibleAnswer);
+            placeholder.setStart(window.start);
+            placeholders.add(placeholder);
+            if (setStatus != null) {
+              setStatus.fun(Pair.create(placeholder, window.myStatus));
+            }
+          }
+
+          taskFile.setAnswerPlaceholders(placeholders);
+          taskFiles.put(entry.getKey(), taskFile);
+        }
+        task.taskFiles = taskFiles;
+        tasks.add(task);
+      }
+
+      lesson.taskList = tasks;
+
+      lessons.add(lesson);
+    }
+    course.setLessons(lessons);
+    course.initCourse(false);
+    return course;
+  }
+
+  public static boolean isImage(String fileName) {
+    final String[] readerFormatNames = ImageIO.getReaderFormatNames();
+    for (@NonNls String format : readerFormatNames) {
+      final String ext = format.toLowerCase();
+      if (fileName.endsWith(ext)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -73,7 +73,6 @@ class PostHighlightingVisitor {
   @NotNull private final Project myProject;
   private final PsiFile myFile;
   @NotNull private final Document myDocument;
-  @NotNull private final HighlightingSession myHighlightingSession;
 
   private boolean myHasRedundantImports;
   private int myCurrentEntryIndex;
@@ -94,19 +93,19 @@ class PostHighlightingVisitor {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              if (myProject.isDisposed() || !myFile.isValid()) return;
+              if (myProject.isDisposed() || !myFile.isValid() || !myFile.isWritable()) return;
               IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true);
-              if (optimizeImportsFix.isAvailable(myProject, null, myFile) && myFile.isWritable()) {
+              if (optimizeImportsFix.isAvailable(myProject, null, myFile)) {
                 optimizeImportsFix.invoke(myProject, null, myFile);
               }
             }
           });
         }
       };
-      Disposer.register(myHighlightingSession, invokeFixLater);
+      Disposer.register((DaemonProgressIndicator)progress, invokeFixLater);
       if (progress.isCanceled()) {
         Disposer.dispose(invokeFixLater);
-        Disposer.dispose(myHighlightingSession);
+        Disposer.dispose((DaemonProgressIndicator)progress);
         progress.checkCanceled();
       }
     }
@@ -114,9 +113,7 @@ class PostHighlightingVisitor {
 
   PostHighlightingVisitor(@NotNull PsiFile file,
                           @NotNull Document document,
-                          @NotNull RefCountHolder refCountHolder,
-                          @NotNull HighlightingSession highlightingSession) throws ProcessCanceledException {
-    myHighlightingSession = highlightingSession;
+                          @NotNull RefCountHolder refCountHolder) throws ProcessCanceledException {
     myProject = file.getProject();
     myFile = file;
     myDocument = document;

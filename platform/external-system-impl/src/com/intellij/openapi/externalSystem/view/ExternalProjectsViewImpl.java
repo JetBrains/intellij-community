@@ -191,13 +191,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
         wasVisible = true;
       }
     };
-    manager.addToolWindowManagerListener(listener);
-
-    Disposer.register(myProject, new Disposable() {
-      public void dispose() {
-        manager.removeToolWindowManagerListener(listener);
-      }
-    });
+    manager.addToolWindowManagerListener(listener, myProject);
 
     getShortcutsManager().addListener(new ExternalSystemShortcutsManager.Listener() {
       @Override

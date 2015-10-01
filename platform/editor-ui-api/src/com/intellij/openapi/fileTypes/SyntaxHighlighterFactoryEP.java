@@ -20,6 +20,10 @@ import com.intellij.util.xmlb.annotations.Attribute;
 
 public class SyntaxHighlighterFactoryEP extends LanguageExtensionPoint<SyntaxHighlighterFactory> {
   // For backward compatibility
+
+  /**
+   * @deprecated use "language" attribute instead
+   */
   @Deprecated
   @Attribute("key")
   public String key;

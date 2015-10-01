@@ -158,7 +158,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
     }
     finally {
       super.tearDown();
-      if (!FileUtil.delete(myDir) && myDir.exists()) {
+      FileUtil.delete(myDir);
+      // cannot use reliably the result of the com.intellij.openapi.util.io.FileUtil.delete() method
+      // because com.intellij.openapi.util.io.FileUtilRt.deleteRecursivelyNIO() does not honor this contract
+      if (myDir.exists()) {
         System.err.println("Cannot delete " + myDir);
         //printDirectoryContent(myDir);
         myDir.deleteOnExit();

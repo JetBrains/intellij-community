@@ -16,6 +16,8 @@
 package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
 import com.intellij.ide.passwordSafe.HelpID;
+import com.intellij.ide.passwordSafe.PasswordSafe;
+import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ui.DialogUtil;
@@ -58,6 +60,7 @@ public class ResetPasswordComponent extends PasswordComponentBase {
         Messages.showYesNoDialog((Project)null, "All stored passwords will be removed! Are you sure you want to proceed?",
                                  "Confirm Master Password Reset", Messages.getWarningIcon()) == Messages.YES) {
       mySafe.resetMasterPassword(new String(myNewPasswordField.getPassword()), myEncryptCheckBox.isSelected());
+      ((PasswordSafeImpl)PasswordSafe.getInstance()).getMemoryProvider().clear();
       return true;
     }
     return false;

@@ -23,9 +23,9 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -177,20 +177,12 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
     return false;
   }
 
-  public static PsiSubstitutor calculateMethodReturnTypeSubstitutor(PsiMethod method, final PsiType expected) {
-    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-    PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
-    final PsiTypeParameter[] typeParameters = method.getTypeParameters();
-    for (PsiTypeParameter typeParameter : typeParameters) {
-      PsiType substitution = helper.getSubstitutionForTypeParameter(typeParameter, method.getReturnType(), expected,
-                                                                    false, PsiUtil.getLanguageLevel(method));
-      if (PsiType.NULL.equals(substitution)) {
-        substitution = TypeConversionUtil.typeParameterErasure(typeParameter);
-      }
+  public static PsiSubstitutor calculateMethodReturnTypeSubstitutor(@NotNull PsiMethod method, @NotNull final PsiType expected) {
+    PsiType returnType = method.getReturnType();
+    if (returnType == null) return PsiSubstitutor.EMPTY;
 
-      substitutor = substitutor.put(typeParameter, substitution);
-    }
-    return substitutor;
+    PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
+    return helper.inferTypeArguments(method.getTypeParameters(), new PsiType[]{expected}, new PsiType[]{returnType}, LanguageLevel.HIGHEST);
   }
 
   @Nullable

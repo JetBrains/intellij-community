@@ -21,8 +21,6 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -139,12 +137,12 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     }
 
     @Override
-    public void readExternal(final Element element) throws InvalidDataException {
+    public void readExternal(@NotNull Element element) {
       myInstance.readExternal(element);
     }
 
     @Override
-    public void writeExternal(final Element element) throws WriteExternalException {
+    public void writeExternal(@NotNull Element element) {
       myInstance.writeExternal(element);
     }
 

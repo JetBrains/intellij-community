@@ -30,7 +30,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewManager;
@@ -96,8 +95,7 @@ public class FindInProjectManager {
   }
 
   public void startFindInProject(@NotNull FindModel findModel) {
-    final PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
-    if (findModel.getDirectoryName() != null && psiDirectory == null){
+    if (findModel.getDirectoryName() != null && FindInProjectUtil.getDirectory(findModel) == null) {
       return;
     }
 
@@ -133,7 +131,7 @@ public class FindInProjectManager {
                     return processor.process(usage);
                   }
                 };
-                FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject, consumer, processPresentation);
+                FindInProjectUtil.findUsages(findModelCopy, myProject, consumer, processPresentation);
               }
               finally {
                 myIsFindInProgress = false;

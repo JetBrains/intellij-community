@@ -3,6 +3,9 @@
     <applicationService serviceInterface="com.intellij.openapi.vcs.actions.VcsContextFactory"
                         serviceImplementation="com.intellij.peer.impl.VcsContextFactoryImpl"/>
 
+    <applicationService serviceInterface="com.intellij.codeInsight.actions.FormatChangedTextUtil"
+                        serviceImplementation="com.intellij.codeInsight.actions.VcsAwareFormatChangedTextUtil" overrides="true"/>
+
     <projectService serviceInterface="com.intellij.openapi.vcs.AbstractVcsHelper"
                     serviceImplementation="com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.IssueNavigationConfiguration"
@@ -22,6 +25,8 @@
                     serviceImplementation="com.intellij.openapi.vcs.changes.ui.WolfChangesFileNameDecorator"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.CodeSmellDetector"
                     serviceImplementation="com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl"/>
+
+    <diff.merge.MergeTool implementation="com.intellij.openapi.vcs.changes.patch.ApplyPatchMergeTool"/>
 
     <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
 
@@ -65,7 +70,9 @@
     <projectSetProcessor implementation="com.intellij.openapi.vcs.OpenProjectSetProcessor"/>
 
     <getDataRule key="VCS_REVISION_NUMBERS" implementationClass="com.intellij.openapi.vcs.history.VcsRevisionNumberArrayRule"/>
+    <getDataRule key="vcs.ChangesSelection" implementationClass="com.intellij.openapi.vcs.changes.VcsChangesSelectionRule"/>
     <jbProtocolCommand implementation="com.intellij.openapi.vcs.checkout.JBProtocolCheckoutCommand"/>
+    <diff.DiffExtension implementation="com.intellij.openapi.vcs.actions.AnnotateDiffViewerAction$MyDiffExtension"/>
   </extensions>
 </idea-plugin>
 

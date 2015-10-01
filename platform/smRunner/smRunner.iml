@@ -14,7 +14,8 @@
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="library" exported="" name="tcServiceMessages" level="project" />
     <orderEntry type="module" module-name="annotations" />
+    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="lang-api" />
   </component>
 </module>
-

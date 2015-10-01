@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
+import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.icons.AllIcons;
@@ -51,7 +52,7 @@ public class
     final Project project = e.getProject();
     if (project == null) return EMPTY_ARRAY;
     final Collection<String> filePaths = TestHistoryConfiguration.getInstance(project).getFiles();
-    final File testHistoryRoot = AbstractImportTestsAction.getTestHistoryRoot(project);
+    final File testHistoryRoot = TestStateStorage.getTestHistoryRoot(project);
     final List<File> fileNames = ContainerUtil.map(filePaths, new Function<String, File>() {
       @Override
       public File fun(String fileName) {

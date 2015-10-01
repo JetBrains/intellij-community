@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
@@ -154,20 +154,12 @@ public final class TreeUtil {
   }
 
   @NotNull
-  public static TreePath getPath(final TreeNode aRootNode, @NotNull final TreeNode aNode) {
-    final List<TreeNode> pathStack = new ArrayList<TreeNode>();
-    addEach(aRootNode, aNode, pathStack);
-
-    final Object[] pathElements = new Object[pathStack.size()];
-
-    for (int i = pathStack.size() - 1; i >= 0; i--) {
-      pathElements[pathStack.size() - i - 1] = pathStack.get(i);
-    }
-
-    return new TreePath(pathElements);
+  public static TreePath getPath(@NotNull TreeNode aRootNode, @NotNull TreeNode aNode) {
+    TreeNode[] nodes = getPathFromRootTo(aRootNode, aNode, true);
+    return new TreePath(nodes);
   }
 
-  public static boolean isAncestor(final TreeNode ancestor, final TreeNode node) {
+  public static boolean isAncestor(@NotNull TreeNode ancestor, @NotNull TreeNode node) {
     TreeNode parent = node;
     while (parent != null) {
       if (parent == ancestor) return true;
@@ -192,13 +184,22 @@ public final class TreeUtil {
 
   @NotNull
   public static TreePath getPathFromRoot(@NotNull TreeNode node) {
-    final ArrayList<TreeNode> path = new ArrayList<TreeNode>();
-    do {
-      path.add(node);
-      node = node.getParent();
-    } while (node != null);
-    Collections.reverse(path);
-    return new TreePath(path.toArray());
+    TreeNode[] path = getPathFromRootTo(null, node, false);
+    return new TreePath(path);
+  }
+
+  @NotNull
+  private static TreeNode[] getPathFromRootTo(@Nullable TreeNode root, @NotNull TreeNode node, boolean includeRoot) {
+    int height = 0;
+    for (TreeNode n = node; n != root; n = n.getParent()) {
+      height++;
+    }
+    TreeNode[] path = new TreeNode[includeRoot ? height+1 : height];
+    int i = path.length-1;
+    for (TreeNode n = node; i>=0; n = n.getParent()) {
+      path[i--] = n;
+    }
+    return path;
   }
 
   @Nullable
@@ -285,14 +286,6 @@ public final class TreeUtil {
     return selectionPath;
   }
 
-  private static void addEach(final TreeNode aRootNode, @NotNull final TreeNode aNode, @NotNull final List<TreeNode> aPathStack) {
-    aPathStack.add(aNode);
-
-    if (aNode != aRootNode) {
-      addEach(aRootNode, aNode.getParent(), aPathStack);
-    }
-  }
-
   @NotNull
   private static IndexTreePathState removeLastPathComponent(@NotNull final DefaultTreeModel model, @NotNull final TreePath pathToBeRemoved) {
     final IndexTreePathState selectionState = new IndexTreePathState(pathToBeRemoved);
@@ -334,11 +327,11 @@ public final class TreeUtil {
     return result.toArray(new TreePath[result.size()]);
   }
 
-  public static void sort(@NotNull final DefaultTreeModel model, final Comparator comparator) {
+  public static void sort(@NotNull final DefaultTreeModel model, @Nullable Comparator comparator) {
     sort((DefaultMutableTreeNode) model.getRoot(), comparator);
   }
 
-  public static void sort(@NotNull final DefaultMutableTreeNode node, final Comparator comparator) {
+  public static void sort(@NotNull final DefaultMutableTreeNode node, @Nullable Comparator comparator) {
     final List<TreeNode> children = childrenToArray(node);
     Collections.sort(children, comparator);
     node.removeAllChildren();
@@ -383,7 +376,7 @@ public final class TreeUtil {
       return showRowCentred(tree, tree.getRowForPath(path));
     } else {
       final int row = tree.getRowForPath(path);
-      return showAndSelect(tree, row - ListScrollingUtil.ROW_PADDING, row + ListScrollingUtil.ROW_PADDING, row, -1);
+      return showAndSelect(tree, row - ScrollingUtil.ROW_PADDING, row + ScrollingUtil.ROW_PADDING, row, -1);
     }
   }
 

@@ -29,6 +29,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.smartPointers.SelfElementInfo;
+import com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.stubs.IStubElementType;
@@ -83,12 +84,12 @@ public abstract class PsiAnchor {
     if (stubRef != null) return stubRef;
 
     if (!element.isPhysical() && element instanceof PsiCompiledElement || element instanceof LightElement || element instanceof SyntheticElement) {
-      return new HardReference(element);
+      return wrapperOrHardReference(element);
     }
 
     TextRange textRange = element.getTextRange();
     if (textRange == null) {
-      return new HardReference(element);
+      return wrapperOrHardReference(element);
     }
 
     Language lang = null;
@@ -103,6 +104,20 @@ public abstract class PsiAnchor {
 
     if (lang == null) lang = element.getLanguage();
     return new TreeRangeReference(file, textRange.getStartOffset(), textRange.getEndOffset(), element.getClass(), lang, virtualFile);
+  }
+
+  @NotNull
+  public static PsiAnchor wrapperOrHardReference(@NotNull PsiElement element) {
+    for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensions()) {
+      PsiElement anchorElement = provider.getAnchor(element);
+      if (anchorElement != null && anchorElement != element) {
+        PsiAnchor wrappedAnchor = create(anchorElement);
+        if (!(wrappedAnchor instanceof HardReference)) {
+          return new WrappedElementAnchor(provider, wrappedAnchor);
+        }
+      }
+    }
+    return new HardReference(element);
   }
 
   @Nullable

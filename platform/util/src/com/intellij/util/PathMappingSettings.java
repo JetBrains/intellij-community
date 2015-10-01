@@ -79,6 +79,15 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     return myPathMappings.isEmpty();
   }
 
+  /**
+   * @deprecated use {@code !isEmpty()} instead
+   * @see #isEmpty()
+   */
+  @Deprecated
+  public boolean isUseMapping() {
+    return !isEmpty();
+  }
+
   public static class BestMappingSelector {
     private int myBestWeight = -1;
     private PathMapping myBest = null;
@@ -254,11 +263,11 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     }
 
     public void setLocalRoot(@Nullable String localRoot) {
-      myLocalRoot = localRoot;
+      myLocalRoot = normalize(localRoot);
     }
 
     public void setRemoteRoot(@Nullable String remoteRoot) {
-      myRemoteRoot = remoteRoot;
+      myRemoteRoot = normalize(remoteRoot);
     }
 
     @NotNull
@@ -290,7 +299,10 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
       return isAnyEmpty(myLocalRoot, myRemoteRoot);
     }
 
-    private static String trimSlash(String s) {
+    private static String trimSlash(@NotNull String s) {
+      if (s.equals("/")) {
+        return s;
+      }
       return StringUtil.trimEnd(s, "/");
     }
 

@@ -186,7 +186,7 @@ public class AddImportAction implements QuestionAction {
       public void run() {
         if (project.isDisposed()) return;
 
-        final AutoImportOptionsConfigurable configurable = new AutoImportOptionsConfigurable();
+        final AutoImportOptionsConfigurable configurable = new AutoImportOptionsConfigurable(project);
         ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
           @Override
           public void run() {

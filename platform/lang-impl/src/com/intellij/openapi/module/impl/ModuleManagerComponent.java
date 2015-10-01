@@ -25,7 +25,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -40,7 +39,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.List;
 
@@ -119,10 +117,8 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
 
   @NotNull
   @Override
-  protected ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException {
-    ModuleImpl module = new ModuleImpl(filePath, myProject);
-    StorageUtil.checkUnknownMacros(module, myProject);
-    return module;
+  protected ModuleEx createAndLoadModule(@NotNull String filePath) {
+    return new ModuleImpl(filePath, myProject);
   }
 
   @Override
@@ -132,10 +128,14 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
 
   @Override
   protected void fireModulesAdded() {
+    if (myModuleModel.myModules.isEmpty()) {
+      return;
+    }
+
     Runnable runnableWithProgress = new Runnable() {
       @Override
       public void run() {
-        for (final Module module : myModuleModel.myPathToModule.values()) {
+        for (final Module module : myModuleModel.myModules) {
           final Application app = ApplicationManager.getApplication();
           final Runnable swingRunnable = new Runnable() {
             @Override

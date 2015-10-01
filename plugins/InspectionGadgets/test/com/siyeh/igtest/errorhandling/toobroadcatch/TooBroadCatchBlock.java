@@ -114,4 +114,10 @@ public class TooBroadCatchBlock{
 
     }
   }
+
+  void incomplete() {
+    try {
+      throw <error descr="Cannot resolve symbol 'undeclared'">undeclared</error>;
+    } catch (NumberFormatException e) {}
+  }
 }

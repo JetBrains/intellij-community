@@ -205,7 +205,8 @@ public interface Application extends ComponentManager {
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
    * AWT event dispatching thread - unless the expiration condition is fulfilled.
-   * This will happen after all pending AWT events have been processed and in {@link ModalityState#defaultModalityState()} modality state.<p/>
+   * This will happen after all pending AWT events have been processed and in {@link ModalityState#defaultModalityState()} modality state
+   * (or a state with less modal dialogs open).<p/>
    *
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
    * for the reasons described in {@link ModalityState} documentation.
@@ -218,7 +219,7 @@ public interface Application extends ComponentManager {
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
    * AWT event dispatching thread, when IDEA is in the specified modality
-   * state.
+   * state (or a state with less modal dialogs open).
    *
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
    * for the reasons described in {@link ModalityState} documentation.
@@ -231,7 +232,7 @@ public interface Application extends ComponentManager {
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
    * AWT event dispatching thread, when IDEA is in the specified modality
-   * state - unless the expiration condition is fulfilled.
+   * state(or a state with less modal dialogs open) - unless the expiration condition is fulfilled.
    * This will happen after all pending AWT events have been processed.
    *
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
@@ -246,7 +247,7 @@ public interface Application extends ComponentManager {
   /**
    * <p>Causes {@code runnable.run()} to be executed synchronously on the
    * AWT event dispatching thread, when the IDE is in the specified modality
-   * state. This call blocks until all pending AWT events have been processed and (then)
+   * state (or a state with less modal dialogs open). This call blocks until all pending AWT events have been processed and (then)
    * {@code runnable.run()} returns.</p>
    *
    * <p>If current thread is an event dispatch thread then {@code runnable.run()}

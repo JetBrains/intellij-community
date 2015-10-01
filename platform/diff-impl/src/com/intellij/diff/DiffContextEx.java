@@ -15,11 +15,30 @@
  */
 package com.intellij.diff;
 
+import org.jetbrains.annotations.CalledInAwt;
+
 public abstract class DiffContextEx extends DiffContext {
   /*
    * Reopen current DiffRequest.
+   *
    * perform the same procedure as on switching between DiffRequests or between DiffViewers.
    * this can be used, if some change in request or settings was made, and we need to reopen DiffViewer to apply them.
    */
+  @CalledInAwt
+  public abstract void reopenDiffRequest();
+
+  /*
+   * Drop cached DiffRequest version (if any) and reopen current DiffRequest.
+   *
+   * perform the same procedure as on opening DiffRequests for the first time.
+   * this can be used, if some change in request or settings was made, and we need to reload DiffRequest to apply them.
+   */
+  @CalledInAwt
   public abstract void reloadDiffRequest();
+
+  /*
+   * Show indeterminate progress near status panel.
+   */
+  @CalledInAwt
+  public abstract void showProgressBar(boolean enabled);
 }

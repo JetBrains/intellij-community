@@ -32,10 +32,10 @@ import java.awt.*;
 
 public class DiffRequestPanelImpl implements DiffRequestPanel {
   @NotNull private final JPanel myPanel;
-  @NotNull private final MyCacheDiffRequestChainProcessor myProcessor;
+  @NotNull private final MyDiffRequestProcessor myProcessor;
 
   public DiffRequestPanelImpl(@Nullable Project project, @Nullable Window window) {
-    myProcessor = new MyCacheDiffRequestChainProcessor(project, window);
+    myProcessor = new MyDiffRequestProcessor(project, window);
     myProcessor.putContextUserData(DiffUserDataKeys.DO_NOT_CHANGE_WINDOW_TITLE, true);
 
     myPanel = new JPanel(new BorderLayout()) {
@@ -81,12 +81,12 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
     Disposer.dispose(myProcessor);
   }
 
-  private static class MyCacheDiffRequestChainProcessor extends DiffRequestProcessor {
+  private static class MyDiffRequestProcessor extends DiffRequestProcessor {
     @Nullable private final Window myWindow;
 
     @NotNull private DiffRequest myRequest = NoDiffRequest.INSTANCE;
 
-    public MyCacheDiffRequestChainProcessor(@Nullable Project project, @Nullable Window window) {
+    public MyDiffRequestProcessor(@Nullable Project project, @Nullable Window window) {
       super(project);
       myWindow = window;
     }

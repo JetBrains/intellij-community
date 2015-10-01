@@ -85,3 +85,14 @@ class IntIntegerTest {
     boolean b = o != Boolean.valueOf(false) || p != <warning descr="Unnecessary boxing 'Boolean.valueOf(false)'">Boolean.valueOf(false)</warning>;
   }
 }
+class test {
+  static abstract class AAbstractLongMap extends java.util.AbstractMap<Long, Long> {
+    public Long put(long key, Long value) {
+      return null;
+    }
+  }
+  static AAbstractLongMap new_times;
+  public static void main(String[] args) {
+    new_times.put(1l, new Long(2l));
+  }
+}

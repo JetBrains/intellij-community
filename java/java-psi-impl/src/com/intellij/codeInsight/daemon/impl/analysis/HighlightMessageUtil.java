@@ -43,7 +43,7 @@ public class HighlightMessageUtil {
     else if (symbol instanceof PsiMethod) {
       symbolName = PsiFormatUtil.formatMethod((PsiMethod)symbol,
                                               substitutor, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                              PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES);
+                                              PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES | PsiFormatUtilBase.USE_INTERNAL_CANONICAL_TEXT);
     }
     else if (symbol instanceof PsiVariable) {
       symbolName = ((PsiVariable)symbol).getName();

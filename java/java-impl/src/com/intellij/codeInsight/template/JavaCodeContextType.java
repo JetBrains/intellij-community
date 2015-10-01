@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.template;
 
-import com.intellij.codeInsight.completion.JavaCompletionData;
+import com.intellij.codeInsight.completion.JavaKeywordCompletion;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.lang.java.JavaLanguage;
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.instanceOf;
 
 public abstract class JavaCodeContextType extends TemplateContextType {
 
@@ -136,7 +137,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
-      if (JavaCompletionData.isInsideParameterList(element)) {
+      if (JavaKeywordCompletion.isInsideParameterList(element)) {
         return false;
       }
 
@@ -146,7 +147,8 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   private static boolean isAfterExpression(PsiElement element) {
     ProcessingContext context = new ProcessingContext();
-    if (psiElement().inside(PsiExpression.class).afterLeaf(psiElement().inside(psiElement(PsiExpression.class).save("prevExpr"))).accepts(element, context)) {
+    if (psiElement().withAncestor(1, instanceOf(PsiExpression.class))
+      .afterLeaf(psiElement().withAncestor(1, psiElement(PsiExpression.class).save("prevExpr"))).accepts(element, context)) {
       PsiExpression prevExpr = (PsiExpression)context.get("prevExpr");
       if (prevExpr.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) {
         return true;
@@ -167,7 +169,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
-      return JavaCompletionData.isSuitableForClass(element) || JavaCompletionData.isInsideParameterList(element);
+      return JavaKeywordCompletion.isSuitableForClass(element) || JavaKeywordCompletion.isInsideParameterList(element);
     }
   }
 

@@ -30,7 +30,7 @@ import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
 public class AllClassesSearch extends ExtensibleQueryFactory<PsiClass, AllClassesSearch.SearchParameters> {
-  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.allClassesSearch");
+  public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.allClassesSearch");
   public static final AllClassesSearch INSTANCE = new AllClassesSearch();
 
   public static class SearchParameters {

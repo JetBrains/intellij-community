@@ -121,9 +121,9 @@ public class IdeEventQueue extends EventQueue {
    */
   private int myEventCount;
 
-  private boolean myIsInInputEvent = false;
+  private boolean myIsInInputEvent;
 
-  private AWTEvent myCurrentEvent = null;
+  private AWTEvent myCurrentEvent;
 
   private long myLastActiveTime;
 
@@ -156,7 +156,7 @@ public class IdeEventQueue extends EventQueue {
     keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", new PropertyChangeListener() {
 
       @Override
-      public void propertyChange(final PropertyChangeEvent e) {
+      public void propertyChange(@NotNull final PropertyChangeEvent e) {
         final Application application = ApplicationManager.getApplication();
         if (application == null) {
           // We can get focus event before application is initialized
@@ -324,8 +324,8 @@ public class IdeEventQueue extends EventQueue {
 
   private static class InertialMouseRouter {
     private static final int MOUSE_WHEEL_RESTART_THRESHOLD = 50;
-    private static Component wheelDestinationComponent = null;
-    private static long lastMouseWheel = 0;
+    private static Component wheelDestinationComponent;
+    private static long lastMouseWheel;
 
     private static AWTEvent changeSourceIfNeeded(AWTEvent awtEvent) {
       if (SystemInfo.isMac && Registry.is("ide.inertial.mouse.fix") && awtEvent instanceof MouseWheelEvent) {
@@ -342,7 +342,7 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  private static boolean ourAppIsLoaded = false;
+  private static boolean ourAppIsLoaded;
 
   private static boolean appIsLoaded() {
     if (ourAppIsLoaded) return true;
@@ -352,7 +352,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   @Override
-  public void dispatchEvent(AWTEvent e) {
+  public void dispatchEvent(@NotNull AWTEvent e) {
     if (!appIsLoaded()) {
       try {
         super.dispatchEvent(e);
@@ -400,8 +400,8 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  private static int ctrlIsPressedCount = 0;
-  private static boolean leftAltIsPressed = false;
+  private static int ctrlIsPressedCount;
+  private static boolean leftAltIsPressed;
   //private static boolean altGrIsPressed = false;
 
   private static AWTEvent fixNonEnglishKeyboardLayouts(AWTEvent e) {
@@ -417,12 +417,12 @@ public class IdeEventQueue extends EventQueue {
 
     if (ke.getID() == KeyEvent.KEY_PRESSED) {
       switch (ke.getKeyCode()) {
-        case (KeyEvent.VK_CONTROL):
+        case KeyEvent.VK_CONTROL:
           if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {
             ctrlIsPressedCount++;
           }
           break;
-        case (KeyEvent.VK_ALT):
+        case KeyEvent.VK_ALT:
           if (ke.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT) {
             if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {
               leftAltIsPressed = true;
@@ -433,10 +433,10 @@ public class IdeEventQueue extends EventQueue {
     }
     else if (ke.getID() == KeyEvent.KEY_RELEASED) {
       switch (ke.getKeyCode()) {
-        case (KeyEvent.VK_CONTROL):
+        case KeyEvent.VK_CONTROL:
           ctrlIsPressedCount--;
           break;
-        case (KeyEvent.VK_ALT):
+        case KeyEvent.VK_ALT:
           if (ke.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT) {
             leftAltIsPressed = false;
           }
@@ -521,6 +521,8 @@ public class IdeEventQueue extends EventQueue {
     }
 
     myEventCount++;
+    
+    traceClipboardEvents(e);
 
     if (e instanceof WindowEvent) {
       processAppActivationEvents((WindowEvent)e);
@@ -648,8 +650,42 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  private MouseEvent lastClickEvent = null;
-  private long lastClickTime = 0L;
+  private static final Field ourInvocationEventRunnableAccessor;
+  
+  static {
+    Field field = null;
+    if (Registry.is("trace.clipboard.events") && SystemInfo.isJavaVersionAtLeast("1.8.0_60")) {
+      try {
+        field = InvocationEvent.class.getDeclaredField("runnable");
+        field.setAccessible(true);
+      }
+      catch (Exception e) {
+        LOG.warn("Error creating accessor for java.awt.event.InvocationEvent.runnable field", e);
+      }
+    }
+    ourInvocationEventRunnableAccessor = field;
+  }
+  
+  private static void traceClipboardEvents(AWTEvent e) {
+    if (ourInvocationEventRunnableAccessor != null && e instanceof InvocationEvent && e.getClass().getName().equals("sun.awt.PeerEvent")) {
+      try {
+        Object r = ourInvocationEventRunnableAccessor.get(e);
+        if (r != null) {
+          String className = r.getClass().getName();
+          // This check for event constructed in SunClipboard.lostOwnershipLater() (known to work with JDK 8u60) 
+          if (className.contains("sun.awt.datatransfer.SunClipboard") && className.contains("Lambda")) {
+            LOG.info("Clipboard has been set by other application");
+          }
+        }
+      }
+      catch (Exception ex) {
+        LOG.warn("Error accessing java.awt.event.InvocationEvent.runnable field");
+      }
+    }
+  }
+
+  private MouseEvent lastClickEvent;
+  private long lastClickTime;
 
   private void setLastClickEvent(@Nullable MouseEvent event) {
     lastClickEvent = event;
@@ -1115,7 +1151,7 @@ public class IdeEventQueue extends EventQueue {
 
   private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(1009, 100);
   @Override
-  public void postEvent(AWTEvent theEvent) {
+  public void postEvent(@NotNull AWTEvent theEvent) {
     myFrequentEventDetector.eventHappened();
     super.postEvent(theEvent);
   }

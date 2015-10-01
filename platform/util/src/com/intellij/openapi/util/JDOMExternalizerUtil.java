@@ -84,12 +84,9 @@ public class JDOMExternalizerUtil {
 
   @Nullable
   public static String getFirstChildValueAttribute(@NotNull Element parent, @NotNull String childTagName) {
-    List<Element> children = parent.getChildren(childTagName);
-    if (!children.isEmpty()) {
-      Element first = children.get(0);
-      if (first != null) {
-        return first.getAttributeValue(VALUE_ATTR_NAME);
-      }
+    Element first = parent.getChild(childTagName);
+    if (first != null) {
+      return first.getAttributeValue(VALUE_ATTR_NAME);
     }
     return null;
   }

@@ -71,6 +71,14 @@ public class UrlClassLoader extends ClassLoader {
     return myClassPath;
   }
 
+  /**
+   * @see com.intellij.TestAll#getClassRoots()
+   */
+  @SuppressWarnings("unused")
+  public List<URL> getBaseUrls() {
+    return myClassPath.getBaseUrls();
+  }
+
   public static final class Builder {
     private List<URL> myURLs = ContainerUtil.emptyList();
     private ClassLoader myParent = null;

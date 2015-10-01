@@ -1822,7 +1822,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   /**
-   * @see com.intellij.openapi.wm.impl.ToolWindowsPane#createAddDecoratorCmd
+   * @see ToolWindowsPane#createAddDecoratorCmd
    */
   private void appendAddDecoratorCmd(final InternalDecorator decorator,
                                      final WindowInfoImpl info,
@@ -1834,7 +1834,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   /**
-   * @see com.intellij.openapi.wm.impl.ToolWindowsPane#createRemoveDecoratorCmd
+   * @see ToolWindowsPane#createRemoveDecoratorCmd
    */
   private void appendRemoveDecoratorCmd(final String id, final boolean dirtyMode, final List<FinalizableCommand> commandsList) {
     final FinalizableCommand command = myToolWindowsPane.createRemoveDecoratorCmd(id, dirtyMode, myWindowManager.getCommandProcessor());
@@ -1852,7 +1852,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   /**
-   * @see com.intellij.openapi.wm.impl.ToolWindowsPane#createAddButtonCmd
+   * @see ToolWindowsPane#createAddButtonCmd
    */
   private void appendAddButtonCmd(final StripeButton button, final WindowInfoImpl info, final List<FinalizableCommand> commandsList) {
     final Comparator<StripeButton> comparator = myLayout.comparator(info.getAnchor());
@@ -1862,7 +1862,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   /**
-   * @see com.intellij.openapi.wm.impl.ToolWindowsPane#createAddButtonCmd
+   * @see ToolWindowsPane#createAddButtonCmd
    */
   private void appendRemoveButtonCmd(final String id, final List<FinalizableCommand> commandsList) {
     final FinalizableCommand command = myToolWindowsPane.createRemoveButtonCmd(id, myWindowManager.getCommandProcessor());
@@ -1886,7 +1886,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   /**
-   * @see com.intellij.openapi.wm.impl.ToolWindowsPane#createSetEditorComponentCmd
+   * @see ToolWindowsPane#createSetEditorComponentCmd
    */
   public void appendSetEditorComponentCmd(@Nullable final JComponent component, final List<FinalizableCommand> commandsList) {
     final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();

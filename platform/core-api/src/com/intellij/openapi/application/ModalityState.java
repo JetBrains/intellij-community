@@ -21,7 +21,7 @@ import java.awt.*;
 
 /**
  * Represents the stack of active modal dialogs. Used in calls to {@link Application#invokeAndWait(Runnable, ModalityState)} to specify
- * that the corresponding runnable is to be executed within the given modality state, i.e. when the same set modal dialogs is present.<p/>
+ * that the corresponding runnable is to be executed within the given modality state, i.e. when the same set modal dialogs is present, or its subset.<p/>
  *
  * Modality state is used to prevent the following scenario. Someone does SwingUtilities.invokeAndWait, but there are already other runnables in
  * Swing queue, so they are executed before and show a dialog (e.g. asking a yes/no question). While this dialog is shown, further events are pumped

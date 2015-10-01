@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,5 +64,9 @@ public class DummyConversionService extends ConversionService {
   @Override
   public ConversionResult convertModule(@NotNull Project project, @NotNull File moduleFile) {
     return CONVERSION_RESULT;
+  }
+
+  @Override
+  public void saveConversionResult(@NotNull String projectPath) {
   }
 }

@@ -279,7 +279,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
       createOrWaitPrepare(debugProcess, position);
     }
     else {
-      LOG.error("Unable to create request for breakpoint with null position: " + getDisplayName() + " at " + myXBreakpoint.getSourcePosition());
+      LOG.error("Unable to create request for breakpoint with null position: " + toString() + " at " + myXBreakpoint.getSourcePosition());
     }
     updateUI();
   }

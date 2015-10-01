@@ -4,6 +4,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 
 public class LoginDialog extends DialogWrapper {
   private final LoginPanel myLoginPanel;
@@ -18,7 +19,7 @@ public class LoginDialog extends DialogWrapper {
 
   @NotNull
   protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction()};
+    return new Action[]{getOKAction(), new RegisterAction(), getCancelAction()};
   }
 
   @Override
@@ -39,13 +40,15 @@ public class LoginDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     AuthDataHolder authData = myLoginPanel.getAuthData();
-    StudySettings.getInstance().setLogin(authData.email);
-    StudySettings.getInstance().setPassword(authData.password);
     final boolean success = EduStepicConnector.login(authData.email, authData.password);
     if (!success) {
-      setErrorText("Log in failed");
+      setErrorText("Login failed");
     }
-    super.doOKAction();
+    else {
+      StudySettings.getInstance().setLogin(authData.email);
+      StudySettings.getInstance().setPassword(authData.password);
+      super.doOKAction();
+    }
   }
 
   public void clearErrors() {
@@ -61,4 +64,17 @@ public class LoginDialog extends DialogWrapper {
       this.password = password;
     }
   }
+
+  protected class RegisterAction extends DialogWrapperAction {
+    private RegisterAction() {
+      super("Register");
+    }
+
+    @Override
+    protected void doAction(ActionEvent e) {
+      EduStepicConnector.createUser(myLoginPanel.getAuthData().email, myLoginPanel.getAuthData().password);
+      doOKAction();
+    }
+  }
+
 }

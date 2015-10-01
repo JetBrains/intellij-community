@@ -2,7 +2,9 @@ package com.intellij.lang.properties.xml;
 
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomRenameableTarget;
+import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiTarget;
@@ -82,7 +84,7 @@ public class XmlProperty implements IProperty, PomRenameableTarget, PsiTarget {
   @NotNull
   @Override
   public PsiElement getPsiElement() {
-    return myTag;
+    return PomService.convertToPsi(this);
   }
 
   @Override
@@ -113,6 +115,28 @@ public class XmlProperty implements IProperty, PomRenameableTarget, PsiTarget {
   @NotNull
   @Override
   public PsiElement getNavigationElement() {
-    return getPsiElement();
+    return myTag;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    XmlProperty property = (XmlProperty)o;
+
+    if (!myTag.equals(property.myTag)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myTag.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "XmlProperty: key = '" + getKey() + "', value = '" + getValue() + "'";
   }
 }

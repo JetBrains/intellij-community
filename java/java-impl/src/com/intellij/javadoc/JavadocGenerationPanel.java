@@ -48,6 +48,7 @@ final class JavadocGenerationPanel extends JPanel {
   JCheckBox myOpenInBrowserCheckBox;
   JTextField myLocaleTextField;
   JCheckBox myIncludeLibraryCb;
+  JCheckBox myLinkToJdkDocs;
 
   JavadocGenerationPanel() {
     myTfOutputDir.addBrowseFolderListener(JavadocBundle.message("javadoc.generate.output.directory.browse"), null, null, FileChooserDescriptorFactory.createSingleFolderDescriptor());

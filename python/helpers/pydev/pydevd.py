@@ -3,6 +3,7 @@ from __future__ import nested_scopes # Jython 2.1 support
 
 import pydev_monkey_qt
 from pydevd_utils import save_main_module
+import pydevd_utils
 
 pydev_monkey_qt.patch_qt()
 
@@ -28,7 +29,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_STEP_OVER, \
                          CMD_STEP_RETURN, \
                          CMD_STEP_INTO_MY_CODE, \
-    CMD_THREAD_KILL, \
+                         CMD_THREAD_KILL, \
                          CMD_THREAD_RUN, \
                          CMD_THREAD_SUSPEND, \
                          CMD_RUN_TO_LINE, \
@@ -51,7 +52,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          InternalTerminateThread, \
                          InternalRunThread, \
                          InternalStepThread, \
-    NetCommandFactory, \
+                         NetCommandFactory, \
                          PyDBDaemonThread, \
                          _queue, \
                          ReaderThread, \
@@ -63,15 +64,18 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          StartServer, \
                          InternalSetNextStatementThread, \
                          ReloadCodeCommand, \
-    CMD_SET_PY_EXCEPTION, \
+                         CMD_SET_PY_EXCEPTION, \
                          CMD_IGNORE_THROWN_EXCEPTION_AT,\
                          InternalGetBreakpointException, \
                          InternalSendCurrExceptionTrace,\
                          InternalSendCurrExceptionTraceProceeded,\
                          CMD_ENABLE_DONT_TRACE, \
                          CMD_GET_FILE_CONTENTS,\
-                         CMD_SET_PROPERTY_TRACE, CMD_RUN_CUSTOM_OPERATION,\
-                         InternalRunCustomOperation, CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression,\
+                         CMD_SET_PROPERTY_TRACE, \
+                         CMD_RUN_CUSTOM_OPERATION,\
+                         InternalRunCustomOperation, \
+                         CMD_EVALUATE_CONSOLE_EXPRESSION, \
+                         InternalEvaluateConsoleExpression,\
                          InternalConsoleGetCompletions
 
 from pydevd_file_utils import NormFileToServer, GetFilenameAndBase
@@ -194,14 +198,14 @@ if hasattr(_temp, '_is_stopped'): # Python 3.4 has this
             return not t._is_stopped
         except:
             return t.isAlive()
-    
+
 elif hasattr(_temp, '_Thread__stopped'): # Python 2.7 has this
     def isThreadAlive(t):
         try:
             return not t._Thread__stopped
         except:
             return t.isAlive()
-    
+
 else: # Haven't checked all other versions, so, let's use the regular isAlive call in this case.
     def isThreadAlive(t):
         return t.isAlive()
@@ -378,26 +382,16 @@ class PyDB:
         self.mpl_in_use = False
         self.mpl_hooks_in_debug_console = False
         self.mpl_modules_for_patching = {}
+
+        self._filename_to_not_in_scope = {}
         
     def get_plugin_lazy_init(self):
         if self.plugin is None and SUPPORT_PLUGINS:
             self.plugin = PluginManager(self)
         return self.plugin
 
-    def get_project_roots(self):
-        if self.project_roots is None:
-            roots = os.getenv('IDE_PROJECT_ROOTS', '').split(os.pathsep)
-            pydev_log.debug("IDE_PROJECT_ROOTS %s\n" % roots)
-            self.project_roots = roots
-
     def not_in_scope(self, filename):
-        self.get_project_roots()
-        filename = os.path.normcase(filename)
-        for root in self.project_roots:
-            root = os.path.normcase(root)
-            if filename.startswith(root):
-                return False
-        return True
+        return pydevd_utils.is_in_project_roots(filename)
 
     def first_appearance_in_scope(self, trace):
         if trace is None or self.not_in_scope(trace.tb_frame.f_code.co_filename):
@@ -593,8 +587,7 @@ class PyDB:
                                         self.mpl_in_use = True
                                     except:
                                         PydevdLog(2, "Matplotlib support in debug console failed", traceback.format_exc())
-                                    finally:
-                                        self.mpl_hooks_in_debug_console = True
+                                    self.mpl_hooks_in_debug_console = True
 
                                 if int_cmd.canBeExecutedBy(curr_thread_id):
                                     PydevdLog(2, "processing internal command ", str(int_cmd))
@@ -1217,10 +1210,10 @@ class PyDB:
                         update_exception_hook(self)
                     else:
                         supported_type = False
-                        
+
                         # I.e.: no need to initialize lazy (if we didn't have it in the first place, we can't remove
                         # anything from it anyways).
-                        plugin = self.plugin 
+                        plugin = self.plugin
                         if plugin is not None:
                             supported_type = plugin.remove_exception_breakpoint(self, type, exception)
 
@@ -2078,15 +2071,15 @@ def stoptrace():
 
         from pydev_monkey import undo_patch_thread_modules
         undo_patch_thread_modules()
- 
+
         debugger = GetGlobalDebugger()
- 
+
         if debugger:
-  
+
             debugger.SetTraceForFrameAndParents(
                 GetFrame(), also_add_to_passed_frame=True, overwrite_prev_trace=True, dispatch_func=lambda *args:None)
             debugger.exiting()
-  
+
             killAllPydevThreads()
 
         connected = False
@@ -2118,7 +2111,7 @@ class DispatchReader(ReaderThread):
         dummy_thread = threading.currentThread()
         dummy_thread.is_pydev_daemon_thread = False
         return ReaderThread.OnRun(self)
-        
+
     def handleExcept(self):
         ReaderThread.handleExcept(self)
 
@@ -2182,7 +2175,7 @@ class SetupHolder:
 # main
 #=======================================================================================================================
 if __name__ == '__main__':
-    
+
     # parse the command line. --file is our last argument that is required
     try:
         sys.original_argv = sys.argv[:]

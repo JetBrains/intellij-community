@@ -128,8 +128,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
 
   @Override
   protected PsiElement checkLocalScope() {
-    final PsiVariable variable = getLocalVariable();
-    return variable == null ? myMethod : PsiTreeUtil.getParentOfType(variable, PsiMethod.class);
+    return myMethod;
   }
 
   @Override

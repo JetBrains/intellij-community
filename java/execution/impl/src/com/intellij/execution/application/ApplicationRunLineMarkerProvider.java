@@ -15,40 +15,34 @@
  */
 package com.intellij.execution.application;
 
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
-import com.intellij.execution.lineMarker.RunLineMarkerInfo;
+import com.intellij.execution.lineMarker.ExecutorAction;
+import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-public class ApplicationRunLineMarkerProvider implements LineMarkerProvider {
+public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
 
   @Nullable
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement e) {
-    if (e instanceof PsiIdentifier) {
+  public Info getInfo(PsiElement e) {
+    if (isIdentifier(e)) {
       PsiElement element = e.getParent();
       if (element instanceof PsiClass && PsiMethodUtil.findMainInClass((PsiClass)element) != null)
-        return new RunLineMarkerInfo(element, ApplicationConfigurationType.getInstance().getIcon(), null);
+        return new Info(ApplicationConfigurationType.getInstance().getIcon(), null, ExecutorAction.getActions(0));
       if (element instanceof PsiMethod && "main".equals(((PsiMethod)element).getName()) && PsiMethodUtil.isMainMethod((PsiMethod)element))
-        return new RunLineMarkerInfo(element, ApplicationConfigurationType.getInstance().getIcon(), null);
+        return new Info(ApplicationConfigurationType.getInstance().getIcon(), null, ExecutorAction.getActions(0));
     }
     return null;
   }
 
-  @Override
-  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
-
+  protected boolean isIdentifier(PsiElement e) {
+    return e instanceof PsiIdentifier;
   }
 }

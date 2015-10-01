@@ -1301,27 +1301,37 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       if (rExpr != null) {
         rExpr.accept(this);
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lExpr;
-      PsiExpression qualifierExpression = referenceExpression.getQualifierExpression();
-      PsiVariable variable = getUsedVariable(referenceExpression);
-      if (qualifierExpression == null ||
-          qualifierExpression instanceof PsiThisExpression ||
-          variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC)) {
-        if (variable != null) {
-          if (myAssignmentTargetsAreElements) {
-            startElement(lExpr);
-          }
-
-          if (expression.getOperationTokenType() != JavaTokenType.EQ) {
-            generateReadInstruction(variable);
-          }
-          generateWriteInstruction(variable);
-
-          if (myAssignmentTargetsAreElements) finishElement(lExpr);
+      PsiVariable variable = getUsedVariable((PsiReferenceExpression)lExpr);
+      if (variable != null) {
+        if (myAssignmentTargetsAreElements) {
+          startElement(lExpr);
         }
+
+        if (expression.getOperationTokenType() != JavaTokenType.EQ) {
+          generateReadInstruction(variable);
+        }
+        generateWriteInstruction(variable);
+
+        if (myAssignmentTargetsAreElements) finishElement(lExpr);
       }
       else {
         lExpr.accept(this); //?
+      }
+    }
+    else if (lExpr instanceof PsiArrayAccessExpression &&
+             ((PsiArrayAccessExpression)lExpr).getArrayExpression() instanceof PsiReferenceExpression){
+      PsiVariable variable = getUsedVariable((PsiReferenceExpression)((PsiArrayAccessExpression)lExpr).getArrayExpression());
+      if (variable != null) {
+        generateReadInstruction(variable);
+        final PsiExpression indexExpression = ((PsiArrayAccessExpression)lExpr).getIndexExpression();
+        if (indexExpression != null) {
+          indexExpression.accept(this);
+        }
+      } else {
+        lExpr.accept(this);
+      }
+      if (rExpr != null) {
+        rExpr.accept(this);
       }
     }
     else if (lExpr != null) {

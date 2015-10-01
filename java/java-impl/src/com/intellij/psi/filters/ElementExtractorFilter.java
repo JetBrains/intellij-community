@@ -26,15 +26,9 @@ import com.intellij.psi.infos.CandidateInfo;
  * To change this template use Options | File Templates.
  */
 public class ElementExtractorFilter implements ElementFilter{
-  ElementFilter myFilter;
-
-  public ElementExtractorFilter(){}
+  private final ElementFilter myFilter;
 
   public ElementExtractorFilter(ElementFilter filter){
-    myFilter = filter;
-  }
-
-  public void setFilter(ElementFilter filter){
     myFilter = filter;
   }
 

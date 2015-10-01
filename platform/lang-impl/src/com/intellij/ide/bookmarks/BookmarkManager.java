@@ -37,6 +37,8 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -63,6 +65,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
 
   private final List<Bookmark> myBookmarks = new ArrayList<Bookmark>();
+  private final Map<Trinity<VirtualFile, Integer, String>, Bookmark> myDeletedDocumentBookmarks = new HashMap<Trinity<VirtualFile, Integer, String>, Bookmark>();
 
   private final MessageBus myBus;
 
@@ -479,7 +482,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
       if (e.isWholeTextReplaced()) return;
-      List<Bookmark> bookmarksToRemove = null;
+      Map<Trinity<VirtualFile, Integer, String>, Bookmark> bookmarksToRemove = null;
       for (Bookmark bookmark : myBookmarks) {
         Document document = bookmark.getDocument();
         if (document == null || document != e.getDocument()) continue;
@@ -488,15 +491,18 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
         int start = document.getLineStartOffset(bookmark.getLine());
         int end = document.getLineEndOffset(bookmark.getLine());
         if (start >= e.getOffset() && end <= e.getOffset() + e.getOldLength() ) {
+          Trinity<VirtualFile, Integer, String> restoreBookmarkData
+            = new Trinity<VirtualFile, Integer, String>(bookmark.getFile(), bookmark.getLine(), document.getText(new TextRange(start, end)));
           if (bookmarksToRemove == null) {
-            bookmarksToRemove = new ArrayList<Bookmark>();
+            bookmarksToRemove = new HashMap<Trinity<VirtualFile, Integer, String>, Bookmark>();
           }
-          bookmarksToRemove.add(bookmark);
+          bookmarksToRemove.put(restoreBookmarkData, bookmark);
         }
       }
       if (bookmarksToRemove != null) {
-        for (Bookmark bookmark : bookmarksToRemove) {
-          removeBookmark(bookmark);
+        for (Map.Entry<Trinity<VirtualFile, Integer, String>, Bookmark> entry : bookmarksToRemove.entrySet()) {
+          removeBookmark(entry.getValue());
+          myDeletedDocumentBookmarks.put(entry.getKey(), entry.getValue());
         }
       }
     }
@@ -529,6 +535,36 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       if (bookmarksToRemove != null) {
         for (Bookmark bookmark : bookmarksToRemove) {
           removeBookmark(bookmark);
+        }
+      }
+
+      for (Iterator<Map.Entry<Trinity<VirtualFile, Integer, String>, Bookmark>> iterator = myDeletedDocumentBookmarks.entrySet().iterator();
+           iterator.hasNext(); ) {
+        Map.Entry<Trinity<VirtualFile, Integer, String>, Bookmark> entry = iterator.next();
+
+        if (!entry.getKey().first.isValid()) {
+          iterator.remove();
+          continue;
+        }
+
+        Bookmark bookmark = entry.getValue();
+        Document document = bookmark.getDocument();
+        if (document == null || !bookmark.getFile().equals(entry.getKey().first)) {
+          continue;
+        }
+        Integer line = entry.getKey().second;
+        if (document.getLineCount() <= line) {
+          continue;
+        }
+        int start = document.getLineStartOffset(line);
+        int end = document.getLineEndOffset(line);
+        String lineContent = document.getText(new TextRange(start, end));
+        if (entry.getKey().third.equals(lineContent)) {
+          Bookmark restored = addTextBookmark(bookmark.getFile(), bookmark.getLine(), bookmark.getDescription());
+          if (bookmark.getMnemonic() != 0) {
+            setMnemonic(restored, bookmark.getMnemonic());
+          }
+          iterator.remove();
         }
       }
     }

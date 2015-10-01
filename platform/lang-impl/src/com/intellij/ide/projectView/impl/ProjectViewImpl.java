@@ -1303,9 +1303,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private static void readOption(Element node, @NotNull Map<String, Boolean> options) {
     if (node == null) return;
-    List attributes = node.getAttributes();
-    for (final Object attribute1 : attributes) {
-      Attribute attribute = (Attribute)attribute1;
+    for (Attribute attribute : node.getAttributes()) {
       options.put(attribute.getName(), Boolean.TRUE.toString().equals(attribute.getValue()) ? Boolean.TRUE : Boolean.FALSE);
     }
   }

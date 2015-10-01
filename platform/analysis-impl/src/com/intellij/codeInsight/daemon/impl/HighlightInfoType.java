@@ -139,8 +139,13 @@ public interface HighlightInfoType {
       return "HighlightInfoTypeImpl[severity=" + mySeverity + ", key=" + myAttributesKey + "]";
     }
 
-    public void writeExternal(Element element) throws WriteExternalException {
-      mySeverity.writeExternal(element);
+    public void writeExternal(Element element) {
+      try {
+        mySeverity.writeExternal(element);
+      }
+      catch (WriteExternalException e) {
+        throw new RuntimeException(e);
+      }
       myAttributesKey.writeExternal(element);
     }
 

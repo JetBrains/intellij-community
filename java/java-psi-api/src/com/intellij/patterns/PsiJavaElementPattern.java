@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,16 +48,32 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
         PlatformPatterns.psiElement(PsiAnnotationParameterList.class).withParent(
           PsiJavaPatterns.psiAnnotation().qName(annotationQualifiedName))));
   }
+  public Self annotationParam(@NotNull ElementPattern<PsiAnnotation> annotation) {
+    return withParent(
+      PsiJavaPatterns.psiNameValuePair().withParent(
+        PlatformPatterns.psiElement(PsiAnnotationParameterList.class).withParent(
+          annotation)));
+  }
+
+  public Self annotationParam(String parameterName, @NotNull ElementPattern<PsiAnnotation> annotation) {
+    return withParent(
+      PsiJavaPatterns.psiNameValuePair().withName(parameterName).withParent(
+        PlatformPatterns.psiElement(PsiAnnotationParameterList.class).withParent(annotation)));
+  }
 
   public Self insideAnnotationParam(final ElementPattern<String> annotationQualifiedName, @NonNls final String parameterName) {
-    return inside(true,
-      PsiJavaPatterns.psiNameValuePair().withName(parameterName).withParent(
+    return withAncestor(3,   // can be array initializer
+                        PsiJavaPatterns.psiNameValuePair().withName(parameterName).withParent(
         PlatformPatterns.psiElement(PsiAnnotationParameterList.class).withParent(
           PsiJavaPatterns.psiAnnotation().qName(annotationQualifiedName))));
   }
 
   public Self insideAnnotationParam(final ElementPattern<String> annotationQualifiedName) {
     return insideAnnotationParam(annotationQualifiedName, VALUE);
+  }
+
+  public Self insideAnnotationParam(@NotNull String annotationQualifiedName) {
+    return insideAnnotationParam(StandardPatterns.string().equalTo(annotationQualifiedName));
   }
 
   public Self nameIdentifierOf(final Class<? extends PsiMember> aClass) {
@@ -89,6 +105,30 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
           final PsiExpressionList psiExpressionList = (PsiExpressionList)parent;
           final PsiExpression[] psiExpressions = psiExpressionList.getExpressions();
           if (!(psiExpressions.length > index && psiExpressions[index] == literal)) return false;
+
+          final PsiElement element = psiExpressionList.getParent();
+          if (element instanceof PsiMethodCallExpression) {
+            final JavaResolveResult[] results = ((PsiMethodCallExpression)element).getMethodExpression().multiResolve(false);
+            for (JavaResolveResult result : results) {
+              final PsiElement psiElement = result.getElement();
+              if (methodPattern.accepts(psiElement, context)) {
+                return true;
+              }
+            }
+          }
+        }
+        return false;
+      }
+    });
+  }
+
+  public Self methodCallParameter(@NotNull final ElementPattern<? extends PsiMethod> methodPattern) {
+    return with(new PatternCondition<T>("methodCallParameter") {
+      @Override
+      public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
+        final PsiElement parent = literal.getParent();
+        if (parent instanceof PsiExpressionList) {
+          final PsiExpressionList psiExpressionList = (PsiExpressionList)parent;
 
           final PsiElement element = psiExpressionList.getParent();
           if (element instanceof PsiMethodCallExpression) {

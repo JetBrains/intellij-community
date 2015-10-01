@@ -78,12 +78,21 @@ public class MoveToPackageFix implements LocalQuickFix {
 
   private void chooseDirectoryAndMove(Project project, PsiFile myFile) {
     try {
-      PsiDirectory directory = MoveClassesOrPackagesUtil.chooseDestinationPackage(project, myTargetPackage, myFile.getContainingDirectory());
+      String error;
+      PsiDirectory directory = null;
+      try {
+        directory = MoveClassesOrPackagesUtil.chooseDestinationPackage(project, myTargetPackage, myFile.getContainingDirectory());
 
-      if (directory == null) {
-        return;
+        if (directory == null) {
+          return;
+        }
+
+        error = RefactoringMessageUtil.checkCanCreateFile(directory, myFile.getName());
       }
-      String error = RefactoringMessageUtil.checkCanCreateFile(directory, myFile.getName());
+      catch (IncorrectOperationException e) {
+        error = e.getLocalizedMessage();
+      }
+
       if (error != null) {
         Messages.showMessageDialog(project, error, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
         return;

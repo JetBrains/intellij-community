@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class JavaFindUsagesHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findUsages.JavaFindUsagesHelper");
 
   @NotNull
-  static Set<String> getElementNames(@NotNull final PsiElement element) {
+  public static Set<String> getElementNames(@NotNull final PsiElement element) {
     if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
       PsiPackage aPackage = ApplicationManager.getApplication().runReadAction(new Computable<PsiPackage>() {
         @Override

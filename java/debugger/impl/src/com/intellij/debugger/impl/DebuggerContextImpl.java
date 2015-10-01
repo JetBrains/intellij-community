@@ -36,6 +36,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -144,6 +145,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
     return context != null ? new EvaluationContextImpl(context, frameProxy, objectReference) : null;
   }
 
+  @NotNull
   public static DebuggerContextImpl createDebuggerContext(@Nullable DebuggerSession session,
                                                           @Nullable SuspendContextImpl context,
                                                           ThreadReferenceProxyImpl threadProxy,

@@ -17,3 +17,4 @@ class Stub {
         [Parameter list]
           [Parameter : i]
             [Modifiers]
+        [Throw clause]

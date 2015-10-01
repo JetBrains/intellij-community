@@ -48,7 +48,7 @@ public class JavaGenerateMemberCompletionContributor {
 
     PsiElement position = parameters.getPosition();
     if (psiElement(PsiIdentifier.class).withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiClass.class).
-      andNot(JavaCompletionData.AFTER_DOT).
+      andNot(JavaKeywordCompletion.AFTER_DOT).
       andNot(psiElement().afterLeaf(psiElement().inside(PsiModifierList.class))).accepts(position)) {
       suggestGeneratedMethods(result, position);
     } else if (psiElement(PsiIdentifier.class)

@@ -15,80 +15,87 @@
  */
 package org.jetbrains.settingsRepository.test
 
-import com.intellij.configurationStore.*
-import com.intellij.openapi.components.RoamingType
+import com.intellij.configurationStore.SchemeManagerImpl
+import com.intellij.configurationStore.TestScheme
+import com.intellij.configurationStore.TestSchemesProcessor
+import com.intellij.testFramework.ProjectRule
+import com.intellij.util.xmlb.serialize
+import com.intellij.util.xmlb.toByteArray
+import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Repository
-import org.hamcrest.CoreMatchers.equalTo
 import org.jetbrains.settingsRepository.ReadonlySource
 import org.jetbrains.settingsRepository.git.cloneBare
 import org.jetbrains.settingsRepository.git.commit
-import org.junit.Assert.assertThat
+import org.junit.ClassRule
 import org.junit.Test
 import java.io.File
 
-class LoadTest : TestCase() {
+class LoadTest : IcsTestCase() {
+  companion object {
+    @ClassRule val projectRule = ProjectRule()
+  }
+
   private val dirPath = "\$ROOT_CONFIG$/keymaps"
 
-  private fun createSchemeManager(dirPath: String) = SchemeManagerImpl<TestScheme, TestScheme>(dirPath, TestSchemesProcessor(), RoamingType.PER_USER, provider, tempDirManager.newDirectory("schemes"))
+  private fun createSchemeManager(dirPath: String) = SchemeManagerImpl<TestScheme, TestScheme>(dirPath, TestSchemesProcessor(), provider, tempDirManager.newDirectory("schemes"))
 
-  public Test fun `load scheme`() {
+  @Test fun `load scheme`() {
     val localScheme = TestScheme("local")
-    val data = localScheme.serialize().toByteArray()
-    provider.save("$dirPath/local.xml", data)
+    provider.write("$dirPath/local.xml", localScheme.serialize().toByteArray())
 
     val schemesManager = createSchemeManager(dirPath)
     schemesManager.loadSchemes()
-    assertThat(schemesManager.getAllSchemes(), equalTo(listOf(localScheme)))
+    assertThat(schemesManager.getAllSchemes()).containsOnly(localScheme)
   }
 
-  public Test fun `load scheme with the same names`() {
+  @Test fun `load scheme with the same names`() {
     val localScheme = TestScheme("local")
     val data = localScheme.serialize().toByteArray()
-    provider.save("$dirPath/local.xml", data)
-    provider.save("$dirPath/local2.xml", data)
+    provider.write("$dirPath/local.xml", data)
+    provider.write("$dirPath/local2.xml", data)
 
     val schemesManager = createSchemeManager(dirPath)
     schemesManager.loadSchemes()
-    assertThat(schemesManager.getAllSchemes(), equalTo(listOf(localScheme)))
+    assertThat(schemesManager.getAllSchemes()).containsOnly(localScheme)
   }
 
-  public Test fun `load scheme from repo and read-only repo`() {
+  @Test fun `load scheme from repo and read-only repo`() {
     val localScheme = TestScheme("local")
 
-    provider.save("$dirPath/local.xml", localScheme.serialize().toByteArray())
+    provider.write("$dirPath/local.xml", localScheme.serialize().toByteArray())
 
     val remoteScheme = TestScheme("remote")
     val remoteRepository = tempDirManager.createRepository()
     remoteRepository
-      .add(remoteScheme.serialize().toByteArray(), "$dirPath/Mac OS X from RubyMine.xml")
+      .add("$dirPath/Mac OS X from RubyMine.xml", remoteScheme.serialize().toByteArray())
       .commit("")
 
     remoteRepository.useAsReadOnlySource {
       val schemesManager = createSchemeManager(dirPath)
       schemesManager.loadSchemes()
-      assertThat(schemesManager.getAllSchemes(), equalTo(listOf(remoteScheme, localScheme)))
-      assertThat(schemesManager.isMetadataEditable(localScheme), equalTo(true))
-      assertThat(schemesManager.isMetadataEditable(remoteScheme), equalTo(false))
+      assertThat(schemesManager.getAllSchemes()).containsOnly(remoteScheme, localScheme)
+      assertThat(schemesManager.isMetadataEditable(localScheme)).isTrue()
+      assertThat(schemesManager.isMetadataEditable(remoteScheme)).isFalse()
     }
   }
 
-  public Test fun `scheme overrides read-only`() {
+  @Test fun `scheme overrides read-only`() {
     val schemeName = "Emacs"
     val localScheme = TestScheme(schemeName, "local")
 
-    provider.save("$dirPath/$schemeName.xml", localScheme.serialize().toByteArray())
+    provider.write("$dirPath/$schemeName.xml", localScheme.serialize().toByteArray())
 
     val remoteScheme = TestScheme(schemeName, "remote")
     val remoteRepository = tempDirManager.createRepository("remote")
     remoteRepository
-      .add(remoteScheme.serialize().toByteArray(), "$dirPath/$schemeName.xml")
+      .add("$dirPath/$schemeName.xml", remoteScheme.serialize().toByteArray())
       .commit("")
 
     remoteRepository.useAsReadOnlySource {
       val schemesManager = createSchemeManager(dirPath)
       schemesManager.loadSchemes()
-      assertThat(schemesManager.getAllSchemes(), equalTo(listOf(localScheme)))
-      assertThat(schemesManager.isMetadataEditable(localScheme), equalTo(false))
+      assertThat(schemesManager.getAllSchemes()).containsOnly(localScheme)
+      assertThat(schemesManager.isMetadataEditable(localScheme)).isFalse()
     }
   }
 
@@ -104,7 +111,7 @@ class LoadTest : TestCase() {
 
   fun Repository.createAndRegisterReadOnlySource(): ReadonlySource {
     val source = ReadonlySource(getWorkTree().getAbsolutePath())
-    assertThat(cloneBare(source.url!!, File(icsManager.readOnlySourcesManager.rootDir, source.path!!)).getObjectDatabase().exists(), equalTo(true))
+    assertThat(cloneBare(source.url!!, File(icsManager.readOnlySourcesManager.rootDir, source.path!!)).getObjectDatabase().exists()).isTrue()
     icsManager.readOnlySourcesManager.setSources(listOf(source))
     return source
   }

@@ -33,8 +33,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
+import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.SearchScope;
@@ -54,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -61,9 +64,18 @@ public class MarkerType {
 
   private final GutterIconNavigationHandler<PsiElement> handler;
   private final Function<PsiElement, String> myTooltip;
+  @NotNull private final String myDebugName;
 
+  /**
+   * @deprecated use {@link #MarkerType(String, Function, LineMarkerNavigator)} instead
+   */
   public MarkerType(@NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
+    this("Unknown", tooltip, navigator);
+  }
+
+  public MarkerType(@NotNull String debugName, @NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
     myTooltip = tooltip;
+    myDebugName = debugName;
     handler = new GutterIconNavigationHandler<PsiElement>() {
       @Override
       public void navigate(final MouseEvent e, final PsiElement elt) {
@@ -77,6 +89,11 @@ public class MarkerType {
     };
   }
 
+  @Override
+  public String toString() {
+    return myDebugName;
+  }
+
   @NotNull
   public GutterIconNavigationHandler<PsiElement> getNavigationHandler() {
     return handler;
@@ -87,7 +104,7 @@ public class MarkerType {
     return myTooltip;
   }
 
-  static final MarkerType OVERRIDING_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
+  static final MarkerType OVERRIDING_METHOD = new MarkerType("OVERRIDING_METHOD", new NullableFunction<PsiElement, String>() {
     @Override
     public String fun(PsiElement element) {
       PsiElement parent = getParentMethod(element);
@@ -103,6 +120,24 @@ public class MarkerType {
       if (!(parent instanceof PsiMethod)) return;
       PsiMethod method = (PsiMethod)parent;
       navigateToOverridingMethod(e, method, method != element.getParent());
+    }
+  });
+  static final MarkerType SIBLING_OVERRIDING_METHOD = new MarkerType("SIBLING_OVERRIDING_METHOD", new NullableFunction<PsiElement, String>() {
+    @Override
+    public String fun(PsiElement element) {
+      PsiElement parent = getParentMethod(element);
+      if (!(parent instanceof PsiMethod)) return null;
+      PsiMethod method = (PsiMethod)parent;
+
+      return calculateOverridingSiblingMethodTooltip(method);
+    }
+  }, new LineMarkerNavigator() {
+    @Override
+    public void browse(MouseEvent e, PsiElement element) {
+      PsiElement parent = getParentMethod(element);
+      if (!(parent instanceof PsiMethod)) return;
+      PsiMethod method = (PsiMethod)parent;
+      navigateToSiblingOverridingMethod(e, method);
     }
   });
 
@@ -125,6 +160,22 @@ public class MarkerType {
     }
     return composeText(superMethods, "", DaemonBundle.message(key), IdeActions.ACTION_GOTO_SUPER);
   }
+  @Nullable
+  private static String calculateOverridingSiblingMethodTooltip(@NotNull PsiMethod method) {
+    Pair<PsiMethod, PsiClass> pair =
+      FindSuperElementsHelper.getSiblingInheritedViaSubClass(method, FindSuperElementsHelper.createSubClassCache());
+    if (pair == null) return null;
+    PsiMethod superMethod = pair.getFirst();
+    PsiClass subClass = pair.getSecond();
+    boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+    boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
+
+    String postfix = MessageFormat.format(" via sub-class <a href=\"#javaClass/{0}\">{0}</a>", ClassPresentationUtil.getNameForClass(subClass, true));
+    @NonNls String pattern = DaemonBundle.message(isSuperAbstract && !isAbstract ?
+                                                  "method.implements" :
+                                                  "method.overrides") + postfix;
+    return composeText(new PsiElement[]{superMethod}, "", pattern, IdeActions.ACTION_GOTO_SUPER);
+  }
 
   @NotNull
   private static String composeText(@NotNull PsiElement[] methods, @NotNull String start, @NotNull String pattern, @NotNull String actionId) {
@@ -144,6 +195,14 @@ public class MarkerType {
                                         DaemonBundle.message("navigation.title.super.method", method.getName()),
                                         DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()),
                                         new MethodCellRenderer(showMethodNames));
+  }
+  private static void navigateToSiblingOverridingMethod(MouseEvent e, @NotNull PsiMethod method) {
+    PsiMethod superMethod = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
+    if (superMethod == null) return;
+    PsiElementListNavigator.openTargets(e, new NavigatablePsiElement[]{superMethod},
+                                        DaemonBundle.message("navigation.title.super.method", method.getName()),
+                                        DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()),
+                                        new MethodCellRenderer(false));
   }
 
   @NotNull
@@ -169,7 +228,7 @@ public class MarkerType {
   }
 
   public static final String SEARCHING_FOR_OVERRIDING_METHODS = "Searching for Overriding Methods";
-  static final MarkerType OVERRIDDEN_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
+  static final MarkerType OVERRIDDEN_METHOD = new MarkerType("OVERRIDDEN_METHOD", new NullableFunction<PsiElement, String>() {
     @Override
     public String fun(PsiElement element) {
       PsiElement parent = element.getParent();
@@ -257,7 +316,7 @@ public class MarkerType {
   }
 
   private static final String SEARCHING_FOR_OVERRIDDEN_METHODS = "Searching for Overridden Methods";
-  static final MarkerType SUBCLASSED_CLASS = new MarkerType(new NullableFunction<PsiElement, String>() {
+  static final MarkerType SUBCLASSED_CLASS = new MarkerType("SUBCLASSED_CLASS", new NullableFunction<PsiElement, String>() {
     @Override
     public String fun(PsiElement element) {
       PsiElement parent = element.getParent();

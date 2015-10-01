@@ -37,7 +37,7 @@ import java.util.Collections;
 public class RefJavaUtilImpl extends RefJavaUtil{
 
   @Override
-  public void addReferences(@NotNull final PsiModifierListOwner psiFrom, @NotNull final RefJavaElement ref, @Nullable PsiElement findIn) {
+  public void addReferences(@NotNull final PsiModifierListOwner psiFrom, @NotNull final RefJavaElement ref, @Nullable final PsiElement findIn) {
     final RefJavaElementImpl refFrom = (RefJavaElementImpl)ref;
     if (findIn == null) {
       return;
@@ -61,7 +61,8 @@ public class RefJavaUtilImpl extends RefJavaUtil{
         @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
           visitElement(expression);
 
-          PsiElement psiResolved = expression.resolve();
+          final JavaResolveResult result = expression.advancedResolve(false);
+          final PsiElement psiResolved = result.getElement();
 
           if (psiResolved instanceof PsiModifierListOwner) {
             if (isDeprecated(psiResolved)) refFrom.setUsesDeprecatedApi(true);
@@ -75,6 +76,16 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
           if (refResolved instanceof RefMethod) {
             updateRefMethod(psiResolved, refResolved, expression, psiFrom, refFrom);
+          }
+          
+          if (psiResolved instanceof PsiMember && result.getCurrentFileResolveScope() instanceof PsiImportStaticStatement) {
+            final PsiClass containingClass = ((PsiMember)psiResolved).getContainingClass();
+            if (containingClass != null) {
+              RefElement refContainingClass = refFrom.getRefManager().getReference(containingClass);
+              if (refContainingClass != null) {
+                refFrom.addReference(refContainingClass, containingClass, psiFrom, false, true, expression);
+              }
+            }
           }
         }
 

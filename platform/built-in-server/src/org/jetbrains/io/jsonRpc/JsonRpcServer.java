@@ -109,7 +109,7 @@ public class JsonRpcServer implements MessageServer {
         promise.setResult(JsonUtil.nextAny(reader));
       }
       else {
-        promise.setError(Promise.createError("error"));
+        promise.setError("error");
       }
       return;
     }

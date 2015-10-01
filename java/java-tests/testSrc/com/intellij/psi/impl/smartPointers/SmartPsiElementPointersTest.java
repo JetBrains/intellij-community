@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -670,23 +671,147 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertNotNull(node);
   }
 
-  public void testLargeFileWithManyChanges() {
+  public void testLargeFileWithManyChangesPerformance() {
     configureByText(PlainTextFileType.INSTANCE, StringUtil.repeat("foo foo \n", 50000));
     final TextRange range = TextRange.from(10, 10);
     final SmartPsiFileRange pointer = SmartPointerManager.getInstance(myProject).createSmartPsiFileRangePointer(myFile, range);
 
     final Document document = myFile.getViewProvider().getDocument();
     assertNotNull(document);
-    
-    for (int i = 0; i < 10000; i++) {
-      document.insertString(i * 20 + 100, "x\n");
-      assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
-      if (i % 500 == 0) {
+
+    PlatformTestUtil.startPerformanceTest("smart pointer range update", 25000, () -> {
+      for (int i = 0; i < 10000; i++) {
+        document.insertString(i * 20 + 100, "x\n");
+        assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
         assertEquals(range, pointer.getRange());
       }
-    }
+    }).cpuBound().assertTiming();
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     assertEquals(range, pointer.getRange());
   }
+
+  public void testConvergingRanges() {
+    configureByText(PlainTextFileType.INSTANCE, "aba");
+    final Document document = myFile.getViewProvider().getDocument();
+    assertNotNull(document);
+
+    SmartPsiFileRange range1 = SmartPointerManager.getInstance(myProject).createSmartPsiFileRangePointer(myFile, TextRange.create(0, 2));
+    SmartPsiFileRange range2 = SmartPointerManager.getInstance(myProject).createSmartPsiFileRangePointer(myFile, TextRange.create(1, 3));
+
+    document.deleteString(0, 1);
+    document.deleteString(1, 2);
+    assertEquals(TextRange.create(0, 1), range1.getRange());
+    assertEquals(TextRange.create(0, 1), range2.getRange());
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    assertEquals(TextRange.create(0, 1), range1.getRange());
+    assertEquals(TextRange.create(0, 1), range2.getRange());
+
+    document.insertString(0, "a");
+    assertEquals(TextRange.create(1, 2), range1.getRange());
+    assertEquals(TextRange.create(1, 2), range2.getRange());
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    assertEquals(TextRange.create(1, 2), range1.getRange());
+    assertEquals(TextRange.create(1, 2), range2.getRange());
+  }
+
+  public void testMoveText() {
+    PsiJavaFile file = (PsiJavaFile)configureByText(JavaFileType.INSTANCE, "class C1{}\nclass C2 {}");
+    DocumentEx document = (DocumentEx)file.getViewProvider().getDocument();
+
+    SmartPsiElementPointer<PsiClass> pointer1 =
+      SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(file.getClasses()[0]);
+    SmartPsiElementPointer<PsiClass> pointer2 =
+      SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(file.getClasses()[1]);
+    assertEquals("C1", pointer1.getElement().getName());
+    assertEquals("C2", pointer2.getElement().getName());
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(((SmartPointerEx) pointer1).getCachedElement());
+    assertNull(((SmartPointerEx) pointer2).getCachedElement());
+
+    TextRange range = file.getClasses()[1].getTextRange();
+    document.moveText(range.getStartOffset(), range.getEndOffset(), 0);
+
+    System.out.println(pointer1.getRange());
+    System.out.println(pointer2.getRange());
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+    assertEquals("C1", pointer1.getElement().getName());
+    assertEquals("C2", pointer2.getElement().getName());
+  }
+
+  public void testNonPhysicalFile() {
+    PsiJavaFile file = (PsiJavaFile)myJavaFacade.findClass("AClass", GlobalSearchScope.allScope(getProject())).getContainingFile().copy();
+    SmartPsiFileRange pointer = SmartPointerManager.getInstance(myProject).createSmartPsiFileRangePointer(file, TextRange.create(1, 2));
+
+    file.getViewProvider().getDocument().insertString(0, " ");
+
+    assertEquals(TextRange.create(2, 3), pointer.getRange());
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    assertEquals(TextRange.create(2, 3), pointer.getRange());
+  }
+
+  public void testAnchorInfoSurvivesPsiChange() {
+    PsiJavaFile file = (PsiJavaFile)configureByText(JavaFileType.INSTANCE, "class C1{}\nclass C2 {}");
+
+    SmartPsiElementPointer<PsiClass> pointer =
+      SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(file.getClasses()[1]);
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(((SmartPointerEx) pointer).getCachedElement());
+
+    file.getClasses()[1].delete();
+
+    assertNotNull(pointer.getElement());
+  }
+
+  public void testPointerToEmptyElement() {
+    PsiFile file = configureByText(JavaFileType.INSTANCE, "class Foo {\n" +
+                                                             "  Test<String> test = new Test<>();\n" +
+                                                             "}");
+    PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("<>"), PsiJavaCodeReferenceElement.class, false);
+    SmartPointerEx pointer = (SmartPointerEx)SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(
+      ref.getParameterList().getTypeParameterElements()[0]);
+    ref = null;
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(pointer.getCachedElement());
+
+    assertInstanceOf(pointer.getElement(), PsiTypeElement.class);
+  }
+
+  public void testPointerToEmptyElement2() {
+    PsiFile file = configureByText(JavaFileType.INSTANCE, "class Foo {\n" +
+                                                             "  void foo() {}\n" +
+                                                             "}");
+    PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("void"), PsiMethod.class, false);
+    SmartPointerEx pointer1 = (SmartPointerEx)SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(method.getModifierList());
+    SmartPointerEx pointer2 = (SmartPointerEx)SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(method.getTypeParameterList());
+    method = null;
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(pointer1.getCachedElement());
+    assertNull(pointer2.getCachedElement());
+
+    assertInstanceOf(pointer1.getElement(), PsiModifierList.class);
+    assertInstanceOf(pointer2.getElement(), PsiTypeParameterList.class);
+  }
+
+  public void testPointerToReferenceSurvivesRename() {
+    PsiFile file = configureByText(JavaFileType.INSTANCE, "class Foo extends Bar {}");
+    PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("Bar"), PsiJavaCodeReferenceElement.class, false);
+    SmartPointerEx pointer = (SmartPointerEx)SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(ref);
+    ref = null;
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(pointer.getCachedElement());
+
+    ref = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("Bar"), PsiJavaCodeReferenceElement.class, false);
+    ref.handleElementRename("BarImpl");
+    assertNotNull(pointer.getElement());
+  }
+
 }

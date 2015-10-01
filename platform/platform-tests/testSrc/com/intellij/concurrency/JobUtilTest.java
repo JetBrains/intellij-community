@@ -24,12 +24,10 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Processor;
+import com.intellij.util.TimeoutUtil;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -41,6 +39,12 @@ import java.util.concurrent.atomic.AtomicReference;
 public class JobUtilTest extends PlatformTestCase {
   private static final AtomicInteger COUNT = new AtomicInteger();
 
+  //@Override
+  //protected void setUp() throws Exception {
+  //  super.setUp();
+  //  ((ApplicationImpl)ApplicationManager.getApplication()).stopMeasuringWriteActionPauses(myTestRootDisposable);
+  //}
+  //
   @Override
   protected boolean isRunInWriteAction() {
     return false;
@@ -356,7 +360,7 @@ public class JobUtilTest extends PlatformTestCase {
     }
   }
 
-  public void testTasksRunEvenWhenReadActionIsHardToGet() throws ExecutionException, InterruptedException {
+  public void testTasksRunEvenWhenReadActionIsHardToGet_Performance() throws ExecutionException, InterruptedException {
     final Processor<String> processor = new Processor<String>() {
       @Override
       public boolean process(String s) {
@@ -364,7 +368,8 @@ public class JobUtilTest extends PlatformTestCase {
         return true;
       }
     };
-    for (int i=0; i<1/*00*/; i++) {
+    for (int i=0; i<10/*0*/; i++) {
+      System.out.println("i = " + i);
       final ProgressIndicator indicator = new EmptyProgressIndicator();
       Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
@@ -382,6 +387,59 @@ public class JobUtilTest extends PlatformTestCase {
         });
       }
       future.get();
+    }
+  }
+
+  public void testAfterCancelInTheMiddleOfTheExecutionTaskIsDoneReturnsFalseUntilFinished() throws ExecutionException, InterruptedException {
+    Random random = new Random();
+    for (int i=0; i<100; i++) {
+      final AtomicBoolean finished = new AtomicBoolean();
+      final AtomicBoolean started = new AtomicBoolean();
+      Job<Void> job = JobLauncher.getInstance().submitToJobThread(new Runnable() {
+        @Override
+        public void run() {
+          started.set(true);
+          TimeoutUtil.sleep(100);
+          finished.set(true);
+        }
+      }, null);
+      assertFalse(job.isDone());
+      TimeoutUtil.sleep(random.nextInt(100));
+      job.cancel();
+      long start = System.currentTimeMillis();
+      while (!job.isDone() && (started.get() || System.currentTimeMillis() < start + 2000)) {
+        boolean wasDone = job.isDone();
+        boolean wasStarted = started.get();
+        boolean wasFinished = finished.get();
+        if (!wasFinished) {
+          assertTrue(wasStarted+", "+wasDone, wasDone == !wasStarted);
+        }
+        // else no guarantees
+
+        if (wasDone) {
+          assertTrue(wasFinished);
+        }
+      }
+    }
+  }
+
+  public void testJobWaitForTerminationAfterCancelInTheMiddleOfTheExecutionWaitsUntilFinished() throws Exception {
+    for (int i=0; i<100; i++) {
+      final AtomicBoolean finished = new AtomicBoolean();
+      final AtomicBoolean started = new AtomicBoolean();
+      Job<Void> job = JobLauncher.getInstance().submitToJobThread(new Runnable() {
+        @Override
+        public void run() {
+          started.set(true);
+          TimeoutUtil.sleep(100);
+          finished.set(true);
+        }
+      }, null);
+      assertFalse(job.isDone());
+      while (!started.get());
+      job.cancel();
+      job.waitForCompletion(100000);
+      assertTrue(finished.get());
     }
   }
 }

@@ -13,7 +13,9 @@ public class RefusedBequestInspectionTest extends LightInspectionTestCase {
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new RefusedBequestInspection();
+    RefusedBequestInspection inspection = new RefusedBequestInspection();
+    inspection.onlyReportWhenAnnotated = false;
+    return inspection;
   }
 
   @Override

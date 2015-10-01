@@ -32,7 +32,7 @@ import java.util.List;
  */
 public class JCiPExternalLibraryResolver extends ExternalLibraryResolver {
   private static final ExternalLibraryDescriptor JDCIP_LIBRARY_DESCRIPTOR =
-    new ExternalLibraryDescriptor("net.jcip", "jcip-annotations", null) {
+    new ExternalLibraryDescriptor("net.jcip", "jcip-annotations") {
       @NotNull
       @Override
       public List<String> getLibraryClassesRoots() {

@@ -101,6 +101,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean ANTIALIASING_IN_EDITOR = true;
   public boolean ANTIALIASING_IN_IDE = ANTIALIASING_IN_EDITOR;
   public LCDRenderingScope LCD_RENDERING_SCOPE = UIUtil.isRetina() ? LCDRenderingScope.OFF : LCDRenderingScope.IDE;
+  public ColorBlindness COLOR_BLINDNESS; 
   public boolean USE_LCD_RENDERING_IN_EDITOR = true;
   public boolean MOVE_MOUSE_ON_DEFAULT_BUTTON = false;
   public boolean ENABLE_ALPHA_MODE = false;
@@ -127,6 +128,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
   public boolean NAVIGATE_TO_PREVIEW = false;
   public boolean SORT_BOOKMARKS = false;
+  public boolean MERGE_EQUAL_STACKTRACES = false;
 
   private final EventDispatcher<UISettingsListener> myDispatcher = EventDispatcher.create(UISettingsListener.class);
 
@@ -297,8 +299,9 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
 
   /**
    * @return true when Remote Desktop (i.e. Windows RDP) is connected
+   * @deprecated Use RemoteDesktopDetector class - it should work in more cases. To be removed in IDEA 16.
    */
-  // TODO[neuro]: move to UIUtil
+  @SuppressWarnings("unused")
   public static boolean isRemoteDesktopConnected() {
     if (System.getProperty("os.name").contains("Windows")) {
       final Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");

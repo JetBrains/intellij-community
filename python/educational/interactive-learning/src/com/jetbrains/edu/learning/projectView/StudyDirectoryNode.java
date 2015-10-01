@@ -19,7 +19,8 @@ import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.courseFormat.StudyStatus;
+import icons.EducationalIcons;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,8 +50,8 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     }
     if (valueName.equals(myProject.getName())) {
       data.clearText();
+      data.setIcon(EducationalIcons.Course);
       data.addText(course.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.BLACK));
-      data.addText(" (" + valueName + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
     else if (valueName.contains(EduNames.TASK)) {
       TaskFile file = null;
@@ -98,7 +99,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     StudyStatus taskStatus = StudyTaskManager.getInstance(myProject).getStatus(lesson);
     switch (taskStatus) {
       case Unchecked: {
-        updatePresentation(data, additionalName, JBColor.BLACK, InteractiveLearningIcons.Lesson);
+        updatePresentation(data, additionalName, JBColor.BLACK, EducationalIcons.Lesson);
         break;
       }
       case Solved: {
@@ -106,7 +107,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
         break;
       }
       case Failed: {
-        updatePresentation(data, additionalName, JBColor.RED, InteractiveLearningIcons.Lesson);
+        updatePresentation(data, additionalName, JBColor.RED, EducationalIcons.Lesson);
       }
     }
   }
@@ -115,7 +116,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     StudyStatus taskStatus = StudyTaskManager.getInstance(myProject).getStatus(task);
     switch (taskStatus) {
       case Unchecked: {
-        updatePresentation(data, additionalName, JBColor.BLACK, InteractiveLearningIcons.Task);
+        updatePresentation(data, additionalName, JBColor.BLACK, EducationalIcons.Task);
         break;
       }
       case Solved: {

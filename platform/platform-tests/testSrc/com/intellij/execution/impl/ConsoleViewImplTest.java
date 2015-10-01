@@ -17,6 +17,8 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -40,6 +42,24 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       console.clear();
       console.print("Hi", ConsoleViewContentType.NORMAL_OUTPUT);
       assertEquals(2, console.getContentSize());
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+    finally {
+      Disposer.dispose(console);
+    }
+  }
+
+  public void testTypeInEmptyConsole() throws Exception {
+    final ConsoleViewImpl console = createConsole();
+    try {
+      console.clear();
+      EditorActionManager actionManager = EditorActionManager.getInstance();
+      final DataContext dataContext = DataManager.getInstance().getDataContext();
+      TypedAction action = actionManager.getTypedAction();
+      action.actionPerformed(console.getEditor(), 'h', dataContext);
+      assertEquals(1, console.getContentSize());
     }
     catch (Exception e) {
       e.printStackTrace();

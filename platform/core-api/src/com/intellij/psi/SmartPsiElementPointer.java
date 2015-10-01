@@ -45,6 +45,18 @@ public interface SmartPsiElementPointer<E extends PsiElement> {
 
   VirtualFile getVirtualFile();
 
+  /**
+   * @return the range in the document. For committed document, it's the same as {@link #getPsiRange()}, for non-committed documents
+   * the ranges may be changed (like in {@link com.intellij.openapi.editor.RangeMarker}) or even invalidated. In the latter case returns null.
+   * Returns null for invalid pointers.
+   */
   @Nullable
   Segment getRange();
+
+  /**
+   * @return the range in the committed PSI file. May be different from {@link #getRange()} result when the document has been changed since commit.
+   * Returns null for invalid pointers.
+   */
+  @Nullable
+  Segment getPsiRange();
 }

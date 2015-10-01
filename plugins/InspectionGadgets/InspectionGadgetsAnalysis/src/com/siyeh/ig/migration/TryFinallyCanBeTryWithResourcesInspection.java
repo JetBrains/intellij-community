@@ -143,10 +143,12 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         separator = true;
       }
       int j = 1;
-      while (!unwantedChildren.contains(Integer.valueOf(j)) && j < tryBlockChildren.length - 1) {
-        tryStatement.getParent().addBefore(tryBlockChildren[j], tryStatement);
-        unwantedChildren.add(j);
-        j++;
+      if (!unwantedChildren.isEmpty()) {
+        while (!unwantedChildren.contains(Integer.valueOf(j)) && j < tryBlockChildren.length - 1) {
+          tryStatement.getParent().addBefore(tryBlockChildren[j], tryStatement);
+          unwantedChildren.add(j);
+          j++;
+        }
       }
       newTryStatementText.append(") {");
       final int tryBlockStatementsLength = tryBlockChildren.length - 1;

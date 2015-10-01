@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,12 @@
 
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupResolveConverter;
 
 /**
  * plugin.dtd:add-to-group interface.
@@ -44,7 +46,8 @@ public interface AddToGroup extends DomElement {
 	 * @return the value of the relative-to-action child.
 	 */
 	@NotNull
-	GenericAttributeValue<String> getRelativeToAction();
+	@Convert(ActionOrGroupResolveConverter.class)
+        GenericAttributeValue<ActionOrGroup> getRelativeToAction();
 
 
 	/**
@@ -54,7 +57,8 @@ public interface AddToGroup extends DomElement {
 	 */
 	@NotNull
 	@Required
-	GenericAttributeValue<String> getGroupId();
+	@Convert(ActionOrGroupResolveConverter.OnlyGroups.class)
+	GenericAttributeValue<ActionOrGroup> getGroupId();
 
 
 }

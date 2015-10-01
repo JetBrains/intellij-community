@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class DelegateMarker implements PsiBuilder.Marker {
-
   @NotNull
   private final PsiBuilder.Marker myDelegate;
 
@@ -82,8 +81,7 @@ public abstract class DelegateMarker implements PsiBuilder.Marker {
   }
 
   @Override
-  public void setCustomEdgeTokenBinders(@Nullable WhitespacesAndCommentsBinder left,
-                                        @Nullable WhitespacesAndCommentsBinder right) {
+  public void setCustomEdgeTokenBinders(@Nullable WhitespacesAndCommentsBinder left, @Nullable WhitespacesAndCommentsBinder right) {
     myDelegate.setCustomEdgeTokenBinders(left, right);
   }
 }

@@ -17,7 +17,6 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -99,14 +98,14 @@ public class JavaExecutionStack extends XExecutionStack {
 
   @Override
   public void computeStackFrames(final int firstFrameIndex, final XStackFrameContainer container) {
-    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext()) {
+    myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(myDebugProcess.getDebuggerContext().getSuspendContext()) {
       @Override
       public Priority getPriority() {
         return Priority.NORMAL;
       }
 
       @Override
-      public void threadAction() {
+      public void contextAction() throws Exception {
         if (!myThreadProxy.isCollected() && myDebugProcess.getSuspendManager().isSuspended(myThreadProxy)) {
           int status = myThreadProxy.status();
           if (!(status == ThreadReference.THREAD_STATUS_UNKNOWN) &&

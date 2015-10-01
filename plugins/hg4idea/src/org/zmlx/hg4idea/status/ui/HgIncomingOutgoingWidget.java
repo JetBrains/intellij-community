@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.status.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
@@ -28,6 +29,8 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
@@ -38,10 +41,6 @@ import org.zmlx.hg4idea.status.HgChangesetStatus;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 
-
-/**
- * @author Nadya Zabrodina
- */
 public class HgIncomingOutgoingWidget extends EditorBasedWidget
   implements StatusBarWidget.IconPresentation, StatusBarWidget.Multiframe, HgUpdater, HgHideableWidget {
 
@@ -51,8 +50,6 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   @NotNull private final HgChangesetStatus myChangesStatus;
   private final boolean myIsIncoming;
   private boolean isAlreadyShown;
-
-  private MessageBusConnection myBusConnection;
 
   private volatile String myTooltip = "";
   private Icon myCurrentIcon = AllIcons.Ide.IncomingChangesOff;
@@ -125,9 +122,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
 
   @Override
   public void update(final Project project, @Nullable VirtualFile root) {
-    if (!isVisible()) {
-      return;
-    }
+    if (!isVisible()) return;
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -142,16 +137,17 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
           myCurrentIcon = myIsIncoming ? AllIcons.Ide.IncomingChangesOn : AllIcons.Ide.OutgoingChangesOn;
           myTooltip = "\n" + myChangesStatus.getToolTip();
         }
+        if (!isVisible() || !isAlreadyShown) return;
         myStatusBar.updateWidget(ID());
       }
     });
   }
 
-
+  @CalledInAwt
   public void activate() {
-    myBusConnection = myProject.getMessageBus().connect();
-    myBusConnection.subscribe(HgVcs.STATUS_TOPIC, this);
-    myBusConnection.subscribe(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC, this);
+    MessageBusConnection busConnection = myProject.getMessageBus().connect();
+    busConnection.subscribe(HgVcs.STATUS_TOPIC, this);
+    busConnection.subscribe(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC, this);
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (null != statusBar && isVisible()) {
@@ -160,6 +156,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
     }
   }
 
+  @CalledInAwt
   public void deactivate() {
     if (!isAlreadyShown) return;
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
@@ -170,22 +167,33 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   }
 
   public void show() {
-    if (isAlreadyShown) {
-      return;
-    }
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    if (null != statusBar && isVisible()) {
-      statusBar.addWidget(this, myProject);
-      isAlreadyShown = true;
-      myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
-    }
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (isAlreadyShown) {
+          return;
+        }
+        StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+        if (null != statusBar && isVisible()) {
+          statusBar.addWidget(HgIncomingOutgoingWidget.this, myProject);
+          isAlreadyShown = true;
+          myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
+        }
+      }
+    }, ModalityState.any());
   }
 
   public void hide() {
-    deactivate();
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        deactivate();
+      }
+    }, ModalityState.any());
   }
 
-  private void update() {
+  @CalledInAny
+  public void update() {
     update(myProject, null);
   }
 

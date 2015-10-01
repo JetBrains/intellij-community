@@ -26,9 +26,6 @@ class NonFinalStaticVariableUsedInClassInitializationVisitor extends BaseInspect
   @Override
   public void visitReferenceExpression(PsiReferenceExpression expression) {
     super.visitReferenceExpression(expression);
-    if (!isInClassInitialization(expression)) {
-      return;
-    }
     final PsiElement referent = expression.resolve();
     if (!(referent instanceof PsiField)) {
       return;
@@ -38,6 +35,9 @@ class NonFinalStaticVariableUsedInClassInitializationVisitor extends BaseInspect
       return;
     }
     if (field.hasModifierProperty(PsiModifier.FINAL)) {
+      return;
+    }
+    if (!isInClassInitialization(expression)) {
       return;
     }
     registerError(expression, field);

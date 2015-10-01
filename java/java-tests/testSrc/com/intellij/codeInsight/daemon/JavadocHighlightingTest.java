@@ -20,6 +20,8 @@ import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.vcs.IssueNavigationConfiguration;
+import com.intellij.openapi.vcs.IssueNavigationLink;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
@@ -96,9 +98,36 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testMissingReturnDescription() { doTest(); }
   public void testDoubleParenthesesInCode() { doTest(); }
 
+  public void testIssueLinksInJavaDoc() {
+    IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(getProject());
+    List<IssueNavigationLink> oldLinks = navigationConfiguration.getLinks();
+    try {
+      IssueNavigationLink link = new IssueNavigationLink("ABC-\\d+", "http://example.com/$0");
+      navigationConfiguration.setLinks(ContainerUtil.<IssueNavigationLink>newArrayList(link));
+      configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+      List<String> expected = ContainerUtil.newArrayList("http://example.com/ABC-1123", "http://example.com/ABC-2", 
+                                                         "http://example.com/ABC-22", "http://example.com/ABC-11");
+      List<String> actual = collectWebReferences().stream().map(WebReference::getUrl).collect(Collectors.toList());
+      assertEquals(expected, actual);
+    }
+    finally {
+      navigationConfiguration.setLinks(oldLinks);
+    }
+  }
+  
   public void testLinksInJavaDoc() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    @SuppressWarnings("SpellCheckingInspection") Set<String> expected = ContainerUtil.newHashSet(
+      "http://www.unicode.org/unicode/standard/standard.html",
+      "http://docs.oracle.com/javase/7/docs/technotes/guides/lang/cl-mt.html",
+      "https://youtrack.jetbrains.com/issue/IDEA-131621",
+      "mailto:webmaster@jetbrains.com");
+    Set<String> actual = collectWebReferences().stream().map(PsiReferenceBase::getCanonicalText).collect(Collectors.toSet());
+    assertEquals(expected, actual);
+  }
 
+  @NotNull
+  public static List<WebReference> collectWebReferences() {
     final List<WebReference> refs = new ArrayList<>();
     myFile.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
@@ -109,18 +138,8 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
         super.visitElement(element);
       }
     });
-
     assertTrue(refs.stream().allMatch(PsiReferenceBase::isSoft));
-
-    assertTrue(refs.stream().allMatch(ref -> ref.resolve() != null));
-
-    @SuppressWarnings("SpellCheckingInspection") Set<String> expected = ContainerUtil.newHashSet(
-      "http://www.unicode.org/unicode/standard/standard.html",
-      "http://docs.oracle.com/javase/7/docs/technotes/guides/lang/cl-mt.html",
-      "https://youtrack.jetbrains.com/issue/IDEA-131621",
-      "mailto:webmaster@jetbrains.com");
-    Set<String> actual = refs.stream().map(PsiReferenceBase::getCanonicalText).collect(Collectors.toSet());
-    assertEquals(expected, actual);
+    return refs;
   }
 
   private void doTestWithLangLevel(LanguageLevel level) {

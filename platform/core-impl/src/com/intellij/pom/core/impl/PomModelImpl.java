@@ -40,6 +40,7 @@ import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
@@ -320,6 +321,10 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       // PsiToDocumentSynchronizer assertions happen inside event processing and are logged by PsiManagerImpl.fireEvent instead of being rethrown
       // so it's important to throw something outside event processing
       throw new IllegalStateException("Attempt to modify PSI for non-committed Document!");
+    }
+
+    if (containingFileByTree != null) {
+      ((SmartPointerManagerImpl) SmartPointerManager.getInstance(myProject)).fastenBelts(containingFileByTree.getViewProvider().getVirtualFile());
     }
 
     BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), changeScope, true);

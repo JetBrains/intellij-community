@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 
@@ -30,10 +29,6 @@ import java.awt.*;
  */
 public class MacIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
   public static final Icon DEFAULT_ICON = EmptyIcon.create(20);
-  public static final Icon CHECKED_ICON = DarculaLaf.loadIcon("checkBoxSelected.png");
-  public static final Icon CHECKED_ICON_FOCUSED = DarculaLaf.loadIcon("checkBoxSelectedFocused.png");
-  public static final Icon UNCHECKED_ICON = DarculaLaf.loadIcon("checkBox.png");
-  public static final Icon UNCHECKED_ICON_FOCUSED = DarculaLaf.loadIcon("checkBoxFocused.png");
 
   public MacIntelliJCheckBoxUI(JCheckBox c) {
     c.setBorder(new MacCheckBoxBorder());
@@ -46,12 +41,9 @@ public class MacIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
 
   @Override
   protected void drawCheckIcon(JComponent c, Graphics2D g, JCheckBox b, Rectangle iconRect, boolean selected, boolean enabled) {
-    getIcon(selected, enabled, c.hasFocus()).paintIcon(c, g, iconRect.x, iconRect.y);
-  }
-
-  private Icon getIcon(boolean selected, boolean enabled, boolean focused) {
-    return focused ? selected ? CHECKED_ICON_FOCUSED : UNCHECKED_ICON_FOCUSED
-                   : selected ? CHECKED_ICON : UNCHECKED_ICON;
+    MacIntelliJIconCache
+      .getIcon("checkBox", selected, c.hasFocus())
+      .paintIcon(c, g, iconRect.x, iconRect.y);
   }
 
   @Override

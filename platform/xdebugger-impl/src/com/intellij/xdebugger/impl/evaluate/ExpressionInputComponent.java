@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -54,7 +55,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
   private final JPanel myMainPanel;
 
   public ExpressionInputComponent(final @NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider, final @Nullable XSourcePosition sourcePosition,
-                                  @Nullable XExpression expression) {
+                                  @Nullable XExpression expression, Disposable parentDisposable) {
     super(XDebuggerBundle.message("xdebugger.dialog.title.evaluate.expression"));
     myMainPanel = new JPanel(new BorderLayout());
     //myMainPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.expression")), BorderLayout.WEST);
@@ -92,7 +93,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
       public void update(AnActionEvent e) {
         e.getPresentation().setEnabled(LookupManager.getActiveLookup(myExpressionEditor.getEditor()) == null);
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("DOWN"), myMainPanel);
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("DOWN"), myMainPanel, parentDisposable);
   }
 
   private void showHistory() {

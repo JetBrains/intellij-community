@@ -16,6 +16,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 7/25/11
  */
 public interface IProperty extends Navigatable, Iconable {
+  DataKey<IProperty[]> ARRAY_KEY = DataKey.create("IProperty.array");
 
   String getName();
 
@@ -69,6 +71,9 @@ public interface IProperty extends Navigatable, Iconable {
   @Nullable
   String getDocCommentText();
 
+  /**
+   * @return underlying psi element of property
+   */
   @NotNull
   PsiElement getPsiElement();
 }

@@ -128,6 +128,12 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return myElementInfo.getRange();
   }
 
+  @Nullable
+  @Override
+  public Segment getPsiRange() {
+    return myElementInfo.getPsiRange();
+  }
+
   @NotNull
   private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project,
                                                                                   @NotNull E element,
@@ -173,7 +179,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
     ProperTextRange proper = ProperTextRange.create(elementRange);
 
-    return new SelfElementInfo(project, proper, element.getClass(), containingFile, LanguageUtil.getRootLanguage(element));
+    return new SelfElementInfo(project, proper, element.getClass(), containingFile, LanguageUtil.getRootLanguage(element), false);
   }
 
   @Override

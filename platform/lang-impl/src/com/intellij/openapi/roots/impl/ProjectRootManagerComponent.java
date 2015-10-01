@@ -19,6 +19,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,7 +58,7 @@ import java.util.Set;
 /**
  * ProjectRootManager extended with ability to watch events.
  */
-public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
+public class ProjectRootManagerComponent extends ProjectRootManagerImpl implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ProjectManagerComponent");
 
   private boolean myPointerChangesDetected = false;
@@ -117,22 +118,28 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   }
 
   @Override
+  public void disposeComponent() {
+  }
+
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return "ProjectRootManager";
+  }
+
+  @Override
   public void initComponent() {
-    super.initComponent();
     myConnection.subscribe(BatchUpdateListener.TOPIC, myHandler);
   }
 
   @Override
   public void projectOpened() {
-    super.projectOpened();
     addRootsToWatch();
-    AppListener applicationListener = new AppListener();
-    ApplicationManager.getApplication().addApplicationListener(applicationListener, myProject);
+    ApplicationManager.getApplication().addApplicationListener(new AppListener(), myProject);
   }
 
   @Override
   public void projectClosed() {
-    super.projectClosed();
     LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
   }
 

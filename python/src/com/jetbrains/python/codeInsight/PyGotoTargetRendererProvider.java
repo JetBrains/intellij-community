@@ -21,12 +21,13 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.psi.PyElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class PyGotoTargetRendererProvider implements GotoTargetRendererProvider {
-  public PsiElementListCellRenderer getRenderer(final PsiElement element, GotoTargetHandler.GotoData gotoData) {
+  public PsiElementListCellRenderer getRenderer(@NotNull final PsiElement element, @NotNull GotoTargetHandler.GotoData gotoData) {
     if (element instanceof PyElement && element instanceof PsiNamedElement) return new PyElementListCellRenderer();
     return null;
   }

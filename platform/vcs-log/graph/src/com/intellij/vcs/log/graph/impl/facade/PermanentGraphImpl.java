@@ -117,7 +117,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     }
     else if (sortType == SortType.LinearBek) {
       if (visibleHeads != null) {
-        controller = new BranchFilterController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads));
+        controller = new BranchFilterController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
       }
       else {
         controller = baseController;
@@ -126,7 +126,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     else {
       Set<Integer> idOfVisibleBranches = null;
       if (visibleHeads != null) {
-        idOfVisibleBranches = myPermanentCommitsInfo.convertToNodeIds(visibleHeads);
+        idOfVisibleBranches = myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true);
       }
       controller = new CollapsedController(baseController, this, idOfVisibleBranches);
     }

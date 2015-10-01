@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
@@ -26,20 +27,21 @@ import java.io.File;
  */
 public class LongLineInspectionTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public void testJavaShortLine() {
-    doTest();
+  public void testShortLine() {
+    doTest("java");
   }
 
-  public void testJavaLongLine() {
-    doTest();
+  public void _testLongLine() {
+    doTest("java");
   }
 
   public void testXmlLongLine() {
-    doTest();
+    doTest("xml");
   }
 
-  private void doTest() {
-    myFixture.testInspection(getTestName(true), new LocalInspectionToolWrapper(new LongLineInspection()));
+  private void doTest(final String extension) {
+    myFixture.enableInspections(new LongLineInspection());
+    myFixture.testHighlighting(true, false, false, getTestName(true) + "." + extension);
   }
 
   @Override

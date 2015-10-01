@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,17 +78,27 @@ public class MalformedFormatStringInspectionBase extends BaseInspection {
   public String buildErrorString(Object... infos) {
     final Object value = infos[0];
     if (value instanceof Exception) {
+      final Exception exception = (Exception)value;
+      final String message = exception.getMessage();
+      if (message != null) {
+        return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.illegal", message);
+      }
       return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.malformed");
     }
-    final Validator[] validators = (Validator[])value;
+    final FormatDecode.Validator[] validators = (FormatDecode.Validator[])value;
     final int argumentCount = ((Integer)infos[1]).intValue();
     if (validators.length < argumentCount) {
-      return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.too.many.arguments");
+      return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.too.many.arguments",
+                                             argumentCount, validators.length);
     }
     if (validators.length > argumentCount) {
-      return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.too.few.arguments");
+      return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.too.few.arguments",
+                                             argumentCount, validators.length);
     }
-    return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.arguments.do.not.match.type");
+    final PsiType argumentType = (PsiType)infos[2];
+    final FormatDecode.Validator validator = (FormatDecode.Validator)infos[3];
+    return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.arguments.do.not.match.type",
+                                           argumentType.getPresentableText(), validator.getSpecifier());
   }
 
   @Override
@@ -142,7 +152,7 @@ public class MalformedFormatStringInspectionBase extends BaseInspection {
         return;
       }
       final int argumentCount = arguments.length - (formatArgumentIndex + 1);
-      final Validator[] validators;
+      final FormatDecode.Validator[] validators;
       try {
         validators = FormatDecode.decode(value, argumentCount);
       }
@@ -158,17 +168,18 @@ public class MalformedFormatStringInspectionBase extends BaseInspection {
             return;
           }
         }
-        registerError(formatArgument, validators, Integer.valueOf(argumentCount));
+        registerMethodCallError(expression, validators, Integer.valueOf(argumentCount));
         return;
       }
       for (int i = 0; i < validators.length; i++) {
-        final Validator validator = validators[i];
-        final PsiType argumentType = arguments[i + formatArgumentIndex + 1].getType();
+        final FormatDecode.Validator validator = validators[i];
+        final PsiExpression argument = arguments[i + formatArgumentIndex + 1];
+        final PsiType argumentType = argument.getType();
         if (argumentType == null) {
           continue;
         }
         if (validator != null && !validator.valid(argumentType)) {
-          registerError(formatArgument, validators, Integer.valueOf(argumentCount));
+          registerError(argument, validators, Integer.valueOf(argumentCount), argumentType, validator);
           return;
         }
       }

@@ -29,7 +29,7 @@ import static org.junit.Assume.assumeTrue;
  */
 public class EnvironmentUtilTest {
   @Test(timeout = 30000)
-  public void map() throws Exception {
+  public void map() {
     assertNotNull(EnvironmentUtil.getEnvironmentMap());
   }
 

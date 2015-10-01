@@ -93,6 +93,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Anton Katilin
@@ -126,6 +127,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private final DockManager myDockManager;
   private DockableEditorContainerFactory myContentFactory;
   private final EditorHistoryManager myEditorHistoryManager;
+  private static final AtomicInteger ourOpenFilesSetModificationCount = new AtomicInteger();
+
+  public static final ModificationTracker OPEN_FILE_SET_MODIFICATION_COUNT = new ModificationTracker() {
+    @Override
+    public long getModificationCount() {
+      return ourOpenFilesSetModificationCount.get();
+    }
+  };
+
 
   public FileEditorManagerImpl(final Project project, DockManager dockManager, EditorHistoryManager editorHistoryManager) {
 /*    ApplicationManager.getApplication().assertIsDispatchThread(); */
@@ -593,6 +603,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   public void closeFile(@NotNull final VirtualFile file, @NotNull final EditorWindow window, final boolean transferFocus) {
     assertDispatchThread();
+    ourOpenFilesSetModificationCount.incrementAndGet();
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
@@ -630,6 +641,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   private void closeFileImpl(@NotNull final VirtualFile file, final boolean moveFocus, boolean closeAllCopies) {
     assertDispatchThread();
+    ourOpenFilesSetModificationCount.incrementAndGet();
     runChange(new FileEditorManagerChange() {
       @Override
       public void run(EditorsSplitters splitters) {
@@ -789,7 +801,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
                                                          final Boolean pin,
                                                          final int index) {
     assert ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed() : "must not open files under read action since we are doing a lot of invokeAndWaits here";
-    file.refresh(true, false);
 
     final Ref<EditorWithProviderComposite> compositeRef = new Ref<EditorWithProviderComposite>();
 
@@ -852,6 +863,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         if (newEditor) {
           clearWindowIfNeeded(window);
 
+          ourOpenFilesSetModificationCount.incrementAndGet();
           getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(FileEditorManagerImpl.this, file);
 
           FileEditor[] newEditors = new FileEditor[newProviders.length];

@@ -1,8 +1,8 @@
 public class A {
 
   public void testInlineRefactoring() {
-    int[] array = ar();
-    arr<caret>ay[1] = 22;
+    int[] ar<caret>ray = ar();
+    array[1] = 22;
   }
 
   private int[] ar() {

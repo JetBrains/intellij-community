@@ -23,16 +23,19 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -125,6 +128,20 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       }
     };
 
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProgressWindow.TOPIC, new ProgressWindow.Listener() {
+      @Override
+      public void progressWindowCreated(ProgressWindow pw) {
+        Disposer.register(pw, new Disposable() {
+          @Override
+          public void dispose() {
+            if (!popup.checkDisposed()) {
+              popup.repaintList();
+            }
+          }
+        });
+      }
+    });
+
     if (project != null) {
       project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, popup);
     }
@@ -162,7 +179,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
 
   private static void repaint(@Nullable ChooseByNamePopup popup) {
     if (popup != null) {
-      popup.repaintList();
+      popup.repaintListImmediate();
     }
   }
 

@@ -20,7 +20,7 @@ public class RemoteServersViewImpl extends RemoteServersView {
 
   @Override
   public void showServerConnection(@NotNull final ServerConnection<?> connection) {
-    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ServersToolWindow.ID);
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ServersToolWindowManager.WINDOW_ID);
     if (toolWindow != null) {
       toolWindow.activate(new Runnable() {
         @Override
@@ -42,7 +42,7 @@ public class RemoteServersViewImpl extends RemoteServersView {
   @Override
   public void showDeployment(@NotNull final ServerConnection<?> connection, @NotNull final String deploymentName) {
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    final ToolWindow toolWindow = toolWindowManager.getToolWindow(ServersToolWindow.ID);
+    final ToolWindow toolWindow = toolWindowManager.getToolWindow(ServersToolWindowManager.WINDOW_ID);
     if (toolWindow != null) {
       toolWindowManager.invokeLater(new Runnable() {
         @Override

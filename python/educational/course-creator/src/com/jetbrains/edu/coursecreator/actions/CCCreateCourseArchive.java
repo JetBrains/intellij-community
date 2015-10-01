@@ -86,7 +86,9 @@ public class CCCreateCourseArchive extends DumbAwareAction {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
             public void run() {
-              EduUtils.createStudentFileFromAnswer(project, taskDir, taskDir, entry);
+              TaskFile taskFile = new TaskFile();
+              TaskFile.copy(entry.getValue(), taskFile);
+              EduUtils.createStudentFileFromAnswer(project, taskDir, taskDir, entry.getKey(), taskFile);
             }
           });
         }

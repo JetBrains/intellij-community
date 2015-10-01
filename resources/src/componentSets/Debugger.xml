@@ -1,4 +1,4 @@
-<components>
+<idea-plugin>
   <project-components>
     <component>
       <interface-class>com.intellij.debugger.ui.DebuggerPanelsManager</interface-class>
@@ -30,4 +30,4 @@
     </group>
   </actions>
   -->
-</components>
+</idea-plugin>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ public class GradleStartupActivity implements StartupActivity {
               }
             }
             else if (DO_NOT_SHOW_EVENT_DESCRIPTION.equals(e.getDescription())) {
-              PropertiesComponent.getInstance(project).setValue(SHOW_UNLINKED_GRADLE_POPUP, Boolean.FALSE.toString());
+              PropertiesComponent.getInstance(project).setValue(SHOW_UNLINKED_GRADLE_POPUP, false, true);
             }
           }
         }

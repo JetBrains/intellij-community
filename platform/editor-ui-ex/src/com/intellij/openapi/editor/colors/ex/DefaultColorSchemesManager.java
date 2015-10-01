@@ -51,10 +51,24 @@ public class DefaultColorSchemesManager implements PersistentStateComponent<Elem
 
   @Override
   public void loadState(Element state) {
+    int index = 0;
+    int count = mySchemes.size();
     for (Element schemeElement : state.getChildren(SCHEME_ELEMENT)) {
-      DefaultColorsScheme newScheme = new DefaultColorsScheme();
-      newScheme.readExternal(schemeElement);
-      mySchemes.add(newScheme);
+      if (index < count) {
+        // update a scheme that is already loaded
+        DefaultColorsScheme oldScheme = mySchemes.get(index++);
+        oldScheme.readExternal(schemeElement);
+      }
+      else {
+        assert index == 0 : "config file modified: scheme added";
+        DefaultColorsScheme newScheme = new DefaultColorsScheme();
+        newScheme.readExternal(schemeElement);
+        mySchemes.add(newScheme);
+      }
+    }
+    assert index == count : "config file modified: scheme removed";
+    while (index < count--) {
+      mySchemes.remove(index);
     }
   }
 

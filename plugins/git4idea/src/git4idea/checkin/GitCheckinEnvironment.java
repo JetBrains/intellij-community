@@ -38,9 +38,7 @@ import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorCustomization;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.StringComboboxEditor;
+import com.intellij.ui.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -623,6 +621,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           }
         }
       };
+      myAuthorField.setRenderer(new ListCellRendererWrapper<String>() {
+        @Override
+        public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+          if (value != null) {
+            setText(StringUtil.trimLog(value, 100));
+          }
+        }
+      });
       myAuthorField.setMinimumAndPreferredWidth(100);
       myAuthorField.setEditable(true);
       authorLabel.setLabelFor(myAuthorField);

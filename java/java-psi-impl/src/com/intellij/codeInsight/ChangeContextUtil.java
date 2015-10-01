@@ -340,10 +340,6 @@ public class ChangeContextUtil {
     return scope;
   }
 
-  public static PsiClass getThisClass(PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiClass.class);
-  }
-
   public static void clearContextInfo(PsiElement scope) {
     scope.putCopyableUserData(THIS_QUALIFIER_CLASS_KEY, null);
     scope.putCopyableUserData(REF_MEMBER_KEY, null);

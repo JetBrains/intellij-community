@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,17 @@ public class TestComparisionFailedState extends TestFailedState {
                                     @NotNull final String actualText,
                                     @NotNull final String expectedText,
                                     @Nullable final String filePath) {
+    this(localizedMessage, stackTrace, actualText, expectedText, filePath, null);
+  }
+  
+  public TestComparisionFailedState(@Nullable final String localizedMessage,
+                                    @Nullable final String stackTrace,
+                                    @NotNull final String actualText,
+                                    @NotNull final String expectedText,
+                                    @Nullable final String expectedFilePath,
+                                    @Nullable final String actualFilePath) {
     super(localizedMessage, stackTrace);
-    myHyperlink = new DiffHyperlink(expectedText, actualText, filePath);
+    myHyperlink = new DiffHyperlink(expectedText, actualText, expectedFilePath, actualFilePath, true);
 
     myErrorMsgPresentation = StringUtil.isEmptyOrSpaces(localizedMessage) ? "" : localizedMessage;
     myStacktracePresentation = StringUtil.isEmptyOrSpaces(stackTrace) ? "" : stackTrace;

@@ -126,6 +126,10 @@ public class MostSpecificResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testIncompatibleSiteSubstitutionBounds() throws Exception {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(true);
   }

@@ -17,42 +17,31 @@ public class ProjectData {
         myTraceDir = traceDir;
     }
 
-    private ConcurrentMap<String, Set<String>> myTrace;
     private final ConcurrentMap<String, boolean[]> myTrace2 = new ConcurrentHashMap<String, boolean[]>();
     private final ConcurrentMap<String, String[]> myTrace3 = new ConcurrentHashMap<String, String[]>();
 
     public static ProjectData getProjectData() {
         return ourData;
     }
-    
-    public static void trace(String className, String methodSignature) {
-        ourData.traceLines(className, methodSignature);
-    }
 
     // called from instrumented code during class's static init
-    public static void trace(String className, boolean[] methodFlags, String[] methodNames) {
-        ourData.traceLines(className, methodFlags, methodNames);
-    }
-    
-    public void traceLines(String className, String methodSignature) {
-        if (myTrace != null) {
-            Set<String> methods = myTrace.get(className);
-            if (methods == null) {
-                methods = new HashSet<String>();
-                Set<String> previousMethods = myTrace.putIfAbsent(className, methods);
-                if (previousMethods != null) methods = previousMethods;
-            }
-            synchronized (methods) {
-                methods.add(methodSignature);
-            }
-        }
+    public static boolean[] trace(String className, boolean[] methodFlags, String[] methodNames) {
+        return ourData.traceLines(className, methodFlags, methodNames);
     }
 
-    public synchronized void traceLines(String className, boolean[] methodFlags, String[] methodNames) {
+    private synchronized boolean[] traceLines(String className, boolean[] methodFlags, String[] methodNames) {
         //System.out.println("Registering " + className);
         assert methodFlags.length == methodNames.length;
-        myTrace2.put(className, methodFlags);
-        myTrace3.put(className, methodNames);
+        final boolean[] previousMethodFlags = myTrace2.putIfAbsent(className, methodFlags);
+
+        if (previousMethodFlags != null) {
+            assert previousMethodFlags.length == methodFlags.length;
+            final String[] previousMethodNames = myTrace3.get(className);
+            assert previousMethodNames != null && previousMethodNames.length == methodNames.length;
+        } else {
+            myTrace3.put(className, methodNames);
+        }
+        return previousMethodFlags != null ? previousMethodFlags : methodFlags;
     }
 
     private static final int STRING_LENGTH_THRESHOLD = 255;
@@ -163,22 +152,6 @@ public class ProjectData {
         catch (IOException e) {
            e.printStackTrace();
         }
-        finally {
-            myTrace = null;
-        }
-    }
-
-    private void saveOldTrace(DataOutputStream os) throws IOException {
-        os.writeInt(myTrace.size());
-        for (Iterator<String> it = myTrace.keySet().iterator(); it.hasNext();) {
-            final String classData = it.next();
-            os.writeUTF(classData);
-            final Set<String> methods = myTrace.get(classData);
-            os.writeInt(methods.size());
-            for (Iterator<String> iterator = methods.iterator(); iterator.hasNext(); ) {
-                os.writeUTF(iterator.next());
-            }
-        }
     }
 
     public synchronized void testStarted(final String name) {
@@ -189,9 +162,5 @@ public class ProjectData {
                 if(used[i]) used[i] = false;
             }
         }
-    }
-
-    private void clearOldTrace() {
-        myTrace = new ConcurrentHashMap<String, Set<String>>();
     }
 }

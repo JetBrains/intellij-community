@@ -1,0 +1,13 @@
+<div class="section" id="the-continue-statement">
+<span id="continue"></span><h2>The <a class="reference internal" href="#continue"><tt class="xref std std-keyword docutils literal"><span class="pre">continue</span></tt></a> statement</h2>
+<pre id="index-30">
+<strong id="grammar-token-continue_stmt">continue_stmt</strong> ::=  &quot;continue&quot;
+</pre>
+<p><a class="reference internal" href="#continue"><tt class="xref std std-keyword docutils literal"><span class="pre">continue</span></tt></a> may only occur syntactically nested in a <a class="reference internal" href="compound_stmts.html#for"><tt class="xref std std-keyword docutils literal"><span class="pre">for</span></tt></a> or
+<a class="reference internal" href="compound_stmts.html#while"><tt class="xref std std-keyword docutils literal"><span class="pre">while</span></tt></a> loop, but not nested in a function or class definition or
+<a class="reference internal" href="compound_stmts.html#finally"><tt class="xref std std-keyword docutils literal"><span class="pre">finally</span></tt></a> clause within that loop.  It continues with the next
+cycle of the nearest enclosing loop.</p>
+<p>When <a class="reference internal" href="#continue"><tt class="xref std std-keyword docutils literal"><span class="pre">continue</span></tt></a> passes control out of a <a class="reference internal" href="compound_stmts.html#try"><tt class="xref std std-keyword docutils literal"><span class="pre">try</span></tt></a> statement with a
+<a class="reference internal" href="compound_stmts.html#finally"><tt class="xref std std-keyword docutils literal"><span class="pre">finally</span></tt></a> clause, that <a class="reference internal" href="compound_stmts.html#finally"><tt class="xref std std-keyword docutils literal"><span class="pre">finally</span></tt></a> clause is executed before
+really starting the next loop cycle.</p>
+</div>

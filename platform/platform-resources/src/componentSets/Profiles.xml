@@ -1,4 +1,4 @@
-<components>
+<idea-plugin>
   <project-components>
     <component>
       <interface-class>com.intellij.profile.codeInspection.InspectionProjectProfileManager</interface-class>
@@ -6,4 +6,4 @@
       <loadForDefaultProject/>
     </component>
   </project-components>
-</components>
+</idea-plugin>

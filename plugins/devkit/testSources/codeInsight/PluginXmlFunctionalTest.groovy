@@ -281,4 +281,14 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.launchAction(myFixture.findSingleIntention("Define class attribute"))
     myFixture.checkResultByFile(getTestName(true) + "_after.xml")
   }
+
+  public void testActionHighlighting() {
+    configureByFile()
+    myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction { }");
+    myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }");
+
+    myFixture.addClass("package com.intellij.openapi.actionSystem; public class ActionGroup { }")
+    myFixture.addClass("package foo.bar; public class BarGroup extends com.intellij.openapi.actionSystem.ActionGroup { }");
+    myFixture.testHighlighting()
+  }
 }

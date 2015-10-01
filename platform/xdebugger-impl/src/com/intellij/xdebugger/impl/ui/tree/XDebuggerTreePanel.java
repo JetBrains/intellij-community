@@ -52,6 +52,12 @@ public class XDebuggerTreePanel implements DnDSource {
     myMainPanel = new JPanel(new BorderLayout());
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
     Disposer.register(parentDisposable, myTree);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myMainPanel.removeAll();
+      }
+    });
   }
 
   public XDebuggerTree getTree() {

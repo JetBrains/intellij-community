@@ -17,13 +17,13 @@ package com.jetbrains.python.edu;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface PyExecuteFileExtensionPoint {
 
   ExtensionPointName<PyExecuteFileExtensionPoint> EP_NAME = ExtensionPointName.create("Edu.executeFile");
 
-  @NotNull
+  @Nullable
   AnAction getRunAction();
 
 }

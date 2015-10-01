@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -67,9 +66,10 @@ public abstract class IndexableSetContributor implements IndexedRootsProvider {
   }
 
   @NotNull
-  public Set<VirtualFile> getAdditionalProjectRootsToIndex(@Nullable Project project) {
+  public Set<VirtualFile> getAdditionalProjectRootsToIndex(@NotNull Project project) {
     return EMPTY_FILE_SET;
   }
 
+  @NotNull
   public abstract Set<VirtualFile> getAdditionalRootsToIndex();
 }

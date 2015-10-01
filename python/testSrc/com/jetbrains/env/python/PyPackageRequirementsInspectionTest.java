@@ -69,6 +69,7 @@ public class PyPackageRequirementsInspectionTest extends PyEnvTestCase {
         }
       }
 
+      @NotNull
       @Override
       public Set<String> getTags() {
         return TAGS;

@@ -86,7 +86,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
     final JavaOverrideImplementMemberChooser javaOverrideImplementMemberChooser =
       new JavaOverrideImplementMemberChooser(all, onlyPrimary, lazyElementsWithPercent, project, PsiUtil.isLanguageLevel5OrHigher(aClass),
                                              merge, toImplement, PropertiesComponent.getInstance(project)
-        .getBoolean(PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT, false));
+        .getBoolean(PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT));
     javaOverrideImplementMemberChooser.setTitle(getChooserTitle(toImplement, merge));
 
     javaOverrideImplementMemberChooser.setCopyJavadocVisible(true);
@@ -151,8 +151,8 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    PropertiesComponent.getInstance(myProject).setValue(PROP_COMBINED_OVERRIDE_IMPLEMENT, String.valueOf(myMerge));
-    PropertiesComponent.getInstance(myProject).setValue(PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT, String.valueOf(mySortedByOverriding));
+    PropertiesComponent.getInstance(myProject).setValue(PROP_COMBINED_OVERRIDE_IMPLEMENT, myMerge, true);
+    PropertiesComponent.getInstance(myProject).setValue(PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT, mySortedByOverriding);
   }
 
   @Override

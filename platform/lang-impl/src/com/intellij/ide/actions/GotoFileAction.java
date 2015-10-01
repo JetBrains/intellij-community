@@ -88,7 +88,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
         }, ModalityState.NON_MODAL);
       }
     };
-    GotoFileItemProvider provider = new GotoFileItemProvider(project, getPsiContext(e));
+    GotoFileItemProvider provider = new GotoFileItemProvider(project, getPsiContext(e), gotoFileModel);
     showNavigationPopup(e, gotoFileModel, callback, IdeBundle.message("go.to.file.toolwindow.title"), true, true, provider);
   }
 

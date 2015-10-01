@@ -513,6 +513,41 @@ class Test {
 '''
   }
 
+  public void testShortNameIfInnerClass() {
+    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED
+    def text = '''
+package pkg;
+
+class Foo {
+
+    /**
+     * @throws FooE<caret>
+     */
+    void foo() {
+    }
+
+    static class FooException extends RuntimeException {}
+}
+'''
+    myFixture.configureByText "a.java", text
+    myFixture.completeBasic()
+    myFixture.type('\t')
+    myFixture.checkResult '''
+package pkg;
+
+class Foo {
+
+    /**
+     * @throws FooException 
+     */
+    void foo() {
+    }
+
+    static class FooException extends RuntimeException {}
+}
+'''
+  }
+
   public void testCustomReferenceProvider() throws Exception {
     PsiReferenceRegistrarImpl registrar =
       (PsiReferenceRegistrarImpl) ReferenceProvidersRegistry.getInstance().getRegistrar(StdLanguages.JAVA);
@@ -544,5 +579,14 @@ class Test {
     finally {
       registrar.unregisterReferenceProvider(PsiDocTag.class, provider);
     }
+  }
+
+  public void "test complete author name"() {
+    def userName = SystemProperties.userName
+    assert userName
+    myFixture.configureByText 'a.java', "/** @author <caret> */"
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResult "/** @author $userName<caret> */"
   }
 }

@@ -83,7 +83,7 @@ public class EnvironmentVariablesData {
       return DEFAULT;
     }
     Map<String, String> envs = ImmutableMap.of();
-    String passParentEnvsStr = element.getAttributeValue(PASS_PARENT_ENVS);
+    String passParentEnvsStr = envsElement.getAttributeValue(PASS_PARENT_ENVS);
     boolean passParentEnvs = passParentEnvsStr == null || Boolean.parseBoolean(passParentEnvsStr);
     for (Element envElement : envsElement.getChildren(ENV)) {
       String envName = envElement.getAttributeValue(NAME);

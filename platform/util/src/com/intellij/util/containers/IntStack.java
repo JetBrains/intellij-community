@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.ArrayUtil;
+
+import java.util.Arrays;
 import java.util.EmptyStackException;
 
 public class IntStack {
@@ -35,9 +38,7 @@ public class IntStack {
 
   public void push(int t) {
     if (size >= data.length) {
-      int[] newdata = new int[data.length * 3 / 2];
-      System.arraycopy(data, 0, newdata, 0, size);
-      data = newdata;
+      data = ArrayUtil.realloc(data, data.length * 3 / 2);
     }
     data[size++] = t;
   }
@@ -76,5 +77,10 @@ public class IntStack {
 
   public void clear() {
     size = 0;
+  }
+
+  @Override
+  public String toString() {
+    return Arrays.toString(Arrays.copyOf(data, size));
   }
 }

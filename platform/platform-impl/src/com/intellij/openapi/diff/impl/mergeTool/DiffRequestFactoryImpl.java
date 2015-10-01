@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.mergeTool;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.ActionButtonPresentation;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DiffRequestFactoryImpl extends DiffRequestFactory {
+  private static final Logger LOG = Logger.getInstance(DiffRequestFactoryImpl.class);
+
   @Override
   public MergeRequest createMergeRequest(@NotNull String leftText,
                                          @NotNull String rightText,
@@ -42,6 +45,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                   cancelButtonPresentation);
     }
     else {
+      LOG.warn("Document not found for " + file.getPresentableUrl() + "; FileType - " + file.getFileType().getName() + "; valid - " + file.isValid());
       return create3WayDiffRequest(leftText, rightText, originalContent, file.getFileType(), project, okButtonPresentation, cancelButtonPresentation);
     }
   }

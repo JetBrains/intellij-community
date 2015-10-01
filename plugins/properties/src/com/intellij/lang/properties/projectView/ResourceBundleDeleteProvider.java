@@ -37,7 +37,7 @@ import static com.intellij.util.containers.ContainerUtil.*;
 /**
  * @author cdr
  */
-class ResourceBundleDeleteProvider implements DeleteProvider {
+public class ResourceBundleDeleteProvider implements DeleteProvider {
   private static final Logger LOG = Logger.getInstance(ResourceBundleDeleteProvider.class);
 
   private static final Function<ResourceBundle, List<PropertiesFile>> MAPPER_RES_BUNDLE_TO_FILES = new Function<ResourceBundle, List<PropertiesFile>>() {

@@ -146,7 +146,7 @@ public class TextFieldWithHistory extends ComboBox {
 
     public void insertElementAt(Object obj, int index) {
       myFullList.add(index, (String)obj);
-      fireContentsChanged();
+      fireIntervalAdded(this, index, index);
     }
 
     public Object getSelectedItem() {

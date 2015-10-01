@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -275,7 +275,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     public void addExecutorComponent(Executor executor, JComponent component) {
       myRunnerPanel.add(component, executor.getId());
       myListModel.addElement(executor);
-      ListScrollingUtil.ensureSelectionExists(myRunnersList);
+      ScrollingUtil.ensureSelectionExists(myRunnersList);
     }
 
     public List<Executor> getExecutors() {

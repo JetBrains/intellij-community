@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,8 @@ public class SubtractionInCompareToInspection extends BaseInspection {
         return;
       }
 
-      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(expression, PsiLambdaExpression.class, true, PsiMethod.class);
+      final PsiLambdaExpression lambdaExpression =
+        PsiTreeUtil.getParentOfType(expression, PsiLambdaExpression.class, true, PsiMember.class);
       if (lambdaExpression != null) {
         final PsiClass functionalInterface = PsiUtil.resolveClassInType(lambdaExpression.getFunctionalInterfaceType());
         if (functionalInterface != null && CommonClassNames.JAVA_UTIL_COMPARATOR.equals(functionalInterface.getQualifiedName())) {

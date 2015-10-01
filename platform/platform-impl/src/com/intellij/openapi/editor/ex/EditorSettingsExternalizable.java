@@ -52,6 +52,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean IS_RIGHT_MARGIN_SHOWN = true;
     public boolean ARE_LINE_NUMBERS_SHOWN = false;
     public boolean IS_FOLDING_OUTLINE_SHOWN = true;
+    public boolean SHOW_BREADCRUMBS = true;
 
     public boolean SMART_HOME = true;
 
@@ -216,6 +217,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setFoldingOutlineShown(boolean val) {
     myOptions.IS_FOLDING_OUTLINE_SHOWN = val;
+  }
+
+  public boolean isBreadcrumbsShown() {
+     return myOptions.SHOW_BREADCRUMBS;
+  }
+
+  public void setBreadcrumbsShown(boolean breadcrumbsShown) {
+    myOptions.SHOW_BREADCRUMBS = breadcrumbsShown;
   }
 
   public boolean isBlockCursor() {

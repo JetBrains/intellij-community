@@ -65,6 +65,7 @@ public class StudyNewProjectPanel{
       final String authorsString = Course.getAuthorsString(selectedCourse.getAuthors());
       myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ? "Author: " + authorsString : "");
       myDescriptionLabel.setText(selectedCourse.getDescription());
+      myDescriptionLabel.setEditable(false);
       //setting the first course in list as selected
       myGenerator.setSelectedCourse(selectedCourse);
       setOK();

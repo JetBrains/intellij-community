@@ -17,8 +17,10 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,8 +35,8 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -43,17 +45,13 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.StringInterner;
-import com.intellij.util.containers.hash.EqualityPolicy;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.text.FilePathHashingStrategy;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
@@ -180,7 +178,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
       loadModules((ModuleModelImpl)model);
 
-      model.commit();
+      AccessToken token = WriteAction.start();
+      try {
+        model.commit();
+      }
+      finally {
+        token.finish();
+      }
     }
   }
 
@@ -324,8 +328,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     myModuleModel.myModulesCache = null;
     for (ModuleLoadingErrorDescription error : errors) {
-      final Module module = myModuleModel.myPathToModule.remove(FileUtil.toSystemIndependentName(error.getModulePath().getPath()));
+      final Module module = myModuleModel.getModuleByFilePath(FileUtil.toSystemIndependentName(error.getModulePath().getPath()));
       if (module != null) {
+        myModuleModel.myModules.remove(module);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
@@ -481,7 +486,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   @Override
   @NotNull
-  public Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists {
+  public Module loadModule(@NotNull String filePath) throws IOException, JDOMException, ModuleWithNameAlreadyExists {
     incModificationCount();
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.loadModule(filePath);
@@ -579,7 +584,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   protected void fireModulesAdded() {
-    for (final Module module : myModuleModel.myPathToModule.values()) {
+    for (final Module module : myModuleModel.myModules) {
       fireModuleAddedInWriteAction(module);
     }
   }
@@ -610,7 +615,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   protected abstract ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException;
 
   class ModuleModelImpl implements ModifiableModuleModel {
-    final Map<String, Module> myPathToModule = new LinkedHashMap<String, Module>(new EqualityPolicy.ByHashingStrategy<String>(FilePathHashingStrategy.create()));
+    final Set<Module> myModules = new LinkedHashSet<Module>();
     private volatile Module[] myModulesCache;
 
     private final List<Module> myModulesToDispose = new ArrayList<Module>();
@@ -624,7 +629,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     private ModuleModelImpl(@NotNull ModuleModelImpl that) {
-      myPathToModule.putAll(that.myPathToModule);
+      myModules.addAll(that.myModules);
       final Map<Module, String[]> groupPath = that.myModuleGroupPath;
       if (groupPath != null){
         myModuleGroupPath = new THashMap<Module, String[]>();
@@ -641,7 +646,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     @NotNull
     public Module[] getModules() {
       if (myModulesCache == null) {
-        Collection<Module> modules = myPathToModule.values();
+        Collection<Module> modules = myModules;
         myModulesCache = modules.toArray(new Module[modules.size()]);
       }
       return myModulesCache;
@@ -733,7 +738,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     @Nullable
     private ModuleEx getModuleByFilePath(@NotNull String filePath) {
-      return (ModuleEx)myPathToModule.get(filePath);
+      for (Module module : myModules) {
+        if (SystemInfo.isFileSystemCaseSensitive ? module.getModuleFilePath().equals(filePath) : module.getModuleFilePath().equalsIgnoreCase(filePath)) {
+          return (ModuleEx)module;
+        }
+      }
+      return null;
     }
 
     @Override
@@ -763,7 +773,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
       if (name.endsWith(IML_EXTENSION)) {
         final String moduleName = name.substring(0, name.length() - 4);
-        for (Module module : myPathToModule.values()) {
+        for (Module module : myModules) {
           if (module.getName().equals(moduleName)) {
             throw new ModuleWithNameAlreadyExists(ProjectBundle.message("module.already.exists.error", moduleName), moduleName);
           }
@@ -788,15 +798,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     private void initModule(@NotNull ModuleEx module, @NotNull String path, @Nullable Runnable beforeComponentCreation) {
       module.init(path, beforeComponentCreation);
       myModulesCache = null;
-      myPathToModule.put(path, module);
+      myModules.add(module);
     }
 
     @Override
     public void disposeModule(@NotNull Module module) {
       assertWritable();
       myModulesCache = null;
-      if (myPathToModule.values().contains(module)) {
-        myPathToModule.remove(module.getModuleFilePath());
+      if (myModules.remove(module)) {
         myModulesToDispose.add(module);
       }
       if (myModuleGroupPath != null){
@@ -806,7 +815,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     @Override
     public Module findModuleByName(@NotNull String name) {
-      for (Module module : myPathToModule.values()) {
+      for (Module module : myModules) {
         if (!module.isDisposed() && module.getName().equals(name)) {
           return module;
         }
@@ -823,7 +832,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
         @Override
         public Collection<Module> getNodes() {
-          return myPathToModule.values();
+          return myModules;
         }
 
         @Override
@@ -836,7 +845,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     @NotNull private List<Module> getModuleDependentModules(Module module) {
       List<Module> result = new ArrayList<Module>();
-      for (Module aModule : myPathToModule.values()) {
+      for (Module aModule : myModules) {
         if (isModuleDependent(aModule, module)) {
           result.add(aModule);
         }
@@ -868,8 +877,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     public void dispose() {
       assertWritable();
       ApplicationManager.getApplication().assertWriteAccessAllowed();
-      final Collection<Module> list = myModuleModel.myPathToModule.values();
-      final Collection<Module> thisModules = myPathToModule.values();
+      final Collection<Module> list = myModuleModel.myModules;
+      final Collection<Module> thisModules = myModules;
       for (Module thisModule : thisModules) {
         if (!list.contains(thisModule)) {
           Disposer.dispose(thisModule);
@@ -888,22 +897,20 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       if (!myIsWritable) {
         return false;
       }
-      Set<Module> thisModules = new HashSet<Module>(myPathToModule.values());
-      Set<Module> thatModules = new HashSet<Module>(myModuleModel.myPathToModule.values());
-      return !thisModules.equals(thatModules) || !Comparing.equal(myModuleModel.myModuleGroupPath, myModuleGroupPath);
+      return !myModules.equals(myModuleModel.myModules) || !Comparing.equal(myModuleModel.myModuleGroupPath, myModuleGroupPath);
     }
 
     private void disposeModel() {
       myModulesCache = null;
-      for (final Module module : myPathToModule.values()) {
+      for (final Module module : myModules) {
         Disposer.dispose(module);
       }
-      myPathToModule.clear();
+      myModules.clear();
       myModuleGroupPath = null;
     }
 
     public void projectOpened() {
-      final Collection<Module> collection = myPathToModule.values();
+      final Collection<Module> collection = myModules;
       for (final Module aCollection : collection) {
         ModuleEx module = (ModuleEx)aCollection;
         module.projectOpened();
@@ -911,8 +918,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     public void projectClosed() {
-      final Collection<Module> collection = myPathToModule.values();
-      for (final Module aCollection : collection) {
+      for (Module aCollection : myModules) {
         ModuleEx module = (ModuleEx)aCollection;
         module.projectClosed();
       }
@@ -940,20 +946,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         myModuleGroupPath.put(module, groupPath);
       }
     }
-
-    @Override
-    public void setModuleFilePath(@NotNull Module module, String oldPath, String newFilePath) {
-      myPathToModule.remove(oldPath);
-      myPathToModule.put(newFilePath, module);
-    }
   }
 
   private void commitModel(final ModuleModelImpl moduleModel, final Runnable runnable) {
     myModuleModel.myModulesCache = null;
     incModificationCount();
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    final Collection<Module> oldModules = myModuleModel.myPathToModule.values();
-    final Collection<Module> newModules = moduleModel.myPathToModule.values();
+    final Collection<Module> oldModules = myModuleModel.myModules;
+    final Collection<Module> newModules = moduleModel.myModules;
     final List<Module> removedModules = new ArrayList<Module>(oldModules);
     removedModules.removeAll(newModules);
     final List<Module> addedModules = new ArrayList<Module>(newModules);
@@ -968,7 +968,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         }
 
         List<Module> neverAddedModules = new ArrayList<Module>(moduleModel.myModulesToDispose);
-        neverAddedModules.removeAll(myModuleModel.myPathToModule.values());
+        neverAddedModules.removeAll(myModuleModel.myModules);
         for (final Module neverAddedModule : neverAddedModules) {
           neverAddedModule.putUserData(DISPOSED_MODULE_NAME, neverAddedModule.getName());
           Disposer.dispose(neverAddedModule);
@@ -986,10 +986,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         Map<Module, String> oldNames = ContainerUtil.newHashMap();
         for (final Module module : modulesToBeRenamed) {
           oldNames.put(module, module.getName());
-          moduleModel.myPathToModule.remove(module.getModuleFilePath());
+          moduleModel.myModules.remove(module);
           modules.add(module);
           ((ModuleEx)module).rename(modulesToNewNamesMap.get(module));
-          moduleModel.myPathToModule.put(module.getModuleFilePath(), module);
+          moduleModel.myModules.add(module);
         }
 
         moduleModel.myIsWritable = false;

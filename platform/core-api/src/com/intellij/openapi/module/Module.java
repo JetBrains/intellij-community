@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  * @see ModuleManager#getModules()
  * @see ModuleComponent
  */
-public interface Module extends ComponentManager, AreaInstance, Disposable, OptionManager {
+public interface Module extends ComponentManager, AreaInstance, Disposable {
   /**
    * The empty array of modules which cab be reused to avoid unnecessary allocations.
    */
@@ -48,11 +48,10 @@ public interface Module extends ComponentManager, AreaInstance, Disposable, Opti
   VirtualFile getModuleFile();
 
   /**
-   * Returns the path to the module .iml file.
-   *
-   * @return the path to the .iml file.
+   * System-independent path to the .iml file.
    */
-  @NotNull String getModuleFilePath();
+  @NotNull
+  String getModuleFilePath();
 
   /**
    * Returns the project to which this module belongs.
@@ -77,6 +76,30 @@ public interface Module extends ComponentManager, AreaInstance, Disposable, Opti
   boolean isDisposed();
 
   boolean isLoaded();
+
+  /**
+   * Removes a custom option from this module.
+   *
+   * @param key the name of the custom option.
+   */
+  void clearOption(@NotNull String key);
+
+  /**
+   * Sets a custom option for this module.
+   *
+   * @param key the name of the custom option.
+   * @param value the value of the custom option.
+   */
+  void setOption(@NotNull String key, @NotNull String value);
+
+  /**
+   * Gets the value of a custom option for this module.
+   *
+   * @param key the name of the custom option.
+   * @return the value of the custom option, or null if no value has been set.
+   */
+  @Nullable
+  String getOptionValue(@NotNull String key);
 
   /**
    * Returns module scope including sources and tests, excluding libraries and dependencies.

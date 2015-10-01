@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,6 +65,7 @@ public class MavenIndicesTestFixture {
 
   public void tearDown() throws Exception {
     getIndicesManager().doShutdownInTests();
+    MavenServerManager.getInstance().shutdown(true);
   }
 
   public MavenIndicesManager getIndicesManager() {

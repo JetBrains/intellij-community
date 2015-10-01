@@ -3,6 +3,7 @@ package com.jetbrains.env.python;
 import com.google.common.collect.Sets;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.python.console.PyConsoleTask;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.util.Collections;
@@ -38,6 +39,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
         waitForOutput("101");
       }
 
+      @NotNull
       @Override
       public Set<String> getTags() {
         return Sets.newHashSet("-jython"); //jython doesn't support multiline execution: http://bugs.jython.org/issue2106
@@ -60,6 +62,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
         waitForReady();
       }
 
+      @NotNull
       @Override
       public Set<String> getTags() {
         return Sets.newHashSet("-iron", "-jython");

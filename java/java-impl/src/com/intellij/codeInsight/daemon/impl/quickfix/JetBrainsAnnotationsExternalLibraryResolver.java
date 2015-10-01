@@ -16,18 +16,20 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ThreeState;
+import org.intellij.lang.annotations.Flow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,16 +41,33 @@ public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibrary
     @NotNull
     @Override
     public List<String> getLibraryClassesRoots() {
-      return Collections.singletonList(FileUtil.toSystemIndependentName(new File(PathManager.getLibPath(), "annotations.jar").getAbsolutePath()));
+      File annotationsJar = new File(PathManager.getLibPath(), "annotations.jar");
+      if (annotationsJar.exists()) {
+        return Collections.singletonList(FileUtil.toSystemIndependentName(annotationsJar.getAbsolutePath()));
+      }
+      return getPathsToAnnotationsDirectoriesInDevelopmentMode("annotations");
     }
   };
+
   private static final ExternalLibraryDescriptor JAVA8 = new JetBrainsAnnotationsLibraryDescriptor() {
     @NotNull
     @Override
     public List<String> getLibraryClassesRoots() {
-      return Collections.singletonList(FileUtil.toSystemIndependentName(new File(PathManager.getHomePath(), "redist/annotations-java8.jar").getAbsolutePath()));
+      File annotationsJar = new File(PathManager.getHomePath(), "redist/annotations-java8.jar");
+      if (annotationsJar.exists()) {
+        return Collections.singletonList(FileUtil.toSystemIndependentName(annotationsJar.getAbsolutePath()));
+      }
+      return getPathsToAnnotationsDirectoriesInDevelopmentMode("annotations-java8");
     }
   };
+
+  @NotNull
+  private static List<String> getPathsToAnnotationsDirectoriesInDevelopmentMode(final String moduleName) {
+    final String annotationsRoot = PathManager.getJarPathForClass(Flow.class);
+    if (annotationsRoot == null) return Collections.emptyList();
+    return Arrays.asList(annotationsRoot, FileUtil.toSystemIndependentName(new File(new File(annotationsRoot).getParentFile(),
+                                                                                    moduleName).getAbsolutePath()));
+  }
 
   @Nullable
   @Override
@@ -68,7 +87,7 @@ public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibrary
 
   private static abstract class JetBrainsAnnotationsLibraryDescriptor extends ExternalLibraryDescriptor {
     public JetBrainsAnnotationsLibraryDescriptor() {
-      super("com.intellij", "annotations", null);
+      super("com.intellij", "annotations");
     }
   }
 }

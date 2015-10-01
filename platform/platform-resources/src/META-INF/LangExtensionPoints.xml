@@ -9,7 +9,7 @@
     <extensionPoint name="generalCodeStyleOptionsProvider" beanClass="com.intellij.application.options.GeneralCodeStyleOptionsProviderEP">
       <with attribute="instance" implements="com.intellij.application.options.GeneralCodeStyleOptionsProvider"/>
     </extensionPoint>
-    <extensionPoint name="autoImportOptionsProvider" beanClass="com.intellij.application.options.editor.AutoImportOptionsProviderEP">
+    <extensionPoint name="autoImportOptionsProvider" beanClass="com.intellij.application.options.editor.AutoImportOptionsProviderEP" area="IDEA_PROJECT">
       <with attribute="instance" implements="com.intellij.application.options.editor.AutoImportOptionsProvider"/>
     </extensionPoint>
     <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
@@ -371,6 +371,7 @@
 
     <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
     <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>
+    <extensionPoint name="refactoring.invertBoolean" interface="com.intellij.refactoring.invertBoolean.InvertBooleanDelegate"/>
     <extensionPoint name="refactoring.moveDirectoryWithClassesHelper"
                     interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper"/>
 

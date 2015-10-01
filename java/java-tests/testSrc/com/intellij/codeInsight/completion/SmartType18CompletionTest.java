@@ -150,6 +150,8 @@ public void testConvertToObjectStream() {
     doTest(false);
   }
 
+  public void testCollectionsEmptyMap() { doTest(true); }
+
   private void doTest() {
     doTest(true);
   }

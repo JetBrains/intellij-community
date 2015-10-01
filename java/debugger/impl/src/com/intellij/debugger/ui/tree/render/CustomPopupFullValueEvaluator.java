@@ -17,8 +17,10 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -54,6 +56,9 @@ public abstract class CustomPopupFullValueEvaluator<T> extends JavaValue.JavaFul
         Dimension frameSize = frame.getSize();
         Dimension size = new Dimension(frameSize.width / 2, frameSize.height / 2);
         popup.setSize(size);
+        if (comp instanceof Disposable) {
+          Disposer.register(popup, (Disposable)comp);
+        }
         callback.evaluated("");
         popup.show(new RelativePoint(frame, new Point(size.width / 2, size.height / 2)));
       }

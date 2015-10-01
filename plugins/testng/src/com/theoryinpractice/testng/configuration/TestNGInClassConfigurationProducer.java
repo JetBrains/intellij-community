@@ -27,7 +27,6 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit.InheritorChooser;
-import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -103,12 +102,7 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
     }
 
     final Location contextLocation = context.getLocation();
-    if (contextLocation instanceof PsiMemberParameterizedLocation) {
-      final String paramSetName = getInvocationNumber(((PsiMemberParameterizedLocation)contextLocation).getParamSetName());
-      if (paramSetName != null) {
-        configuration.setProgramParameters(paramSetName);
-      }
-    }
+    setupConfigurationParamName(configuration, contextLocation);
 
     PsiClass psiClass = null;
     PsiElement element = context.getPsiLocation();

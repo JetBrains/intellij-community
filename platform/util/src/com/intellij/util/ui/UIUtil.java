@@ -2054,6 +2054,13 @@ public class UIUtil {
     for (MouseWheelListener each : mouseWheelListeners) {
       c.removeMouseWheelListener(each);
     }
+    
+    if (c instanceof AbstractButton) {
+      final ActionListener[] listeners = ((AbstractButton)c).getActionListeners();
+      for (ActionListener listener : listeners) {
+        ((AbstractButton)c).removeActionListener(listener);
+      }
+    }
   }
 
   public static void disposeProgress(final JProgressBar progress) {
@@ -2279,7 +2286,8 @@ public class UIUtil {
   }
 
   /**
-   * Unless you know very well what you're doing, please use Application.invokeLater() with a modality state.<p/>
+   * Please use Application.invokeLater() with a modality state, unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
    *
    * On AWT thread, invoked runnable immediately, otherwise do {@link SwingUtilities#invokeLater(Runnable)} on it.
    */
@@ -2293,7 +2301,8 @@ public class UIUtil {
   }
 
   /**
-   * Unless you know very well what you're doing, please use Application.invokeAndWait() with a modality state.<p/>
+   * Please use Application.invokeAndWait() with a modality state, unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
    *
    * Invoke and wait in the event dispatch thread
    * or in the current thread if the current thread
@@ -2318,7 +2327,8 @@ public class UIUtil {
   }
 
   /**
-   * Unless you know very well what you're doing, please use Application.invokeAndWait() with a modality state.<p/>
+   * Please use Application.invokeAndWait() with a modality state, unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
    *
    * Invoke and wait in the event dispatch thread
    * or in the current thread if the current thread
@@ -2340,7 +2350,8 @@ public class UIUtil {
   }
 
   /**
-   * Unless you know very well what you're doing, please use Application.invokeAndWait() with a modality state.<p/>
+   * Please use Application.invokeAndWait() with a modality state, unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
    *
    * Invoke and wait in the event dispatch thread
    * or in the current thread if the current thread
@@ -2559,7 +2570,7 @@ public class UIUtil {
    * @param parent parent component
    * @return true if parent if a top parent of child, false otherwise
    *
-   * @see javax.swing.SwingUtilities#isDescendingFrom(java.awt.Component, java.awt.Component)
+   * @see SwingUtilities#isDescendingFrom(Component, Component)
    */
   public static boolean isDescendingFrom(@Nullable Component child, @NotNull Component parent) {
     while (child != null && child != parent) {

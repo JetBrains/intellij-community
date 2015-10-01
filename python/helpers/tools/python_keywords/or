@@ -1,0 +1,27 @@
+<div class="section" id="boolean-operations">
+<span id="not"></span><span id="or"></span><span id="and"></span><span id="booleans"></span><h2>Boolean operations</h2>
+<pre id="index-65">
+<strong id="grammar-token-or_test">or_test </strong> ::=  <a class="reference internal" href="#grammar-token-and_test"><tt class="xref docutils literal"><span class="pre">and_test</span></tt></a> | <a class="reference internal" href="#grammar-token-or_test"><tt class="xref docutils literal"><span class="pre">or_test</span></tt></a> &quot;or&quot; <a class="reference internal" href="#grammar-token-and_test"><tt class="xref docutils literal"><span class="pre">and_test</span></tt></a>
+<strong id="grammar-token-and_test">and_test</strong> ::=  <a class="reference internal" href="#grammar-token-not_test"><tt class="xref docutils literal"><span class="pre">not_test</span></tt></a> | <a class="reference internal" href="#grammar-token-and_test"><tt class="xref docutils literal"><span class="pre">and_test</span></tt></a> &quot;and&quot; <a class="reference internal" href="#grammar-token-not_test"><tt class="xref docutils literal"><span class="pre">not_test</span></tt></a>
+<strong id="grammar-token-not_test">not_test</strong> ::=  <a class="reference internal" href="#grammar-token-comparison"><tt class="xref docutils literal"><span class="pre">comparison</span></tt></a> | &quot;not&quot; <a class="reference internal" href="#grammar-token-not_test"><tt class="xref docutils literal"><span class="pre">not_test</span></tt></a>
+</pre>
+<p>In the context of Boolean operations, and also when expressions are used by
+control flow statements, the following values are interpreted as false:
+<tt class="docutils literal"><span class="pre">False</span></tt>, <tt class="docutils literal"><span class="pre">None</span></tt>, numeric zero of all types, and empty strings and containers
+(including strings, tuples, lists, dictionaries, sets and frozensets).  All
+other values are interpreted as true.  User-defined objects can customize their
+truth value by providing a <a class="reference internal" href="datamodel.html#object.__bool__" title="object.__bool__"><tt class="xref py py-meth docutils literal"><span class="pre">__bool__()</span></tt></a> method.</p>
+<p id="index-66">The operator <a class="reference internal" href="#not"><tt class="xref std std-keyword docutils literal"><span class="pre">not</span></tt></a> yields <tt class="docutils literal"><span class="pre">True</span></tt> if its argument is false, <tt class="docutils literal"><span class="pre">False</span></tt>
+otherwise.</p>
+<p id="index-67">The expression <tt class="docutils literal"><span class="pre">x</span> <span class="pre">and</span> <span class="pre">y</span></tt> first evaluates <em>x</em>; if <em>x</em> is false, its value is
+returned; otherwise, <em>y</em> is evaluated and the resulting value is returned.</p>
+<p id="index-68">The expression <tt class="docutils literal"><span class="pre">x</span> <span class="pre">or</span> <span class="pre">y</span></tt> first evaluates <em>x</em>; if <em>x</em> is true, its value is
+returned; otherwise, <em>y</em> is evaluated and the resulting value is returned.</p>
+<p>(Note that neither <a class="reference internal" href="#and"><tt class="xref std std-keyword docutils literal"><span class="pre">and</span></tt></a> nor <a class="reference internal" href="#or"><tt class="xref std std-keyword docutils literal"><span class="pre">or</span></tt></a> restrict the value and type
+they return to <tt class="docutils literal"><span class="pre">False</span></tt> and <tt class="docutils literal"><span class="pre">True</span></tt>, but rather return the last evaluated
+argument.  This is sometimes useful, e.g., if <tt class="docutils literal"><span class="pre">s</span></tt> is a string that should be
+replaced by a default value if it is empty, the expression <tt class="docutils literal"><span class="pre">s</span> <span class="pre">or</span> <span class="pre">'foo'</span></tt> yields
+the desired value.  Because <a class="reference internal" href="#not"><tt class="xref std std-keyword docutils literal"><span class="pre">not</span></tt></a> has to create a new value, it
+returns a boolean value regardless of the type of its argument
+(for example, <tt class="docutils literal"><span class="pre">not</span> <span class="pre">'foo'</span></tt> produces <tt class="docutils literal"><span class="pre">False</span></tt> rather than <tt class="docutils literal"><span class="pre">''</span></tt>.)</p>
+</div>

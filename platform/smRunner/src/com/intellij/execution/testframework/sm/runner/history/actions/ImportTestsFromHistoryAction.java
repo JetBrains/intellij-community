@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
+import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
@@ -62,6 +63,6 @@ public class ImportTestsFromHistoryAction extends AbstractImportTestsAction {
   @Nullable
   @Override
   public VirtualFile getFile(@NotNull Project project) {
-    return LocalFileSystem.getInstance().findFileByPath(AbstractImportTestsAction.getTestHistoryRoot(project).getPath() + "/" + myFileName);
+    return LocalFileSystem.getInstance().findFileByPath(TestStateStorage.getTestHistoryRoot(project).getPath() + "/" + myFileName);
   }
 }

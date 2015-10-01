@@ -61,15 +61,15 @@ fun PrintElementWithGraphElement.asString(): String {
   val pos = getPositionInCurrentRow()
   val sel = if (isSelected()) "Select" else "Unselect"
   return when (this) {
-    is SimplePrintElement -> {
-      val t = getType()
-      "Simple:${t}|-$row:${pos}|-$color:${sel}($element)"
+    is NodePrintElement -> {
+      "Simple:NODE|-$row:${pos}|-$color:${sel}($element)"
     }
     is EdgePrintElement -> {
       val t = getType()
       val ls = getLineStyle()
       val posO = getPositionInOtherRow()
-      "Edge:$t:${ls}|-$row:$pos:${posO}|-$color:$sel($element)"
+      val arrow = if (hasArrow()) "_ARROW" else ""
+      "Edge:$t${arrow}:${ls}|-$row:$pos:${posO}|-$color:$sel($element)"
     }
 
     else -> {
@@ -85,8 +85,8 @@ fun PrintElementGenerator.asString(size: Int): String {
     if (row > 0) s.append("\n")
     val elements = getPrintElements(row).sortBy {
       val pos = it.getPositionInCurrentRow()
-      if (it is SimplePrintElement) {
-        1024 * pos + it.getType().ordinal()
+      if (it is NodePrintElement) {
+        1024 * pos
       } else if (it is EdgePrintElement) {
         1024 * pos + (it.getType().ordinal() + 1) * 64 + it.getPositionInOtherRow()
       } else 0

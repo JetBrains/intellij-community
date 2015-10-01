@@ -42,10 +42,7 @@ import org.jetbrains.io.MessageDecoder;
 import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -66,8 +63,8 @@ public final class SocketLock {
   private BuiltInServer server;
 
   public SocketLock(@NotNull String configPath, @NotNull String systemPath) {
-    this.configPath = configPath;
-    this.systemPath = systemPath;
+    this.configPath = canonicalPath(configPath);
+    this.systemPath = canonicalPath(systemPath);
   }
 
   public void setExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
@@ -353,6 +350,15 @@ public final class SocketLock {
           break;
         }
       }
+    }
+  }
+
+  @NotNull
+  private static String canonicalPath(@NotNull String configPath) {
+    try {
+      return new File(configPath).getCanonicalPath();
+    } catch (IOException ignore) {
+      return configPath;
     }
   }
 }

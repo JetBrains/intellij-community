@@ -80,10 +80,13 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
     group.add(new MyReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
+    group.add(Separator.getInstance());
+    group.addAll(super.createToolbarActions());
+
     return group;
   }
 
-  @Nullable
+  @NotNull
   @Override
   protected List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<AnAction>();
@@ -92,6 +95,9 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
     group.add(new MyIgnorePolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
     group.add(new MyHighlightPolicySettingAction().getPopupGroup());
+
+    group.add(Separator.getInstance());
+    group.addAll(super.createPopupActions());
 
     return group;
   }

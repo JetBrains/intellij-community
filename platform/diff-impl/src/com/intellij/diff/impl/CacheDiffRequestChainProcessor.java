@@ -33,7 +33,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -64,8 +63,20 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
   // Update
   //
 
+  @Override
+  protected void reloadRequest() {
+    updateRequest(true, false, null);
+  }
+
   @CalledInAwt
   public void updateRequest(final boolean force, @Nullable final ScrollToPolicy scrollToChangePolicy) {
+    updateRequest(force, true, scrollToChangePolicy);
+  }
+
+  @CalledInAwt
+  public void updateRequest(final boolean force, boolean useCache, @Nullable final ScrollToPolicy scrollToChangePolicy) {
+    if (isDisposed()) return;
+
     List<? extends DiffRequestProducer> requests = myRequestChain.getRequests();
     int index = myRequestChain.getIndex();
     if (index < 0 || index >= requests.size()) {
@@ -75,7 +86,7 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
 
     final DiffRequestProducer producer = requests.get(index);
 
-    DiffRequest request = loadRequestFast(producer);
+    DiffRequest request = loadRequestFast(producer, useCache);
     if (request != null) {
       applyRequest(request, force, scrollToChangePolicy);
       return;
@@ -107,7 +118,8 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
   }
 
   @Nullable
-  protected DiffRequest loadRequestFast(@NotNull DiffRequestProducer producer) {
+  protected DiffRequest loadRequestFast(@NotNull DiffRequestProducer producer, boolean useCache) {
+    if (!useCache) return null;
     return myRequestCache.get(producer);
   }
 
@@ -126,6 +138,7 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
       return new ErrorDiffRequest(producer, e);
     }
     catch (Exception e) {
+      LOG.warn(e);
       return new ErrorDiffRequest(producer, e);
     }
   }

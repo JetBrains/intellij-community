@@ -67,7 +67,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   protected final VfsData.Segment mySegment;
   private final VirtualDirectoryImpl myParent;
-  private final int myId;
+  protected final int myId;
 
   static {
     //noinspection ConstantConditions

@@ -16,6 +16,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import com.jetbrains.python.sdkTools.SdkCreationType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -146,6 +147,7 @@ public class PyPackagingTest extends PyEnvTestCase {
 
 
   private abstract static class PyPackagingTestTask extends PyExecutionFixtureTestTask {
+    @NotNull
     @Override
     public Set<String> getTags() {
       return Sets.newHashSet("packaging");

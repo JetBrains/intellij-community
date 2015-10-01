@@ -115,7 +115,7 @@
     <attribute name="usemap" type="%URL" />
   </control>
   <control name="ol" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
-  <control name="option" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="option"/>
+  <control name="option" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="option,optgroup"/>
   
   <control name="P" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="p"/>
   <control name="param" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true"/>

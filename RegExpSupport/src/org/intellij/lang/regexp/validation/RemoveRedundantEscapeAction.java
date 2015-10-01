@@ -39,12 +39,12 @@ class RemoveRedundantEscapeAction implements IntentionAction {
 
     @NotNull
     public String getText() {
-        return "Remove Redundant Escape";
+        return "Remove redundant escape";
     }
 
     @NotNull
     public String getFamilyName() {
-        return "Redundant Character Escape";
+        return "Redundant character escape";
     }
 
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {

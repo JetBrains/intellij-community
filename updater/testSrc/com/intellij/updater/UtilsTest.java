@@ -38,7 +38,7 @@ public class UtilsTest extends TestCase {
       Utils.delete(f);
       assertFalse(f.exists());
     } finally {
-      f.deleteOnExit();
+      f.delete();
     }
   }
 
@@ -59,12 +59,12 @@ public class UtilsTest extends TestCase {
     } catch (IOException e) {
       millis = System.currentTimeMillis() - millis;
       assertEquals("Cannot delete file " + f.getAbsolutePath(), e.getMessage());
-      assertTrue("Utils.delete took " + millis + " ms, which is less than the expected 100 ms.", millis > 100);
+      assertTrue("Utils.delete took " + millis + " ms, which is less than the expected 100 ms.", millis >= 100);
       return;
 
     } finally {
-      f.deleteOnExit();
       fw.close();
+      f.delete();
     }
 
     assertFalse("Utils.delete did not fail with the expected IOException on Windows.", mIsWindows);

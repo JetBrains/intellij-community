@@ -63,6 +63,9 @@
     <applicationService serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings"
                         serviceImplementation="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl"/>
 
+    <applicationService serviceInterface="com.intellij.codeInsight.actions.FormatChangedTextUtil"
+                        serviceImplementation="com.intellij.codeInsight.actions.FormatChangedTextUtil"/>
+
     <applicationService serviceInterface="com.intellij.facet.FacetTypeRegistry"
                         serviceImplementation="com.intellij.facet.impl.FacetTypeRegistryImpl"/>
 
@@ -164,7 +167,7 @@
                         serviceImplementation="com.intellij.lang.DefaultASTFactoryImpl"/>
 
     <applicationService serviceInterface="com.intellij.conversion.ConversionService"
-                        serviceImplementation="com.intellij.conversion.impl.ConversionServiceImpl"/>
+                        serviceImplementation="com.intellij.impl.ConversionServiceImpl"/>
 
     <applicationService serviceInterface="com.intellij.psi.search.searches.IndexPatternSearch"
                         serviceImplementation="com.intellij.psi.impl.search.IndexPatternSearchImpl"/>
@@ -331,6 +334,7 @@
                     serviceImplementation="com.intellij.openapi.roots.impl.LibraryScopeCache"/>
 
     <moduleService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore" serviceImplementation="com.intellij.configurationStore.ModuleStoreImpl"/>
+    <moduleService serviceImplementation="com.intellij.openapi.module.impl.ModuleImpl$DeprecatedModuleOptionManager"/>
     <moduleService serviceInterface="com.intellij.openapi.components.PathMacroManager" serviceImplementation="com.intellij.openapi.components.impl.ModulePathMacroManager"/>
 
     <projectViewPane implementation="com.intellij.ide.scratch.ScratchProjectViewPane"/>
@@ -496,8 +500,6 @@
     <ideRootPaneNorth implementation="com.intellij.ide.navigationToolbar.NavBarRootPaneExtension"/>
     <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension" id="defaultNavbar" order="last"/>
 
-    <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.DecoratorCompletionStatistician" order="first"
-                  id="decorator"/>
     <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionStatistician" order="last"/>
 
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.OpenedInEditorWeigher" id="openedInEditor"/>
@@ -590,6 +592,8 @@
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.LineCommentSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.ide.highlighter.custom.impl.CustomFileTypeSelectWordHandler"/>
 
+    <basicWordSelectionFilter implementation="com.intellij.lang.parser.DummyBlockWordSelectionFilter"/>
+
     <syntaxHighlighter factoryClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeHighlighterProvider"/>
     <fileTypeRegistrator implementation="com.intellij.ide.highlighter.custom.impl.StandardFileTypeRegistrator"/>
 
@@ -636,8 +640,12 @@
     <editorOptionsProvider instance="com.intellij.application.options.CodeCompletionOptions" id="editor.preferences.completion"
                            key="title.code.completion" bundle="messages.ApplicationBundle"/>
     <search.topHitProvider implementation="com.intellij.application.options.editor.AutoImportOptionsTopHitProvider"/>
-    <editorOptionsProvider instance="com.intellij.application.options.editor.AutoImportOptionsConfigurable" id="editor.preferences.import"
-                           key="auto.import" bundle="messages.ApplicationBundle"/>
+    <projectConfigurable instance="com.intellij.application.options.editor.AutoImportOptionsConfigurable"
+                         id="editor.preferences.import"
+                         parentId="preferences.editor"
+                         key="auto.import" bundle="messages.ApplicationBundle"
+                         groupId="editor"
+                         groupWeight="1"/>
 
     <editorTabColorProvider implementation="com.intellij.ui.tabs.EditorTabColorProviderImpl"/>
 
@@ -765,7 +773,9 @@
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.HttpFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.NullFileReferenceHelper" order="last"/>
-    <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.ArbitraryPlaceUrlReferenceContributor"/>
+    <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.CommentsReferenceContributor"/>
+    <referenceProviderType key="commentsReferenceProvider"
+                           implementationClass="com.intellij.psi.impl.source.resolve.reference.ArbitraryPlaceUrlReferenceProvider"/>
 
     <projectConfigurable groupId="editor"
                          groupWeight="140"
@@ -931,6 +941,8 @@
     <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectableIndentOptionsProvider" order="last"/>
     <editorNotificationProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectedIndentOptionsNotificationProvider"/>
     <smartPointerElementInfoFactory implementation="com.intellij.psi.impl.smartPointers.AnchorElementInfoFactory"/>
+    <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
+    <projectService serviceImplementation="com.intellij.execution.TestStateStorage"/>
   </extensions>
 </idea-plugin>
 

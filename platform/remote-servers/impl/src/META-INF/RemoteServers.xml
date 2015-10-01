@@ -31,13 +31,19 @@
     <applicationService serviceInterface="com.intellij.remoteServer.impl.runtime.log.CloudTerminalProvider"
                         serviceImplementation="com.intellij.remoteServer.impl.runtime.log.ConsoleTerminalProvider"/>
     <toolWindow id="Application Servers" anchor="bottom" icon="RemoteServersIcons.ServersToolWindow"
-                factoryClass="com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowFactory"/>
+                factoryClass="com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowFactory"
+                conditionClass="com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowFactory"/>
   </extensions>
   <application-components>
     <component>
       <implementation-class>com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar</implementation-class>
     </component>
   </application-components>
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowManager</implementation-class>
+    </component>
+  </project-components>
 
   <actions>
     <group id="RemoteServersViewToolbar">

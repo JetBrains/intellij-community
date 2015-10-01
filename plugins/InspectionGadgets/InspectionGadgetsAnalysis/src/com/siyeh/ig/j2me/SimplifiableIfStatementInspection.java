@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 Bas Leijdekkers
+ * Copyright 2006-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,12 +119,12 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
     }
     else if (BoolUtils.isFalse(thenRhs)) {
       return lhs.getText() + ' ' + token.getText() + ' ' +
-             buildNegatedExpressionText(condition, ParenthesesUtils.AND_PRECEDENCE) + " && " +
+             BoolUtils.getNegatedExpressionText(condition, ParenthesesUtils.AND_PRECEDENCE) + " && " +
              buildExpressionText(elseRhs, ParenthesesUtils.AND_PRECEDENCE) + ';';
     }
     if (BoolUtils.isTrue(elseRhs)) {
       return lhs.getText() + ' ' + token.getText() + ' ' +
-             buildNegatedExpressionText(condition, ParenthesesUtils.OR_PRECEDENCE) + " || " +
+             BoolUtils.getNegatedExpressionText(condition, ParenthesesUtils.OR_PRECEDENCE) + " || " +
              buildExpressionText(thenRhs, ParenthesesUtils.OR_PRECEDENCE) + ';';
     }
     else {
@@ -151,11 +151,11 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
              buildExpressionText(elseReturnValue, ParenthesesUtils.OR_PRECEDENCE) + ';';
     }
     else if (BoolUtils.isFalse(thenReturnValue)) {
-      return "return " + buildNegatedExpressionText(condition, ParenthesesUtils.AND_PRECEDENCE) + " && " +
+      return "return " + BoolUtils.getNegatedExpressionText(condition, ParenthesesUtils.AND_PRECEDENCE) + " && " +
              buildExpressionText(elseReturnValue, ParenthesesUtils.AND_PRECEDENCE) + ';';
     }
     if (BoolUtils.isTrue(elseReturnValue)) {
-      return "return " + buildNegatedExpressionText(condition, ParenthesesUtils.OR_PRECEDENCE) + " || " +
+      return "return " + BoolUtils.getNegatedExpressionText(condition, ParenthesesUtils.OR_PRECEDENCE) + " || " +
              buildExpressionText(thenReturnValue, ParenthesesUtils.OR_PRECEDENCE) + ';';
     }
     else {
@@ -202,65 +202,6 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
         appendPresentableText(child, builder);
       }
     }
-  }
-
-
-  public static String buildNegatedExpressionText(@Nullable PsiExpression expression, int precedence) {
-    while (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
-      expression = parenthesizedExpression.getExpression();
-    }
-    if (expression == null) {
-      return "";
-    }
-    final StringBuilder result = new StringBuilder();
-    if (BoolUtils.isNegation(expression)) {
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
-      final PsiExpression operand = prefixExpression.getOperand();
-      final PsiExpression negated = ParenthesesUtils.stripParentheses(operand);
-      if (negated == null) {
-        return "";
-      }
-      if (ParenthesesUtils.getPrecedence(negated) > precedence) {
-        result.append('(');
-        appendPresentableText(negated, result);
-        result.append(')');
-      }
-      else {
-        appendPresentableText(negated, result);
-      }
-    }
-    else if (ComparisonUtils.isComparison(expression)) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
-      final String negatedComparison = ComparisonUtils.getNegatedComparison(polyadicExpression.getOperationTokenType());
-      final PsiExpression[] operands = polyadicExpression.getOperands();
-      final boolean isEven = (operands.length & 1) != 1;
-      for (int i = 0, length = operands.length; i < length; i++) {
-        final PsiExpression operand = operands[i];
-        if (i > 0) {
-          if (isEven && (i & 1) != 1) {
-            final PsiJavaToken token = polyadicExpression.getTokenBeforeOperand(operand);
-            if (token != null) {
-              result.append(token.getText());
-            }
-          }
-          else {
-            result.append(negatedComparison);
-          }
-        }
-        appendPresentableText(operand, result);
-      }
-    }
-    else if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
-      result.append("!(");
-      appendPresentableText(expression, result);
-      result.append(')');
-    }
-    else {
-      result.append('!');
-      appendPresentableText(expression, result);
-    }
-    return result.toString();
   }
 
   @Override

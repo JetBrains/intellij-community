@@ -1,6 +1,5 @@
 package com.intellij.openapi.externalSystem.service.project;
 
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -60,8 +59,7 @@ public interface PlatformFacade {
 
   /**
    * Creates a module of the specified type at the specified path and adds it to the project
-   * to which the module manager is related. {@link #commit()} must be called to
-   * bring the changes in effect.
+   * to which the module manager is related.
    *
    *
    * @param project

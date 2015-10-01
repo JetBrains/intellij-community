@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,33 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class LocalVariableHidingMemberVariableInspectionTest extends IGInspectionTestCase {
+public class LocalVariableHidingMemberVariableInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
+  public void testLocalVariableHidingMemberVariable() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
     final LocalVariableHidingMemberVariableInspection inspection = new LocalVariableHidingMemberVariableInspection();
     inspection.m_ignoreStaticMethods = true;
-    doTest("com/siyeh/igtest/visibility/local_variable_hiding_member_variable", inspection);
+    return inspection;
+  }
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package com.siyeh.igtest.visibility2;\n" +
+      "public class DifferentPackageClass\n" +
+      "{\n" +
+      "    int fooBar;\n" +
+      "    protected int fooBar2;\n" +
+      "}\n"
+    };
   }
 }

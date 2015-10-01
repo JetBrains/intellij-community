@@ -57,7 +57,7 @@ public abstract class AsyncValueLoader<T> {
 
   private void rejectAndDispose(@NotNull AsyncPromise<T> asyncResult) {
     try {
-      asyncResult.setError(Promise.createError("rejected"));
+      asyncResult.setError("rejected");
     }
     finally {
       T result = asyncResult.get();

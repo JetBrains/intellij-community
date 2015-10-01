@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,6 @@ public class MultipleTraitsListSpeedSearch extends MultipleTraitsSpeedSearch<JLi
 
   @Override
   protected void selectElement(Object element, String selectedText) {
-    ListScrollingUtil.selectItem(myComponent, element);
+    ScrollingUtil.selectItem(myComponent, element);
   }
 }

@@ -414,4 +414,9 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   public void setAssertOnFileLoadingFilter(@NotNull final VirtualFileFilter filter, Disposable parentDisposable) {
     ((PsiManagerImpl)PsiManager.getInstance(myProject)).setAssertOnFileLoadingFilter(filter, parentDisposable);
   }
+
+  @TestOnly
+  public void clearFindersCache() {
+    myElementFinders = null;
+  }
 }

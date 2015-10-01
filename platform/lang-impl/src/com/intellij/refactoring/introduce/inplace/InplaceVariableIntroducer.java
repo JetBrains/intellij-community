@@ -21,8 +21,8 @@ import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.LanguageTokenSeparatorGenerators;
+import com.intellij.lang.*;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -38,6 +38,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
@@ -67,23 +68,32 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
 
   public InplaceVariableIntroducer(PsiNamedElement elementToRename,
                                    Editor editor,
-                                   Project project,
-                                   String title, E[] occurrences, 
+                                   final Project project,
+                                   String title, E[] occurrences,
                                    @Nullable E expr) {
     super(editor, elementToRename, project);
     myTitle = title;
     myOccurrences = occurrences;
     if (expr != null) {
       final ASTNode node = expr.getNode();
+      ASTNode prev = node.getTreePrev();
       final ASTNode astNode = LanguageTokenSeparatorGenerators.INSTANCE.forLanguage(expr.getLanguage())
-        .generateWhitespaceBetweenTokens(node.getTreePrev(), node);
+        .generateWhitespaceBetweenTokens(prev, node);
       if (astNode != null) {
-        new WriteCommandAction<Object>(project, "Normalize declaration") {
-          @Override
-          protected void run(@NotNull Result<Object> result) throws Throwable {
-            node.getTreeParent().addChild(astNode, node);
-          }
-        }.execute();
+        final Lexer lexer = LanguageParserDefinitions.INSTANCE.forLanguage(expr.getLanguage()).createLexer(project);
+        if (LanguageUtil.canStickTokensTogetherByLexer(prev, prev, lexer) == ParserDefinition.SpaceRequirements.MUST) {
+          PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(new Runnable() {
+            @Override
+            public void run() {
+              new WriteCommandAction<Object>(project, "Normalize declaration") {
+                @Override
+                protected void run(@NotNull Result<Object> result) throws Throwable {
+                  node.getTreeParent().addChild(astNode, node);
+                }
+              }.execute(); 
+            }
+          });
+        }
       }
       myExpr = expr;
     }

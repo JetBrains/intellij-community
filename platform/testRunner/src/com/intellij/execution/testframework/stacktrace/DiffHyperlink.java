@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ public class DiffHyperlink implements Printable {
   protected final String myExpected;
   protected final String myActual;
   protected final String myFilePath;
+  protected final String myActualFilePath;
   private boolean myPrintOneLine;
   private final HyperlinkInfo myDiffHyperlink = new DiffHyperlinkInfo();
 
@@ -57,10 +58,23 @@ public class DiffHyperlink implements Printable {
                        final String actual,
                        final String filePath,
                        boolean printOneLine) {
+    this(expected, actual, filePath, null, printOneLine);
+  }
+  
+  public DiffHyperlink(final String expected,
+                       final String actual,
+                       final String expectedFilePath,
+                       final String actualFilePath,
+                       boolean printOneLine) {
     myExpected = expected;
     myActual = actual;
-    myFilePath = filePath == null ? null : filePath.replace(File.separatorChar, '/');
+    myFilePath = normalizeSeparators(expectedFilePath);
+    myActualFilePath = normalizeSeparators(actualFilePath);
     myPrintOneLine = printOneLine;
+  }
+
+  private static String normalizeSeparators(String filePath) {
+    return filePath == null ? null : filePath.replace(File.separatorChar, '/');
   }
 
   /**
@@ -99,6 +113,10 @@ public class DiffHyperlink implements Printable {
   public String getFilePath() {
     return myFilePath;
   }
+  
+  public String getActualFilePath() {
+    return myActualFilePath;
+  }
 
   public void printOn(final Printer printer) {
     if (!hasMoreThanOneLine(myActual.trim()) && !hasMoreThanOneLine(myExpected.trim()) && myPrintOneLine) {
@@ -127,6 +145,7 @@ public class DiffHyperlink implements Printable {
     if (myActual != null ? !myActual.equals(hyperlink.myActual) : hyperlink.myActual != null) return false;
     if (myExpected != null ? !myExpected.equals(hyperlink.myExpected) : hyperlink.myExpected != null) return false;
     if (myFilePath != null ? !myFilePath.equals(hyperlink.myFilePath) : hyperlink.myFilePath != null) return false;
+    if (myActualFilePath != null ? !myActualFilePath.equals(hyperlink.myActualFilePath) : hyperlink.myActualFilePath != null) return false;
 
     return true;
   }
@@ -136,6 +155,7 @@ public class DiffHyperlink implements Printable {
     int result = myExpected != null ? myExpected.hashCode() : 0;
     result = 31 * result + (myActual != null ? myActual.hashCode() : 0);
     result = 31 * result + (myFilePath != null ? myFilePath.hashCode() : 0);
+    result = 31 * result + (myActualFilePath != null ? myActualFilePath.hashCode() : 0);
     return result;
   }
 

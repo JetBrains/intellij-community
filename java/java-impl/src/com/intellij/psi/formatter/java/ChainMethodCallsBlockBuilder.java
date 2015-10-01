@@ -75,8 +75,10 @@ class ChainMethodCallsBlockBuilder {
     for (int i = 0; i < methodCall.size(); i++) {
       ChainedCallChunk currentCallChunk = methodCall.get(i);
       if (isMethodCall(currentCallChunk)) {
-        if (myWrap == null) myWrap = createCallChunkWrap(i, methodCall);
-        if (myChainedCallsAlignment == null) myChainedCallsAlignment = createCallChunkAlignment(i, methodCall);
+        if (myWrap == null)
+          myWrap = createCallChunkWrap(i, methodCall);
+        if (myChainedCallsAlignment == null)
+          myChainedCallsAlignment = createCallChunkAlignment(i, methodCall);
       }
       else {
         myWrap = null;
@@ -137,7 +139,7 @@ class ChainMethodCallsBlockBuilder {
 
   private boolean isMethodCall(@NotNull ChainedCallChunk callChunk) {
     List<ASTNode> nodes = callChunk.nodes;
-    return !nodes.isEmpty() && nodes.get(nodes.size() - 1).getElementType() == JavaElementType.EXPRESSION_LIST;
+    return nodes.size() >= 3 && nodes.get(2).getElementType() == JavaElementType.EXPRESSION_LIST;
   }
 }
 

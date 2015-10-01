@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -70,7 +71,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
     add(ScrollPaneFactory.createScrollPane(getThreadsTree()), BorderLayout.CENTER);
     stateManager.addListener(new DebuggerContextListener() {
       @Override
-      public void changeEvent(DebuggerContextImpl newContext, DebuggerSession.Event event) {
+      public void changeEvent(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
         if (DebuggerSession.Event.ATTACHED == event || DebuggerSession.Event.RESUME == event) {
           startLabelsUpdate();
         }

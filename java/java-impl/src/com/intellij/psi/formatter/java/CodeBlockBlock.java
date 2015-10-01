@@ -18,10 +18,7 @@ package com.intellij.psi.formatter.java;
 import com.intellij.formatting.*;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiSyntheticClass;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -114,15 +111,17 @@ public class CodeBlockBlock extends AbstractJavaBlock {
       state = INSIDE_BODY;
     }
 
+    ChildAlignmentStrategyProvider provider = getStrategyProvider();
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
+        AlignmentStrategy alignmentStrategy = provider.getNextChildStrategy(child);
         final Indent indent = calcCurrentIndent(child, state);
         state = calcNewState(child, state);
 
         if (child.getElementType() == JavaElementType.SWITCH_LABEL_STATEMENT) {
           child = processCaseAndStatementAfter(result, child, childAlignment, childWrap, indent);
         }
-        else if (myNode.getElementType() == JavaElementType.CLASS && child.getElementType() == JavaTokenType.LBRACE) {
+        else if (myNode.getPsi() instanceof PsiClass && child.getElementType() == JavaTokenType.LBRACE) {
           child = composeCodeBlock(result, child, getCodeBlockExternalIndent(), myChildrenIndent, null);
         }
         else if (myNode.getElementType() == JavaElementType.CODE_BLOCK && child.getElementType() == JavaTokenType.LBRACE
@@ -131,33 +130,13 @@ public class CodeBlockBlock extends AbstractJavaBlock {
           child = composeCodeBlock(result, child, indent, myChildrenIndent, childWrap);
         }
         else {
-          child = processChild(result, child, chooseAlignment(child, childAlignment), childWrap, indent);
+          child = processChild(result, child, alignmentStrategy, childWrap, indent);
         }
       }
       if (child != null) {
         child = child.getTreeNext();
       }
     }
-  }
-
-  @Nullable
-  private Alignment chooseAlignment(@NotNull ASTNode child, @Nullable Alignment defaultAlignment) {
-    if (defaultAlignment != null) {
-      return defaultAlignment;
-    }
-    // Take special care about anonymous classes.
-    if (child.getElementType() != JavaTokenType.RBRACE) {
-      return defaultAlignment;
-    }
-    final ASTNode parent = child.getTreeParent();
-    if (parent == null || parent.getElementType() != JavaElementType.ANONYMOUS_CLASS) {
-      return defaultAlignment;
-    }
-    final ASTNode whiteSpaceCandidate = parent.getTreePrev();
-    if (whiteSpaceCandidate == null || whiteSpaceCandidate.getElementType() != TokenType.WHITE_SPACE) {
-      return defaultAlignment;
-    }
-    return StringUtil.countNewLines(whiteSpaceCandidate.getChars()) > 0 ? myAlignment : defaultAlignment;
   }
 
   @Nullable

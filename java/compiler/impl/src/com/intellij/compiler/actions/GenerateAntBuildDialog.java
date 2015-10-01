@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
@@ -129,19 +130,13 @@ public class GenerateAntBuildDialog extends DialogWrapper {
 
   private void saveSettings() {
     final PropertiesComponent properties = PropertiesComponent.getInstance(myProject);
-    properties.setValue(SINGLE_FILE_PROPERTY, Boolean.toString(myRbGenerateSingleFileBuild.isSelected()));
-    properties.setValue(UI_FORM_PROPERTY, Boolean.toString(myCbEnableUIFormsCompilation.isSelected()));
-    properties.setValue(FORCE_TARGET_JDK_PROPERTY, Boolean.toString(myCbForceTargetJdk.isSelected()));
-    properties.setValue(BACKUP_FILES_PROPERTY, Boolean.toString(myRbBackupFiles.isSelected()));
-    properties.setValue(INLINE_RUNTIME_CLASSPATH_PROPERTY, Boolean.toString(myCbInlineRuntimeClasspath.isSelected()));
-    properties.setValue(GENERATE_IDEA_HOME_PROPERTY, Boolean.toString(myGenerateIdeaHomeProperty.isSelected()));
-    final String outputFileName = getOutputFileName();
-    if (outputFileName.length() > 0) {
-      properties.setValue(OUTPUT_FILE_NAME_PROPERTY, outputFileName);
-    }
-    else {
-      properties.unsetValue(OUTPUT_FILE_NAME_PROPERTY);
-    }
+    properties.setValue(SINGLE_FILE_PROPERTY, myRbGenerateSingleFileBuild.isSelected());
+    properties.setValue(UI_FORM_PROPERTY, myCbEnableUIFormsCompilation.isSelected());
+    properties.setValue(FORCE_TARGET_JDK_PROPERTY, myCbForceTargetJdk.isSelected());
+    properties.setValue(BACKUP_FILES_PROPERTY, myRbBackupFiles.isSelected());
+    properties.setValue(INLINE_RUNTIME_CLASSPATH_PROPERTY, myCbInlineRuntimeClasspath.isSelected());
+    properties.setValue(GENERATE_IDEA_HOME_PROPERTY, myGenerateIdeaHomeProperty.isSelected());
+    properties.setValue(OUTPUT_FILE_NAME_PROPERTY, StringUtil.nullize(getOutputFileName()));
   }
 
   public void dispose() {

@@ -141,7 +141,7 @@ public class ParameterHidingMemberVariableInspectionBase extends BaseInspection 
       if (variableName == null) {
         return null;
       }
-      PsiClass aClass = ClassUtils.getContainingClass(variable);
+      PsiClass aClass = ClassUtils.getContainingClass(method);
       while (aClass != null) {
         PsiField field = aClass.findFieldByName(variableName, true);
         if (field != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -171,9 +171,11 @@ public abstract class EditorComposite implements Disposable {
     });
     wrapper.getTabs().getComponent().setBorder(new EmptyBorder(0, 0, 1, 0));
 
+    boolean firstEditor = true;
     for (FileEditor editor : editors) {
-      JComponent component = myEditors.length == 1 && editor == myEditors[0] ? (JComponent)myComponent.getComponent(0) : createEditorComponent(editor);
+      JComponent component = firstEditor && myComponent != null ? (JComponent)myComponent.getComponent(0) : createEditorComponent(editor);
       wrapper.addTab(editor.getName(), component);
+      firstEditor = false;
     }
     wrapper.addChangeListener(new MyChangeListener());
 
@@ -458,9 +460,9 @@ public abstract class EditorComposite implements Disposable {
 
   void addEditor(@NotNull FileEditor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    FileEditor[] editors = ArrayUtil.append(myEditors, editor);
+    myEditors = ArrayUtil.append(myEditors, editor);
     if (myTabbedPaneWrapper == null) {
-      myTabbedPaneWrapper = createTabbedPaneWrapper(editors);
+      myTabbedPaneWrapper = createTabbedPaneWrapper(myEditors);
       myComponent.setComponent(myTabbedPaneWrapper.getComponent());
     }
     else {
@@ -469,7 +471,6 @@ public abstract class EditorComposite implements Disposable {
     }
     myFocusWatcher.deinstall(myFocusWatcher.getTopComponent());
     myFocusWatcher.install(myComponent);
-    myEditors = editors;
   }
 
   private static class TopBottomPanel extends JPanel {

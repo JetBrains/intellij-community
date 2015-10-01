@@ -154,6 +154,7 @@ eval
 evex
 exif
 expr
+externalizer
 facebook
 facelet
 fallthrough
@@ -470,6 +471,7 @@ reifies
 reify
 reifying
 reindex
+reindexing
 renderer
 replacer
 repo
@@ -626,6 +628,7 @@ undofile
 unescaped
 unhandled
 uninstall
+uniques
 unmerged
 unpivot
 unprotect

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -209,13 +209,17 @@ public class JavaSuppressionUtil {
           return statement;
         }
 
-        PsiVariable local = PsiTreeUtil.getParentOfType(place, PsiVariable.class, false);
-        if (local != null && getAnnotationMemberSuppressedIn(local, toolId) != null) {
-          PsiModifierList modifierList = local.getModifierList();
-          return modifierList != null ? modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;
+        PsiModifierListOwner up = PsiTreeUtil.getNonStrictParentOfType(place, PsiVariable.class, PsiDocCommentOwner.class);
+        if (up instanceof PsiVariable) {
+          PsiVariable local = (PsiVariable)up;
+          if (getAnnotationMemberSuppressedIn(local, toolId) != null) {
+            PsiModifierList modifierList = local.getModifierList();
+            return modifierList != null ? modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;
+          }
         }
 
-        PsiDocCommentOwner container = PsiTreeUtil.getNonStrictParentOfType(place, PsiDocCommentOwner.class);
+        PsiDocCommentOwner container = up == null || up instanceof PsiDocCommentOwner
+                                       ? (PsiDocCommentOwner)up : PsiTreeUtil.getNonStrictParentOfType(up, PsiDocCommentOwner.class);
         while (true) {
           if (!(container instanceof PsiTypeParameter)) break;
           container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);

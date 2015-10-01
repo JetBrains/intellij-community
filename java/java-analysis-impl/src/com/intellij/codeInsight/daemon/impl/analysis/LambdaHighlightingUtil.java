@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -25,12 +26,16 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
  */
 public class LambdaHighlightingUtil {
+  private static final Logger LOG = Logger.getInstance("#" + LambdaHighlightingUtil.class.getName());
+
   @Nullable
   public static String checkInterfaceFunctional(@NotNull PsiClass psiClass) {
     return checkInterfaceFunctional(psiClass, "Target type of a lambda conversion must be an interface");
@@ -90,14 +95,16 @@ public class LambdaHighlightingUtil {
   @Nullable
   public static String checkInterfaceFunctional(PsiType functionalInterfaceType) {
     if (functionalInterfaceType instanceof PsiIntersectionType) {
-      int count = 0;
+      final Set<MethodSignature> signatures = new HashSet<MethodSignature>();
       for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
         if (checkInterfaceFunctional(type) == null) {
-          count++;
+          final MethodSignature signature = LambdaUtil.getFunction(PsiUtil.resolveClassInType(type));
+          LOG.assertTrue(signature != null, type.getCanonicalText());
+          signatures.add(signature);
         }
       }
 
-      if (count > 1) {
+      if (signatures.size() > 1) {
         return "Multiple non-overriding abstract methods found in " + functionalInterfaceType.getPresentableText();
       }
       return null;

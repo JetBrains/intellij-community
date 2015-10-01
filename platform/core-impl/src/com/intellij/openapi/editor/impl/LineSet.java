@@ -183,6 +183,23 @@ public class LineSet{
     return new LineSet(myStarts, flags, myLength);
   }
 
+  LineSet clearModificationFlags(int startLine, int endLine) {
+    if (startLine > endLine) {
+      throw new IllegalArgumentException("endLine < startLine: " + endLine + " < " + startLine + "; lineCount: " + getLineCount());
+    }
+    checkLineIndex(startLine);
+    checkLineIndex(endLine - 1);
+
+    if (isLastEmptyLine(endLine - 1)) endLine--;
+    if (startLine >= endLine) return this;
+
+    byte[] flags = myFlags.clone();
+    for (int i = startLine; i < endLine; i++) {
+      flags[i] &= ~MODIFIED_MASK;
+    }
+    return new LineSet(myStarts, flags, myLength);
+  }
+
   LineSet clearModificationFlags() {
     byte[] flags = myFlags.clone();
     for (int i = 0; i < flags.length; i++) {

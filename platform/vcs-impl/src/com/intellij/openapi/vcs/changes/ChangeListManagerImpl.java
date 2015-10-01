@@ -55,7 +55,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.continuation.ContinuationPause;
 import com.intellij.util.messages.Topic;
-import com.intellij.vcsUtil.Rethrow;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.CalledInAwt;
@@ -761,7 +760,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
     catch (Throwable t) {
       LOG.debug(t);
-      Rethrow.reThrowRuntime(t);
+      ExceptionUtil.rethrowAllAsUnchecked(t);
     }
     finally {
       if (!myUpdater.isStopped()) {

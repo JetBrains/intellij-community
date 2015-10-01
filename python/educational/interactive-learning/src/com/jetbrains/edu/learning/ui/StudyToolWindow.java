@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -27,15 +28,17 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.actions.*;
-import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +47,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
+import java.io.IOException;
 
 public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvider, Disposable {
 
@@ -54,15 +58,22 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
     JPanel toolbarPanel = createToolbarPanel();
     setToolbar(toolbarPanel);
 
-    final StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
     final JTextPane taskTextPane = createTaskTextPane();
 
-    if (studyEditor == null) {
+    VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
+    TaskFile taskFile = null;
+    for (VirtualFile file : files) {
+      taskFile = StudyUtils.getTaskFile(project, file);
+      if (taskFile != null) {
+        break;
+      }
+    }
+    if (taskFile == null) {
       taskTextPane.setText(EMPTY_TASK_TEXT);
       setContent(taskTextPane);
       return;
     }
-    final Task task = studyEditor.getTaskFile().getTask();
+    final Task task = taskFile.getTask();
 
     if (task != null) {
       final String taskText = task.getText();
@@ -78,7 +89,7 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
   }
 
   @NotNull
-  private JTextPane createTaskTextPane() {
+  private static JTextPane createTaskTextPane() {
     final JTextPane taskTextPane = new JTextPane();
     taskTextPane.setContentType(new HTMLEditorKit().getContentType());
     final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -89,7 +100,9 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
                       "font-size: " + font.getSize() + "pt; }";
     ((HTMLDocument)taskTextPane.getDocument()).getStyleSheet().addRule(bodyRule);
     taskTextPane.setEditable(false);
-    taskTextPane.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+    if (!UIUtil.isUnderDarcula()) {
+      taskTextPane.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+    }
     taskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
     return taskTextPane;
   }
@@ -113,6 +126,7 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
   }
 
   static class StudyFileEditorManagerListener implements FileEditorManagerListener {
+    private static final Logger LOG = Logger.getInstance(StudyFileEditorManagerListener.class);
     private Project myProject;
     private JTextPane myTaskTextPane;
 
@@ -124,7 +138,7 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
     @Override
     public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       Task task = getTask(file);
-      setTaskText(task);
+      setTaskText(task, file.getParent());
     }
 
     @Override
@@ -137,7 +151,7 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
       VirtualFile file = event.getNewFile();
       if (file != null) {
         Task task = getTask(file);
-        setTaskText(task);
+        setTaskText(task, file.getParent());
       }
     }
 
@@ -152,12 +166,23 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
       }
     }
 
-    private void setTaskText(@Nullable final Task task) {
+    private void setTaskText(@Nullable final Task task, @Nullable final VirtualFile taskDirectory) {
       if (task == null) {
         myTaskTextPane.setText(EMPTY_TASK_TEXT);
         return;
       }
       String text = task.getText();
+      if (text == null && taskDirectory != null) {
+        VirtualFile taskTextFile = taskDirectory.findChild(EduNames.TASK_HTML);
+        if (taskTextFile != null) {
+          try {
+            text = FileUtil.loadTextAndClose(taskTextFile.getInputStream());
+          }
+          catch (IOException e) {
+            LOG.info(e);
+          }
+        }
+      }
       myTaskTextPane.setText(text);
     }
   }

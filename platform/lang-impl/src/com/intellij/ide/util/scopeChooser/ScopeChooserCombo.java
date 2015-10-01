@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.packageDependencies.ChangeListsScopesProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -49,6 +50,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private DependencyValidationManager myValidationManager;
   private boolean myCurrentSelection = true;
   private boolean myUsageView = true;
+  private Condition<ScopeDescriptor> myScopeFilter;
 
   public ScopeChooserCombo() {
     super(new IgnoringComboBox(){
@@ -68,7 +70,15 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     init(project, false, true, preselect);
   }
 
-  public void init(final Project project, final boolean suggestSearchInLibs, final boolean prevSearchWholeFiles,  final String preselect) {
+  public void init(final Project project, final boolean suggestSearchInLibs, final boolean prevSearchWholeFiles, final String preselect) {
+    init(project, suggestSearchInLibs, prevSearchWholeFiles, preselect, null);
+  }
+
+  public void init(final Project project,
+                   final boolean suggestSearchInLibs,
+                   final boolean prevSearchWholeFiles,
+                   final String preselect,
+                   @Nullable Condition<ScopeDescriptor> scopeFilter) {
     mySuggestSearchInLibs = suggestSearchInLibs;
     myPrevSearchFiles = prevSearchWholeFiles;
     myProject = project;
@@ -82,6 +92,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
         }
       }
     };
+    myScopeFilter = scopeFilter;
     myNamedScopeManager = NamedScopeManager.getInstance(project);
     myNamedScopeManager.addScopeListener(myScopeListener);
     myValidationManager = DependencyValidationManager.getInstance(project);
@@ -163,7 +174,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       model.addElement(new ScopeSeparator("VCS Scopes"));
       for (NamedScope changeListScope : changeLists) {
         final GlobalSearchScope scope = GlobalSearchScopesCore.filterScope(myProject, changeListScope);
-        model.addElement(new ScopeDescriptor(scope));
+        addScopeDescriptor(model, new ScopeDescriptor(scope));
       }
     }
 
@@ -179,7 +190,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     if (!customScopes.isEmpty()) {
       model.addElement(new ScopeSeparator("Custom Scopes"));
       for (ScopeDescriptor scope : customScopes) {
-        model.addElement(scope);
+        addScopeDescriptor(model, scope);
       }
     }
 
@@ -209,12 +220,20 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     for (SearchScope scope : PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(myProject, context, mySuggestSearchInLibs,
                                                                                              myPrevSearchFiles, myCurrentSelection,
                                                                                              myUsageView)) {
-      model.addElement(new ScopeDescriptor(scope));
+      addScopeDescriptor(model, new ScopeDescriptor(scope));
     }
     for (ScopeDescriptorProvider provider : Extensions.getExtensions(ScopeDescriptorProvider.EP_NAME)) {
       for (ScopeDescriptor scopeDescriptor : provider.getScopeDescriptors(myProject)) {
-        model.addElement(scopeDescriptor);
+        if(myScopeFilter == null || myScopeFilter.value(scopeDescriptor)) {
+          model.addElement(scopeDescriptor);
+        }
       }
+    }
+  }
+
+  private void addScopeDescriptor(DefaultComboBoxModel model, ScopeDescriptor scopeDescriptor) {
+    if (myScopeFilter == null || myScopeFilter.value(scopeDescriptor)) {
+      model.addElement(scopeDescriptor);
     }
   }
 

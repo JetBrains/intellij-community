@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.google.common.util.concurrent.Atomics;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -542,6 +543,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   private void checkLengthConsistency() {
     Document document = getCachedDocument();
+    if (document instanceof DocumentWindow) {
+      return;
+    }
     if (document != null &&
         ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myManager.getProject())).getSynchronizer().isInSynchronization(document)) {
       return;

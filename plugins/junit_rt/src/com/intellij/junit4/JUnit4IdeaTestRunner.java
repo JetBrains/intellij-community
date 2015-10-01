@@ -18,6 +18,7 @@ package com.intellij.junit4;
 import com.intellij.rt.execution.junit.*;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
+import org.junit.ComparisonFailure;
 import org.junit.internal.requests.ClassRequest;
 import org.junit.internal.requests.FilterRequest;
 import org.junit.runner.*;
@@ -76,7 +77,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
           }
 
           public void testFailure(Failure failure) throws Exception {
-            mySuccess = false;
+            mySuccess = ComparisonFailureData.isAssertionError(failure.getException().getClass());
           }
 
           public void testAssumptionFailure(Failure failure) {

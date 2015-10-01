@@ -22,6 +22,7 @@ import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -34,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
@@ -311,8 +313,12 @@ public interface GroovyElementTypes {
 
   GroovyElementType EXPLICIT_CONSTRUCTOR = new GroovyElementType("explicit constructor invokation");
 
-  //throws
-  GroovyElementType THROW_CLAUSE = new GroovyElementType("throw clause", true);
+  GrReferenceListElementType<GrThrowsClause> THROW_CLAUSE = new GrReferenceListElementType<GrThrowsClause>("throw clause") {
+    @Override
+    public GrThrowsClause createPsi(@NotNull GrReferenceListStub stub) {
+      return new GrThrowsClauseImpl(stub);
+    }
+  };
   //annotation
   GroovyElementType ANNOTATION_ARRAY_INITIALIZER = new GroovyElementType("annotation array initializer");
   GroovyElementType ANNOTATION_ARGUMENTS = new GroovyElementType("annotation arguments", true);
@@ -337,7 +343,7 @@ public interface GroovyElementTypes {
     @Override
     public GrParameterStub createStub(@NotNull GrParameter psi, StubElement parentStub) {
       return new GrParameterStub(parentStub, StringRef.fromString(psi.getName()), GrStubUtils.getAnnotationNames(psi), GrStubUtils.getTypeText(
-        psi.getTypeElementGroovy()));
+        psi.getTypeElementGroovy()), GrParameterStub.encodeFlags(psi.getInitializerGroovy() != null, psi.isVarArgs()));
     }
 
     @Override
@@ -345,6 +351,7 @@ public interface GroovyElementTypes {
       dataStream.writeName(stub.getName());
       GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
       GrStubUtils.writeNullableString(dataStream, stub.getTypeText());
+      dataStream.writeVarInt(stub.getFlags());
     }
 
     @NotNull
@@ -353,7 +360,8 @@ public interface GroovyElementTypes {
       final StringRef name = dataStream.readName();
       final String[] annotations = GrStubUtils.readStringArray(dataStream);
       final String typeText = GrStubUtils.readNullableString(dataStream);
-      return new GrParameterStub(parentStub, name, annotations, typeText);
+      final int flags = dataStream.readVarInt();
+      return new GrParameterStub(parentStub, name, annotations, typeText, flags);
     }
   };
 

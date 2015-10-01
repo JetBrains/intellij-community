@@ -217,7 +217,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
         updateRightComponent(true);
       }
     });
-    ListScrollingUtil.installActions(list);
+    ScrollingUtil.installActions(list);
 
     //    installSpeedSearch(list); // TODO
 

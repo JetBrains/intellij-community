@@ -23,16 +23,4 @@ public interface VcsLogColorManager {
    */
   boolean isMultipleRoots();
 
-  /**
-   * Returns the color of the border drawn around a reference label.
-   */
-  @NotNull
-  Color getReferenceBorderColor();
-
-  /**
-   * Returns the color of the border separating the thin root indicator drawn at the left of the commit table.
-   */
-  @NotNull
-  Color getRootIndicatorBorder();
-
 }

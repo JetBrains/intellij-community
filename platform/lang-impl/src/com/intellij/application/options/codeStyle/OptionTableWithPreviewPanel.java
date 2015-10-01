@@ -223,6 +223,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
         Object node = treePath.getLastPathComponent();
 
+        @SuppressWarnings("unchecked")
         TableCellRenderer renderer = COLUMNS[column].getRenderer(node);
         return renderer == null ? super.getCellRenderer(row, column) : renderer;
       }
@@ -233,6 +234,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         if (treePath == null) return super.getCellEditor(row, column);
 
         Object node = treePath.getLastPathComponent();
+        @SuppressWarnings("unchecked")
         TableCellEditor editor = COLUMNS[column].getEditor(node);
         return editor == null ? super.getCellEditor(row, column) : editor;
       }
@@ -260,7 +262,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     titleColumn.setMaxWidth(maxWidth);
     titleColumn.setResizable(false);
 
-    final TableColumn levelColumn = treeTable.getColumnModel().getColumn(1);
+    //final TableColumn levelColumn = treeTable.getColumnModel().getColumn(1);
     //TODO[max]: better preffered size...
     //TODO[kb]: Did I fixed it by making the last column floating?
     //levelColumn.setPreferredWidth(valueSize.width);
@@ -294,7 +296,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
   protected abstract void initTables();
 
-  private void resetNode(TreeNode node, CodeStyleSettings settings) {
+  private static void resetNode(TreeNode node, CodeStyleSettings settings) {
     if (node instanceof MyTreeNode) {
       ((MyTreeNode)node).reset(settings);
     }
@@ -304,7 +306,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  private void applyNode(TreeNode node, final CodeStyleSettings settings) {
+  private static void applyNode(TreeNode node, final CodeStyleSettings settings) {
     if (node instanceof MyTreeNode) {
       ((MyTreeNode)node).apply(settings);
     }
@@ -314,7 +316,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  private boolean isModified(TreeNode node, final CodeStyleSettings settings) {
+  private static boolean isModified(TreeNode node, final CodeStyleSettings settings) {
     if (node instanceof MyTreeNode) {
       if (((MyTreeNode)node).isModified(settings)) return true;
     }
@@ -632,7 +634,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   };
 
-  private class MyTreeNode extends DefaultMutableTreeNode {
+  private static class MyTreeNode extends DefaultMutableTreeNode {
     private final Option myKey;
     private final String myText;
     private Object myValue;
@@ -677,7 +679,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  private class MyValueRenderer implements TableCellRenderer {
+  private static class MyValueRenderer implements TableCellRenderer {
     private final JLabel myComboBox = new JLabel();
     private final JCheckBox myCheckBox = new JBCheckBox();
     private final JPanel myEmptyLabel = new JPanel();
@@ -852,7 +854,9 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         }
       }
 
-      myCurrentEditor.setBackground(table.getBackground());
+      if (myCurrentEditor != null) {
+        myCurrentEditor.setBackground(table.getBackground());
+      }
       return myCurrentEditor;
     }
   }

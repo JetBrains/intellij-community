@@ -35,6 +35,13 @@ public enum Side {
   }
 
   @NotNull
+  public static Side fromIndex(int index) {
+    if (index == 0) return LEFT;
+    if (index == 1) return RIGHT;
+    throw new IndexOutOfBoundsException("index: " + index);
+  }
+
+  @NotNull
   public static Side fromLeft(boolean isLeft) {
     return isLeft ? LEFT : RIGHT;
   }

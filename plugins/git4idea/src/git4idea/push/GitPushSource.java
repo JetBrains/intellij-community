@@ -20,15 +20,15 @@ import com.intellij.dvcs.push.PushSource;
 import git4idea.GitLocalBranch;
 import org.jetbrains.annotations.NotNull;
 
-abstract class GitPushSource implements PushSource {
+public abstract class GitPushSource implements PushSource {
 
   @NotNull
-  static GitPushSource create(@NotNull GitLocalBranch branch) {
+  public static GitPushSource create(@NotNull GitLocalBranch branch) {
     return new OnBranch(branch);
   }
 
   @NotNull
-  static GitPushSource create(@NotNull String revision) {
+  public static GitPushSource create(@NotNull String revision) {
     return new DetachedHead(revision);
   }
 

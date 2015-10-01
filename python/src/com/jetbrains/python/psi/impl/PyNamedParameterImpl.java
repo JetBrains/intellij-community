@@ -219,7 +219,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           final PyClass containingClass = func.getContainingClass();
           if (containingClass != null) {
             PyType initType = null;
-            final PyFunction init = containingClass.findInitOrNew(true, null);
+            final PyFunction init = containingClass.findInitOrNew(true, context);
             if (init != null && init != func) {
               initType = context.getReturnType(init);
               if (init.getContainingClass() != containingClass) {

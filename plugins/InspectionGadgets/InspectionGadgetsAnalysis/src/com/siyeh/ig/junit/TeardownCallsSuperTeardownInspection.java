@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -95,17 +96,22 @@ public class TeardownCallsSuperTeardownInspection extends BaseInspection {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new TeardownCallsSuperTeardownVisitor();
+    return new TeardownCallsSuperTeardownVisitor("tearDown");
   }
 
-  private static class TeardownCallsSuperTeardownVisitor
-    extends BaseInspectionVisitor {
+  public static class TeardownCallsSuperTeardownVisitor extends BaseInspectionVisitor {
+
+    private final String myMethodName;
+
+    public TeardownCallsSuperTeardownVisitor(String methodName) {
+      myMethodName = methodName;
+    }
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       //note: no call to super;
       @NonNls final String methodName = method.getName();
-      if (!"tearDown".equals(methodName)) {
+      if (!myMethodName.equals(methodName)) {
         return;
       }
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -122,14 +128,10 @@ public class TeardownCallsSuperTeardownInspection extends BaseInspection {
       if (targetClass == null) {
         return;
       }
-      if (!InheritanceUtil.isInheritor(targetClass,
-                                       "junit.framework.TestCase")) {
+      if (!InheritanceUtil.isInheritor(targetClass, "junit.framework.TestCase")) {
         return;
       }
-      final CallToSuperTeardownVisitor visitor =
-        new CallToSuperTeardownVisitor();
-      method.accept(visitor);
-      if (visitor.isCallToSuperTeardownFound()) {
+      if (MethodCallUtils.containsSuperMethodCall(myMethodName, method)) {
         return;
       }
       registerMethodError(method);

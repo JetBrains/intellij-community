@@ -28,5 +28,11 @@ public interface RenameInputValidator {
   ExtensionPointName<RenameInputValidator> EP_NAME = ExtensionPointName.create("com.intellij.renameInputValidator");
 
   ElementPattern<? extends PsiElement> getPattern();
+
+  /**
+   * Is invoked for elements accepted by pattern {@link #getPattern()}. 
+   * Should return true if {@link RenameInputValidatorEx} is intended to return custom error message, 
+   * otherwise default message "newName is not a valid identifier" would be shown
+   */
   boolean isInputValid(final String newName, final PsiElement element, final ProcessingContext context);
 }

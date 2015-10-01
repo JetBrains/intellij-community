@@ -15,13 +15,13 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.execution.filters.UrlFilter;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +61,7 @@ public class CopyUrlAction extends DumbAwareAction {
     CharSequence chars = editor.getDocument().getCharsSequence();
     while (offset > 0 && seemsUrlPart(chars.charAt(offset - 1))) offset--;
 
-    Matcher matcher = UrlFilter.URL_PATTERN.matcher(chars.subSequence(offset, chars.length()));
+    Matcher matcher = URLUtil.URL_PATTERN.matcher(chars.subSequence(offset, chars.length()));
     if (matcher.lookingAt()) {
       return matcher.group();
     }

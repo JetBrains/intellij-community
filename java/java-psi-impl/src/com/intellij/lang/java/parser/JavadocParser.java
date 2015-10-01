@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,11 +137,11 @@ public class JavadocParser {
     else if (TAG_VALUES_SET.contains(tokenType)) {
       if (SEE_TAG.equals(tagName) && !isInline ||
           LINK_TAG.equals(tagName) && isInline) {
-        parseSeeTagValue(builder);
+        parseSeeTagValue(builder, false);
       }
       else {
         if (JavaParserUtil.getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_4) && LINK_PLAIN_TAG.equals(tagName) && isInline) {
-          parseSeeTagValue(builder);
+          parseSeeTagValue(builder, false);
         }
         else if (!isInline && (THROWS_TAG.equals(tagName) || EXCEPTION_TAG.equals(tagName))) {
           final PsiBuilder.Marker tagValue = builder.mark();
@@ -154,7 +154,7 @@ public class JavadocParser {
         }
         else {
           if (JavaParserUtil.getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_5) && VALUE_TAG.equals(tagName) && isInline) {
-            parseSeeTagValue(builder);
+            parseSeeTagValue(builder, true);
           }
           else {
             parseSimpleTagValue(builder, false);
@@ -167,7 +167,7 @@ public class JavadocParser {
     }
   }
 
-  private static void parseSeeTagValue(@NotNull final PsiBuilder builder) {
+  private static void parseSeeTagValue(@NotNull final PsiBuilder builder, boolean allowBareFieldReference) {
     final IElementType tokenType = getTokenType(builder);
     if (tokenType == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) {
       parseMethodRef(builder, builder.mark());
@@ -179,6 +179,11 @@ public class JavadocParser {
 
       if (getTokenType(builder) == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) {
         parseMethodRef(builder, refStart);
+      }
+      else if (allowBareFieldReference) {
+        refStart.rollbackTo();
+        builder.remapCurrentToken(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
+        parseMethodRef(builder, builder.mark());
       }
       else {
         refStart.drop();
@@ -192,8 +197,9 @@ public class JavadocParser {
   }
 
   private static void parseMethodRef(@NotNull final PsiBuilder builder, @NotNull final PsiBuilder.Marker refStart) {
-    builder.advanceLexer();
-
+    if (getTokenType(builder) == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) {
+      builder.advanceLexer();
+    }
     if (getTokenType(builder) != JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
       refStart.done(JavaDocElementType.DOC_METHOD_OR_FIELD_REF);
       return;

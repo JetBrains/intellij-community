@@ -1,4 +1,4 @@
-<component>
+<idea-plugin>
   <actions>
 
     <group id="ToolsXmlGroup" popup="true" class="com.intellij.xml.actions.XmlActionsGroup">
@@ -124,4 +124,4 @@
       </group>
     </group>
   </actions>
-</component>
+</idea-plugin>

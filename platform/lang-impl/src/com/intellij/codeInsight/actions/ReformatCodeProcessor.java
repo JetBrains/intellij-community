@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
 
   private void prepareUserNotificationMessage(@NotNull Document document, @NotNull CharSequence before) {
     LOG.assertTrue(getInfoCollector() != null);
-    int number = FormatChangedTextUtil.calculateChangedLinesNumber(document, before);
+    int number = FormatChangedTextUtil.getInstance().calculateChangedLinesNumber(document, before);
     if (number > 0) {
       String message = "formatted " + number + " line" + (number > 1 ? "s" : "");
       getInfoCollector().setReformatCodeNotification(message);
@@ -172,7 +172,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     }
 
     if (processChangedTextOnly) {
-      return FormatChangedTextUtil.getChangedTextRanges(myProject, file);
+      return FormatChangedTextUtil.getInstance().getChangedTextRanges(myProject, file);
     }
 
     return !myRanges.isEmpty() ? myRanges : ContainerUtil.newArrayList(file.getTextRange());

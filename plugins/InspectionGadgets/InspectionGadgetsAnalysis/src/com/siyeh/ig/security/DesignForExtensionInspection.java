@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,11 @@ public class DesignForExtensionInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return !FileTypeUtils.isInServerPageFile(file); // IDEADEV-25538
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new DesignForExtensionVisitor();
   }
@@ -94,10 +99,6 @@ public class DesignForExtensionInspection extends BaseInspection {
 
     @Override
     public void visitMethod(PsiMethod method) {
-      if (FileTypeUtils.isInServerPageFile(method)) {
-        // IDEADEV-25538
-        return;
-      }
       super.visitMethod(method);
       if (method.isConstructor()) {
         return;

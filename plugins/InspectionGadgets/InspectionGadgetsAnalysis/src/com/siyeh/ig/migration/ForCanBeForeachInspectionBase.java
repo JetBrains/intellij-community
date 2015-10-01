@@ -282,7 +282,7 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
     return visitor.getNumCallsToIteratorNext();
   }
 
-  private static boolean isIteratorMethodCalled(PsiVariable iterator, PsiStatement body) {
+  public static boolean isIteratorMethodCalled(PsiVariable iterator, PsiStatement body) {
     final IteratorMethodCallVisitor visitor = new IteratorMethodCallVisitor(iterator);
     body.accept(visitor);
     return visitor.isMethodCalled();
@@ -599,8 +599,7 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
     }
   }
 
-  private static class IteratorMethodCallVisitor
-    extends JavaRecursiveElementWalkingVisitor {
+  private static class IteratorMethodCallVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private boolean methodCalled;
     private final PsiVariable iterator;
@@ -627,7 +626,7 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
       if (HardcodedMethodConstants.NEXT.equals(name)) {
         return;
       }
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
       if (!(qualifier instanceof PsiReferenceExpression)) {
         return;
       }
@@ -644,8 +643,12 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
         return;
       }
       super.visitMethodReferenceExpression(expression);
-      final PsiExpression qualifierExpression = expression.getQualifierExpression();
-      if (qualifierExpression instanceof PsiReferenceExpression && iterator.equals(((PsiReferenceExpression)qualifierExpression).resolve())) {
+      final PsiExpression qualifierExpression = ParenthesesUtils.stripParentheses(expression.getQualifierExpression());
+      if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifierExpression;
+      if (iterator.equals(referenceExpression.resolve())) {
         methodCalled = true;
       }
     }

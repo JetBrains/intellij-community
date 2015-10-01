@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.EditorWindowImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.SettingsSavingComponent;
@@ -30,13 +31,16 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBus;
@@ -110,9 +114,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
       if (myUnitTestMode) {
         myStopTrackingDocuments = true;
         try {
-          LOG.error("Too many uncommitted documents for " + myProject + ":\n" + myUncommittedDocuments);
+          LOG.error("Too many uncommitted documents for " + myProject + ":\n" + StringUtil.join(myUncommittedDocuments, "\n") + 
+                    "\n\n Project creation trace: " + myProject.getUserData(ProjectImpl.CREATION_TRACE));
         }
         finally {
+          //noinspection TestOnlyProblems
           clearUncommittedDocuments();
         }
       }
@@ -183,5 +189,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   @Override
   public void reparseFiles(@NotNull Collection<VirtualFile> files, boolean includeOpenFiles) {
     FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);
+  }
+
+  @NotNull
+  @Override
+  protected DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
+    return MultiHostRegistrarImpl.freezeWindow((DocumentWindowImpl)document);
   }
 }

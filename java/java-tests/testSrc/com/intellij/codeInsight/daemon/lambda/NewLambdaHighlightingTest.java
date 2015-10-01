@@ -203,6 +203,35 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testNonAccessibleFunctionalInterfaceTypeArguments() throws Exception {
+    doTest();
+  }
+
+  //JDK-8043374
+  public void testIntersectionTypeOfDifferentParameterizationOfTheSameClassInNonWildcardParameterization() throws Exception {
+    doTest();
+  }
+
+  public void testPreserveCapturedWildcardsDuringNonWildcardParameterization() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA136401() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA133920() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA132253() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA144840() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

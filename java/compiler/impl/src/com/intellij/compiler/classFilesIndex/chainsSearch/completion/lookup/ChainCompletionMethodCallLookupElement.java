@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.completion.StaticallyImportable;
-import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.sub.SubLookupElement;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.sub.SubLookupElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiClass;
@@ -64,7 +64,7 @@ public class ChainCompletionMethodCallLookupElement extends JavaMethodCallElemen
 
   private void configureAutoCompletionPolicy() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (PropertiesComponent.getInstance(myMethod.getProject()).getBoolean(PROP_METHODS_CHAIN_COMPLETION_AUTO_COMPLETION, false)) {
+      if (PropertiesComponent.getInstance(myMethod.getProject()).getBoolean(PROP_METHODS_CHAIN_COMPLETION_AUTO_COMPLETION)) {
         setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
       }
     }

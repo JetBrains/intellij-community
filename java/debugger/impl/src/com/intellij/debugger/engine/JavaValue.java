@@ -38,7 +38,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XExpression;
@@ -46,6 +46,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation;
@@ -82,7 +83,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                     @NotNull EvaluationContextImpl evaluationContext,
                     NodeManagerImpl nodeManager,
                     boolean contextSet) {
-    super(valueDescriptor.getName());
+    super(valueDescriptor.calcValueName());
     myParent = parent;
     myValueDescriptor = valueDescriptor;
     myEvaluationContext = evaluationContext;
@@ -134,7 +135,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
       @Override
       protected void commandCancelled() {
-        node.setPresentation(null, new JavaValuePresentation("", null, DebuggerBundle.message("error.context.has.changed"), myValueDescriptor), false);
+        node.setPresentation(null, new XErrorValuePresentation(DebuggerBundle.message("error.context.has.changed")), false);
       }
 
       @Override
@@ -181,7 +182,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   public abstract static class JavaFullValueEvaluator extends XFullValueEvaluator {
-    private final EvaluationContextImpl myEvaluationContext;
+    protected final EvaluationContextImpl myEvaluationContext;
 
     public JavaFullValueEvaluator(@NotNull String linkText, EvaluationContextImpl evaluationContext) {
       super(linkText);
@@ -309,12 +310,12 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     @NotNull
     @Override
     public String getSeparator() {
-      String fullName = myValueDescriptor.calcValueName();
-      String name = myValueDescriptor.getName();
-      if (!StringUtil.isEmpty(fullName) && !name.equals(fullName) && fullName.startsWith(name)) {
-        return fullName.substring(name.length()) + " " + DEFAULT_SEPARATOR;
+      boolean emptyAfterSeparator = !myValueDescriptor.isShowIdLabel() && StringUtil.isEmpty(myValue);
+      String declaredType = myValueDescriptor.getDeclaredTypeLabel();
+      if (!StringUtil.isEmpty(declaredType)) {
+        return emptyAfterSeparator ? declaredType : declaredType + " " + DEFAULT_SEPARATOR;
       }
-      return DEFAULT_SEPARATOR;
+      return emptyAfterSeparator ? "" : DEFAULT_SEPARATOR;
     }
 
     @Override
@@ -525,7 +526,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             @Override
             public XExpression compute() {
               try {
-                PsiExpression psiExpression = getDescriptor().getTreeEvaluation(JavaValue.this, getDebuggerContext());
+                PsiElement psiExpression = getDescriptor().getTreeEvaluation(JavaValue.this, getDebuggerContext());
                 if (psiExpression != null) {
                   XExpression res = TextWithImportsImpl.toXExpression(new TextWithImportsImpl(psiExpression));
                   // add runtime imports if any

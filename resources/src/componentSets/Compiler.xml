@@ -1,4 +1,4 @@
-<components>
+<idea-plugin>
   <application-components>
     <component>
       <implementation-class>com.intellij.compiler.impl.TranslatingCompilerFilesMonitor</implementation-class>
@@ -27,4 +27,4 @@
     <projectService serviceInterface="com.intellij.compiler.ProblemsView" serviceImplementation="com.intellij.compiler.impl.ProblemsViewImpl"/>
   </extensions>
 
-</components>
+</idea-plugin>

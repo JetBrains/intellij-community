@@ -108,6 +108,6 @@ public abstract class TextAttributesDescription extends ColorAndFontDescription 
   @Override
   public void setInherited(boolean isInherited) {
     super.setInherited(isInherited);
-    myAttributes.setEnforcedDefaults(!isInherited);
+    myAttributes.setEnforceEmpty(!isInherited);
   }
 }

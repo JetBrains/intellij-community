@@ -34,12 +34,13 @@ import java.util.HashSet;
 import java.util.List;
 
 public class KeywordArgumentCompletionUtil {
-  public static void collectFunctionArgNames(PyElement element, List<LookupElement> ret) {
+  public static void collectFunctionArgNames(PyElement element, List<LookupElement> ret,  final @NotNull TypeEvalContext context) {
     PyCallExpression callExpr = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
     if (callExpr != null) {
       PyExpression callee = callExpr.getCallee();
       if (callee instanceof PyReferenceExpression && element.getParent() == callExpr.getArgumentList()) {
-        final QualifiedResolveResult result = ((PyReferenceExpression)callee).followAssignmentsChain(PyResolveContext.defaultContext());
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+        final QualifiedResolveResult result = ((PyReferenceExpression)callee).followAssignmentsChain(resolveContext);
         PsiElement def = result.getElement();
         if (def instanceof PyFunction) {
           addKeywordArgumentVariants((PyFunction)def, callExpr, ret);
@@ -201,7 +202,7 @@ public class KeywordArgumentCompletionUtil {
       if (Comparing.equal(myKwArgs.getName(), operandName) &&
           argument instanceof PyStringLiteralExpression) {
         String name = ((PyStringLiteralExpression)argument).getStringValue();
-        if (PyUtil.isPythonIdentifier(name)) {
+        if (PyNames.isIdentifier(name)) {
           myRet.add(PyUtil.createNamedParameterLookup(name, argument.getProject()));
         }
       }

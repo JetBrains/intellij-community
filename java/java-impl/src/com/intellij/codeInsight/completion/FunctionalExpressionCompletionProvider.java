@@ -64,6 +64,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
         final PsiType functionalInterfaceType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(defaultType);
         final PsiMethod functionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
         if (functionalInterfaceMethod != null) {
+          assert functionalInterfaceType != null;
           PsiParameter[] params = new PsiParameter[0];
           final PsiElement originalPosition = parameters.getPosition();
           final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(functionalInterfaceMethod, PsiUtil.resolveGenericsClassInType(functionalInterfaceType));
@@ -90,13 +91,16 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
             lambdaExpression = (PsiLambdaExpression)codeStyleManager.reformat(lambdaExpression);
             paramsString = lambdaExpression.getParameterList().getText();
             final LookupElementBuilder builder =
-              LookupElementBuilder.create(functionalInterfaceMethod, paramsString).withPresentableText(paramsString + " -> {}").withInsertHandler(new InsertHandler<LookupElement>() {
+              LookupElementBuilder.create(functionalInterfaceMethod, paramsString)
+                .withPresentableText(paramsString + " -> {}").withInsertHandler(new InsertHandler<LookupElement>() {
                 @Override
                 public void handleInsert(InsertionContext context, LookupElement item) {
                   final Editor editor = context.getEditor();
                   EditorModificationUtil.insertStringAtCaret(editor, " -> ");
                 }
-              }).withIcon(AllIcons.Nodes.AnonymousClass);
+              })
+                .withTypeText(functionalInterfaceType.getPresentableText())
+                .withIcon(AllIcons.Nodes.Function);
             LookupElement lambdaElement = builder.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
             if (prioritize) {
               lambdaElement = PrioritizedLookupElement.withPriority(lambdaElement, 1);
@@ -131,7 +135,8 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
                           JavaCompletionUtil.insertClassReference(paramClass, file, startOffset);
                         }
                       })
-                      .withIcon(AllIcons.Nodes.AnonymousClass)
+                      .withTypeText(functionalInterfaceType.getPresentableText())
+                      .withIcon(AllIcons.Nodes.MethodReference)
                       .withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
                     if (prioritize && psiMethod.getContainingClass() == paramClass) {
                       methodRefLookupElement = PrioritizedLookupElement.withPriority(methodRefLookupElement, 1);

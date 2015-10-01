@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,12 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.*;
-import com.intellij.psi.search.searches.AnnotatedMembersSearch;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiElementProcessorAdapter;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.ClassesWithAnnotatedMembersSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -99,22 +102,16 @@ public class ConfigurationUtil {
     );
     if (testAnnotation != null) {
       //allScope is used to find all abstract test cases which probably have inheritors in the current 'scope'
-      AnnotatedMembersSearch.search(testAnnotation, GlobalSearchScope.allScope(manager.getProject())).forEach(new Processor<PsiMember>() {
-        public boolean process(final PsiMember annotated) {
-          final PsiClass containingClass;
-
+      ClassesWithAnnotatedMembersSearch.search(testAnnotation, GlobalSearchScope.allScope(manager.getProject())).forEach(new Processor<PsiClass>() {
+        public boolean process(final PsiClass annotated) {
           AccessToken token = ReadAction.start();
           try {
-            containingClass = annotated instanceof PsiClass ? (PsiClass)annotated : annotated.getContainingClass();
-            if (containingClass == null || annotated instanceof PsiMethod != isMethod) {
+            if (!processed.add(annotated)) { // don't process the same class twice regardless of it being in the scope
               return true;
             }
-            if (!processed.add(containingClass)) { // don't process the same class twice regardless of it being in the scope
-              return true;
-            }
-            final VirtualFile file = PsiUtilCore.getVirtualFile(containingClass);
-            if (file != null && scope.contains(file) && testClassFilter.isAccepted(containingClass)) {
-              if (!found.add(containingClass)) {
+            final VirtualFile file = PsiUtilCore.getVirtualFile(annotated);
+            if (file != null && scope.contains(file) && testClassFilter.isAccepted(annotated)) {
+              if (!found.add(annotated)) {
                 return true;
               }
               isJUnit4.set(Boolean.TRUE);
@@ -124,7 +121,7 @@ public class ConfigurationUtil {
             token.finish();
           }
 
-          ClassInheritorsSearch.search(containingClass, scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
+          ClassInheritorsSearch.search(annotated, scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
             @Override
             public boolean processInReadAction(PsiClass aClass) {
               if (testClassFilter.isAccepted(aClass)) {

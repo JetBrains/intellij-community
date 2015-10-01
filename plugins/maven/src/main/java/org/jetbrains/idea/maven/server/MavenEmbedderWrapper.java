@@ -158,12 +158,12 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
   @NotNull
   public List<String> retrieveVersions(@NotNull final String groupId,
                                        @NotNull final String artifactId,
-                                       @NotNull final String remoteRepository) throws MavenProcessCanceledException {
+                                       @NotNull final List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
 
     return perform(new RetriableCancelable<List<String>>() {
       @Override
       public List<String> execute() throws RemoteException, MavenServerProcessCanceledException {
-        return getOrCreateWrappee().retrieveAvailableVersions(groupId, artifactId, remoteRepository);
+        return getOrCreateWrappee().retrieveAvailableVersions(groupId, artifactId, remoteRepositories);
       }
     });
   }

@@ -19,12 +19,15 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyKeyIndex;
 import com.intellij.lang.properties.xml.XmlPropertiesFileImpl;
 import com.intellij.lang.properties.xml.XmlPropertiesIndex;
+import com.intellij.lang.properties.xml.XmlProperty;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.pom.PomTarget;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -186,5 +189,18 @@ public class PropertiesImplUtil extends PropertiesUtil {
       previousKey = key;
     }
     return true;
+  }
+
+  public static IProperty getProperty(PsiElement element) {
+    if (element instanceof IProperty) {
+      return (IProperty)element;
+    }
+    if (element instanceof PomTargetPsiElement) {
+      final PomTarget target = ((PomTargetPsiElement)element).getTarget();
+      if (target instanceof XmlProperty) {
+        return (IProperty)target;
+      }
+    }
+    return null;
   }
 }

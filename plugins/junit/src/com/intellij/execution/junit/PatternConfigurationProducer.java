@@ -16,6 +16,9 @@
 
 package com.intellij.execution.junit;
 
+import com.intellij.execution.Location;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -61,6 +64,13 @@ public class PatternConfigurationProducer extends AbstractPatternBasedConfigurat
     data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
     data.setScope(setupPackageConfiguration(context, configuration, data.getScope()));
     configuration.setGeneratedName();
+    final Location contextLocation = context.getLocation();
+    if (contextLocation instanceof PsiMemberParameterizedLocation) {
+      final String paramSetName = ((PsiMemberParameterizedLocation)contextLocation).getParamSetName();
+      if (paramSetName != null) {
+        configuration.setProgramParameters(paramSetName);
+      }
+    }
     return true;
   }
 

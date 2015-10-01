@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteImportFix;
-import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +50,11 @@ public class UnusedImportInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return !FileTypeUtils.isInServerPageFile(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnusedImportVisitor();
   }
@@ -58,9 +63,6 @@ public class UnusedImportInspection extends BaseInspection {
 
     @Override
     public void visitJavaFile(PsiJavaFile file) {
-      if (FileTypeUtils.isInServerPageFile(file)) {
-        return;
-      }
       final PsiClass[] classes = file.getClasses();
       final PsiPackageStatement packageStatement = file.getPackageStatement();
       final PsiModifierList annotationList;

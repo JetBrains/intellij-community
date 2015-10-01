@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,6 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     }
     myModulesGraph = buildGraph();
     DFSTBuilder<Module> builder = new DFSTBuilder<Module>(myModulesGraph);
-    builder.buildDFST();
     if (builder.isAcyclic()){
       mySplitter.setProportion(1.f);
     } else {

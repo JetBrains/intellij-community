@@ -1,147 +1,164 @@
 package com.intellij.configurationStore
 
-import com.intellij.ProjectTopics
-import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.StoreUtil
+import com.intellij.openapi.components.impl.stores.BatchUpdateListener
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.ModuleAdapter
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.openapi.module.ModuleTypeId
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.FixtureRule
-import com.intellij.testFramework.RuleChain
-import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder
-import com.intellij.testFramework.exists
-import com.intellij.testFramework.fixtures.ModuleFixture
-import com.intellij.util.Function
-import com.intellij.util.SmartList
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.CoreMatchers.not
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.collection.IsEmptyCollection.empty
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.*
+import gnu.trove.TObjectIntHashMap
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExternalResource
-import java.io.File
-import java.util.UUID
-import kotlin.properties.Delegates
+import java.nio.file.Path
+import java.nio.file.Paths
 
+@RunsInEdt
+@RunsInActiveStoreMode
 class ModuleStoreTest {
-  var moduleFixture: ModuleFixture by Delegates.notNull()
-  val module by Delegates.lazy { moduleFixture.getModule() }
+  companion object {
+     @ClassRule val projectRule = ProjectRule()
 
-  // we test fireModuleRenamedByVfsEvent
-  private val oldModuleNames = SmartList<String>()
+    val MODULE_DIR = "\$MODULE_DIR$"
 
-  private val fixtureManager = FixtureRule {
-    moduleFixture = addModule(javaClass<EmptyModuleFixtureBuilder<*>>()).getFixture()
-  }
-
-  private val ruleChain = RuleChain(
-    object : ExternalResource() {
-      // should be invoked after project tearDown
-      override fun after() {
-        (ApplicationManager.getApplication().stateStore.getStateStorageManager() as StateStorageManagerImpl).getVirtualFileTracker()!!.remove {
-          if (it.storageManager.componentManager == module) {
-            throw AssertionError("Storage manager is not disposed, module $module, storage $it")
-          }
-          false
-        }
+    private inline fun <T> Module.useAndDispose(task: Module.() -> T): T {
+      try {
+        return task()
       }
-    },
-    fixtureManager,
-    object : ExternalResource() {
-      override fun before() {
-        module.getMessageBus().connect().subscribe(ProjectTopics.MODULES, object : ModuleAdapter() {
-          override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
-            assertThat(modules.size(), equalTo(1))
-            assertThat(modules.get(0), equalTo(module))
-            oldModuleNames.add(oldNameProvider.`fun`(module))
-          }
-        })
+      finally {
+        ModuleManager.getInstance(projectRule.project).disposeModule(this)
       }
     }
-  )
 
+    private fun VirtualFile.loadModule() = runWriteAction { ModuleManager.getInstance(projectRule.project).loadModule(getPath()) }
+
+    fun Path.createModule() = projectRule.createModule(this)
+  }
+
+  private val tempDirManager = TemporaryDirectory()
+
+  private val ruleChain = RuleChain(tempDirManager, EdtRule(), ActiveStoreRule(projectRule), DisposeModulesRule(projectRule))
   public Rule fun getChain(): RuleChain = ruleChain
 
-  fun Module.change(task: ModifiableModuleModel.() -> Unit) {
-    invokeAndWaitIfNeed {
-      val model = ModuleManager.getInstance(fixtureManager.projectFixture.getProject()).getModifiableModel()
+  @Test fun `set option`() {
+    val moduleFile = runWriteAction {
+      VfsTestUtil.createFile(tempDirManager.newVirtualDirectory("module"), "test.iml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+        "<module type=\"JAVA_MODULE\" foo=\"bar\" version=\"4\" />")
+    }
+
+    moduleFile.loadModule().useAndDispose {
+      assertThat(getOptionValue("foo")).isEqualTo("bar")
+
+      setOption("foo", "not bar")
+      saveStore()
+    }
+
+    moduleFile.loadModule().useAndDispose {
+      assertThat(getOptionValue("foo")).isEqualTo("not bar")
+
+      setOption("foo", "not bar")
+      // ensure that save the same data will not lead to any problems (like "Content equals, but it must be handled not on this level")
+      saveStore()
+    }
+  }
+
+  @Test fun `must be empty if classpath storage`() {
+    // we must not use VFS here, file must not be created
+    val moduleFile = tempDirManager.newPath("module").resolve("test.iml")
+    moduleFile.createModule().useAndDispose {
+      ModuleRootModificationUtil.addContentRoot(this, moduleFile.parentSystemIndependentPath)
+      saveStore()
+      assertThat(moduleFile).isRegularFile()
+      assertThat(moduleFile.readText()).startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<module type=\"JAVA_MODULE\" version=\"4\">")
+
+      ClasspathStorage.setStorageType(ModuleRootManager.getInstance(this), "eclipse")
+      saveStore()
+      assertThat(moduleFile).hasContent("""<?xml version="1.0" encoding="UTF-8"?>
+<module classpath="eclipse" classpath-dir="$MODULE_DIR" type="JAVA_MODULE" version="4" />""")
+    }
+  }
+
+  @Test fun `one batch update session if several modules changed`() {
+    val nameToCount = TObjectIntHashMap<String>()
+    val root = tempDirManager.newPath()
+
+    fun Module.addContentRoot() {
+      val moduleName = getName()
+      var batchUpdateCount = 0
+      nameToCount.put(moduleName, batchUpdateCount)
+
+      getMessageBus().connect().subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
+        override fun onBatchUpdateStarted() {
+          nameToCount.put(moduleName, ++batchUpdateCount)
+        }
+
+        override fun onBatchUpdateFinished() {
+        }
+      })
+
+      //
+      ModuleRootModificationUtil.addContentRoot(this, root.resolve(moduleName).systemIndependentPath)
+      assertThat(contentRootUrls).hasSize(1)
+      saveStore()
+    }
+
+    fun Module.removeContentRoot() {
+      val modulePath = stateStore.getStateStorageManager().expandMacros(StoragePathMacros.MODULE_FILE)
+      val moduleFile = Paths.get(modulePath)
+      assertThat(moduleFile).isRegularFile()
+
+      val virtualFile = LocalFileSystem.getInstance().findFileByPath(modulePath)!!
+      val newData = moduleFile.readText().replace("<content url=\"file://\$MODULE_DIR$/${getName()}\" />\n", "").toByteArray()
       runWriteAction {
-        model.task()
-        model.commit()
+        virtualFile.setBinaryContent(newData)
       }
     }
-  }
 
-  // project structure
-  public Test fun `rename module using model`() {
-    invokeAndWaitIfNeed { StoreUtil.save(module.stateStore, null) }
-    val storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
-    val oldFile = storage.getFile()
-    assertThat(oldFile, exists())
-
-    val oldName = module.getName()
-    val newName = "foo"
-    module.change { renameModule(module, newName) }
-    assertRename(newName, oldFile)
-    assertThat(oldModuleNames, equalTo(listOf(oldName)))
-  }
-
-  // project view
-  public Test fun `rename module using rename virtual file`() {
-    invokeAndWaitIfNeed { StoreUtil.save(module.stateStore, null) }
-    var storage = module.stateStore.getStateStorageManager().getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
-    val oldFile = storage.getFile()
-    assertThat(oldFile, exists())
-
-    val oldName = module.getName()
-    val newName = "foo"
-    invokeAndWaitIfNeed { runWriteAction { LocalFileSystem.getInstance().refreshAndFindFileByIoFile(oldFile)!!.rename(null, "$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}") } }
-    assertRename(newName, oldFile)
-    assertThat(oldModuleNames, equalTo(listOf(oldName)))
-  }
-
-  // we cannot test external rename yet, because it is not supported - ModuleImpl doesn't support delete and create events (in case of external change we don't get move event, but get "delete old" and "create new")
-
-  private fun assertRename(newName: String, oldFile: File) {
-    val storageManager = moduleFixture.getModule().stateStore.getStateStorageManager()
-    val newFile = (storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage).getFile()
-    assertThat(newFile.getName(), equalTo("$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}"))
-    assertThat(oldFile, not(exists()))
-    assertThat(oldFile, not(equalTo(newFile)))
-    assertThat(newFile, exists())
-
-    // ensure that macro value updated
-    assertThat(storageManager.expandMacros(StoragePathMacros.MODULE_FILE), equalTo(newFile.systemIndependentPath))
-  }
-
-  public Test fun `rename module parent virtual dir`() {
-    invokeAndWaitIfNeed { StoreUtil.save(module.stateStore, null) }
-    val storageManager = module.stateStore.getStateStorageManager()
-    val storage = storageManager.getStateStorage(StoragePathMacros.MODULE_FILE, RoamingType.PER_USER) as FileBasedStorage
-
-    val oldFile = storage.getFile()
-    val parentVirtualDir = storage.getVirtualFile()!!.getParent()
-    invokeAndWaitIfNeed { runWriteAction { parentVirtualDir.rename(null, UUID.randomUUID().toString()) } }
-
-    val newFile = File(parentVirtualDir.getPath(), module.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION)
-    try {
-      assertThat(newFile, exists())
-      assertRename(module.getName(), oldFile)
-      assertThat(oldModuleNames, empty())
+    fun Module.assertChangesApplied() {
+      assertThat(contentRootUrls).isEmpty()
     }
-    finally {
-      invokeAndWaitIfNeed { runWriteAction { parentVirtualDir.delete(this) } }
-    }
+
+    val m1 = root.resolve("m1.iml").createModule()
+    val m2 = root.resolve("m2.iml").createModule()
+
+    var projectBatchUpdateCount = 0
+    projectRule.project.getMessageBus().connect(m1).subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
+      override fun onBatchUpdateStarted() {
+        nameToCount.put("p", ++projectBatchUpdateCount)
+      }
+
+      override fun onBatchUpdateFinished() {
+      }
+    })
+
+    m1.addContentRoot()
+    m2.addContentRoot()
+
+    m1.removeContentRoot()
+    m2.removeContentRoot()
+
+    (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
+
+    m1.assertChangesApplied()
+    m2.assertChangesApplied()
+
+    assertThat(nameToCount.size()).isEqualTo(3)
+    assertThat(nameToCount.get("p")).isEqualTo(1)
+    assertThat(nameToCount.get("m1")).isEqualTo(1)
+    assertThat(nameToCount.get("m1")).isEqualTo(1)
   }
 }
+
+val Module.contentRootUrls: Array<String>
+  get() = ModuleRootManager.getInstance(this).getContentRootUrls()
+
+fun ProjectRule.createModule(path: Path) = runWriteAction { ModuleManager.getInstance(project).newModule(path.systemIndependentPath, ModuleTypeId.JAVA_MODULE) }

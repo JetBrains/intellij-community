@@ -52,11 +52,13 @@
               <text resource-bundle="messages/DebuggerBundle" key="label.generic.debugger.parameters.patcher.configurable.port"/>
             </properties>
           </component>
-          <component id="5ffe7" class="com.intellij.ui.PortField" binding="myPortField">
+          <component id="3f860" class="javax.swing.JTextField" binding="myPortField">
             <constraints>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
-            <properties/>
+            <properties>
+              <columns value="5"/>
+            </properties>
           </component>
         </children>
       </grid>

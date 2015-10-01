@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,9 +126,17 @@ public class PluginHeaderPanel {
       myCategory.setVisible(false);
       myDownloadsPanel.setVisible(false);
       final String version = plugin.getVersion();
-      myVersion.setText("Version: " + (version == null ? "N/A" : version));
+      if (ourState.wasUpdated(plugin.getPluginId())) {
+        myVersion.setText("New version will be available after restart");
+      }
+      else {
+        myVersion.setText("Version: " + (version == null ? "N/A" : version));
+      }
       myUpdated.setVisible(false);
-      if (!plugin.isBundled() || hasNewerVersion) {
+      if (ourState.wasUpdated(plugin.getPluginId()) || ourState.wasInstalled(plugin.getPluginId())) {
+        myActionId = ACTION_ID.RESTART;
+      }
+      else if (!plugin.isBundled() || hasNewerVersion) {
         if (((IdeaPluginDescriptorImpl)plugin).isDeleted()) {
           myActionId = ACTION_ID.RESTART;
         } else if (hasNewerVersion) {
@@ -184,7 +192,7 @@ public class PluginHeaderPanel {
         g.setPaint(getBackgroundPaint());
         g.fillRoundRect(1, 1, w - 2, h - 2, 6, 6);
         g.setColor(getButtonForeground());
-        int offset = 12;
+        int offset = 8;
         g.drawString(getText(), offset + 16 + 4, getBaseline(w, h));
         getIcon().paintIcon(this, g, offset, (getHeight() - getIcon().getIconHeight()) / 2);
         config.restore();

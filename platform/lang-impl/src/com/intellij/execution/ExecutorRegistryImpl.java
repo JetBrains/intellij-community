@@ -47,7 +47,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   private static final Logger LOG = Logger.getInstance(ExecutorRegistryImpl.class);
 
   @NonNls public static final String RUNNERS_GROUP = "RunnerActions";
-  @NonNls public static final String RUN_CONTEXT_GROUP = "RunContextGroup";
+  @NonNls public static final String RUN_CONTEXT_GROUP = "RunContextGroupInner";
 
   private List<Executor> myExecutors = new ArrayList<Executor>();
   private ActionManager myActionManager;

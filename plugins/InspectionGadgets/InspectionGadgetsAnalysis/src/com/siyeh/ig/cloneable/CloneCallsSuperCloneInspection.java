@@ -18,10 +18,12 @@ package com.siyeh.ig.cloneable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CloneUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class CloneCallsSuperCloneInspection extends BaseInspection {
@@ -80,9 +82,7 @@ public class CloneCallsSuperCloneInspection extends BaseInspection {
       if (CloneUtils.onlyThrowsException(method)) {
         return;
       }
-      final CallToSuperCloneVisitor visitor = new CallToSuperCloneVisitor();
-      method.accept(visitor);
-      if (visitor.isCallToSuperCloneFound()) {
+      if (MethodCallUtils.containsSuperMethodCall(HardcodedMethodConstants.CLONE, method)) {
         return;
       }
       registerMethodError(method);

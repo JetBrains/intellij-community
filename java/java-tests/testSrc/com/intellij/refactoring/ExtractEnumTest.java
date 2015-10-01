@@ -51,6 +51,16 @@ public class ExtractEnumTest extends MultiFileTestCase {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
+  
+  public void testConstructorCall() throws Exception {
+    doTest(new RefactoringTestUtil.MemberDescriptor("STATE_STARTED", PsiField.class, true),
+           new RefactoringTestUtil.MemberDescriptor("STATE_STOPPED", PsiField.class, true));
+  }
+ 
+  public void testCondition() throws Exception {
+    doTest(new RefactoringTestUtil.MemberDescriptor("STATE_STARTED", PsiField.class, true),
+           new RefactoringTestUtil.MemberDescriptor("STATE_STOPPED", PsiField.class, true));
+  }
 
   public void testReferencesOnEnumConstantInEnum() throws Exception {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),

@@ -3204,4 +3204,19 @@ public void testSCR260() throws Exception {
       "}"
     );
   }
+
+  public void testReformatCodeWithErrorElementsWithoutAssertions() {
+    doTextTest("class  RedTest   {   \n\n\n\n\n\n\n\n   " +
+               "String  [  ]  [  ]   test    =    {       { \n\n\n\n\n {    \"\"}  \n\n\n\n\n };   " +
+               "String  [  ]  [  ]   test    =    {       { \n\n\n\n\n {    \"\"}  \n\n\n\n\n };   " +
+               "                      \n\n\n\n\n\n\n\n  }  ",
+               "class RedTest {\n\n\n" +
+               "    String[][] test = {{\n\n\n" +
+               "            {\"\"}\n\n\n" +
+               "    };\n" +
+               "    String[][] test = {{\n\n\n" +
+               "            {\"\"}\n\n\n" +
+               "    };\n\n\n" +
+               "}  ");
+  }
 }

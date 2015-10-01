@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.util.Consumer;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.InstalledPackagesPanel;
 import com.intellij.webcore.packaging.PackageManagementService;
@@ -78,9 +77,6 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
           }
           packageManager.refresh();
           updatePackages(new PyPackageManagementService(myProject, sdk));
-          for (Consumer<Sdk> listener : myPathChangedListeners) {
-            listener.consume(sdk);
-          }
           updateNotifications(sdk);
         }
       });

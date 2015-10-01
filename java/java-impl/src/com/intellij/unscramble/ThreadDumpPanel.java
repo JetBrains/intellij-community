@@ -20,6 +20,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ExporterToTextFile;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -70,6 +71,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   private static final Icon IO_ICON_DAEMON = new LayeredIcon(IO, Daemon_sign);
   private final JBList myThreadList;
   private final List<ThreadState> myThreadDump;
+  private final List<ThreadState> myMergedThreadDump;
   private final JPanel myFilterPanel;
   private final SearchTextField myFilterField;
   private final ExporterToTextFile myExporterToTextFile;
@@ -77,6 +79,20 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   public ThreadDumpPanel(final Project project, final ConsoleView consoleView, final DefaultActionGroup toolbarActions, final List<ThreadState> threadDump) {
     super(new BorderLayout());
     myThreadDump = threadDump;
+    myMergedThreadDump = new ArrayList<ThreadState>();
+    List<ThreadState> copy = new ArrayList<ThreadState>(myThreadDump);
+    for (int i = 0; i < copy.size(); i++) {
+      ThreadState state = copy.get(i);
+      ThreadState.CompoundThreadState compound = new ThreadState.CompoundThreadState(state);
+      myMergedThreadDump.add(compound);
+      for (int j = i+1; j < copy.size(); j++) {
+        ThreadState toAdd = copy.get(j);
+        if (compound.add(toAdd)) {
+          copy.remove(j);
+        }
+      }
+    }
+
 
     myFilterField = new SearchTextField();
     myFilterField.addDocumentListener(new DocumentAdapter() {
@@ -116,6 +132,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     toolbarActions.add(new CopyToClipboardAction(threadDump, project));
     toolbarActions.add(new SortThreadsAction());
     toolbarActions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPORT_TO_TEXT_FILE));
+    toolbarActions.add(new MergeStacktracesAction());
     add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false).getComponent(), BorderLayout.WEST);
 
     JPanel leftPanel = new JPanel(new BorderLayout());
@@ -156,16 +173,24 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
   private void updateThreadList() {
     String text = myFilterPanel.isVisible() ? myFilterField.getText() : "";
+    Object selection = myThreadList.getSelectedValue();
     DefaultListModel model = (DefaultListModel)myThreadList.getModel();
     model.clear();
-    for (ThreadState state : myThreadDump) {
+    int selectedIndex = 0;
+    int index = 0;
+    List<ThreadState> threadStates = UISettings.getInstance().MERGE_EQUAL_STACKTRACES ? myMergedThreadDump : myThreadDump;
+    for (ThreadState state : threadStates) {
       if (StringUtil.containsIgnoreCase(state.getStackTrace(), text) || StringUtil.containsIgnoreCase(state.getName(), text)) {
         //noinspection unchecked
         model.addElement(state);
+        if (selection == state) {
+          selectedIndex = index;
+        }
+        index++;
       }
     }
     if (!model.isEmpty()) {
-      myThreadList.setSelectedIndex(0);
+      myThreadList.setSelectedIndex(selectedIndex);
     }
     myThreadList.revalidate();
     myThreadList.repaint();
@@ -301,22 +326,9 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final DefaultListModel model = (DefaultListModel)myThreadList.getModel();
-      final ThreadState selected = (ThreadState)myThreadList.getSelectedValue();
-      ArrayList<ThreadState> states = new ArrayList<ThreadState>();
-      for (int i = 0; i < model.getSize(); i++) {
-        states.add((ThreadState)model.getElementAt(i));
-      }
-      Collections.sort(states, COMPARATOR);
-      int selectedIndex = 0;
-      for (int i = 0; i < states.size(); i++) {
-        final ThreadState state = states.get(i);
-        model.setElementAt(state, i);
-        if (state == selected) {
-          selectedIndex = i;
-        }
-      }
-      myThreadList.setSelectedIndex(selectedIndex);
+      Collections.sort(myThreadDump, COMPARATOR);
+      Collections.sort(myMergedThreadDump, COMPARATOR);
+      updateThreadList();
       COMPARATOR = COMPARATOR == BY_TYPE ? BY_NAME : BY_TYPE;
       update(e);
     }
@@ -368,6 +380,23 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
         IdeFocusManager.getInstance(getEventProject(e)).requestFocus(myFilterField, true);
         myFilterField.selectText();
       }
+      updateThreadList();
+    }
+  }
+
+  private class MergeStacktracesAction extends ToggleAction implements DumbAware {
+    MergeStacktracesAction() {
+      super("Merge Identical Stacktraces", "Group threads with identical stacktraces", AllIcons.General.CollapseAll);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return UISettings.getInstance().MERGE_EQUAL_STACKTRACES;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      UISettings.getInstance().MERGE_EQUAL_STACKTRACES = state;
       updateThreadList();
     }
   }

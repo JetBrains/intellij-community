@@ -841,6 +841,17 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Nullable
+  @Contract(pure=true)
+  public static <T> T find(@NotNull Iterator<? extends T> iterator, @NotNull final T equalTo) {
+    return find(iterator, new Condition<T>() {
+      @Override
+      public boolean value(final T object) {
+        return equalTo == object || equalTo.equals(object);
+      }
+    });
+  }
+
+  @Nullable
   public static <T, V extends T> V find(@NotNull Iterator<V> iterator, @NotNull Condition<T> condition) {
     while (iterator.hasNext()) {
       V value = iterator.next();

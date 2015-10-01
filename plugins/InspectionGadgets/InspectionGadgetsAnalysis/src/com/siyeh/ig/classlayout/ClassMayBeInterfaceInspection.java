@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -27,13 +29,20 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.memory.InnerClassReferenceVisitor;
+import com.siyeh.ig.psiutils.ClassUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ClassMayBeInterfaceInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean reportClassesWithNonAbstractMethods = false;
 
   @Override
   @NotNull
@@ -45,6 +54,20 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("class.may.be.interface.problem.descriptor");
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("class.may.be.interface.java8.option"), this,
+                                          "reportClassesWithNonAbstractMethods");
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    if (reportClassesWithNonAbstractMethods) {
+      node.addContent(new Element("option").setAttribute("name", "reportClassesWithNonAbstractMethods").setAttribute("value", "true"));
+    }
   }
 
   @Override
@@ -172,7 +195,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
     return new ClassMayBeInterfaceVisitor();
   }
 
-  private static class ClassMayBeInterfaceVisitor extends BaseInspectionVisitor {
+  private class ClassMayBeInterfaceVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
@@ -189,10 +212,17 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
       if (!mayBeInterface(aClass)) {
         return;
       }
+      if (ClassUtils.isInnerClass(aClass)) {
+        final InnerClassReferenceVisitor visitor = new InnerClassReferenceVisitor(aClass);
+        aClass.accept(visitor);
+        if (!visitor.canInnerClassBeStatic()) {
+          return;
+        }
+      }
       registerClassError(aClass);
     }
 
-    public static boolean mayBeInterface(PsiClass aClass) {
+    public boolean mayBeInterface(PsiClass aClass) {
       final PsiReferenceList extendsList = aClass.getExtendsList();
       if (extendsList != null) {
         final PsiJavaCodeReferenceElement[] extendsElements = extendsList.getReferenceElements();
@@ -207,7 +237,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
       return allMethodsPublicAbstract(aClass) && allFieldsPublicStaticFinal(aClass) && allInnerClassesPublic(aClass);
     }
 
-    private static boolean allFieldsPublicStaticFinal(PsiClass aClass) {
+    private boolean allFieldsPublicStaticFinal(PsiClass aClass) {
       boolean allFieldsStaticFinal = true;
       final PsiField[] fields = aClass.getFields();
       for (final PsiField field : fields) {
@@ -219,10 +249,11 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
       return allFieldsStaticFinal;
     }
 
-    private static boolean allMethodsPublicAbstract(PsiClass aClass) {
+    private boolean allMethodsPublicAbstract(PsiClass aClass) {
       final PsiMethod[] methods = aClass.getMethods();
       for (final PsiMethod method : methods) {
-        if (!PsiUtil.isLanguageLevel8OrHigher(aClass) && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        if (!method.hasModifierProperty(PsiModifier.ABSTRACT) &&
+            (!reportClassesWithNonAbstractMethods || !PsiUtil.isLanguageLevel8OrHigher(aClass))) {
           return false;
         }
         else if (!method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.FINAL)) {
@@ -232,7 +263,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
       return true;
     }
 
-    private static boolean allInnerClassesPublic(PsiClass aClass) {
+    private boolean allInnerClassesPublic(PsiClass aClass) {
       final PsiClass[] innerClasses = aClass.getInnerClasses();
       for (PsiClass innerClass : innerClasses) {
         if (!innerClass.hasModifierProperty(PsiModifier.PUBLIC)) {

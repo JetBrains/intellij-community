@@ -23,6 +23,7 @@ import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * User: cdr
@@ -66,6 +67,12 @@ public class ClsElementInfo extends SmartPointerElementInfo {
   @Override
   public Project getProject() {
     return myStubIndexReference.getProject();
+  }
+
+  @Nullable
+  @Override
+  public Segment getPsiRange() {
+    return null;
   }
 
   @Override

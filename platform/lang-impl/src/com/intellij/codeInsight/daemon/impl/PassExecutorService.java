@@ -609,9 +609,6 @@ class PassExecutorService implements Disposable {
     catch (InterruptedException e) {
       return true;
     }
-    catch (CancellationException e) {
-      return true;
-    }
     catch (ExecutionException e) {
       throw e.getCause();
     }

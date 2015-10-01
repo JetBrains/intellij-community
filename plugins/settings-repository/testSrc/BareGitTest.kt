@@ -18,60 +18,49 @@ package org.jetbrains.settingsRepository.test
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.TemporaryDirectory
 import gnu.trove.THashMap
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.CoreMatchers.nullValue
-import org.jetbrains.jgit.dirCache.AddFile
-import org.jetbrains.jgit.dirCache.edit
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.settingsRepository.git.cloneBare
 import org.jetbrains.settingsRepository.git.commit
 import org.jetbrains.settingsRepository.git.processChildren
 import org.jetbrains.settingsRepository.git.read
-import org.junit.Assert.assertThat
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 
 class BareGitTest {
   val tempDirManager = TemporaryDirectory()
-  public Rule fun getTemporaryFolder(): TemporaryDirectory = tempDirManager
+  Rule fun getTemporaryFolder() = tempDirManager
 
-  public Test fun `remote doesn't have commits`() {
+  Test fun `remote doesn't have commits`() {
     val repository = cloneBare(tempDirManager.createRepository("remote").getWorkTree().getAbsolutePath(), tempDirManager.newDirectory("local"))
-    assertThat(repository.read("\$ROOT_CONFIG$/keymaps/Mac OS X from RubyMine.xml"), nullValue())
+    assertThat(repository.read("\$ROOT_CONFIG$/keymaps/Mac OS X from RubyMine.xml")).isNull()
   }
 
-  public Test fun bare() {
+  Test fun bare() {
     val remoteRepository = tempDirManager.createRepository()
-    val workTree: File = remoteRepository.getWorkTree()
-    val filePath = "\$ROOT_CONFIG$/keymaps/Mac OS X from RubyMine.xml"
-    val file = File(testDataPath, "remote.xml")
-    FileUtil.copy(file, File(workTree, filePath))
-    remoteRepository.edit(AddFile(filePath))
+    val filePath = "keymaps/Mac OS X from RubyMine.xml"
+    remoteRepository.add(filePath, SAMPLE_FILE_CONTENT)
     remoteRepository.commit("")
 
     val repository = cloneBare(remoteRepository.getWorkTree().getAbsolutePath(), tempDirManager.newDirectory())
-    assertThat(FileUtil.loadTextAndClose(repository.read(filePath)!!), equalTo(FileUtil.loadFile(file)))
+    assertThat(FileUtil.loadTextAndClose(repository.read(filePath)!!)).isEqualTo(SAMPLE_FILE_CONTENT)
   }
 
-  public Test fun processChildren() {
+  Test fun processChildren() {
     val remoteRepository = tempDirManager.createRepository()
 
-    val workTree: File = remoteRepository.getWorkTree()
-    val filePath = "\$ROOT_CONFIG$/keymaps/Mac OS X from RubyMine.xml"
-    val file = File(testDataPath, "remote.xml")
-    FileUtil.copy(file, File(workTree, filePath))
-    remoteRepository.edit(AddFile(filePath))
+    val filePath = "keymaps/Mac OS X from RubyMine.xml"
+    remoteRepository.add(filePath, SAMPLE_FILE_CONTENT)
     remoteRepository.commit("")
 
     val repository = cloneBare(remoteRepository.getWorkTree().getAbsolutePath(), tempDirManager.newDirectory())
 
     val data = THashMap<String, String>()
-    repository.processChildren("\$ROOT_CONFIG$/keymaps") {name, input ->
+    repository.processChildren("keymaps") {name, input ->
       data.put(name, FileUtil.loadTextAndClose(input))
       true
     }
 
-    assertThat(data.size(), equalTo(1))
-    assertThat(data.get("Mac OS X from RubyMine.xml"), equalTo(FileUtil.loadFile(file)))
+    assertThat(data).hasSize(1)
+    assertThat(data.get("Mac OS X from RubyMine.xml")).isEqualTo(SAMPLE_FILE_CONTENT)
   }
 }

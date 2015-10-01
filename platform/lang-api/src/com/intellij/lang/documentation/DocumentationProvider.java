@@ -67,7 +67,8 @@ public interface DocumentationProvider {
    * @param element         the element for which the documentation is requested (for example, if the mouse is over
    *                        a method reference, this will be the method to which the reference is resolved).
    * @param originalElement the element under the mouse cursor
-   * @return                target element's documentation (if any)
+   * @return                target element's documentation, or <code>null</code> if provider is unable to generage documentation
+   *                        for the given element
    */
   @Nullable
   String generateDoc(PsiElement element, @Nullable PsiElement originalElement);

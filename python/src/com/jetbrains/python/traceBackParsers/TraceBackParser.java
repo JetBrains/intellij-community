@@ -20,32 +20,12 @@ import com.jetbrains.python.testing.pytest.PyTestTracebackParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
- * Parent of all traceback filters. Extend it and your impl. to {@link #PARSERS}.
- * When implement, provide {@link Pattern pattern}, and your code will be called only if line matches this pattern
+ * Searches for line in stacktrace
  *
  * @author Ilya.Kazakevich
  */
-public abstract class TraceBackParser {
-  @NotNull
-  private final Pattern myPattern;
-
-  /**
-   * @param pattern pattern to be used to match line.
-   */
-  protected TraceBackParser(@NotNull final Pattern pattern) {
-    myPattern = pattern;
-  }
-
-
-  @NotNull // TODO: use EP instead?
-  @SuppressWarnings("PublicStaticArrayField") // Noone will change it, anyway.
-  public static final TraceBackParser[] PARSERS = {new PyTestTracebackParser(), new PyTracebackParser()};
-
-
+public interface TraceBackParser {
   /**
    * Searches for link in line
    *
@@ -53,22 +33,9 @@ public abstract class TraceBackParser {
    * @return line info (if found)
    */
   @Nullable
-  public final LinkInTrace findLinkInTrace(@NotNull final String line) {
-    final Matcher matcher = myPattern.matcher(line);
-    if (!matcher.find()) {
-      return null;
-    }
-    return findLinkInTrace(line, matcher);
-  }
+  LinkInTrace findLinkInTrace(@NotNull String line);
 
-
-  /**
-   * Fetches link from line
-   *
-   * @param line           line to search link in
-   * @param matchedMatcher regex matcher that found link
-   * @return line info
-   */
-  @NotNull
-  protected abstract LinkInTrace findLinkInTrace(@NotNull String line, @NotNull Matcher matchedMatcher);
+  @NotNull // TODO: use EP instead?
+  @SuppressWarnings("PublicStaticArrayField") // Noone will change it, anyway.
+  TraceBackParser[] PARSERS = {new PyTestTracebackParser(), new PyTracebackParser()};
 }

@@ -21,6 +21,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
@@ -31,6 +32,13 @@ import com.intellij.psi.PsiMethod;
 import java.util.List;
 
 public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
+  public TestClassConfigurationProducer() {
+  }
+
+  protected TestClassConfigurationProducer(ConfigurationType configurationType) {
+    super(configurationType);
+  }
+
   @Override
   protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
                                                   ConfigurationContext context,

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsAdapter
@@ -88,8 +89,8 @@ class AutoSyncManager(private val icsManager: IcsManager) {
     })
   }
 
-  fun autoSync(onAppExit: Boolean = false) {
-    if (!icsManager.repositoryActive) {
+  fun autoSync(onAppExit: Boolean = false, force: Boolean = false) {
+    if (!icsManager.repositoryActive || (!force && !icsManager.settings.autoSync)) {
       return
     }
 
@@ -144,7 +145,7 @@ class AutoSyncManager(private val icsManager: IcsManager) {
         app.invokeAndWait({
           catchAndLog {
             val updateResult = updater.merge()
-            if (!onAppExit && !app.isDisposeInProgress() && updateResult != null && updateStoragesFromStreamProvider(app.stateStore, updateResult)) {
+            if (!onAppExit && !app.isDisposeInProgress() && updateResult != null && updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult, app.getMessageBus())) {
               // force to avoid saveAll & confirmation
               app.exit(true, true, true, true)
             }

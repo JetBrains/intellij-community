@@ -550,11 +550,11 @@ public class IterationState {
       TextAttributes attrs = cachedAttributes.get(i);
 
       if (fore == null) {
-        fore = ifDiffers(attrs.getForegroundColor(), myDefaultForeground);
+        fore = attrs.getForegroundColor();
       }
 
       if (back == null) {
-        back = ifDiffers(attrs.getBackgroundColor(), myDefaultBackground);
+        back = attrs.getBackgroundColor();
       }
 
       if (fontType == Font.PLAIN) {
@@ -580,11 +580,6 @@ public class IterationState {
   private boolean isInCaretRow(boolean includeLineStart, boolean includeLineEnd) {
     return myStartOffset > myCaretRowStart && myStartOffset < myCaretRowEnd ||
            includeLineStart && myStartOffset == myCaretRowStart || includeLineEnd && myStartOffset == myCaretRowEnd;
-  }
-
-  @Nullable
-  private static Color ifDiffers(final Color c1, final Color c2) {
-    return Comparing.equal(c1, c2) ? null : c1;
   }
 
   public boolean atEnd() {

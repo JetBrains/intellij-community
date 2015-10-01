@@ -433,8 +433,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (more < newIndex) {
         more = myList.getItemsCount() - 1;
       }
-      ListScrollingUtil.ensureIndexIsVisible(myList, more, forward ? 1 : -1);
-      ListScrollingUtil.ensureIndexIsVisible(myList, newIndex, forward ? 1 : -1);
+      ScrollingUtil.ensureIndexIsVisible(myList, more, forward ? 1 : -1);
+      ScrollingUtil.ensureIndexIsVisible(myList, newIndex, forward ? 1 : -1);
     }
   }
 
@@ -769,7 +769,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
       @Override
       public void exitDumbMode() {
-        rebuildList(myPopupField.getText());
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            rebuildList(myPopupField.getText());
+          }
+        });
       }
     });
 
@@ -950,6 +955,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         jumpNextGroup(false);
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), editor, balloon);
+    final AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
     new DumbAwareAction(){
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -960,7 +966,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           myPopup.cancel();
         }
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), editor, balloon);
+    }.registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), editor, balloon);
     new DumbAwareAction(){
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -2040,7 +2046,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             return;
           }
           if (myPopup == null || !myPopup.isVisible()) {
-            final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(getField().getTextEditor(), myList);
+            ScrollingUtil.installActions(myList, getField().getTextEditor());
             JBScrollPane content = new JBScrollPane(myList) {
               {
                 if (UIUtil.isUnderDarcula()) {
@@ -2084,7 +2090,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               public void dispose() {
                 ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
                   public void run() {
-                    callback.setDone();
                     resetFields();
                     myNonProjectCheckBox.setSelected(false);
                     //noinspection SSBasedInspection
@@ -2131,7 +2136,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             myList.revalidate();
             myList.repaint();
           }
-          ListScrollingUtil.ensureSelectionExists(myList);
+          ScrollingUtil.ensureSelectionExists(myList);
           if (myList.getModel().getSize() > 0) {
             updatePopupBounds();
           }
@@ -2188,7 +2193,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                           case RUN_CONFIGURATIONS: moreIndex.runConfigurations = -1; break;
                         }
                       }
-                      ListScrollingUtil.selectItem(myList, index);
+                      ScrollingUtil.selectItem(myList, index);
                       myDone.setDone();
                     }
                     catch (Exception e) {

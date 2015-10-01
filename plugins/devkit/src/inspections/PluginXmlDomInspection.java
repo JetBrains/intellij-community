@@ -26,10 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
-import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
-import com.intellij.util.xml.highlighting.DomHighlightingHelper;
-import com.intellij.util.xml.highlighting.RemoveDomElementQuickFix;
+import com.intellij.util.xml.highlighting.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -84,6 +81,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
     else if (element instanceof Extensions) {
       annotateExtensions((Extensions)element, holder);
+    }
+    else if (element instanceof AddToGroup) {
+      annotateAddToGroup((AddToGroup)element, holder);
     }
   }
 
@@ -183,5 +183,21 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
                          "Attribute '" + attributeValue.getXmlElementName() + "' not used anymore",
                          null, new RemoveDomElementQuickFix(attributeValue))
       .highlightWholeElement();
+  }
+
+  private static void annotateAddToGroup(AddToGroup addToGroup, DomElementAnnotationHolder holder) {
+    if (!DomUtil.hasXml(addToGroup.getRelativeToAction())) return;
+
+    if (!DomUtil.hasXml(addToGroup.getAnchor())) {
+      holder.createProblem(addToGroup, "'anchor' must be specified with 'relative-to-action'",
+                           new AddDomElementQuickFix<GenericAttributeValue>(addToGroup.getAnchor()));
+      return;
+    }
+
+    final Anchor value = addToGroup.getAnchor().getValue();
+    if (value == Anchor.after || value == Anchor.before) {
+      return;
+    }
+    holder.createProblem(addToGroup.getAnchor(), "Must use '" + Anchor.after + "'|'" + Anchor.before + "' with 'relative-to-action'");
   }
 }

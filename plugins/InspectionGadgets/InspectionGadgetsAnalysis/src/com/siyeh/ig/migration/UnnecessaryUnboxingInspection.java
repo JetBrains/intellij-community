@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -265,63 +265,17 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
 
     private boolean isSameMethodCalledWithoutUnboxing(@NotNull PsiCallExpression callExpression,
                                                       @NotNull PsiMethodCallExpression unboxingExpression) {
-      final PsiExpressionList argumentList = callExpression.getArgumentList();
-      if (argumentList == null) {
+      final PsiReferenceExpression methodExpression = unboxingExpression.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (qualifier == null) {
         return false;
       }
-      final PsiExpression[] expressions = argumentList.getExpressions();
       final PsiMethod originalMethod = callExpression.resolveMethod();
       if (originalMethod == null) {
         return false;
       }
-      final String name = originalMethod.getName();
-
-      final PsiExpression qualifierExpression;
-      if (callExpression instanceof PsiMethodCallExpression) {
-        qualifierExpression = ((PsiMethodCallExpression)callExpression).getMethodExpression().getQualifierExpression();
-      } else if (callExpression instanceof PsiNewExpression) {
-        qualifierExpression = ((PsiNewExpression)callExpression).getQualifier();
-      } else {
-        return false;
-      }
-
-      final PsiClass containingClass;
-      if (qualifierExpression == null) {
-        final PsiElement scope = callExpression.resolveMethodGenerics().getCurrentFileResolveScope();
-        containingClass = scope instanceof PsiClass ? (PsiClass)scope : null;
-      }
-      else {
-        containingClass = PsiUtil.resolveClassInType(GenericsUtil.getVariableTypeByExpressionType(qualifierExpression.getType()));
-      }
-
-      if (containingClass == null) {
-        return false;
-      }
-
-      final PsiType[] types = PsiType.createArray(expressions.length);
-      for (int i = 0; i < expressions.length; i++) {
-        final PsiExpression expression = expressions[i];
-        final PsiType type = expression.getType();
-        if (unboxingExpression.equals(expression)) {
-          if (!(type instanceof PsiPrimitiveType)) {
-            return false;
-          }
-          final PsiPrimitiveType primitiveType = (PsiPrimitiveType)type;
-          types[i] = primitiveType.getBoxedType(unboxingExpression);
-        }
-        else {
-          types[i] = type;
-        }
-      }
-      final PsiMethod[] methods = containingClass.findMethodsByName(name, true);
-      for (final PsiMethod method : methods) {
-        if (!originalMethod.equals(method)) {
-          if (MethodCallUtils.isApplicable(method, PsiSubstitutor.EMPTY, types)) {
-            return false;
-          }
-        }
-      }
-      return true;
+      final PsiMethod method = MethodCallUtils.findMethodWithReplacedArgument(callExpression, unboxingExpression, qualifier);
+      return originalMethod == method;
     }
 
     @Nullable

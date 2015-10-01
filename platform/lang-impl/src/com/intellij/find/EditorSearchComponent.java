@@ -266,13 +266,17 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     boolean wasNull = mySearchTextComponent == null;
     String textToSet = myFindModel.getStringToFind();
     if (!updateTextComponent(true)) {
-      mySearchTextComponent.setText(textToSet);
+      if (!mySearchTextComponent.getText().equals(textToSet)) {
+        mySearchTextComponent.setText(textToSet);
+      }
       return;
     }
 
-    mySearchTextComponent.setText(textToSet);
-    if (wasNull) {
-      mySearchTextComponent.selectAll();
+    if (!mySearchTextComponent.getText().equals(textToSet)) {
+      mySearchTextComponent.setText(textToSet);
+      if (wasNull) {
+        mySearchTextComponent.selectAll();
+      }
     }
     mySearchTextComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override

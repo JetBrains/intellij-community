@@ -25,7 +25,7 @@ import javax.swing.*;
 
 /**
  * Describes a specific way of executing any possible run configuration. The three default executors provided by the IntelliJ Platform
- * by default are Run, Debug and (in IntelliJ IDEA Ultimate and certain platform-based IDEs) Run with Coverage. Each executor gets its
+ * by default are Run, Debug and Run with Coverage. Each executor gets its
  * own toolbar button, which starts the selected run configuration using this executor, and its own context menu item for starting
  * a configuration using this executor.
  *

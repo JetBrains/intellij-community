@@ -63,7 +63,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
-import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
@@ -202,42 +201,26 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
   protected boolean acceptLocation(final DebugProcessImpl debugProcess, ReferenceType classType, final Location loc) {
     Method method = loc.method();
-    if (DebuggerUtils.isSynthetic(method)) {
-      return false;
+    // Some frameworks may create synthetic methods with lines mapped to user code, see IDEA-143852
+    // if (DebuggerUtils.isSynthetic(method)) { return false; }
+    if (isAnonymousClass(classType)) {
+      if ((method.isConstructor() && loc.codeIndex() == 0) || method.isBridge()) return false;
     }
-    boolean res = !(method.isConstructor() && loc.codeIndex() == 0 && isAnonymousClass(classType));
-    if (!res) return false;
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        if (getProperties() instanceof JavaLineBreakpointProperties) {
-          Integer ordinal = ((JavaLineBreakpointProperties)getProperties()).getLambdaOrdinal();
-          if (ordinal == null) return true;
-          PsiElement containingMethod = getContainingMethod();
-          if (containingMethod == null) return false;
-          SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
-          if (position == null) return false;
-          return DebuggerUtilsEx.inTheMethod(position, containingMethod);
-        }
-        return true;
+        SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
+        if (position == null) return false;
+        JavaLineBreakpointType type = getXBreakpointType();
+        if (type == null) return true;
+        return type.matchesPosition(LineBreakpoint.this, position);
       }
     });
   }
 
   @Nullable
-  public PsiElement getContainingMethod() {
-    SourcePosition position = getSourcePosition();
-    if (position == null) return null;
-    if (getProperties() instanceof JavaLineBreakpointProperties) {
-      Integer ordinal = ((JavaLineBreakpointProperties)getProperties()).getLambdaOrdinal();
-      if (ordinal > -1) {
-        List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(position, true);
-        if (ordinal < lambdas.size()) {
-          return lambdas.get(ordinal);
-        }
-      }
-    }
-    return DebuggerUtilsEx.getContainingMethod(position);
+  protected JavaLineBreakpointType getXBreakpointType() {
+    return (JavaLineBreakpointType)myXBreakpoint.getType();
   }
 
   private boolean isInScopeOf(DebugProcessImpl debugProcess, String className) {

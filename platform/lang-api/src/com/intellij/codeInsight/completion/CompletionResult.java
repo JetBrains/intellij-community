@@ -65,4 +65,8 @@ public class CompletionResult {
     return myMatcher.isStartMatch(myLookupElement);
   }
 
+  @Override
+  public String toString() {
+    return myLookupElement.toString();
+  }
 }

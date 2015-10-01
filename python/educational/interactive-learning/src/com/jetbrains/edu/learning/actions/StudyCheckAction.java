@@ -43,7 +43,7 @@ import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.run.StudySmartChecker;
@@ -104,7 +104,7 @@ public class StudyCheckAction extends DumbAwareAction {
 
   public void check(@NotNull final Project project) {
     if (DumbService.isDumb(project)) {
-      DumbService.getInstance(project).showDumbModeNotification("Check Action is not available while indexing in in progress");
+      DumbService.getInstance(project).showDumbModeNotification("Check Action is not available while indexing is in progress");
       return;
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -193,7 +193,7 @@ public class StudyCheckAction extends DumbAwareAction {
 
     final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     final StudyStatus statusBeforeCheck = taskManager.getStatus(task);
-    return new com.intellij.openapi.progress.Task.Backgroundable(project, "Checking task", true) {
+    return new com.intellij.openapi.progress.Task.Backgroundable(project, "Checking Task", true) {
       @Override
       public void onSuccess() {
         StudyUtils.updateToolWindows(project);

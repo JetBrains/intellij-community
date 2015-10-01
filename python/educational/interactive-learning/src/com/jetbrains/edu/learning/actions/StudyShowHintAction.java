@@ -61,7 +61,8 @@ public class StudyShowHintAction extends DumbAwareAction {
     }
     String hintText = ourWarningMessage;
     if (answerPlaceholder != null) {
-      hintText = answerPlaceholder.getHint();
+      String hint = answerPlaceholder.getHint();
+      hintText = hint.isEmpty() ? HINT_NOT_AVAILABLE : hint;
     }
     int offset = editor.getDocument().getLineStartOffset(pos.line) + pos.column;
     PsiElement element = file.findElementAt(offset);

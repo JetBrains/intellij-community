@@ -49,12 +49,13 @@ import java.util.*;
  * @author Max Medvedev
  */
 public class DelegatedMethodsContributor extends AstTransformContributor {
+
   @Override
   public void collectMethods(@NotNull final GrTypeDefinition clazz, @NotNull Collection<PsiMethod> collector) {
     Set<PsiClass> processed = new HashSet<PsiClass>();
 
     if (!checkForDelegate(clazz)) return;
-    
+
     Map<MethodSignature, PsiMethod> signatures = new THashMap<MethodSignature, PsiMethod>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
     initializeSignatures(clazz, PsiSubstitutor.EMPTY, signatures, processed);
 
@@ -334,4 +335,32 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
 
   private static final Set<String> OBJECT_METHODS = ContainerUtil.newHashSet("equals", "hashCode", "getClass", "clone", "toString", "notify", "notifyAll", "wait", "finalize");
   private static final Set<String> GROOVY_OBJECT_METHODS = ContainerUtil.newHashSet("invokeMethod", "getProperty", "setProperty", "getMetaClass", "setMetaClass");
+
+  @Override
+  public void collectImplementsTypes(GrTypeDefinition grType, Collection<PsiClassType> result) {
+    final GrField[] fields = grType.getCodeFields();
+    for (GrField field : fields) {
+      final PsiAnnotation delegate = PsiImplUtil.getAnnotation(field, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);
+      if (delegate == null) continue;
+
+      final boolean shouldImplement = shouldImplementDelegatedInterfaces(delegate);
+      if (!shouldImplement) continue;
+
+      final PsiType type = field.getDeclaredType();
+      if (!(type instanceof PsiClassType)) continue;
+
+      final PsiClass psiClass = ((PsiClassType)type).resolve();
+      if (psiClass == null) continue;
+
+      result.addAll(Arrays.asList(psiClass.getImplementsListTypes()));
+      if (psiClass.isInterface()) {
+        result.add((PsiClassType)type);
+      }
+    }
+  }
+
+  private static boolean shouldImplementDelegatedInterfaces(PsiAnnotation delegate) {
+    final Boolean result = GrAnnotationUtil.inferBooleanAttribute(delegate, "interfaces");
+    return result == null || result.booleanValue();
+  }
 }

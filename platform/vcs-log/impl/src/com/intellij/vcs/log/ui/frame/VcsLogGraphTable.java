@@ -31,7 +31,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
@@ -48,10 +47,10 @@ import com.intellij.vcs.log.printer.idea.GraphCellPainter;
 import com.intellij.vcs.log.printer.idea.PositionUtil;
 import com.intellij.vcs.log.printer.idea.SimpleGraphCellPainter;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
-import com.intellij.vcs.log.ui.render.RefPainter;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
@@ -92,6 +91,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       }
     }
   };
+  private final GraphCommitCellRender myGraphCommitCellRenderer;
 
   private boolean myColumnsSizeInitialized = false;
 
@@ -113,12 +113,12 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     super();
     myUI = UI;
     myLogDataHolder = logDataHolder;
+    myGraphCommitCellRenderer = new GraphCommitCellRender(logDataHolder, myGraphCellPainter, this);
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
-    setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myGraphCellPainter, this));
+    setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);
     setDefaultRenderer(String.class, new StringCellRenderer());
 
-    setRowHeight(RefPainter.REF_HEIGHT);
     setShowHorizontalLines(false);
     setIntercellSpacing(JBUI.emptySize());
 
@@ -132,7 +132,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     getTableHeader().setReorderingAllowed(false);
 
     PopupHandler.installPopupHandler(this, VcsLogUiImpl.POPUP_ACTION_GROUP, VcsLogUiImpl.VCS_LOG_TABLE_PLACE);
-    TableScrollingUtil.installActions(this, false);
+    ScrollingUtil.installActions(this, false);
 
     setModel(new GraphTableModel(initialDataPack, myLogDataHolder, myUI));
   }
@@ -377,7 +377,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       public void stateChanged(ChangeEvent e) {
         TableModel model = getModel();
         if (model instanceof AbstractTableModel) {
-          Couple<Integer> visibleRows = TableScrollingUtil.getVisibleRows(VcsLogGraphTable.this);
+          Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(VcsLogGraphTable.this);
           ((AbstractTableModel)model)
             .fireTableChanged(new TableModelEvent(model, visibleRows.first - 1, visibleRows.second, GraphTableModel.ROOT_COLUMN));
         }
@@ -410,14 +410,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   public static JBColor getRootBackgroundColor(@NotNull VirtualFile root, @NotNull VcsLogColorManager colorManager) {
-    final Color rootColor = colorManager.getRootColor(root);
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return ColorUtil.mix(rootColor, UIUtil.getTableBackground(), 0.75);
-      }
-    });
+    return VcsLogColorManagerImpl.getBackgroundColor(colorManager.getRootColor(root));
   }
 
   public void handleAnswer(@Nullable GraphAnswer<Integer> answer, boolean dataCouldChange, @Nullable Selection previousSelection) {
@@ -471,7 +464,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     public Selection(@NotNull VcsLogGraphTable table) {
       myTable = table;
       List<Integer> selectedRows = ContainerUtil.sorted(toList(myTable.getSelectedRows()));
-      Couple<Integer> visibleRows = TableScrollingUtil.getVisibleRows(myTable);
+      Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(myTable);
       myScrollToTop = visibleRows.first - 1 == 0;
 
       VisibleGraph<Integer> graph = myTable.getVisibleGraph();
@@ -710,7 +703,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
       if (value instanceof VirtualFile) {
         VirtualFile root = (VirtualFile)value;
-        int readableRow = TableScrollingUtil.getReadableRow(table, Math.round(myUi.getTable().getRowHeight() * 0.5f));
+        int readableRow = ScrollingUtil.getReadableRow(table, Math.round(myUi.getTable().getRowHeight() * 0.5f));
         if (row < readableRow) {
           text = "";
         }
@@ -756,6 +749,11 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     // this fixes selection problems by prohibiting selection when user clicks on graph (CellEditor does that)
     // what is fun about this code is that if you set cell editor in constructor with setCellEditor method it would not work
     return myDummyEditor;
+  }
+
+  @Override
+  public int getRowHeight() {
+    return myGraphCommitCellRenderer.getPreferredHeight();
   }
 
   private class StringCellRenderer extends ColoredTableCellRenderer {

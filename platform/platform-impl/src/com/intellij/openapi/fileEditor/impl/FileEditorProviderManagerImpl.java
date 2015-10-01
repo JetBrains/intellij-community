@@ -101,7 +101,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
       ContainerUtil.retainAll(sharedProviders, new Condition<FileEditorProvider>() {
         @Override
         public boolean value(FileEditorProvider provider) {
-          return !(provider instanceof TextEditorProvider);
+          return !(provider instanceof TextEditorProvider) || !((TextEditorProvider)provider).isDefaultFileEditorProvider();
         }
       });
     }

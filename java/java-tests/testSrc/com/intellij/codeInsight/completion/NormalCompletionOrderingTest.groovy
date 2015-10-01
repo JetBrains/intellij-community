@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.codeInsight.completion;
-
-
+package com.intellij.codeInsight.completion
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
@@ -24,11 +22,12 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.statistics.StatisticsManager
+import com.intellij.ui.JBColor
 
 public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/normalSorting";
@@ -294,7 +293,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferModifiers() {
-    checkPreferredItems(0, "private", "protected", "public", "paaa", "paab");
+    checkPreferredItems(0, "private", "protected", "public");
   }
 
   public void testPreferEnumConstants() {
@@ -659,6 +658,10 @@ interface TxANotAnno {}
     assertPreferredItems 0, 'newLinkedSet1', 'newLinkedSet0', 'newLinkedSet2'
   }
 
+  public void testStaticMemberTypes() {
+    checkPreferredItems 0, 'newMap', 'newList'
+  }
+
   public void testNoStatsInSuperInvocation() {
     checkPreferredItems 0, 'put', 'putAll'
 
@@ -674,11 +677,35 @@ interface TxANotAnno {}
   public void testLiveTemplateOrdering() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
     checkPreferredItems(0, 'return')
-    assert lookup.items[-1].lookupString == 'ritar'
+    assert lookup.items.find { it.lookupString == 'ritar'} != null
   }
 
   public void testPreferLocalToExpectedTypedMethod() {
     checkPreferredItems 0, 'event', 'equals'
+  }
+
+  public void testDispreferJustUsedEnumConstantsInSwitch() {
+    checkPreferredItems 0, 'BAR', 'FOO', 'GOO'
+    myFixture.type('\nbreak;\ncase ')
+
+    def items = myFixture.completeBasic()
+    assertPreferredItems 0, 'FOO', 'GOO', 'BAR'
+
+    assert LookupElementPresentation.renderElement(items[0]).itemTextForeground == JBColor.foreground()
+    assert LookupElementPresentation.renderElement(items.find { it.lookupString == 'BAR' }).itemTextForeground == JBColor.RED
+  }
+
+  public void testPreferValueTypesReturnedFromMethod() {
+    checkPreferredItems 0, 'StringBuffer', 'String', 'Serializable', 'SomeInterface', 'SomeOtherClass'
+    assert 'SomeInterface<String>' == LookupElementPresentation.renderElement(myFixture.lookupElements[3]).itemText
+  }
+
+  public void testPreferCastTypesHavingSpecifiedMethod() {
+    checkPreferredItems 0, 'MainClass1', 'MainClass2', 'Maa'
+  }
+
+  public void testNaturalSorting() {
+    checkPreferredItems 0, 'fun1', 'fun2', 'fun10'
   }
 
 }

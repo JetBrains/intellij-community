@@ -1,6 +1,9 @@
 package com.intellij.psi;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.LighterASTTokenNode;
+import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
@@ -14,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.LinkedList;
+
+import static com.intellij.openapi.util.Conditions.compose;
 
 /**
  * @author gregsh
@@ -46,6 +51,11 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   }
 
   @NotNull
+  public static SyntaxTraverser<PsiElement> psiTraverser(@Nullable PsiElement root) {
+    return psiTraverser().withRoot(root);
+  }
+
+  @NotNull
   public static SyntaxTraverser<PsiElement> revPsiTraverser() {
     return new SyntaxTraverser<PsiElement>(psiApiReversed(), null);
   }
@@ -56,9 +66,14 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   }
 
   @NotNull
+  public static SyntaxTraverser<ASTNode> astTraverser(@Nullable ASTNode root) {
+    return astTraverser().withRoot(root);
+  }
+
+  @NotNull
   public static SyntaxTraverser<LighterASTNode> lightTraverser(@NotNull PsiBuilder builder) {
     LighterASTApi api = new LighterASTApi(builder);
-    return new SyntaxTraverser<LighterASTNode>(api, Meta.<LighterASTNode>empty().withRoots(JBIterable.of(api.flyweightStructure.getRoot())));
+    return new SyntaxTraverser<LighterASTNode>(api, Meta.<LighterASTNode>empty().withRoots(JBIterable.of(api.getStructure().getRoot())));
   }
 
   public final Api<T> api;
@@ -91,17 +106,22 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   }
 
   private UserDataHolder getUserDataHolder() {
-    return api instanceof LighterASTApi ? ((LighterASTApi)api).builder : (UserDataHolder)parents(getRoot()).last();
+    return api instanceof LighterASTApi ? ((LighterASTApi)api).builder : (UserDataHolder)api.parents(getRoot()).last();
   }
 
   @NotNull
-  public SyntaxTraverser<T> expandTypes(@NotNull Condition<? super IElementType> condition) {
-    return super.expand(Conditions.compose(api.TO_TYPE(), condition));
+  public SyntaxTraverser<T> expandTypes(@NotNull Condition<? super IElementType> c) {
+    return super.expand(compose(api.TO_TYPE(), c));
   }
 
   @NotNull
-  public SyntaxTraverser<T> filterTypes(@NotNull Condition<? super IElementType> condition) {
-    return super.filter(Conditions.compose(api.TO_TYPE(), condition));
+  public SyntaxTraverser<T> filterTypes(@NotNull Condition<? super IElementType> c) {
+    return super.filter(compose(api.TO_TYPE(), c));
+  }
+
+  @NotNull
+  public SyntaxTraverser<T> forceDisregardTypes(@NotNull Condition<? super IElementType> c) {
+    return super.forceDisregard(compose(api.TO_TYPE(), c));
   }
 
   @Nullable
@@ -114,17 +134,6 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
     }
     return null;
   }
-
-  @NotNull
-  public JBIterable<T> parents(@Nullable final T element) {
-    return JBIterable.generate(element, new Function<T, T>() {
-      @Override
-      public T fun(T t) {
-        return api.parent(t);
-      }
-    });
-  }
-
 
   public abstract static class Api<T> implements Function<T, Iterable<? extends T>> {
     @NotNull
@@ -145,6 +154,16 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
     @Override
     public JBIterable<? extends T> fun(T t) {
       return children(t);
+    }
+
+    @NotNull
+    public JBIterable<T> parents(@Nullable final T element) {
+      return JBIterable.generate(element, new Function<T, T>() {
+        @Override
+        public T fun(T t) {
+          return parent(t);
+        }
+      });
     }
 
     @NotNull
@@ -352,16 +371,14 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   }
 
   private abstract static class FlyweightApi<T> extends Api<T> {
-    final FlyweightCapableTreeStructure<T> flyweightStructure;
 
-    public FlyweightApi(@NotNull FlyweightCapableTreeStructure<T> structure) {
-      flyweightStructure = structure;
-    }
+    @NotNull
+    abstract FlyweightCapableTreeStructure<T> getStructure();
 
     @Nullable
     @Override
     public T parent(@NotNull T node) {
-      return flyweightStructure.getParent(node);
+      return getStructure().getParent(node);
     }
 
     @NotNull
@@ -370,25 +387,27 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
       return new JBIterable<T>() {
         @Override
         public Iterator<T> iterator() {
+          FlyweightCapableTreeStructure<T> structure = getStructure();
           Ref<T[]> ref = Ref.create();
-          int count = flyweightStructure.getChildren(flyweightStructure.prepareForGetChildren(node), ref);
+          int count = structure.getChildren(structure.prepareForGetChildren(node), ref);
           if (count == 0) return ContainerUtil.emptyIterator();
           T[] array = ref.get();
           LinkedList<T> list = ContainerUtil.newLinkedList();
           for (int i = 0; i < count; i++) {
             T child = array[i];
             IElementType childType = typeOf(child);
-            if (childType.getLanguage() == Language.ANY) {
-              // skip TokenType.* types, errors cannot be properly handled (no parents)
-              if (childType == TokenType.ERROR_ELEMENT) {
-                // todo remember error
-              }
+            // skip TokenType.* types, errors cannot be properly handled (no parents)
+            if (childType == TokenType.ERROR_ELEMENT) {
+              // todo remember error
+              continue;
+            }
+            else if (childType == TokenType.WHITE_SPACE || childType == TokenType.BAD_CHARACTER) {
               continue;
             }
             array[i] = null; // do not dispose meaningful TokenNodes
             list.addLast(child);
           }
-          flyweightStructure.disposeChildren(array, count);
+          structure.disposeChildren(array, count);
           return list.iterator();
         }
       };
@@ -397,10 +416,22 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
 
   private static class LighterASTApi extends FlyweightApi<LighterASTNode> {
     private final PsiBuilder builder;
+    private final ThreadLocalCachedValue<FlyweightCapableTreeStructure<LighterASTNode>> structure =
+      new ThreadLocalCachedValue<FlyweightCapableTreeStructure<LighterASTNode>>() {
+        @Override
+        protected FlyweightCapableTreeStructure<LighterASTNode> create() {
+          return builder.getLightTree();
+        }
+      };
 
-    public LighterASTApi(PsiBuilder builder) {
-      super(builder.getLightTree());
+    public LighterASTApi(final PsiBuilder builder) {
       this.builder = builder;
+    }
+
+    @NotNull
+    @Override
+    FlyweightCapableTreeStructure<LighterASTNode> getStructure() {
+      return structure.getValue();
     }
 
     @NotNull

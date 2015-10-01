@@ -202,7 +202,12 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   // requests creation
+  @Nullable
   public ClassPrepareRequest createClassPrepareRequest(ClassPrepareRequestor requestor, String pattern) {
+    if (myEventRequestManager == null) { // detached already
+      return null;
+    }
+
     ClassPrepareRequest classPrepareRequest = myEventRequestManager.createClassPrepareRequest();
     classPrepareRequest.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
     classPrepareRequest.addClassFilter(pattern);
@@ -321,10 +326,12 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     DebuggerManagerThreadImpl.assertIsManagerThread();
     ClassPrepareRequest classPrepareRequest = createClassPrepareRequest(requestor, classOrPatternToBeLoaded);
 
-    registerRequest(requestor, classPrepareRequest);
-    classPrepareRequest.enable();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("classOrPatternToBeLoaded = " + classOrPatternToBeLoaded);
+    if (classPrepareRequest != null) {
+      registerRequest(requestor, classPrepareRequest);
+      classPrepareRequest.enable();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("classOrPatternToBeLoaded = " + classOrPatternToBeLoaded);
+      }
     }
   }
 

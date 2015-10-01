@@ -468,8 +468,17 @@ public class SMTestProxy extends AbstractTestProxy {
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText,
                                       @Nullable final String filePath) {
+    setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, filePath, null);
+  }
+  
+  public void setTestComparisonFailed(@NotNull final String localizedMessage,
+                                      @Nullable final String stackTrace,
+                                      @NotNull final String actualText,
+                                      @NotNull final String expectedText,
+                                      @Nullable final String expectedFilePath,
+                                      @Nullable final String actualFilePath) {
     setStacktraceIfNotSet(stackTrace);
-    myState = new TestComparisionFailedState(localizedMessage, stackTrace, actualText, expectedText, filePath);
+    myState = new TestComparisionFailedState(localizedMessage, stackTrace, actualText, expectedText, expectedFilePath, actualFilePath);
     fireOnNewPrintable(myState);
   }
 

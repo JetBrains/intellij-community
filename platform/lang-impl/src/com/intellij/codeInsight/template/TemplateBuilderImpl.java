@@ -308,4 +308,19 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     mySkipOnStartMap.put(key, Boolean.valueOf(skipOnStart));
     replaceElement(key, expression);
   }
+
+  public void replaceRange(TextRange rangeWithinElement, String varName, Expression expression, boolean alwaysStopAt) {
+    final RangeMarker key = myDocument.createRangeMarker(rangeWithinElement.shiftRight(myContainerElement.getStartOffset()));
+    myAlwaysStopAtMap.put(key, alwaysStopAt ? Boolean.TRUE : Boolean.FALSE);
+    myVariableNamesMap.put(key, varName);
+    replaceElement(key, expression);
+  }
+
+  public void replaceElement(TextRange rangeWithinElement, String varName, String dependantVariableName, boolean alwaysStopAt) {
+    final RangeMarker key = myDocument.createRangeMarker(rangeWithinElement.shiftRight(myContainerElement.getStartOffset()));
+    myAlwaysStopAtMap.put(key, alwaysStopAt ? Boolean.TRUE : Boolean.FALSE);
+    myVariableNamesMap.put(key, varName);
+    myVariableExpressions.put(key, dependantVariableName);
+    myElements.add(key);
+  }
 }

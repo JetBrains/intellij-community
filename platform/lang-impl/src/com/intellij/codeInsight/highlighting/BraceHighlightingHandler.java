@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,11 +123,16 @@ public class BraceHighlightingHandler {
           public void run() {
             final PsiFile injected;
             try {
-              injected = psiFile instanceof PsiCompiledElement ||
-                         psiFile instanceof PsiBinaryFile ||
-                         !isValidEditor(editor) ||
-                         !isValidFile(psiFile)
-                         ? null : getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
+              if (psiFile instanceof PsiCompiledFile) {
+                injected = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
+              }
+              else {
+                injected = psiFile instanceof PsiCompiledElement ||
+                           psiFile instanceof PsiBinaryFile ||
+                           !isValidEditor(editor) ||
+                           !isValidFile(psiFile)
+                           ? null : getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
+              }
             }
             catch (RuntimeException e) {
               // Reset processing flag in case of unexpected exception.

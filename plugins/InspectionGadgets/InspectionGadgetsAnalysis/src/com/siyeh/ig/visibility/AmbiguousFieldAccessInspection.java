@@ -100,10 +100,6 @@ public class AmbiguousFieldAccessInspection extends BaseInspection {
       if (expression.isQualified()) {
         return;
       }
-      PsiClass containingClass = ClassUtils.getContainingClass(expression);
-      if (containingClass == null) {
-        return;
-      }
       final PsiElement target = expression.resolve();
       if (target == null) {
         return;
@@ -113,7 +109,14 @@ public class AmbiguousFieldAccessInspection extends BaseInspection {
       }
       final PsiField field = (PsiField)target;
       final PsiClass fieldClass = field.getContainingClass();
-      if (fieldClass == null || !containingClass.isInheritor(fieldClass, true)) {
+      if (fieldClass == null) {
+        return;
+      }
+      PsiClass containingClass = ClassUtils.getContainingClass(expression);
+      if (containingClass == null) {
+        return;
+      }
+      if (!containingClass.isInheritor(fieldClass, true)) {
         return;
       }
       final PsiElement parent = containingClass.getParent();

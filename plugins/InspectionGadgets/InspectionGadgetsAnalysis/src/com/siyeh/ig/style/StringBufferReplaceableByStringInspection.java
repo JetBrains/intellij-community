@@ -209,7 +209,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       }
 
       if (element instanceof PsiWhiteSpace) {
-        if (element.getText().contains("\n")) {
+        if (element.getText().contains("\n") && result.length() > 0) {
           result.append('\n'); // keep line break structure
         }
       }

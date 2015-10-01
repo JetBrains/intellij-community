@@ -67,6 +67,12 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   }
 
   @Override
+  protected void onInit() {
+    super.onInit();
+    myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myRequest));
+  }
+
+  @Override
   @CalledInAwt
   protected void onDispose() {
     destroyEditorHolders();

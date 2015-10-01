@@ -375,23 +375,28 @@ NSString *getOverrideVMOptionsPath() {
 }
 
 NSArray *parseVMOptions() {
-    NSArray *files = @[getApplicationVMOptionsPath(),
-                       getUserVMOptionsPath(),
-                       getOverrideVMOptionsPath()];
+    NSString *vmOptionsFile = getApplicationVMOptionsPath();
+    NSString *userVMOptiosFile = getUserVMOptionsPath();
+    NSString *envVarVMOptiosFile = getOverrideVMOptionsPath();
+
+    if ([[NSFileManager defaultManager] fileExistsAtPath:userVMOptiosFile]) {
+      vmOptionsFile = userVMOptiosFile;
+    }
+    if ([[NSFileManager defaultManager] fileExistsAtPath:envVarVMOptiosFile]) {
+      vmOptionsFile = envVarVMOptiosFile;
+    }
 
     NSMutableArray *options = [NSMutableArray array];
     NSMutableArray *used = [NSMutableArray array];
 
-    for (NSString *file in files) {
-        NSLog(@"Processing VMOptions file at %@", file);
-        NSArray *contents = [VMOptionsReader readFile:file];
-        if (contents != nil) {
-            NSLog(@"Done");
-            [used addObject:file];
-            [options addObjectsFromArray:contents];
-        } else {
-            NSLog(@"No content found");
-        }
+    NSLog(@"Processing VMOptions file at %@", vmOptionsFile);
+    NSArray *contents = [VMOptionsReader readFile:vmOptionsFile];
+    if (contents != nil) {
+      NSLog(@"Done");
+      [used addObject:vmOptionsFile];
+      [options addObjectsFromArray:contents];
+    } else {
+      NSLog(@"No content found at %@ ", vmOptionsFile);
     }
     [options addObject:[NSString stringWithFormat:@"-Djb.vmOptionsFile=%@", [used componentsJoinedByString:@","]]];
 

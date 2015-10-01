@@ -124,15 +124,15 @@ public class NonAtomicOperationOnVolatileFieldInspection
       }
       final PsiReferenceExpression reference =
         (PsiReferenceExpression)expression;
-      if (SynchronizationUtil.isInSynchronizedContext(reference)) {
-        return null;
-      }
       final PsiElement referent = reference.resolve();
       if (!(referent instanceof PsiField)) {
         return null;
       }
       final PsiField field = (PsiField)referent;
       if (!field.hasModifierProperty(PsiModifier.VOLATILE)) {
+        return null;
+      }
+      if (SynchronizationUtil.isInSynchronizedContext(reference)) {
         return null;
       }
       return field;

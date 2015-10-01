@@ -74,7 +74,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider implements As
     return new Builder() {
       @Override
       public FileEditor build() {
-        final PsiAwareTextEditorImpl editor = new PsiAwareTextEditorImpl(project, file, PsiAwareTextEditorProvider.this);
+        PsiAwareTextEditorImpl editor = new PsiAwareTextEditorImpl(project, file, PsiAwareTextEditorProvider.this, getFileEditorName());
         if (finalState != null) {
           finalState.setToEditor(editor.getEditor());
         }

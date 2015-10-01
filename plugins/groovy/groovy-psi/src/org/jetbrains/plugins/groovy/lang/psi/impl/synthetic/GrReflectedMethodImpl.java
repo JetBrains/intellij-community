@@ -95,15 +95,13 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
       }
     }
 
-    for (PsiElement modifier : baseMethod.getModifierList().getModifiers()) {
-      if (modifier instanceof GrAnnotation) {
-        final String qualifiedName = ((GrAnnotation)modifier).getQualifiedName();
-        if (qualifiedName != null) {
-          myModifierList.addAnnotation(qualifiedName);
-        }
-        else {
-          myModifierList.addAnnotation(((GrAnnotation)modifier).getShortName());
-        }
+    for (PsiAnnotation annotation : baseMethod.getModifierList().getRawAnnotations()) {
+      final String qualifiedName = annotation.getQualifiedName();
+      if (qualifiedName != null) {
+        myModifierList.addAnnotation(qualifiedName);
+      }
+      else {
+        myModifierList.addAnnotation(((GrAnnotation)annotation).getShortName());
       }
     }
 

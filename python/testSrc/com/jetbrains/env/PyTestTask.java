@@ -77,6 +77,10 @@ public abstract class PyTestTask {
     return myWorkingFolder;
   }
 
+  /**
+   * @return tags this task needs to exist on interpreter to run
+   */
+  @NotNull
   public Set<String> getTags() {
     return Sets.newHashSet();
   }

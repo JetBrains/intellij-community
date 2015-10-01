@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -100,7 +101,7 @@ public class ProjectStructureSelectInTarget extends SelectInTargetBase implement
   @Nullable
   private static Module findModuleByModuleFile(@NotNull Project project, @NotNull VirtualFile file) {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (file.equals(module.getModuleFile())) {
+      if (ModuleUtilCore.isModuleFile(module, file)) {
         return module;
       }
     }

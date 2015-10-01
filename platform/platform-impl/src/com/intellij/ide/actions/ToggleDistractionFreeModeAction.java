@@ -95,6 +95,7 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
     p.setValue(before + "ARE_LINE_NUMBERS_SHOWN",   valueOf(eo.ARE_LINE_NUMBERS_SHOWN));    eo.ARE_LINE_NUMBERS_SHOWN   = p.getBoolean(after + "ARE_LINE_NUMBERS_SHOWN", value); 
     p.setValue(before + "IS_RIGHT_MARGIN_SHOWN",    valueOf(eo.IS_RIGHT_MARGIN_SHOWN));     eo.IS_RIGHT_MARGIN_SHOWN    = p.getBoolean(after + "IS_RIGHT_MARGIN_SHOWN", value); 
     p.setValue(before + "IS_INDENT_GUIDES_SHOWN",   valueOf(eo.IS_INDENT_GUIDES_SHOWN));    eo.IS_INDENT_GUIDES_SHOWN   = p.getBoolean(after + "IS_INDENT_GUIDES_SHOWN", value); 
+    p.setValue(before + "SHOW_BREADCRUMBS",         valueOf(eo.SHOW_BREADCRUMBS));          eo.SHOW_BREADCRUMBS         = p.getBoolean(after + "SHOW_BREADCRUMBS", value); 
 
     p.setValue(before + "SHOW_METHOD_SEPARATORS",   valueOf(ds.SHOW_METHOD_SEPARATORS));    ds.SHOW_METHOD_SEPARATORS   = p.getBoolean(after + "SHOW_METHOD_SEPARATORS", value);
     

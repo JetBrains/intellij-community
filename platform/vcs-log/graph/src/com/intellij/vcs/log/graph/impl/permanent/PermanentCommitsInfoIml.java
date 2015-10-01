@@ -16,6 +16,7 @@
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.GraphCommit;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class PermanentCommitsInfoIml<CommitId> implements PermanentCommitsInfo<CommitId> {
+  private static final Logger LOG = Logger.getInstance(PermanentCommitsInfoIml.class);
 
   @NotNull
   public static <CommitId> PermanentCommitsInfoIml<CommitId> newInstance(@NotNull final List<? extends GraphCommit<CommitId>> graphCommits,
@@ -159,11 +161,24 @@ public class PermanentCommitsInfoIml<CommitId> implements PermanentCommitsInfo<C
 
   @NotNull
   public Set<Integer> convertToNodeIds(@NotNull Collection<CommitId> commitIds) {
+    return convertToNodeIds(commitIds, false);
+  }
+
+  @NotNull
+  public Set<Integer> convertToNodeIds(@NotNull Collection<CommitId> commitIds, boolean reportNotFound) {
     Set<Integer> result = ContainerUtil.newHashSet();
+    Set<CommitId> matchedIds = ContainerUtil.newHashSet();
     for (int i = 0; i < myCommitIdIndexes.size(); i++) {
       CommitId commitId = myCommitIdIndexes.get(i);
       if (commitIds.contains(commitId)) {
         result.add(i);
+        matchedIds.add(commitId);
+      }
+    }
+    if (reportNotFound) {
+      Collection<CommitId> unmatchedIds = ContainerUtil.subtract(commitIds, matchedIds);
+      if (!unmatchedIds.isEmpty()) {
+        LOG.error("Unmatched commit ids " + unmatchedIds);
       }
     }
     for (Map.Entry<Integer, CommitId> entry : myNotLoadCommits.entrySet()) {

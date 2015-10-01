@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
@@ -45,10 +46,27 @@ public class EditorPaintingTest extends AbstractEditorTest {
 
   public void testWholeLineHighlighterAtDocumentEnd() throws Exception {
     initText("foo");
-    myEditor.getMarkupModel().addRangeHighlighter(0, 3, HighlighterLayer.WARNING, 
-                                                  new TextAttributes(null, Color.red, null, null, Font.PLAIN),
-                                                  HighlighterTargetArea.LINES_IN_RANGE);
+    addLineHighlighter(0, 3, HighlighterLayer.WARNING, null, Color.red);
     checkResult();
+  }
+
+  public void testUpperHighlighterCanSetDefaultForegroundColor() throws Exception {
+    initText("foo");
+    addRangeHighlighter(1, 3, HighlighterLayer.WARNING, Color.red, null);
+    addRangeHighlighter(2, 3, HighlighterLayer.ERROR, Color.black, null);
+    checkResult();
+  }
+
+  private static void addRangeHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
+    myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer,
+                                                  new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN),
+                                                  HighlighterTargetArea.EXACT_RANGE);
+  }
+  
+  private static void addLineHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
+    myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer,
+                                                  new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN),
+                                                  HighlighterTargetArea.LINES_IN_RANGE);
   }
 
   @Override
@@ -60,15 +78,19 @@ public class EditorPaintingTest extends AbstractEditorTest {
 
   @Override
   protected void tearDown() throws Exception {
-    Registry.get("editor.new.rendering").setValue(false);
-    FontLayoutService.setInstance(null);
-    super.tearDown();
+    try {
+      Registry.get("editor.new.rendering").setValue(false);
+      FontLayoutService.setInstance(null);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private void checkResult() throws IOException {
     checkResult(getTestName(true) + ".png");
   }
-  
+
   private void checkResult(@TestDataFile String expectedResultFileName) throws IOException {
     myEditor.putUserData(EditorImpl.DO_DOCUMENT_UPDATE_TEST, Boolean.TRUE);
     myEditor.getSettings().setAdditionalLinesCount(0);
@@ -90,14 +112,16 @@ public class EditorPaintingTest extends AbstractEditorTest {
     File fileWithExpectedResult = getTestDataFile(expectedResultFileName);
     if (fileWithExpectedResult.exists()) {
       BufferedImage expectedResult = ImageIO.read(fileWithExpectedResult);
-      assertEquals(generateMessage("Unexpected image width", fileWithExpectedResult, image), 
-                   expectedResult.getWidth(), image.getWidth());
-      assertEquals(generateMessage("Unexpected image height", fileWithExpectedResult, image), 
-                   expectedResult.getHeight(), image.getHeight());
+      if (expectedResult.getWidth() != image.getWidth()) {
+        fail("Unexpected image width", fileWithExpectedResult, image);
+      }
+      if (expectedResult.getHeight() != image.getHeight()) {
+        fail("Unexpected image height", fileWithExpectedResult, image);
+      }
       for (int i = 0; i < expectedResult.getWidth(); i++) {
         for (int j = 0; j < expectedResult.getHeight(); j++) {
           if (expectedResult.getRGB(i, j) != image.getRGB(i, j)) {
-            fail(generateMessage("Unexpected image contents", fileWithExpectedResult, image));
+            fail("Unexpected image contents", fileWithExpectedResult, image);
           }
         }
       }
@@ -107,15 +131,17 @@ public class EditorPaintingTest extends AbstractEditorTest {
         ImageIO.write(image, "png", fileWithExpectedResult);
       }
       else {
-        fail(generateMessage("Test data is missing", fileWithExpectedResult, image));
+        fail("Test data is missing", fileWithExpectedResult, image);
       }
     }
   }
 
-  private String generateMessage(String text, File expectedResultsFile, BufferedImage actualImage) throws IOException {
+  private void fail(String message, File expectedResultsFile, BufferedImage actualImage) throws IOException {
     File savedImage = FileUtil.createTempFile(getName(), ".png", false);
+    addTmpFileToKeep(savedImage);
     ImageIO.write(actualImage, "png", savedImage);
-    return text + "\nExpected image: " + expectedResultsFile.getAbsolutePath() + "\nActual image:   " + savedImage.getAbsolutePath() + "\n";
+    throw new FileComparisonFailure(message, expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath(),
+                                    expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath());
   }
 
   private static File getFontFile() {
@@ -179,7 +205,7 @@ public class EditorPaintingTest extends AbstractEditorTest {
       myBitmapFont.draw(myDelegate, c, x, y);
     }
   }
-  
+
   // font which, once created, should be rendered identically on all platforms
   private static class BitmapFont {
     private static final float FONT_SIZE = 12;
@@ -187,7 +213,7 @@ public class EditorPaintingTest extends AbstractEditorTest {
     private static final int CHAR_HEIGHT = 12;
     private static final int CHAR_DESCENT = 2;
     private static final int NUM_CHARACTERS = 128;
-    
+
     private final BufferedImage myImage;
 
     private BitmapFont(BufferedImage image) {

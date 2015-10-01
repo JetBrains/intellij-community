@@ -17,6 +17,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit2.info.LocationUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -31,6 +32,14 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 
 public class AllInDirectoryConfigurationProducer extends JUnitConfigurationProducer {
+
+  protected AllInDirectoryConfigurationProducer(ConfigurationType configurationType) {
+    super(configurationType);
+  }
+
+  public AllInDirectoryConfigurationProducer() {
+  }
+
   @Override
   protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
                                                   ConfigurationContext context,

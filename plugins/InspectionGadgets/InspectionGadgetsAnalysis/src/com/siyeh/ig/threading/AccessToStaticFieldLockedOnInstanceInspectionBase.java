@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,29 @@ public class AccessToStaticFieldLockedOnInstanceInspectionBase extends BaseInspe
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
+      final PsiElement target = expression.resolve();
+      if (!(target instanceof PsiField)) {
+        return;
+      }
+      final PsiField lockedField = (PsiField)target;
+      if (!lockedField.hasModifierProperty(PsiModifier.STATIC) || ExpressionUtils.isConstant(lockedField)) {
+        return;
+      }
+      final PsiClass containingClass = lockedField.getContainingClass();
+      if (!PsiTreeUtil.isAncestor(containingClass, expression, false)) {
+        return;
+      }
+      if (!ignoredClasses.isEmpty()) {
+        final PsiType type = lockedField.getType();
+        if (type instanceof PsiClassType) {
+          final PsiClassType classType = (PsiClassType)type;
+          final PsiClass aClass = classType.resolve();
+          if (aClass != null && ignoredClasses.contains(aClass.getQualifiedName())) {
+            return;
+          }
+        }
+      }
+
       boolean isLockedOnInstance = false;
       boolean isLockedOnClass = false;
       final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
@@ -73,9 +96,9 @@ public class AccessToStaticFieldLockedOnInstanceInspectionBase extends BaseInspe
         final PsiExpression lockExpression = synchronizedStatement.getLockExpression();
         if (lockExpression instanceof PsiReferenceExpression) {
           final PsiReferenceExpression reference = (PsiReferenceExpression)lockExpression;
-          final PsiElement target = reference.resolve();
-          if (target instanceof PsiField) {
-            final PsiField lockField = (PsiField)target;
+          final PsiElement lockTarget = reference.resolve();
+          if (lockTarget instanceof PsiField) {
+            final PsiField lockField = (PsiField)lockTarget;
             if (lockField.hasModifierProperty(PsiModifier.STATIC)) {
               isLockedOnClass = true;
             }
@@ -94,28 +117,6 @@ public class AccessToStaticFieldLockedOnInstanceInspectionBase extends BaseInspe
       }
       if (!isLockedOnInstance || isLockedOnClass) {
         return;
-      }
-      final PsiElement target = expression.resolve();
-      if (!(target instanceof PsiField)) {
-        return;
-      }
-      final PsiField lockedField = (PsiField)target;
-      if (!lockedField.hasModifierProperty(PsiModifier.STATIC) || ExpressionUtils.isConstant(lockedField)) {
-        return;
-      }
-      final PsiClass containingClass = lockedField.getContainingClass();
-      if (!PsiTreeUtil.isAncestor(containingClass, expression, false)) {
-        return;
-      }
-      if (!ignoredClasses.isEmpty()) {
-        final PsiType type = lockedField.getType();
-        if (type instanceof PsiClassType) {
-          final PsiClassType classType = (PsiClassType)type;
-          final PsiClass aClass = classType.resolve();
-          if (aClass != null && ignoredClasses.contains(aClass.getQualifiedName())) {
-            return;
-          }
-        }
       }
       registerError(expression);
     }

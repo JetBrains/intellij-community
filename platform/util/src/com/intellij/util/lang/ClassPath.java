@@ -165,6 +165,14 @@ public class ClassPath {
     return myLoaders.get(i);
   }
 
+  public List<URL> getBaseUrls() {
+    List<URL> result = new ArrayList<URL>();
+    for (Loader loader : myLoaders) {
+      result.add(loader.getBaseURL());
+    }
+    return result;
+  }
+  
   /**
    * Used in 
    * @see com.intellij.openapi.projectRoots.JdkUtil#isClassPathJarEnabled(java.util.List, java.lang.String)

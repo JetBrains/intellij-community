@@ -32,7 +32,6 @@ public class SSBasedInspectionTest extends InspectionTestCase {
     configuration.setMatchOptions(options);
     configurations.add(configuration);
     inspection.setConfigurations(configurations, myProject);
-    inspection.projectOpened(getProject());
     myWrapper = new LocalInspectionToolWrapper(inspection);
   }
 

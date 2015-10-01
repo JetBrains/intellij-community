@@ -165,7 +165,7 @@ public class SortedIdSet implements Cloneable, RandomAccessIntContainer {
   }
 
   public boolean contains(int value) {
-    assert value > 0;
+    if(value <= 0) return false;
     int pos = binarySearch(mySet, 0, mySetLength, value);
     return pos >= 0 && mySet[pos] > 0;
   }

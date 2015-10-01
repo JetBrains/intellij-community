@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,21 @@ public class ClassMayBeInterfaceInspectionTest extends LightInspectionTestCase {
            "    public class A {}\n" +
            "}");
   }
+
+  public void testMethodCantBeDefault() {
+    doTest("class Issue {\n" +
+           "    public abstract class Inner {\n" +
+           "        public Issue getParent() {\n" +
+           "            return Issue.this;\n" +
+           "        }\n" +
+           "    }\n" +
+           "}");
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new ClassMayBeInterfaceInspection();
+    final ClassMayBeInterfaceInspection inspection = new ClassMayBeInterfaceInspection();
+    inspection.reportClassesWithNonAbstractMethods = true;
+    return inspection;
   }
 }

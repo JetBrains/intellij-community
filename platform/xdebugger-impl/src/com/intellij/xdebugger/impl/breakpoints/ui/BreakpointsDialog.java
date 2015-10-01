@@ -297,7 +297,7 @@ public class BreakpointsDialog extends DialogWrapper {
         navigate(true);
         close(OK_EXIT_CODE);
       }
-    }.registerCustomShortcutSet(CommonShortcuts.ENTER, tree);
+    }.registerCustomShortcutSet(CommonShortcuts.ENTER, tree, myDisposable);
 
     new AnAction("BreakpointDialog.ShowSource") {
       @Override
@@ -305,7 +305,7 @@ public class BreakpointsDialog extends DialogWrapper {
         navigate(true);
         close(OK_EXIT_CODE);
       }
-    }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), tree);
+    }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), tree, myDisposable);
 
     final DefaultActionGroup breakpointTypes = new DefaultActionGroup();
     for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {

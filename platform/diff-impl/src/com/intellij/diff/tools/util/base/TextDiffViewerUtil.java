@@ -29,7 +29,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -441,10 +440,11 @@ public class TextDiffViewerUtil {
       myEditorPopupActions = editorPopupActions;
     }
 
-    public void install(@NotNull List<? extends Editor> editors) {
-      for (Editor editor : editors) {
+    public void install(@NotNull List<? extends EditorEx> editors) {
+      for (EditorEx editor : editors) {
         if (editor == null) continue;
         editor.addEditorMouseListener(this);
+        editor.setContextMenuGroupId(null); // disabling default context menu
       }
     }
 

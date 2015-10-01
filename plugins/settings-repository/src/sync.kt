@@ -15,16 +15,11 @@
  */
 package org.jetbrains.settingsRepository
 
-import com.intellij.configurationStore.ComponentStoreImpl
-import com.intellij.configurationStore.SchemeManagerFactoryBase
-import com.intellij.configurationStore.XmlElementStorage
+import com.intellij.configurationStore.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.runBatchUpdate
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.impl.stores.FileStorage
-import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.SchemesManagerFactory
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -33,6 +28,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.util.messages.MessageBus
 import com.intellij.util.ui.UIUtil
 import gnu.trove.THashSet
 import java.util.LinkedHashSet
@@ -41,14 +37,12 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
   volatile var writeAndDeleteProhibited = false
     private set
 
-  public fun sync(syncType: SyncType, project: Project?, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult? {
-    ApplicationManager.getApplication()!!.assertIsDispatchThread()
-
+  public fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult? {
     var exception: Throwable? = null
     var restartApplication = false
     var updateResult: UpdateResult? = null
     icsManager.runInAutoCommitDisabledMode {
-      ApplicationManager.getApplication()!!.saveSettings()
+      UIUtil.invokeAndWaitIfNeeded(Runnable { ApplicationManager.getApplication()!!.saveSettings() })
       try {
         writeAndDeleteProhibited = true
         ProgressManager.getInstance().run(object : Task.Modal(project, IcsBundle.message("task.sync.title"), true) {
@@ -61,11 +55,11 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
             if (localRepositoryInitializer == null) {
               try {
                 // we commit before even if sync "RESET_TO_THEIRS" — preserve history and ability to undo
-                repositoryManager.commitIfCan(indicator)
+                repositoryManager.commit(indicator, syncType)
                 // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
               }
               catch (e: ProcessCanceledException) {
-                LOG.debug("Canceled")
+                LOG.warn("Canceled")
                 return
               }
               catch (e: Throwable) {
@@ -110,7 +104,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
               return
             }
             catch (e: Throwable) {
-              if (e !is AuthenticationException && e !is NoRemoteRepositoryException) {
+              if (e !is AuthenticationException && e !is NoRemoteRepositoryException && e !is CannotResolveConflictInTestMode) {
                 LOG.error(e)
               }
               exception = e
@@ -119,7 +113,8 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
 
             icsManager.repositoryActive = true
             if (updateResult != null) {
-              restartApplication = updateStoragesFromStreamProvider(ApplicationManager.getApplication().stateStore, updateResult!!)
+              val app = ApplicationManager.getApplication()
+              restartApplication = updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult!!, app.getMessageBus())
             }
             if (!restartApplication && syncType == SyncType.OVERWRITE_LOCAL) {
               (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
@@ -145,11 +140,9 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
   }
 }
 
-private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResult: UpdateResult): Boolean {
+private fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateResult: UpdateResult, messageBus: MessageBus): Boolean {
   val changedComponentNames = LinkedHashSet<String>()
-  val stateStorages = store.getStateStorageManager().getCachedFileStateStorages(updateResult.changed, updateResult.deleted)
-  val changed = stateStorages.first!!
-  val deleted = stateStorages.second!!
+  val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted)
   if (changed.isEmpty() && deleted.isEmpty()) {
     return false
   }
@@ -157,34 +150,30 @@ private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResul
   return UIUtil.invokeAndWaitIfNeeded(object : Computable<Boolean> {
     override fun compute(): Boolean {
       val notReloadableComponents: Collection<String>
-      val token = WriteAction.start()
-      try {
-        updateStateStorage(changedComponentNames, changed, false)
-        updateStateStorage(changedComponentNames, deleted, true)
+      updateStateStorage(changedComponentNames, changed, false)
+      updateStateStorage(changedComponentNames, deleted, true)
 
-        if (changedComponentNames.isEmpty()) {
-          return false
-        }
-
-        notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
-
-        val changedStorageSet = THashSet<StateStorage>(changed)
-        changedStorageSet.addAll(deleted)
-        (store as ComponentStoreImpl).reinitComponents(changedComponentNames, notReloadableComponents, changedStorageSet)
+      if (changedComponentNames.isEmpty()) {
+        return false
       }
-      finally {
-        token.finish()
+
+      notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
+
+      val changedStorageSet = THashSet<StateStorage>(changed)
+      changedStorageSet.addAll(deleted)
+      runBatchUpdate(messageBus) {
+        store.reinitComponents(changedComponentNames, changedStorageSet, notReloadableComponents)
       }
 
       if (notReloadableComponents.isEmpty()) {
         return false
       }
-      return StoreUtil.askToRestart(store, notReloadableComponents, null)
+      return askToRestart(store, notReloadableComponents, null, true)
     }
   })!!
 }
 
-private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateStorages: Collection<FileStorage>, deleted: Boolean) {
+private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateStorages: Collection<StateStorage>, deleted: Boolean) {
   for (stateStorage in stateStorages) {
     try {
       (stateStorage as XmlElementStorage).updatedFromStreamProvider(changedComponentNames, deleted)
@@ -200,3 +189,7 @@ enum class SyncType {
   OVERWRITE_LOCAL,
   OVERWRITE_REMOTE
 }
+
+class NoRemoteRepositoryException(cause: Throwable) : RuntimeException(cause.getMessage(), cause)
+
+class CannotResolveConflictInTestMode() : RuntimeException()

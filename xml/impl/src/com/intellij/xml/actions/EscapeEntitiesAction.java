@@ -15,7 +15,8 @@
  */
 package com.intellij.xml.actions;
 
-import com.intellij.codeInsight.actions.SimpleCodeInsightAction;
+import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -29,6 +30,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTokenType;
@@ -42,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dennis.Ushakov
  */
-public class EscapeEntitiesAction extends SimpleCodeInsightAction {
+public class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
   private static ParameterizedCachedValueImpl<IntObjectHashMap<String>, PsiFile> ESCAPES = new ParameterizedCachedValueImpl<IntObjectHashMap<String>, PsiFile>(
     new ParameterizedCachedValueProvider<IntObjectHashMap<String>, PsiFile>() {
       @Nullable
@@ -79,7 +81,7 @@ public class EscapeEntitiesAction extends SimpleCodeInsightAction {
       char c = text.charAt(i);
       final PsiElement element = file.findElementAt(start + i);
       if (element != null && isCharacterElement(element)) {
-        if (c == '<' || c == '>' || c == '&' || c == '"' || c == '\'' || c > 0xff) {
+        if (c == '<' || c == '>' || c == '&' || c == '"' || c == '\'' || c > 0x7f) {
           final String escape = ESCAPES.getValue(file).get(c);
           if (escape != null) {
             result.append("&").append(escape).append(";");
@@ -95,7 +97,10 @@ public class EscapeEntitiesAction extends SimpleCodeInsightAction {
   private static boolean isCharacterElement(PsiElement element) {
     final IElementType type = element.getNode().getElementType();
     if (type == XmlTokenType.XML_DATA_CHARACTERS) return true;
-    if (type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) return true;
+    if (type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
+      if (element.getParent().getParent() instanceof XmlAttribute) return true;
+    }
+    if (type == XmlTokenType.XML_BAD_CHARACTER) return true;
     if (type == XmlTokenType.XML_START_TAG_START) {
       if (element.getNextSibling() instanceof PsiErrorElement) return true;
       if (element.getParent() instanceof PsiErrorElement) return true;
@@ -105,7 +110,13 @@ public class EscapeEntitiesAction extends SimpleCodeInsightAction {
 
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return ApplicationManager.getApplication().isInternal() && file instanceof XmlFile;
+    return file instanceof XmlFile;
+  }
+
+  @NotNull
+  @Override
+  protected CodeInsightActionHandler getHandler() {
+    return this;
   }
 
   @Override
@@ -127,5 +138,10 @@ public class EscapeEntitiesAction extends SimpleCodeInsightAction {
         });
       }
     }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return true;
   }
 }

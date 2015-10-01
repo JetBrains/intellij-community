@@ -5,6 +5,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,16 +16,20 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
@@ -35,7 +41,7 @@ import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.run.StudyExecutor;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
-import com.jetbrains.edu.learning.ui.ProgressToolWindowFactory;
+import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,9 +127,9 @@ public class StudyUtils {
     StudyToolWindowFactory factory = new StudyToolWindowFactory();
     factory.createToolWindowContent(project, windowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
 
-    windowManager.getToolWindow(ProgressToolWindowFactory.ID).getContentManager().removeAllContents(false);
-    ProgressToolWindowFactory windowFactory = new ProgressToolWindowFactory();
-    windowFactory.createToolWindowContent(project, windowManager.getToolWindow(ProgressToolWindowFactory.ID));
+    windowManager.getToolWindow(StudyProgressToolWindowFactory.ID).getContentManager().removeAllContents(false);
+    StudyProgressToolWindowFactory windowFactory = new StudyProgressToolWindowFactory();
+    windowFactory.createToolWindowContent(project, windowManager.getToolWindow(StudyProgressToolWindowFactory.ID));
   }
 
   public static void deleteFile(@NotNull final VirtualFile file) {
@@ -209,6 +215,18 @@ public class StudyUtils {
   public static StudyLanguageManager getLanguageManager(@NotNull final Course course) {
     Language language = course.getLanguageById();
     return language == null ? null : StudyLanguageManager.INSTANCE.forLanguage(language);
+  }
+
+  public static boolean isTestsFile(@NotNull Project project, @NotNull final String name) {
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return false;
+    }
+    StudyLanguageManager manager = getLanguageManager(course);
+    if (manager == null) {
+      return false;
+    }
+    return manager.getTestFileName().equals(name);
   }
 
   @Nullable
@@ -302,5 +320,72 @@ public class StudyUtils {
         });
       }
     }
+  }
+
+  @Nullable
+  public static Document getPatternDocument(@NotNull final TaskFile taskFile, String name) {
+    Task task = taskFile.getTask();
+    String lessonDir = EduNames.LESSON + String.valueOf(task.getLesson().getIndex());
+    String taskDir = EduNames.TASK + String.valueOf(task.getIndex());
+    Course course = task.getLesson().getCourse();
+    File resourceFile = new File(course.getCourseDirectory());
+    if (!resourceFile.exists()) {
+      return  null;
+    }
+    String patternPath = FileUtil.join(resourceFile.getPath(), lessonDir, taskDir, name);
+    VirtualFile patternFile = VfsUtil.findFileByIoFile(new File(patternPath), true);
+    if (patternFile == null) {
+      return null;
+    }
+    return FileDocumentManager.getInstance().getDocument(patternFile);
+  }
+
+  public static boolean isRenameableOrMoveable(@NotNull final Project project, @NotNull final Course course, @NotNull final PsiElement element) {
+    if (element instanceof PsiFile) {
+      VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
+      if (project.getBaseDir().equals(virtualFile.getParent())) {
+        return false;
+      }
+      TaskFile file = getTaskFile(project, virtualFile);
+      if (file != null) {
+        return false;
+      }
+      String name = virtualFile.getName();
+      return !isTestsFile(project, name) && !EduNames.TASK_HTML.equals(name);
+    }
+    if (element instanceof PsiDirectory) {
+      VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
+      VirtualFile parent = virtualFile.getParent();
+      if (parent == null) {
+        return true;
+      }
+      if (project.getBaseDir().equals(parent)) {
+        return false;
+      }
+      Lesson lesson = course.getLesson(parent.getName());
+      if (lesson != null) {
+        Task task = lesson.getTask(virtualFile.getName());
+        if (task != null) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  public static boolean canRenameOrMove(DataContext dataContext) {
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (element == null || project == null) {
+      return false;
+    }
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return false;
+    }
+    if (!isRenameableOrMoveable(project, course, element)) {
+      return true;
+    }
+    return false;
   }
 }

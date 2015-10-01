@@ -18,28 +18,44 @@ package org.jetbrains.idea.maven.utils.library;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
 public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLibraryProperties> {
-  private String myMavenId;
+  private String mavenId;
+  private String groupId;
+  private String artifactId;
+  private String version;
 
   public RepositoryLibraryProperties() {
   }
 
   public RepositoryLibraryProperties(String mavenId) {
-    myMavenId = mavenId;
+    setMavenId(mavenId);
+  }
+
+  public RepositoryLibraryProperties(@NotNull String groupId, @NotNull String artifactId, @NotNull String version) {
+    this.groupId = groupId;
+    this.artifactId = artifactId;
+    this.version = version;
+    this.mavenId = groupId + ":" + artifactId + ":" + version;
   }
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof RepositoryLibraryProperties && Comparing.equal(myMavenId, ((RepositoryLibraryProperties)obj).myMavenId);
+    if (!(obj instanceof RepositoryLibraryProperties)) {
+      return false;
+    }
+    RepositoryLibraryProperties other = (RepositoryLibraryProperties)obj;
+    return Comparing.equal(mavenId, other.mavenId);
+
   }
 
   @Override
   public int hashCode() {
-    return Comparing.hashcode(myMavenId);
+    return Comparing.hashcode(getMavenId());
   }
 
   @Override
@@ -49,15 +65,41 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
 
   @Override
   public void loadState(RepositoryLibraryProperties state) {
-    myMavenId = state.myMavenId;
+    setMavenId(state.mavenId);
   }
 
   @Attribute("maven-id")
   public String getMavenId() {
-    return myMavenId;
+    return mavenId;
   }
 
   public void setMavenId(String mavenId) {
-    myMavenId = mavenId;
+    this.mavenId = mavenId;
+    if (mavenId == null) {
+      groupId = artifactId = version = null;
+    }
+    else {
+      String[] parts = mavenId.split(":");
+      groupId = parts.length > 0 ? parts[0] : null;
+      artifactId = parts.length > 1 ? parts[1] : null;
+      version = parts.length > 2 ? parts[2] : null;
+    }
+  }
+
+  public String getGroupId() {
+    return groupId;
+  }
+
+  public String getArtifactId() {
+    return artifactId;
+  }
+
+  public String getVersion() {
+    return version;
+  }
+
+  public void changeVersion(String version) {
+    this.version = version;
+    this.mavenId = groupId + ":" + artifactId + ":" + version;
   }
 }

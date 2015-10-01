@@ -73,6 +73,22 @@ public class ParameterTypePreventsOverridingInspectionTest extends LightInspecti
            "}");
   }
 
+  public void testStaticmethod() {
+    doTest("import java.util.List;" +
+           "class ParameterTypePreventsOverridingFalsePositiveForStaticMethods {\n" +
+           "    public static class SuperClass {\n" +
+           "        public static <T> Object wrap( List<T> something ) {\n" +
+           "            return null;\n" +
+           "        }\n" +
+           "    }\n" +
+           "    public static class SubClass extends SuperClass {\n" +
+           "        public static <T> Object wrap( List<T> something ) {\n" +
+           "            return null;\n" +
+           "        }\n" +
+           "    }\n" +
+           "}");
+  }
+
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[]{

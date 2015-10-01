@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * (c) 2015 Silent Forest AB
- * created: 03 August 2015
- */
 package com.siyeh.ipp.trivialif;
 
 import com.intellij.lang.java.JavaLanguage;

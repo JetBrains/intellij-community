@@ -15,36 +15,31 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.options.BaseSchemeProcessor
 import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.SchemesManagerFactory
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.FixtureRule
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.exists
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.Transient
+import com.intellij.util.xmlb.toByteArray
 import gnu.trove.THashMap
-import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.CoreMatchers.not
-import org.hamcrest.CoreMatchers.notNullValue
-import org.hamcrest.CoreMatchers.sameInstance
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.collection.IsMapContaining.hasKey
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jdom.Element
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import java.io.File
 
 val FILE_SPEC = "REMOTE"
@@ -53,14 +48,12 @@ val FILE_SPEC = "REMOTE"
  * Functionality without stream provider covered, ICS has own test suite
  */
 class SchemeManagerTest {
-  private val fixtureManager = FixtureRule()
-  public Rule fun getFixtureManager(): FixtureRule = fixtureManager
+  companion object {
+    ClassRule val projectRule = ProjectRule()
+  }
 
   private val tempDirManager = TemporaryDirectory()
   public Rule fun getTemporaryFolder(): TemporaryDirectory = tempDirManager
-
-  private val thrown = ExpectedException.none()
-  public Rule fun getThrown(): ExpectedException = thrown
 
   private var localBaseDir: File? = null
   private var remoteBaseDir: File? = null
@@ -87,8 +80,7 @@ class SchemeManagerTest {
     val manager = createAndLoad("options1")
 
     val scheme = manager.findSchemeByName("first")
-    assertThat(scheme, notNullValue())
-    assert(scheme != null)
+    assertThat(scheme).isNotNull()
     scheme!!.setName("renamed")
     manager.save()
 
@@ -99,11 +91,11 @@ class SchemeManagerTest {
     val manager = createAndLoad("options1")
 
     val first = manager.findSchemeByName("first")
-    assertThat(first, notNullValue())
+    assertThat(first).isNotNull()
     assert(first != null)
     first!!.setName("2")
     val second = manager.findSchemeByName("second")
-    assertThat(second, notNullValue())
+    assertThat(second).isNotNull()
     assert(second != null)
     second!!.setName("1")
     manager.save()
@@ -115,7 +107,7 @@ class SchemeManagerTest {
     val manager = createAndLoad("options1")
 
     val firstScheme = manager.findSchemeByName("first")
-    assertThat(firstScheme, notNullValue())
+    assertThat(firstScheme).isNotNull()
     assert(firstScheme != null)
     firstScheme!!.setName("first_renamed")
     manager.save()
@@ -134,7 +126,7 @@ class SchemeManagerTest {
   public Test fun testDeleteAndCreateSchemeWithTheSameName() {
     val manager = createAndLoad("options1")
     val firstScheme = manager.findSchemeByName("first")
-    assertThat(firstScheme, notNullValue())
+    assertThat(firstScheme).isNotNull()
 
     manager.removeScheme(firstScheme!!)
     manager.addScheme(TestScheme("first"))
@@ -147,11 +139,11 @@ class SchemeManagerTest {
     val scheme = TestScheme("first")
     manager.addNewScheme(scheme, false)
 
-    assertThat("first2", equalTo(scheme.getName()))
+    assertThat("first2").isEqualTo(scheme.getName())
   }
 
   fun TestScheme.save(file: File) {
-    FileUtil.writeToFile(file, serialize().toByteArray())
+    FileUtil.writeToFile(file, _serialize().toByteArray())
   }
 
   public Test fun `different extensions`() {
@@ -165,45 +157,44 @@ class SchemeManagerTest {
       override fun isUpgradeNeeded() = true
 
       override fun getSchemeExtension() = ".icls"
-    }, RoamingType.PER_USER, null, dir)
+    }, null, dir)
     schemesManager.loadSchemes()
-    assertThat(schemesManager.getAllSchemes(), equalTo(listOf(scheme)))
+    assertThat(schemesManager.getAllSchemes()).containsOnly(scheme)
 
-    assertThat(File(dir, "1.icls"), exists())
-    assertThat(File(dir, "1.xml"), exists())
+    assertThat(File(dir, "1.icls")).isFile()
+    assertThat(File(dir, "1.xml")).isFile()
 
     scheme.data = "newTrue"
     schemesManager.save()
 
-    assertThat(File(dir, "1.icls"), exists())
-    assertThat(File(dir, "1.xml"), not(exists()))
+    assertThat(File(dir, "1.icls")).isFile()
+    assertThat(File(dir, "1.xml")).doesNotExist()
   }
 
   public Test fun setSchemes() {
     val dir = tempDirManager.newDirectory()
     val schemeManager = createSchemeManager(dir)
     schemeManager.loadSchemes()
-    assertThat(schemeManager.getAllSchemes().isEmpty(), equalTo(true))
+    assertThat(schemeManager.getAllSchemes()).isEmpty()
 
     val scheme = TestScheme("s1")
     schemeManager.setSchemes(listOf(scheme))
 
     val schemes = schemeManager.getAllSchemes()
-    assertThat(schemes.size(), equalTo(1))
-    assertThat(schemes.get(0), sameInstance(scheme))
+    assertThat(schemes).containsOnly(scheme)
 
-    assertThat(File(dir, "s1.xml"), not(exists()))
+    assertThat(File(dir, "s1.xml")).doesNotExist()
 
     scheme.data = "newTrue"
     schemeManager.save()
 
-    assertThat(File(dir, "s1.xml"), exists())
+    assertThat(File(dir, "s1.xml")).isFile()
 
     schemeManager.setSchemes(emptyList())
 
     schemeManager.save()
 
-    assertThat(dir, not(exists()))
+    assertThat(dir).doesNotExist()
   }
 
   public Test fun `save only if scheme differs from bundled`() {
@@ -213,34 +204,30 @@ class SchemeManagerTest {
     val bundledPath = "/bundledSchemes/default"
     schemeManager.loadBundledScheme(bundledPath, this, converter)
     var schemes = schemeManager.getAllSchemes()
-    assertThat(schemes.size(), equalTo(1))
     val customScheme = TestScheme("default")
-    assertThat(schemes.get(0), equalTo(customScheme))
+    assertThat(schemes).containsOnly(customScheme)
 
     schemeManager.save()
-    assertThat(dir, not(exists()))
+    assertThat(dir).doesNotExist()
 
     schemeManager.save()
     schemeManager.setSchemes(listOf(customScheme))
-    assertThat(dir, not(exists()))
+    assertThat(dir).doesNotExist()
 
     schemes = schemeManager.getAllSchemes()
-    assertThat(schemes.size(), equalTo(1))
-    assertThat(schemes.get(0), sameInstance(customScheme))
+    assertThat(schemes).containsOnly(customScheme)
 
     customScheme.data = "foo"
     schemeManager.save()
-    val schemeFile = File(dir, "default.xml")
-    assertThat(schemeFile, exists())
+    assertThat(File(dir, "default.xml")).isFile()
 
     schemeManager = createSchemeManager(dir)
     schemeManager.loadBundledScheme(bundledPath, this, converter)
     schemeManager.loadSchemes()
 
     schemes = schemeManager.getAllSchemes()
-    assertThat(schemes.get(0), equalTo(customScheme))
+    assertThat(schemes).containsOnly(customScheme)
   }
-
 
   public Test fun `don't remove dir if no schemes but at least one non-hidden file exists`() {
     val dir = tempDirManager.newDirectory()
@@ -252,7 +239,7 @@ class SchemeManagerTest {
     schemeManager.save()
 
     val schemeFile = File(dir, "s1.xml")
-    assertThat(schemeFile.exists(), equalTo(true))
+    assertThat(schemeFile).isFile()
 
     schemeManager.setSchemes(emptyList())
 
@@ -260,8 +247,8 @@ class SchemeManagerTest {
 
     schemeManager.save()
 
-    assertThat(schemeFile.exists(), equalTo(false))
-    assertThat(dir.exists(), equalTo(true))
+    assertThat(schemeFile).doesNotExist()
+    assertThat(dir).isDirectory()
   }
 
   public Test fun `remove empty directory only if some file was deleted`() {
@@ -269,58 +256,55 @@ class SchemeManagerTest {
     val schemeManager = createSchemeManager(dir)
     schemeManager.loadSchemes()
 
-    assertThat(dir.mkdirs(), equalTo(true))
+    assertThat(dir.mkdirs()).isTrue()
     schemeManager.save()
-    assertThat(dir, exists())
+    assertThat(dir).isDirectory()
 
     schemeManager.addScheme(TestScheme("test"))
     schemeManager.save()
-    assertThat(dir, exists())
+    assertThat(dir).isDirectory()
 
     schemeManager.setSchemes(emptyList())
     schemeManager.save()
-    assertThat(dir, not(exists()))
+    assertThat(dir).doesNotExist()
   }
 
   public Test fun rename() {
     val dir = tempDirManager.newDirectory()
     val schemeManager = createSchemeManager(dir)
     schemeManager.loadSchemes()
-    assertThat(schemeManager.getAllSchemes().isEmpty(), equalTo(true))
+    assertThat(schemeManager.getAllSchemes()).isEmpty()
 
     val scheme = TestScheme("s1")
     schemeManager.setSchemes(listOf(scheme))
 
     val schemes = schemeManager.getAllSchemes()
-    assertThat(schemes.size(), equalTo(1))
-    assertThat(schemes.get(0), sameInstance(scheme))
+    assertThat(schemes).containsOnly(scheme)
 
-    assertThat(File(dir, "s1.xml").exists(), equalTo(false))
+    assertThat(File(dir, "s1.xml")).doesNotExist()
 
     scheme.data = "newTrue"
     schemeManager.save()
 
-    assertThat(File(dir, "s1.xml").exists(), equalTo(true))
+    assertThat(File(dir, "s1.xml")).isFile()
 
     scheme.setName("s2")
 
     schemeManager.save()
 
-    assertThat(File(dir, "s1.xml").exists(), equalTo(false))
-    assertThat(File(dir, "s2.xml").exists(), equalTo(true))
+    assertThat(File(dir, "s1.xml")).doesNotExist()
+    assertThat(File(dir, "s2.xml")).isFile()
   }
 
   public Test fun `path must not contains ROOT_CONFIG macro`() {
-    thrown.expectMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
-    SchemesManagerFactory.getInstance().create<TestScheme, TestScheme>("\$ROOT_CONFIG$/foo", TestSchemesProcessor())
+    assertThatThrownBy({ SchemesManagerFactory.getInstance().create<TestScheme, TestScheme>("\$ROOT_CONFIG$/foo", TestSchemesProcessor()) }).hasMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
   }
 
   public Test fun `path must be system-independent`() {
-    thrown.expectMessage("Path must be system-independent, use forward slash instead of backslash")
-    SchemesManagerFactory.getInstance().create<TestScheme, TestScheme>("foo\\bar", TestSchemesProcessor())
+    assertThatThrownBy({SchemesManagerFactory.getInstance().create<TestScheme, TestScheme>("foo\\bar", TestSchemesProcessor())}).hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 
-  private fun createSchemeManager(dir: File) = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), RoamingType.PER_USER, null, dir)
+  private fun createSchemeManager(dir: File) = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), null, dir)
 
   private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme, TestScheme> {
     createTempFiles(testData)
@@ -340,7 +324,7 @@ class SchemeManagerTest {
   }
 
   private fun createAndLoad(): SchemeManagerImpl<TestScheme, TestScheme> {
-    val schemesManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), RoamingType.PER_USER, MockStreamProvider(remoteBaseDir!!), localBaseDir!!)
+    val schemesManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), MockStreamProvider(remoteBaseDir!!), localBaseDir!!)
     schemesManager.loadSchemes()
     return schemesManager
   }
@@ -366,13 +350,13 @@ private fun checkSchemes(baseDir: File, expected: String, ignoreDeleted: Boolean
     for (file in files) {
       val fileName = FileUtil.getNameWithoutExtension(file)
       if ("--deleted" == fileName && ignoreDeleted) {
-        assertThat<Map<String, String>>(fileToSchemeMap, hasKey(fileName))
+        assertThat(fileToSchemeMap).containsKey(fileName)
       }
     }
   }
 
   for (file in fileToSchemeMap.keySet()) {
-    assertThat(File(baseDir, "$file.xml").isFile(), equalTo(true))
+    assertThat(File(baseDir, "$file.xml")).isFile()
   }
 
   if (files != null) {
@@ -380,12 +364,13 @@ private fun checkSchemes(baseDir: File, expected: String, ignoreDeleted: Boolean
     for (file in files) {
       val fileName = FileUtil.getNameWithoutExtension(file)
       val scheme = schemesProcessor.readScheme(JDOMUtil.load(file), true)
-      assertThat(fileToSchemeMap.get(fileName), equalTo(scheme!!.getName()))
+      assertThat(fileToSchemeMap.get(fileName)).isEqualTo(scheme!!.getName())
     }
   }
 }
 
-public data Tag("scheme") class TestScheme(Attribute private var name: String = "", Attribute var data: String? = null) : ExternalizableScheme {
+Tag("scheme")
+public data class TestScheme(@Attribute private var name: String = "", @Attribute public var data: String? = null) : ExternalizableScheme {
   override fun getName() = name
 
   override Transient fun setName(newName: String) {
@@ -399,7 +384,7 @@ public data Tag("scheme") class TestScheme(Attribute private var name: String = 
 public open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme>() {
   override fun readScheme(element: Element) = XmlSerializer.deserialize(element, javaClass<TestScheme>())
 
-  override fun writeScheme(scheme: TestScheme) = scheme.serialize()
+  override fun writeScheme(scheme: TestScheme) = scheme._serialize()
 }
 
 fun SchemeManagerImpl<*, *>.save() {
@@ -408,10 +393,4 @@ fun SchemeManagerImpl<*, *>.save() {
   CompoundRuntimeException.doThrow(errors)
 }
 
-public fun <T : Any> T.serialize(): Element = XmlSerializer.serialize(this, SkipDefaultValuesSerializationFilters())
-
-public fun Element.toByteArray(): ByteArray {
-  val out = BufferExposingByteArrayOutputStream(512)
-  JDOMUtil.writeParent(this, out, "\n")
-  return out.toByteArray()
-}
+public fun <T : Any> T._serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)

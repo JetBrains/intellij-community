@@ -153,8 +153,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   IdeStatusBarImpl(@Nullable IdeStatusBarImpl master) {
-    setLayout(new BorderLayout(JBUI.scale(2), 0));
-    setBorder(JBUI.Borders.empty(1, 4, 0, SystemInfo.isMac ? 2 : 0));
+    setLayout(new BorderLayout());
+    setBorder(JBUI.Borders.empty());
 
     myInfoAndProgressPanel = new InfoAndProgressPanel();
     addWidget(myInfoAndProgressPanel, Position.CENTER);
@@ -335,7 +335,22 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     if (pos == Position.RIGHT) {
       if (myRightPanel == null) {
         myRightPanel = new JPanel();
-        myRightPanel.setLayout(new BoxLayout(myRightPanel, BoxLayout.X_AXIS));
+        myRightPanel.setBorder(JBUI.Borders.empty(1, 1, 0, SystemInfo.isMac ? 2 : 0));
+        myRightPanel.setLayout(new BoxLayout(myRightPanel, BoxLayout.X_AXIS) {
+          @Override
+          public void layoutContainer(Container target) {
+            super.layoutContainer(target);
+            for (Component component : target.getComponents()) {
+              if (component instanceof MemoryUsagePanel) {
+                Rectangle r = component.getBounds();
+                r.y = 0;
+                r.width += SystemInfo.isMac ? 4 : 0;
+                r.height = target.getHeight();
+                component.setBounds(r);
+              }
+            }
+          }
+        });
         myRightPanel.setOpaque(false);
         add(myRightPanel, BorderLayout.EAST);
       }
@@ -345,6 +360,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     else if (pos == Position.LEFT) {
       if (myLeftPanel == null) {
         myLeftPanel = new JPanel();
+        myLeftPanel.setBorder(JBUI.Borders.empty(1, 4, 0, 1));
         myLeftPanel.setLayout(new BoxLayout(myLeftPanel, BoxLayout.X_AXIS));
         myLeftPanel.setOpaque(false);
         add(myLeftPanel, BorderLayout.WEST);
@@ -354,8 +370,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     }
     else {
       if (myCenterPanel == null) {
-        myCenterPanel = new JPanel(new BorderLayout());
-        myCenterPanel.setOpaque(false);
+        myCenterPanel = JBUI.Panels.simplePanel().andTransparent();
+        myCenterPanel.setBorder(JBUI.Borders.empty(1, 1, 0, 1));
         add(myCenterPanel, BorderLayout.CENTER);
       }
 

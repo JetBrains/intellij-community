@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@ import com.siyeh.ig.j2me.SimplifiableIfStatementInspection;
 public class SimplifiableIfStatementFixTest extends IGQuickFixesTestCase {
 
   public void testComments() { doTest(); }
+  public void testParentheses() { doTest(); }
+  public void testMoreParentheses() { doTest(); }
+  public void testPrecedence() { doTest(); }
 
   @Override
   protected void setUp() throws Exception {

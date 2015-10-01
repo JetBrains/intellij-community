@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,9 +35,18 @@ public class BreakpointsDialogFactory {
     myProject = project;
   }
 
-  public void setBalloonToHide(Balloon balloonToHide, Object breakpoint) {
+  public void setBalloonToHide(final Balloon balloonToHide, Object breakpoint) {
     myBalloonToHide = balloonToHide;
     myBreakpoint = breakpoint;
+    Disposer.register(myBalloonToHide, new Disposable() {
+      @Override
+      public void dispose() {
+        if (myBalloonToHide == balloonToHide) {
+          myBalloonToHide = null;
+          myBreakpoint = null;
+        }
+      }
+    });
   }
 
   public static BreakpointsDialogFactory getInstance(Project project) {

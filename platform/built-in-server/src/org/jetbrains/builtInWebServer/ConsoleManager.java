@@ -29,7 +29,7 @@ public final class ConsoleManager {
   }
 
   private void createConsole(@NotNull final NetService netService) {
-    TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(netService.project);
+    TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(netService.getProject());
     netService.configureConsole(consoleBuilder);
     console = consoleBuilder.getConsole();
 
@@ -43,8 +43,8 @@ public final class ConsoleManager {
         toolWindowPanel.setContent(console.getComponent());
         toolWindowPanel.setToolbar(toolbar.getComponent());
 
-        ToolWindow toolWindow = ToolWindowManager.getInstance(netService.project)
-          .registerToolWindow(netService.getConsoleToolWindowId(), false, ToolWindowAnchor.BOTTOM, netService.project, true);
+        ToolWindow toolWindow = ToolWindowManager.getInstance(netService.getProject())
+          .registerToolWindow(netService.getConsoleToolWindowId(), false, ToolWindowAnchor.BOTTOM, netService.getProject(), true);
         toolWindow.setIcon(netService.getConsoleToolWindowIcon());
 
         Content content = ContentFactory.SERVICE.getInstance().createContent(toolWindowPanel, "", false);
@@ -52,6 +52,6 @@ public final class ConsoleManager {
 
         toolWindow.getContentManager().addContent(content);
       }
-    }, netService.project.getDisposed());
+    }, netService.getProject().getDisposed());
   }
 }

@@ -12,18 +12,20 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.*;
+import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
@@ -32,7 +34,7 @@ import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
-import com.jetbrains.edu.learning.ui.ProgressToolWindowFactory;
+import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,18 +42,18 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 
 public class StudyProjectComponent implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(StudyProjectComponent.class.getName());
-  private static Map<String, String> myDeletedShortcuts = new HashMap<String, String>();
   private final Project myProject;
 
   private FileCreatedByUserListener myListener;
 
+  private Map<Keymap, List<Pair<String, String>>> myDeletedShortcuts = new HashMap<Keymap, List<Pair<String, String>>>();
   private StudyProjectComponent(@NotNull final Project project) {
     myProject = project;
   }
@@ -88,7 +90,7 @@ public class StudyProjectComponent implements ProjectComponent {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
       registerToolWindows(toolWindowManager);
       final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
-      final ToolWindow progressToolWindow = toolWindowManager.getToolWindow(ProgressToolWindowFactory.ID);
+      final ToolWindow progressToolWindow = toolWindowManager.getToolWindow(StudyProgressToolWindowFactory.ID);
       if (studyToolWindow != null) {
         studyToolWindow.show(null);
       }
@@ -124,15 +126,14 @@ public class StudyProjectComponent implements ProjectComponent {
     });
   }
 
-  private static void registerShortcuts() {
-    addShortcut(StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.ACTION_ID, false);
-    addShortcut(StudyPrevWindowAction.SHORTCUT, StudyPrevWindowAction.ACTION_ID, false);
-    addShortcut(StudyShowHintAction.SHORTCUT, StudyShowHintAction.ACTION_ID, false);
-    addShortcut(StudyNextWindowAction.SHORTCUT2, StudyNextWindowAction.ACTION_ID, true);
-    addShortcut(StudyCheckAction.SHORTCUT, StudyCheckAction.ACTION_ID, false);
-    addShortcut(StudyNextStudyTaskAction.SHORTCUT, StudyNextStudyTaskAction.ACTION_ID, false);
-    addShortcut(StudyPreviousStudyTaskAction.SHORTCUT, StudyPreviousStudyTaskAction.ACTION_ID, false);
-    addShortcut(StudyRefreshTaskFileAction.SHORTCUT, StudyRefreshTaskFileAction.ACTION_ID, false);
+  private void registerShortcuts() {
+    addShortcut(StudyNextWindowAction.ACTION_ID, new String[]{StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.SHORTCUT2});
+    addShortcut(StudyPrevWindowAction.ACTION_ID, new String[]{StudyPrevWindowAction.SHORTCUT});
+    addShortcut(StudyShowHintAction.ACTION_ID, new String[]{StudyShowHintAction.SHORTCUT});
+    addShortcut(StudyCheckAction.ACTION_ID, new String[]{StudyCheckAction.SHORTCUT});
+    addShortcut(StudyNextStudyTaskAction.ACTION_ID, new String[]{StudyNextStudyTaskAction.SHORTCUT});
+    addShortcut(StudyPreviousStudyTaskAction.ACTION_ID, new String[]{StudyPreviousStudyTaskAction.SHORTCUT});
+    addShortcut(StudyRefreshTaskFileAction.ACTION_ID, new String[]{StudyRefreshTaskFileAction.SHORTCUT});
   }
 
   private void registerToolWindows(@NotNull final ToolWindowManager toolWindowManager) {
@@ -140,9 +141,9 @@ public class StudyProjectComponent implements ProjectComponent {
     if (toolWindow == null) {
       toolWindowManager.registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, myProject, true);
     }
-    ToolWindow progressToolWindow = toolWindowManager.getToolWindow(ProgressToolWindowFactory.ID);
+    ToolWindow progressToolWindow = toolWindowManager.getToolWindow(StudyProgressToolWindowFactory.ID);
     if (progressToolWindow == null) {
-      toolWindowManager.registerToolWindow(ProgressToolWindowFactory.ID, true, ToolWindowAnchor.LEFT, myProject, true, true);
+      toolWindowManager.registerToolWindow(StudyProgressToolWindowFactory.ID, true, ToolWindowAnchor.LEFT, myProject, true, true);
     }
   }
 
@@ -197,19 +198,24 @@ public class StudyProjectComponent implements ProjectComponent {
     }
   }
 
-  private static void addShortcut(@NotNull final String shortcutString, @NotNull final String actionIdString, boolean isAdditional) {
-    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    Shortcut[] shortcuts = keymap.getShortcuts(actionIdString);
-    if (shortcuts.length > 0 && !isAdditional) {
-      return;
+  private void addShortcut(@NotNull final String actionIdString, @NotNull final String[] shortcuts) {
+    KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
+    for (Keymap keymap : keymapManager.getAllKeymaps()) {
+      List<Pair<String, String>> pairs = myDeletedShortcuts.get(keymap);
+      if (pairs == null) {
+        pairs = new ArrayList<Pair<String, String>>();
+        myDeletedShortcuts.put(keymap, pairs);
+      }
+      for (String shortcutString : shortcuts) {
+        Shortcut studyActionShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(shortcutString), null);
+        String[] actionsIds = keymap.getActionIds(studyActionShortcut);
+        for (String actionId : actionsIds) {
+          pairs.add(Pair.create(actionId, shortcutString));
+          keymap.removeShortcut(actionId, studyActionShortcut);
+        }
+        keymap.addShortcut(actionIdString, studyActionShortcut);
+      }
     }
-    Shortcut studyActionShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(shortcutString), null);
-    String[] actionsIds = keymap.getActionIds(studyActionShortcut);
-    for (String actionId : actionsIds) {
-      myDeletedShortcuts.put(actionId, shortcutString);
-      keymap.removeShortcut(actionId, studyActionShortcut);
-    }
-    keymap.addShortcut(actionIdString, studyActionShortcut);
   }
 
   @Override
@@ -220,17 +226,19 @@ public class StudyProjectComponent implements ProjectComponent {
       if (toolWindow != null) {
         toolWindow.getContentManager().removeAllContents(false);
       }
-      final ToolWindow progressToolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ProgressToolWindowFactory.ID);
+      final ToolWindow progressToolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(StudyProgressToolWindowFactory.ID);
       if (progressToolWindow != null) {
         progressToolWindow.getContentManager().removeAllContents(false);
       }
-      if (!myDeletedShortcuts.isEmpty()) {
-        for (Map.Entry<String, String> shortcut : myDeletedShortcuts.entrySet()) {
-          final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-          final Shortcut actionShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(shortcut.getValue()), null);
-          keymap.addShortcut(shortcut.getKey(), actionShortcut);
+      KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
+      for (Keymap keymap : keymapManager.getAllKeymaps()) {
+        List<Pair<String, String>> pairs = myDeletedShortcuts.get(keymap);
+        if (pairs != null && !pairs.isEmpty()) {
+          for (Pair<String, String> actionShortcut : pairs) {
+            keymap.addShortcut(actionShortcut.first, new KeyboardShortcut(KeyStroke.getKeyStroke(actionShortcut.second), null));
+          }
         }
-      }
+       }
     }
     myListener = null;
   }

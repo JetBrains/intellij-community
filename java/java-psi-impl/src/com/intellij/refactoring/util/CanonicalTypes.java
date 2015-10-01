@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,7 @@ public class CanonicalTypes {
   private abstract static class AnnotatedType extends Type {
     protected final PsiAnnotation[] myAnnotations;
 
-    protected AnnotatedType(PsiAnnotation[] annotations) {
+    protected AnnotatedType(@NotNull PsiAnnotation[] annotations) {
       myAnnotations = annotations;
     }
   }
@@ -59,7 +60,7 @@ public class CanonicalTypes {
   private static class Primitive extends AnnotatedType {
     private final PsiPrimitiveType myType;
 
-    private Primitive(PsiPrimitiveType type) {
+    private Primitive(@NotNull PsiPrimitiveType type) {
       super(type.getAnnotations());
       myType = type;
     }
@@ -79,7 +80,7 @@ public class CanonicalTypes {
   private static class Array extends AnnotatedType {
     protected final Type myComponentType;
 
-    private Array(PsiType original, Type componentType) {
+    private Array(@NotNull PsiType original, @NotNull Type componentType) {
       super(original.getAnnotations());
       myComponentType = componentType;
     }
@@ -107,7 +108,7 @@ public class CanonicalTypes {
   }
 
   private static class Ellipsis extends Array {
-    private Ellipsis(PsiType original, Type componentType) {
+    private Ellipsis(@NotNull PsiType original, @NotNull Type componentType) {
       super(original, componentType);
     }
 
@@ -127,7 +128,7 @@ public class CanonicalTypes {
     private final boolean myIsExtending;
     private final Type myBound;
 
-    private WildcardType(PsiType original, boolean isExtending, Type bound) {
+    private WildcardType(@NotNull PsiType original, boolean isExtending, @Nullable Type bound) {
       super(original.getAnnotations());
       myIsExtending = isExtending;
       myBound = bound;
@@ -176,7 +177,7 @@ public class CanonicalTypes {
     private final String myPresentableText;
     private final String myCanonicalText;
 
-    private UnresolvedType(PsiType original) {
+    private UnresolvedType(@NotNull PsiType original) {
       myPresentableText = original.getPresentableText();
       myCanonicalText = original.getCanonicalText(true);
     }
@@ -203,7 +204,7 @@ public class CanonicalTypes {
     private final String myClassQName;
     private final Map<String, Type> mySubstitutor;
 
-    private ClassType(PsiType original, String classQName, Map<String, Type> substitutor) {
+    private ClassType(@NotNull PsiType original, @NotNull String classQName, @NotNull Map<String, Type> substitutor) {
       super(original.getAnnotations());
       myPresentableText = original.getPresentableText();
       myClassQName = classQName;

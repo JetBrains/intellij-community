@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +23,28 @@ public class FileComparisonFailure extends ComparisonFailure implements KnownExc
   private final String myExpected;
   private final String myActual;
   private final String myFilePath;
+  private final String myActualFilePath;
 
   public FileComparisonFailure(String message, String expected, String actual, String filePath) {
+    this(message, expected, actual, filePath, null);
+  }
+
+  public FileComparisonFailure(String message, String expected, String actual, String expectedFilePath, String actualFilePath) {
     super(message, expected, actual);
     myExpected = expected;
     myActual = actual;
-    myFilePath = filePath;
+    myFilePath = expectedFilePath;
+    myActualFilePath = actualFilePath;
   }
 
   public String getFilePath() {
     return myFilePath;
   }
 
+  public String getActualFilePath() {
+    return myActualFilePath;
+  }
+  
   public String getExpected() {
     return myExpected;
   }

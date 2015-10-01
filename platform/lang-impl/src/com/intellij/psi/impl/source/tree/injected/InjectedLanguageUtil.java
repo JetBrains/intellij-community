@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiParameterizedCachedValue;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -449,7 +450,15 @@ public class InjectedLanguageUtil {
     VirtualFileWindowImpl virtualFile = (VirtualFileWindowImpl)injected.getVirtualFile();
     PsiManagerEx psiManagerEx = (PsiManagerEx)injected.getManager();
     if (psiManagerEx.getProject().isDisposed()) return;
-    psiManagerEx.getFileManager().setViewProvider(virtualFile, null);
+
+    DebugUtil.startPsiModification("injected clearCaches");
+    try {
+      psiManagerEx.getFileManager().setViewProvider(virtualFile, null);
+    }
+    finally {
+      DebugUtil.finishPsiModification();
+    }
+
     PsiElement context = InjectedLanguageManager.getInstance(injected.getProject()).getInjectionHost(injected);
     PsiFile hostFile;
     if (context != null) {

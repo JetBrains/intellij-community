@@ -17,13 +17,22 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 
 /**
  * Created by Max Medvedev on 25/04/14
  */
 public class GrTraitMethod extends GrMethodWrapper {
+  private final PsiSubstitutor mySubstitutor;
+
   protected GrTraitMethod(PsiMethod method, PsiSubstitutor substitutor) {
     super(method, substitutor);
+    mySubstitutor = substitutor;
+  }
+
+  @Override
+  public PsiType getReturnType() {
+    return mySubstitutor.substitute(super.getReturnType());
   }
 
   public static GrTraitMethod create(PsiMethod method, PsiSubstitutor substitutor) {

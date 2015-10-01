@@ -38,6 +38,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
@@ -55,6 +56,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.*;
@@ -72,10 +74,7 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -244,6 +243,10 @@ public class DiffUtil {
   //
   // UI
   //
+
+  public static void registerAction(@NotNull AnAction action, @NotNull JComponent component) {
+    action.registerCustomShortcutSet(action.getShortcutSet(), component);
+  }
 
   @NotNull
   public static JPanel createMessagePanel(@NotNull String message) {
@@ -715,18 +718,66 @@ public class DiffUtil {
   // Writable
   //
 
+  public static abstract class DiffCommandAction implements Runnable {
+    @Nullable protected final Project myProject;
+    @NotNull protected final Document myDocument;
+    @Nullable private final String myCommandName;
+    @Nullable private final String myCommandGroupId;
+    @NotNull private final UndoConfirmationPolicy myConfirmationPolicy;
+
+    public DiffCommandAction(@Nullable Project project,
+                             @NotNull Document document,
+                             @Nullable String commandName) {
+      this(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT);
+    }
+
+    public DiffCommandAction(@Nullable Project project,
+                             @NotNull Document document,
+                             @Nullable String commandName,
+                             @Nullable String commandGroupId,
+                             @NotNull UndoConfirmationPolicy confirmationPolicy) {
+      myDocument = document;
+      myProject = project;
+      myCommandName = commandName;
+      myCommandGroupId = commandGroupId;
+      myConfirmationPolicy = confirmationPolicy;
+    }
+
+    @CalledInAwt
+    public final void run() {
+      if (!makeWritable(myProject, myDocument)) {
+        VirtualFile file = FileDocumentManager.getInstance().getFile(myDocument);
+        LOG.warn("Document is read-only" + (file != null ? ": " + file.getPresentableName() : ""));
+        return;
+      }
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+            @Override
+            public void run() {
+              execute();
+            }
+          }, myCommandName, myCommandGroupId, myConfirmationPolicy, myDocument);
+        }
+      });
+    }
+
+    @CalledWithWriteLock
+    protected abstract void execute();
+  }
+
   @CalledInAwt
   public static void executeWriteCommand(@NotNull final Document document,
                                          @Nullable final Project project,
                                          @Nullable final String name,
                                          @NotNull final Runnable task) {
-    if (!makeWritable(project, document)) return;
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(project, task, name, null);
+    new DiffCommandAction(project, document, name) {
+      @Override
+      protected void execute() {
+        task.run();
       }
-    });
+    }.run();
   }
 
   public static boolean isEditable(@NotNull Editor editor) {
@@ -747,8 +798,16 @@ public class DiffUtil {
   @CalledInAwt
   public static boolean makeWritable(@Nullable Project project, @NotNull Document document) {
     if (document.isWritable()) return true;
-    if (project == null) return false;
-    return ReadonlyStatusHandler.ensureDocumentWritable(project, document);
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    if (file == null) return false;
+    return makeWritable(project, file);
+  }
+
+  @CalledInAwt
+  public static boolean makeWritable(@Nullable Project project, @NotNull VirtualFile file) {
+    if (file.isWritable()) return true;
+    if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+    return !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles();
   }
 
   //
@@ -843,6 +902,22 @@ public class DiffUtil {
       if (data != null) return data;
     }
     return null;
+  }
+
+  public static void addNotification(@NotNull JComponent component, @NotNull UserDataHolder holder) {
+    List<JComponent> components = holder.getUserData(DiffUserDataKeys.NOTIFICATIONS);
+    if (components == null) {
+      holder.putUserData(DiffUserDataKeys.NOTIFICATIONS, Collections.singletonList(component));
+    }
+    else {
+      holder.putUserData(DiffUserDataKeys.NOTIFICATIONS, ContainerUtil.append(components, component));
+    }
+  }
+
+  public static List<JComponent> getCustomNotifications(@NotNull DiffContext context, @NotNull DiffRequest request) {
+    List<JComponent> requestComponents = request.getUserData(DiffUserDataKeys.NOTIFICATIONS);
+    List<JComponent> contextComponents = context.getUserData(DiffUserDataKeys.NOTIFICATIONS);
+    return ContainerUtil.concat(ContainerUtil.notNullize(contextComponents), ContainerUtil.notNullize(requestComponents));
   }
 
   //

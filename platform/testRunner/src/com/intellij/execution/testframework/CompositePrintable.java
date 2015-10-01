@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.io.IOUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +78,7 @@ public class CompositePrintable implements Printable, Disposable {
         printables.add(printable);
       }
     }
-    myWrapper.printOn(printer, printables);
+    myWrapper.printOn(printer, printables, true);
   }
 
   public void addLast(@NotNull final Printable printable) {
@@ -139,12 +138,13 @@ public class CompositePrintable implements Printable, Disposable {
 
   private class PrintablesWrapper {
 
-    @NonNls private static final String HYPERLINK = "hyperlink";
+    private static final String HYPERLINK = "hyperlink";
 
     private ConsoleViewContentType myLastSelected;
 
     private File myFile;
     private final MyFlushToFilePrinter myPrinter = new MyFlushToFilePrinter();
+    private final Object myFileLock = new Object();
 
     @Nullable
     private synchronized File getFile() {
@@ -179,43 +179,43 @@ public class CompositePrintable implements Printable, Disposable {
       final Runnable request = new Runnable() {
         @Override
         public void run() {
-          for (final Printable printable : currentPrintables) {
-            printable.printOn(myPrinter);
+          synchronized (myFileLock) {
+            for (final Printable printable : currentPrintables) {
+              printable.printOn(myPrinter);
+            }
+            myPrinter.close();
           }
-          myPrinter.close();
           if (myOutputFile != null && new File(myOutputFile).exists()) {
-            PrintStream printStream = null;
             try {
-              printStream = new PrintStream(new FileOutputStream(new File(myOutputFile), true));
-              final PrintStream finalPrintStream = printStream;
-              for (Printable currentPrintable : currentPrintables) {
-                currentPrintable.printOn(new Printer() {
-                  @Override
-                  public void print(String text, ConsoleViewContentType contentType) {
-                    if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT) {
-                      finalPrintStream.print(text);
+              final PrintStream printStream = new PrintStream(new FileOutputStream(new File(myOutputFile), true));
+              try {
+                for (Printable currentPrintable : currentPrintables) {
+                  currentPrintable.printOn(new Printer() {
+                    @Override
+                    public void print(String text, ConsoleViewContentType contentType) {
+                      if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT) {
+                        printStream.print(text);
+                      }
                     }
-                  }
-
-                  @Override
-                  public void printHyperlink(String text, HyperlinkInfo info) {
-                    finalPrintStream.print(text);
-                  }
-
-                  @Override
-                  public void onNewAvailable(@NotNull Printable printable) {}
-                  @Override
-                  public void mark() {}
-                });
+  
+                    @Override
+                    public void printHyperlink(String text, HyperlinkInfo info) {
+                      printStream.print(text);
+                    }
+  
+                    @Override
+                    public void onNewAvailable(@NotNull Printable printable) {}
+                    @Override
+                    public void mark() {}
+                  });
+                }
               }
-            }
-            catch (FileNotFoundException e) {
-              LOG.error(e);
-            }
-            finally {
-              if (printStream != null) {
+              finally {
                 printStream.close();
               }
+            }
+            catch (IOException e) {
+              LOG.error(e);
             }
           }
         }
@@ -224,12 +224,21 @@ public class CompositePrintable implements Printable, Disposable {
     }
 
     public void printOn(final Printer console, final List<Printable> printables) {
+      printOn(console, printables, false);
+    }
+
+    public void printOn(final Printer console, final List<Printable> printables, final boolean skipFileContent) {
       final Runnable request = new Runnable() {
         @Override
         public void run() {
+          if (skipFileContent) {
+            readFileContentAndPrint(console, null, printables);
+            return;
+          }
           final File file = hasOutput() ? getFile() : null;
-          final MyFileContentPrinter printer = new MyFileContentPrinter();
-          printer.printFileContent(console, file, printables);
+          synchronized (myFileLock) {
+            readFileContentAndPrint(console, file, printables);
+          }
         }
       };
       invokeInAlarm(request);
@@ -239,7 +248,7 @@ public class CompositePrintable implements Printable, Disposable {
       //all access is performed from alarm thread
       private DataOutputStream myFileWriter;
 
-      public DataOutputStream getFileWriter() {
+      private DataOutputStream getFileWriter() {
         if (myFileWriter == null) {
           try {
             final File file = getFile();
@@ -254,7 +263,7 @@ public class CompositePrintable implements Printable, Disposable {
         return myFileWriter;
       }
 
-      public void close() {
+      private void close() {
         if (myFileWriter != null) {
           try {
             myFileWriter.close();
@@ -317,14 +326,12 @@ public class CompositePrintable implements Printable, Disposable {
       public void mark() {}
     }
 
-    private class MyFileContentPrinter {
-
-      public void printFileContent(Printer printer, @Nullable File file, List<Printable> nestedPrintables) {
-        if (file != null) {
-          DataInputStream reader = null;
+    private void readFileContentAndPrint(Printer printer, @Nullable File file, List<Printable> nestedPrintables) {
+      if (file != null) {
+        try {
+          int lineNum = 0;
+          DataInputStream reader = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
           try {
-            reader = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-            int lineNum = 0;
             while (reader.available() > 0 && !wasPrintableChanged(printer)) {
               if (lineNum == CompositePrintable.this.getExceptionMark() && lineNum > 0) printer.mark();
               final String line = IOUtil.readString(reader);
@@ -340,7 +347,8 @@ public class CompositePrintable implements Printable, Disposable {
               }
               if (!printed) {
                 if (line.startsWith(HYPERLINK)) {
-                  new DiffHyperlink(IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader), false).printOn(printer);
+                  new DiffHyperlink(IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader), false)
+                    .printOn(printer);
                 }
                 else {
                   printer.print(line, myLastSelected != null ? myLastSelected : ConsoleViewContentType.NORMAL_OUTPUT);
@@ -348,38 +356,27 @@ public class CompositePrintable implements Printable, Disposable {
               }
               lineNum++;
             }
-
-          }
-          catch (FileNotFoundException e) {
-            LOG.info(e);
-          }
-          catch (IOException e) {
-            LOG.error(e);
           }
           finally {
-            try {
-              if (reader != null) {
-                reader.close();
-              }
-            }
-            catch (FileNotFoundException e) {
-              LOG.info(e);
-            }
-            catch (IOException e) {
-              LOG.error(e);
-            }
+            reader.close();
           }
         }
-        for (int i = 0; i < nestedPrintables.size(); i++) {
-          if (i == getExceptionMark() && i > 0) printer.mark();
-          nestedPrintables.get(i).printOn(printer);
+        catch (FileNotFoundException e) {
+          LOG.info(e);
+        }
+        catch (IOException e) {
+          LOG.error(e);
         }
       }
+      for (int i = 0; i < nestedPrintables.size(); i++) {
+        if (i == getExceptionMark() && i > 0) printer.mark();
+        nestedPrintables.get(i).printOn(printer);
+      }
+    }
 
       private boolean wasPrintableChanged(Printer printer) {
         return printer instanceof TestsOutputConsolePrinter && !((TestsOutputConsolePrinter)printer).isCurrent(CompositePrintable.this);
       }
-    }
   }
 }
 

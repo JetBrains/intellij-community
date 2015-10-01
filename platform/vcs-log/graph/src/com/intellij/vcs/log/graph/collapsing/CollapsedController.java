@@ -35,10 +35,10 @@ public class CollapsedController extends CascadeController {
 
   public CollapsedController(@NotNull CascadeController delegateLinearGraphController,
                              @NotNull final PermanentGraphInfo<?> permanentGraphInfo,
-                             @Nullable Set<Integer> IdsOfVisibleBranches) {
+                             @Nullable Set<Integer> idsOfVisibleBranches) {
     super(delegateLinearGraphController, permanentGraphInfo);
     UnsignedBitSet initVisibility =
-      ReachableNodes.getReachableNodes(permanentGraphInfo.getPermanentLinearGraph(), IdsOfVisibleBranches);
+      ReachableNodes.getReachableNodes(permanentGraphInfo.getPermanentLinearGraph(), idsOfVisibleBranches);
     myCollapsedGraph = CollapsedGraph.newInstance(getDelegateController().getCompiledGraph(), initVisibility);
   }
 

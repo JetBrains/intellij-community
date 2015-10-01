@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,11 +53,11 @@ public class LastRunReformatCodeOptionsProvider {
   }
 
   public boolean getLastOptimizeImports() {
-    return myPropertiesComponent.getBoolean(OPTIMIZE_IMPORTS_KEY, false);
+    return myPropertiesComponent.getBoolean(OPTIMIZE_IMPORTS_KEY);
   }
 
   public TextRangeType getLastTextRangeType() {
-    return myPropertiesComponent.getBoolean(PROCESS_CHANGED_TEXT_KEY, false) ? TextRangeType.VCS_CHANGED_TEXT : TextRangeType.WHOLE_FILE;
+    return myPropertiesComponent.getBoolean(PROCESS_CHANGED_TEXT_KEY) ? TextRangeType.VCS_CHANGED_TEXT : TextRangeType.WHOLE_FILE;
   }
 
   public void saveProcessVcsChangedTextState(boolean value) {
@@ -66,16 +66,16 @@ public class LastRunReformatCodeOptionsProvider {
   }
 
   public void saveRearrangeCodeState(boolean value) {
-    myPropertiesComponent.setValue(REARRANGE_ENTRIES_KEY, Boolean.toString(value));
+    myPropertiesComponent.setValue(REARRANGE_ENTRIES_KEY, value);
   }
 
   public boolean getLastRearrangeCode() {
-    return myPropertiesComponent.getBoolean(REARRANGE_ENTRIES_KEY, false);
+    return myPropertiesComponent.getBoolean(REARRANGE_ENTRIES_KEY);
   }
 
   public boolean isRearrangeCode(@NotNull Language language) {
     String key = getRearrangeCodeKeyFor(language);
-    return myPropertiesComponent.getBoolean(key, false);
+    return myPropertiesComponent.getBoolean(key);
   }
 
   private static String getRearrangeCodeKeyFor(@NotNull Language language) {

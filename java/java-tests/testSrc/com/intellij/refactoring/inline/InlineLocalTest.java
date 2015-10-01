@@ -156,7 +156,7 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   }
 
   public void testArrayMethodCallInitialized() throws Exception {
-    doTest(true);
+    doTest(false);
   }
 
   public void testArrayIndex() throws Exception {
@@ -237,6 +237,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   }
 
   public void testCollapseArrayCreation() throws Exception {
+    doTest(true);
+  }
+
+  public void testRenameLambdaParamsToAvoidConflicts() throws Exception {
     doTest(true);
   }
 

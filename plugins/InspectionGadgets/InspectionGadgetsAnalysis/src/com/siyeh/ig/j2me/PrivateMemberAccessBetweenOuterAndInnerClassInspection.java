@@ -18,6 +18,7 @@ package com.siyeh.ig.j2me;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,7 +26,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -162,6 +162,15 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    if (FileTypeUtils.isInServerPageFile(file)) {
+      // disable for jsp files IDEADEV-12957
+      return false;
+    }
+    return true;
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PrivateMemberAccessFromInnerClassVisitor();
   }
@@ -171,9 +180,6 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
 
     @Override
     public void visitNewExpression(PsiNewExpression expression) {
-      if (FileTypeUtils.isInServerPageFile(expression)) {
-        return;
-      }
       super.visitNewExpression(expression);
       final PsiClass containingClass =
         getContainingContextClass(expression);
@@ -215,19 +221,10 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
     @Override
     public void visitReferenceExpression(
       @NotNull PsiReferenceExpression expression) {
-      if (FileTypeUtils.isInServerPageFile(expression)) {
-        // disable for jsp files IDEADEV-12957
-        return;
-      }
       super.visitReferenceExpression(expression);
       final PsiElement referenceNameElement =
         expression.getReferenceNameElement();
       if (referenceNameElement == null) {
-        return;
-      }
-      final PsiElement containingClass =
-        getContainingContextClass(expression);
-      if (containingClass == null) {
         return;
       }
       final PsiElement element = expression.resolve();
@@ -236,6 +233,10 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
       }
       final PsiMember member = (PsiMember)element;
       if (!member.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
+      }
+      final PsiElement containingClass = getContainingContextClass(expression);
+      if (containingClass == null) {
         return;
       }
       final PsiClass memberClass = ClassUtils.getContainingClass(member);

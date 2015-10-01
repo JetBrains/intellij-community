@@ -77,7 +77,8 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   @Override
   public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
     myModificationCount.getAndIncrement();
-    if (event.getParent() instanceof PsiDirectory) {
+    if (event.getParent() instanceof PsiDirectory 
+        || event.getOldParent() instanceof PsiDirectory /* move events */) {
       myOutOfCodeBlockModificationCount.getAndIncrement();
     }
 

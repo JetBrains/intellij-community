@@ -2,8 +2,8 @@
   <id>com.intellij</id>
   <name>IDEA CORE</name>
 
-  <xi:include href="/componentSets/PlatformComponents.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/idea/PlatformActionManager.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="/componentSets/PlatformComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/idea/PlatformActionManager.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/vcs-log.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,11 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 
+import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +62,9 @@ public class DumpLookupElementWeights extends AnAction implements DumbAware {
     sb += "\nweights:\n" + StringUtil.join(getLookupElementWeights(lookup), "\n");
     System.out.println(sb);
     LOG.info(sb);
+    try {
+      CopyPasteManager.getInstance().setContents(new StringSelection(sb));
+    } catch (Exception ignore){}
   }
 
   public static List<String> getLookupElementWeights(LookupImpl lookup) {

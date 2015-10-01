@@ -124,7 +124,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       }
     });
     if (alive.get() > DUPLICATE_LIMIT) {
-      return "Too many range markers (" + alive + ") registered for interval "+node+"\n";
+      return "Too many range markers (" + alive + ") registered for interval "+node;
     }
 
     return null;

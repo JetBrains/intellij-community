@@ -2,30 +2,30 @@ package org.jetbrains.ide
 
 import com.google.gson.stream.JsonWriter
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.testFramework.FixtureRule
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.RuleChain
+import com.intellij.testFramework.TemporaryDirectory
 import io.netty.handler.codec.http.HttpResponseStatus
-import org.hamcrest.CoreMatchers.equalTo
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.ide.TestManager.TestDescriptor
-import org.junit.Assert.assertThat
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.RuleChain
 import java.io.BufferedOutputStream
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
-import kotlin.properties.Delegates
 
-public class RestApiTest {
-  private val fixtureManager = FixtureRule()
-  private val manager by Delegates.lazy { TestManager(fixtureManager) }
+class RestApiTest {
+  companion object {
+    @ClassRule val projectRule = ProjectRule()
+  }
 
-  private val _chain = RuleChain
-      .outerRule(fixtureManager)
-      .around(manager)
+  private val tempDirManager = TemporaryDirectory()
+  private val manager = TestManager(projectRule, tempDirManager)
 
-  Rule
-  public fun getChain(): RuleChain = _chain
+  private val ruleChain = RuleChain(tempDirManager, manager)
+  public Rule fun getChain(): RuleChain = ruleChain
 
   Test(timeout = 60000)
   TestDescriptor(filePath = "", status = 400)
@@ -51,9 +51,9 @@ public class RestApiTest {
     doTest()
   }
 
-  Test(timeout = 60000)
-  TestDescriptor(filePath = "fileInExcludedDir.txt", excluded = true, status = 200)
-  public fun inExcludedDir() {
+  @TestDescriptor(filePath = "fileInExcludedDir.txt", excluded = true, status = 200)
+  @Test(timeout = 60000)
+  fun inExcludedDir() {
     doTest()
   }
 
@@ -77,7 +77,7 @@ public class RestApiTest {
 
   private fun doTest() {
     val serviceUrl = "http://localhost:" + BuiltInServerManager.getInstance().getPort() + "/api/file"
-    var url = serviceUrl + (if (manager.filePath == null) "" else ("/" + manager.filePath))
+    var url = serviceUrl + (if (manager.filePath == null) "" else ("/${manager.filePath}"))
     val line = manager.annotation?.line ?: -1
     if (line != -1) {
       url += ":$line"
@@ -89,10 +89,10 @@ public class RestApiTest {
 
     var connection = URL(url).openConnection() as HttpURLConnection
     val expectedStatus = HttpResponseStatus.valueOf(manager.annotation?.status ?: 200)
-    assertThat(HttpResponseStatus.valueOf(connection.getResponseCode()), equalTo(expectedStatus))
+    assertThat(HttpResponseStatus.valueOf(connection.getResponseCode())).isEqualTo(expectedStatus)
 
     connection = URL("$serviceUrl?file=${manager.filePath ?: ""}&line=$line&column=$column").openConnection() as HttpURLConnection
-    assertThat(HttpResponseStatus.valueOf(connection.getResponseCode()), equalTo(expectedStatus))
+    assertThat(HttpResponseStatus.valueOf(connection.getResponseCode())).isEqualTo(expectedStatus)
 
     connection = URL("$serviceUrl").openConnection() as HttpURLConnection
     connection.setRequestMethod("POST")
@@ -104,6 +104,6 @@ public class RestApiTest {
     writer.name("column").value(column)
     writer.endObject()
     writer.close()
-    assertThat(HttpResponseStatus.valueOf(connection.getResponseCode()), equalTo(expectedStatus))
+    assertThat(HttpResponseStatus.valueOf(connection.getResponseCode())).isEqualTo(expectedStatus)
   }
 }

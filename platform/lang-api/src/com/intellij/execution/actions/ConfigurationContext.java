@@ -43,6 +43,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -66,6 +67,7 @@ public class ConfigurationContext {
   private List<RuntimeConfigurationProducer> myPreferredProducers;
   private List<ConfigurationFromContext> myConfigurationsFromContext;
 
+  @NotNull
   public static ConfigurationContext getFromContext(DataContext dataContext) {
     final ConfigurationContext context = new ConfigurationContext(dataContext);
     final DataManager dataManager = DataManager.getInstance();

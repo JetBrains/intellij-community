@@ -26,6 +26,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.formatter.common.NewLineBlocksIterator;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -89,7 +90,10 @@ public class FormatterBasedLineIndentInfoBuilder {
       else {
         return false;
       }
-      
+
+      if (block instanceof AbstractBlock) {
+        ((AbstractBlock)block).setBuildIndentsOnly(true);
+      }
       List<Block> subBlocks = block.getSubBlocks();
       block = subBlocks.isEmpty() ? null : subBlocks.get(0);
     }

@@ -85,13 +85,16 @@ public class CustomResourceBundle extends ResourceBundle {
   @Nullable
   @Override
   public VirtualFile getBaseDirectory() {
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public Project getProject() {
-    return getDefaultPropertiesFile().getProject();
+    VirtualFile baseDir = null;
+    for (PropertiesFile file : myFiles) {
+      final VirtualFile currentBaseDir = file.getContainingFile().getContainingDirectory().getVirtualFile();
+      if (baseDir == null) {
+        baseDir = currentBaseDir;
+      } else if (!baseDir.equals(currentBaseDir)) {
+        return null;
+      }
+    }
+    return baseDir;
   }
 
   public boolean equals(final Object o) {

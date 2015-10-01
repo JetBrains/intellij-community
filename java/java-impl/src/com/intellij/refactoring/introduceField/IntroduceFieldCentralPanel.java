@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -329,7 +329,7 @@ public abstract class IntroduceFieldCentralPanel {
   public void saveFinalState() {
     if (myCbFinal != null && myCbFinal.isEnabled()) {
       ourLastCbFinalState = myCbFinal.isSelected();
-      PropertiesComponent.getInstance().setValue(INTRODUCE_FIELD_FINAL_CHECKBOX, String.valueOf(ourLastCbFinalState));
+      PropertiesComponent.getInstance().setValue(INTRODUCE_FIELD_FINAL_CHECKBOX, ourLastCbFinalState, true);
     }
   }
 

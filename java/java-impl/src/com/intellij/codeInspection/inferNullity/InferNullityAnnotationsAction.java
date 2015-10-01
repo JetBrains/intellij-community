@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.DependencyScope;
@@ -77,7 +78,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
   @Override
   protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
-    PropertiesComponent.getInstance().setValue(ANNOTATE_LOCAL_VARIABLES, String.valueOf(myAnnotateLocalVariablesCb.isSelected()));
+    PropertiesComponent.getInstance().setValue(ANNOTATE_LOCAL_VARIABLES, myAnnotateLocalVariablesCb.isSelected());
 
     final ProgressManager progressManager = ProgressManager.getInstance();
     final Set<Module> modulesWithoutAnnotations = new HashSet<Module>();
@@ -271,7 +272,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   }
 
   private void restartAnalysis(final Project project, final AnalysisScope scope) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    DumbService.getInstance(project).smartInvokeLater(new Runnable() {
       @Override
       public void run() {
         analyze(project, scope);
@@ -343,7 +344,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   protected JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
     final JPanel panel = new JPanel(new VerticalFlowLayout());
     panel.add(new TitledSeparator());
-    myAnnotateLocalVariablesCb = new JCheckBox("Annotate local variables", PropertiesComponent.getInstance().getBoolean(ANNOTATE_LOCAL_VARIABLES, false));
+    myAnnotateLocalVariablesCb = new JCheckBox("Annotate local variables", PropertiesComponent.getInstance().getBoolean(ANNOTATE_LOCAL_VARIABLES));
     panel.add(myAnnotateLocalVariablesCb);
     return panel;
   }

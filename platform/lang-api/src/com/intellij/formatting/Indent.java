@@ -269,6 +269,10 @@ public abstract class Indent {
     return myFactory.getIndent(type, spaces, relativeToDirectParent, enforceIndentToChildren);
   }
 
+  public static Indent getSmartIndent(Type type) {
+    return myFactory.getSmartIndent(type);
+  }
+
   public static class Type {
     private final String myName;
 

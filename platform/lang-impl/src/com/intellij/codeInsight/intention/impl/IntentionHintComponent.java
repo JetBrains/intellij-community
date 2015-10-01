@@ -29,10 +29,7 @@ import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -43,6 +40,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -60,6 +58,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
@@ -76,6 +75,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
@@ -87,7 +87,6 @@ import java.util.List;
  * @author Valentin
  * @author Eugene Belyaev
  * @author Konstantin Bulenkov
- * @author and me too (Chinee?)
  */
 public class IntentionHintComponent implements Disposable, ScrollAwareHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionHintComponent.ListPopupRunnable");
@@ -458,6 +457,22 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
       Disposer.dispose(myPopup);
     }
     myPopup = JBPopupFactory.getInstance().createListPopup(step);
+    if (myPopup instanceof WizardPopup) {
+      Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
+      for (Shortcut shortcut : shortcuts) {
+        if (shortcut instanceof KeyboardShortcut) {
+          KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
+          if (keyboardShortcut.getSecondKeyStroke() == null) {
+            ((WizardPopup)myPopup).registerAction("activateSelectedElement", keyboardShortcut.getFirstKeyStroke(), new AbstractAction() {
+              @Override
+              public void actionPerformed(ActionEvent e) {
+                myPopup.handleSelect(true);
+              }
+            });
+          }
+        }
+      }
+    }
 
     boolean committed = PsiDocumentManager.getInstance(myFile.getProject()).isCommitted(myEditor.getDocument());
     final PsiFile injectedFile = committed ? InjectedLanguageUtil.findInjectedPsiNoCommit(myFile, myEditor.getCaretModel().getOffset()) : null;

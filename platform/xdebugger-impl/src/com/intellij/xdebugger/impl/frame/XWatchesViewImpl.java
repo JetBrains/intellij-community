@@ -90,10 +90,11 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
     actionManager.getAction(XDebuggerActions.XREMOVE_WATCH).registerCustomShortcutSet(CommonShortcuts.getDelete(), tree, myDisposables);
 
     CustomShortcutSet f2Shortcut = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
-    actionManager.getAction(XDebuggerActions.XEDIT_WATCH).registerCustomShortcutSet(f2Shortcut, tree);
+    actionManager.getAction(XDebuggerActions.XEDIT_WATCH).registerCustomShortcutSet(f2Shortcut, tree, myDisposables);
 
     AnAction copyAction = actionManager.getAction(XDebuggerActions.XCOPY_WATCH);
-    copyAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_DUPLICATE).getShortcutSet(), tree);
+    copyAction.registerCustomShortcutSet(
+      ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_DUPLICATE).getShortcutSet(), tree, myDisposables);
 
     DnDManager.getInstance().registerTarget(this, tree);
     myRootNode = new WatchesRootNode(tree, this, session.getSessionData().getWatchExpressions());

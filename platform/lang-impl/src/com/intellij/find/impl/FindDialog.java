@@ -23,16 +23,19 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -44,18 +47,17 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectAttachProcessor;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -197,7 +199,6 @@ public class FindDialog extends DialogWrapper {
     }
     myComboBoxListeners.clear();
     if (myScopePanel != null) myPreviousResultsExpandedState = myScopePanel.isExpanded();
-    rememberResultsPreviewWasOpen();
     super.dispose();
   }
 
@@ -374,6 +375,7 @@ public class FindDialog extends DialogWrapper {
         if(myResultsPreviewTable != null &&
           myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX) {
           newAction.run();
+          return;
         }
 
         if (previousAction != null) {
@@ -416,8 +418,6 @@ public class FindDialog extends DialogWrapper {
 
       ValidationInfo result = getValidationInfo(modelClone);
 
-      final PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(modelClone, myProject);
-
       final ProgressIndicatorBase progressIndicatorWhenSearchStarted = new ProgressIndicatorBase();
       myResultsPreviewSearchProgress = progressIndicatorWhenSearchStarted;
 
@@ -434,6 +434,17 @@ public class FindDialog extends DialogWrapper {
       myResultsPreviewTable.getEmptyText().setText("Searching...");
       myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX, PREVIEW_TITLE);
 
+      final Component component = myInputComboBox.getEditor().getEditorComponent();
+
+      // avoid commit of search text document upon encountering / highlighting of first usage that will restart the search
+      // (UsagePreviewPanel.highlight)
+      if (component instanceof EditorTextField) {
+        final Document document = ((EditorTextField)component).getDocument();
+        if (document != null) {
+          PsiDocumentManager.getInstance(myProject).commitDocument(document);
+        }
+      }
+
       final AtomicInteger resultsCount = new AtomicInteger();
 
       ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
@@ -446,7 +457,7 @@ public class FindDialog extends DialogWrapper {
           final FindUsagesProcessPresentation processPresentation =
             FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
 
-          FindInProjectUtil.findUsages(modelClone, psiDirectory, myProject, new Processor<UsageInfo>() {
+          FindInProjectUtil.findUsages(modelClone, myProject, new Processor<UsageInfo>() {
             @Override
             public boolean process(final UsageInfo info) {
               final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
@@ -646,7 +657,7 @@ public class FindDialog extends DialogWrapper {
       pane.insertTab("Options", null, optionsPanel, null, 0);
       pane.insertTab(PREVIEW_TITLE, null, myPreviewSplitter, null, RESULTS_PREVIEW_TAB_INDEX);
       myContent = pane;
-      AnAction anAction = new AnAction() {
+      final AnAction anAction = new DumbAwareAction() {
         @Override
         public void actionPerformed(AnActionEvent e) {
           int selectedIndex = myContent.getSelectedIndex();
@@ -655,7 +666,9 @@ public class FindDialog extends DialogWrapper {
       };
 
       final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_SWITCHER).getShortcutSet();
-      anAction.registerCustomShortcutSet(shortcutSet, getRootPane());
+
+      anAction.registerCustomShortcutSet(shortcutSet, getRootPane(), myDisposable);
+
       if (myPreviewResultsTabWasSelected) myContent.setSelectedIndex(RESULTS_PREVIEW_TAB_INDEX);
 
       return pane.getComponent();
@@ -740,6 +753,7 @@ public class FindDialog extends DialogWrapper {
       myModel.copyFrom(validateModel);
       updateFindSettings();
 
+      rememberResultsPreviewWasOpen();
       super.doOKAction();
       myOkHandler.consume(myModel);
     }
@@ -806,7 +820,7 @@ public class FindDialog extends DialogWrapper {
   @Nullable("null means OK")
   private ValidationInfo getValidationInfo(@NotNull FindModel model) {
     if (myRbDirectory != null && myRbDirectory.isEnabled() && myRbDirectory.isSelected()) {
-      PsiDirectory directory = FindInProjectUtil.getPsiDirectory(model, myProject);
+      VirtualFile directory = FindInProjectUtil.getDirectory(model);
       if (directory == null) {
         return new ValidationInfo(FindBundle.message("find.directory.not.found.error", getDirectory()), myDirectoryComboBox);
       }
@@ -1170,7 +1184,21 @@ public class FindDialog extends DialogWrapper {
     gbConstraints.gridx++;
     gbConstraints.weightx = 1;
     gbConstraints.gridwidth = 2;
-    myScopeCombo = new ScopeChooserCombo(myProject, true, true, FindSettings.getInstance().getDefaultScopeName());
+    myScopeCombo = new ScopeChooserCombo();
+    myScopeCombo.init(myProject, true, true, FindSettings.getInstance().getDefaultScopeName(), new Condition<ScopeDescriptor>() {
+      final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
+      final String moduleFilesScopeName;
+      {
+        String moduleScopeName = PsiBundle.message("search.scope.module", "");
+        final int ind = moduleScopeName.indexOf(' ');
+        moduleFilesScopeName = moduleScopeName.substring(0, ind + 1);
+      }
+      @Override
+      public boolean value(ScopeDescriptor descriptor) {
+        final String display = descriptor.getDisplay();
+        return !projectFilesScopeName.equals(display) && !display.startsWith(moduleFilesScopeName);
+      }
+    });
     myScopeCombo.getComboBox().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -1184,9 +1212,9 @@ public class FindDialog extends DialogWrapper {
 
 
     ButtonGroup bgScope = new ButtonGroup();
-    bgScope.add(myRbDirectory);
     bgScope.add(myRbProject);
     bgScope.add(myRbModule);
+    bgScope.add(myRbDirectory);
     bgScope.add(myRbCustomScope);
 
     ActionListener validateAll = new ActionListener() {
@@ -1591,9 +1619,12 @@ public class FindDialog extends DialogWrapper {
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         if (value instanceof UsageInfo2UsageAdapter) {
-          TextChunk[] text = ((UsageInfo2UsageAdapter)value).getPresentation().getText();
+          final UsageInfo2UsageAdapter usageAdapter = (UsageInfo2UsageAdapter)value;
+          TextChunk[] text = usageAdapter.getPresentation().getText();
+          final String uniqueVirtualFilePath =
+            UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(usageAdapter.getUsageInfo().getProject(), usageAdapter.getFile());
           // line number / file info
-          append(((UsageInfo2UsageAdapter)value).getFile().getName() + " " + text[0].getText(), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+          append(uniqueVirtualFilePath + " " + text[0].getText(), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
         }
         setBorder(null);
       }

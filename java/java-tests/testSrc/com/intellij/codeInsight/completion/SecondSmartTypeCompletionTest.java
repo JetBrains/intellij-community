@@ -1,9 +1,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
@@ -115,8 +113,8 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     configure();
     checkResultByFile(getTestName(false) + ".java");
     assertStringItems("bar()", "foo()");
-    assertEquals("Arrays.asList(f.bar())", ((LookupItem)((LookupElementDecorator)myItems[0]).getDelegate()).getPresentableText());
-    assertEquals("Arrays.asList(f.foo())", ((LookupItem)((LookupElementDecorator)myItems[1]).getDelegate()).getPresentableText());
+    assertEquals("Arrays.asList(f.bar())", LookupElementPresentation.renderElement(myItems[0]).getItemText());
+    assertEquals("Arrays.asList(f.foo())", LookupElementPresentation.renderElement(myItems[1]).getItemText());
     selectItem(myItems[1]);
     checkResult();
   }

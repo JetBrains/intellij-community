@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -105,6 +106,8 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
     final Rectangle rectangle = WindowManager.getInstance().getIdeFrame(myProject).suggestChildFrameBounds();
     myToolWindow.setDefaultState(ToolWindowAnchor.RIGHT, ToolWindowType.FLOATING, rectangle);
+    
+    ((ToolWindowEx)myToolWindow).setTitleActions(createRestorePopupAction());
 
     final ContentManager contentManager = myToolWindow.getContentManager();
     final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
@@ -152,12 +155,12 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
         restartAutoUpdate(state);
       }
     };
-    return new AnAction[]{toggleAutoUpdateAction, createRestorePopupAction()};
+    return new AnAction[]{toggleAutoUpdateAction};
   }
 
   @NotNull
   protected AnAction createRestorePopupAction() {
-    return new AnAction("Restore Popup", getRestorePopupDescription(), AllIcons.Actions.Cancel) {
+    return new AnAction("Restore Popup", getRestorePopupDescription(), AllIcons.General.AutohideOffPressed) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         restorePopupBehavior();

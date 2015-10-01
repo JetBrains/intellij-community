@@ -20,31 +20,15 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
-import com.intellij.openapi.components.impl.stores.StorageData
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.PathUtilRt
-import com.intellij.util.containers.ContainerUtil
+import org.jdom.Element
 
 class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module) : StateStorageManagerImpl("module", macroSubstitutor, module) {
-  override fun createStorageData(fileSpec: String) = ModuleFileData()
-
-  override fun startExternalization() = MyStateStorageManagerExternalizationSession(this)
-
-  private class MyStateStorageManagerExternalizationSession(storageManager: StateStorageManagerImpl) : StateStorageManagerImpl.StateStorageManagerExternalizationSession(storageManager) {
-    override fun createSaveSessions(): List<StateStorage.SaveSession> {
-      val storage = ContainerUtil.getFirstItem(storageManager.getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)))
-      if (storage != null && (storage.getStorageData() as StorageData).isDirty()) {
-        // force XmlElementStorageSaveSession creation
-        getExternalizationSession(storage)
-      }
-      return super.createSaveSessions()
-    }
-  }
-
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation) = StoragePathMacros.MODULE_FILE
 
   override fun pathRenamed(oldPath: String, newPath: String, event: VFileEvent?) {
@@ -60,5 +44,34 @@ class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, 
         ModuleManagerImpl.getInstanceImpl(module.getProject()).fireModuleRenamedByVfsEvent(module, oldName)
       }
     }
+  }
+
+  override fun beforeElementLoaded(element: Element) {
+    val optionElement = Element("component").setAttribute("name", "DeprecatedModuleOptionManager")
+    val iterator = element.getAttributes().iterator()
+    for (attribute in iterator) {
+      if (attribute.getName() != ProjectStateStorageManager.VERSION_OPTION) {
+        iterator.remove()
+        optionElement.addContent(Element("option").setAttribute("key", attribute.getName()).setAttribute("value", attribute.getValue()))
+      }
+    }
+
+    element.addContent(optionElement)
+  }
+
+  override fun beforeElementSaved(element: Element) {
+    val componentIterator = element.getChildren("component").iterator()
+    for (component in componentIterator) {
+      if (component.getAttributeValue("name") == "DeprecatedModuleOptionManager") {
+        componentIterator.remove()
+        for (option in component.getChildren("option")) {
+          element.setAttribute(option.getAttributeValue("key"), option.getAttributeValue("value"))
+        }
+        break;
+      }
+    }
+
+    // need be last for compat reasons
+    element.setAttribute(ProjectStateStorageManager.VERSION_OPTION, "4")
   }
 }

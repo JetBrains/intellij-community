@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -24,7 +25,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -72,6 +72,11 @@ public class UnnecessaryReturnInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return !FileTypeUtils.isInServerPageFile(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryReturnVisitor();
   }
@@ -80,9 +85,6 @@ public class UnnecessaryReturnInspection extends BaseInspection {
     @Override
     public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
-      if (FileTypeUtils.isInServerPageFile(statement.getContainingFile())) {
-        return;
-      }
       if (statement.getReturnValue() != null) {
         return;
       }

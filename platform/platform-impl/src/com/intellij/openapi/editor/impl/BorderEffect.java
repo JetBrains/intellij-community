@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ public class BorderEffect {
   private final int myEndOffset;
   private final TextRange myRange;
   private final EditorImpl myEditor;
+  private final ClipDetector myClipDetector;
   private static final Equality<TextAttributes> SAME_COLOR_BOXES = new Equality<TextAttributes>() {
     @Override
     public boolean equals(final TextAttributes attributes1, final TextAttributes attributes2) {
@@ -58,6 +59,7 @@ public class BorderEffect {
     myStartOffset = clipStartOffset;
     myEndOffset = clipEndOffset;
     myRange = new TextRange(myStartOffset, myEndOffset);
+    myClipDetector = new ClipDetector(editor, graphics.getClipBounds());
   }
 
   private static boolean isBorder(TextAttributes textAttributes) {
@@ -117,14 +119,15 @@ public class BorderEffect {
     return myEditor.getDocument().getLineStartOffset(line);
   }
 
-  private static void paintBorder(Graphics g, EditorImpl editor, int startOffset, int endOffset, Color color, EffectType effectType) {
+  private void paintBorder(Graphics g, EditorImpl editor, int startOffset, int endOffset, Color color, EffectType effectType) {
     Color savedColor = g.getColor();
     g.setColor(color);
     paintBorder(g, editor, startOffset, endOffset, effectType);
     g.setColor(savedColor);
   }
 
-  private static void paintBorder(Graphics g, EditorImpl editor, int startOffset, int endOffset, EffectType effectType) {
+  private void paintBorder(Graphics g, EditorImpl editor, int startOffset, int endOffset, EffectType effectType) {
+    if (!myClipDetector.rangeCanBeVisible(startOffset, endOffset)) return;
     Point startPoint = offsetToXY(editor, startOffset);
     Point endPoint = offsetToXY(editor, endOffset);
     int height = endPoint.y - startPoint.y;

@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
@@ -93,7 +94,15 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   // We're guessing style of references in javadoc by bytecode version of library class file
   // but displaying quick doc should work even if javadoc was generated using a JDK not corresponding to bytecode version
   public void testReferenceStyleDoesntMatchBytecodeVersion() throws Exception {
-    String actualText = getDocumentationText("@com.jetbrains.TestAnnotation(<caret>param = \"foo\") class Foo {}");
+    doTest("@com.jetbrains.TestAnnotation(<caret>param = \"foo\") class Foo {}");
+  }
+
+  public void testLinkWithReference() throws Exception {
+    doTest("class Foo { com.jetbrains.<caret>ClassWithRefLink field;}");
+  }
+
+  private void doTest(String text) throws Exception {
+    String actualText = getDocumentationText(text);
     String expectedText = StringUtil.convertLineSeparators(FileUtil.loadFile(getDataFile(getTestName(false) + ".html")));
     assertEquals(expectedText, replaceBaseUrlWithPlaceholder(actualText));
   }
@@ -103,6 +112,7 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   }
 
   private static void waitTillDone(ActionCallback actionCallback) throws InterruptedException {
+    if (actionCallback == null) return;
     long start = System.currentTimeMillis();
     while (System.currentTimeMillis() - start < 300000) {
       //noinspection BusyWait
@@ -118,7 +128,7 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   }
   
   @NotNull
-  private static VirtualFile getJarFile(String name) {
+  public static VirtualFile getJarFile(String name) {
     VirtualFile file = getVirtualFile(getDataFile(name));
     assertNotNull(file);
     VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(file);
@@ -133,14 +143,19 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
                          sourceEditorText.substring(caretPosition + EditorTestUtil.CARET_TAG.length());
     }
     PsiFile psiFile = PsiFileFactory.getInstance(myProject).createFileFromText(JavaLanguage.INSTANCE, sourceEditorText);
-    Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
+    return getDocumentationText(psiFile, caretPosition);
+  }
+
+  public static String getDocumentationText(@NotNull PsiFile psiFile, int caretPosition) throws InterruptedException {
+    Project project = psiFile.getProject();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     assertNotNull(document);
-    Editor editor = EditorFactory.getInstance().createEditor(document, myProject);
+    Editor editor = EditorFactory.getInstance().createEditor(document, project);
     try {
       if (caretPosition >= 0) {
         editor.getCaretModel().moveToOffset(caretPosition);
       }
-      DocumentationManager documentationManager = DocumentationManager.getInstance(myProject);
+      DocumentationManager documentationManager = DocumentationManager.getInstance(project);
       MockDocumentationComponent documentationComponent = new MockDocumentationComponent(documentationManager);
       try {
         documentationManager.setDocumentationComponent(documentationComponent);
@@ -157,7 +172,7 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
     finally {
       EditorFactory.getInstance().releaseEditor(editor);
     }
-  }
+  } 
 
   @Override
   protected boolean isRunInWriteAction() {

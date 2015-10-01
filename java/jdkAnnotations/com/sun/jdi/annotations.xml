@@ -1,0 +1,5 @@
+<root>
+  <item name='com.sun.jdi.ClassType com.sun.jdi.ClassType superclass()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+</root>

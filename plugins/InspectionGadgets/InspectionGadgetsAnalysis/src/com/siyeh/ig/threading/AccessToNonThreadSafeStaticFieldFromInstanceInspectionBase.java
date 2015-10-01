@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,25 +83,6 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspectionBase extends 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
-      final PsiModifierListOwner parent =
-        PsiTreeUtil.getParentOfType(expression, PsiField.class, PsiMethod.class, PsiClassInitializer.class);
-      if (parent == null) {
-        return;
-      }
-      if (parent instanceof PsiMethod || parent instanceof PsiClassInitializer) {
-        if (parent.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-          return;
-        }
-        final PsiSynchronizedStatement synchronizedStatement = PsiTreeUtil.getParentOfType(expression, PsiSynchronizedStatement.class);
-        if (synchronizedStatement != null) {
-          return;
-        }
-      }
-      if (parent instanceof PsiField || parent instanceof PsiClassInitializer) {
-        if (parent.hasModifierProperty(PsiModifier.STATIC)) {
-          return;
-        }
-      }
       if (expression.getQualifierExpression() != null) {
         return;
       }
@@ -126,6 +107,27 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspectionBase extends 
       if (!field.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
+
+      final PsiModifierListOwner parent =
+        PsiTreeUtil.getParentOfType(expression, PsiField.class, PsiMethod.class, PsiClassInitializer.class);
+      if (parent == null) {
+        return;
+      }
+      if (parent instanceof PsiMethod || parent instanceof PsiClassInitializer) {
+        if (parent.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+          return;
+        }
+        final PsiSynchronizedStatement synchronizedStatement = PsiTreeUtil.getParentOfType(expression, PsiSynchronizedStatement.class);
+        if (synchronizedStatement != null) {
+          return;
+        }
+      }
+      if (parent instanceof PsiField || parent instanceof PsiClassInitializer) {
+        if (parent.hasModifierProperty(PsiModifier.STATIC)) {
+          return;
+        }
+      }
+
       if (deepCheck) {
         final PsiExpression initializer = field.getInitializer();
         if (initializer == null) {

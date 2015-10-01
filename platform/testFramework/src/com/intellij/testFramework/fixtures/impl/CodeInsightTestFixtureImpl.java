@@ -56,7 +56,10 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
@@ -936,6 +939,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)) {
             return;
           }
+          if (_performEditorAction(IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE)) {
+            return;
+          }
 
           performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
           return;
@@ -1102,10 +1108,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   @Override
-  public Collection<GutterMark> findGuttersAtCaret() {
+  public List<GutterMark> findGuttersAtCaret() {
     CommonProcessors.CollectProcessor<GutterMark> processor = new CommonProcessors.CollectProcessor<GutterMark>();
     findGutters(processor);
-    return processor.getResults();
+    return new ArrayList<GutterMark>(processor.getResults());
   }
 
   private void findGutters(Processor<GutterMark> processor) {
@@ -1133,14 +1139,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   @NotNull
-  public Collection<GutterMark> findAllGutters(@NotNull final String filePath) {
+  public List<GutterMark> findAllGutters(@NotNull final String filePath) {
     configureByFilesInner(filePath);
     return findAllGutters();
   }
 
   @Override
   @NotNull
-  public Collection<GutterMark> findAllGutters() {
+  public List<GutterMark> findAllGutters() {
     final Project project = getProject();
     final SortedMap<Integer, List<GutterMark>> result = new TreeMap<Integer, List<GutterMark>>();
 
@@ -1368,17 +1374,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void setUp() throws Exception {
     super.setUp();
 
-    UsefulTestCase.replaceIdeEventQueueSafely();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    TestRunnerUtil.replaceIdeEventQueueSafely();
+    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
-      public void run() {
-        try {
-          myProjectFixture.setUp();
-          myTempDirFixture.setUp();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+      public void run() throws Throwable {
+        myProjectFixture.setUp();
+        myTempDirFixture.setUp();
 
         VirtualFile tempDir = myTempDirFixture.getFile("");
         PlatformTestCase.synchronizeTempDirVfs(tempDir);
@@ -1538,7 +1539,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private PsiFile configureInner(@NotNull final VirtualFile copy, @NotNull final SelectionAndCaretMarkupLoader loader) {
     assertInitialized();
 
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
       public void run() {
         if (!copy.getFileType().isBinary()) {
@@ -1573,7 +1574,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           setupEditorForInjectedLanguage();
         }
       }
-    }, ModalityState.any());
+    });
 
     return getFile();
   }

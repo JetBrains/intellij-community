@@ -31,7 +31,5 @@ public interface ProjectEx extends Project {
 
   void setOptimiseTestLoadSpeed(boolean optimiseTestLoadSpeed);
 
-  void checkUnknownMacros(final boolean showDialog);
-
   void setProjectName(@NotNull String name);
 }

@@ -57,10 +57,13 @@ import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class IdeaApplication {
   @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
   @NonNls public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
+
+  private static final String[] SAFE_JAVA_ENV_PARAMETERS = {"idea.required.plugins.id"};
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
 
@@ -83,21 +86,7 @@ public class IdeaApplication {
     LOG.assertTrue(ourInstance == null);
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourInstance = this;
-
-    //Assuming that passing -Dkey=value as a program argument is just a convenient way to setup environment
-    ArrayList<String> arguments = new ArrayList<String>();
-    for (String arg : args) {
-      if (arg.startsWith("-D")) {
-        String[] keyValue = arg.substring(2).split("=");
-        if (keyValue.length == 2) {
-          System.setProperty(keyValue[0], keyValue[1]);
-          continue;
-        }
-      }
-      arguments.add(arg);
-    }
-
-    myArgs = ArrayUtil.toStringArray(arguments);
+    myArgs = processProgramArguments(args);
     boolean isInternal = Boolean.getBoolean(IDEA_IS_INTERNAL_PROPERTY);
     boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
 
@@ -134,6 +123,30 @@ public class IdeaApplication {
     }
 
     myStarter.premain(args);
+  }
+
+  /**
+   * Method looks for -Dkey=value program arguments and stores some of them in system properties.
+   * We should use it for a limited number of safe keys.
+   * One of them is a list of ids of required plugins
+   *
+   * @see IdeaApplication#SAFE_JAVA_ENV_PARAMETERS
+   */
+  @NotNull
+  private static String[] processProgramArguments(String[] args) {
+    ArrayList<String> arguments = new ArrayList<String>();
+    List<String> safeKeys = Arrays.asList(SAFE_JAVA_ENV_PARAMETERS);
+    for (String arg : args) {
+      if (arg.startsWith("-D")) {
+        String[] keyValue = arg.substring(2).split("=");
+        if (keyValue.length == 2 && safeKeys.contains(keyValue[0])) {
+          System.setProperty(keyValue[0], keyValue[1]);
+          continue;
+        }
+      }
+      arguments.add(arg);
+    }
+    return ArrayUtil.toStringArray(arguments);
   }
 
   private static void patchSystem(boolean headless) {

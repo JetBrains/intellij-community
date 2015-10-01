@@ -28,11 +28,10 @@ import java.util.Map;
 class HighlightedAdditionalColumn extends AnnotationFieldGutter {
 
   HighlightedAdditionalColumn(FileAnnotation annotation,
-                              Editor editor,
                               LineAnnotationAspect aspect,
                               TextAnnotationPresentation presentation,
                               Couple<Map<VcsRevisionNumber, Color>> colorScheme) {
-    super(annotation, editor, aspect, presentation, colorScheme);
+    super(annotation, aspect, presentation, colorScheme);
   }
 
   @Override

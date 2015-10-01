@@ -444,7 +444,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   GutterMark findGutter(@NotNull @TestDataFile @NonNls String filePath);
 
   @NotNull
-  Collection<GutterMark> findGuttersAtCaret();
+  List<GutterMark> findGuttersAtCaret();
 
   @NotNull
   PsiManager getPsiManager();
@@ -472,9 +472,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   Document getDocument(@NotNull PsiFile file);
 
   @NotNull
-  Collection<GutterMark> findAllGutters(@NotNull @TestDataFile String filePath);
+  List<GutterMark> findAllGutters(@NotNull @TestDataFile String filePath);
 
-  Collection<GutterMark> findAllGutters();
+  List<GutterMark> findAllGutters();
 
   void type(final char c);
 

@@ -706,8 +706,7 @@ class Person {
     myFixture.configureByText('_a.groovy', text)
 
     final ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    final resolved = ref.resolve()
-    assertInstanceOf(resolved, PsiMethod)
+    final resolved = assertInstanceOf(ref.resolve(), PsiMethod)
     final containingClass = resolved.containingClass.name
     assertEquals(resolvedClass, containingClass)
   }

@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
@@ -32,6 +33,7 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.stepic.CourseInfo;
 import com.jetbrains.edu.stepic.EduStepicConnector;
+import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,7 +180,12 @@ public class StudyProjectGenerator {
       final File file = new File(courseDirectory, name);
       FileUtil.createIfDoesntExist(file);
       try {
-        FileUtil.writeToFile(file, text);
+        if (EduUtils.isImage(name)) {
+          FileUtil.writeToFile(file, Base64.decodeBase64(text));
+        }
+        else {
+          FileUtil.writeToFile(file, text);
+        }
       }
       catch (IOException e) {
         LOG.error("ERROR copying file " + name);
@@ -205,7 +212,13 @@ public class StudyProjectGenerator {
       FileUtil.createIfDoesntExist(file);
 
       try {
-        FileUtil.writeToFile(file, taskFile.text);
+        if (EduUtils.isImage(taskFile.name)) {
+          FileUtil.writeToFile(file, Base64.decodeBase64(taskFile.text));
+        }
+        else {
+          FileUtil.writeToFile(file, taskFile.text);
+        }
+
       }
       catch (IOException e) {
         LOG.error("ERROR copying file " + name);
@@ -367,6 +380,9 @@ public class StudyProjectGenerator {
           }
         }
         catch (IOException e) {
+          LOG.error(e.getMessage());
+        }
+        catch (JsonSyntaxException e) {
           LOG.error(e.getMessage());
         }
         finally {

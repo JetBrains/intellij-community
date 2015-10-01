@@ -15,15 +15,17 @@
  */
 package com.intellij.vcs.log.printer.idea;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.graph.EdgePrintElement;
+import com.intellij.vcs.log.graph.NodePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
-import com.intellij.vcs.log.graph.SimplePrintElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
 import java.util.Collection;
 
 /**
@@ -33,6 +35,8 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
   private static final Color MARK_COLOR = JBColor.BLACK;
   private static final int ROW_HEIGHT = 24;
+  private static final double ARROW_ANGLE_COS2 = 0.7;
+  private static final double ARROW_LENGTH = 0.3;
 
   private final Stroke usual = new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
   private final Stroke hide =
@@ -53,22 +57,66 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     return ROW_HEIGHT;
   }
 
-  private void paintUpLine(int from, int to, Color color) {
-    int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
-    int y1 = getRowHeight() / 2;
-    int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
-    int y2 = -getRowHeight() / 2;
-    g2.setColor(color);
-    g2.drawLine(x2, y2, x1, y1);
+  private void paintUpLine(int from, int to, Color color, boolean hasArrow) {
+    // paint vertical lines normal size
+    // paint non-vertical lines twice the size to make them dock with each other well
+    if (from == to) {
+      int x = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+      int y1 = getRowHeight() / 2 - 1;
+      int y2 = 0;
+      paintLine(color, hasArrow, x, y1, x, y2, x, y2);
+    }
+    else {
+      int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+      int y1 = getRowHeight() / 2;
+      int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
+      int y2 = -getRowHeight() / 2;
+      paintLine(color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2);
+    }
   }
 
-  private void paintDownLine(int from, int to, Color color) {
-    int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
-    int y1 = getRowHeight() / 2;
-    int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
-    int y2 = getRowHeight() + getRowHeight() / 2;
+  private void paintDownLine(int from, int to, Color color, boolean hasArrow) {
+    if (from == to) {
+      int y2 = getRowHeight() - 1;
+      int y1 = getRowHeight() / 2;
+      int x = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+      paintLine(color, hasArrow, x, y1, x, y2, x, y2);
+    }
+    else {
+      int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+      int y1 = getRowHeight() / 2;
+      int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
+      int y2 = getRowHeight() + getRowHeight() / 2;
+      paintLine(color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2);
+    }
+  }
+
+  private void paintLine(Color color, boolean hasArrow, int x1, int y1, int x2, int y2, int startArrowX, int startArrowY) {
     g2.setColor(color);
     g2.drawLine(x1, y1, x2, y2);
+    if (hasArrow) {
+      Pair<Integer, Integer> rotate1 =
+        rotate(x1, y1, startArrowX, startArrowY, Math.sqrt(ARROW_ANGLE_COS2), Math.sqrt(1 - ARROW_ANGLE_COS2), ARROW_LENGTH * getRowHeight());
+      Pair<Integer, Integer> rotate2 =
+        rotate(x1, y1, startArrowX, startArrowY, Math.sqrt(ARROW_ANGLE_COS2), -Math.sqrt(1 - ARROW_ANGLE_COS2), ARROW_LENGTH * getRowHeight());
+      g2.drawLine(startArrowX, startArrowY, rotate1.first, rotate1.second);
+      g2.drawLine(startArrowX, startArrowY, rotate2.first, rotate2.second);
+    }
+  }
+
+  @NotNull
+  private static Pair<Integer, Integer> rotate(double x, double y, double centerX, double centerY, double cos, double sin, double arrowLength) {
+    double translateX = (x - centerX);
+    double translateY = (y - centerY);
+
+    double d = Math.sqrt(translateX * translateX + translateY * translateY);
+    double scaleX = arrowLength * translateX / d;
+    double scaleY = arrowLength * translateY / d;
+
+    double rotateX = scaleX * cos - scaleY * sin;
+    double rotateY = scaleX * sin + scaleY * cos;
+
+    return Pair.create((int)Math.round(rotateX + centerX), (int)Math.round(rotateY + centerY));
   }
 
   private void paintCircle(int position, Color color, boolean select) {
@@ -81,26 +129,6 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     Ellipse2D.Double circle = new Ellipse2D.Double(x0 - r + 0.5, y0 - r + 0.5, 2 * r, 2 * r);
     g2.setColor(color);
     g2.fill(circle);
-  }
-
-  private void paintDownArrow(int position, Color color) {
-    int x0 = PrintParameters.WIDTH_NODE * position + PrintParameters.WIDTH_NODE / 2;
-    int r = PrintParameters.CIRCLE_RADIUS;
-    int y0 = getRowHeight() - r - 2;
-    g2.setColor(color);
-    g2.drawLine(x0, getRowHeight() / 2, x0, y0 + r);
-    g2.drawLine(x0, y0 + r, x0 + r, y0);
-    g2.drawLine(x0, y0 + r, x0 - r, y0);
-  }
-
-  private void paintUpArrow(int position, Color color) {
-    int x0 = PrintParameters.WIDTH_NODE * position + PrintParameters.WIDTH_NODE / 2;
-    int r = PrintParameters.CIRCLE_RADIUS;
-    int y0 = r + 2;
-    g2.setColor(color);
-    g2.drawLine(x0, getRowHeight() / 2, x0, y0 - r);
-    g2.drawLine(x0, y0 - r, x0 + r, y0);
-    g2.drawLine(x0, y0 - r, x0 - r, y0);
   }
 
   private void setStroke(boolean usual, boolean select) {
@@ -166,43 +194,23 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
             int to = edgePrintElement.getPositionInOtherRow();
 
             if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-              paintDownLine(from, to, color);
+              paintDownLine(from, to, color, edgePrintElement.hasArrow());
             }
             else {
-              paintUpLine(from, to, color);
+              paintUpLine(from, to, color, edgePrintElement.hasArrow());
             }
           }
         };
       }
 
-      if (printElement instanceof SimplePrintElement) {
-        final int position = printElement.getPositionInCurrentRow();
-        switch (((SimplePrintElement)printElement).getType()) {
-          case NODE:
-            if (printElement.isSelected()) {
-              paintCircle(position, MARK_COLOR, true);
-              paintCircle(position, getColor(printElement), false);
-            }
-            else {
-              paintCircle(position, getColor(printElement), false);
-            }
-            break;
-          case UP_ARROW:
-            printer = new LitePrinter() {
-              @Override
-              public void print(Color color) {
-                paintUpArrow(position, color);
-              }
-            };
-            break;
-          case DOWN_ARROW:
-            printer = new LitePrinter() {
-              @Override
-              public void print(Color color) {
-                paintDownArrow(position, color);
-              }
-            };
-            break;
+      if (printElement instanceof NodePrintElement) {
+        int position = printElement.getPositionInCurrentRow();
+        if (printElement.isSelected()) {
+          paintCircle(position, MARK_COLOR, true);
+          paintCircle(position, getColor(printElement), false);
+        }
+        else {
+          paintCircle(position, getColor(printElement), false);
         }
       }
 
@@ -214,8 +222,8 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   @Override
   public PrintElement mouseOver(@NotNull Collection<? extends PrintElement> printElements, int x, int y) {
     for (PrintElement printElement : printElements) {
-      if (printElement instanceof SimplePrintElement) {
-        if (PositionUtil.overNode(printElement.getPositionInCurrentRow(), x, y, ((SimplePrintElement)printElement).getType(), getRowHeight())) {
+      if (printElement instanceof NodePrintElement) {
+        if (PositionUtil.overNode(printElement.getPositionInCurrentRow(), x, y, getRowHeight())) {
           return printElement;
         }
       }

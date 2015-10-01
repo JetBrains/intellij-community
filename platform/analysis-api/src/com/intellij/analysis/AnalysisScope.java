@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -771,7 +771,7 @@ public class AnalysisScope {
           .isInTestSourceContent(((PsiDirectory)myElement).getVirtualFile());
       case FILE:
         final PsiFile containingFile = myElement.getContainingFile();
-        return ProjectRootManager.getInstance(myElement.getProject()).getFileIndex().isInTestSourceContent(containingFile.getVirtualFile());
+        return ProjectRootManager.getInstance(containingFile.getProject()).getFileIndex().isInTestSourceContent(containingFile.getVirtualFile());
       case MODULE:
         return isTestOnly(myModule);
       case MODULES:

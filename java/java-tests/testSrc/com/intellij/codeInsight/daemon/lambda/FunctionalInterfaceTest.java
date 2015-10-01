@@ -18,7 +18,11 @@ package com.intellij.codeInsight.daemon.lambda;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,5 +89,18 @@ public class FunctionalInterfaceTest extends LightDaemonAnalyzerTestCase {
 
   public void testAbstractClass() throws Exception {
     doTestFunctionalInterface("Target type of a lambda conversion must be an interface");
+  }
+
+  public void testIntersectionTypeWithSameBaseInterfaceInConjuncts() throws Exception {
+    String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
+    configureByFile(filePath);
+    final PsiTypeCastExpression castExpression =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiTypeCastExpression.class);
+    assertNotNull(castExpression);
+    final PsiTypeElement castTypeElement = castExpression.getCastType();
+    assertNotNull(castTypeElement);
+    final PsiType type = castTypeElement.getType();
+    final String errorMessage = LambdaHighlightingUtil.checkInterfaceFunctional(type);
+    assertEquals(null, errorMessage);
   }
 }

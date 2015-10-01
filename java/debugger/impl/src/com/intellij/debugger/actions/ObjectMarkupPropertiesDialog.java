@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import java.awt.*;
  */
 public class ObjectMarkupPropertiesDialog extends ValueMarkerPresentationDialogBase {
   @NonNls private static final String MARK_ALL_REFERENCED_VALUES_KEY = "debugger.mark.all.referenced.values";
+  private static final boolean MARK_ALL_REFERENCED_VALUES_DEFAULT_VALUE = true;
   private JCheckBox myCbMarkAdditionalFields;
   private final boolean mySuggestAdditionalMarkup;
   private JPanel myAdditionalPropertiesPanel;
@@ -41,14 +42,14 @@ public class ObjectMarkupPropertiesDialog extends ValueMarkerPresentationDialogB
     mySuggestAdditionalMarkup = suggestAdditionalMarkup;
     myDescriptionLabel.setText("If the value is referenced by a constant field of an abstract class,\n" +
                                "IDEA could additionally mark all values referenced from this class with the names of referencing fields.");
-    myCbMarkAdditionalFields.setSelected(PropertiesComponent.getInstance().getBoolean(MARK_ALL_REFERENCED_VALUES_KEY, true));
+    myCbMarkAdditionalFields.setSelected(PropertiesComponent.getInstance().getBoolean(MARK_ALL_REFERENCED_VALUES_KEY, MARK_ALL_REFERENCED_VALUES_DEFAULT_VALUE));
     init();
   }
 
   @Override
   protected void doOKAction() {
     if (mySuggestAdditionalMarkup) {
-      PropertiesComponent.getInstance().setValue(MARK_ALL_REFERENCED_VALUES_KEY, Boolean.toString(myCbMarkAdditionalFields.isSelected()));
+      PropertiesComponent.getInstance().setValue(MARK_ALL_REFERENCED_VALUES_KEY, myCbMarkAdditionalFields.isSelected(), MARK_ALL_REFERENCED_VALUES_DEFAULT_VALUE);
     }
     super.doOKAction();
   }

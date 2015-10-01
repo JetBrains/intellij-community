@@ -12,7 +12,6 @@ import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.printer.idea.GraphCellPainter;
 import com.intellij.vcs.log.printer.idea.PrintParameters;
-import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,26 +31,31 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
   @NotNull private final VcsLogDataHolder myDataHolder;
   @NotNull private final GraphCellPainter myPainter;
   @NotNull private final VcsLogGraphTable myGraphTable;
-  @NotNull private final RefPainter myRefPainter;
+  @NotNull private final TextLabelPainter myTextLabelPainter;
   @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
 
   @Nullable private PaintInfo myGraphImage;
   @Nullable private Collection<VcsRef> myRefs;
 
-  public GraphCommitCellRender(@NotNull VcsLogColorManager colorManager,
-                               @NotNull VcsLogDataHolder dataHolder,
+  public GraphCommitCellRender(@NotNull VcsLogDataHolder dataHolder,
                                @NotNull GraphCellPainter painter,
                                @NotNull VcsLogGraphTable table) {
     myDataHolder = dataHolder;
     myPainter = painter;
     myGraphTable = table;
-    myRefPainter = new RefPainter(colorManager, false) {
-      @Override
-      protected int getRowHeight() {
-        return myGraphTable.getRowHeight();
-      }
-    };
+    myTextLabelPainter = TextLabelPainter.createPainter(false);
     myIssueLinkRenderer = new IssueLinkRenderer(dataHolder.getProject(), this);
+  }
+
+  @NotNull
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension preferredSize = super.getPreferredSize();
+    return new Dimension(preferredSize.width, getPreferredHeight());
+  }
+
+  public int getPreferredHeight() {
+    return myTextLabelPainter.calculateSize("", getFontMetrics(TextLabelPainter.getFont())).height + 4;
   }
 
   @Override
@@ -59,7 +63,14 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
     super.paintComponent(g);
 
     if (myRefs != null) {
-      myRefPainter.drawLabels((Graphics2D)g, collectLabelsForRefs(myRefs), myGraphImage != null ? myGraphImage.getWidth() : 0);
+      int paddingX = (myGraphImage != null ? myGraphImage.getWidth() : 0) + PrintParameters.LABEL_PADDING;
+      Map<String, Color> labelsForReferences = collectLabelsForRefs(myRefs);
+      for (Map.Entry<String, Color> entry : labelsForReferences.entrySet()) {
+        Dimension size = myTextLabelPainter.calculateSize(entry.getKey(), g.getFontMetrics(TextLabelPainter.getFont()));
+        int paddingY = (myGraphTable.getRowHeight() - size.height) / 2;
+        myTextLabelPainter.paint((Graphics2D)g, entry.getKey(), paddingX, paddingY, entry.getValue());
+        paddingX += size.width + PrintParameters.LABEL_PADDING;
+      }
     }
 
     if (myGraphImage != null) {
@@ -90,7 +101,7 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
     else {
       graphPadding = 0;
     }
-    int textPadding = graphPadding + calcRefsPadding(myRefs);
+    int textPadding = graphPadding + calculateReferencePadding(myRefs);
 
     setBorder(null);
     append("");
@@ -132,8 +143,15 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
     return getLabelsForRefs(branches, tags);
   }
 
-  private int calcRefsPadding(@NotNull Collection<VcsRef> refs) {
-    return myRefPainter.getLabelsWidth(collectLabelsForRefs(refs).keySet(), this.getFontMetrics(RefPainter.DEFAULT_FONT));
+  private int calculateReferencePadding(@NotNull Collection<VcsRef> references) {
+    if (references.isEmpty()) return 0;
+
+    int paddingX = 2 * PrintParameters.LABEL_PADDING;
+    for (String label : collectLabelsForRefs(references).keySet()) {
+      Dimension size = myTextLabelPainter.calculateSize(label, this.getFontMetrics(TextLabelPainter.getFont()));
+      paddingX += size.width + PrintParameters.LABEL_PADDING;
+    }
+    return paddingX;
   }
 
   @NotNull

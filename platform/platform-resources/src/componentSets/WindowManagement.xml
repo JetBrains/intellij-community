@@ -1,4 +1,4 @@
-<components>
+<idea-plugin>
   <application-components>
     <component>
       <interface-class>com.intellij.openapi.wm.WindowManager</interface-class>
@@ -28,4 +28,4 @@
       <skipForDefaultProject/>
     </component>
   </project-components>
-</components>
+</idea-plugin>

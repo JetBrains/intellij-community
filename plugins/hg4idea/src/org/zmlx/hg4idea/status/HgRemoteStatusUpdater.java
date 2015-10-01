@@ -37,9 +37,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author Kirill Likhodedov
- */
 public class HgRemoteStatusUpdater implements HgUpdater {
 
   private final AbstractVcs myVcs;
@@ -79,12 +76,10 @@ public class HgRemoteStatusUpdater implements HgUpdater {
             if (project.isDisposed()) return;
             final VirtualFile[] roots =
               root != null ? new VirtualFile[]{root} : ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(myVcs);
-            if (myProjectSettings.isCheckIncomingOutgoing()) {
-              updateChangesetStatus(project, roots, myIncomingStatus, true);
-              updateChangesetStatus(project, roots, myOutgoingStatus, false);
-            }
+            updateChangesetStatus(project, roots, myIncomingStatus, true);
+            updateChangesetStatus(project, roots, myOutgoingStatus, false);
 
-            project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, null);
+            project.getMessageBus().syncPublisher(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).update();
 
             indicator.stop();
             myUpdateStarted.set(false);
@@ -116,6 +111,7 @@ public class HgRemoteStatusUpdater implements HgUpdater {
   }
 
   private void updateChangesetStatus(Project project, VirtualFile[] roots, HgChangesetStatus status, boolean incoming) {
+    if (!myProjectSettings.isCheckIncomingOutgoing()) return;
     final List<HgRevisionNumber> changesets = new LinkedList<HgRevisionNumber>();
     for (VirtualFile root : roots) {
       if (incoming) {
@@ -128,8 +124,8 @@ public class HgRemoteStatusUpdater implements HgUpdater {
     status.setChanges(changesets.size(), new ChangesetFormatter(status, changesets));
   }
 
-  private String getProgressTitle() {
-    return "Checking incoming and outgoing changes";
+  private static String getProgressTitle() {
+    return "Checking Incoming and Outgoing Changes";
   }
 
   protected boolean isCheckingEnabled() {

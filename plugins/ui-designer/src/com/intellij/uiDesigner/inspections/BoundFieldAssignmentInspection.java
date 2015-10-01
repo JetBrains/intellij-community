@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -58,24 +57,28 @@ public class BoundFieldAssignmentInspection extends BaseJavaLocalInspectionTool 
     return new JavaElementVisitor() {
       @Override
       public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-        if (expression.getLExpression() instanceof PsiReferenceExpression) {
+        PsiExpression lExpression = expression.getLExpression();
+        if (lExpression instanceof PsiReferenceExpression) {
+          PsiReferenceExpression lExpr = (PsiReferenceExpression)lExpression;
+          PsiElement lElement = lExpr.resolve();
+          if (!(lElement instanceof PsiField)) {
+            return;
+          }
+          PsiField field = (PsiField) lElement;
+          PsiReference formReference = FormReferenceProvider.getFormReference(field);
+          if (!(formReference instanceof FieldFormReference)) {
+            return;
+          }
+          FieldFormReference ref = (FieldFormReference) formReference;
+          if (ref.isCustomCreate()) {
+            return;
+          }
+
           PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
           if (method != null && AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) {
             return;
           }
-          PsiReferenceExpression lExpr = (PsiReferenceExpression) expression.getLExpression();
-          PsiElement lElement = lExpr.resolve();
-          if (lElement instanceof PsiField) {
-            PsiField field = (PsiField) lElement;
-            PsiReference formReference = FormReferenceProvider.getFormReference(field);
-            if (formReference instanceof FieldFormReference) {
-              FieldFormReference ref = (FieldFormReference) formReference;
-              if (!ref.isCustomCreate()) {
-                holder.registerProblem(expression, UIDesignerBundle.message("inspection.bound.field.message"),
-                                       new LocalQuickFix[0]);
-              }
-            }
-          }
+          holder.registerProblem(expression, UIDesignerBundle.message("inspection.bound.field.message"));
         }
       }
     };

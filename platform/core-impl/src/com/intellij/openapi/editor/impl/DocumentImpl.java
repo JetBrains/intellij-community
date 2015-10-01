@@ -172,7 +172,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @TestOnly
   public boolean stripTrailingSpaces(Project project) {
-    return stripTrailingSpaces(project, false, false, new int[0]);
+    return stripTrailingSpaces(project, false);
+  }
+
+  @TestOnly
+  public boolean stripTrailingSpaces(Project project, boolean inChangedLinesOnly) {
+    return stripTrailingSpaces(project, inChangedLinesOnly, false, new int[0]);
   }
 
   /**
@@ -443,7 +448,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     myText = myText.ensureChunked();
     ImmutableText newText = myText.insert(offset, ImmutableText.valueOf(s));
-    updateText(newText, offset, null, newText.subtext(offset, offset + s.length()), false, LocalTimeCounter.currentTime());
+    updateText(newText, offset, null, newText.subtext(offset, offset + s.length()), false, LocalTimeCounter.currentTime(), offset, 0);
     trimToSize();
   }
 
@@ -467,7 +472,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
 
     myText = myText.ensureChunked();
-    updateText(myText.delete(startOffset, endOffset), startOffset, myText.subtext(startOffset, endOffset), null, false, LocalTimeCounter.currentTime());
+    updateText(myText.delete(startOffset, endOffset), startOffset, myText.subtext(startOffset, endOffset), null, false, LocalTimeCounter.currentTime(), startOffset, endOffset - startOffset);
   }
 
   @Override
@@ -512,8 +517,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throw new ReadOnlyModificationException(this);
     }
 
+    int initialStartOffset = startOffset;
+    int initialOldLength = endOffset - startOffset;
+
     final int newStringLength = s.length();
-    final CharSequence chars = getCharsSequence();
+    final CharSequence chars = myText;
     int newStartInString = 0;
     int newEndInString = newStringLength;
     while (newStartInString < newStringLength &&
@@ -550,7 +558,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       newText = myText.delete(startOffset, endOffset).insert(startOffset, changedPart);
       changedPart = newText.subtext(startOffset, startOffset + changedPart.length());
     }
-    updateText(newText, startOffset, sToDelete, changedPart, wholeTextReplaced, newModificationStamp);
+    updateText(newText, startOffset, sToDelete, changedPart, wholeTextReplaced, newModificationStamp, initialStartOffset, initialOldLength);
     trimToSize();
   }
 
@@ -640,6 +648,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myFrozen = null;
   }
 
+  public void clearLineModificationFlags(int startLine, int endLine) {
+    myLineSet = getLineSet().clearModificationFlags(startLine, endLine);
+    myFrozen = null;
+  }
+
   void clearLineModificationFlagsExcept(@NotNull int[] caretLines) {
     IntArrayList modifiedLines = new IntArrayList(caretLines.length);
     LineSet lineSet = getLineSet();
@@ -661,14 +674,16 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
                           @Nullable CharSequence oldString,
                           @Nullable CharSequence newString,
                           boolean wholeTextReplaced,
-                          long newModificationStamp) {
+                          long newModificationStamp,
+                          int initialStartOffset,
+                          int initialOldLength) {
     assertNotNestedModification();
     boolean enableRecursiveModifications = Registry.is("enable.recursive.document.changes"); // temporary property, to remove in IDEA 16
     myChangeInProgress = true;
     try {
-      final DocumentEvent event;
+      DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced, initialStartOffset, initialOldLength);
       try {
-        event = doBeforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
+        doBeforeChangedUpdate(event);
       }
       finally {
         if (enableRecursiveModifications) {
@@ -687,8 +702,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  @NotNull
-  private DocumentEvent doBeforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced) {
+  private void doBeforeChangedUpdate(DocumentEvent event) {
     Application app = ApplicationManager.getApplication();
     if (app != null) {
       FileDocumentManager manager = FileDocumentManager.getInstance();
@@ -700,8 +714,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     assertInsideCommand();
 
     getLineSet(); // initialize line set to track changed lines
-
-    DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced);
 
     if (!ShutDownTracker.isShutdownHookRunning()) {
       DocumentListener[] listeners = getCachedListeners();
@@ -716,7 +728,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
 
     myEventsHandling = true;
-    return event;
   }
 
   private void assertInsideCommand() {
@@ -805,7 +816,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   // Breaks encapsulation, yet required for current zero-latency typing implementation.
-  // TODO Sould be removed when we implement typing without starting write actions.
+  // TODO Should be removed when we implement typing without starting write actions.
   @NotNull
   public ImmutableText getImmutableText() {
     return myText;

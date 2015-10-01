@@ -28,7 +28,12 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.font.TextAttribute;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Locale;
 
 /**
  * @author max
@@ -53,10 +58,49 @@ public class FontInfo {
     mySize = size;
     myStyle = style;
     Font font = new Font(familyName, style, size);
-    myFont = ENABLE_OPTIONAL_LIGATURES ? font.deriveFont(Collections.singletonMap(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON)) : 
-             font;
+    myFont = ENABLE_OPTIONAL_LIGATURES ? getFontWithLigaturesEnabled(font) : font;
   }
-  
+
+  @NotNull
+  private static Font getFontWithLigaturesEnabled(Font font) {
+    if (SystemInfo.isMac) {
+      // Ligatures don't work on Mac for fonts loaded natively, so we need to locate and load font manually
+      File fontFile = findFileForFont(font, true);
+      if (fontFile == null && font.getStyle() != Font.PLAIN) fontFile = findFileForFont(font.deriveFont(Font.PLAIN), true);
+      if (fontFile == null) fontFile = findFileForFont(font, false);
+      if (fontFile == null) return font;
+      try {
+        font = Font.createFont(Font.TRUETYPE_FONT, fontFile).deriveFont(font.getStyle(), font.getSize());
+      }
+      catch (Exception e) {
+        return font;
+      }
+    }
+    return font.deriveFont(Collections.singletonMap(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON));
+  }
+
+  private static File findFileForFont(Font font, final boolean matchStyle) {
+    final String normalizedFamilyName = font.getFamily().toLowerCase(Locale.getDefault()).replace(" ", "");
+    final int fontStyle = font.getStyle();
+    File[] files = new File(System.getProperty("user.home"), "Library/Fonts").listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File file, String name) {
+        String normalizedName = name.toLowerCase(Locale.getDefault());
+        return normalizedName.startsWith(normalizedFamilyName) &&
+               (normalizedName.endsWith(".otf") || normalizedName.endsWith(".ttf")) &&
+               (!matchStyle || fontStyle == ComplementaryFontsRegistry.getFontStyle(name));
+      }
+    });
+    if (files == null || files.length == 0) return null;
+    // to make sure results are predictable we return first file in alphabetical order
+    return Collections.min(Arrays.asList(files), new Comparator<File>() {
+      @Override
+      public int compare(File file1, File file2) {
+        return file1.getName().compareTo(file2.getName());
+      }
+    });
+  }
+
   private void parseProblemGlyphs() {
     myCheckedForProblemGlyphs = true;
     BufferedImage buffer = UIUtil.createImage(20, 20, BufferedImage.TYPE_INT_RGB);

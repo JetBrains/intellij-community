@@ -15,24 +15,60 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
- * @author yole
+ * @author traff
  */
-public class CollectionComboBoxModel<T> extends AbstractCollectionComboBoxModel<T> {
-  public CollectionComboBoxModel(@NotNull List<T> items, @Nullable T selection) {
-    super(selection, items);
+public class CollectionComboBoxModel<T> extends CollectionListModel<T> implements ComboBoxModel {
+  protected T mySelection;
+
+  public CollectionComboBoxModel() {
+    super();
+
+    mySelection = null;
   }
 
   public CollectionComboBoxModel(@NotNull List<T> items) {
-    super(items.isEmpty() ? null : items.get(0), items);
+    this(items, ContainerUtil.getFirstItem(items));
   }
 
-  public CollectionComboBoxModel() {
-    super(null);
+  public CollectionComboBoxModel(@NotNull List<T> items, @Nullable T selection) {
+    super(items, true);
+
+    mySelection = selection;
+  }
+
+  @Override
+  public void setSelectedItem(@Nullable Object item) {
+    if (mySelection != item) {
+      //noinspection unchecked
+      mySelection = (T)item;
+      update();
+    }
+  }
+
+  @Override
+  @Nullable
+  public Object getSelectedItem() {
+    return mySelection;
+  }
+
+  @Nullable
+  public T getSelected() {
+    return mySelection;
+  }
+
+  public void update() {
+    super.fireContentsChanged(this, -1, -1);
+  }
+
+  public boolean contains(T item) {
+    return getElementIndex(item) != -1;
   }
 }

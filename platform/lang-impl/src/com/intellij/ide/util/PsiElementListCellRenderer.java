@@ -142,7 +142,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         }
         setIcon(PsiElementListCellRenderer.this.getIcon(element));
 
-        String containerText = getContainerText(element, name + (myModuleName != null ? myModuleName + "        " : ""));
+        String containerText = getContainerTextForLeftComponent(element, name + (myModuleName != null ? myModuleName + "        " : ""));
         if (containerText != null) {
           append(" " + containerText, new SimpleTextAttributes(Font.PLAIN, JBColor.GRAY));
         }
@@ -233,6 +233,11 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   @Nullable
   protected abstract String getContainerText(T element, final String name);
+
+  @Nullable
+  protected String getContainerTextForLeftComponent(T element, final String name) {
+    return getContainerText(element, name);
+  }
 
   @Iconable.IconFlags
   protected abstract int getIconFlags();

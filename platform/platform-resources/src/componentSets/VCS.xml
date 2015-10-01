@@ -1,4 +1,4 @@
-<components>
+<idea-plugin>
   <application-components>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.VetoSavingCommittingDocumentsAdapter</implementation-class>
@@ -115,4 +115,4 @@
     <component><interface-class>com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCache</interface-class>
       <implementation-class>com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCacheImpl</implementation-class></component>
   </project-components>
-</components>
+</idea-plugin>

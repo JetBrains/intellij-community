@@ -32,6 +32,7 @@ import org.junit.runner.notification.RunListener;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.annotation.Annotation;
 import java.util.*;
 
 public class JUnit4TestListener extends RunListener {
@@ -91,7 +92,8 @@ public class JUnit4TestListener extends RunListener {
     final String classFQN = JUnit4ReflectionUtil.getClassName(description);
 
     final List parents = (List)myParents.get(description);
-    List parentsHierarchy = parents != null && !parents.isEmpty() ? (List)parents.remove(0) : Collections.singletonList(description);
+    List parentsHierarchy = parents != null && !parents.isEmpty() ? (List)parents.remove(0) 
+                                                                  : Collections.singletonList(Description.createSuiteDescription(classFQN, new Annotation[0]));
     
     final String methodName = getFullMethodName(description, parentsHierarchy.isEmpty() ? null 
                                                                                         : (Description)parentsHierarchy.get(parentsHierarchy.size() - 1));
@@ -103,7 +105,9 @@ public class JUnit4TestListener extends RunListener {
     while (idx < myStartedSuites.size() && idx < parentsHierarchy.size()) {
       currentClass = (Description)myStartedSuites.get(idx);
       currentParent = (Description)parentsHierarchy.get(parentsHierarchy.size() - 1 - idx);
-      if (System.identityHashCode(currentClass) != System.identityHashCode(currentParent)) break;
+      if (isHierarchyDifferent(parents, currentClass, currentParent)) {
+        break;
+      }
       idx++;
     }
 
@@ -125,6 +129,17 @@ public class JUnit4TestListener extends RunListener {
     myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\' " + 
                           getTestMethodLocation(methodName, classFQN) + "]");
     myCurrentTestStart = currentTime();
+  }
+
+  private static boolean isHierarchyDifferent(List parents, 
+                                              Description currentClass, 
+                                              Description currentParent) {
+    if (parents == null) {
+      return !currentClass.equals(currentParent);
+    }
+    else {
+      return System.identityHashCode(currentClass) != System.identityHashCode(currentParent);
+    }
   }
 
   protected long currentTime() {
@@ -366,6 +381,7 @@ public class JUnit4TestListener extends RunListener {
   public void sendTree(Description description) {
     myRootName = JUnit4ReflectionUtil.getClassName((Description)description);
     sendTree(description, null, new ArrayList());
+    myPrintStream.println("##teamcity[treeEnded]");
   }
 
   private static String getShortName(String fqName) {

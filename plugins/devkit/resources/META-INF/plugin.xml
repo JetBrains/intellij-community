@@ -209,14 +209,11 @@
     <action id="TestData.Navigate"
             class="org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction"
             text="Navigate to testdata" use-shortcut-of="GotoRelated">
+      <add-to-group anchor="last" group-id="TestTreePopupMenu"/>
     </action>
     <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
       <add-to-group group-id="Internal.Dump"/>
     </action>
-    <group>
-      <reference id="TestData.Navigate"/>
-      <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
-    </group>
   </actions>
 
 </idea-plugin>

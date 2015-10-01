@@ -65,7 +65,14 @@ public abstract class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTest
   }
 
   protected void doTestCompletion(final String text, final String toType, final String result) {
-    myFixture.configureByText(XmlFileType.INSTANCE, text);
+    doTestCompletion(XmlFileType.INSTANCE, text, toType, result);
+  }
+
+  protected void doTestCompletion(final FileType fileType,
+                                  final String text,
+                                  final String toType,
+                                  final String result) {
+    myFixture.configureByText(fileType, text);
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {

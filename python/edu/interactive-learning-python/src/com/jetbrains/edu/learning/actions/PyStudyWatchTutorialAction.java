@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PyStudyWatchTutorialAction extends DumbAwareAction {
   public PyStudyWatchTutorialAction() {
-    super("Learn more about PyCharm Educational Edition", null, null);
+    super("Learn more about PyCharm Edu", null, null);
   }
 
   @Override

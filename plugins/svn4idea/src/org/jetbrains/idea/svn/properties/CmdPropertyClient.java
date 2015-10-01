@@ -8,11 +8,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.commandLine.Command;
-import org.jetbrains.idea.svn.commandLine.CommandExecutor;
-import org.jetbrains.idea.svn.commandLine.CommandUtil;
-import org.jetbrains.idea.svn.commandLine.SvnCommandName;
+import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.info.Info;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -61,8 +59,17 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     // is critical for some parts of merge logic
     parameters.add("--xml");
 
-    CommandExecutor command = execute(myVcs, target, SvnCommandName.propget, parameters, null);
-    PropertyData data = parseSingleProperty(target, command);
+    PropertyData data = null;
+
+    try {
+      CommandExecutor command = execute(myVcs, target, SvnCommandName.propget, parameters, null);
+      data = parseSingleProperty(target, command);
+    }
+    catch (SvnBindException e) {
+      if (!isPropertyNotFoundError(e)) {
+        throw e;
+      }
+    }
 
     return data != null ? data.getValue() : null;
   }
@@ -78,8 +85,15 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     parameters.add(property);
     fillListParameters(target, revision, depth, parameters, false);
 
-    CommandExecutor command = execute(myVcs, target, SvnCommandName.propget, parameters, null);
-    parseOutput(target, command, handler);
+    try {
+      CommandExecutor command = execute(myVcs, target, SvnCommandName.propget, parameters, null);
+      parseOutput(target, command, handler);
+    }
+    catch (SvnBindException e) {
+      if (!isPropertyNotFoundError(e)) {
+        throw e;
+      }
+    }
   }
 
   @Override
@@ -111,6 +125,13 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     for (Map.Entry<String, PropertyValue> entry : currentProperties.entrySet()) {
       setProperty(file, entry.getKey(), entry.getValue(), Depth.EMPTY, true);
     }
+  }
+
+  /**
+   * Such error is thrown (if there is no requested property on the given target) by svn 1.9 client.
+   */
+  private static boolean isPropertyNotFoundError(@NotNull SvnBindException e) {
+    return e.contains(SVNErrorCode.BASE) && e.contains(SVNErrorCode.PROPERTY_NOT_FOUND);
   }
 
   @NotNull

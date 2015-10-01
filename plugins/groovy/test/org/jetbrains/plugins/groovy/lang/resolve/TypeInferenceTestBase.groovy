@@ -36,7 +36,7 @@ abstract class TypeInferenceTestBase extends GroovyResolveTestCase {
     myFixture.addClass("package java.math; public class BigDecimal extends Number implements Comparable<BigDecimal> {}");
   }
 
-  protected void doTest(@Language("Groovy") String text, @Nullable String type) {
+  protected void doTest(String text, @Nullable String type) {
     def file = myFixture.configureByText('_.groovy', text)
     def ref = file.findReferenceAt(myFixture.editor.caretModel.offset) as GrReferenceExpression
     def actual = ref.type

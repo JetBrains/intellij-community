@@ -3,12 +3,17 @@ package com.jetbrains.edu.learning;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
+import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashMap;
-import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.*;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.UserTest;
+import com.jetbrains.edu.oldCourseFormat.OldCourse;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,16 +36,19 @@ import java.util.Map;
       scheme = StorageScheme.DIRECTORY_BASED
     )}
 )
-public class StudyTaskManager implements PersistentStateComponent<StudyTaskManager>, DumbAware {
+public class StudyTaskManager implements PersistentStateComponent<Element>, DumbAware {
   private Course myCourse;
+  private OldCourse myOldCourse;
+  public int VERSION = 2;
   public Map<AnswerPlaceholder, StudyStatus> myStudyStatusMap = new HashMap<AnswerPlaceholder, StudyStatus>();
   public Map<TaskFile, StudyStatus> myTaskStatusMap = new HashMap<TaskFile, StudyStatus>();
   public Map<Task, List<UserTest>> myUserTests = new HashMap<Task, List<UserTest>>();
+  public List<String> myInvisibleFiles = new ArrayList<String>();
 
   private StudyTaskManager() {
   }
 
-  public void setCourse(@NotNull final Course course) {
+  public void setCourse(final Course course) {
     myCourse = course;
   }
 
@@ -167,21 +175,71 @@ public class StudyTaskManager implements PersistentStateComponent<StudyTaskManag
   public boolean hasFailedAnswerPlaceholders(@NotNull final TaskFile taskFile) {
     return taskFile.getAnswerPlaceholders().size() > 0 && getStatus(taskFile) == StudyStatus.Failed;
   }
+
   @Nullable
   @Override
-  public StudyTaskManager getState() {
-    return this;
+  public Element getState() {
+    Element el = new Element("taskManager");
+    if (myCourse != null) {
+      Element courseElement = new Element(MAIN_ELEMENT);
+      XmlSerializer.serializeInto(this, courseElement);
+      el.addContent(courseElement);
+    }
+    return el;
   }
 
   @Override
-  public void loadState(StudyTaskManager state) {
-    XmlSerializerUtil.copyBean(state, this);
+  public void loadState(Element state) {
+    final Element mainElement = state.getChild(MAIN_ELEMENT);
+    if (mainElement != null) {
+      final StudyTaskManager taskManager = XmlSerializer.deserialize(mainElement, StudyTaskManager.class);
+      if (taskManager != null) {
+        myCourse = taskManager.myCourse;
+        myUserTests = taskManager.myUserTests;
+        myInvisibleFiles = taskManager.myInvisibleFiles;
+        myTaskStatusMap = taskManager.myTaskStatusMap;
+        myStudyStatusMap = taskManager.myStudyStatusMap;
+      }
+    }
+    final Element oldCourseElement = state.getChild(COURSE_ELEMENT);
+    if (oldCourseElement != null) {
+      myOldCourse = XmlSerializer.deserialize(oldCourseElement, OldCourse.class);
+      if (myOldCourse != null) {
+        myCourse = EduUtils.transformOldCourse(myOldCourse, new Function<Pair<AnswerPlaceholder, StudyStatus>, Void>() {
+          @Override
+          public Void fun(Pair<AnswerPlaceholder, StudyStatus> pair) {
+            setStatus(pair.first, pair.second);
+            return null;
+          }
+        });
+        myOldCourse = null;
+      }
+    }
     if (myCourse != null) {
       myCourse.initCourse(true);
     }
   }
 
+  public static final String COURSE_ELEMENT = "courseElement";
+  public static final String MAIN_ELEMENT = "StudyTaskManager";
+
+  public OldCourse getOldCourse() {
+    return myOldCourse;
+  }
+
+  public void setOldCourse(OldCourse oldCourse) {
+    myOldCourse = oldCourse;
+  }
+
   public static StudyTaskManager getInstance(@NotNull final Project project) {
     return ServiceManager.getService(project, StudyTaskManager.class);
+  }
+
+  public void addInvisibleFiles(String filePath) {
+    myInvisibleFiles.add(filePath);
+  }
+
+  public boolean isInvisibleFile(String path) {
+    return myInvisibleFiles.contains(path);
   }
 }

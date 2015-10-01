@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@
  */
 package org.jetbrains.idea.eclipse;
 
+import org.jetbrains.annotations.NotNull;
+
 public class EclipseEml2ModulesTest extends Eclipse2ModulesTest{
   @Override
   protected String getTestPath() {
@@ -27,7 +29,7 @@ public class EclipseEml2ModulesTest extends Eclipse2ModulesTest{
   }
 
   @Override
-  protected void doTest(String workspaceRoot, String projectRoot) throws Exception {
+  protected void doTest(@NotNull String workspaceRoot, @NotNull String projectRoot) throws Exception {
     super.doTest(workspaceRoot, projectRoot);
     EclipseEmlTest.doTest("/" + workspaceRoot + "/" + projectRoot, getProject());
   }

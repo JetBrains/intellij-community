@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -25,8 +24,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiFile;
-
-import java.util.Calendar;
 
 /**
  * @author Dennis.Ushakov
@@ -158,7 +155,6 @@ public class XmlSyncTagCommunityTest extends XmlSyncTagTest {
     doTest("<div></div><caret></div>", "\b\b\b\b\b\b", "<div></div>");
   }
 
-  @Bombed(user = "Den", day = 30, month = Calendar.AUGUST, year = 2015)
   public void testMultipleEditors() {
     myFixture.configureByText(XmlFileType.INSTANCE, "<div<caret>></div>");
     final Editor editor = EditorFactory.getInstance().createEditor(myFixture.getEditor().getDocument());

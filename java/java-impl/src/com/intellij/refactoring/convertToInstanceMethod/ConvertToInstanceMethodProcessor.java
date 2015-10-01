@@ -333,8 +333,8 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     final PsiReference reference = usage.getReferenceExpression();
     if (reference instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)reference;
-      if (referenceExpression.getParent() instanceof PsiReferenceExpression) {
-        // todo: check for correctness
+      PsiElement parent = referenceExpression.getParent();
+      if (parent instanceof PsiReferenceExpression && sameUnqualified(parent)) {
         referenceExpression.delete();
       }
       else {
@@ -348,6 +348,16 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
         element.getParent().delete();
       }
     }
+  }
+
+  private static boolean sameUnqualified(PsiElement parent) {
+    PsiElement resolve = ((PsiReferenceExpression)parent).resolve();
+    if (resolve instanceof PsiField) {
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(resolve.getProject());
+      final PsiExpression unqualifiedFieldReference = elementFactory.createExpressionFromText(((PsiField)resolve).getName(), parent);
+      return resolve == ((PsiReferenceExpression)unqualifiedFieldReference).resolve();
+    }
+    return true;
   }
 
   private void processMethodCall(MethodCallUsageInfo usageInfo) throws IncorrectOperationException {

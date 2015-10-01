@@ -25,6 +25,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.dir.actions.popup.WarnOnDeletion;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
@@ -215,30 +217,46 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     myTable.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
     final JBLoadingPanel loadingPanel = getLoadingPanel();
     loadingPanel.startLoading();
+
+    final ModalityState modalityState = ModalityState.current();
+
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        try {
-          if (myDisposed) return;
-          myUpdater = new Updater(loadingPanel, 100);
-          myUpdater.start();
-          myTree = new DTree(null, "", true);
-          mySrc.refresh(userForcedRefresh);
-          myTrg.refresh(userForcedRefresh);
-          scan(mySrc, myTree, true);
-          scan(myTrg, myTree, false);
-        }
-        catch (final IOException e) {
-          LOG.warn(e);
-          reportException(VcsBundle.message("refresh.failed.message", StringUtil.decapitalize(e.getLocalizedMessage())));
-        }
-        finally {
-          if (myTree != null) {
-            myTree.setSource(mySrc);
-            myTree.setTarget(myTrg);
-            myTree.update(mySettings);
-            applySettings();
+        EmptyProgressIndicator indicator = new EmptyProgressIndicator() {
+          @NotNull
+          @Override
+          public ModalityState getModalityState() {
+            return modalityState;
           }
-        }
+        };
+        ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              if (myDisposed) return;
+              myUpdater = new Updater(loadingPanel, 100);
+              myUpdater.start();
+              text.set("Loading...");
+              myTree = new DTree(null, "", true);
+              mySrc.refresh(userForcedRefresh);
+              myTrg.refresh(userForcedRefresh);
+              scan(mySrc, myTree, true);
+              scan(myTrg, myTree, false);
+            }
+            catch (final IOException e) {
+              LOG.warn(e);
+              reportException(VcsBundle.message("refresh.failed.message", StringUtil.decapitalize(e.getLocalizedMessage())));
+            }
+            finally {
+              if (myTree != null) {
+                myTree.setSource(mySrc);
+                myTree.setTarget(myTrg);
+                myTree.update(mySettings);
+                applySettings();
+              }
+            }
+          }
+        }, indicator);
       }
     });
   }

@@ -29,7 +29,7 @@ public final class DefaultStorageAnnotation implements Storage {
 
   @Override
   public RoamingType roamingType() {
-    return RoamingType.PER_USER;
+    return RoamingType.DEFAULT;
   }
 
   @Override

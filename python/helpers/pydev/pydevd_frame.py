@@ -23,6 +23,9 @@ import pydevd_dont_trace
 basename = os.path.basename
 
 IGNORE_EXCEPTION_TAG = re.compile('[^#]*#.*@IgnoreException')
+DEBUG_START = ('pydevd.py', 'run')
+DEBUG_START_PY3K = ('_pydev_execfile.py', 'execfile')
+TRACE_PROPERTY = 'pydevd_traceproperty.py'
 
 
 #=======================================================================================================================
@@ -396,6 +399,17 @@ class PyDBFrame:
                             finally:
                                 if val is not None:
                                     thread.additionalInfo.message = val
+
+                        if event == 'call':
+                            if hasattr(frame, 'f_back'):
+                                back = frame.f_back
+                                if back is not None:
+                                    # When we start debug session, we call execfile in pydevd run function. It produces an additional
+                                    # 'call' event for tracing and we stop on the first line of code twice.
+                                    base = basename(back.f_code.co_filename)
+                                    if (base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]) or \
+                                            (base == DEBUG_START_PY3K[0] and back.f_code.co_name == DEBUG_START_PY3K[1]):
+                                        stop = False
                 if stop:
                     self.setSuspend(thread, CMD_SET_BREAK)
                 elif flag and plugin_manager is not None:
@@ -505,10 +519,10 @@ class PyDBFrame:
                             #(note that it can still go on for other threads, but for this one, we just make it finish)
                             #So, just setting it to None should be OK
                             base = basename(back.f_code.co_filename)
-                            if base == 'pydevd.py' and back.f_code.co_name == 'run':
+                            if base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]:
                                 back = None
 
-                            elif base == 'pydevd_traceproperty.py':
+                            elif base == TRACE_PROPERTY:
                                 # We dont want to trace the return event of pydevd_traceproperty (custom property for debugging)
                                 #if we're in a return, we want it to appear to the user in the previous frame!
                                 return None

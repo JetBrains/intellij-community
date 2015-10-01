@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiSynchronizedStatement;
+import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptySynchronizedStatementInspection extends BaseInspection {
@@ -41,20 +42,20 @@ public class EmptySynchronizedStatementInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return !FileTypeUtils.isInServerPageFile(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new EmptySynchronizedStatementVisitor();
   }
 
-  private static class EmptySynchronizedStatementVisitor
-    extends BaseInspectionVisitor {
+  private static class EmptySynchronizedStatementVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSynchronizedStatement(
-      @NotNull PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
-      if (FileTypeUtils.isInServerPageFile(statement.getContainingFile())) {
-        return;
-      }
       final PsiCodeBlock body = statement.getBody();
       if (body == null) {
         return;

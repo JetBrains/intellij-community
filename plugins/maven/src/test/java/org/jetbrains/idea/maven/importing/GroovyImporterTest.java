@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
@@ -460,57 +461,63 @@ public class GroovyImporterTest extends MavenImportingTestCase {
   }
 
   public void testUpdatingGroovySpecificGeneratedSourcesOnFoldersUpdate() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+    try {
+      importProject("<groupId>test</groupId>" +
+                    "<artifactId>project</artifactId>" +
+                    "<version>1</version>" +
 
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.groovy.maven</groupId>" +
-                  "      <artifactId>gmaven-plugin</artifactId>" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <goals>" +
-                  "            <goal>generateStubs</goal>" +
-                  "            <goal>generateTestStubs</goal>" +
-                  "          </goals>" +
-                  "        </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+                    "<build>" +
+                    "  <plugins>" +
+                    "    <plugin>" +
+                    "      <groupId>org.codehaus.groovy.maven</groupId>" +
+                    "      <artifactId>gmaven-plugin</artifactId>" +
+                    "      <executions>" +
+                    "        <execution>" +
+                    "          <goals>" +
+                    "            <goal>generateStubs</goal>" +
+                    "            <goal>generateTestStubs</goal>" +
+                    "          </goals>" +
+                    "        </execution>" +
+                    "      </executions>" +
+                    "    </plugin>" +
+                    "  </plugins>" +
+                    "</build>");
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        MavenRootModelAdapter a = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
-                                                            getModule("project"),
-                                                            new MavenDefaultModifiableModelsProvider(myProject));
-        a.unregisterAll(getProjectPath() + "/target", true, true);
-        a.getRootModel().commit();
-      }
-    });
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          MavenRootModelAdapter a = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
+                                                              getModule("project"),
+                                                              new MavenDefaultModifiableModelsProvider(myProject));
+          a.unregisterAll(getProjectPath() + "/target", true, true);
+          a.getRootModel().commit();
+        }
+      });
 
 
-    assertSources("project");
-    assertTestSources("project");
-    assertExcludes("project");
+      assertSources("project");
+      assertTestSources("project");
+      assertExcludes("project");
 
-    createProjectSubDirs("src/main/groovy",
-                         "src/test/groovy",
-                         "target/generated-sources/xxx/yyy",
-                         "target/generated-sources/groovy-stubs/main/foo",
-                         "target/generated-sources/groovy-stubs/test/bar");
+      createProjectSubDirs("src/main/groovy",
+                           "src/test/groovy",
+                           "target/generated-sources/xxx/yyy",
+                           "target/generated-sources/groovy-stubs/main/foo",
+                           "target/generated-sources/groovy-stubs/test/bar");
 
-    resolveFoldersAndImport();
+      resolveFoldersAndImport();
 
-    assertSources("project",
-                  "src/main/groovy",
-                  "target/generated-sources/xxx");
-    assertTestSources("project",
-                      "src/test/groovy");
-    assertExcludes("project",
-                   "target/generated-sources/groovy-stubs");
+      assertSources("project",
+                    "src/main/groovy",
+                    "target/generated-sources/xxx");
+      assertTestSources("project",
+                        "src/test/groovy");
+      assertExcludes("project",
+                     "target/generated-sources/groovy-stubs");
+    }
+    finally {
+      // do not lock files by maven process
+      MavenServerManager.getInstance().shutdown(true);
+    }
   }
 
   public void testDoNotAddGroovySpecificGeneratedSourcesForGMaven_1_2() throws Exception {

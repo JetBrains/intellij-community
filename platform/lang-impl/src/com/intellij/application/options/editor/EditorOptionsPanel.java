@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
 import com.intellij.codeInsight.documentation.QuickDocOnMouseOverManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -45,7 +46,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
-import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
+import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -359,10 +360,7 @@ public class EditorOptionsPanel {
       updateVcsSettings = true;
     }
     if (updateVcsSettings) {
-      Project[] projects = ProjectManager.getInstance().getOpenProjects();
-      for (Project project : projects) {
-        LineStatusTrackerManager.getInstance(project).updateSettings();
-      }
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated();
     }
 
     reinitAllEditors();

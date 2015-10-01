@@ -18,19 +18,19 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.templates.github.ZipUtil;
-import com.intellij.util.containers.HashMap;
 import com.jetbrains.edu.EduDocumentListener;
 import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.coursecreator.CCProjectService;
-import com.jetbrains.edu.coursecreator.actions.oldCourseFormat.*;
+import com.jetbrains.edu.oldCourseFormat.OldCourse;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Map;
 
 public class CCFromCourseArchive extends DumbAwareAction {
@@ -42,7 +42,8 @@ public class CCFromCourseArchive extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    CCProjectService.setCCActionAvailable(e);
+    e.getPresentation().setEnabledAndVisible(false);
+    //CCProjectService.setCCActionAvailable(e);
   }
 
   @Override
@@ -64,13 +65,23 @@ public class CCFromCourseArchive extends DumbAwareAction {
     final String basePath = project.getBasePath();
     if (basePath == null) return;
     final CCProjectService service = CCProjectService.getInstance(project);
-    Reader reader;
+    Reader reader = null;
     try {
       ZipUtil.unzip(null, new File(basePath), new File(virtualFile.getPath()), null, null, true);
       reader = new InputStreamReader(new FileInputStream(new File(basePath, EduNames.COURSE_META_FILE)));
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-      OldCourse oldCourse = gson.fromJson(reader, OldCourse.class);
-      Course course = transformOldCourse(oldCourse);
+      Course course = gson.fromJson(reader, Course.class);
+      if (course == null || course.getLessons().isEmpty() || StringUtil.isEmptyOrSpaces(course.getLessons().get(0).getName())) {
+        try {
+          reader.close();
+        }
+        catch (IOException e) {
+          LOG.error(e.getMessage());
+        }
+        reader = new InputStreamReader(new FileInputStream(new File(basePath, EduNames.COURSE_META_FILE)));
+        OldCourse oldCourse = gson.fromJson(reader, OldCourse.class);
+        course = EduUtils.transformOldCourse(oldCourse);
+      }
 
       service.setCourse(course);
       project.getBaseDir().refresh(false, true);
@@ -83,6 +94,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
         for (Task task : lesson.getTaskList()) {
           final VirtualFile taskDir = lessonDir.findChild(EduNames.TASK + String.valueOf(taskIndex));
           task.setIndex(taskIndex);
+          task.setLesson(lesson);
           if (taskDir == null) continue;
           for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -107,63 +119,17 @@ public class CCFromCourseArchive extends DumbAwareAction {
     catch (JsonSyntaxException e) {
       LOG.error(e.getMessage());
     }
-    synchronize(project);
-  }
-
-  @NotNull
-  private static Course transformOldCourse(@NotNull final OldCourse oldCourse) {
-    Course course = new Course();
-    course.setDescription(oldCourse.description);
-    course.setName(oldCourse.name);
-    course.setAuthors(new String[]{oldCourse.author});
-
-    final ArrayList<Lesson> lessons = new ArrayList<Lesson>();
-    for (OldLesson oldLesson : oldCourse.lessons) {
-      final Lesson lesson = new Lesson();
-      lesson.setName(oldLesson.name);
-      lesson.setIndex(oldLesson.myIndex);
-
-      final ArrayList<Task> tasks = new ArrayList<Task>();
-      for (OldTask oldTask : oldLesson.taskList) {
-        final Task task = new Task();
-        task.setIndex(oldTask.myIndex);
-        task.setName(oldTask.name);
-        task.setLesson(lesson);
-
-        final HashMap<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
-        for (Map.Entry<String, OldTaskFile> entry : oldTask.taskFiles.entrySet()) {
-          final TaskFile taskFile = new TaskFile();
-          final OldTaskFile oldTaskFile = entry.getValue();
-          taskFile.setIndex(oldTaskFile.myIndex);
-          taskFile.name = entry.getKey();
-
-          final ArrayList<AnswerPlaceholder> placeholders = new ArrayList<AnswerPlaceholder>();
-          for (OldTaskWindow window : oldTaskFile.taskWindows) {
-            final AnswerPlaceholder placeholder = new AnswerPlaceholder();
-
-            placeholder.setIndex(window.myIndex);
-            placeholder.setHint(window.hint);
-            placeholder.setLength(window.length);
-            placeholder.setLine(window.line);
-            placeholder.setPossibleAnswer(window.possibleAnswer);
-            placeholder.setStart(window.start);
-
-            placeholders.add(placeholder);
-          }
-
-          taskFile.setAnswerPlaceholders(placeholders);
-          taskFiles.put(entry.getKey(), taskFile);
+    finally {
+      if (reader != null) {
+        try {
+          reader.close();
         }
-        task.taskFiles = taskFiles;
-        tasks.add(task);
+        catch (IOException e) {
+          LOG.error(e.getMessage());
+        }
       }
-
-      lesson.taskList = tasks;
-
-      lessons.add(lesson);
     }
-    course.setLessons(lessons);
-    return course;
+    synchronize(project);
   }
 
   public static void createAnswerFile(@NotNull final Project project,

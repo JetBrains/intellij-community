@@ -5,8 +5,10 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.packaging.PyPackage;
@@ -47,6 +49,10 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
   private final String[] myRequiredTags;
 
   /**
+   * TODO: Move to {@link EnvTestTagsRequired} as well?
+   */
+
+  /**
    * @param requiredTags tags that should exist on some interpreter for this test to run.
    *                     if some of these tags do not exist on any interpreter, all test methods would be skipped using
    *                     {@link org.junit.Assume}.
@@ -61,6 +67,10 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
   @Nullable
   public static PyPackage getInstalledDjango(@NotNull final Sdk sdk) throws ExecutionException {
     return PyPackageManager.getInstance(sdk).findPackage("django", false);
+  }
+
+  public static String norm(String testDataPath) {
+    return FileUtil.toSystemIndependentName(testDataPath);
   }
 
   @Override
@@ -153,10 +163,18 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     if (RUN_LOCAL) {
       PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots);
 
-      taskRunner.runTask(testTask, testName);
+      final EnvTestTagsRequired tagsRequiredAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
+      final String[] requiredTags;
+      if (tagsRequiredAnnotation != null) {
+        requiredTags = tagsRequiredAnnotation.tags();
+      }
+      else {
+        requiredTags = ArrayUtil.EMPTY_STRING_ARRAY;
+      }
+
+      taskRunner.runTask(testTask, testName, requiredTags);
     }
   }
-
 
   public static boolean notEnvConfiguration() {
     return UsefulTestCase.IS_UNDER_TEAMCITY && !IS_ENV_CONFIGURATION;

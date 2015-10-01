@@ -29,9 +29,8 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileEx;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
@@ -53,8 +52,7 @@ import java.util.concurrent.ConcurrentHashMap;
   name = "InspectionProjectProfileManager",
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/inspectionProfiles", scheme = StorageScheme.DIRECTORY_BASED,
-             stateSplitter = InspectionProjectProfileManagerImpl.ProfileStateSplitter.class)
+    @Storage(file = "inspectionProfiles", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = DefaultProjectProfileManager.ProfileStateSplitter.class)
   }
 )
 public class InspectionProjectProfileManagerImpl extends InspectionProjectProfileManager {
@@ -205,7 +203,7 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
     try {
       mySeverityRegistrar.readExternal(state);
     }
-    catch (InvalidDataException e) {
+    catch (Throwable e) {
       LOG.error(e);
     }
     super.loadState(state);
@@ -214,12 +212,7 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
   @Override
   public Element getState() {
     Element state = super.getState();
-    try {
-      mySeverityRegistrar.writeExternal(state);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
+    mySeverityRegistrar.writeExternal(state);
     return state;
   }
 
@@ -231,7 +224,7 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
   @Override
   public void convert(Element element) {
     super.convert(element);
-    if (myProjectProfile != null) {
+    if (getProjectProfile() != null) {
       ((ProfileEx)getProjectProfileImpl()).convert(element, getProject());
     }
   }

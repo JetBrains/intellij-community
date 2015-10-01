@@ -66,6 +66,11 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   @Nullable
   public abstract VirtualFile getFile(@NotNull FileEditor editor);
 
+  /**
+   * Refreshes the text, colors and icon of the editor tabs representing the specified file.
+   *
+   * @param file the file to refresh.
+   */
   public abstract void updateFilePresentation(@NotNull VirtualFile file);
 
   /**

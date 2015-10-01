@@ -113,15 +113,23 @@ public class InferenceIncorporationPhase {
             if (mySession.getInferenceVariable(eqBound) == null) return false;
           }
 
-          final PsiClassType[] paramBounds = parameters[i].getExtendsListTypes();
+          final PsiClassType[] paramBounds = inferenceVariable.getParameter().getExtendsListTypes();
+
+          PsiType glb = null;
+          for (PsiClassType paramBound : paramBounds) {
+            if (glb == null) {
+              glb = paramBound;
+            }
+            else {
+              glb = GenericsUtil.getGreatestLowerBound(glb, paramBound);
+            }
+          }
 
           if (!((PsiWildcardType)aType).isBounded()) {
 
             for (PsiType upperBound : upperBounds) {
-              if (mySession.getInferenceVariable(upperBound) == null) {
-                for (PsiClassType paramBound : paramBounds) {
-                  addConstraint(new StrictSubtypingConstraint(upperBound, mySession.substituteWithInferenceVariables(paramBound)));
-                }
+              if (glb != null && mySession.getInferenceVariable(upperBound) == null) {
+                addConstraint(new StrictSubtypingConstraint(upperBound, mySession.substituteWithInferenceVariables(glb)));
               }
             }
 
@@ -137,10 +145,9 @@ public class InferenceIncorporationPhase {
               if (mySession.getInferenceVariable(upperBound) == null) {
                 if (paramBounds.length == 1 && paramBounds[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || paramBounds.length == 0) {
                   addConstraint(new StrictSubtypingConstraint(upperBound, extendsBound));
-                } else if (extendsBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-                  for (PsiClassType paramBound : paramBounds) {
-                    addConstraint(new StrictSubtypingConstraint(upperBound, mySession.substituteWithInferenceVariables(paramBound)));
-                  }
+                }
+                else if (extendsBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && glb != null) {
+                  addConstraint(new StrictSubtypingConstraint(upperBound, mySession.substituteWithInferenceVariables(glb)));
                 }
               }
             }
@@ -154,10 +161,8 @@ public class InferenceIncorporationPhase {
             final PsiType superBound = ((PsiWildcardType)aType).getSuperBound();
 
             for (PsiType upperBound : upperBounds) {
-              if (mySession.getInferenceVariable(upperBound) == null) {
-                for (PsiClassType paramBound : paramBounds) {
-                  addConstraint(new StrictSubtypingConstraint(mySession.substituteWithInferenceVariables(paramBound), upperBound));
-                }
+              if (glb != null && mySession.getInferenceVariable(upperBound) == null) {
+                addConstraint(new StrictSubtypingConstraint(mySession.substituteWithInferenceVariables(glb), upperBound));
               }
             }
 

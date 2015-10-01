@@ -4,12 +4,14 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdkTools.PyTestSdkTools;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URL;
@@ -26,14 +28,16 @@ public class PyEnvTaskRunner {
     myRoots = roots;
   }
 
-  public void runTask(PyTestTask testTask, String testName) {
+  // todo: doc
+  public void runTask(PyTestTask testTask, String testName, @NotNull final String... tagsRequiedByTest) {
     boolean wasExecuted = false;
 
     List<String> passedRoots = Lists.newArrayList();
 
     for (String root : myRoots) {
 
-      if (!isSuitableForTask(PyEnvTestCase.loadEnvTags(root), testTask) || !shouldRun(root, testTask)) {
+      final Set<String> requredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiedByTest));
+      if (!isSuitableForTask(PyEnvTestCase.loadEnvTags(root), requredTags) || !shouldRun(root, testTask)) {
         continue;
       }
 
@@ -93,14 +97,17 @@ public class PyEnvTaskRunner {
    * Create SDK by path to python exectuable
    *
    * @param executable path executable
-   * @return sdk
+   * @return sdk or null if there is no sdk on this path
    * @throws InvalidSdkException bad sdk
-   * @throws IOException         bad path
    */
-  @NotNull
+  @Nullable
   private static Sdk createSdkByExecutable(@NotNull final String executable) throws InvalidSdkException, IOException {
     final URL rootUrl = new URL(String.format("file:///%s", executable));
-    return PyTestSdkTools.createTempSdk(VfsUtil.findFileByURL(rootUrl), SdkCreationType.SDK_PACKAGES_AND_SKELETONS, null);
+    final VirtualFile url = VfsUtil.findFileByURL(rootUrl);
+    if (url == null) {
+      return null;
+    }
+    return PyTestSdkTools.createTempSdk(url, SdkCreationType.SDK_PACKAGES_AND_SKELETONS, null);
   }
 
   protected boolean shouldRun(String root, PyTestTask task) {
@@ -115,8 +122,8 @@ public class PyEnvTaskRunner {
     return "local";
   }
 
-  private static boolean isSuitableForTask(List<String> tags, PyTestTask task) {
-    return isSuitableForTags(tags, task.getTags());
+  private static boolean isSuitableForTask(List<String> availableTags, @NotNull final Set<String> requiredTags) {
+    return isSuitableForTags(availableTags, requiredTags);
   }
 
   public static boolean isSuitableForTags(List<String> envTags, Set<String> taskTags) {

@@ -443,7 +443,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
     @Override
     public void setSelectedItem(Object anObject) {
-      if (myModel.getSize() == 0 && anObject != null) {
+      if (myModel.getIndexOf(anObject) == -1) {
         myModel.addElement(anObject);
       }
       super.setSelectedItem(anObject);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.LocalVariableDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.project.Project;
@@ -33,6 +32,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements LocalVariableDescriptor {
   private final StackFrameProxyImpl myFrameProxy;
@@ -95,12 +95,10 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
     return myLocalVariable.name();
   }
 
+  @Nullable
   @Override
-  public String calcValueName() {
-    if (NodeRendererSettings.getInstance().getClassRenderer().SHOW_DECLARED_TYPE) {
-      return addDeclaredType(myTypeName);
-    }
-    return super.calcValueName();
+  public String getDeclaredType() {
+    return myLocalVariable.typeName();
   }
 
   @Override

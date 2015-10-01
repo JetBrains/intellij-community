@@ -20,11 +20,15 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayDeque;
+
+import static com.intellij.Patches.USE_REFLECTION_TO_ACCESS_JDK7;
 
 /**
  * @author Sergey Malenkov
  */
 public class MovablePopup {
+  private static final Object CACHE = new Object();
   private final Component myOwner;
   private final Component myContent;
   private Rectangle myViewBounds;
@@ -45,10 +49,6 @@ public class MovablePopup {
     myHeavyWeight = true;
   }
 
-  public void dispose() {
-    disposeAndUpdate(false);
-  }
-
   /**
    * Sets whether this popup should be always on top.
    * This property is used by heavy weight popups only.
@@ -57,6 +57,16 @@ public class MovablePopup {
     if (myAlwaysOnTop != value) {
       myAlwaysOnTop = value;
       disposeAndUpdate(true);
+    }
+  }
+
+  private static void setAlwaysOnTop(@NotNull Window window, boolean value) {
+    if (value != window.isAlwaysOnTop()) {
+      try {
+        window.setAlwaysOnTop(value);
+      }
+      catch (Exception ignored) {
+      }
     }
   }
 
@@ -82,6 +92,12 @@ public class MovablePopup {
     }
   }
 
+  private static void setWindowFocusable(@NotNull Window window, boolean value) {
+    if (value != window.getFocusableWindowState()) {
+      window.setFocusableWindowState(value);
+    }
+  }
+
   /**
    * Sets whether this popup should have a shadow.
    * This property is used by heavy weight popups only.
@@ -90,6 +106,13 @@ public class MovablePopup {
     if (myWindowShadow != value) {
       myWindowShadow = value;
       disposeAndUpdate(true);
+    }
+  }
+
+  private static void setWindowShadow(@NotNull Window window, boolean value) {
+    JRootPane root = getRootPane(window);
+    if (root != null) {
+      root.putClientProperty("Window.shadow", value);
     }
   }
 
@@ -133,36 +156,21 @@ public class MovablePopup {
   }
 
   public void setVisible(boolean visible) {
-    if (myView != null) {
-      myView.setVisible(visible);
+    if (!visible && myView != null) {
+      disposeAndUpdate(false);
     }
-    else if (visible) {
+    else if (visible && myView == null) {
       Window owner = UIUtil.getWindow(myOwner);
       if (owner != null) {
         if (myHeavyWeight) {
-          JWindow view = new JWindow(owner);
-          // TODO 1.7+: temporary fix for the i3 window manager because of Java 1.6
-          try {
-            @SuppressWarnings("unchecked")
-            Class<? extends Enum> type = (Class<? extends Enum>)Class.forName("java.awt.Window$Type");
-            Object value = Enum.valueOf(type, "POPUP");
-            view.getClass().getMethod("setType", type).invoke(view, value);
+          Window view = pop(owner);
+          if (view == null) {
+            view = new JWindow(owner);
+            setPopupType(view);
           }
-          catch (Exception ignored) {
-          }
-          // TODO 1.7+: setType(Window.Type.POPUP); // or UTILITY
-          if (myAlwaysOnTop) {
-            try {
-              view.setAlwaysOnTop(true);
-            }
-            catch (SecurityException ignored) {
-              myAlwaysOnTop = false;
-            }
-          }
-          view.setFocusableWindowState(myWindowFocusable);
-          if (!myWindowShadow) {
-            view.getRootPane().putClientProperty("Window.shadow", Boolean.FALSE);
-          }
+          setAlwaysOnTop(view, myAlwaysOnTop);
+          setWindowFocusable(view, myWindowFocusable);
+          setWindowShadow(view, myWindowShadow);
           myView = view;
         }
         else if (owner instanceof RootPaneContainer) {
@@ -200,10 +208,17 @@ public class MovablePopup {
   private void disposeAndUpdate(boolean update) {
     if (myView != null) {
       boolean visible = myView.isVisible();
+      myView.setVisible(false);
+      Container container = myContent.getParent();
+      if (container != null) {
+        container.remove(myContent);
+      }
       if (myView instanceof Window) {
         myViewBounds = myView.getBounds();
         Window window = (Window)myView;
-        window.dispose();
+        if (!push(UIUtil.getWindow(myOwner), window)) {
+          window.dispose();
+        }
       }
       else {
         Container parent = myView.getParent();
@@ -247,5 +262,59 @@ public class MovablePopup {
         myView.repaint();
       }
     }
+  }
+
+  // TODO: HACK because of Java7 required:
+  // replace later with window.setType(Window.Type.POPUP)
+  private static void setPopupType(@NotNull Window window) {
+    //noinspection ConstantConditions,ConstantAssertCondition
+    assert USE_REFLECTION_TO_ACCESS_JDK7;
+    try {
+      @SuppressWarnings("unchecked")
+      Class<? extends Enum> type = (Class<? extends Enum>)Class.forName("java.awt.Window$Type");
+      Object value = Enum.valueOf(type, "POPUP");
+      Window.class.getMethod("setType", type).invoke(window, value);
+    }
+    catch (Exception ignored) {
+    }
+  }
+
+  private static JRootPane getRootPane(Window window) {
+    if (window instanceof RootPaneContainer) {
+      RootPaneContainer container = (RootPaneContainer)window;
+      return container.getRootPane();
+    }
+    return null;
+  }
+
+  private static Window pop(Window owner) {
+    JRootPane root = getRootPane(owner);
+    if (root != null) {
+      synchronized (CACHE) {
+        @SuppressWarnings("unchecked")
+        ArrayDeque<Window> cache = (ArrayDeque<Window>)root.getClientProperty(CACHE);
+        if (cache != null && !cache.isEmpty()) {
+          return cache.pop();
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean push(Window owner, Window window) {
+    JRootPane root = getRootPane(owner);
+    if (root != null) {
+      synchronized (CACHE) {
+        @SuppressWarnings("unchecked")
+        ArrayDeque<Window> cache = (ArrayDeque<Window>)root.getClientProperty(CACHE);
+        if (cache == null) {
+          cache = new ArrayDeque<Window>();
+          root.putClientProperty(CACHE, cache);
+        }
+        cache.push(window);
+        return true;
+      }
+    }
+    return false;
   }
 }

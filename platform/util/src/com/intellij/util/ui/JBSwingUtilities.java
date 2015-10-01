@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.FilteredTraverser;
 import com.intellij.util.containers.JBIterable;
@@ -33,34 +34,36 @@ import java.util.Collections;
 public class JBSwingUtilities {
 
   public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
+  
+  private static final boolean LEGACY_JDK = !SystemInfo.isJavaVersionAtLeast("1.8");
 
   /**
    * Replaces SwingUtilities#isLeftMouseButton() for consistency with other button-related methods
    *
-   * @see javax.swing.SwingUtilities#isLeftMouseButton(java.awt.event.MouseEvent)
+   * @see SwingUtilities#isLeftMouseButton(MouseEvent)
    */
   public static boolean isLeftMouseButton(MouseEvent anEvent) {
-    return (anEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) > 0;
+    return LEGACY_JDK ? (anEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) > 0 : SwingUtilities.isLeftMouseButton(anEvent);
   }
 
   /**
    * Replaces SwingUtilities#isMiddleMouseButton() due to the fact that BUTTON2_MASK == Event.ALT_MASK
    *
-   * @see javax.swing.SwingUtilities#isMiddleMouseButton(java.awt.event.MouseEvent)
-   * @see java.awt.event.InputEvent#BUTTON2_MASK
+   * @see SwingUtilities#isMiddleMouseButton(MouseEvent)
+   * @see InputEvent#BUTTON2_MASK
    */
   public static boolean isMiddleMouseButton(MouseEvent anEvent) {
-    return (anEvent.getModifiersEx() & InputEvent.BUTTON2_DOWN_MASK) > 0;
+    return LEGACY_JDK ? (anEvent.getModifiersEx() & InputEvent.BUTTON2_DOWN_MASK) > 0 : SwingUtilities.isMiddleMouseButton(anEvent);
   }
 
   /**
    * Replaces SwingUtilities#isRightMouseButton() due to the fact that BUTTON3_MASK == Event.META_MASK
    *
-   * @see javax.swing.SwingUtilities#isRightMouseButton(java.awt.event.MouseEvent)
-   * @see java.awt.event.InputEvent#BUTTON3_MASK
+   * @see SwingUtilities#isRightMouseButton(MouseEvent)
+   * @see InputEvent#BUTTON3_MASK
    */
   public static boolean isRightMouseButton(MouseEvent anEvent) {
-    return (anEvent.getModifiersEx() & InputEvent.BUTTON3_DOWN_MASK) > 0;
+    return LEGACY_JDK ? (anEvent.getModifiersEx() & InputEvent.BUTTON3_DOWN_MASK) > 0 : SwingUtilities.isRightMouseButton(anEvent);
   }
 
   @NotNull

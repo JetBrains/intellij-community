@@ -20,11 +20,15 @@
 package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.ide.util.TreeFileChooserFactory;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.LastSelectedPropertiesFileStore;
+import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -365,11 +369,9 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   protected PropertiesFile getPropertiesFile() {
     String path = FileUtil.toSystemIndependentName(myPropertiesFile.getText());
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
-    if (virtualFile != null) {
-      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
-      if (psiFile instanceof PropertiesFile) return (PropertiesFile)psiFile;
-    }
-    return null;
+    return virtualFile != null
+           ? PropertiesImplUtil.getPropertiesFile(PsiManager.getInstance(myProject).findFile(virtualFile))
+           : null;
   }
 
   private boolean createPropertiesFileIfNotExists() {
@@ -381,8 +383,8 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
       myPropertiesFile.requestFocusInWindow();
       return false;
     }
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(path);
-    if (fileType != StdFileTypes.PROPERTIES) {
+    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(path);
+    if (fileType != StdFileTypes.PROPERTIES && fileType != StdFileTypes.XML) {
       String message = CodeInsightBundle.message("i18nize.cant.create.properties.file.because.its.name.is.associated",
                                                  myPropertiesFile.getText(), fileType.getDescription());
       Messages.showErrorDialog(myProject, message, CodeInsightBundle.message("i18nize.error.creating.properties.file"));
@@ -390,28 +392,33 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
       return false;
     }
 
-    final VirtualFile virtualFile;
     try {
       final File file = new File(path).getCanonicalFile();
       FileUtil.createParentDirs(file);
-      virtualFile = ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
+      ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<PsiFile, Exception>() {
         @Override
-        public VirtualFile compute() throws IOException {
+        public PsiFile compute() throws Exception {
           VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.getParentFile());
+          final PsiManager psiManager = PsiManager.getInstance(myProject);
           if (dir == null) {
             throw new IOException("Error creating directory structure for file '" + path + "'");
           }
-          return dir.createChildData(this, file.getName());
+          if (fileType == StdFileTypes.PROPERTIES) {
+            return psiManager.findFile(dir.createChildData(this, file.getName()));
+          }
+          else {
+            FileTemplate template = FileTemplateManager.getInstance(myProject).getInternalTemplate("XML Properties File.xml");
+            LOG.assertTrue(template != null);
+            return (PsiFile)FileTemplateUtil.createFromTemplate(template, file.getName(), null, psiManager.findDirectory(dir));
+          }
         }
       });
     }
-    catch (IOException e) {
+    catch (Exception e) {
       Messages.showErrorDialog(myProject, e.getLocalizedMessage(), CodeInsightBundle.message("i18nize.error.creating.properties.file"));
       return false;
     }
-
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
-    return psiFile instanceof PropertiesFile;
+    return true;
   }
 
   @Override

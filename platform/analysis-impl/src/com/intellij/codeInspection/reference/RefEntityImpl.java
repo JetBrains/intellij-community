@@ -45,7 +45,7 @@ abstract class RefEntityImpl implements RefEntity {
 
   RefEntityImpl(@NotNull String name, @NotNull RefManager manager) {
     myManager = (RefManagerImpl)manager;
-    myName = name;
+    myName = myManager.internName(name);
   }
 
   @NotNull

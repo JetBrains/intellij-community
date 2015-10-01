@@ -40,9 +40,8 @@ public class ParameterizedParametersStaticCollectionInspection extends Parameter
       protected void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
         final PsiElement element = descriptor.getPsiElement();
         final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-        if (method != null) {
+        if (method != null && infos[1] instanceof PsiType) {
           PsiType type = (PsiType)infos[1];
-          if (type == null) type = method.getReturnType();
           final ChangeSignatureProcessor csp =
             new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), type, new ParameterInfoImpl[0]);
           csp.run();

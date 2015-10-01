@@ -7,8 +7,8 @@
   <module value="com.intellij.modules.xdebugger"/>
   <module value="com.intellij.modules.xml"/>
 
-  <xi:include href="/componentSets/IdeaComponents.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/idea/RichPlatformActions.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="/componentSets/IdeaComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/idea/RichPlatformActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <project-components>
     <component>
@@ -90,8 +90,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <xi:include href="/META-INF/PlatformExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
-    <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
     <xi:include href="/META-INF/LangExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+    <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
     <xi:include href="/META-INF/ExternalSystemExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
 
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>

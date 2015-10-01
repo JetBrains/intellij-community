@@ -182,7 +182,7 @@ public class JavaLexer extends LexerBase {
     }
     catch (IOException e) { /* impossible */ }
     catch (Error e) {
-      throw new IllegalArgumentException("Non-parsable text `" + myBuffer + "`");
+      throw new IllegalArgumentException("Non-parsable text `" + myBuffer + "`", e);
     }
   }
 

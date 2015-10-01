@@ -37,6 +37,8 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
@@ -102,8 +104,10 @@ public abstract class DebuggerSessionTabBase extends RunTab {
           ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
             .getToolWindowByDescriptor(myRunContentDescriptor);
           Content content = myRunContentDescriptor.getAttachedContent();
-          if (toolWindow != null && content != null && !toolWindow.getContentManager().isSelected(content)) {
-            toolWindow.getContentManager().setSelectedContent(content);
+          if (toolWindow == null || content == null) return;
+          ContentManager manager = toolWindow.getContentManager();
+          if (ArrayUtil.contains(content, manager.getContents()) && !manager.isSelected(content)) {
+            manager.setSelectedContent(content);
           }
         }
       }

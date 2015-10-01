@@ -19,6 +19,9 @@ import com.google.common.collect.Sets;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistryImpl;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.SelectInTarget;
@@ -31,7 +34,12 @@ import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.notification.EventLog;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
@@ -70,6 +78,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -84,6 +93,32 @@ public class PyCharmEduInitialConfigurator {
 
   private static final Set<String> UNRELATED_TIPS = Sets.newHashSet("LiveTemplatesDjango.html", "TerminalOpen.html",
                                                                     "Terminal.html", "ConfiguringTerminal.html");
+  private static final Set<String> HIDDEN_ACTIONS = ContainerUtil.newHashSet("CopyAsPlainText", "CopyAsRichText", "EditorPasteSimple",
+                                                                             "Folding", "Generate", "CompareClipboardWithSelection",
+                                                                             "ChangeFileEncodingAction", "CloseAllUnmodifiedEditors",
+                                                                             "CloseAllUnpinnedEditors", "CloseAllEditorsButActive",
+                                                                             "CopyReference", "MoveTabRight", "MoveTabDown", "External Tools",
+                                                                             "MoveEditorToOppositeTabGroup", "OpenEditorInOppositeTabGroup",
+                                                                             "ChangeSplitOrientation", "PinActiveTab", "Tabs Placement",
+                                                                             "TabsAlphabeticalMode", "AddNewTabToTheEndMode", "NextTab",
+                                                                             "PreviousTab", "Add to Favorites", "Add All To Favorites",
+                                                                             "ValidateXml", "NewHtmlFile", "CleanPyc", "Images.ShowThumbnails",
+                                                                             "CompareFileWithEditor", "SynchronizeCurrentFile",
+                                                                             "Mark Directory As", "CompareTwoFiles", "ShowFilePath",
+                                                                             "ChangesView.ApplyPatch", "TemplateProjectProperties",
+                                                                             "ExportToHTML", "SaveAll", "Export/Import Actions",
+                                                                             "Synchronize", "Line Separators", "ToggleReadOnlyAttribute",
+                                                                             "Macros", "EditorToggleCase", "EditorJoinLines", "FillParagraph",
+                                                                             "Convert Indents", "TemplateParametersNavigation", "EscapeEntities",
+                                                                             "QuickDefinition", "ExpressionTypeInfo", "EditorContextInfo",
+                                                                             "ShowErrorDescription", "RecentChanges", "CompareActions",
+                                                                             "GotoCustomRegion", "JumpToLastChange", "JumpToNextChange",
+                                                                             "SelectIn", "GotoTypeDeclaration", "QuickChangeScheme",
+                                                                             "GotoTest", "GotoRelated", "Hierarchy Actions", "Bookmarks",
+                                                                             "Goto Error/Bookmark Actions", "GoToEditPointGroup",
+                                                                             "Change Navigation Actions", "Method Navigation Actions",
+                                                                             "EvaluateExpression", "Pause", "ViewBreakpoints",
+                                                                             "XDebugger.MuteBreakpoints");
 
   public static class First {
 
@@ -101,13 +136,13 @@ public class PyCharmEduInitialConfigurator {
                                        FileTypeManager fileTypeManager,
                                        final ProjectManagerEx projectManager) {
     final UISettings uiSettings = UISettings.getInstance();
-    if (!propertiesComponent.getBoolean(CONFIGURED_V1, false)) {
+    if (!propertiesComponent.getBoolean(CONFIGURED_V1)) {
       patchMainMenu();
       uiSettings.SHOW_NAVIGATION_BAR = false;
-      propertiesComponent.setValue(CONFIGURED_V1, "true");
+      propertiesComponent.setValue(CONFIGURED_V1, true);
     }
 
-    if (!propertiesComponent.getBoolean(CONFIGURED, false)) {
+    if (!propertiesComponent.getBoolean(CONFIGURED)) {
       propertiesComponent.setValue(CONFIGURED, "true");
       propertiesComponent.setValue("toolwindow.stripes.buttons.info.shown", "true");
 
@@ -143,6 +178,8 @@ public class PyCharmEduInitialConfigurator {
       });
       PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP = false;
     }
+    final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    editorColorsScheme.setEditorFontSize(14);
 
     if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
 
@@ -211,67 +248,35 @@ public class PyCharmEduInitialConfigurator {
     actionsTree.setModel(model);
 
     schema.fillActionGroups(root);
-    hideActionFromMainMenu(root, schema);
-
+    for (int i = 0; i < root.getChildCount(); i++) {
+      final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)root.getChildAt(i);
+      if ("Main menu".equals(getItemId(treeNode))) {
+        hideActionFromMainMenu(root, schema, treeNode);
+      }
+      hideActions(schema, root, treeNode, HIDDEN_ACTIONS);
+    }
     CustomActionsSchema.getInstance().copyFrom(schema);
   }
 
   private static void hideActionFromMainMenu(@NotNull final DefaultMutableTreeNode root,
-                                             @NotNull final CustomActionsSchema schema){
-    final TreeNode mainMenu = root.getFirstChild();
-
-    for (int i = 0; i < mainMenu.getChildCount(); i++) {
-      final DefaultMutableTreeNode menuItem = (DefaultMutableTreeNode)mainMenu.getChildAt(i);
-      if ("File".equals(getItemId(menuItem))) {
-        final String[] fileItems = {"ExportToHTML", "SaveAll", "Export/Import Actions", "Synchronize", "ChangeFileEncodingAction",
-          "Line Separators", "ToggleReadOnlyAttribute"};
-        for (String item : fileItems) {
-          hideAction(schema, root, menuItem, item);
-        }
-      }
-      else if ("Edit".equals(getItemId(menuItem))) {
-        final String[] fileItems = {"CopyAsPlainText", "CopyAsReachText", "CopyReference", "EditorPasteSimple", "Macros", "EditorToggleCase",
-          "TemplateParametersNavigation", "EscapeEntities"};
-        for (String item : fileItems) {
-          hideAction(schema, root, menuItem, item);
-        }
-      }
-      else if ("View".equals(getItemId(menuItem))) {
-        final String[] fileItems = {"QuickDefinition", "ExpressionTypeInfo", "EditorContextInfo", "ShowErrorDescription",
-          "RecentChanges", "CompareActions", "QuickChangeScheme"};
-        for (String item : fileItems) {
-          hideAction(schema, root, menuItem, item);
-        }
-      }
-      else if ("Navigate".equals(getItemId(menuItem))) {
-        final String[] fileItems = {"GotoCustomRegion", "JumpToLastChange", "JumpToNextChange", "SelectIn", "GotoTypeDeclaration",
-        "GotoTest", "GotoRelated", "ShowFilePath", "Hierarchy Actions", "Goto Error/Bookmark Actions", "GoToEditPointGroup",
-          "Change Navigation Actions", "Method Navigation Actions"};
-        for (String item : fileItems) {
-          hideAction(schema, root, menuItem, item);
-        }
-      }
-    }
-
-    final String[] menuItems = {"Tools", "VCS", "Refactor", "Code", "Window", "Run"};
-    for (String item : menuItems) {
-      hideAction(schema, root, mainMenu, item);
-    }
+                                             @NotNull final CustomActionsSchema schema, DefaultMutableTreeNode mainMenu){
+    final HashSet<String> menuItems = ContainerUtil.newHashSet("Tools", "VCS", "Refactor", "Code", "Window", "Run");
+    hideActions(schema, root, mainMenu, menuItems);
   }
 
-  private static void hideAction(@NotNull final CustomActionsSchema schema, @NotNull final DefaultMutableTreeNode root,
-                                 @NotNull final TreeNode actionGroup, @NotNull final String actionId) {
+  private static void hideActions(@NotNull CustomActionsSchema schema, @NotNull DefaultMutableTreeNode root,
+                                  @NotNull final TreeNode actionGroup, Set<String> items) {
     for(int i = 0; i < actionGroup.getChildCount(); i++){
       final DefaultMutableTreeNode child = (DefaultMutableTreeNode)actionGroup.getChildAt(i);
       final int childCount = child.getChildCount();
-      if (childCount > 0) {
-        hideAction(schema, child, child, actionId);
-      }
       final String childId = getItemId(child);
-      if (childId != null && childId.equals(actionId)){
+      if (childId != null && items.contains(childId)){
         final TreePath treePath = TreeUtil.getPath(root, child);
         final ActionUrl url = CustomizationUtil.getActionUrl(treePath, ActionUrl.DELETED);
         schema.addAction(url);
+      }
+      else if (childCount > 0) {
+        hideActions(schema, child, child, items);
       }
     }
   }
@@ -314,6 +319,10 @@ public class PyCharmEduInitialConfigurator {
   }
 
   private static void patchProjectAreaExtensions(@NotNull final Project project) {
+    Executor debugExecutor = DefaultDebugExecutor.getDebugExecutorInstance();
+    unregisterAction(debugExecutor.getId(), ExecutorRegistryImpl.RUNNERS_GROUP);
+    unregisterAction(debugExecutor.getContextActionId(), ExecutorRegistryImpl.RUN_CONTEXT_GROUP);
+
     ExtensionsArea projectArea = Extensions.getArea(project);
 
     for (SelectInTarget target : Extensions.getExtensions(SelectInTarget.EP_NAME, project)) {
@@ -327,6 +336,18 @@ public class PyCharmEduInitialConfigurator {
       if (pane.getId().equals(ScopeViewPane.ID)) {
         Disposer.dispose(pane);
         projectArea.getExtensionPoint(AbstractProjectViewPane.EP_NAME).unregisterExtension(pane);
+      }
+    }
+  }
+
+  private static void unregisterAction(String actionId, String groupId) {
+    ActionManager actionManager = ActionManager.getInstance();
+    AnAction action = actionManager.getAction(actionId);
+    if (action != null) {
+      AnAction actionGroup = actionManager.getAction(groupId);
+      if (actionGroup != null && actionGroup instanceof DefaultActionGroup) {
+        ((DefaultActionGroup)actionGroup).remove(action);
+        actionManager.unregisterAction(actionId);
       }
     }
   }

@@ -668,6 +668,10 @@ public class XmlParsingTest extends ParsingTestCase {
     doTestXml("<!DOCTYPE x3 [<!NOTATION data-sources SYSTEM \"x3\">]>");
   }
 
+  public void testWhitespaceBeforeName() throws Exception {
+    doTestXml("<a>< a</a>");
+  }
+
   public void testCustomMimeType() throws Exception {
     final Language language = new MyLanguage();
     addExplicitExtension(LanguageHtmlScriptContentProvider.INSTANCE, language, new HtmlScriptContentProvider() {

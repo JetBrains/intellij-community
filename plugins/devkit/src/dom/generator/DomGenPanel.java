@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ public class DomGenPanel {
   }
 
   private static String getValue(String name, String defaultValue) {
-    return PropertiesComponent.getInstance().getOrInit(PREFIX + name, defaultValue);
+    return PropertiesComponent.getInstance().getValue(PREFIX + name, defaultValue);
   }
 
   private static void setValue(String name, String value) {

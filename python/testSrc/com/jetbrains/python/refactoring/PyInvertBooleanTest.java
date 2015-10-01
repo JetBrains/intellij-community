@@ -19,9 +19,9 @@ import com.google.common.collect.Lists;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.refactoring.invertBoolean.InvertBooleanProcessor;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanProcessor;
 
 import java.util.List;
 
@@ -52,7 +52,7 @@ public class PyInvertBooleanTest extends PyTestCase {
     final PsiNamedElement target = (PsiNamedElement)element;
     final String name = target.getName();
     assertNotNull(name);
-    new PyInvertBooleanProcessor(target, "not"+ StringUtil.toTitleCase(name)).run();
+    new InvertBooleanProcessor(target, "not" + StringUtil.toTitleCase(name)).run();
     myFixture.checkResultByFile("refactoring/invertBoolean/" + getTestName(true) + ".after.py");
   }
 }

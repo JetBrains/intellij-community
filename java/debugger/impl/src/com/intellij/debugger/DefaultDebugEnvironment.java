@@ -46,6 +46,7 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
     return state.execute(environment.getExecutor(), environment.getRunner());
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getSearchScope() {
     return mySearchScope;

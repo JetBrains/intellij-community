@@ -86,6 +86,31 @@ public class DiffDrawUtil {
     UIUtil.drawLine(g, x1, y, x2, y, null, color);
   }
 
+  public static void drawDottedDoubleChunkBorderLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color) {
+    UIUtil.drawBoldDottedLine(g, x1, x2, y - 1, null, color, false);
+    UIUtil.drawBoldDottedLine(g, x1, x2, y, null, color, false);
+  }
+
+  public static void drawDottedChunkBorderLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color) {
+    UIUtil.drawBoldDottedLine(g, x1, x2, y - 1, null, color, false);
+  }
+
+  public static void drawChunkBorderLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color,
+                                         boolean doubleLine, boolean dottedLine) {
+    if (dottedLine && doubleLine) {
+      drawDottedDoubleChunkBorderLine(g, x1, x2, y, color);
+    }
+    else if (dottedLine) {
+      drawDottedChunkBorderLine(g, x1, x2, y, color);
+    }
+    else if (doubleLine) {
+      drawDoubleChunkBorderLine(g, x1, x2, y, color);
+    }
+    else {
+      drawChunkBorderLine(g, x1, x2, y, color);
+    }
+  }
+
   public static void drawTrapezium(@NotNull Graphics2D g,
                                    int x1, int x2,
                                    int start1, int end1,
@@ -196,8 +221,9 @@ public class DiffDrawUtil {
 
   private static void installGutterRenderer(@NotNull RangeHighlighter highlighter,
                                             @NotNull TextDiffType type,
-                                            boolean ignoredFoldingOutline) {
-    highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(type, ignoredFoldingOutline));
+                                            boolean ignoredFoldingOutline,
+                                            boolean resolved) {
+    highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(type, ignoredFoldingOutline, resolved));
   }
 
   private static void installEmptyRangeRenderer(@NotNull RangeHighlighter highlighter,
@@ -224,17 +250,22 @@ public class DiffDrawUtil {
     return createHighlighter(editor, start, end, type, ignored, HighlighterTargetArea.EXACT_RANGE);
   }
 
-
   @NotNull
   public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type,
                                                          boolean ignored, @NotNull HighlighterTargetArea area) {
-    TextAttributes attributes = start != end ? getTextAttributes(type, editor, ignored) : null;
-    TextAttributes stripeAttributes = start != end ? getStripeTextAttributes(type, editor) : null;
+    return createHighlighter(editor, start, end, type, ignored, area, false);
+  }
+
+  @NotNull
+  public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type,
+                                                         boolean ignored, @NotNull HighlighterTargetArea area, boolean resolved) {
+    TextAttributes attributes = start != end && !resolved ? getTextAttributes(type, editor, ignored) : null;
+    TextAttributes stripeAttributes = start != end && !resolved ? getStripeTextAttributes(type, editor) : null;
 
     RangeHighlighter highlighter = editor.getMarkupModel()
       .addRangeHighlighter(start, end, DEFAULT_LAYER, attributes, area);
 
-    installGutterRenderer(highlighter, type, ignored);
+    installGutterRenderer(highlighter, type, ignored, resolved);
 
     if (stripeAttributes == null) return Collections.singletonList(highlighter);
 
@@ -265,21 +296,23 @@ public class DiffDrawUtil {
   @NotNull
   public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
                                                         @NotNull final SeparatorPlacement placement, final boolean doubleLine) {
+    return createLineMarker(editor, line, type, placement, doubleLine, false);
+  }
+
+  @NotNull
+  public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
+                                                        @NotNull final SeparatorPlacement placement, final boolean doubleLine,
+                                                        final boolean applied) {
     LineSeparatorRenderer renderer = new LineSeparatorRenderer() {
       @Override
       public void drawLine(Graphics g, int x1, int x2, int y) {
         // TODO: change LineSeparatorRenderer interface ?
         Rectangle clip = g.getClipBounds();
         x2 = clip.x + clip.width;
-        if (doubleLine) {
-          drawDoubleChunkBorderLine((Graphics2D)g, x1, x2, y, type.getColor(editor));
-        }
-        else {
-          drawChunkBorderLine((Graphics2D)g, x1, x2, y, type.getColor(editor));
-        }
+        drawChunkBorderLine((Graphics2D)g, x1, x2, y, type.getColor(editor), doubleLine, applied);
       }
     };
-    return createLineMarker(editor, line, placement, type, renderer);
+    return createLineMarker(editor, line, placement, type, renderer, applied);
   }
 
   @NotNull
@@ -295,12 +328,12 @@ public class DiffDrawUtil {
         g.drawLine(x1, y, x2, y);
       }
     };
-    return createLineMarker(editor, line, placement, null, renderer);
+    return createLineMarker(editor, line, placement, null, renderer, false);
   }
 
   @NotNull
   public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final SeparatorPlacement placement,
-                                                        @Nullable TextDiffType type, @NotNull LineSeparatorRenderer renderer) {
+                                                        @Nullable TextDiffType type, @NotNull LineSeparatorRenderer renderer, boolean applied) {
     // We won't use addLineHighlighter as it will fail to add marker into empty document.
     //RangeHighlighter highlighter = editor.getMarkupModel().addLineHighlighter(line, HighlighterLayer.SELECTION - 1, null);
 
@@ -311,7 +344,7 @@ public class DiffDrawUtil {
     highlighter.setLineSeparatorPlacement(placement);
     highlighter.setLineSeparatorRenderer(renderer);
 
-    if (type == null) return Collections.singletonList(highlighter);
+    if (type == null || applied) return Collections.singletonList(highlighter);
 
     TextAttributes stripeAttributes = getStripeTextAttributes(type, editor);
     RangeHighlighter stripeHighlighter = editor.getMarkupModel()

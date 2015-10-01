@@ -93,7 +93,7 @@ class OpenFileHttpService extends RestService {
   @Nullable
   @Override
   public String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
-    final boolean keepAlive = HttpHeaderUtil.isKeepAlive(request);
+    final boolean keepAlive = HttpUtil.isKeepAlive(request);
     final Channel channel = context.channel();
 
     OpenFileRequest apiRequest;

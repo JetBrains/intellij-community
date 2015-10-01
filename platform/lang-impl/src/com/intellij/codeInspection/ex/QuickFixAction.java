@@ -31,7 +31,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -40,9 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.util.SequentialModalProgressTask;
-import com.intellij.util.SequentialTask;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,6 +51,8 @@ import java.util.*;
  * @author max
  */
 public class QuickFixAction extends AnAction {
+  private static final Logger LOG = Logger.getInstance("#" + QuickFixAction.class.getName());
+
   public static final QuickFixAction[] EMPTY = new QuickFixAction[0];
   protected final InspectionToolWrapper myToolWrapper;
 
@@ -148,22 +148,19 @@ public class QuickFixAction extends AnAction {
     try {
       final Set<PsiElement> ignoredElements = new HashSet<PsiElement>();
 
+      final String templatePresentationText = getTemplatePresentation().getText();
+      assert templatePresentationText != null;
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         @Override
         public void run() {
           CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              final SequentialModalProgressTask progressTask =
-                new SequentialModalProgressTask(project, getTemplatePresentation().getText(), false);
-              progressTask.setMinIterationTime(200);
-              progressTask.setTask(new PerformFixesTask(project, descriptors, ignoredElements, progressTask, context));
-              ProgressManager.getInstance().run(progressTask);
-            }
-          });
+          final SequentialModalProgressTask progressTask =
+            new SequentialModalProgressTask(project, templatePresentationText, true);
+          progressTask.setMinIterationTime(200);
+          progressTask.setTask(new PerformFixesTask(project, descriptors, ignoredElements, progressTask, context));
+          ProgressManager.getInstance().run(progressTask);
         }
-      }, getTemplatePresentation().getText(), null);
+      }, templatePresentationText, null);
 
       refreshViews(project, ignoredElements, myToolWrapper);
     }
@@ -300,52 +297,32 @@ public class QuickFixAction extends AnAction {
     return true;
   }
 
-  private class PerformFixesTask implements SequentialTask {
-    @NotNull
-    private final Project myProject;
-    private final CommonProblemDescriptor[] myDescriptors;
+  private class PerformFixesTask extends PerformFixesModalTask {
+    @NotNull private final GlobalInspectionContextImpl myContext;
     @NotNull
     private final Set<PsiElement> myIgnoredElements;
-    private final SequentialModalProgressTask myTask;
-    @NotNull private final GlobalInspectionContextImpl myContext;
-    private int myCount = 0;
 
     public PerformFixesTask(@NotNull Project project,
                             @NotNull CommonProblemDescriptor[] descriptors,
                             @NotNull Set<PsiElement> ignoredElements,
                             @NotNull SequentialModalProgressTask task,
                             @NotNull GlobalInspectionContextImpl context) {
-      myProject = project;
-      myDescriptors = descriptors;
-      myIgnoredElements = ignoredElements;
-      myTask = task;
+      super(project, descriptors, task);
       myContext = context;
+      myIgnoredElements = ignoredElements;
     }
 
     @Override
-    public void prepare() {
-    }
-
-    @Override
-    public boolean isDone() {
-      return myCount > myDescriptors.length - 1;
-    }
-
-    @Override
-    public boolean iteration() {
-      final CommonProblemDescriptor descriptor = myDescriptors[myCount++];
-      ProgressIndicator indicator = myTask.getIndicator();
-      if (indicator != null) {
-        indicator.setFraction((double)myCount / myDescriptors.length);
-        if (descriptor instanceof ProblemDescriptor) {
-          final PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
-          if (psiElement != null) {
-            indicator.setText("Processing " + SymbolPresentationUtil.getSymbolPresentableText(psiElement));
-          }
+    protected void applyFix(Project project, CommonProblemDescriptor descriptor) {
+      if (descriptor instanceof ProblemDescriptor && 
+          ((ProblemDescriptor)descriptor).getStartElement() == null &&
+          ((ProblemDescriptor)descriptor).getEndElement() == null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Invalidated psi for " + descriptor);
         }
+        return;
       }
-      applyFix(myProject, myContext, new CommonProblemDescriptor[]{descriptor}, myIgnoredElements);
-      return isDone();
+      QuickFixAction.this.applyFix(myProject, myContext, new CommonProblemDescriptor[]{descriptor}, myIgnoredElements);
     }
 
     @Override

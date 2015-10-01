@@ -62,6 +62,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -195,10 +196,14 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     }
 
     if (!StringUtil.isEmptyOrSpaces(parameters)) {
-      javaParameters.getProgramParametersList().add("@name" + parameters);
+      javaParameters.getProgramParametersList().addAll(getNamedParams(parameters));
     }
 
     return javaParameters;
+  }
+
+  protected List<String> getNamedParams(String parameters) {
+    return Collections.singletonList("@name" + parameters);
   }
 
   private ServerSocket myForkSocket = null;

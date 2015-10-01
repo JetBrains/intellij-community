@@ -313,9 +313,8 @@ public class PsiSuperMethodImplUtil {
           return false;
         }
 
-        if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) ||
-            method.hasModifierProperty(PsiModifier.DEFAULT)) {
-          return !InheritanceUtil.isInheritorOrSelf(superClass, containingClass, true);
+        if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) || method.hasModifierProperty(PsiModifier.DEFAULT)) {
+          return superMethod.equals(method) || !InheritanceUtil.isInheritorOrSelf(superClass, containingClass, true);
         }
         return true;
       }

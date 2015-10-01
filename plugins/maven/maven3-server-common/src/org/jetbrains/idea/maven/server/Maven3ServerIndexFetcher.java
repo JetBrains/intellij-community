@@ -58,7 +58,8 @@ public class Maven3ServerIndexFetcher extends AbstractResourceFetcher {
     ArtifactRepository artifactRepository =
       myRepositorySystem.createArtifactRepository(myOriginalRepositoryId, myOriginalRepositoryUrl, null, null, null);
 
-    String mirrorUrl = myWagonManager.getMirrorRepository(artifactRepository).getUrl();
+    final ArtifactRepository mirrorRepository = myWagonManager.getMirrorRepository(artifactRepository);
+    String mirrorUrl = mirrorRepository.getUrl();
     String indexUrl = mirrorUrl + (mirrorUrl.endsWith("/") ? "" : "/") + ".index";
     Repository repository = new Repository(myOriginalRepositoryId, indexUrl);
 
@@ -67,8 +68,8 @@ public class Maven3ServerIndexFetcher extends AbstractResourceFetcher {
       myWagon.addTransferListener(myListener);
 
       myWagon.connect(repository,
-                      myWagonManager.getAuthenticationInfo(repository.getId()),
-                      myWagonManager.getProxy(repository.getProtocol()));
+                      myWagonManager.getAuthenticationInfo(mirrorRepository.getId()),
+                      myWagonManager.getProxy(mirrorRepository.getProtocol()));
     }
     catch (AuthenticationException e) {
       IOException newEx = new IOException("Authentication exception connecting to " + repository);

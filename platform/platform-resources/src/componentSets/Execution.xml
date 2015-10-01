@@ -1,4 +1,4 @@
-<components>
+<idea-plugin>
   <application-components>
     <component>
       <interface-class>com.intellij.execution.ExecutorRegistry</interface-class>
@@ -16,4 +16,4 @@
       <implementation-class>com.intellij.execution.impl.ProjectRunConfigurationManager</implementation-class>
     </component>
   </project-components>
-</components>
+</idea-plugin>

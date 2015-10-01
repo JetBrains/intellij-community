@@ -17,9 +17,7 @@ package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.util.messages.Topic;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @State(
@@ -27,11 +25,6 @@ import org.jetbrains.annotations.Nullable;
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/editor.xml")
 )
 public class WebEditorOptions implements PersistentStateComponent<WebEditorOptions> {
-  public static final Topic<WebEditorOptionsListener> WEB_EDITOR_OPTIONS =
-    new Topic<WebEditorOptionsListener>("web editor options changed", WebEditorOptionsListener.class);
-
-  private boolean myBreadcrumbsEnabled = true;
-  private boolean myBreadcrumbsEnabledInXml = false;
   private boolean myShowCssColorPreviewInGutter = true;
   private boolean mySelectWholeCssIdentifierOnDoubleClick = true;
   private boolean myShowCssInlineColorPreview = false;
@@ -53,30 +46,6 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public static WebEditorOptions getInstance() {
     return ServiceManager.getService(WebEditorOptions.class);
-  }
-
-  public boolean isBreadcrumbsEnabled() {
-    return myBreadcrumbsEnabled;
-  }
-
-  public void setBreadcrumbsEnabled(boolean b) {
-    boolean oldValue = myBreadcrumbsEnabled;
-    myBreadcrumbsEnabled = b;
-    if (oldValue != b) {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(WEB_EDITOR_OPTIONS).breadcrumbsOptionsChanged(this);
-    }
-  }
-
-  public boolean isBreadcrumbsEnabledInXml() {
-    return myBreadcrumbsEnabledInXml;
-  }
-
-  public void setBreadcrumbsEnabledInXml(boolean b) {
-    boolean oldValue = myBreadcrumbsEnabledInXml;
-    myBreadcrumbsEnabledInXml = b;
-    if (oldValue != b) {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(WEB_EDITOR_OPTIONS).breadcrumbsOptionsChanged(this);
-    }
   }
 
   public boolean isShowCssInlineColorPreview() {
@@ -200,9 +169,5 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public void setSyncTagEditing(boolean syncTagEditing) {
     mySyncTagEditing = syncTagEditing;
-  }
-
-  public interface WebEditorOptionsListener {
-    void breadcrumbsOptionsChanged(@NotNull WebEditorOptions options);
   }
 }

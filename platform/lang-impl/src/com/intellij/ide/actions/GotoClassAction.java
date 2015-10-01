@@ -205,7 +205,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       PsiElement current = element;
       for (int index : indexes) {
         final PsiElement[] anonymousClasses = getAnonymousClasses(current);
-        if (anonymousClasses.length > index) {
+        if (index >= 0 && index < anonymousClasses.length) {
           current = anonymousClasses[index];
         }
         else {

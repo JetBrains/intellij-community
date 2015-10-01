@@ -33,6 +33,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +51,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefin
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.*;
@@ -136,63 +137,15 @@ public class GrClassImplUtil {
 
   @NotNull
   public static PsiClassType[] getImplementsListTypes(GrTypeDefinition grType) {
-    Set<PsiClass> visited = new HashSet<PsiClass>();
-    List<PsiClassType> result = new ArrayList<PsiClassType>();
-    getImplementListsInner(grType, result, visited);
-    return result.toArray(new PsiClassType[result.size()]);
-  }
-
-  private static void getImplementListsInner(GrTypeDefinition grType, List<PsiClassType> result, Set<PsiClass> visited) {
-    if (!visited.add(grType)) return;
-
+    final Collection<PsiClassType> result = ContainerUtil.newLinkedHashSet();
     final PsiClassType[] implementsTypes = getReferenceListTypes(grType.getImplementsClause());
-    List<PsiClassType> fromDelegates = getImplementsFromDelegate(grType, visited);
-    if (fromDelegates != null) {
-      result.addAll(fromDelegates);
-    }
+    final PsiClassType[] extendsTypes = getReferenceListTypes(grType.getExtendsClause());
     result.addAll(Arrays.asList(implementsTypes));
-
-    if (!grType.isInterface() &&
-        !ContainerUtil.or(implementsTypes, IS_GROOVY_OBJECT) &&
-        !ContainerUtil.or(getReferenceListTypes(grType.getExtendsClause()), IS_GROOVY_OBJECT)) {
+    result.addAll(AstTransformContributor.runContributorsForImplementsTypes(grType));
+    if (!grType.isInterface() && !ContainerUtil.or(implementsTypes, IS_GROOVY_OBJECT) && !ContainerUtil.or(extendsTypes, IS_GROOVY_OBJECT)) {
       result.add(getGroovyObjectType(grType));
     }
-  }
-
-  @Nullable
-  private static List<PsiClassType> getImplementsFromDelegate(@NotNull final GrTypeDefinition grType, final Set<PsiClass> visited) {
-    return RecursionManager.doPreventingRecursion(grType, true, new Computable<List<PsiClassType>>() {
-      @Override
-      public List<PsiClassType> compute() {
-        List<PsiClassType> result = new ArrayList<PsiClassType>();
-        final GrField[] fields = grType.getCodeFields();
-        for (GrField field : fields) {
-          final PsiAnnotation delegate = PsiImplUtil.getAnnotation(field, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);
-          if (delegate == null) continue;
-
-          final boolean shouldImplement = shouldImplementDelegatedInterfaces(delegate);
-          if (!shouldImplement) continue;
-
-          final PsiType type = field.getDeclaredType();
-          if (!(type instanceof PsiClassType)) continue;
-
-          final PsiClass psiClass = ((PsiClassType)type).resolve();
-          if (psiClass == null) continue;
-
-          if (psiClass instanceof GrTypeDefinition) {
-            getImplementListsInner((GrTypeDefinition)psiClass, result, visited);
-          }
-          else {
-            result.addAll(Arrays.asList(psiClass.getImplementsListTypes()));
-          }
-          if (psiClass.isInterface()) {
-            result.add((PsiClassType)type);
-          }
-        }
-        return result;
-
-      }
-    });
+    return result.toArray(new PsiClassType[result.size()]);
   }
 
   public static PsiClassType getGroovyObjectType(@NotNull PsiElement context) {
@@ -640,11 +593,6 @@ public class GrClassImplUtil {
     return PsiClassImplUtil.isClassEquivalentTo(definition, another);
   }
 
-  private static boolean shouldImplementDelegatedInterfaces(PsiAnnotation delegate) {
-    final Boolean result = GrAnnotationUtil.inferBooleanAttribute(delegate, "interfaces");
-    return result == null || result.booleanValue();
-  }
-
   public static void addExpandingReflectedMethods(Collection<PsiMethod> result, PsiMethod method) {
     if (method instanceof GrMethod) {
       final GrReflectedMethod[] reflectedMethods = ((GrMethod)method).getReflectedMethods();
@@ -666,5 +614,26 @@ public class GrClassImplUtil {
       ContainerUtil.addAll(result, field.getGetters());
       ContainerUtil.addIfNotNull(result, field.getSetter());
     }
+  }
+
+  public static Collection<PsiMethod> filterOutAccessors(Collection<PsiMethod> result) {
+    final TObjectIntHashMap<String> map = new TObjectIntHashMap<String>();
+    for (PsiMethod method : result) {
+      if (method instanceof GrAccessorMethod || GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
+        final String methodName = method.getName();
+        if (map.containsKey(methodName)) {
+          map.adjustValue(methodName, 1);
+        }
+        else {
+          map.put(methodName, 1);
+        }
+      }
+    }
+    return ContainerUtil.filter(result, new Condition<PsiMethod>() {
+      @Override
+      public boolean value(PsiMethod method) {
+        return !(method instanceof GrAccessorMethod) || map.get(method.getName()) <= 1;
+      }
+    });
   }
 }

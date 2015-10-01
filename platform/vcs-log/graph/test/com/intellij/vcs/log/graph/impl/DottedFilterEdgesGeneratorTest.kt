@@ -15,16 +15,16 @@
  */
 package com.intellij.vcs.log.graph.impl
 
-import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.TestGraphBuilder
-import com.intellij.vcs.log.graph.utils.UnsignedBitSet
+import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType
-import com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator
-import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
-import com.intellij.vcs.log.graph.graph
-import org.junit.Assert.*
-import org.junit.Test
 import com.intellij.vcs.log.graph.asTestGraphString
+import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
+import com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator
+import com.intellij.vcs.log.graph.graph
+import com.intellij.vcs.log.graph.utils.UnsignedBitSet
+import org.junit.Assert.assertEquals
+import org.junit.Test
 
 public class DottedFilterEdgesGeneratorTest {
 
@@ -152,6 +152,20 @@ public class DottedFilterEdgesGeneratorTest {
     4(6)
     5(6)
     6()
+  }
+
+  Test fun fork() = graph {
+    0(2)
+    1(3)
+    2(3)
+    3.UNM(4)
+    4.UNM(5)
+    5()
+  }.assert {
+    0(2)
+    1(5.dot)
+    2(5.dot)
+    5()
   }
 
 }

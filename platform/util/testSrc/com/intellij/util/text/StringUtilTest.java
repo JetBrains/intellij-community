@@ -294,7 +294,7 @@ public class StringUtilTest {
 
   @Test
   public void testReplace() {
-    assertEquals(StringUtil.replace("$PROJECT_FILE$/filename", "$PROJECT_FILE$", "/tmp"), "/tmp/filename");
+    assertEquals("/tmp/filename", StringUtil.replace("$PROJECT_FILE$/filename", "$PROJECT_FILE$", "/tmp"));
   }
 
   @Test

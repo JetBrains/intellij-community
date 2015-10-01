@@ -31,7 +31,7 @@ public abstract class SchemesManagerFactory {
 
   @NotNull
   public final <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> create(@NotNull String directoryName, @NotNull SchemeProcessor<E> processor) {
-    return createSchemesManager(directoryName, processor, RoamingType.PER_USER);
+    return createSchemesManager(directoryName, processor, RoamingType.DEFAULT);
   }
 
   @NotNull

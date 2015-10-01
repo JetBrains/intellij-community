@@ -14,10 +14,10 @@ public class LocalVariableHidingMemberVariable extends DifferentPackageClass
         m_barangus = barangus;
     }
 
-    public void foo()
-    {
+    public void foo() {
         int fooBar;
-        final Object m_barangus = new Object();
+        int <warning descr="Local variable 'fooBar2' hides field in class 'LocalVariableHidingMemberVariable'">fooBar2</warning>;
+        final Object <warning descr="Local variable 'm_barangus' hides field in class 'LocalVariableHidingMemberVariable'">m_barangus</warning> = new Object();
         System.out.println("bar" + m_barangus);
     }
 
@@ -30,19 +30,19 @@ public class LocalVariableHidingMemberVariable extends DifferentPackageClass
     public void innerContainer() {
         new Object() {
             void foo() {
-                Object m_barangus = new Object();
+                Object <warning descr="Local variable 'm_barangus' hides field in class 'LocalVariableHidingMemberVariable'">m_barangus</warning> = new Object();
             }
         };
     }
 
     public void foreach(List<String> list) {
-      for (String m_barangus : list) {
+      for (String <warning descr="Local variable 'm_barangus' hides field in class 'LocalVariableHidingMemberVariable'">m_barangus</warning> : list) {
 
       }
     }
 
     {
-        final Object m_barangus = new Object();
+        final Object <warning descr="Local variable 'm_barangus' hides field in class 'LocalVariableHidingMemberVariable'">m_barangus</warning> = new Object();
     }
 
     static {

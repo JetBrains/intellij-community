@@ -18,7 +18,6 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.CharTailType;
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
@@ -53,8 +52,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
 
   public static final Object FORCE_QUALIFY = Key.create("FORCE_QUALIFY");
   public static final Object SUBSTITUTOR = Key.create("SUBSTITUTOR");
-  public static final Object TYPE = Key.create("TYPE");
-  public static final Key<Object> DEPRECATED_ATTR = Key.create("DEPRECATED");
 
   public static final Object CASE_INSENSITIVE = Key.create("CASE_INSENSITIVE");
 
@@ -78,6 +75,9 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     setLookupString(lookupString);
   }
 
+  /**
+   * @deprecated use {@link LookupElementBuilder}
+   */
   public static LookupItem fromString(String s) {
     return new LookupItem<String>(s, s);
   }
@@ -221,7 +221,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
 
     if (lookupElement instanceof LookupItem) {
       final LookupItem<?> item = (LookupItem)lookupElement;
-      final TailType attr = item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
+      final TailType attr = item.getAttribute(TAIL_TYPE_ATTR);
       if (attr != null) {
         return attr;
       }
@@ -282,11 +282,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return this;
   }
 
-  public LookupItem<T> setDeprecated(boolean deprecated) {
-    setAttribute(DEPRECATED_ATTR, deprecated ? "" : null);
-    return this;
-  }
-
   @Override
   public LookupItem<T> setAutoCompletionPolicy(final AutoCompletionPolicy policy) {
     myAutoCompletionPolicy = policy;
@@ -328,25 +323,10 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return myPresentable;
   }
 
-  @Override
   @NotNull
-  public LookupItem<T> setTypeText(final String text) {
-    setAttribute(TYPE_TEXT_ATTR, text);
-    return this;
-  }
-
-  @NotNull
-  @Override
   public MutableLookupElement<T> setTailText(final String text, final boolean grayed) {
     setAttribute(TAIL_TEXT_ATTR, text);
     setAttribute(TAIL_TEXT_SMALL_ATTR, Boolean.TRUE);
-    return this;
-  }
-
-  @Override
-  @NotNull
-  public LookupItem<T> setCaseSensitive(final boolean caseSensitive) {
-    setAttribute(CASE_INSENSITIVE, !caseSensitive);
     return this;
   }
 

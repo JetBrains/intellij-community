@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.*;
+import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -39,12 +40,10 @@ import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListen
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -444,6 +443,61 @@ public class ExternalSystemApiUtil {
       queue.addAll(node.getChildren());
     }
     return null;
+  }
+
+  public static void commitChangedModels(boolean synchronous, Project project, List<Library.ModifiableModel> models) {
+    final List<Library.ModifiableModel> changedModels = ContainerUtil.findAll(models, new Condition<Library.ModifiableModel>() {
+      @Override
+      public boolean value(Library.ModifiableModel model) {
+        return model.isChanged();
+      }
+    });
+    if (!changedModels.isEmpty()) {
+      executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
+        @Override
+        public void execute() {
+          for (Library.ModifiableModel modifiableModel : changedModels) {
+            modifiableModel.commit();
+          }
+        }
+      });
+    }
+  }
+
+  public static void disposeModels(@NotNull Collection<ModifiableRootModel> models) {
+    for (ModifiableRootModel model : models) {
+      if (!model.isDisposed()) {
+        model.dispose();
+      }
+    }
+  }
+
+  public static void commitModels(boolean synchronous, Project project, List<ModifiableRootModel> models) {
+    final List<ModifiableRootModel> changedModels = ContainerUtilRt.newArrayList();
+    for (ModifiableRootModel modifiableRootModel : models) {
+      if (modifiableRootModel.isDisposed()) {
+        continue;
+      }
+      if (modifiableRootModel.isChanged()) {
+        changedModels.add(modifiableRootModel);
+      } else {
+        modifiableRootModel.dispose();
+      }
+    }
+    // Commit only if there are changes. #executeProjectChangeAction acquires a write lock
+    if (!changedModels.isEmpty()) {
+      executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
+        @Override
+        public void execute() {
+          for (ModifiableRootModel modifiableRootModel : changedModels) {
+            // double check
+            if (!modifiableRootModel.isDisposed()) {
+              modifiableRootModel.commit();
+            }
+          }
+        }
+      });
+    }
   }
 
   public static void executeProjectChangeAction(@NotNull final DisposeAwareProjectChange task) {

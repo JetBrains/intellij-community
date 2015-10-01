@@ -43,6 +43,10 @@ public interface SMTestLocator {
       myLocators = ContainerUtil.newHashMap(first, rest);
     }
 
+    public Composite(@NotNull Map<String, ? extends SMTestLocator> locators) {
+      myLocators = ContainerUtil.newHashMap(locators);
+    }
+
     @NotNull
     @Override
     public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {

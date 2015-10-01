@@ -118,12 +118,7 @@ public class TemplateState implements Disposable {
 
       @Override
       public void commandStarted(CommandEvent event) {
-        if (myEditor != null) {
-          final int offset = myEditor.getCaretModel().getOffset();
-          myDocumentChangesTerminateTemplate = myCurrentSegmentNumber >= 0 &&
-                                               (offset < mySegments.getSegmentStart(myCurrentSegmentNumber) ||
-                                                offset > mySegments.getSegmentEnd(myCurrentSegmentNumber));
-        }
+        myDocumentChangesTerminateTemplate = isCaretOutsideCurrentSegment();
         started = true;
       }
 
@@ -170,6 +165,14 @@ public class TemplateState implements Disposable {
     CommandProcessor.getInstance().addCommandListener(myCommandListener, this);
   }
 
+  private boolean isCaretOutsideCurrentSegment() {
+    if (myEditor != null) {
+      final int offset = myEditor.getCaretModel().getOffset();
+      return offset < mySegments.getSegmentStart(myCurrentSegmentNumber) || offset > mySegments.getSegmentEnd(myCurrentSegmentNumber);
+    }
+    return false;
+  }
+
   private boolean isMultiCaretMode() {
     return myEditor != null && myEditor.getCaretModel().getCaretCount() > 1;
   }
@@ -188,6 +191,9 @@ public class TemplateState implements Disposable {
   }
 
   public boolean isToProcessTab() {
+    if (isCaretOutsideCurrentSegment()) {
+      return false;
+    }
     if (ourLookupShown) {
       final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
       if (lookup != null && !lookup.isFocused()) {
@@ -223,7 +229,7 @@ public class TemplateState implements Disposable {
     }
     CharSequence text = myDocument.getCharsSequence();
     int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
-    if (segmentNumber < 0) {
+    if (segmentNumber < 0 || mySegments.getSegmentsCount() <= segmentNumber) {
       return null;
     }
     int start = mySegments.getSegmentStart(segmentNumber);

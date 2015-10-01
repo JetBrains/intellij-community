@@ -26,6 +26,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.ResolveScopeManager;
@@ -319,6 +320,10 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
   @Override
   @NotNull
   public Project getProject() {
+    Project project = ProjectCoreUtil.theOnlyOpenProject();
+    if (project != null) {
+      return project;
+    }
     final PsiManager manager = getManager();
     if (manager == null) throw new PsiInvalidElementAccessException(this);
 

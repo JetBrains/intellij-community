@@ -25,13 +25,14 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -142,12 +143,19 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
     };
   }
 
+  @Nullable
   @Override
-  public PsiElement[] getPsiElements() {
-    final List<PropertiesFile> propertiesFiles = getValue().getPropertiesFiles();
-    return ContainerUtil.map2Array(propertiesFiles, new PsiElement[propertiesFiles.size()], new Function<PropertiesFile, PsiElement>() {
+  public IProperty[] getProperties() {
+    return new IProperty[0];
+  }
+
+  @Nullable
+  @Override
+  public PsiFile[] getFiles() {
+    final List<PropertiesFile> files = getValue().getPropertiesFiles();
+    return ContainerUtil.map2Array(files, new PsiFile[files.size()], new Function<PropertiesFile, PsiFile>() {
       @Override
-      public PsiElement fun(PropertiesFile propertiesFile) {
+      public PsiFile fun(PropertiesFile propertiesFile) {
         return propertiesFile.getContainingFile();
       }
     });

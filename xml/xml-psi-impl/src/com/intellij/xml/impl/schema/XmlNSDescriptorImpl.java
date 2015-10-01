@@ -522,7 +522,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
                       public Result<XmlAttributeDescriptor> compute() {
                         Object[] deps = attributeDescriptor.getDependences();
                         if (deps.length == 0) {
-                          LOG.error(attributeDescriptor + " returned no dependencies");
+                          LOG.error(attributeDescriptor + " (" + attributeDescriptor.getClass() + ") returned no dependencies");
                         }
                         return new Result<XmlAttributeDescriptor>(attributeDescriptor, deps);
                       }

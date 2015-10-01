@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.stubs;
 import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.BitUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -30,15 +31,18 @@ public class GrParameterStub extends StubBase<GrParameter> implements NamedStub<
   private final StringRef myName;
   private final String[] myAnnotations;
   private final String myTypeText;
+  private final int myFlags;
 
   public GrParameterStub(StubElement parent,
                          StringRef name,
                          final String[] annotations,
-                         String typeText) {
+                         String typeText, 
+                         int flags) {
     super(parent, GroovyElementTypes.PARAMETER);
     myName = name;
     myAnnotations = annotations;
     myTypeText = typeText;
+    myFlags = flags;
   }
 
   @Override
@@ -55,4 +59,19 @@ public class GrParameterStub extends StubBase<GrParameter> implements NamedStub<
     return myTypeText;
   }
 
+  public int getFlags() {
+    return myFlags;
+  }
+
+  public static int encodeFlags(boolean hasInitializer, boolean isVarArgs) {
+    return (hasInitializer ? 2 : 0) + (isVarArgs ? 1 : 0);
+  }
+
+  public static boolean hasInitializer(int flags) {
+    return BitUtil.isSet(flags, 2);
+  }
+
+  public static boolean isVarRags(int flags) {
+    return BitUtil.isSet(flags, 1);
+  }
 }

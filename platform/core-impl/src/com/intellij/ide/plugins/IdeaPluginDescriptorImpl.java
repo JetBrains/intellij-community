@@ -93,6 +93,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private long myDate;
   private boolean myUseIdeaClassLoader;
   private boolean myUseCoreClassLoader;
+  private boolean myAllowBundledUpdate;
   private boolean myEnabled = true;
   private String mySinceBuild;
   private String myUntilBuild;
@@ -213,6 +214,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
     myUseIdeaClassLoader = pluginBean.useIdeaClassLoader;
+    myAllowBundledUpdate = pluginBean.allowBundledUpdate;
     if (pluginBean.ideaVersion != null) {
       mySinceBuild = pluginBean.ideaVersion.sinceBuild;
       myUntilBuild = pluginBean.ideaVersion.untilBuild;
@@ -223,6 +225,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myDescriptionChildText = pluginBean.description;
     myChangeNotes = pluginBean.changeNotes;
     myVersion = pluginBean.pluginVersion;
+    if (myVersion == null) {
+      myVersion = PluginManagerCore.getBuildNumber().getBaselineVersion() + ".SNAPSHOT";
+    }
+
     myCategory = pluginBean.category;
 
 
@@ -687,6 +693,11 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     return path.startsWith(PathManager.getPreInstalledPluginsPath());
+  }
+
+  @Override
+  public boolean allowBundledUpdate() {
+    return myAllowBundledUpdate;
   }
 
   @Nullable

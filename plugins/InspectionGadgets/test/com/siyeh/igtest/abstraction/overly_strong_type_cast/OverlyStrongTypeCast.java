@@ -14,21 +14,21 @@ interface TestInter{}
 public class OverlyStrongTypeCast
 {
   void iterate(Object o) {
-    for (Object object : (ArrayList) o) {}
-    for (String s : (ArrayList<String>) o) {}
+    for (Object object : (<warning descr="Cast to 'ArrayList' can be weakened to 'Iterable'">ArrayList</warning>) o) {}
+    for (String s : (<warning descr="Cast to 'ArrayList<String>' can be weakened to 'Iterable<String>'">ArrayList<String></warning>) o) {}
   }
 
     void optional(Object foo) {
         if (foo instanceof SubClass2) {
             ((SubClass2)foo).doSmth();
         }
-        ((SubClass2)foo).doSmth();
+        ((<warning descr="Cast to 'SubClass2' can be weakened to 'SuperClass'">SubClass2</warning>)foo).doSmth();
     }
 
     public static void main(String[] args)
     {
         List bar = new ArrayList();
-        AbstractList foo = (ArrayList) bar;
+        AbstractList foo = (<warning descr="Cast to 'ArrayList' can be weakened to 'AbstractList'">ArrayList</warning>) bar;
         List foo2 = (ArrayList) bar;
         double x = (double)3.0f;
     }                  
@@ -70,4 +70,22 @@ class SAM {
   {
     Object runnable = (Runnable) () -> {};
   }
+}
+class CloseableWarningTest {
+  private Object x = new Object();
+
+  public void example() {
+    //if (x instanceof SafeCloseable) {
+      ((SafeCloseable) x).close();
+    //}
+  }
+}
+
+interface SafeCloseable extends Closeable {
+  @Override
+  void close();
+}
+interface Closeable extends AutoCloseable {
+
+  public void close() throws java.io.IOException;
 }

@@ -16,8 +16,13 @@
 
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -30,9 +35,6 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
@@ -46,14 +48,13 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
-/**
- * @author max
- */
-public class ProjectRootManagerImpl extends ProjectRootManagerEx implements ProjectComponent, JDOMExternalizable {
+@State(name = "ProjectRootManager", storages = @Storage(file = StoragePathMacros.PROJECT_FILE))
+public class ProjectRootManagerImpl extends ProjectRootManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootManagerImpl");
 
   @NonNls public static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
@@ -94,11 +95,17 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     protected void levelDown() {
       myBatchLevel -= 1;
       if (myChanged && myBatchLevel == 0) {
+        AccessToken token = WriteAction.start();
         try {
           fireChange();
         }
         finally {
-          myChanged = false;
+          try {
+            myChanged = false;
+          }
+          finally {
+            token.finish();
+          }
         }
       }
     }
@@ -266,29 +273,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "ProjectRootManager";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void loadState(Element element) {
     for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
       extension.readExternal(element);
     }
@@ -296,8 +281,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     myProjectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR);
   }
 
+  @Nullable
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public Element getState() {
+    Element element = new Element("state");
     element.setAttribute(ATTRIBUTE_VERSION, "2");
     for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
       extension.writeExternal(element);
@@ -313,6 +300,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       // remove empty element to not write defaults
       element.removeAttribute(ATTRIBUTE_VERSION);
     }
+    return element;
   }
 
   private boolean myMergedCallStarted;

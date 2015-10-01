@@ -973,11 +973,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
             }
             myActivated = true;
             JComponent toFocus = wrapper == null ? null : wrapper.getPreferredFocusedComponent();
-            if (toFocus == null) {
+            if (getRootPane() != null && toFocus == null) {
               toFocus = getRootPane().getDefaultButton();
             }
 
-            IJSwingUtilities.moveMousePointerOn(getRootPane().getDefaultButton());
+            if (getRootPane() != null) {
+              IJSwingUtilities.moveMousePointerOn(getRootPane().getDefaultButton());
+            }
             setupSelectionOnPreferredComponent(toFocus);
 
             if (toFocus != null) {

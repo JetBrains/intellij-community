@@ -18,6 +18,8 @@ package com.intellij.openapi.diagnostic;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -30,6 +32,12 @@ public class FrequentEventDetector {
 
   private long myStartedCounting = System.currentTimeMillis();
   private final AtomicInteger myEventsPosted = new AtomicInteger();
+  private final Map<String, String> myRecentTraces = new LinkedHashMap<String, String>() {
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+      return size() > 5;
+    }
+  };
   private final int myEventCountThreshold;
   private final int myTimeSpanMs;
   private final Level myLevel;
@@ -58,7 +66,13 @@ public class FrequentEventDetector {
       }
 
       if (shouldLog) {
-        String message = "Too many events posted\n" + ExceptionUtil.getThrowableText(new Throwable());
+        String trace = ExceptionUtil.getThrowableText(new Throwable());
+        boolean logTrace;
+        synchronized (myEventsPosted) {
+          logTrace = myRecentTraces.put(trace, trace) == null;
+        }
+
+        String message = "Too many events posted" + (logTrace ? "\n" + trace : "");
         if (myLevel == Level.INFO) {
           LOG.info(message);
         }

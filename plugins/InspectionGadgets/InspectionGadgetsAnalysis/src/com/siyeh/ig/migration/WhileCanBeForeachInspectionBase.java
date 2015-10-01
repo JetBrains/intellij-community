@@ -150,7 +150,7 @@ public class WhileCanBeForeachInspectionBase extends BaseInspection {
       if (calculateCallsToIteratorNext(variable, body) != 1) {
         return false;
       }
-      if (isIteratorRemoveCalled(variable, body)) {
+      if (ForCanBeForeachInspectionBase.isIteratorMethodCalled(variable, body)) {
         return false;
       }
       //noinspection SimplifiableIfStatement
@@ -206,12 +206,6 @@ public class WhileCanBeForeachInspectionBase extends BaseInspection {
       return visitor.getNumCallsToIteratorNext();
     }
 
-    private static boolean isIteratorRemoveCalled(PsiVariable iterator, PsiElement context) {
-      final IteratorMethodCallVisitor visitor = new IteratorMethodCallVisitor(iterator);
-      context.accept(visitor);
-      return visitor.isMethodCalled();
-    }
-
     private static boolean isIteratorHasNextCalled(PsiVariable iterator, PsiElement context) {
       final IteratorHasNextVisitor visitor = new IteratorHasNextVisitor(iterator);
       context.accept(visitor);
@@ -249,48 +243,6 @@ public class WhileCanBeForeachInspectionBase extends BaseInspection {
 
     int getNumCallsToIteratorNext() {
       return numCallsToIteratorNext;
-    }
-  }
-
-  private static class IteratorMethodCallVisitor extends JavaRecursiveElementVisitor {
-    private boolean methodCalled;
-    private final PsiVariable iterator;
-
-    IteratorMethodCallVisitor(@NotNull PsiVariable iterator) {
-      this.iterator = iterator;
-    }
-
-    @Override
-    public void visitElement(@NotNull PsiElement element) {
-      if (!methodCalled) {
-        super.visitElement(element);
-      }
-    }
-
-    @Override
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      if (methodCalled) {
-        return;
-      }
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final String name = methodExpression.getReferenceName();
-      if (HardcodedMethodConstants.NEXT.equals(name)) {
-        return;
-      }
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (!(qualifier instanceof PsiReferenceExpression)) {
-        return;
-      }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
-      final PsiElement target = referenceExpression.resolve();
-      if (iterator.equals(target)) {
-        methodCalled = true;
-      }
-    }
-
-    boolean isMethodCalled() {
-      return methodCalled;
     }
   }
 

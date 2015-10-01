@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
+import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,12 @@ public class PyCCRunTestsAction extends CCRunTestsAction {
 
     final PythonRunConfiguration configuration = (PythonRunConfiguration)settings.getConfiguration();
     configuration.setScriptName(testFile.getPath());
-    VirtualFile userFile = taskDir.findChild(virtualFile.getNameWithoutExtension() + ".py");
+    configuration.setWorkingDirectory(taskDir.getPath());
+    String taskFileName = CCProjectService.getRealTaskFileName(virtualFile.getName());
+    if (taskFileName == null) {
+      return;
+    }
+    VirtualFile userFile = taskDir.findChild(taskFileName);
     if (userFile == null) {
       return;
     }
@@ -57,6 +63,4 @@ public class PyCCRunTestsAction extends CCRunTestsAction {
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     ProgramRunnerUtil.executeConfiguration(project, settings, executor);
   }
-
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,11 @@ public class OnDemandImportInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(PsiFile file) {
+    return !FileTypeUtils.isInServerPageFile(file);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new PackageImportVisitor();
   }
@@ -51,9 +56,6 @@ public class OnDemandImportInspection extends BaseInspection {
         return;
       }
       final PsiJavaFile file = (PsiJavaFile)parent;
-      if (FileTypeUtils.isInServerPageFile(aClass.getContainingFile())) {
-        return;
-      }
       if (!file.getClasses()[0].equals(aClass)) {
         return;
       }

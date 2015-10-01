@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
@@ -25,6 +26,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntIntHashMap;
+import gnu.trove.TIntLongHashMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +59,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
       ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
         DuplicatedCodeProcessor<LighterASTNode> myProcessor;
         @Override
-        public void process(int hash, @NotNull final LighterAST ast, @NotNull final LighterASTNode... nodes) {
+        public void process(int hash, int hash2, @NotNull final LighterAST ast, @NotNull final LighterASTNode... nodes) {
           class LightDuplicatedCodeProcessor extends DuplicatedCodeProcessor<LighterASTNode> {
 
             LightDuplicatedCodeProcessor(VirtualFile file, Project project) {
@@ -93,7 +95,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
             myProcessor = new LightDuplicatedCodeProcessor(virtualFile, psiFile.getProject());
             myProcessorRef.set(myProcessor);
           }
-          myProcessor.process(hash, nodes[0]);
+          myProcessor.process(hash, hash2, nodes[0]);
         }
       });
     } else {
@@ -153,7 +155,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
             myProcessor = new OldDuplicatedCodeProcessor(virtualFile, psiFile.getProject());
             myProcessorRef.set(myProcessor);
           }
-          myProcessor.process(hash, frag);
+          myProcessor.process(hash, 0, frag);
         }
       }, true).visitNode(psiFile);
     }
@@ -163,20 +165,29 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     final SmartList<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
 
     if (processor != null) {
+      final VirtualFile baseDir = psiFile.getProject().getBaseDir();
       for(Map.Entry<Integer, TextRange> entry:processor.reportedRanges.entrySet()) {
         final Integer offset = entry.getKey();
         if (!usingLightProfile && processor.fragmentSize.get(offset) < MIN_FRAGMENT_SIZE) continue;
         final VirtualFile file = processor.reportedFiles.get(offset);
-        String message = "Found duplicated code in " + file.getPath();
+        String path;
+
+        if (file.equals(virtualFile)) path = "this file";
+        else if (baseDir != null) {
+          path = VfsUtilCore.getRelativePath(file, baseDir);
+        } else {
+          path = file.getPath();
+        }
+        String message = "Found duplicated code in " + path;
 
         PsiElement targetElement = processor.reportedPsi.get(offset);
         TextRange rangeInElement = entry.getValue();
         final int offsetInOtherFile = processor.reportedOffsetInOtherFiles.get(offset);
 
         LocalQuickFix fix = createNavigateToDupeFix(file, offsetInOtherFile);
-        int hash = processor.fragmentHash.get(offset);
+        long hash = processor.fragmentHash.get(offset);
 
-        LocalQuickFix viewAllDupesFix = hash != 0 ? createShowOtherDupesFix(virtualFile, offset, hash, psiFile.getProject()) : null;
+        LocalQuickFix viewAllDupesFix = hash != 0 ? createShowOtherDupesFix(virtualFile, offset, (int)hash, (int)(hash >> 32), psiFile.getProject()) : null;
 
         ProblemDescriptor descriptor = manager
           .createProblemDescriptor(targetElement, rangeInElement, message, ProblemHighlightType.WEAK_WARNING, isOnTheFly, fix, viewAllDupesFix);
@@ -190,7 +201,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
   protected LocalQuickFix createNavigateToDupeFix(@NotNull VirtualFile file, int offsetInOtherFile) {
     return null;
   }
-  protected LocalQuickFix createShowOtherDupesFix(VirtualFile file, int offset, int hash, Project project) {
+  protected LocalQuickFix createShowOtherDupesFix(VirtualFile file, int offset, int hash, int hash2, Project project) {
     return null;
   }
 
@@ -200,12 +211,13 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     final TIntObjectHashMap<PsiElement> reportedPsi = new TIntObjectHashMap<PsiElement>();
     final TIntIntHashMap reportedOffsetInOtherFiles = new TIntIntHashMap();
     final TIntIntHashMap fragmentSize = new TIntIntHashMap();
-    final TIntIntHashMap fragmentHash = new TIntIntHashMap();
+    final TIntLongHashMap fragmentHash = new TIntLongHashMap();
     final VirtualFile virtualFile;
     final Project project;
     final ProjectFileIndex myProjectFileIndex;
     T myNode;
     int myHash;
+    int myHash2;
 
     DuplicatedCodeProcessor(VirtualFile file, Project project) {
       virtualFile = file;
@@ -213,25 +225,27 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
       myProjectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
     }
 
-    void process(int hash, T node) {
+    void process(int hash, int hash2, T node) {
       ProgressManager.checkCanceled();
       myNode = node;
       myHash = hash;
+      myHash2 = hash2;
       FileBasedIndex.getInstance().processValues(DuplicatesIndex.NAME, hash, null, this, GlobalSearchScope.projectScope(project));
     }
 
     @Override
     public boolean process(VirtualFile file, TIntArrayList list) {
-      for(int i = 0, len = list.size(); i < len; ++i) {
+      for(int i = 0, len = list.size(); i < len; i+=2) {
         ProgressManager.checkCanceled();
 
-        int value = list.getQuick(i);
+        if (list.getQuick(i + 1) != myHash2) continue;
+        int offset = list.getQuick(i);
 
         if (myProjectFileIndex.isInSource(virtualFile) && !myProjectFileIndex.isInSource(file)) return true;
         if (!myProjectFileIndex.isInSource(virtualFile) && myProjectFileIndex.isInSource(file)) return true;
         final int startOffset = getStartOffset(myNode);
         final int endOffset = getEndOffset(myNode);
-        if (file.equals(virtualFile) && value >= startOffset && value < endOffset) continue;
+        if (file.equals(virtualFile) && offset >= startOffset && offset < endOffset) continue;
 
         PsiElement target = getPsi(myNode);
         TextRange rangeInElement = getRangeInElement(myNode);
@@ -252,10 +266,12 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
 
         reportedRanges.put(fragmentStartOffsetInteger, rangeInElement);
         reportedFiles.put(fragmentStartOffsetInteger, file);
-        reportedOffsetInOtherFiles.put(fragmentStartOffsetInteger, value);
+        reportedOffsetInOtherFiles.put(fragmentStartOffsetInteger, offset);
         reportedPsi.put(fragmentStartOffsetInteger, target);
         fragmentSize.put(fragmentStartOffsetInteger, newFragmentSize);
-        if (newFragmentSize >= MIN_FRAGMENT_SIZE || isLightProfile()) fragmentHash.put(fragmentStartOffsetInteger, myHash);
+        if (newFragmentSize >= MIN_FRAGMENT_SIZE || isLightProfile()) {
+          fragmentHash.put(fragmentStartOffsetInteger, (myHash & 0xFFFFFFFFL) | ((long)myHash2 << 32));
+        }
         return false;
       }
       return true;

@@ -99,7 +99,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     if (myStateStorageKey == null) {
       return false;
     }
-    return PropertiesComponent.getInstance().getBoolean(myStateStorageKey, false);
+    return PropertiesComponent.getInstance().getBoolean(myStateStorageKey);
   }
 
   public void enableConsole(boolean primary) {

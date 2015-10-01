@@ -5,11 +5,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -53,7 +54,6 @@ public class StudyGenerator {
   public static void createTask(@NotNull final Task task, @NotNull final VirtualFile lessonDir, @NotNull final File resourceRoot,
                                 @NotNull final Project project) throws IOException {
     VirtualFile taskDir = lessonDir.createChildDirectory(project, EduNames.TASK + Integer.toString(task.getIndex()));
-    EduUtils.markDirAsSourceRoot(taskDir, project);
     File newResourceRoot = new File(resourceRoot, taskDir.getName());
     int i = 0;
     for (Map.Entry<String, TaskFile> taskFile : task.getTaskFiles().entrySet()) {
@@ -66,10 +66,11 @@ public class StudyGenerator {
     if (filesInTask != null) {
       for (File file : filesInTask) {
         String fileName = file.getName();
-        if (!task.isTaskFile(fileName)) {
+        if (!task.isTaskFile(fileName) && !StudyUtils.isTestsFile(project, fileName) && !EduNames.TASK_HTML.equals(fileName)) {
           File resourceFile = new File(newResourceRoot, fileName);
           File fileInProject = new File(taskDir.getCanonicalPath(), fileName);
           FileUtil.copy(resourceFile, fileInProject);
+          StudyTaskManager.getInstance(project).addInvisibleFiles(FileUtil.toSystemIndependentName(fileInProject.getPath()));
         }
       }
     }

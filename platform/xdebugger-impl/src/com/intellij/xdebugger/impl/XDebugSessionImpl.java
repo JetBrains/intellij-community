@@ -867,9 +867,10 @@ public class XDebugSessionImpl implements XDebugSession {
       return;
     }
 
-    myDebugProcess.stopAsync().done(new Consumer<Void>() {
+    //noinspection unchecked
+    myDebugProcess.stopAsync().done(new Consumer<Object>() {
       @Override
-      public void consume(Void aVoid) {
+      public void consume(Object aVoid) {
         if (!myProject.isDisposed()) {
           myProject.getMessageBus().syncPublisher(XDebuggerManager.TOPIC).processStopped(myDebugProcess);
         }

@@ -85,6 +85,7 @@ class EditorPainter implements TextDrawingCallback {
     int endLine = myView.yToVisualLine(Math.max(clip.y + clip.height, 0));
     int startOffset = myView.visualPositionToOffset(new VisualPosition(startLine, 0));
     int endOffset = myView.visualPositionToOffset(new VisualPosition(endLine + 1, 0, true));
+    ClipDetector clipDetector = new ClipDetector(myEditor, clip);
     
     paintBackground(g, clip, startLine, endLine);
     paintRightMargin(g, clip);
@@ -95,9 +96,9 @@ class EditorPainter implements TextDrawingCallback {
     paintTextWithEffects(g, clip, startLine, endLine);
     paintHighlightersAfterEndOfLine(g, docMarkup, startOffset, endOffset);
     paintHighlightersAfterEndOfLine(g, myEditor.getMarkupModel(), startOffset, endOffset);
-    paintBorderEffect(g, myEditor.getHighlighter(), startOffset, endOffset);
-    paintBorderEffect(g, docMarkup, startOffset, endOffset);
-    paintBorderEffect(g, myEditor.getMarkupModel(), startOffset, endOffset);
+    paintBorderEffect(g, clipDetector, myEditor.getHighlighter(), startOffset, endOffset);
+    paintBorderEffect(g, clipDetector, docMarkup, startOffset, endOffset);
+    paintBorderEffect(g, clipDetector, myEditor.getMarkupModel(), startOffset, endOffset);
     
     paintCaret(g);
     
@@ -510,25 +511,34 @@ class EditorPainter implements TextDrawingCallback {
     }
   }
 
-  private void paintBorderEffect(Graphics2D g, EditorHighlighter highlighter, int clipStartOffset, int clipEndOffset) {
+  private void paintBorderEffect(Graphics2D g,
+                                 ClipDetector clipDetector,
+                                 EditorHighlighter highlighter,
+                                 int clipStartOffset,
+                                 int clipEndOffset) {
     HighlighterIterator it = highlighter.createIterator(clipStartOffset);
     while (!it.atEnd() && it.getStart() < clipEndOffset) {
       TextAttributes attributes = it.getTextAttributes();
       if (isBorder(attributes)) {
-        paintBorderEffect(g, it.getStart(), it.getEnd(), attributes);
+        paintBorderEffect(g, clipDetector, it.getStart(), it.getEnd(), attributes);
       }
       it.advance();
     }
   }
 
-  private void paintBorderEffect(final Graphics2D g, MarkupModelEx markupModel, int clipStartOffset, int clipEndOffset) {
+  private void paintBorderEffect(final Graphics2D g,
+                                 final ClipDetector clipDetector,
+                                 MarkupModelEx markupModel,
+                                 int clipStartOffset,
+                                 int clipEndOffset) {
     markupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(RangeHighlighterEx rangeHighlighter) {
         if (rangeHighlighter.getEditorFilter().avaliableIn(myEditor)) {
           TextAttributes attributes = rangeHighlighter.getTextAttributes();
           if (isBorder(attributes)) {
-            paintBorderEffect(g, rangeHighlighter.getAffectedAreaStartOffset(), rangeHighlighter.getAffectedAreaEndOffset(), attributes);
+            paintBorderEffect(g, clipDetector, rangeHighlighter.getAffectedAreaStartOffset(), rangeHighlighter.getAffectedAreaEndOffset(), 
+                              attributes);
           }
         }
         return true;
@@ -542,7 +552,8 @@ class EditorPainter implements TextDrawingCallback {
            attributes.getEffectColor() != null;
   }
 
-  private void paintBorderEffect(Graphics2D g, int startOffset, int endOffset, TextAttributes attributes) {
+  private void paintBorderEffect(Graphics2D g, ClipDetector clipDetector, int startOffset, int endOffset, TextAttributes attributes) {
+    if (!clipDetector.rangeCanBeVisible(startOffset, endOffset)) return;
     int startLine = myDocument.getLineNumber(startOffset);
     int endLine = myDocument.getLineNumber(endOffset);
     if (startLine + 1 == endLine &&

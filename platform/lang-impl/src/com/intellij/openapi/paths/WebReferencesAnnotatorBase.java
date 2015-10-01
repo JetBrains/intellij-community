@@ -117,7 +117,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
 
   @Override
   public void apply(@NotNull PsiFile file, MyInfo[] infos, @NotNull AnnotationHolder holder) {
-    if (infos.length == 0) {
+    if (infos == null || infos.length == 0) {
       return;
     }
 

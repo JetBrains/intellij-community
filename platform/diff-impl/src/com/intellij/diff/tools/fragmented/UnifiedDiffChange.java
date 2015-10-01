@@ -257,13 +257,17 @@ public class UnifiedDiffChange {
         return new DumbAwareAction() {
           @Override
           public void actionPerformed(AnActionEvent e) {
+            if (myViewer.isStateIsOutOfDate()) return;
+            if (!myViewer.isEditable(sourceSide.other(), true)) return;
+
             final Project project = e.getProject();
             final Document document = myViewer.getDocument(sourceSide.other());
 
             DiffUtil.executeWriteCommand(document, project, "Replace change", new Runnable() {
               @Override
               public void run() {
-                myViewer.applyChange(UnifiedDiffChange.this, sourceSide);
+                myViewer.replaceChange(UnifiedDiffChange.this, sourceSide);
+                myViewer.scheduleRediff();
               }
             });
             // applyChange() will schedule rediff, but we want to try to do it in sync

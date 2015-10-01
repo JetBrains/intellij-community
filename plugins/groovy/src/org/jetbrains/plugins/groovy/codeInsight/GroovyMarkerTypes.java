@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ import java.util.*;
  * @author Max Medvedev
  */
 public class GroovyMarkerTypes {
-  static final MarkerType OVERRIDING_PROPERTY_TYPE = new MarkerType(new Function<PsiElement, String>() {
+  static final MarkerType OVERRIDING_PROPERTY_TYPE = new MarkerType("OVERRIDING_PROPERTY_TYPE",new Function<PsiElement, String>() {
     @Nullable
     @Override
     public String fun(PsiElement psiElement) {
@@ -116,7 +116,7 @@ public class GroovyMarkerTypes {
                                           new MethodCellRenderer(showMethodNames));
     }
   });
-  static final MarkerType OVERRIDEN_PROPERTY_TYPE = new MarkerType(new Function<PsiElement, String>() {
+  static final MarkerType OVERRIDEN_PROPERTY_TYPE = new MarkerType("OVERRIDEN_PROPERTY_TYPE",new Function<PsiElement, String>() {
     @Nullable
     @Override
     public String fun(PsiElement element) {
@@ -183,7 +183,7 @@ public class GroovyMarkerTypes {
     }
   }
   );
-  public static final MarkerType OVERRIDING_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
+  public static final MarkerType GR_OVERRIDING_METHOD = new MarkerType("GR_OVERRIDING_METHOD", new NullableFunction<PsiElement, String>() {
       @Override
       public String fun(PsiElement element) {
         PsiElement parent = element.getParent();
@@ -223,7 +223,7 @@ public class GroovyMarkerTypes {
 
       }
     });
-  public static final MarkerType OVERRIDEN_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
+  public static final MarkerType GR_OVERRIDEN_METHOD = new MarkerType("GR_OVERRIDEN_METHOD",new NullableFunction<PsiElement, String>() {
       @Override
       public String fun(PsiElement element) {
         PsiElement parent = element.getParent();

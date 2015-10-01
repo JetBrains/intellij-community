@@ -17,8 +17,6 @@ package com.intellij.vcs.log.graph;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- */
 public interface EdgePrintElement extends PrintElement {
 
   int getPositionInOtherRow();
@@ -28,6 +26,8 @@ public interface EdgePrintElement extends PrintElement {
 
   @NotNull
   LineStyle getLineStyle();
+
+  boolean hasArrow();
 
   enum Type {
     UP,

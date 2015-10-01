@@ -90,36 +90,7 @@ public class MethodUtils {
         return false;
       }
     }
-    if (parameterTypes != null) {
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != parameterTypes.length) {
-        return false;
-      }
-      final PsiParameter[] parameters = parameterList.getParameters();
-      for (int i = 0; i < parameters.length; i++) {
-        final PsiParameter parameter = parameters[i];
-        final PsiType type = parameter.getType();
-        final PsiType parameterType = parameterTypes[i];
-        if (PsiType.NULL.equals(parameterType)) {
-          continue;
-        }
-        if (parameterType != null &&
-            !EquivalenceChecker.typesAreEquivalent(type, parameterType)) {
-          return false;
-        }
-      }
-    }
-    if (returnType != null) {
-      final PsiType methodReturnType = method.getReturnType();
-      if (!EquivalenceChecker.typesAreEquivalent(returnType, methodReturnType)) {
-        return false;
-      }
-    }
-    if (containingClassName != null) {
-      final PsiClass containingClass = method.getContainingClass();
-      return InheritanceUtil.isInheritor(containingClass, containingClassName);
-    }
-    return true;
+    return methodMatches(method, containingClassName, returnType, parameterTypes);
   }
 
   /**
@@ -144,6 +115,13 @@ public class MethodUtils {
     if (methodName != null && !methodName.equals(name)) {
       return false;
     }
+    return methodMatches(method, containingClassName, returnType, parameterTypes);
+  }
+
+  private static boolean methodMatches(@NotNull PsiMethod method,
+                                       @NonNls @Nullable String containingClassName,
+                                       @Nullable PsiType returnType,
+                                       @Nullable PsiType... parameterTypes) {
     if (parameterTypes != null) {
       final PsiParameterList parameterList = method.getParameterList();
       if (parameterList.getParametersCount() != parameterTypes.length) {
@@ -157,8 +135,7 @@ public class MethodUtils {
         if (PsiType.NULL.equals(parameterType)) {
           continue;
         }
-        if (parameterType != null &&
-            !EquivalenceChecker.typesAreEquivalent(type, parameterType)) {
+        if (parameterType != null && !EquivalenceChecker.typesAreEquivalent(type, parameterType)) {
           return false;
         }
       }

@@ -43,8 +43,9 @@ public class BooleanMethodNameMustStartWithQuestionInspectionBase extends BaseIn
   /**
    * @noinspection PublicField
    */
-  @NonNls public String questionString = "is,can,has,should,could,will,shall,check,contains,equals,add,put,remove,startsWith,endsWith";List<String>
-    questionList = new ArrayList(32);
+  @NonNls public String questionString =
+    "add,are,can,check,contains,could,endsWith,equals,has,is,matches,must,put,remove,shall,should,startsWith,was,were,will,would";
+  List<String> questionList = new ArrayList(32);
 
   public BooleanMethodNameMustStartWithQuestionInspectionBase() {
     parseString(questionString, questionList);

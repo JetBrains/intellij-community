@@ -1,0 +1,5 @@
+<div class="section" id="__debug__">
+<tt class="descname">__debug__</tt>
+<p>This constant is true if Python was not started with an <a class="reference internal" href="../using/cmdline.html#cmdoption-O"><em class="xref std std-option">-O</em></a> option.
+See also the <a class="reference internal" href="../reference/simple_stmts.html#assert"><tt class="xref std std-keyword docutils literal"><span class="pre">assert</span></tt></a> statement.</p>
+</div>

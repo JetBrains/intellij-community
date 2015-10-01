@@ -93,11 +93,11 @@ public class CreateResourceBundleDialogComponent {
       myUseXMLBasedPropertiesCheckBox.setVisible(false);
     } else {
       final String checkBoxSelectedStateKey = getClass() + ".useXmlPropertiesFiles";
-      myUseXMLBasedPropertiesCheckBox.setSelected(PropertiesComponent.getInstance().getBoolean(checkBoxSelectedStateKey, false));
+      myUseXMLBasedPropertiesCheckBox.setSelected(PropertiesComponent.getInstance().getBoolean(checkBoxSelectedStateKey));
       myUseXMLBasedPropertiesCheckBox.addContainerListener(new ContainerAdapter() {
         @Override
         public void componentRemoved(ContainerEvent e) {
-          PropertiesComponent.getInstance().setValue(checkBoxSelectedStateKey, myUseXMLBasedPropertiesCheckBox.isSelected(), false);
+          PropertiesComponent.getInstance().setValue(checkBoxSelectedStateKey, myUseXMLBasedPropertiesCheckBox.isSelected());
         }
       });
     }
@@ -154,6 +154,12 @@ public class CreateResourceBundleDialogComponent {
     @Override
     protected JComponent createCenterPanel() {
       return myComponent.getPanel();
+    }
+
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myComponent.myResourceBundleBaseNameTextField;
     }
 
     public PsiElement[] getCreatedFiles() {

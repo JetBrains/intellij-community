@@ -16,7 +16,6 @@
 package com.intellij.designer;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -186,7 +185,7 @@ public abstract class LightToolWindowManager implements ProjectComponent {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  public final ActionGroup createGearActions() {
+  public AnAction createGearActions() {
     DefaultActionGroup group = new DefaultActionGroup("In Editor Mode", true);
 
     if (myLeftEditorModeAction == null) {
@@ -298,7 +297,7 @@ public abstract class LightToolWindowManager implements ProjectComponent {
     return value.equals("ToolWindow") ? null : ToolWindowAnchor.fromText(value);
   }
 
-  final void setEditorMode(@Nullable ToolWindowAnchor newState) {
+  protected final void setEditorMode(@Nullable ToolWindowAnchor newState) {
     ToolWindowAnchor oldState = getEditorMode();
     myPropertiesComponent.setValue(myEditorModeKey, newState == null ? "ToolWindow" : newState.toString());
 

@@ -177,9 +177,13 @@ public class CertificateTest extends LightPlatformTestCase {
       assertEmpty(myTrustManager.getCertificates());
     }
     finally {
-      myClient.close();
+      try {
+        myClient.close();
+      }
+      finally {
+        super.tearDown();
+      }
     }
-    super.tearDown();
   }
 
   private static String getTestDataPath() {

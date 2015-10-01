@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.template
+
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.Lookup
@@ -36,6 +37,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
+
 /**
  * @author spleaner
  */
@@ -288,7 +290,7 @@ class Foo {
   public void testToar() throws Throwable {
     configure();
     startTemplate("toar", "other")
-    state.gotoEnd();
+    state.gotoEnd(false);
     checkResult();
   }
 
@@ -953,6 +955,39 @@ class Foo {
     Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
       return calculateResult(params, context)
     }
+  }
+  
+  public void "test add new line on enter outside editing variable"() {
+    myFixture.configureByText 'a.java', """
+class Foo {{
+  <caret>
+}}
+"""
+    myFixture.type 'soutv\tabc'
+    myFixture.editor.caretModel.moveCaretRelatively(3, 0, false, false, false)
+    myFixture.type '\n'
+    myFixture.checkResult """
+class Foo {{
+    System.out.println("true = " + abc);
+    <caret>
+}}
+"""
+  }
+  
+  public void "test type tab character on tab outside editing variable"() {
+    myFixture.configureByText 'a.java', """
+class Foo {{
+  <caret>
+}}
+"""
+    myFixture.type 'soutv\tabc'
+    myFixture.editor.caretModel.moveCaretRelatively(3, 0, false, false, false)
+    myFixture.type '\t'
+    myFixture.checkResult """
+class Foo {{
+    System.out.println("true = " + abc);    <caret>
+}}
+"""
   }
 
   public void "test multicaret expanding with space"() {

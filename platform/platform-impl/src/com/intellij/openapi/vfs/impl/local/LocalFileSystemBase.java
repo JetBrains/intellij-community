@@ -74,8 +74,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public VirtualFile findFileByIoFile(@NotNull File file) {
-    String path = file.getAbsolutePath();
-    return findFileByPath(path.replace(File.separatorChar, '/'));
+    String path = FileUtil.toSystemIndependentName(file.getAbsolutePath());
+    return findFileByPath(path);
   }
 
   @NotNull
@@ -197,13 +197,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         path = path.substring(1);  // hack over new File(path).toURI().toURL().getFile()
       }
 
-      if (path.contains("~")) {
-        try {
-          path = new File(FileUtil.toSystemDependentName(path)).getCanonicalPath();
-        }
-        catch (IOException e) {
-          return null;
-        }
+      try {
+        path = FileUtil.resolveShortWindowsName(path);
+      }
+      catch (IOException e) {
+        return null;
       }
     }
 
@@ -227,8 +225,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public VirtualFile refreshAndFindFileByIoFile(@NotNull File file) {
-    String path = file.getAbsolutePath();
-    return refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
+    String path = FileUtil.toSystemIndependentName(file.getAbsolutePath());
+    return refreshAndFindFileByPath(path);
   }
 
   @Override
@@ -516,7 +514,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
 
     File ioFile = convertToIOFile(file);
-    if (!ioFile.exists()) {
+    if (FileSystemUtil.getAttributes(ioFile) == null) {
       throw new FileNotFoundException(VfsBundle.message("file.not.exist.error", ioFile.getPath()));
     }
     File ioParent = convertToIOFile(newParent);

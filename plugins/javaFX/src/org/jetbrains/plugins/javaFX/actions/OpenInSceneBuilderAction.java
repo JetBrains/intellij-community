@@ -30,12 +30,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderInfo;
 
+import java.io.File;
+
 /**
  * User: anna
  * Date: 2/14/13
  */
 public class OpenInSceneBuilderAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#" + OpenInSceneBuilderAction.class.getName());
+  public static final String OLD_LAUNCHER = "scenebuilder-launcher.sh";
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -52,7 +55,12 @@ public class OpenInSceneBuilderAction extends AnAction {
     String pathToSceneBuilder = info.path;
 
     if (SystemInfo.isMac) {
-      pathToSceneBuilder += "/Contents/MacOS/scenebuilder-launcher.sh";
+      pathToSceneBuilder += "/Contents/MacOS/"; 
+      if (new File(pathToSceneBuilder, OLD_LAUNCHER).exists()) {
+        pathToSceneBuilder += OLD_LAUNCHER;
+      } else {
+        pathToSceneBuilder += "SceneBuilder";
+      }
     }
 
     final GeneralCommandLine commandLine = new GeneralCommandLine();

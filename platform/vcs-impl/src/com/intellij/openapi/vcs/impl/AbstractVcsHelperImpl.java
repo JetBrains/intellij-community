@@ -33,15 +33,18 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
@@ -60,6 +63,8 @@ import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.vfs.VcsFileSystem;
+import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -638,6 +643,105 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     if (!window.isVisible()) {
       window.activate(null);
     }
+  }
+
+  @Override
+  public void loadAndShowCommittedChangesDetails(@NotNull final Project project,
+                                                 @NotNull final VcsRevisionNumber revision,
+                                                 @NotNull final VirtualFile virtualFile,
+                                                 @NotNull VcsKey vcsKey,
+                                                 @Nullable final RepositoryLocation location,
+                                                 final boolean isNonLocal) {
+    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName());
+    if (vcs == null) return;
+    final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+    if (provider == null) return;
+    if (isNonLocal && provider.getForNonLocal(virtualFile) == null) return;
+
+    final String title = VcsBundle.message("paths.affected.in.revision",
+                                           revision instanceof ShortVcsRevisionNumber
+                                           ? ((ShortVcsRevisionNumber)revision).toShortString()
+                                           : revision.asString());
+    final CommittedChangeList[] list = new CommittedChangeList[1];
+    final FilePath[] targetPath = new FilePath[1];
+    final VcsException[] exc = new VcsException[1];
+    Task.Backgroundable task = new Task.Backgroundable(project, title, true, BackgroundFromStartOption.getInstance()) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          if (!isNonLocal) {
+            final Pair<CommittedChangeList, FilePath> pair = provider.getOneList(virtualFile, revision);
+            if (pair != null) {
+              list[0] = pair.getFirst();
+              targetPath[0] = pair.getSecond();
+            }
+          }
+          else {
+            if (location != null) {
+              final ChangeBrowserSettings settings = provider.createDefaultSettings();
+              settings.USE_CHANGE_BEFORE_FILTER = true;
+              settings.CHANGE_BEFORE = revision.asString();
+              final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, location, 1);
+              if (changes != null && changes.size() == 1) {
+                list[0] = changes.get(0);
+              }
+            }
+            else {
+              list[0] = getRemoteList(vcs, revision, virtualFile);
+            }
+          }
+        }
+        catch (VcsException e) {
+          exc[0] = e;
+        }
+      }
+
+      @Override
+      public void onSuccess() {
+        if (exc[0] != null) {
+          showError(exc[0], failedText(virtualFile, revision));
+        }
+        else if (list[0] == null) {
+          Messages.showErrorDialog(project, failedText(virtualFile, revision), getTitle());
+        }
+        else {
+          VirtualFile navigateToFile = targetPath[0] != null ?
+                                       new VcsVirtualFile(targetPath[0].getPath(), null, VcsFileSystem.getInstance()) :
+                                       virtualFile;
+          showChangesListBrowser(list[0], navigateToFile, title);
+        }
+      }
+    };
+
+    CoreProgressManager progressManager = (CoreProgressManager)ProgressManager.getInstance();
+    progressManager.runProcessWithProgressAsynchronously(task, new EmptyProgressIndicator(), null, ModalityState.current());
+  }
+
+  @Nullable
+  public static CommittedChangeList getRemoteList(@NotNull AbstractVcs vcs,
+                                                  @NotNull VcsRevisionNumber revision,
+                                                  @NotNull VirtualFile nonLocal)
+    throws VcsException {
+    final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+    final RepositoryLocation local = provider.getForNonLocal(nonLocal);
+    if (local != null) {
+      final String number = revision.asString();
+      final ChangeBrowserSettings settings = provider.createDefaultSettings();
+      final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, local, provider.getUnlimitedCountValue());
+      if (changes != null) {
+        for (CommittedChangeList change : changes) {
+          if (number.equals(String.valueOf(change.getNumber()))) {
+            return change;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  private static String failedText(@NotNull VirtualFile virtualFile, @NotNull VcsRevisionNumber revision) {
+    return "Show all affected files for " + virtualFile.getPath() + " at " + revision.asString() + " failed";
   }
 
   private static class AsynchronousListsLoader extends Task.Backgroundable {

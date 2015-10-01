@@ -21,6 +21,7 @@ package com.intellij.lang;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +67,9 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     return result;
   }
 
+  /**
+   *  @see #allForLanguageOrAny(Language)
+   */
   @NotNull
   public List<T> allForLanguage(@NotNull Language l) {
     List<T> list = forKey(l);
@@ -75,17 +79,14 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
         return allForLanguage(base);
       }
     }
-    //if (l != Language.ANY) {
-    //  final List<T> all = allForLanguage(Language.ANY);
-    //  if (!all.isEmpty()) {
-    //    if (list.isEmpty()) {
-    //      return all;
-    //    }
-    //    list = new ArrayList<T>(list);
-    //    list.addAll(all);
-    //  }
-    //}
     return list;
+  }
+
+  @NotNull
+  public List<T> allForLanguageOrAny(@NotNull Language l) {
+    List<T> providers = allForLanguage(l);
+    if (l == Language.ANY) return providers;
+    return ContainerUtil.concat(providers, allForLanguage(Language.ANY));
   }
 
   protected T getDefaultImplementation() {

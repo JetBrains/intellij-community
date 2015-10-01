@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,10 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
       }
     });
   }
-public static void searchOptimized(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch, SearchRequestCollector collector, final boolean inReadAction, PairProcessor<PsiReference, SearchRequestCollector> processor) {
+
+  public static void searchOptimized(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch,
+                                     SearchRequestCollector collector, final boolean inReadAction,
+                                     PairProcessor<PsiReference, SearchRequestCollector> processor) {
     final SearchRequestCollector nested = new SearchRequestCollector(collector.getSearchSession());
     collector.searchQuery(new QuerySearchRequest(search(new SearchParameters(method, scope, strictSignatureSearch, nested)), nested,
                                                  inReadAction, processor));
