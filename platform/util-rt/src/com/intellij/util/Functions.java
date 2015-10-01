@@ -25,7 +25,15 @@ import java.util.Map;
  */
 public class Functions {
 
+  public static <A> Function.Mono<A> id() {
+    return (Function.Mono<A>)Function.ID;
+  }
+
   public static <A, B> Function<A, B> identity() {
+    return Function.ID;
+  }
+
+  public static <A, B> Function<A, B> cast(Class<B> clazz) {
     return Function.ID;
   }
 
