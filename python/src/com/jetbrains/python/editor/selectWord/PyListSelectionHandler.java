@@ -51,7 +51,7 @@ public class PyListSelectionHandler extends ExtendWordSelectionHandlerBase {
       startShift += firstChild.getTextLength();
     PsiElement lastChild = e.getLastChild().getPrevSibling();
     int endShift = 1;
-    if (lastChild instanceof PsiWhiteSpace)
+    if (lastChild instanceof PsiWhiteSpace && lastChild != firstChild)
       endShift += lastChild.getTextLength();
 
     final TextRange offsetRange = new TextRange(stringRange.getStartOffset() + startShift, stringRange.getEndOffset() - endShift);
