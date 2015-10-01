@@ -42,7 +42,7 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
       }
       catch (IncorrectOperationException e) {
         if (message == null) {
-          fail("Refactoring wasn't expected to fail");
+          fail("Refactoring failed unexpectedly with message: " + e.getMessage());
         }
         assertEquals(message, e.getMessage());
       }
@@ -66,12 +66,18 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
   }
 
   // PY-6637
-  public void testLocalFunctionDetection() {
+  public void testRefactoringAvailability() {
     myFixture.configureByFile(getTestName(true) + ".py");
     moveByText("func");
     assertFalse(isActionEnabled());
     moveByText("local");
     assertTrue(isActionEnabled());
+    moveByText("method");
+    assertTrue(isActionEnabled());
+    moveByText("static_method");
+    assertFalse(isActionEnabled());
+    moveByText("class_method");
+    assertFalse(isActionEnabled());
   }
 
   // PY-6637
@@ -85,11 +91,6 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
   }
 
   // PY-6637
-  public void testLocalFunctionReferenceToSelf() {
-    doTest(true, PyBundle.message("refactoring.make.function.top.level.error.self.reads", "self"));
-  }
-
-  // PY-6637
   public void testLocalFunctionNonlocalReferencesInInnerFunction() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
       @Override
@@ -97,6 +98,44 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
         doTest();
       }
     });
+  }
+
+  // PY-6637
+  public void testLocalFunctionReferenceToSelf() {
+    doTest(true, PyBundle.message("refactoring.make.function.top.level.error.self.reads"));
+  }
+
+  public void testMethodNonlocalReferenceToOuterScope() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      @Override
+      public void run() {
+        doTest(true, PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes"));
+      }
+    });
+  }
+
+  public void testMethodOuterScopeReads() {
+    doTest(true, PyBundle.message("refactoring.make.function.top.level.error.outer.scope.reads"));
+  }
+
+  public void testMethodOtherMethodCalls() {
+    doTest(true, PyBundle.message("refactoring.make.function.top.level.error.method.calls"));
+  }
+
+  public void testMethodAttributeWrites() {
+    doTest(true, PyBundle.message("refactoring.make.function.top.level.error.attribute.writes"));
+  }
+
+  public void testMethodReadPrivateAttributes() {
+    doTest(true, PyBundle.message("refactoring.make.function.top.level.error.private.attributes"));
+  }
+
+  public void testMethodSelfUsedAsOperand() {
+    doTest(true, PyBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
+  }
+
+  public void testMethodOverriddenSelf() {
+    doTest(true, PyBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
   }
 
   @Override
