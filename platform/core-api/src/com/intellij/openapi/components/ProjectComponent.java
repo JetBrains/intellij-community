@@ -21,8 +21,8 @@ package com.intellij.openapi.components;
  * type or with no parameters.
  * <p>
  * <strong>Note that if you register a class as a project component it will be loaded, its instance will be created and
- * {@link #initComponent()} and {@link #projectOpened()} methods will be called for each project even if user don't use any feature of your
- * plugin. So consider using specific extensions instead to ensure that the plugin will not impact on IDE performance until user calls its
+ * {@link #initComponent()} and {@link #projectOpened()} methods will be called for each project even if user doesn't use any feature of your
+ * plugin. So consider using specific extensions instead to ensure that the plugin will not impact IDE performance until user calls its
  * actions explicitly.</strong>
  *
  * @see AbstractProjectComponent
