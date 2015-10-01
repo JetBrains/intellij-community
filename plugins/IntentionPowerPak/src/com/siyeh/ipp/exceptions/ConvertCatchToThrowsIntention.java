@@ -61,7 +61,7 @@ public class ConvertCatchToThrowsIntention extends Intention {
     addToThrowsList(throwsList, catchType);
     final PsiTryStatement tryStatement = catchSection.getTryStatement();
     final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
-    if (catchSections.length > 1 || tryStatement.getResourceList() != null) {
+    if (catchSections.length > 1 || tryStatement.getResourceList() != null || tryStatement.getFinallyBlock() != null) {
       catchSection.delete();
     }
     else {
