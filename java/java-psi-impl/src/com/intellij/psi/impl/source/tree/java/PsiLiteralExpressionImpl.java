@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -238,128 +239,7 @@ public class PsiLiteralExpressionImpl
   }
 
   public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets) {
-    assert sourceOffsets == null || sourceOffsets.length == chars.length()+1;
-    if (chars.indexOf('\\') < 0) {
-      outChars.append(chars);
-      if (sourceOffsets != null) {
-        for (int i = 0; i < sourceOffsets.length; i++) {
-          sourceOffsets[i] = i;
-        }
-      }
-      return true;
-    }
-    int index = 0;
-    final int outOffset = outChars.length();
-    while (index < chars.length()) {
-      char c = chars.charAt(index++);
-      if (sourceOffsets != null) {
-        sourceOffsets[outChars.length()-outOffset] = index - 1;
-        sourceOffsets[outChars.length() + 1 -outOffset] = index;
-      }
-      if (c != '\\') {
-        outChars.append(c);
-        continue;
-      }
-      if (index == chars.length()) return false;
-      c = chars.charAt(index++);
-      switch (c) {
-        case'b':
-          outChars.append('\b');
-          break;
-
-        case't':
-          outChars.append('\t');
-          break;
-
-        case'n':
-          outChars.append('\n');
-          break;
-
-        case'f':
-          outChars.append('\f');
-          break;
-
-        case'r':
-          outChars.append('\r');
-          break;
-
-        case'"':
-          outChars.append('"');
-          break;
-
-        case'\'':
-          outChars.append('\'');
-          break;
-
-        case'\\':
-          outChars.append('\\');
-          break;
-
-        case'0':
-        case'1':
-        case'2':
-        case'3':
-        case'4':
-        case'5':
-        case'6':
-        case'7':
-          char startC = c;
-          int v = (int)c - '0';
-          if (index < chars.length()) {
-            c = chars.charAt(index++);
-            if ('0' <= c && c <= '7') {
-              v <<= 3;
-              v += c - '0';
-              if (startC <= '3' && index < chars.length()) {
-                c = chars.charAt(index++);
-                if ('0' <= c && c <= '7') {
-                  v <<= 3;
-                  v += c - '0';
-                }
-                else {
-                  index--;
-                }
-              }
-            }
-            else {
-              index--;
-            }
-          }
-          outChars.append((char)v);
-          break;
-
-        case'u':
-          // uuuuu1234 is valid too
-          while (index != chars.length() && chars.charAt(index) == 'u') {
-            index++;
-          }
-          if (index + 4 <= chars.length()) {
-            try {
-              int code = Integer.parseInt(chars.substring(index, index + 4), 16);
-              //line separators are invalid here
-              if (code == 0x000a || code == 0x000d) return false;
-              c = chars.charAt(index);
-              if (c == '+' || c == '-') return false;
-              outChars.append((char)code);
-              index += 4;
-            }
-            catch (Exception e) {
-              return false;
-            }
-          }
-          else {
-            return false;
-          }
-          break;
-
-        default:
-          return false;
-      }
-      if (sourceOffsets != null) {
-        sourceOffsets[outChars.length()-outOffset] = index;
-      }
-    }
-    return true;
+    return CodeInsightUtilCore.parseStringCharacters(chars, outChars, sourceOffsets);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,14 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
+import java.util.Map;
 
 /**
  * @author Sergey Evdokimov
@@ -42,31 +45,40 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity, Dum
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
       @Override
       public void computeInReadAction(@NotNull ProgressIndicator indicator) {
-        if (project.isDisposed()) {
-          return; 
-        }
+        if (project.isDisposed()) return;
+        final Pair<Module, MvcFramework> pair = findModuleWithoutLibrary(project);
+        if (pair == null) return;
 
-        Pair<Module, MvcFramework> pair = findModuleWithoutLibrary(project);
+        final MvcFramework framework = pair.second;
+        final Module module = pair.first;
+        final String name = framework.getFrameworkName();
+        final Map<String, Runnable> actions = framework.createConfigureActions(module);
 
-        if (pair != null) {
-          final MvcFramework framework = pair.second;
-          final Module module = pair.first;
+        final StringBuilder content = new StringBuilder()
+          .append("<html><body>")
+          .append("Module ").append('\'').append(module.getName()).append('\'')
+          .append(" has no ").append(name).append(" SDK.");
+        if (!actions.isEmpty()) content.append("<br/>");
+        content.append(StringUtil.join(actions.keySet(), new Function<String, String>() {
+          @Override
+          public String fun(String actionName) {
+            return String.format("<a href='%s'>%s</a>", actionName, actionName);
+          }
+        }, " "));
+        content.append("</body></html>");
 
-          String name = framework.getFrameworkName();
-          String content = "<html><body>Module '" + module.getName() + "' has no " + name + " SDK. <a href='create'>Configure SDK</a></body></html>";
-          new Notification(name + ".Configure",
-                           name + " SDK not found",
-                           content, NotificationType.INFORMATION,
-                           new NotificationListener.Adapter() {
-                             @Override
-                             protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-                               if (!module.isDisposed()) {
-                                 MvcConfigureNotification.configure(framework, module);
-                               }
-                             }
-                           }
-          ).notify(project);
-        }
+        new Notification(
+          name + ".Configure", name + " SDK not found", content.toString(), NotificationType.INFORMATION,
+          new NotificationListener.Adapter() {
+            @Override
+            protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+              if (module.isDisposed()) return;
+              final Runnable runnable = actions.get(e.getDescription());
+              assert runnable != null;
+              runnable.run();
+            }
+          }
+        ).notify(project);
       }
 
       @Override
@@ -82,11 +94,10 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity, Dum
 
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       for (MvcFramework framework : frameworks) {
-        VirtualFile appRoot = framework.findAppRoot(module);
-        if (appRoot != null && appRoot.findChild("application.properties") != null) {
-           if (!framework.hasFrameworkJar(module)) {
-             return Pair.create(module, framework);
-           }
+        if (framework.hasFrameworkStructure(module) && !framework.hasFrameworkJar(module)) {
+          if (VfsUtil.findRelativeFile(framework.findAppRoot(module), "application.properties") != null) {
+            return Pair.create(module, framework);
+          }
         }
       }
     }

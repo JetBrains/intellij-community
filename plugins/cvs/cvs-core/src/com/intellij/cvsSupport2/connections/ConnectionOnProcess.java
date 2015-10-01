@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.cvsSupport2.connections;
 
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -133,7 +134,7 @@ public abstract class ConnectionOnProcess implements IConnection {
 
   protected synchronized void execute(GeneralCommandLine commandLine) throws AuthenticationException {
     try {
-      commandLine.setPassParentEnvironment(true);
+      commandLine.withParentEnvironmentType(ParentEnvironmentType.CONSOLE);
       myProcess = commandLine.createProcess();
 
       myErrThread = new ReadProcessThread(

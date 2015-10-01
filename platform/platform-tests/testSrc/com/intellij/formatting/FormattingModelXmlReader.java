@@ -28,6 +28,11 @@ import java.util.Map;
                                     "/platform/platform-tests/testData/newGeneralFormatter", dataName + ".xml");
     return readBlock(JDOMUtil.load(dataFile));
   }
+  
+  public TestBlock readTestBlock(String path, String file) throws IOException, JDOMException {
+    final File dataFile = new File(path, file);
+    return readBlock(JDOMUtil.load(dataFile));
+  }
 
   private TestBlock readBlock(final Element rootElement) {
     final int startOffset = Integer.parseInt(rootElement.getAttributeValue("start"));
@@ -116,7 +121,15 @@ import java.util.Map;
   }
 
   private Indent readIndent(final Element indentElement) {
-    return createIndent(indentElement.getAttributeValue("type"));
+    final String type = indentElement.getAttributeValue("type");
+    if ("LABEL".equals(type)) return Indent.getLabelIndent();
+    if ("NONE".equals(type)) return Indent.getNoneIndent();
+    if ("CONTINUATION".equals(type)) return Indent.getContinuationIndent();
+    if ("SPACE".equals(type)) {
+      String spaces = indentElement.getAttributeValue("spaces");
+      return Indent.getSpaceIndent(Integer.valueOf(spaces));
+    }
+    return Indent.getNormalIndent();
   }
 
   private int getInt(final String count) {
@@ -127,12 +140,4 @@ import java.util.Map;
       return 0;
     }
   }
-
-  private Indent createIndent(final String type) {
-    if ("LABEL".equals(type)) return Indent.getLabelIndent();
-    if ("NONE".equals(type)) return Indent.getNoneIndent();
-    if ("CONTINUATION".equals(type)) return Indent.getContinuationIndent();
-    return Indent.getNormalIndent();
-  }
-
 }

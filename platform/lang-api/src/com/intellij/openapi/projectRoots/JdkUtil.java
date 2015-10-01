@@ -17,6 +17,7 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CommandLineWrapperUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.ide.util.PropertiesComponent;
@@ -164,12 +165,11 @@ public class JdkUtil {
   public static GeneralCommandLine setupJVMCommandLine(final String exePath,
                                                        final SimpleJavaParameters javaParameters,
                                                        final boolean forceDynamicClasspath) {
-    final GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.setExePath(exePath);
+    final GeneralCommandLine commandLine = new GeneralCommandLine(exePath);
 
     final ParametersList vmParametersList = javaParameters.getVMParametersList();
-    commandLine.getEnvironment().putAll(javaParameters.getEnv());
-    commandLine.setPassParentEnvironment(javaParameters.isPassParentEnvs());
+    commandLine.withEnvironment(javaParameters.getEnv());
+    commandLine.withParentEnvironmentType(javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
 
     final Class commandLineWrapper;
     if ((commandLineWrapper = getCommandLineWrapperClass()) != null) {
@@ -190,7 +190,7 @@ public class JdkUtil {
     }
 
     final String mainClass = javaParameters.getMainClass();
-    String jarPath = javaParameters.getJarPath();
+    final String jarPath = javaParameters.getJarPath();
     if (mainClass != null) {
       commandLine.addParameter(mainClass);
     }

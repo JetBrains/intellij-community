@@ -62,7 +62,7 @@ fun PrintElementWithGraphElement.asString(): String {
   val sel = if (isSelected()) "Select" else "Unselect"
   return when (this) {
     is NodePrintElement -> {
-      "Simple:NODE|-$row:${pos}|-$color:${sel}($element)"
+      "Node|-$row:${pos}|-$color:${sel}($element)"
     }
     is EdgePrintElement -> {
       val t = getType()

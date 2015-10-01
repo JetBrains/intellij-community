@@ -22,7 +22,6 @@ package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 
 public abstract class Eclipse2ModulesTest extends IdeaTestCase {
   @NonNls
@@ -50,14 +48,11 @@ public abstract class Eclipse2ModulesTest extends IdeaTestCase {
     File currentTestRoot = new File(testRoot, getTestName(true));
     assertTrue(currentTestRoot.getAbsolutePath(), currentTestRoot.isDirectory());
 
-    try {
-      VirtualFile baseDir = getProject().getBaseDir();
-      assert baseDir != null;
-      FileUtil.copyDir(currentTestRoot, new File(baseDir.getPath()));
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+    VirtualFile baseDir = getProject().getBaseDir();
+    assert baseDir != null;
+
+    VirtualFile vTestRoot = LocalFileSystem.getInstance().findFileByIoFile(currentTestRoot);
+    copyDirContentsTo(vTestRoot, getProject().getBaseDir());
   }
 
   @Override

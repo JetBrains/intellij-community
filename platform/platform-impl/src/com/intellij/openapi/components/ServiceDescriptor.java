@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.components;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.xmlb.annotations.Attribute;
 
 public class ServiceDescriptor {
@@ -24,6 +25,9 @@ public class ServiceDescriptor {
 
   @Attribute("serviceImplementation")
   public String serviceImplementation;
+
+  @Attribute("testServiceImplementation")
+  public String testServiceImplementation;
 
   @Attribute("overrides")
   public boolean overrides;
@@ -36,6 +40,6 @@ public class ServiceDescriptor {
   }
 
   public String getImplementation() {
-    return serviceImplementation;
+    return testServiceImplementation != null && ApplicationManager.getApplication().isUnitTestMode() ? testServiceImplementation : serviceImplementation;
   }
 }

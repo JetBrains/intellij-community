@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyParser implements PsiParser {
   private static final Logger LOGGER = Logger.getInstance(PyParser.class.getName());
 
-  private LanguageLevel myLanguageLevel;
+  protected LanguageLevel myLanguageLevel;
   private StatementParsing.FUTURE myFutureFlag;
 
   public PyParser() {
@@ -49,14 +49,15 @@ public class PyParser implements PsiParser {
     builder.setTokenTypeRemapper(statementParser); // must be done before touching the caching lexer with eof() call.
     boolean lastAfterSemicolon = false;
     while (!builder.eof()) {
-      ParsingScope scope = context.emptyParsingScope();
+      context.pushScope(context.emptyParsingScope());
       if (lastAfterSemicolon) {
-        statementParser.parseSimpleStatement(scope);
+        statementParser.parseSimpleStatement();
       }
       else {
-        statementParser.parseStatement(scope);
+        statementParser.parseStatement();
       }
-      lastAfterSemicolon = scope.isAfterSemicolon();
+      lastAfterSemicolon = context.getScope().isAfterSemicolon();
+      context.popScope();
     }
     rootMarker.done(root);
     ASTNode ast = builder.getTreeBuilt();

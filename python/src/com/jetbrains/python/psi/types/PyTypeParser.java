@@ -39,10 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.IDENTIFIER;
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.PARAMETER;
@@ -188,17 +185,16 @@ public class PyTypeParser {
             final List<ParseResult> third = value.getSecond();
             final PyType firstType = first.getType();
             if (firstType instanceof PyClassType) {
-              final List<PyType> tupleTypes = new ArrayList<PyType>();
-              tupleTypes.add(second.getType());
+              final List<PyType> typesInBrackets = new ArrayList<PyType>();
+              typesInBrackets.add(second.getType());
               ParseResult result = first;
               result = result.merge(second);
               for (ParseResult r : third) {
-                tupleTypes.add(r.getType());
+                typesInBrackets.add(r.getType());
                 result = result.merge(r);
               }
-              final PyType elementType = third.isEmpty() ? second.getType() :
-                                         PyTupleType.create(anchor, tupleTypes.toArray(new PyType[tupleTypes.size()]));
-              final PyCollectionTypeImpl type = new PyCollectionTypeImpl(((PyClassType)firstType).getPyClass(), false, elementType);
+              final List<PyType> elementTypes = third.isEmpty() ? Collections.singletonList(second.getType()) : typesInBrackets;
+              final PyCollectionTypeImpl type = new PyCollectionTypeImpl(((PyClassType)firstType).getPyClass(), false, elementTypes);
               return result.withType(type);
             }
             return EMPTY_RESULT;
@@ -215,7 +211,8 @@ public class PyTypeParser {
                   final PyType secondType = secondResult.getType();
                   if (firstType != null) {
                     if (firstType instanceof PyClassType && secondType != null) {
-                      return result.withType(new PyCollectionTypeImpl(((PyClassType)firstType).getPyClass(), false, secondType));
+                      return result.withType(new PyCollectionTypeImpl(((PyClassType)firstType).getPyClass(), false,
+                                                                      Collections.singletonList(secondType)));
                     }
                     return result.withType(firstType);
                   }
@@ -232,8 +229,9 @@ public class PyTypeParser {
                   final ParseResult third = value.getSecond();
                   final PyType firstType = first.getType();
                   if (firstType instanceof PyClassType) {
-                    final PyTupleType tupleType = PyTupleType.create(anchor, new PyType[]{second.getType(), third.getType()});
-                    final PyCollectionTypeImpl type = new PyCollectionTypeImpl(((PyClassType)firstType).getPyClass(), false, tupleType);
+                    final List<PyType> elementTypes = Arrays.asList(second.getType(), third.getType());
+                    final PyCollectionTypeImpl type = new PyCollectionTypeImpl(((PyClassType)firstType).getPyClass(), false,
+                                                                               elementTypes);
                     return first.merge(second).merge(third).withType(type);
                   }
                   return EMPTY_RESULT;

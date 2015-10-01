@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI;
+import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -26,12 +26,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJRadioButtonUI extends DarculaRadioButtonUI {
-  private static final Icon RADIO = DarculaLaf.loadIcon("radio.png");
-  private static final Icon RADIO_FOCUSED = DarculaLaf.loadIcon("radioFocused.png");
-  private static final Icon RADIO_SELECTED = DarculaLaf.loadIcon("radioSelected.png");
-  private static final Icon RADIO_SELECTED_FOCUSED = DarculaLaf.loadIcon("radioSelectedFocused.png");
-  private static final Icon RADIO_DISABLED = DarculaLaf.loadIcon("radioDisabled.png");
-  private static final Icon RADIO_DISABLED_SELECTED = DarculaLaf.loadIcon("radioDisabledSelected.png");
+  private static final Icon DEFAULT_ICON = EmptyIcon.create(26);
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -40,24 +35,12 @@ public class MacIntelliJRadioButtonUI extends DarculaRadioButtonUI {
 
   @Override
   protected void paintIcon(JComponent c, Graphics2D g, Rectangle viewRect, Rectangle iconRect) {
-    boolean enabled = c.isEnabled();
-    boolean focused = c.hasFocus();
-    boolean selected = ((AbstractButton)c).isSelected();
-    Icon icon;
-    if (enabled) {
-      if (selected) {
-        icon = focused ? RADIO_SELECTED_FOCUSED : RADIO_SELECTED;
-      } else {
-        icon = focused ? RADIO_FOCUSED : RADIO;
-      }
-    } else {
-      icon = selected ? RADIO_DISABLED_SELECTED : RADIO_DISABLED;
-    }
+    Icon icon = MacIntelliJIconCache.getIcon("radio", ((AbstractButton)c).isSelected(), c.hasFocus(), c.isEnabled());
     icon.paintIcon(c, g, iconRect.x, iconRect.y);
   }
 
   @Override
   public Icon getDefaultIcon() {
-    return RADIO;
+    return DEFAULT_ICON;
   }
 }

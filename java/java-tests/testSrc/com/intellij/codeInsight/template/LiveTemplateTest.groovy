@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.codeInsight.template.impl.*
 import com.intellij.codeInsight.template.macro.*
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -497,7 +498,9 @@ class Foo {
     if (name in ["testNavigationActionsDontTerminateTemplate", "testTemplateWithEnd", "testDisappearingVar",
                  "test do replace macro value with empty result",
                  "test do not replace macro value with null result",
-                 "test escape string characters in soutv", "test do not replace macro value with empty result"]) {
+                 "test escape string characters in soutv",
+                 "test escape shouldn't move caret to the end marker",
+                 "test do not replace macro value with empty result"]) {
       runnable.run();
       return;
     }
@@ -955,6 +958,24 @@ class Foo {
     Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
       return calculateResult(params, context)
     }
+  }
+
+  public void "test escape shouldn't move caret to the end marker"() {
+    myFixture.configureByText 'a.java', """
+class Foo {{
+  itar<caret>
+}}
+"""
+    myFixture.type '\ta'
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
+    myFixture.checkResult """
+class Foo {{
+    for (int a<caret> = 0; a < array.length; a++) {
+         = array[a];
+        
+    }
+}}
+"""
   }
   
   public void "test add new line on enter outside editing variable"() {

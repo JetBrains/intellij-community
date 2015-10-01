@@ -25,7 +25,7 @@ import com.intellij.util.io.PagePool;
 import com.intellij.util.io.storage.AbstractRecordsTable;
 import com.intellij.util.io.storage.RecordIdIterator;
 import com.intellij.util.io.storage.Storage;
-import com.intellij.util.io.storage.StorageTest;
+import com.intellij.util.io.storage.StorageTestBase;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,26 +35,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Random;
 
-public class CompactStorageTest extends StorageTest {
+public class CompactStorageTest extends StorageTestBase {
   @NotNull
   @Override
   protected Storage createStorage(String fileName) throws IOException {
-    return new Storage(fileName) {
-      @Override
-      protected AbstractRecordsTable createRecordsTable(PagePool pool, File recordsFile) throws IOException {
-        return new CompactRecordsTable(recordsFile, pool, false);
-      }
-    };
-  }
-
-  public void testDeleteRemovesExtendedRecords() throws IOException {
-    TIntArrayList recordsList = new TIntArrayList();
-    // 60000 records of 40000 bytes each: exercise extra record creation
-    int recordCount = 60000;
-    for(int i = 0; i < recordCount; ++i) recordsList.add(createTestRecord());
-    for (int r: recordsList.toNativeArray()) myStorage.deleteRecord(r);
-
-    assertEquals(0, myStorage.getLiveRecordsCount());
+    return new CompactStorage(fileName);
   }
 
   public void testCompactAndIterators() throws IOException {
@@ -100,10 +85,14 @@ public class CompactStorageTest extends StorageTest {
 
   private static final int TIMES_LIMIT = 10000;
 
-  protected int createTestRecord() throws IOException {
-    final int r = myStorage.createNewRecord();
+  private int createTestRecord() throws IOException {
+    return createTestRecord(myStorage);
+  }
 
-    DataOutputStream out = new DataOutputStream(myStorage.appendStream(r));
+  static  int createTestRecord(Storage storage) throws IOException {
+    final int r = storage.createNewRecord();
+
+    DataOutputStream out = new DataOutputStream(storage.appendStream(r));
     try {
       Random random = new Random(r);
       for (int i = 0; i < TIMES_LIMIT; i++) {
@@ -117,7 +106,7 @@ public class CompactStorageTest extends StorageTest {
     return r;
   }
 
-  private void checkTestRecord(int id) throws IOException {
+  void checkTestRecord(int id) throws IOException {
     DataInputStream stream = myStorage.readStream(id);
     try {
       Random random = new Random(id);
@@ -126,6 +115,17 @@ public class CompactStorageTest extends StorageTest {
       }
     } finally {
       stream.close();
+    }
+  }
+
+  static class CompactStorage extends Storage {
+    public CompactStorage(String fileName) throws IOException {
+      super(fileName);
+    }
+
+    @Override
+    protected AbstractRecordsTable createRecordsTable(PagePool pool, File recordsFile) throws IOException {
+      return new CompactRecordsTable(recordsFile, pool, false);
     }
   }
 }

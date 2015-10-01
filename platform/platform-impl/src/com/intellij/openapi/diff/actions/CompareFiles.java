@@ -26,6 +26,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated use {@link com.intellij.diff.actions.CompareFilesAction} instead
+ */
 @Deprecated
 public class CompareFiles extends BaseDiffAction {
   public static final DataKey<DiffRequest> DIFF_REQUEST = DataKey.create("CompareFiles.DiffRequest");

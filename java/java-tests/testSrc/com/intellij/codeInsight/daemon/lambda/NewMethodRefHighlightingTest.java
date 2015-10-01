@@ -426,6 +426,14 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testCapturedReturnTypeOfMethodReference() throws Exception {
+    doTest();
+  }
+
+  public void testEnumConstantsAsContext() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

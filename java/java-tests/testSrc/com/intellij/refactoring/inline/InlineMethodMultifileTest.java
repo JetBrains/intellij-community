@@ -46,6 +46,10 @@ public class InlineMethodMultifileTest extends RefactoringTestCase {
     doTest("Foo", "foo");
   }
 
+  public void testDecodeQualifierInMethodReference() throws Exception {
+    doTest("Foo", "foo");
+  }
+
   private void doTest(String className, String methodName) throws Exception {
     String rootBefore = getRoot() + "/before";
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());

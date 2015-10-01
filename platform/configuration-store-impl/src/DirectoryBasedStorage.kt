@@ -43,7 +43,7 @@ import java.nio.ByteBuffer
 open class DirectoryBasedStorage(private val dir: File,
                                  private val splitter: StateSplitter,
                                  private val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null) : StateStorageBase<StateMap>() {
-  private volatile var virtualFile: VirtualFile? = null
+  private @Volatile var virtualFile: VirtualFile? = null
 
   private var componentName: String? = null
 
@@ -166,12 +166,12 @@ open class DirectoryBasedStorage(private val dir: File,
         return
       }
 
-      if (dir == null || !dir.isValid()) {
+      if (dir == null || !dir.isValid) {
         dir = createDir(storage.dir, this)
         storage.virtualFile = dir
       }
 
-      if (!dirtyFileNames.isEmpty()) {
+      if (!dirtyFileNames.isEmpty) {
         saveStates(dir, stateMap)
       }
       if (someFileRemoved && dir.exists()) {
@@ -213,8 +213,8 @@ open class DirectoryBasedStorage(private val dir: File,
 
     private fun deleteFiles(dir: VirtualFile) {
       runWriteAction {
-        for (file in dir.getChildren()) {
-          val fileName = file.getName()
+        for (file in dir.children) {
+          val fileName = file.name
           if (fileName.endsWith(FileStorageCoreUtil.DEFAULT_EXT) && !copiedStorageData!!.containsKey(fileName)) {
             try {
               file.delete(this)
@@ -246,9 +246,9 @@ private fun loadFile(file: VirtualFile?): Pair<ByteArray, String> {
   }
 
   val bytes = file.contentsToByteArray()
-  var lineSeparator: String? = file.getDetectedLineSeparator()
+  var lineSeparator: String? = file.detectedLineSeparator
   if (lineSeparator == null) {
-    lineSeparator = detectLineSeparators(CharsetToolkit.UTF8_CHARSET.decode(ByteBuffer.wrap(bytes)), null).getSeparatorString()
+    lineSeparator = detectLineSeparators(CharsetToolkit.UTF8_CHARSET.decode(ByteBuffer.wrap(bytes)), null).separatorString
   }
   return Pair.create<ByteArray, String>(bytes, lineSeparator)
 }

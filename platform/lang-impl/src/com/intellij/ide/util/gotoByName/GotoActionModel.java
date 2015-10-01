@@ -564,23 +564,25 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   }
 
   public static class ActionWrapper implements Comparable<ActionWrapper>{
-    private final AnAction myAction;
-    private final MatchMode myMode;
-    private final String myGroupName;
+    @NotNull private final AnAction myAction;
+    @NotNull private final MatchMode myMode;
+    @Nullable  private final String myGroupName;
     private final DataContext myDataContext;
     private Presentation myPresentation;
 
-    public ActionWrapper(@NotNull AnAction action, @Nullable String groupName, MatchMode mode, DataContext dataContext) {
+    public ActionWrapper(@NotNull AnAction action, @Nullable String groupName, @NotNull  MatchMode mode, DataContext dataContext) {
       myAction = action;
       myMode = mode;
       myGroupName = groupName;
       myDataContext = dataContext;
     }
 
+    @NotNull
     public AnAction getAction() {
       return myAction;
     }
 
+    @NotNull
     public MatchMode getMode() {
       return myMode;
     }
@@ -600,7 +602,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       return 0;
     }
 
-    private boolean isAvailable() {
+    public boolean isAvailable() {
       return getPresentation().isEnabledAndVisible();
     }
 
@@ -626,7 +628,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
     @Override
     public int hashCode() {
-      return myAction.getTemplatePresentation().getText().hashCode();
+      String text = myAction.getTemplatePresentation().getText();
+      return text != null ? text.hashCode() : 0;
     }
 
     @Override

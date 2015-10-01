@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,13 +157,13 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       public void templateFinished(final Template template, boolean brokenOff) {
         final int offset = editor.getCaretModel().getOffset();
 
-        if (chooseAttributeName && offset >= 3) {
-          char c = editor.getDocument().getCharsSequence().charAt(offset - 3);
+        if (chooseAttributeName && offset > 0) {
+          char c = editor.getDocument().getCharsSequence().charAt(offset - 1);
           if (c == '/' || (c == ' ' && brokenOff)) {
             new WriteCommandAction.Simple(project) {
               @Override
               protected void run() throws Throwable {
-                editor.getDocument().replaceString(offset - 2, offset + 1, ">");
+                editor.getDocument().replaceString(offset, offset + 3, ">");
               }
             }.execute();
           }

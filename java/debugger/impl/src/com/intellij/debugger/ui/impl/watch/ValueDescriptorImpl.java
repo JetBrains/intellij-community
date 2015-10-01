@@ -274,10 +274,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public void setAncestor(NodeDescriptor oldDescriptor) {
     super.setAncestor(oldDescriptor);
     myIsNew = false;
-    ValueDescriptorImpl other = (ValueDescriptorImpl)oldDescriptor;
-    if (other.myValueReady) {
-      myValue = other.getValue();
-      myValueReady = true;
+    if (!myValueReady) {
+      ValueDescriptorImpl other = (ValueDescriptorImpl)oldDescriptor;
+      if (other.myValueReady) {
+        myValue = other.getValue();
+        myValueReady = true;
+      }
     }
   }
 

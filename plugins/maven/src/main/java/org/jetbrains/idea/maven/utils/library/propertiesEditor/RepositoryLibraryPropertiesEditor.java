@@ -3,9 +3,6 @@ package org.jetbrains.idea.maven.utils.library.propertiesEditor;
 import com.google.common.base.Strings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
@@ -17,9 +14,10 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.ProjectBundle;
-import org.jetbrains.idea.maven.utils.library.RepositoryAttachHandler;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils;
+import org.jetbrains.idea.maven.utils.library.remote.MavenRemoteTask;
+import org.jetbrains.idea.maven.utils.library.remote.MavenVersionsRemoteManager;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -109,16 +107,18 @@ public class RepositoryLibraryPropertiesEditor {
 
   private static int getSelection(String selectedVersion, List<String> versions) {
     VersionKind versionKind = getVersionKind(selectedVersion);
+    int releaseIndex = JBIterable.from(versions).takeWhile(new Condition<String>() {
+      @Override
+      public boolean value(String version) {
+        return version.endsWith(RepositoryUtils.SnapshotVersionSuffix);
+      }
+    }).size();
+
     switch (versionKind) {
       case Unselected:
         return -1;
       case Release:
-        return JBIterable.from(versions).takeWhile(new Condition<String>() {
-          @Override
-          public boolean value(String version) {
-            return version.endsWith(RepositoryUtils.SnapshotVersionSuffix);
-          }
-        }).size();
+        return releaseIndex == versions.size() ? -1 : releaseIndex;
       case Latest:
         return 0;
       case Select:
@@ -200,25 +200,16 @@ public class RepositoryLibraryPropertiesEditor {
 
   private void reloadVersionsAsync() {
     setState(State.Loading);
-    Task task = new Task.Backgroundable(
-      project,
-      ProjectBundle.message("maven.loading.library.version.hint", repositoryLibraryDescription.getDisplayName()),
-      false) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          List<String> versions = RepositoryAttachHandler.retrieveVersions(
-            project,
-            repositoryLibraryDescription.getGroupId(),
-            repositoryLibraryDescription.getArtifactId(),
-            repositoryLibraryDescription.getRemoteRepositories());
-          versionsLoaded(versions);
-        }
-        catch (Exception e) {
-          versionsFailedToLoad();
-        }
-      }
-    };
-    ProgressManager.getInstance().run(task);
+    MavenVersionsRemoteManager.getInstance(project)
+      .getMavenArtifactVersionsAsync(
+        repositoryLibraryDescription.getGroupId(),
+        repositoryLibraryDescription.getArtifactId(),
+        new MavenRemoteTask.ResultProcessor<List<String>>() {
+          @Override
+          public void process(List<String> versions) {
+            versionsLoaded(versions);
+          }
+        });
   }
 
   private void initVersionsPanel() {

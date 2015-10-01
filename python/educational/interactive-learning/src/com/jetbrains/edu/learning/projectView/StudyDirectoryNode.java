@@ -201,4 +201,9 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
   protected boolean hasProblemFileBeneath() {
     return false;
   }
+
+  @Override
+  public String getNavigateActionText(boolean focusEditor) {
+    return null;
+  }
 }

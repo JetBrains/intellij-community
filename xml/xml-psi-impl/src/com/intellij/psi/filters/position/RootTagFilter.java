@@ -32,7 +32,6 @@ public class RootTagFilter extends PositionElementFilter{
     setFilter(filter);
   }
 
-  public RootTagFilter(){}
   @Override
   public boolean isAcceptable(Object element, PsiElement scope){
     if (!(element instanceof XmlDocument)) return false;

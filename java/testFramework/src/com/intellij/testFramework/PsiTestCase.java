@@ -62,11 +62,15 @@ public abstract class PsiTestCase extends ModuleTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myPsiManager = null;
-    myFile = null;
-    myTestDataBefore = null;
-    myTestDataAfter = null;
-    super.tearDown();
+    try {
+      myPsiManager = null;
+      myFile = null;
+      myTestDataBefore = null;
+      myTestDataAfter = null;
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @NotNull

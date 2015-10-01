@@ -144,7 +144,7 @@ public class ExecutionPointHighlighter {
     }
   }
 
-  public void updateGutterIcon(@NotNull final GutterIconRenderer renderer) {
+  public void updateGutterIcon(@Nullable final GutterIconRenderer renderer) {
     AppUIUtil.invokeOnEdt(new Runnable() {
       @Override
       public void run() {

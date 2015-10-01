@@ -486,6 +486,30 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testAsyncDef() {
+    doTest(LanguageLevel.PYTHON35);
+  }
+
+  public void testAsyncWith() {
+    doTest(LanguageLevel.PYTHON35);
+  }
+
+  public void testAsyncFor() {
+    doTest(LanguageLevel.PYTHON35);
+  }
+
+  public void testAwait() {
+    doTest(LanguageLevel.PYTHON35);
+  }
+
+  public void testDecoratedAsyncDef() {
+    doTest(LanguageLevel.PYTHON35);
+  }
+
+  public void testUnpackingExpressions() {
+    doTest(LanguageLevel.PYTHON35);
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;

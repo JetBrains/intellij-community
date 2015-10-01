@@ -38,7 +38,7 @@ import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
 private val COLUMNS = arrayOf(object : TableModelEditor.EditableColumnInfo<ReadonlySource, Boolean>() {
-  override fun getColumnClass() = javaClass<Boolean>()
+  override fun getColumnClass() = Boolean::class.java
 
   override fun valueOf(item: ReadonlySource) = item.active
 
@@ -54,19 +54,19 @@ private val COLUMNS = arrayOf(object : TableModelEditor.EditableColumnInfo<Reado
       }
     })
 
-private fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
+internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
   val itemEditor = object : TableModelEditor.DialogItemEditor<ReadonlySource>() {
     override fun clone(item: ReadonlySource, forInPlaceEditing: Boolean) = ReadonlySource(item.url, item.active)
 
-    override fun getItemClass() = javaClass<ReadonlySource>()
+    override fun getItemClass() = ReadonlySource::class.java
 
     override fun edit(item: ReadonlySource, mutator: Function<ReadonlySource, ReadonlySource>, isAdd: Boolean) {
       val dialogBuilder = DialogBuilder()
       val urlField = TextFieldWithBrowseButton(JTextField(20))
       urlField.addBrowseFolderListener(TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()))
-      urlField.getTextField().getDocument().addDocumentListener(object : DocumentAdapter() {
+      urlField.textField.document.addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(event: DocumentEvent) {
-          val url = StringUtil.nullize(urlField.getText())
+          val url = StringUtil.nullize(urlField.text)
           val enabled: Boolean
           try {
             enabled = url != null && url.length() > 1 && icsManager.repositoryService.checkUrl(url, null)
@@ -79,9 +79,9 @@ private fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
         }
       })
 
-      dialogBuilder.title("Add read-only source").resizable(false).centerPanel(FormBuilder.createFormBuilder().addLabeledComponent("URL:", urlField).getPanel()).setPreferredFocusComponent(urlField)
+      dialogBuilder.title("Add read-only source").resizable(false).centerPanel(FormBuilder.createFormBuilder().addLabeledComponent("URL:", urlField).panel).setPreferredFocusComponent(urlField)
       if (dialogBuilder.showAndGet()) {
-        mutator.`fun`(item).url = urlField.getText()
+        mutator.`fun`(item).url = urlField.text
       }
     }
 
@@ -95,7 +95,7 @@ private fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
   val editor = TableModelEditor(COLUMNS, itemEditor, "No sources configured")
   editor.reset(icsManager.settings.readOnlySources)
   return object : ConfigurableUi<IcsSettings> {
-    override fun isModified(settings: IcsSettings) = editor.isModified()
+    override fun isModified(settings: IcsSettings) = editor.isModified
 
     override fun apply(settings: IcsSettings) {
       val oldList = settings.readOnlySources
@@ -114,22 +114,22 @@ private fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
         }
       }
 
-      if (toDelete.isEmpty() && toCheckout.isEmpty()) {
+      if (toDelete.isEmpty && toCheckout.isEmpty) {
         return
       }
 
       ProgressManager.getInstance().run(object : Task.Modal(null, IcsBundle.message("task.sync.title"), true) {
         override fun run(indicator: ProgressIndicator) {
-          indicator.setIndeterminate(true)
+          indicator.isIndeterminate = true
 
           val root = icsManager.readOnlySourcesManager.rootDir
 
           if (toDelete.isNotEmpty()) {
-            indicator.setText("Deleting old repositories")
+            indicator.text = "Deleting old repositories"
             for (path in toDelete) {
               indicator.checkCanceled()
               try {
-                indicator.setText2(path)
+                indicator.text2 = path
                 FileUtil.delete(File(root, path))
               }
               catch (e: Exception) {
@@ -142,7 +142,7 @@ private fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
             for (source in toCheckout) {
               indicator.checkCanceled()
               try {
-                indicator.setText("Cloning ${StringUtil.trimMiddle(source.url!!, 255)}")
+                indicator.text = "Cloning ${StringUtil.trimMiddle(source.url!!, 255)}"
                 val dir = File(root, source.path!!)
                 if (dir.exists()) {
                   FileUtil.delete(dir)

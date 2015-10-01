@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -84,11 +85,14 @@ public class FindSuperElementsHelper {
     ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), true, true, false).forEach(new Processor<PsiClass>() {
       @Override
       public boolean process(PsiClass inheritor) {
+        ProgressManager.checkCanceled();
         for (PsiClassType interfaceType : inheritor.getImplementsListTypes()) {
+          ProgressManager.checkCanceled();
           PsiClassType.ClassResolveResult resolved = interfaceType.resolveGenerics();
           PsiClass anInterface = resolved.getElement();
           if (anInterface == null || !checkedInterfaces.add(PsiAnchor.create(anInterface))) continue;
           for (PsiMethod superMethod : anInterface.findMethodsByName(method.getName(), true)) {
+            ProgressManager.checkCanceled();
             PsiClass superInterface = superMethod.getContainingClass();
             if (superInterface == null) {
               continue;

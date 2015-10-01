@@ -37,6 +37,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
 import junit.framework.Assert;
 import org.jdom.Document;
@@ -59,7 +61,8 @@ public class EclipseEmlTest extends IdeaTestCase {
     final File currentTestRoot = new File(testRoot, getTestName(true));
     assertTrue(currentTestRoot.getAbsolutePath(), currentTestRoot.isDirectory());
 
-    FileUtil.copyDir(currentTestRoot, new File(getProject().getBaseDir().getPath()));
+    VirtualFile vTestRoot = LocalFileSystem.getInstance().findFileByIoFile(currentTestRoot);
+    copyDirContentsTo(vTestRoot, getProject().getBaseDir());
   }
 
 

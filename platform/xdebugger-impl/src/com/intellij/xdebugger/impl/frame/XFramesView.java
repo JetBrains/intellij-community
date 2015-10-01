@@ -323,7 +323,7 @@ public class XFramesView extends XDebugView {
     private final List<XStackFrame> myStackFrames;
     private String myErrorMessage;
     private int myNextFrameIndex = 0;
-    private boolean myRunning;
+    private volatile boolean myRunning;
     private boolean myAllFramesLoaded;
     private final XDebugSession mySession;
 
@@ -335,9 +335,11 @@ public class XFramesView extends XDebugView {
 
     @Override
     public void addStackFrames(@NotNull final List<? extends XStackFrame> stackFrames, final boolean last) {
+      if (isObsolete()) return;
       myLaterInvocator.offer(new Runnable() {
         @Override
         public void run() {
+          if (isObsolete()) return;
           myStackFrames.addAll(stackFrames);
           addFrameListElements(stackFrames, last);
           selectCurrentFrame();
@@ -356,9 +358,11 @@ public class XFramesView extends XDebugView {
 
     @Override
     public void errorOccurred(@NotNull final String errorMessage) {
+      if (isObsolete()) return;
       myLaterInvocator.offer(new Runnable() {
         @Override
         public void run() {
+          if (isObsolete()) return;
           if (myErrorMessage == null) {
             myErrorMessage = errorMessage;
             addFrameListElements(Collections.singletonList(errorMessage), true);

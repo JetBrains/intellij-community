@@ -183,6 +183,10 @@ public class JpsLibraryTableImpl implements LibraryTable, Disposable {
     }
 
     @Override
+    public void dispose() {
+    }
+
+    @Override
     public boolean isChanged() {
       return false;
     }

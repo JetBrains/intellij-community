@@ -15,6 +15,9 @@
  */
 package com.intellij.psi.autodetect;
 
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -84,19 +87,25 @@ public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeI
     CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(myFile.getFileType());
     indentOptions.copyFrom(defaultIndentOptions);
   }
+  
+  @NotNull
+  private IndentUsageInfo getMaxUsedIndentInfo() {
+    configureByFile(getFileNameWithExtension());
+    Document document = getDocument(myFile);
+
+    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(myFile);
+    Assert.assertNotNull(builder);
+    
+    FormattingModel model = builder.createModel(myFile, CodeStyleSettingsManager.getSettings(getProject()));
+    List<LineIndentInfo> lines = new FormatterBasedLineIndentInfoBuilder(document, model.getRootBlock()).build();
+    
+    IndentUsageStatistics statistics = new IndentUsageStatisticsImpl(lines);
+    return statistics.getKMostUsedIndentInfo(0);
+  }
 
   @NotNull
   public static CommonCodeStyleSettings.IndentOptions detectIndentOptions() {
     IndentOptionsDetector detector = new IndentOptionsDetectorImpl(myFile);
     return detector.getIndentOptions();
-  }
-
-  @NotNull
-  private IndentUsageInfo getMaxUsedIndentInfo() {
-    configureByFile(getFileNameWithExtension());
-    Document document = getDocument(myFile);
-    List<LineIndentInfo> lines = new LineIndentInfoBuilder(document.getCharsSequence(), myFile.getLanguage()).build();
-    IndentUsageStatistics statistics = new IndentUsageStatisticsImpl(lines);
-    return statistics.getKMostUsedIndentInfo(0);
   }
 }

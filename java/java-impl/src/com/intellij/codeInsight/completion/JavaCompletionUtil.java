@@ -34,10 +34,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.light.LightVariableBuilder;
@@ -48,7 +50,10 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,17 +64,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.*;
+import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class JavaCompletionUtil {
+  public static final Key<Boolean> FORCE_SHOW_SIGNATURE_ATTR = Key.create("forceShowSignature");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaCompletionUtil");
   public static final Key<PairFunction<PsiExpression, CompletionParameters, PsiType>> DYNAMIC_TYPE_EVALUATOR = Key.create("DYNAMIC_TYPE_EVALUATOR");
 
   private static final Key<PsiType> QUALIFIER_TYPE_ATTR = Key.create("qualifierType"); // SmartPsiElementPointer to PsiType of "qualifier"
-  public static final OffsetKey LPAREN_OFFSET = OffsetKey.create("lparen");
-  public static final OffsetKey RPAREN_OFFSET = OffsetKey.create("rparen");
-  public static final OffsetKey ARG_LIST_END_OFFSET = OffsetKey.create("argListEnd");
   static final NullableLazyKey<ExpectedTypeInfo[], CompletionLocation> EXPECTED_TYPES = NullableLazyKey.create("expectedTypes", new NullableFunction<CompletionLocation, ExpectedTypeInfo[]>() {
     @Override
     @Nullable
@@ -82,8 +85,6 @@ public class JavaCompletionUtil {
       return JavaSmartCompletionContributor.getExpectedTypes(location.getCompletionParameters());
     }
   });
-  private static final ElementPattern<PsiElement> LEFT_PAREN = psiElement(JavaTokenType.LPARENTH).andOr(psiElement().withParent(
-      PsiExpressionList.class), psiElement().afterLeaf(".", PsiKeyword.NEW));
 
   public static final Key<Boolean> SUPER_METHOD_PARAMETERS = Key.create("SUPER_METHOD_PARAMETERS");
 
@@ -102,7 +103,7 @@ public class JavaCompletionUtil {
 
   private static final Key<List<SmartPsiElementPointer<PsiMethod>>> ALL_METHODS_ATTRIBUTE = Key.create("allMethods");
 
-  public static PsiType getQualifierType(LookupItem item) {
+  public static PsiType getQualifierType(LookupElement item) {
     return item.getUserData(QUALIFIER_TYPE_ATTR);
   }
 
@@ -152,7 +153,7 @@ public class JavaCompletionUtil {
       }
     }
 
-    return ProjectCodeInsightSettings.getSettings(member.getProject()).isExcluded(name);
+    return JavaProjectCodeInsightSettings.getSettings(member.getProject()).isExcluded(name);
   }
 
   @SuppressWarnings({"unchecked"})
@@ -197,38 +198,6 @@ public class JavaCompletionUtil {
       throw new AssertionError("Null result for type " + type + " of class " + type.getClass());
     }
     return result;
-  }
-
-  public static void initOffsets(final PsiFile file, final OffsetMap offsetMap) {
-    int offset = Math.max(offsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET),
-                          offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
-
-    PsiElement element = file.findElementAt(offset);
-    if (element instanceof PsiWhiteSpace &&
-        (!element.textContains('\n') ||
-         CodeStyleSettingsManager.getSettings(file.getProject()).getCommonSettings(JavaLanguage.INSTANCE).METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE
-        )) {
-      element = file.findElementAt(element.getTextRange().getEndOffset());
-    }
-    if (element == null) return;
-
-    if (LEFT_PAREN.accepts(element)) {
-      offsetMap.addOffset(LPAREN_OFFSET, element.getTextRange().getStartOffset());
-      PsiElement list = element.getParent();
-      PsiElement last = list.getLastChild();
-      if (last instanceof PsiJavaToken && ((PsiJavaToken)last).getTokenType() == JavaTokenType.RPARENTH) {
-        offsetMap.addOffset(RPAREN_OFFSET, last.getTextRange().getStartOffset());
-      }
-
-      offsetMap.addOffset(ARG_LIST_END_OFFSET, list.getTextRange().getEndOffset());
-    }
-  }
-
-  public static void resetParensInfo(final OffsetMap offsetMap) {
-    offsetMap.removeOffset(LPAREN_OFFSET);
-    offsetMap.removeOffset(RPAREN_OFFSET);
-    offsetMap.removeOffset(ARG_LIST_END_OFFSET);
-    offsetMap.removeOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
   }
 
   @Nullable
@@ -530,14 +499,19 @@ public class JavaCompletionUtil {
       return Collections.singletonList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, "new", PsiSubstitutor.EMPTY, null));
     }
 
-    LookupElement _ret = LookupItemUtil.objectToLookupItem(completion);
-    if (_ret instanceof LookupItem) {
-      final PsiSubstitutor substitutor = completionElement.getSubstitutor();
-      if (substitutor != null) {
-        ((LookupItem<?>)_ret).setAttribute(LookupItem.SUBSTITUTOR, substitutor);
-      }
+    PsiSubstitutor substitutor = completionElement.getSubstitutor();
+    if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
+    if (completion instanceof PsiClass) {
+      return Collections.singletonList(JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)completion, true).setSubstitutor(substitutor));
     }
-    return Collections.singletonList(_ret);
+    if (completion instanceof PsiMethod) {
+      return Collections.singletonList(new JavaMethodCallElement((PsiMethod)completion).setQualifierSubstitutor(substitutor));
+    }
+    if (completion instanceof PsiVariable) {
+      return Collections.singletonList(new VariableLookupItem((PsiVariable)completion).setSubstitutor(substitutor));
+    }
+
+    return Collections.singletonList(LookupItemUtil.objectToLookupItem(completion));
   }
 
   public static boolean hasAccessibleConstructor(PsiType type) {
@@ -555,10 +529,6 @@ public class JavaCompletionUtil {
       if (!method.hasModifierProperty(PsiModifier.PRIVATE)) return true;
     }
     return false;
-  }
-
-  public static LookupItem qualify(final LookupItem ret) {
-    return ret.forceQualify();
   }
 
   public static Set<String> getAllLookupStrings(@NotNull PsiMember member) {
@@ -580,11 +550,6 @@ public class JavaCompletionUtil {
       containingClass = (PsiClass)parent;
     }
     return allLookupStrings;
-  }
-
-  public static LookupItem setShowFQN(final LookupItem ret) {
-    ret.setAttribute(JavaPsiClassReferenceElement.PACKAGE_NAME, PsiFormatUtil.getPackageDisplayName((PsiClass)ret.getObject()));
-    return ret;
   }
 
   public static boolean mayHaveSideEffects(@Nullable final PsiElement element) {

@@ -27,6 +27,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -51,13 +52,23 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   @Override
   protected void invokeImpl(PsiClass targetClass) {
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
+    final Project project = targetClass.getProject();
 
-    final PsiNewExpression newExpression = getNewExpression();
-
-    final PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
+        if (project.isDisposed()) {
+          return;
+        }
+        
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+        
+        final PsiNewExpression newExpression = getNewExpression();
+        if (newExpression == null) {
+          return;
+        }
+
+        final PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
         final PsiClass[] psiClass = new PsiClass[1];
         CommandProcessor.getInstance().executeCommand(newExpression.getProject(), new Runnable() {
           @Override
@@ -65,7 +76,8 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
             psiClass[0] = CreateFromUsageUtils.createClass(referenceElement, CreateClassKind.CLASS, null);
           }
         }, getText(), getText());
-        new WriteCommandAction(newExpression.getProject(), getText(), getText()) {
+
+        new WriteCommandAction(project, getText(), getText()) {
           @Override
           protected void run(@NotNull Result result) throws Throwable {
             setupClassFromNewExpression(psiClass[0], newExpression);

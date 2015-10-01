@@ -1134,7 +1134,7 @@ public class AbstractPopup implements JBPopup {
   private Window updateMaskAndAlpha(Window window) {
     if (window == null) return null;
 
-    if (window.isDisplayable() && window.isShowing()) return window;
+    if (!window.isDisplayable() || !window.isShowing()) return window;
 
     final WindowManagerEx wndManager = getWndManager();
     if (wndManager == null) return window;
@@ -1734,14 +1734,12 @@ public class AbstractPopup implements JBPopup {
     boolean doRevalidate = false;
     if (myHeaderComponent != null) {
       myHeaderPanel.remove(myHeaderComponent);
-      myHeaderPanel.add(myCaption, BorderLayout.NORTH);
       myHeaderComponent = null;
       doRevalidate = true;
     }
 
     if (c != null) {
-      myHeaderPanel.remove(myCaption);
-      myHeaderPanel.add(c, BorderLayout.NORTH);
+      myHeaderPanel.add(c, BorderLayout.CENTER);
       myHeaderComponent = c;
 
       final Dimension size = myContent.getSize();

@@ -67,10 +67,9 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
 
   @Override
   public void readExternal(@NotNull final Element rootChild, @NotNull final String childElements) throws InvalidDataException {
-    final List urls = rootChild.getChildren(childElements);
-    for (Object url : urls) {
-      Element pathElement = (Element)url;
-      final String urlAttribute = pathElement.getAttributeValue(URL_ATTR);
+    final List<Element> urls = rootChild.getChildren(childElements);
+    for (Element url : urls) {
+      final String urlAttribute = url.getAttributeValue(URL_ATTR);
       if (urlAttribute == null) throw new InvalidDataException("path element without url");
       add(urlAttribute);
     }

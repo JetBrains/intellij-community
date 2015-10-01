@@ -139,10 +139,12 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   public PyType getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     final String qname = getQualifiedName(function, callSite);
     if (qname != null) {
-      if (OPEN_FUNCTIONS.contains(qname) && callSite != null) {
-        final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
-        if (results != null) {
-          final PyType type = getOpenFunctionType(qname, results.getArguments(), callSite);
+      if (OPEN_FUNCTIONS.contains(qname) && callSite instanceof PyCallExpression) {
+        final PyCallExpression callExpr = (PyCallExpression)callSite;
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        final PyCallExpression.PyArgumentsMapping mapping = callExpr.mapArguments( resolveContext);
+        if (mapping.getMarkedCallee() != null) {
+          final PyType type = getOpenFunctionType(qname, mapping.getMappedParameters(), callSite);
           if (type != null) {
             return type;
           }

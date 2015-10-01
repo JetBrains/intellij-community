@@ -33,13 +33,11 @@ import java.util.List;
 import java.util.Set;
 
 public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
-  private static final Logger LOG = Logger.getInstance(GeneralIdBasedToSMTRunnerEventsConvertor.class.getName());
 
   private final TIntObjectHashMap<Node> myNodeByIdMap = new TIntObjectHashMap<Node>();
   private final Set<Node> myRunningTestNodes = ContainerUtil.newHashSet();
   private final SMTestProxy.SMRootTestProxy myTestsRootProxy;
   private final Node myTestsRootNode;
-  private final String myTestFrameworkName;
 
   private boolean myIsTestingFinished = false;
   private SMTestLocator myLocator = null;
@@ -48,10 +46,9 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   public GeneralIdBasedToSMTRunnerEventsConvertor(Project project,
                                                   @NotNull SMTestProxy.SMRootTestProxy testsRootProxy,
                                                   @NotNull String testFrameworkName) {
-    super(project);
+    super(project, testFrameworkName);
     myTestsRootProxy = testsRootProxy;
     myTestsRootNode = new Node(0, null, testsRootProxy);
-    myTestFrameworkName = testFrameworkName;
     myNodeByIdMap.put(myTestsRootNode.getId(), myTestsRootNode);
   }
 
@@ -411,20 +408,6 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       return myTestsRootNode;
     }
     return myRunningTestNodes.iterator().next();
-  }
-
-  private void logProblem(@NotNull String msg) {
-    logProblem(msg, SMTestRunnerConnectionUtil.isInDebugMode());
-  }
-
-  private void logProblem(@NotNull String msg, boolean throwError) {
-    final String text = "[" + myTestFrameworkName + "] " + msg;
-    if (throwError) {
-      LOG.error(text);
-    }
-    else {
-      LOG.warn(text);
-    }
   }
 
   private enum State {

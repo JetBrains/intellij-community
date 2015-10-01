@@ -376,5 +376,6 @@
       <keyboard-shortcut first-keystroke="control M"/>
       <keyboard-shortcut first-keystroke="shift F4"/>
     </action>
+    <action id="EditorMatchBrace"/>
   </keymap>
 </component>

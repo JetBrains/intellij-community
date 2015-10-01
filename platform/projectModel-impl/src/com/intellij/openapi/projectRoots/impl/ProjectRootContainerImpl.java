@@ -81,15 +81,14 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     LOG.assertTrue(myInsideChange);
     HashMap<OrderRootType, VirtualFile[]> oldRoots = new HashMap<OrderRootType, VirtualFile[]>(myFiles);
 
+    boolean changes = false;
     for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
       final VirtualFile[] roots = myRoots.get(orderRootType).getVirtualFiles();
-      final boolean same = Comparing.equal(roots, oldRoots.get(orderRootType));
-
-      myFiles.put(orderRootType, myRoots.get(orderRootType).getVirtualFiles());
-
-      if (!same) {
-        fireRootsChanged();
-      }
+      changes = changes || !Comparing.equal(roots, oldRoots.get(orderRootType));
+      myFiles.put(orderRootType, roots);
+    }
+    if (changes) {
+      fireRootsChanged();
     }
 
     myInsideChange = false;
@@ -104,13 +103,6 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   }
 
   private void fireRootsChanged() {
-    /*
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        LOG.info("roots changed: type='" + type + "'\n    oldRoots='" + Arrays.asList(oldRoots) + "'\n    newRoots='" + Arrays.asList(newRoots) + "' ");
-      }
-    });
-    */
     for (final ProjectRootListener listener : myListeners) {
       listener.rootsChanged();
     }
@@ -189,6 +181,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
       final VirtualFile[] oldRoots = VirtualFile.EMPTY_ARRAY;
       if (!Comparing.equal(oldRoots, newRoots)) {
         fireRootsChanged();
+        break;
       }
     }
   }
@@ -270,6 +263,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
       final VirtualFile[] newRoots = getRootFiles(type);
       if (!Comparing.equal(oldRoots, newRoots)) {
         fireRootsChanged();
+        break;
       }
     }
   }

@@ -768,4 +768,48 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "}\n"
     );
   }
+  
+  public void test_AlignComments_BetweenChainedMethodCalls() {
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    doMethodTest(
+      "ActionBarPullToRefresh.from(getActivity())\n" +
+      "        // Mark the ListView as pullable\n" +
+      "        .theseChildrenArePullable(eventsListView)\n" +
+      "                // Set the OnRefreshListener\n" +
+      "        .listener(this)\n" +
+      "                // Use the AbsListView delegate for StickyListHeadersListView\n" +
+      "        .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())\n" +
+      "                // Finally commit the setup to our PullToRefreshLayout\n" +
+      "        .setup(mPullToRefreshLayout);",
+      "ActionBarPullToRefresh.from(getActivity())\n" +
+      "                      // Mark the ListView as pullable\n" +
+      "                      .theseChildrenArePullable(eventsListView)\n" +
+      "                      // Set the OnRefreshListener\n" +
+      "                      .listener(this)\n" +
+      "                      // Use the AbsListView delegate for StickyListHeadersListView\n" +
+      "                      .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())\n" +
+      "                      // Finally commit the setup to our PullToRefreshLayout\n" +
+      "                      .setup(mPullToRefreshLayout);"
+    );
+  }
+  
+  public void test_AlignComments_2() {
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    doClassTest(
+      "public String returnWithBuilder2() {\n" +
+      "    return MoreObjects\n" +
+      "        .toStringHelper(this)\n" +
+      "        .add(\"value\", value)\n" +
+      "                   // comment\n" +
+      "        .toString();\n" +
+      "  }",
+      "public String returnWithBuilder2() {\n" +
+      "    return MoreObjects\n" +
+      "            .toStringHelper(this)\n" +
+      "            .add(\"value\", value)\n" +
+      "            // comment\n" +
+      "            .toString();\n" +
+      "}"
+    );
+  }
 }

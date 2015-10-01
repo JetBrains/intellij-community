@@ -135,6 +135,39 @@ class __method(object):
 """
     return txt
 
+
+def create_coroutine():
+    if version[0] == 3 and version[1] >= 5:
+        return """
+class __coroutine(object):
+    '''A mock class representing coroutine type.'''
+
+    def __init__(self):
+        self.__name__ = ''
+        self.__qualname__ = ''
+        self.cr_await = None
+        self.cr_frame = None
+        self.cr_running = False
+        self.cr_code = None
+
+    def __await__(self):
+        return []
+
+    def __iter__(self):
+        return []
+
+    def close(self):
+        pass
+
+    def send(self, value):
+        pass
+
+    def throw(self, type, value=None, traceback=None):
+        pass
+"""
+    return ""
+
+
 def _searchbases(cls, accum):
     # logic copied from inspect.py
     if cls not in accum:

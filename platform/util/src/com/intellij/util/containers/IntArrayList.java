@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -32,11 +33,8 @@ public class IntArrayList implements Cloneable {
   }
 
   public void trimToSize() {
-    int oldCapacity = myData.length;
-    if (mySize < oldCapacity){
-      int[] oldData = myData;
-      myData = new int[mySize];
-      System.arraycopy(oldData, 0, myData, 0, mySize);
+    if (mySize < myData.length){
+      myData = ArrayUtil.realloc(myData, mySize);
     }
   }
 
@@ -80,14 +78,11 @@ public class IntArrayList implements Cloneable {
   }
 
   public int indexOf(int elem) {
-    for(int i = 0; i < mySize; i++){
-      if (elem == myData[i]) return i;
-    }
-    return -1;
+    return indexOf(elem, 0, mySize);
   }
 
   public int indexOf(int elem, int startIndex, int endIndex) {
-    if (startIndex < 0 || endIndex < startIndex || endIndex >= mySize) {
+    if (startIndex < 0 || endIndex < startIndex || endIndex > mySize) {
       throw new IndexOutOfBoundsException("startIndex: "+startIndex+"; endIndex: "+endIndex+"; mySize: "+mySize);
     }
     for(int i = startIndex; i < endIndex; i++){
@@ -107,8 +102,7 @@ public class IntArrayList implements Cloneable {
   public Object clone() {
     try{
       IntArrayList v = (IntArrayList)super.clone();
-      v.myData = new int[mySize];
-      System.arraycopy(myData, 0, v.myData, 0, mySize);
+      v.myData = toArray();
       return v;
     }
     catch(CloneNotSupportedException e){
@@ -119,9 +113,7 @@ public class IntArrayList implements Cloneable {
 
   @NotNull
   public int[] toArray() {
-    int[] result = new int[mySize];
-    System.arraycopy(myData, 0, result, 0, mySize);
-    return result;
+    return toArray(0,mySize);
   }
 
   @NotNull

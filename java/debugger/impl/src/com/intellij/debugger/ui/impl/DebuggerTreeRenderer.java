@@ -104,6 +104,9 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     else if (valueDescriptor instanceof ThrownExceptionValueDescriptorImpl) {
       nodeIcon = AllIcons.Nodes.ExceptionClass;
     }
+    else if (valueDescriptor instanceof MethodReturnValueDescriptorImpl) {
+      nodeIcon = AllIcons.Debugger.WatchLastReturnValue;
+    }
     else if (isParameter(valueDescriptor)) {
       nodeIcon = PlatformIcons.PARAMETER_ICON;
     }

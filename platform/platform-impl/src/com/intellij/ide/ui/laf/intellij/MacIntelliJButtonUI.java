@@ -43,7 +43,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     int w = c.getWidth();
     int h = c.getHeight();
     if (isHelpButton(c)) {
-      Icon icon = MacIntelliJIconCache.getIcon("helpButton", false, c.hasFocus(), false);
+      Icon icon = MacIntelliJIconCache.getIcon("helpButton", false, c.hasFocus());
       int x = (w - icon.getIconWidth()) / 2;
       int y = (h - icon.getIconHeight()) / 2;
       icon.paintIcon(c, g, x, y);
@@ -52,7 +52,6 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
       String text = layout(b, SwingUtilities2.getFontMetrics(b, g),
                            b.getWidth(), b.getHeight());
 
-      boolean isDefault = b instanceof JButton && ((JButton)b).isDefaultButton();
       boolean isFocused = c.hasFocus();
       if (isSquare(c)) {
         g.setColor(Gray.xFF);
@@ -63,19 +62,19 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         int x = isFocused ? 0 : 2;
         int y = isFocused ? 0 : (h - viewRect.height) / 2;
         Icon icon;
-        icon = MacIntelliJIconCache.getIcon("buttonLeft", isDefault, isFocused, false);
+        icon = getLeftIcon(b);
         icon.paintIcon(b, g, x, y);
         x += icon.getIconWidth();
-        int stop = w - (isFocused ? 0 : 2) - (MacIntelliJIconCache.getIcon("buttonRight", isDefault, isFocused, false).getIconWidth());
+        int stop = w - (isFocused ? 0 : 2) - (getRightIcon(b).getIconWidth());
         Graphics gg = g.create(0, 0, w, h);
         gg.setClip(x, y, stop - x, h);
-        icon = MacIntelliJIconCache.getIcon("buttonMiddle", isDefault, isFocused, false);
+        icon = getMiddleIcon(b);
         while (x < stop) {
           icon.paintIcon(b, gg, x, y);
           x += icon.getIconWidth();
         }
         gg.dispose();
-        icon = MacIntelliJIconCache.getIcon("buttonRight", isDefault, isFocused, false);
+        icon = getRightIcon(b);
         icon.paintIcon(b, g, stop, y);
 
         clearTextShiftOffset();
@@ -97,6 +96,27 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     }
   }
 
+  private static Icon getLeftIcon(AbstractButton button) {
+    return getIcon("Left", button);
+  }
+
+  private static Icon getMiddleIcon(AbstractButton button) {
+    return getIcon("Middle", button);
+  }
+
+  private static Icon getRightIcon(AbstractButton button) {
+    return getIcon("Right", button);
+  }
+
+  private static Icon getIcon(String suffix, AbstractButton button) {
+    boolean isDefault = isDefaultButton(button);
+    boolean isFocused = button.hasFocus();
+    boolean combo = button.getClientProperty("styleCombo") == Boolean.TRUE;
+    String comboPrefix = combo ? "Combo" : "";
+    String iconName = "button" + comboPrefix + suffix;
+    return MacIntelliJIconCache.getIcon(iconName, isDefault, isFocused && !combo);
+  }
+
   private String layout(AbstractButton b, FontMetrics fm,
                         int width, int height) {
     Insets i = b.getInsets();
@@ -107,6 +127,10 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
     textRect.x = textRect.y = textRect.width = textRect.height = 0;
     iconRect.x = iconRect.y = iconRect.width = iconRect.height = 0;
+
+    if (b.getClientProperty("styleCombo") == Boolean.TRUE) {
+      viewRect.x += 6;
+    }
 
     // layout the text and icon
     return SwingUtilities.layoutCompoundLabel(
@@ -121,5 +145,17 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
     return new Dimension(size.width + 16, 27);
+  }
+
+  @Override
+  protected void paintDisabledText(Graphics g, String text, JComponent c, Rectangle textRect, FontMetrics metrics) {
+    int x = textRect.x + getTextShiftOffset();
+    int y = textRect.y + metrics.getAscent() + getTextShiftOffset();
+    if (isDefaultButton(c)) {
+     g.setColor(Gray.xCC);
+    } else {
+      g.setColor(UIManager.getColor("Button.disabledText"));
+    }
+    SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1, x, y);
   }
 }

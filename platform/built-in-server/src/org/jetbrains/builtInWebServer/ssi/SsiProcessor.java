@@ -16,12 +16,13 @@
 package org.jetbrains.builtInWebServer.ssi;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import io.netty.buffer.ByteBufUtf8Writer;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -109,15 +110,15 @@ public class SsiProcessor {
             try {
               boolean virtual = paramName.equalsIgnoreCase("virtual");
               lastModified = state.ssiExternalResolver.getFileLastModified(substitutedValue, virtual);
-              VirtualFile file = state.ssiExternalResolver.findFile(substitutedValue, virtual);
+              File file = state.ssiExternalResolver.findFile(substitutedValue, virtual);
               if (file == null) {
                 LOG.warn("#include-- Couldn't find file: " + substitutedValue);
                 return 0;
               }
 
-              InputStream in = file.getInputStream();
+              InputStream in = new FileInputStream(file);
               try {
-                writer.write(in, (int)file.getLength());
+                writer.write(in, (int)file.length());
               }
               finally {
                 in.close();

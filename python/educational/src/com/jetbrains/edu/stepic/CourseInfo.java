@@ -70,8 +70,10 @@ public class CourseInfo {
 
   public static class Author {
     int id;
-    String first_name;
-    String last_name;
+    String first_name = "";
+    String last_name = "";
+
+    public Author() {}
 
     public Author(String firstName, String lastName) {
       first_name = firstName;

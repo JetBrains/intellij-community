@@ -39,6 +39,7 @@ public final class HierarchyBrowserManager implements PersistentStateComponent<H
     public boolean SORT_ALPHABETICALLY;
     public boolean HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED;
     public String SCOPE;
+    public String EXPORT_FILE_PATH;
   }
 
   private State myState = new State();

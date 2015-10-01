@@ -87,14 +87,14 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
     val oldData = storageDataRef.get()
     val newData = getStorageData(true)
     if (oldData == null) {
-      if (LOG.isDebugEnabled()) {
+      if (LOG.isDebugEnabled) {
         LOG.debug("analyzeExternalChangesAndUpdateIfNeed: old data null, load new for ${toString()}")
       }
       componentNames.addAll(newData.keys())
     }
     else {
       val changedComponentNames = oldData.getChangedComponentNames(newData)
-      if (LOG.isDebugEnabled()) {
+      if (LOG.isDebugEnabled) {
         LOG.debug("analyzeExternalChangesAndUpdateIfNeed: changedComponentNames $changedComponentNames for ${toString()}")
       }
       if (!ContainerUtil.isEmpty(changedComponentNames)) {
@@ -152,7 +152,6 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
       storage.setStates(originalStates, stateMap)
     }
 
-    throws(IOException::class)
     protected abstract fun saveLocally(element: Element?)
   }
 
@@ -207,7 +206,7 @@ fun save(states: StateMap, rootElementName: String, newLiveStates: Map<String, E
   for (componentName in states.keys()) {
     val element = states.getElement(componentName, newLiveStates)
     // name attribute should be first
-    val elementAttributes = element.getAttributes()
+    val elementAttributes = element.attributes
     if (elementAttributes.isEmpty()) {
       element.setAttribute(FileStorageCoreUtil.NAME, componentName)
     }
@@ -232,7 +231,7 @@ fun save(states: StateMap, rootElementName: String, newLiveStates: Map<String, E
 }
 
 fun Element.normalizeRootName(): Element {
-  if (getParent() != null) {
+  if (parent != null) {
     LOG.warn("State element must not have parent ${JDOMUtil.writeElement(this)}")
     detach()
   }

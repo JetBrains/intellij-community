@@ -15,6 +15,7 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.idea.Bombed
 import com.intellij.openapi.components.MainConfigurationStateSplitter
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.StateStorageBase
@@ -29,6 +30,7 @@ import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import java.util.*
 
 private fun StateStorage.ExternalizationSession.save() {
   runInEdtAndWait {
@@ -38,10 +40,11 @@ private fun StateStorage.ExternalizationSession.save() {
 
 private fun StateStorageBase<*>.setStateAndSave(componentName: String, state: String?) {
   var externalizationSession = startExternalization()!!
-  externalizationSession.setState(null, componentName, if (state == null) Element("state") else JDOMUtil.load(state.reader))
+  externalizationSession.setState(null, componentName, if (state == null) Element("state") else JDOMUtil.load(state.reader()))
   externalizationSession.save()
 }
 
+@Bombed(year = 2015, month = Calendar.SEPTEMBER, day = 30)
 class DirectoryBasedStorageTest {
   companion object {
     @ClassRule val projectRule = ProjectRule()

@@ -316,28 +316,31 @@ public class GradleScriptType extends GroovyRunnableScriptType {
   @Override
   public GlobalSearchScope patchResolveScope(@NotNull GroovyFile file, @NotNull GlobalSearchScope baseScope) {
     if (!FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)) return baseScope;
-
-    final Collection<VirtualFile> files;
-    GlobalSearchScope result = GlobalSearchScope.EMPTY_SCOPE;
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-    if (module != null) {
-      String externalSystemId = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
-      if(!GradleConstants.SYSTEM_ID.toString().equals(externalSystemId)) return baseScope;
+    return patchResolveScopeInner(module, baseScope);
+  }
 
-      for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-        if (entry instanceof JdkOrderEntry) {
-          GlobalSearchScope scopeForSdk = LibraryScopeCache.getInstance(module.getProject()).getScopeForSdk((JdkOrderEntry)entry);
-          result = result.uniteWith(scopeForSdk);
-        }
+  public GlobalSearchScope patchResolveScopeInner(@Nullable Module module, @NotNull GlobalSearchScope baseScope) {
+    if (module == null) return GlobalSearchScope.EMPTY_SCOPE;
+    final String externalSystemId = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+    if (!GradleConstants.SYSTEM_ID.toString().equals(externalSystemId)) return baseScope;
+
+    GlobalSearchScope result = GlobalSearchScope.EMPTY_SCOPE;
+    final Project project = module.getProject();
+    for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+      if (entry instanceof JdkOrderEntry) {
+        GlobalSearchScope scopeForSdk = LibraryScopeCache.getInstance(project).getScopeForSdk((JdkOrderEntry)entry);
+        result = result.uniteWith(scopeForSdk);
       }
-
-      String modulePath = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
-      if(modulePath == null) return result;
-
-      files = GradleBuildClasspathManager.getInstance(file.getProject()).getModuleClasspathEntries(modulePath);
-
-      result = new ExternalModuleBuildGlobalSearchScope(module.getProject(), result.uniteWith(new NonClasspathDirectoriesScope(files)), modulePath);
     }
+
+    String modulePath = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+    if (modulePath == null) return result;
+
+    final Collection<VirtualFile> files = GradleBuildClasspathManager.getInstance(project).getModuleClasspathEntries(modulePath);
+
+    result = new ExternalModuleBuildGlobalSearchScope(project, result.uniteWith(new NonClasspathDirectoriesScope(files)), modulePath);
+
     return result;
   }
 }

@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
@@ -123,6 +124,15 @@ public class FileReferenceSet {
     return "/";
   }
 
+  protected int findSeparatorLength(@NotNull CharSequence sequence, int atOffset) {
+    return StringUtil.startsWith(sequence, atOffset, getSeparatorString()) ?
+           getSeparatorString().length() : 0;
+  }
+
+  protected int findSeparatorOffset(@NotNull CharSequence sequence, int startingFrom) {
+    return StringUtil.indexOf(sequence, getSeparatorString(), startingFrom);
+  }
+
   /**
    * This should be removed. Please use {@link FileReference#getContexts()} instead.
    */
@@ -215,49 +225,72 @@ public class FileReferenceSet {
   }
 
   protected void reparse() {
-    String str = myPathStringNonTrimmed;
-
-    final List<FileReference> referencesList = reparse(str, myStartInElement);
-
+    List<FileReference> referencesList = reparse(myPathStringNonTrimmed, myStartInElement);
     myReferences = referencesList.toArray(new FileReference[referencesList.size()]);
   }
 
   protected List<FileReference> reparse(String str, int startInElement) {
-    final List<FileReference> referencesList = new ArrayList<FileReference>();
+    int wsHead = 0;
+    int wsTail = 0;
 
-    String separatorString = getSeparatorString(); // separator's length can be more then 1 char
-    int sepLen = separatorString.length();
-    int currentSlash = -sepLen;
+    LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper;
+    TextRange valueRange;
+    CharSequence decoded;
+    // todo replace @param str with honest @param rangeInElement; and drop the following startsWith(..)
+    if (myElement instanceof PsiLanguageInjectionHost && !StringUtil.startsWith(myElement.getText(), startInElement, str)) {
+      escaper = ((PsiLanguageInjectionHost)myElement).createLiteralTextEscaper();
+      valueRange = ElementManipulators.getValueTextRange(myElement);
+      StringBuilder sb = new StringBuilder();
+      escaper.decode(valueRange, sb);
+      decoded = sb;
+      wsHead += Math.max(0, startInElement - valueRange.getStartOffset());
+    }
+    else {
+      escaper = null;
+      decoded = str;
+      valueRange = TextRange.from(startInElement, decoded.length());
+    }
+    List<FileReference> referencesList = ContainerUtil.newArrayList();
 
-    // skip white space
-    while (currentSlash + sepLen < str.length() && Character.isWhitespace(str.charAt(currentSlash + sepLen))) {
-      currentSlash++;
+    for (int i = wsHead; i < decoded.length() && Character.isWhitespace(decoded.charAt(i)); i++) {
+      wsHead++;     // skip head white spaces
+    }
+    for (int i = decoded.length() - 1; i >= 0 && Character.isWhitespace(decoded.charAt(i)); i--) {
+      wsTail++;     // skip tail white spaces
     }
 
-    if (currentSlash + sepLen + sepLen < str.length() &&
-        str.substring(currentSlash + sepLen, currentSlash + sepLen + sepLen).equals(separatorString)) {
-      currentSlash+=sepLen;
-    }
     int index = 0;
+    int curSep = findSeparatorOffset(decoded, wsHead);
+    int sepLen = curSep >= wsHead ? findSeparatorLength(decoded, curSep) : 0;
 
-    if (str.equals(separatorString)) {
-      final FileReference fileReference =
-        createFileReference(new TextRange(startInElement, startInElement + sepLen), index++, separatorString);
-      referencesList.add(fileReference);
+    if (curSep >= 0 && decoded.length() == wsHead + sepLen + wsTail) {
+      // add extra reference for the only & leading "/"
+      TextRange r = TextRange.create(startInElement, offset(curSep + Math.max(0, sepLen - 1), escaper, valueRange) + 1);
+      referencesList.add(createFileReference(r, index ++, decoded.subSequence(curSep, curSep + sepLen).toString()));
     }
-
-    while (true) {
-      int nextSlash = str.indexOf(separatorString, currentSlash + sepLen);
-      String subReferenceText = nextSlash > 0 ? str.substring(currentSlash + sepLen, nextSlash) : str.substring(currentSlash + sepLen);
-      TextRange range = new TextRange(startInElement + currentSlash + sepLen, startInElement + (nextSlash > 0 ? nextSlash : str.length()));
-      FileReference ref = createFileReference(range, index++, subReferenceText);
-      referencesList.add(ref);
-      if ((currentSlash = nextSlash) < 0) {
-        break;
-      }
+    curSep = curSep == wsHead ? curSep + sepLen : wsHead; // reset offsets & start again for simplicity
+    sepLen = 0;
+    while (curSep >= 0) {
+      int nextSep = findSeparatorOffset(decoded, curSep + sepLen);
+      int start = curSep + sepLen;
+      int endTrimmed = nextSep > 0 ? nextSep : Math.max(start, decoded.length() - wsTail);
+      int endInclusive = nextSep > 0 ? nextSep : Math.max(start, decoded.length() - 1 - wsTail);
+      // todo move ${placeholder} support (the str usage below) to a reference implementation
+      // todo reference-set should be bound to exact range & text in a file, consider: ${slash}path${slash}file&amp;.txt
+      String refText = index == 0 && nextSep < 0 && !StringUtil.contains(decoded, str) ? str :
+                                decoded.subSequence(start, endTrimmed).toString();
+      TextRange r = new TextRange(offset(start, escaper, valueRange),
+                                  offset(endInclusive, escaper, valueRange) + (nextSep < 0 && refText.length() > 0 ? 1 : 0));
+      referencesList.add(createFileReference(r, index++, refText));
+      curSep = nextSep;
+      sepLen = curSep > 0 ? findSeparatorLength(decoded, curSep) : 0;
     }
 
     return referencesList;
+  }
+
+  private static int offset(int offset, LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper, TextRange valueRange) {
+    return escaper == null ? offset + valueRange.getStartOffset() : escaper.getOffsetInHost(offset, valueRange);
   }
 
   public FileReference getReference(int index) {

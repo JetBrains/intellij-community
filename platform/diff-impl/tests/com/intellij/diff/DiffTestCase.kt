@@ -26,9 +26,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.HashMap
 import com.intellij.util.text.CharSequenceSubSequence
-import java.util.ArrayList
-import java.util.BitSet
-import java.util.Random
+import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
 public abstract class DiffTestCase : UsefulTestCase() {
@@ -211,7 +209,7 @@ public abstract class DiffTestCase : UsefulTestCase() {
       f(data3, ThreeSide.RIGHT)
     }
 
-    public fun invoke(side: ThreeSide): T = side.select(data1, data2, data3)
+    public fun invoke(side: ThreeSide): T = side.select(data1, data2, data3) as T
 
     override fun toString(): String {
       return "($data1, $data2, $data3)"

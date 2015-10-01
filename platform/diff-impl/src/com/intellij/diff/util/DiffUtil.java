@@ -32,6 +32,7 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -69,6 +70,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
@@ -241,6 +243,20 @@ public class DiffUtil {
   }
 
   //
+  // Icons
+  //
+
+  @NotNull
+  public static Icon getArrowIcon(@NotNull Side sourceSide) {
+    return sourceSide.select(AllIcons.Diff.ArrowRight, AllIcons.Diff.Arrow);
+  }
+
+  @NotNull
+  public static Icon getArrowDownIcon(@NotNull Side sourceSide) {
+    return sourceSide.select(AllIcons.Diff.ArrowRightDown, AllIcons.Diff.ArrowLeftDown);
+  }
+
+  //
   // UI
   //
 
@@ -288,6 +304,20 @@ public class DiffUtil {
   @NotNull
   public static String getSettingsConfigurablePath() {
     return "Settings | Tools | Diff";
+  }
+
+  @NotNull
+  public static String createTooltipText(@NotNull String text, @Nullable String appendix) {
+    @NonNls StringBuilder result = new StringBuilder();
+    result.append("<html><body>");
+    result.append(text);
+    if (appendix != null) {
+      result.append("<br><div style='margin-top: 5px'><font size='2'>");
+      result.append(appendix);
+      result.append("</font></div>");
+    }
+    result.append("</body></html>");
+    return result.toString();
   }
 
   // Titles
@@ -724,6 +754,7 @@ public class DiffUtil {
     @Nullable private final String myCommandName;
     @Nullable private final String myCommandGroupId;
     @NotNull private final UndoConfirmationPolicy myConfirmationPolicy;
+    private final boolean myUnderBulkUpdate;
 
     public DiffCommandAction(@Nullable Project project,
                              @NotNull Document document,
@@ -736,11 +767,21 @@ public class DiffUtil {
                              @Nullable String commandName,
                              @Nullable String commandGroupId,
                              @NotNull UndoConfirmationPolicy confirmationPolicy) {
+      this(project, document, commandName, commandGroupId, confirmationPolicy, false);
+    }
+
+    public DiffCommandAction(@Nullable Project project,
+                             @NotNull Document document,
+                             @Nullable String commandName,
+                             @Nullable String commandGroupId,
+                             @NotNull UndoConfirmationPolicy confirmationPolicy,
+                             boolean underBulkUpdate) {
       myDocument = document;
       myProject = project;
       myCommandName = commandName;
       myCommandGroupId = commandGroupId;
       myConfirmationPolicy = confirmationPolicy;
+      myUnderBulkUpdate = underBulkUpdate;
     }
 
     @CalledInAwt
@@ -756,7 +797,17 @@ public class DiffUtil {
           CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
             @Override
             public void run() {
-              execute();
+              if (myUnderBulkUpdate) {
+                DocumentUtil.executeInBulk(myDocument, true, new Runnable() {
+                  @Override
+                  public void run() {
+                    execute();
+                  }
+                });
+              }
+              else {
+                execute();
+              }
             }
           }, myCommandName, myCommandGroupId, myConfirmationPolicy, myDocument);
         }
@@ -880,25 +931,13 @@ public class DiffUtil {
     return false;
   }
 
-  public static <T> T getUserData(@Nullable DiffRequest request, @Nullable DiffContext context, @NotNull Key<T> key) {
-    if (request != null) {
-      T data = request.getUserData(key);
+  public static <T> T getUserData(@Nullable UserDataHolder first, @Nullable UserDataHolder second, @NotNull Key<T> key) {
+    if (first != null) {
+      T data = first.getUserData(key);
       if (data != null) return data;
     }
-    if (context != null) {
-      T data = context.getUserData(key);
-      if (data != null) return data;
-    }
-    return null;
-  }
-
-  public static <T> T getUserData(@Nullable DiffContext context, @Nullable DiffRequest request, @NotNull Key<T> key) {
-    if (context != null) {
-      T data = context.getUserData(key);
-      if (data != null) return data;
-    }
-    if (request != null) {
-      T data = request.getUserData(key);
+    if (second != null) {
+      T data = second.getUserData(key);
       if (data != null) return data;
     }
     return null;

@@ -608,7 +608,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       myChangeGuard = false;
     }
     if (!result || myDisposed) {
-      hide();
+      hideLookup(false);
       return false;
     }
     if (isVisible()) {
@@ -647,7 +647,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     if (ApplicationManager.getApplication().isUnitTestMode()) return true;
 
     if (!myEditor.getContentComponent().isShowing()) {
-      hide();
+      hideLookup(false);
       return false;
     }
 
@@ -665,7 +665,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
 
     if (!isVisible() || !myList.isShowing()) {
-      hide();
+      hideLookup(false);
       return false;
     }
 
@@ -685,7 +685,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       @Override
       public void documentChanged(DocumentEvent e) {
         if (!myChangeGuard && !myFinishing) {
-          hide();
+          hideLookup(false);
         }
       }
     }, this);
@@ -694,7 +694,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       @Override
       public void caretPositionChanged(CaretEvent e) {
         if (!myChangeGuard && !myFinishing) {
-          hide();
+          hideLookup(false);
         }
       }
     };
@@ -702,7 +702,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       @Override
       public void selectionChanged(final SelectionEvent e) {
         if (!myChangeGuard && !myFinishing) {
-          hide();
+          hideLookup(false);
         }
       }
     };
@@ -710,7 +710,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       @Override
       public void mouseClicked(EditorMouseEvent e){
         e.consume();
-        hide();
+        hideLookup(false);
       }
     };
 

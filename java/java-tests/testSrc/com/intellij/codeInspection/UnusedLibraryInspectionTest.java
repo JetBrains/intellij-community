@@ -49,7 +49,7 @@ public class UnusedLibraryInspectionTest extends InspectionTestCase {
   @Override
   protected void setupRootModel(String testDir, VirtualFile[] sourceDir, String sdkName) {
     super.setupRootModel(testDir, sourceDir, sdkName);
-    PsiTestUtil.addLibrary(getModule(), "JUnit", getTestDataPath() + "/junit.jar");
+    PsiTestUtil.addLibrary(getModule(), "JUnit", getTestDataPath(), "/junit.jar");
   }
 
   private void doTest() throws Exception {
@@ -63,4 +63,7 @@ public class UnusedLibraryInspectionTest extends InspectionTestCase {
   }
 
   public void testSimple() throws Exception { doTest(); }
+  public void testUsedJunit() throws Exception { doTest(); }
+  public void testUsedJunitFromField() throws Exception { doTest(); }
+  public void testUsedInParameterAnnotation() throws Exception { doTest(); }
 }

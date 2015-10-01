@@ -23,6 +23,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.Processor;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.io.PersistentEnumeratorBase;
@@ -32,14 +34,14 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import sun.misc.Unsafe;
 
 import javax.swing.*;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.*;
 
 /**
  * User: cdr
@@ -52,23 +54,37 @@ public class LeakHunter {
   private static Field[] getAllFields(@NotNull Class aClass) {
     Field[] cached = allFields.get(aClass);
     if (cached == null) {
-      Field[] declaredFields = aClass.getDeclaredFields();
-      List<Field> fields = new ArrayList<Field>(declaredFields.length + 5);
-      for (Field declaredField : declaredFields) {
-        declaredField.setAccessible(true);
-        Class<?> type = declaredField.getType();
-        if (isTrivial(type)) continue; // unable to hold references, skip
-        fields.add(declaredField);
-      }
-      Class superclass = aClass.getSuperclass();
-      if (superclass != null) {
-        for (Field sup : getAllFields(superclass)) {
-          if (!fields.contains(sup)) {
-            fields.add(sup);
+      try {
+        Field[] declaredFields = aClass.getDeclaredFields();
+        List<Field> fields = new ArrayList<Field>(declaredFields.length + 5);
+        for (Field declaredField : declaredFields) {
+          declaredField.setAccessible(true);
+          Class<?> type = declaredField.getType();
+          if (isTrivial(type)) continue; // unable to hold references, skip
+          fields.add(declaredField);
+        }
+        Class superclass = aClass.getSuperclass();
+        if (superclass != null) {
+          for (Field sup : getAllFields(superclass)) {
+            if (!fields.contains(sup)) {
+              fields.add(sup);
+            }
           }
         }
+        cached = fields.isEmpty() ? EMPTY_FIELD_ARRAY : fields.toArray(new Field[fields.size()]);
       }
-      cached = fields.isEmpty() ? EMPTY_FIELD_ARRAY : fields.toArray(new Field[fields.size()]);
+      catch (IncompatibleClassChangeError e) {
+        //this exception may be thrown because there are two different versions of org.objectweb.asm.tree.ClassNode from different plugins
+        //I don't see any sane way to fix it until we load all the plugins by the same classloader in tests
+        cached = EMPTY_FIELD_ARRAY;
+      }
+      catch (SecurityException e) {
+        cached = EMPTY_FIELD_ARRAY;
+      }
+      catch (NoClassDefFoundError e) {
+        cached = EMPTY_FIELD_ARRAY;
+      }
+
       allFields.put(aClass, cached);
     }
     return cached;
@@ -92,11 +108,13 @@ public class LeakHunter {
   }
 
   private static void walkObjects(@NotNull Class<?> lookFor,
-                                  @NotNull Object startRoot,
+                                  @NotNull Collection<Object> startRoots,
                                   @NotNull Processor<BackLink> leakProcessor) {
     TIntHashSet visited = new TIntHashSet();
     Queue<BackLink> toVisit = new Queue<BackLink>(1000000);
-    toVisit.addLast(new BackLink(startRoot, null, null));
+    for (Object startRoot : startRoots) {
+      toVisit.addLast(new BackLink(startRoot, null, null));
+    }
     while (true) {
       if (toVisit.isEmpty()) return;
       BackLink backLink = toVisit.pullFirst();
@@ -138,7 +156,41 @@ public class LeakHunter {
         catch (ClassCastException ignored) {
         }
       }
+      // check for objects leaking via static fields. process classes which already were initialized only
+      if (root instanceof Class && isLoadedAlready((Class)root)) {
+        try {
+          for (Field field : getAllFields((Class)root)) {
+            if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
+            Object value = field.get(null);
+            if (value == null) continue;
+            Class<?> valueClass = value.getClass();
+            if (lookFor.isAssignableFrom(valueClass) && isReallyLeak(field, field.getName(), value, valueClass)) {
+              BackLink newBackLink = new BackLink(value, field, backLink);
+              leakProcessor.process(newBackLink);
+            }
+            else {
+              BackLink newBackLink = new BackLink(value, field, backLink);
+              toVisit.addLast(newBackLink);
+            }
+          }
+        }
+        catch (IllegalAccessException ignored) {
+        }
+      }
     }
+  }
+
+  private static final Method Unsafe_shouldBeInitialized = ReflectionUtil.getDeclaredMethod(Unsafe.class, "shouldBeInitialized", Class.class);
+  private static boolean isLoadedAlready(Class root) {
+    if (Unsafe_shouldBeInitialized == null) return false;
+    boolean isLoadedAlready = false;
+    try {
+      isLoadedAlready = !(Boolean)Unsafe_shouldBeInitialized.invoke(AtomicFieldUpdater.getUnsafe(), root);
+    }
+    catch (Exception ignored) {
+    }
+    //AtomicFieldUpdater.getUnsafe().shouldBeInitialized((Class<?>)root);
+    return isLoadedAlready;
   }
 
   private static final Key<Boolean> IS_NOT_A_LEAK = Key.create("IS_NOT_A_LEAK");
@@ -158,8 +210,11 @@ public class LeakHunter {
         return !project.isDefault() && !((ProjectImpl)project).isLight();
       }
     };
-    checkLeak(ApplicationManager.getApplication(), ProjectImpl.class, isReallyLeak);
-    checkLeak(Extensions.getRootArea(), ProjectImpl.class, isReallyLeak);
+    Collection<Object> roots = new ArrayList<Object>(Arrays.asList(ApplicationManager.getApplication(), Extensions.getRootArea()));
+    ClassLoader classLoader = LeakHunter.class.getClassLoader();
+    Vector<Class> allLoadedClasses = ReflectionUtil.getField(classLoader.getClass(), classLoader, Vector.class, "classes");
+    roots.addAll(allLoadedClasses); // inspect static fields of all loaded classes
+    checkLeak(roots, ProjectImpl.class, isReallyLeak);
   }
 
   @TestOnly
@@ -171,7 +226,7 @@ public class LeakHunter {
    * Checks if there is a memory leak if an object of type {@code suspectClass} is strongly accessible via references from the {@code root} object.
    */
   @TestOnly
-  public static <T> void checkLeak(@NotNull Object root, @NotNull Class<T> suspectClass, @Nullable final Processor<? super T> isReallyLeak) throws AssertionError {
+  public static <T> void checkLeak(@NotNull Collection<Object> roots, @NotNull Class<T> suspectClass, @Nullable final Processor<? super T> isReallyLeak) throws AssertionError {
     if (SwingUtilities.isEventDispatchThread()) {
       UIUtil.dispatchAllInvocationEvents();
     }
@@ -179,7 +234,7 @@ public class LeakHunter {
       UIUtil.pump();
     }
     PersistentEnumeratorBase.clearCacheForTests();
-    walkObjects(suspectClass, root, new Processor<BackLink>() {
+    walkObjects(suspectClass, roots, new Processor<BackLink>() {
       @Override
       public boolean process(BackLink backLink) {
         UserDataHolder leaked = (UserDataHolder)backLink.value;
@@ -206,5 +261,12 @@ public class LeakHunter {
         return true;
       }
     });
+  }
+  /**
+   * Checks if there is a memory leak if an object of type {@code suspectClass} is strongly accessible via references from the {@code root} object.
+   */
+  @TestOnly
+  public static <T> void checkLeak(@NotNull Object root, @NotNull Class<T> suspectClass, @Nullable final Processor<? super T> isReallyLeak) throws AssertionError {
+    checkLeak(Collections.singletonList(root), suspectClass, isReallyLeak);
   }
 }

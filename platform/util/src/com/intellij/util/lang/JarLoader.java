@@ -16,26 +16,41 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.misc.Resource;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.net.URL;
-import java.util.Enumeration;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.intellij.openapi.util.Pair.pair;
+
 class JarLoader extends Loader {
+  private static final List<Pair<Resource.Attribute, Attributes.Name>> PACKAGE_FIELDS = Arrays.asList(
+    pair(Resource.Attribute.SPEC_TITLE, Attributes.Name.SPECIFICATION_TITLE),
+    pair(Resource.Attribute.SPEC_VERSION, Attributes.Name.SPECIFICATION_VERSION),
+    pair(Resource.Attribute.SPEC_VENDOR, Attributes.Name.SPECIFICATION_VENDOR),
+    pair(Resource.Attribute.IMPL_TITLE, Attributes.Name.IMPLEMENTATION_TITLE),
+    pair(Resource.Attribute.IMPL_VERSION, Attributes.Name.IMPLEMENTATION_VERSION),
+    pair(Resource.Attribute.IMPL_VENDOR, Attributes.Name.IMPLEMENTATION_VENDOR));
+
   private final File myCanonicalFile;
   private final boolean myCanLockJar; // true implies that the zipfile will not be modified in the lifetime of the JarLoader
   private SoftReference<JarMemoryLoader> myMemoryLoader;
   private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myCanLockJar==true
+  private final Map<Resource.Attribute, String> myAttributes;
 
   JarLoader(URL url, @SuppressWarnings("unused") boolean canLockJar, int index, boolean preloadJarContents) throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);
@@ -45,8 +60,9 @@ class JarLoader extends Loader {
 
     ZipFile zipFile = getZipFile(); // IOException from opening is propagated to caller if zip file isn't valid,
     try {
+      myAttributes = getAttributes(zipFile);
       if (preloadJarContents) {
-        JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL());
+        JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL(), myAttributes);
         if (loader != null) {
           myMemoryLoader = new SoftReference<JarMemoryLoader>(loader);
         }
@@ -55,6 +71,32 @@ class JarLoader extends Loader {
     finally {
       releaseZipFile(zipFile);
     }
+  }
+
+  @Nullable
+  private static Map<Resource.Attribute, String> getAttributes(ZipFile zipFile) {
+    ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
+    if (entry == null) return null;
+
+    Map<Resource.Attribute, String> map = null;
+    try {
+      InputStream stream = zipFile.getInputStream(entry);
+      try {
+        Attributes attributes = new Manifest(stream).getMainAttributes();
+        for (Pair<Resource.Attribute, Attributes.Name> p : PACKAGE_FIELDS) {
+          String value = attributes.getValue(p.second);
+          if (value != null) {
+            if (map == null) map = new EnumMap<Resource.Attribute, String>(Resource.Attribute.class);
+            map.put(p.first, value);
+          }
+        }
+      }
+      finally {
+        stream.close();
+      }
+    }
+    catch (Exception ignored) { }
+    return map;
   }
 
   @NotNull
@@ -95,7 +137,7 @@ class JarLoader extends Loader {
       try {
         ZipEntry entry = zipFile.getEntry(name);
         if (entry != null) {
-          return MemoryResource.load(getBaseURL(), zipFile, entry);
+          return MemoryResource.load(getBaseURL(), zipFile, entry, myAttributes);
         }
       }
       finally {

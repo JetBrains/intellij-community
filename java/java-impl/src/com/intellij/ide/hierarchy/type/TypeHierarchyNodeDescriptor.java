@@ -37,18 +37,13 @@ public final class TypeHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
   }
 
   public final PsiElement getPsiClass() {
-    return myElement;
-  }
-
-  public final boolean isValid() {
-    final PsiElement psiElement = getPsiClass();
-    return psiElement != null && psiElement.isValid();
+    return getPsiElement();
   }
 
   public final boolean update() {
     boolean changes = super.update();
 
-    if (myElement == null){
+    if (getPsiElement() == null){
       final String invalidPrefix = IdeBundle.message("node.hierarchy.invalid");
       if (!myHighlightedText.getText().startsWith(invalidPrefix)) {
         myHighlightedText.getBeginning().addText(invalidPrefix, HierarchyNodeDescriptor.getInvalidPrefixAttributes());

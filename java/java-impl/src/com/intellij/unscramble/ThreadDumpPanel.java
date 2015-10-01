@@ -42,6 +42,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -425,6 +426,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     @Override
     public void removeSettingsChangedListener(ChangeListener listener) {}
 
+    @NotNull
     @Override
     public String getReportText() {
       StringBuilder sb = new StringBuilder();
@@ -436,13 +438,14 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
     private static final @NonNls String DEFAULT_REPORT_FILE_NAME = "threads_report.txt";
 
+    @NotNull
     @Override
     public String getDefaultFilePath() {
       final VirtualFile baseDir = myProject.getBaseDir();
       if (baseDir != null) {
         return baseDir.getPresentableUrl() + File.separator + DEFAULT_REPORT_FILE_NAME;
       }
-      return null;
+      return "";
     }
 
     @Override

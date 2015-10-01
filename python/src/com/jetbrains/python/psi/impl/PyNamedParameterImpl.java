@@ -35,6 +35,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.documentation.docstrings.NumpyDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
@@ -208,7 +209,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
             docString = pyClass.getStructuredDocString();
           }
         }
-        if (docString != null) {
+        // FIXME Temporarily disable type extraction directly from NumpyDocString in favor of NumpyDocStringTypeProvider 
+        if (docString != null && !(docString instanceof NumpyDocString)) {
           String typeName = docString.getParamType(getName());
           if (typeName != null) {
             return PyTypeParser.getTypeByName(this, typeName);
@@ -224,8 +226,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
               initType = context.getReturnType(init);
               if (init.getContainingClass() != containingClass) {
                 if (initType instanceof PyCollectionType) {
-                  final PyType elementType = ((PyCollectionType)initType).getElementType(context);
-                  return new PyCollectionTypeImpl(containingClass, false, elementType);
+                  final List<PyType> elementTypes = ((PyCollectionType)initType).getElementTypes(context);
+                  return new PyCollectionTypeImpl(containingClass, false, elementTypes);
                 }
               }
             }
@@ -269,8 +271,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
               final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
               final PyArgumentList argumentList = call.getArgumentList();
               if (argumentList != null) {
-                final CallArgumentsMapping mapping = argumentList.analyzeCall(resolveContext);
-                for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getPlainMappedParams().entrySet()) {
+                final PyCallExpression.PyArgumentsMapping mapping = call.mapArguments(resolveContext);
+                for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getMappedParameters().entrySet()) {
                   if (entry.getValue() == PyNamedParameterImpl.this) {
                     final PyExpression argument = entry.getKey();
                     if (argument != null) {
@@ -393,8 +395,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           }
         }
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-        final CallArgumentsMapping mapping = argumentList.analyzeCall(resolveContext);
-        for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getPlainMappedParams().entrySet()) {
+        final PyCallExpression.PyArgumentsMapping mapping = callExpression.mapArguments(resolveContext);
+        for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getMappedParameters().entrySet()) {
           if (entry.getKey() == element) {
             return entry.getValue();
           }

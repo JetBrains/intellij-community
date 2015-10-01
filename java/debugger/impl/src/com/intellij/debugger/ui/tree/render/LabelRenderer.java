@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,15 +40,11 @@ import javax.swing.*;
  * Date: Sep 20, 2003
  * Time: 10:27:12 PM
  */
-public class LabelRenderer extends com.intellij.debugger.ui.tree.render.ReferenceRenderer implements ValueLabelRenderer{
+public class LabelRenderer extends ReferenceRenderer implements ValueLabelRenderer{
   public static final @NonNls String UNIQUE_ID = "LabelRenderer";
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.render.ClassLabelRenderer");
 
-  private final CachedEvaluator myLabelExpression = new CachedEvaluator() {
-    protected String getClassName() {
-      return LabelRenderer.this.getClassName();
-    }
-  };
+  private CachedEvaluator myLabelExpression = createCachedEvaluator();
 
   public LabelRenderer() {
     super();
@@ -59,7 +55,10 @@ public class LabelRenderer extends com.intellij.debugger.ui.tree.render.Referenc
   }
 
   public LabelRenderer clone() {
-    return (LabelRenderer)super.clone();
+    LabelRenderer clone = (LabelRenderer)super.clone();
+    clone.myLabelExpression = createCachedEvaluator();
+    clone.setLabelExpression(getLabelExpression());
+    return clone;
   }
 
   public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {

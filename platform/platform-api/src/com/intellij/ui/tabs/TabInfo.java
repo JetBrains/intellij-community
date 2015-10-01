@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,11 @@ package com.intellij.ui.tabs;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
@@ -31,6 +34,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
+import java.util.List;
 import java.util.Map;
 
 public final class TabInfo implements Queryable, PlaceProvider<String> {
@@ -82,7 +86,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   private static final AlertIcon DEFAULT_ALERT_ICON = new AlertIcon(AllIcons.Nodes.TabAlert);
 
   private boolean myEnabled = true;
-  private Color myTabColor = null;
+  private Color myTabColor;
 
   private Queryable myQueryable;
   private DragOutDelegate myDragOutDelegate;
@@ -103,18 +107,25 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   public TabInfo setText(String text) {
-    clearText(false);
-    append(text, getDefaultAttributes());
+    List<SimpleTextAttributes> attributes = myText.getAttributes();
+    TextAttributes textAttributes = attributes.size() == 1 ? attributes.get(0).toTextAttributes() : null;
+    TextAttributes defaultAttributes = getDefaultAttributes().toTextAttributes();
+    if (!myText.toString().equals(text) || !Comparing.equal(textAttributes, defaultAttributes)) {
+      clearText(false);
+      append(text, getDefaultAttributes());
+    }
     return this;
   }
 
+  @NotNull
   private SimpleTextAttributes getDefaultAttributes() {
-    if (myDefaultAttributes != null) return myDefaultAttributes;
+    SimpleTextAttributes attributes = myDefaultAttributes;
+    if (attributes == null) {
+      myDefaultAttributes = attributes = new SimpleTextAttributes(myDefaultStyle != -1 ? myDefaultStyle : SimpleTextAttributes.STYLE_PLAIN,
+                                                     myDefaultForeground, myDefaultWaveColor);
 
-    myDefaultAttributes = new SimpleTextAttributes(myDefaultStyle != -1 ? myDefaultStyle : SimpleTextAttributes.STYLE_PLAIN,
-                                                   myDefaultForeground, myDefaultWaveColor);
-
-    return myDefaultAttributes;
+    }
+    return attributes;
   }
 
   public TabInfo clearText(final boolean invalidate) {
@@ -135,8 +146,10 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
 
   public TabInfo setIcon(Icon icon) {
     Icon old = myIcon;
-    myIcon = icon;
-    myChangeSupport.firePropertyChange(ICON, old, icon);
+    if (!IconDeferrer.getInstance().equalIcons(old, icon)) {
+      myIcon = icon;
+      myChangeSupport.firePropertyChange(ICON, old, icon);
+    }
     return this;
   }
 
@@ -168,6 +181,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return myIcon;
   }
 
+  @Override
   public String getPlace() {
     return myPlace;
   }
@@ -339,8 +353,10 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
 
   public TabInfo setTooltipText(final String text) {
     String old = myTooltipText;
-    myTooltipText = text;
-    myChangeSupport.firePropertyChange(TEXT, old, myTooltipText);
+    if (!Comparing.equal(old, text)) {
+      myTooltipText = text;
+      myChangeSupport.firePropertyChange(TEXT, old, myTooltipText);
+    }
     return this;
   }
 
@@ -350,8 +366,10 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
 
   public TabInfo setTabColor(Color color) {
     Color old = myTabColor;
-    myTabColor = color;
-    myChangeSupport.firePropertyChange(TAB_COLOR, old, color);
+    if (!Comparing.equal(color, old)) {
+      myTabColor = color;
+      myChangeSupport.firePropertyChange(TAB_COLOR, old, color);
+    }
     return this;
   }
 
@@ -364,6 +382,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return this;
   }
 
+  @Override
   public void putInfo(@NotNull Map<String, String> info) {
     if (myQueryable != null) {
       myQueryable.putInfo(info);

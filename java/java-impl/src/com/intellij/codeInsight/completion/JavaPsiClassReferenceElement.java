@@ -20,10 +20,10 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
@@ -39,21 +39,22 @@ import java.util.Set;
  * @author peter
  */
 public class JavaPsiClassReferenceElement extends LookupItem<Object> implements TypedLookupItem {
-  public static final Key<String> PACKAGE_NAME = Key.create("PACKAGE_NAME");
   public static final ClassConditionKey<JavaPsiClassReferenceElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaPsiClassReferenceElement.class);
   private final Object myClass;
   private volatile Reference<PsiClass> myCache;
   private final String myQualifiedName;
   private String myForcedPresentableName;
+  private String myPackageDisplayName;
+  private PsiSubstitutor mySubstitutor = PsiSubstitutor.EMPTY;
 
   public JavaPsiClassReferenceElement(PsiClass psiClass) {
     super(psiClass.getName(), psiClass.getName());
     myQualifiedName = psiClass.getQualifiedName();
     final PsiFile file = psiClass.getContainingFile();
     myClass = file == null || file.getVirtualFile() == null || myQualifiedName == null ? psiClass : PsiAnchor.create(psiClass);
-    JavaCompletionUtil.setShowFQN(this);
     setInsertHandler(AllClassesGetter.TRY_SHORTENING);
     setTailType(TailType.NONE);
+    myPackageDisplayName = PsiFormatUtil.getPackageDisplayName(psiClass);
   }
 
   public String getForcedPresentableName() {
@@ -64,8 +65,16 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   @Override
   public PsiType getType() {
     PsiClass psiClass = getObject();
-    final PsiSubstitutor substitutor = (PsiSubstitutor)getAttribute(LookupItem.SUBSTITUTOR);
-    return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, substitutor == null ? PsiSubstitutor.EMPTY : substitutor);
+    return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, getSubstitutor());
+  }
+
+  public PsiSubstitutor getSubstitutor() {
+    return mySubstitutor;
+  }
+
+  public JavaPsiClassReferenceElement setSubstitutor(PsiSubstitutor substitutor) {
+    mySubstitutor = substitutor;
+    return this;
   }
 
   @NotNull
@@ -99,8 +108,12 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
         return psiClass;
       }
 
-      final PsiClass retrieve = (PsiClass)((PsiAnchor)myClass).retrieve();
-      assert retrieve != null : myQualifiedName;
+      PsiAnchor anchor = (PsiAnchor)myClass;
+      final PsiClass retrieve = (PsiClass)anchor.retrieve();
+      if (retrieve == null) {
+        throw new AssertionError(myQualifiedName + "; anchor=" + anchor + "; diagnostics=" +
+                                 (anchor instanceof PsiAnchor.StubIndexReference ? ((PsiAnchor.StubIndexReference)anchor).diagnoseNull() : null));
+      }
       myCache = new WeakReference<PsiClass>(retrieve);
       return retrieve;
     }
@@ -142,22 +155,20 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
 
   @Override
   public void renderElement(LookupElementPresentation presentation) {
-    LookupItem item = this;
-    PsiClass psiClass = getObject();
-    renderClassItem(presentation, item, psiClass, false);
+    renderClassItem(presentation, this, getObject(), false, " (" + myPackageDisplayName + ")", mySubstitutor);
   }
 
-  public static void renderClassItem(LookupElementPresentation presentation, LookupItem item, PsiClass psiClass, boolean diamond) {
+  public static void renderClassItem(LookupElementPresentation presentation, LookupElement item, PsiClass psiClass, boolean diamond,
+                                     @NotNull String locationString, @NotNull PsiSubstitutor substitutor) {
     if (!(psiClass instanceof PsiTypeParameter)) {
       presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item, presentation.isReal()));
     }
 
     boolean strikeout = JavaElementLookupRenderer.isToStrikeout(item);
-    presentation.setItemText(getName(psiClass, item, diamond));
+    presentation.setItemText(getName(psiClass, item, diamond, substitutor));
     presentation.setStrikeout(strikeout);
 
-    String tailText = getLocationString(item);
-    PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
+    String tailText = locationString;
 
     if (item instanceof PsiTypeLookupItem) {
       if (((PsiTypeLookupItem)item).isIndicateAnonymous() &&
@@ -166,7 +177,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
         tailText = "{...}" + tailText;
       }
     }
-    if (substitutor == null && !diamond && psiClass.getTypeParameters().length > 0) {
+    if (substitutor == PsiSubstitutor.EMPTY && !diamond && psiClass.getTypeParameters().length > 0) {
       tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), new Function<PsiTypeParameter, String>() {
         @Override
         public String fun(PsiTypeParameter psiTypeParameter) {
@@ -177,12 +188,11 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     presentation.setTailText(tailText, true);
   }
 
-  public static String getLocationString(LookupItem<?> item) {
-    String pkgName = item.getAttribute(PACKAGE_NAME);
-    return pkgName == null ? "" : " (" + pkgName + ")";
+  public String getLocationString() {
+    return " (" + myPackageDisplayName + ")";
   }
 
-  private static String getName(final PsiClass psiClass, final LookupItem<?> item, boolean diamond) {
+  private static String getName(final PsiClass psiClass, final LookupElement item, boolean diamond, @NotNull PsiSubstitutor substitutor) {
     if (item instanceof JavaPsiClassReferenceElement) {
       String forced = ((JavaPsiClassReferenceElement)item).getForcedPresentableName();
       if (forced != null) {
@@ -191,19 +201,11 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     }
 
     String name = PsiUtilCore.getName(psiClass);
-
-    if (item.getAttribute(LookupItem.FORCE_QUALIFY) != null) {
-      if (psiClass.getContainingClass() != null) {
-        name = psiClass.getContainingClass().getName() + "." + name;
-      }
-    }
-
     if (diamond) {
       return name + "<>";
     }
 
-    PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
-    if (substitutor != null) {
+    if (substitutor != PsiSubstitutor.EMPTY) {
       final PsiTypeParameter[] params = psiClass.getTypeParameters();
       if (params.length > 0) {
         return name + formatTypeParameters(substitutor, params);

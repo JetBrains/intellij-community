@@ -113,9 +113,8 @@ public class JarDirectories implements JDOMExternalizable {
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     clear();
-    final List jarDirs = element.getChildren(JAR_DIRECTORY_ELEMENT);
-    for (Object item : jarDirs) {
-      final Element jarDir = (Element)item;
+    final List<Element> jarDirs = element.getChildren(JAR_DIRECTORY_ELEMENT);
+    for (Element jarDir : jarDirs) {
       final String url = jarDir.getAttributeValue(URL_ATTR);
       final String recursive = jarDir.getAttributeValue(RECURSIVE_ATTR);
       final OrderRootType rootType = getJarDirectoryRootType(jarDir.getAttributeValue(ROOT_TYPE_ATTR));

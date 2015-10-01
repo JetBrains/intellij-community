@@ -132,7 +132,8 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
   }
   
   public boolean sdkHasJavadocUrls() {
-    return getSdk(myProject).getRootProvider().getFiles(JavadocOrderRootType.getInstance()).length > 0;
+    Sdk sdk = getSdk(myProject);
+    return sdk != null && sdk.getRootProvider().getFiles(JavadocOrderRootType.getInstance()).length > 0;
   }
 
   public static Sdk getSdk(@NotNull Project project) {

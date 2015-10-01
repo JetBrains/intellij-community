@@ -233,22 +233,25 @@ public class ProjectUtil {
     return confirmOpenNewProject;
   }
 
-  private static boolean isSameProject(String path, Project p) {
-    final IProjectStore projectStore = (IProjectStore)ComponentsPackage.getStateStore(p);
+  private static boolean isSameProject(String path, @NotNull Project project) {
+    IProjectStore projectStore = (IProjectStore)ComponentsPackage.getStateStore(project);
 
     String toOpen = FileUtil.toSystemIndependentName(path);
-    String existing = FileUtil.toSystemIndependentName(projectStore.getProjectFilePath());
+    String existing = projectStore.getProjectFilePath();
 
-    final VirtualFile existingBaseDir = projectStore.getProjectBaseDir();
-    if (existingBaseDir == null) return false; // could be null if not yet initialized
+    String existingBaseDir = projectStore.getProjectBasePath();
+    if (existingBaseDir == null) {
+      // could be null if not yet initialized
+      return false;
+    }
 
     final File openFile = new File(toOpen);
     if (openFile.isDirectory()) {
-      return FileUtil.pathsEqual(toOpen, existingBaseDir.getPath());
+      return FileUtil.pathsEqual(toOpen, existingBaseDir);
     }
     if (StorageScheme.DIRECTORY_BASED == projectStore.getStorageScheme()) {
       // todo: check if IPR is located not under the project base dir
-      return FileUtil.pathsEqual(FileUtil.toSystemIndependentName(openFile.getParentFile().getPath()), existingBaseDir.getPath());
+      return FileUtil.pathsEqual(FileUtil.toSystemIndependentName(openFile.getParentFile().getPath()), existingBaseDir);
     }
 
     return FileUtil.pathsEqual(toOpen, existing);

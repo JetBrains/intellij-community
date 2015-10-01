@@ -31,6 +31,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
@@ -233,7 +234,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     if (inherited) {
       classMember =
-        resolveByMembersProviders(this, name, location, context);  //ask providers after real class introspection as providers have less priority
+        resolveByMembersProviders(this, name, location,
+                                  context);  //ask providers after real class introspection as providers have less priority
     }
 
     if (classMember != null) {
@@ -244,7 +246,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       for (PyClassLikeType type : myClass.getAncestorTypes(context)) {
         if (type instanceof PyClassType) {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
-          PsiElement superMember = resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name, location, resolveContext.getTypeEvalContext());
+          PsiElement superMember =
+            resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name, location, resolveContext.getTypeEvalContext());
 
           if (superMember != null) {
             return ResolveResultList.to(superMember);
@@ -256,7 +259,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return Collections.emptyList();
   }
 
-  private Ref<ResolveResultList> findProperty(String name, AccessDirection direction, boolean inherited, @Nullable TypeEvalContext context) {
+  private Ref<ResolveResultList> findProperty(String name,
+                                              AccessDirection direction,
+                                              boolean inherited,
+                                              @Nullable TypeEvalContext context) {
     Ref<ResolveResultList> resultRef = null;
     Property property = myClass.findProperty(name, inherited, context);
     if (property != null) {
@@ -338,6 +344,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Override
   public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return null;
+  }
+
+  @NotNull
+  @Override
+  public final List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
+    return myClass.getAncestorTypes(context);
   }
 
   @Nullable
@@ -460,6 +472,28 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return ret.toArray();
   }
 
+  @Override
+  public void visitMembers(@NotNull final Processor<PsiElement> processor,
+                           final boolean inherited,
+                           @NotNull final TypeEvalContext context) {
+
+    myClass.visitMethods(new MyProcessorWrapper<PyFunction>(processor), false, context);
+    myClass.visitClassAttributes(new MyProcessorWrapper<PyTargetExpression>(processor), false, context);
+
+    // TODO: accept instance attributes as well
+
+    if (!inherited) {
+      return;
+    }
+
+    for (final PyClassLikeType type : getAncestorTypes(context)) {
+      if (type != null) {
+        // "false" because getAncestorTypes returns ALL ancestors, not only direct parents
+        type.visitMembers(processor, false, context);
+      }
+    }
+  }
+
   private void addOwnClassMembers(PsiElement expressionHook, Set<String> namesAlready, boolean suppressParentheses, List<Object> ret) {
     PyClass containingClass = PsiTreeUtil.getParentOfType(expressionHook, PyClass.class);
     if (containingClass != null) {
@@ -476,7 +510,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     myClass.processClassLevelDeclarations(processor);
 
     // We are here because of completion (see call stack), so we use code complete here
-    final TypeEvalContext context = (expressionHook != null ? TypeEvalContext.codeCompletion(myClass.getProject(), myClass.getContainingFile()) :null);
+    final TypeEvalContext context =
+      (expressionHook != null ? TypeEvalContext.codeCompletion(myClass.getProject(), myClass.getContainingFile()) : null);
     List<String> slots = myClass.isNewStyleClass(null) ? myClass.getSlots(
       context) : null;
     if (slots != null) {
@@ -620,5 +655,19 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return null;
     }
     return new PyClassTypeImpl(pyClass, isDefinition);
+  }
+
+  private static final class MyProcessorWrapper<T extends PsiElement> implements Processor<T> {
+    private final Processor<PsiElement> myProcessor;
+
+    private MyProcessorWrapper(@NotNull final Processor<PsiElement> processor) {
+      myProcessor = processor;
+    }
+
+    @Override
+    public boolean process(final T t) {
+      myProcessor.process(t);
+      return true;
+    }
   }
 }

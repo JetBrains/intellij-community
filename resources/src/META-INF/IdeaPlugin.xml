@@ -66,6 +66,10 @@
     <component>
       <implementation-class>com.intellij.execution.testDiscovery.TestDiscoveryIndex</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.execution.scratch.JavaScratchCompilationSupport</implementation-class>
+    </component>
   </project-components>
 
   <extensionPoints>
@@ -217,7 +221,7 @@
     </extensionPoint>
 
     <extensionPoint name="expressionConverter" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.refactoring.introduceParameter.ExpressionConverter"/>
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.ExpressionConverter"/>
     </extensionPoint>
 
     <extensionPoint name="refactoring.pullUpHelperFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -246,7 +250,7 @@
     <extensionPoint name="getterSetterProvider" interface="com.intellij.codeInsight.generation.GetterSetterPrototypeProvider"/>
 
     <extensionPoint name="library.dependencyScopeSuggester" interface="com.intellij.openapi.roots.LibraryDependencyScopeSuggester"/>
-    <extensionPoint name="projectModelModifier" interface="com.intellij.openapi.roots.ProjectModelModifier"
+    <extensionPoint name="projectModelModifier" interface="com.intellij.openapi.roots.JavaProjectModelModifier"
                     area="IDEA_PROJECT"/>
 
     <extensionPoint name="refactoring.safeDelete.JavaSafeDeleteDelegate" beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -522,17 +526,13 @@
     <moduleService serviceInterface="com.intellij.openapi.roots.ModulePackageIndex"
                    serviceImplementation="com.intellij.openapi.roots.impl.ModulePackageIndexImpl"/>
 
-    <projectService serviceInterface="com.intellij.openapi.roots.ProjectModelModificationService"
-                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectModelModificationServiceImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.JavaProjectModelModificationService"
+                    serviceImplementation="com.intellij.openapi.roots.impl.JavaProjectModelModificationServiceImpl"/>
     <projectModelModifier implementation="com.intellij.openapi.roots.impl.IdeaProjectModelModifier" order="last"/>
 
     <projectService serviceInterface="com.intellij.usages.impl.rules.DirectoryGroupingRule"
                     serviceImplementation="com.intellij.usages.impl.rules.PackageGroupingRule"/>
 
-    <projectService serviceInterface="com.intellij.slicer.SliceToolwindowSettings"
-                    serviceImplementation="com.intellij.slicer.SliceToolwindowSettings"/>
-    <projectService serviceInterface="com.intellij.slicer.SliceManager"
-                    serviceImplementation="com.intellij.slicer.SliceManager"/>
 
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManager"
                     serviceImplementation="com.intellij.codeInspection.ex.EntryPointsManagerImpl"/>
@@ -551,7 +551,7 @@
                         serviceImplementation="com.intellij.framework.library.impl.DownloadableLibraryServiceImpl"/>
 
     <projectService serviceImplementation="com.intellij.javadoc.JavadocGenerationManager"/>
-    <projectService serviceImplementation="com.intellij.codeInsight.ProjectCodeInsightSettings"/>
+    <projectService serviceImplementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
 
@@ -1111,6 +1111,8 @@
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
     <lang.lineWrapStrategy language="JAVA" implementationClass="com.intellij.psi.formatter.java.JavaLineWrapPositionStrategy"/>
 
+    <lang.sliceProvider language="JAVA" implementationClass="com.intellij.slicer.JavaSliceProvider"/>
+
     <stacktrace.fold substring="at java.awt.EventDispatchThread"/>
     <stacktrace.fold substring="at java.awt.Window.dispatchEventImpl("/>
     <stacktrace.fold substring="at java.awt.Container.dispatchEventImpl("/>
@@ -1325,8 +1327,10 @@
     <configurationProducer implementation="com.intellij.execution.applet.AppletConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.application.ApplicationConfigurationType"/>
     <configurationType implementation="com.intellij.execution.jar.JarApplicationConfigurationType"/>
+    <configurationType implementation="com.intellij.execution.scratch.JavaScratchConfigurationType"/>
     <runConfigurationProducer implementation="com.intellij.execution.jar.JarApplicationConfigurationProducer"/>
     <runConfigurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.scratch.JavaScratchConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
 
     <runLineMarkerContributor language="JAVA" implementationClass="com.intellij.execution.application.ApplicationRunLineMarkerProvider"/>
@@ -1547,6 +1551,7 @@
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.profile.codeInspection.JavaAwareInspectionProfileManager"/>
 
+    <resolveScopeProvider implementation="com.intellij.psi.impl.file.impl.JavaOutOfSourcesResolveScopeProvider"/>
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
 
     <xdebugger.debuggerSupport implementation="com.intellij.debugger.ui.JavaDebuggerSupport"/>

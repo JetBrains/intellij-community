@@ -19,6 +19,7 @@ package com.intellij.psi;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -27,7 +28,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.smartPointers.SelfElementInfo;
 import com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -38,8 +38,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +50,7 @@ import java.util.Set;
  * @author db
  */
 public abstract class PsiAnchor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiAnchor");
   @Nullable
   public abstract PsiElement retrieve();
   public abstract PsiFile getFile();
@@ -59,10 +59,17 @@ public abstract class PsiAnchor {
 
   @NotNull
   public static PsiAnchor create(@NotNull final PsiElement element) {
-    if (!element.isValid()) {
-      throw new PsiInvalidElementAccessException(element);
-    }
+    PsiUtilCore.ensureValid(element);
 
+    PsiAnchor anchor = doCreateAnchor(element);
+    if (ApplicationManager.getApplication().isUnitTestMode() && !element.equals(anchor.retrieve())) {
+      LOG.error("Cannot restore element " + element + " of " + element.getClass() + " from anchor " + anchor);
+    }
+    return anchor;
+  }
+
+  @NotNull
+  private static PsiAnchor doCreateAnchor(@NotNull PsiElement element) {
     if (element instanceof PsiFile) {
       VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
       if (virtualFile != null) return new PsiFileReference(virtualFile, (PsiFile)element);
@@ -83,7 +90,7 @@ public abstract class PsiAnchor {
     PsiAnchor stubRef = createStubReference(element, file);
     if (stubRef != null) return stubRef;
 
-    if (!element.isPhysical() && element instanceof PsiCompiledElement || element instanceof LightElement || element instanceof SyntheticElement) {
+    if (!element.isPhysical()) {
       return wrapperOrHardReference(element);
     }
 
@@ -94,15 +101,17 @@ public abstract class PsiAnchor {
 
     Language lang = null;
     final FileViewProvider viewProvider = file.getViewProvider();
-    final Set<Language> languages = viewProvider.getLanguages();
-    for (Language l : languages) {
-      if (PsiTreeUtil.isAncestor(viewProvider.getPsi(l), element, false)) {
+    for (Language l : viewProvider.getLanguages()) {
+      if (viewProvider.getPsi(l) == file) {
         lang = l;
         break;
       }
     }
 
-    if (lang == null) lang = element.getLanguage();
+    if (lang == null) {
+      return wrapperOrHardReference(element);
+    }
+
     return new TreeRangeReference(file, textRange.getStartOffset(), textRange.getEndOffset(), element.getClass(), lang, virtualFile);
   }
 
@@ -195,17 +204,8 @@ public abstract class PsiAnchor {
     public PsiElement retrieve() {
       PsiFile psiFile = getFile();
       if (psiFile == null || !psiFile.isValid()) return null;
-      PsiElement element = psiFile.getViewProvider().findElementAt(myStartOffset, myLanguage);
-      if (element == null) return null;
 
-      while  (!element.getClass().equals(myClass) ||
-              element.getTextRange().getStartOffset() != myStartOffset ||
-              element.getTextRange().getEndOffset() != myEndOffset) {
-        element = element.getParent();
-        if (element == null || element.getTextRange() == null) return null;
-      }
-
-      return element;
+      return SelfElementInfo.findElementInside(psiFile, myStartOffset, myEndOffset, myClass, myLanguage);
     }
 
     @Override
@@ -455,8 +455,6 @@ public abstract class PsiAnchor {
     private final int myIndex;
     private final Language myLanguage;
     private final IStubElementType myElementType;
-    private final short myCreationModCount;
-    private final short myCreationStamp;
 
     private StubIndexReference(@NotNull final PsiFile file, final int index, @NotNull Language language, IStubElementType elementType) {
       myLanguage = language;
@@ -464,16 +462,6 @@ public abstract class PsiAnchor {
       myVirtualFile = file.getVirtualFile();
       myProject = file.getProject();
       myIndex = index;
-      myCreationModCount = getModCount();
-      myCreationStamp = (short)file.getModificationStamp();
-    }
-
-    private short getModCount() {
-      final PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
-      if (myVirtualFile.getName().endsWith(".java")) {
-        return (short)tracker.getJavaStructureModificationCount();
-      }
-      return (short)tracker.getModificationCount();
     }
 
     @Override
@@ -520,11 +508,10 @@ public abstract class PsiAnchor {
       }
       catch (AssertionError e) {
         String msg = e.getMessage();
-        msg += "\n current (java)modCount=" + getModCount() + "; creation (java)modCount=" + myCreationModCount;
         if (file == null) {
           msg += "\n no PSI file";
         } else {
-          msg += "\n current file stamp=" + (short)file.getModificationStamp() + "; creation file stamp=" + myCreationStamp;
+          msg += "\n current file stamp=" + (short)file.getModificationStamp();
         }
         final Document document = FileDocumentManager.getInstance().getCachedDocument(myVirtualFile);
         if (document != null) {

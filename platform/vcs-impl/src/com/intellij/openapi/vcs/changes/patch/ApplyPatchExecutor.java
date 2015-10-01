@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 
 import java.util.Map;
 
@@ -29,6 +30,7 @@ import java.util.Map;
  *         Time: 5:18 PM
  */
 public interface ApplyPatchExecutor<T extends AbstractFilePatchInProgress> {
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getName();
 
   void apply(final MultiMap<VirtualFile, T> patchGroups,

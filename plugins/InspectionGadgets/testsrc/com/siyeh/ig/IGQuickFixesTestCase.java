@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,13 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
   protected void assertQuickfixNotAvailable(final String quickfixName) {
     final String testName = getTestName(false);
     myFixture.configureByFile(getRelativePath() + "/" + testName + ".java");
+    assertEmpty("Quickfix \'" + quickfixName + "\' is available but should not",
+                myFixture.filterAvailableIntentions(quickfixName));
+  }
+
+  protected void assertQuickfixNotAvailable(String quickfixName, @Language("JAVA") @NotNull @NonNls String text) {
+    text = text.replace("/**/", "<caret>");
+    myFixture.configureByText(JavaFileType.INSTANCE, text);
     assertEmpty("Quickfix \'" + quickfixName + "\' is available but should not",
                 myFixture.filterAvailableIntentions(quickfixName));
   }

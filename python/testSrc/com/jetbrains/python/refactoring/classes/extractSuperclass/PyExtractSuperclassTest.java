@@ -95,25 +95,25 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
   }
 
   public void testSimple() throws Exception {
-    doSimpleTest("Foo", "Suppa", null, true, ".foo");
+    doSimpleTest("Foo", "Suppa", null, true, false, ".foo");
   }
 
   public void testInstanceNotDeclaredInInit() throws Exception {
-    doSimpleTest("Child", "Parent", null, true, "#eggs");
+    doSimpleTest("Child", "Parent", null, true, false, "#eggs");
   }
 
   public void testWithSuper() throws Exception {
-    doSimpleTest("Foo", "Suppa", null, true, ".foo");
+    doSimpleTest("Foo", "Suppa", null, true, false, ".foo");
   }
 
   public void testWithImport() throws Exception {
-    doSimpleTest("A", "Suppa", null, false, ".foo");
+    doSimpleTest("A", "Suppa", null, false, false, ".foo");
   }
 
   // PY-12175
   public void testImportNotBroken() throws Exception {
     myFixture.copyFileToProject("/refactoring/extractsuperclass/shared.py", "shared.py");
-    doSimpleTest("Source", "DestClass", null, true, "SharedClass");
+    doSimpleTest("Source", "DestClass", null, true, false, "SharedClass");
   }
 
   // PY-12175 but between several files
@@ -122,19 +122,29 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
   }
 
   public void testMoveFields() throws Exception {
-    doSimpleTest("FromClass", "ToClass", null, true, "#instance_field", "#CLASS_FIELD");
+    doSimpleTest("FromClass", "ToClass", null, true, false, "#instance_field", "#CLASS_FIELD");
   }
 
 
   public void testProperties() throws Exception {
-    doSimpleTest("FromClass", "ToClass", null, true, "#C", "#a", "._get", ".foo");
+    doSimpleTest("FromClass", "ToClass", null, true, false, "#C", "#a", "._get", ".foo");
+  }
+
+  // PY-16747
+  public void testAbstractMethodDocStringIndentationPreserved() throws Exception {
+    doSimpleTest("B", "A", null, true, true, ".m");
+  }
+
+  // PY-16770
+  public void testAbstractMethodDocStringPrefixPreserved() throws Exception {
+    doSimpleTest("B", "A", null, true, true, ".m");
   }
 
   private void doSimpleTest(final String className,
                             final String superclassName,
                             final String expectedError,
                             final boolean sameFile,
-                            final String... membersName) throws Exception {
+                            boolean asAbstract, final String... membersName) throws Exception {
     try {
       String baseName = "/refactoring/extractsuperclass/" + getTestName(true);
       myFixture.configureByFile(baseName + ".before.py");
@@ -142,7 +152,9 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
       final List<PyMemberInfo<PyElement>> members = new ArrayList<PyMemberInfo<PyElement>>();
       for (String memberName : membersName) {
         final PyElement member = findMember(className, memberName);
-        members.add(MembersManager.findMember(clazz, member));
+        final PyMemberInfo<PyElement> memberInfo = MembersManager.findMember(clazz, member);
+        memberInfo.setToAbstract(asAbstract);
+        members.add(memberInfo);
       }
 
       new WriteCommandAction.Simple(myFixture.getProject()) {

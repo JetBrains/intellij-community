@@ -28,11 +28,11 @@ public interface RepositoryService {
   public fun checkUrl(uriString: String, messageParent: Container? = null): Boolean {
     val uri = URIish(uriString)
     val isFile: Boolean
-    if (uri.getScheme() == URLUtil.FILE_PROTOCOL) {
+    if (uri.scheme == URLUtil.FILE_PROTOCOL) {
       isFile = true
     }
     else {
-      isFile = uri.getScheme() == null && uri.getHost() == null
+      isFile = uri.scheme == null && uri.host == null
     }
 
     if (messageParent != null && isFile && !checkFileRepo(uriString, messageParent)) {
@@ -45,7 +45,7 @@ public interface RepositoryService {
     val suffix = '/' + Constants.DOT_GIT
     val file = File(if (url.endsWith(suffix)) url.substring(0, url.length() - suffix.length()) else url)
     if (file.exists()) {
-      if (!file.isDirectory()) {
+      if (!file.isDirectory) {
         //noinspection DialogTitleCapitalization
         Messages.showErrorDialog(messageParent, "Specified path is not a directory", "Specified Path is Invalid")
         return false
@@ -54,7 +54,7 @@ public interface RepositoryService {
         return true
       }
     }
-    else if (!file.isAbsolute()) {
+    else if (!file.isAbsolute) {
       Messages.showErrorDialog(messageParent, IcsBundle.message("specify.absolute.path.dialog.message"), "")
       return false
     }

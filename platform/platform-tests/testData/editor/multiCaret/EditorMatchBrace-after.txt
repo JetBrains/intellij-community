@@ -1,4 +1,4 @@
 { a }<caret>
-{<caret> b }
-{<caret> c }
+<caret>{ b }
+<caret>{ c }
 text

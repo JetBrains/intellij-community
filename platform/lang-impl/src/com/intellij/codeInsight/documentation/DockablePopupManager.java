@@ -104,8 +104,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     myToolWindow.setAvailable(true, null);
     myToolWindow.setToHideOnEmptyContent(false);
 
-    final Rectangle rectangle = WindowManager.getInstance().getIdeFrame(myProject).suggestChildFrameBounds();
-    myToolWindow.setDefaultState(ToolWindowAnchor.RIGHT, ToolWindowType.FLOATING, rectangle);
+    setToolwindowDefaultState();
     
     ((ToolWindowEx)myToolWindow).setTitleActions(createRestorePopupAction());
 
@@ -139,6 +138,10 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     doUpdateComponent(element, originalElement, component);
   }
 
+  protected void setToolwindowDefaultState() {
+    final Rectangle rectangle = WindowManager.getInstance().getIdeFrame(myProject).suggestChildFrameBounds();
+    myToolWindow.setDefaultState(ToolWindowAnchor.RIGHT, ToolWindowType.FLOATING, rectangle);
+  }
 
   protected AnAction[] createActions() {
     ToggleAction toggleAutoUpdateAction = new ToggleAction(getAutoUpdateTitle(), getAutoUpdateDescription(),

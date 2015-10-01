@@ -63,15 +63,8 @@ public abstract class GroupedElementsRenderer {
     myTextLabel.setIcon(icon);
     myTextLabel.setDisabledIcon(disabledIcon);
 
-    if (isSelected) {
-      //myComponent.setBorder(getSelectedBorder());
-      setSelected(myComponent);
-      setSelected(myTextLabel);
-    } else {
-      //myComponent.setBorder(getBorder());
-      setDeselected(myComponent);
-      setDeselected(myTextLabel);
-    }
+    setSelected(myComponent, isSelected);
+    setSelected(myTextLabel, isSelected);
 
     myRendererComponent.setPrefereedWidth(preferredForcedWidth);
 
@@ -94,13 +87,16 @@ public abstract class GroupedElementsRenderer {
   }
 
   protected final void setSelected(JComponent aComponent) {
-    UIUtil.setBackgroundRecursively(aComponent, getSelectionBackground());
-    aComponent.setForeground(getSelectionForeground());
+    setSelected(aComponent, true);
   }
 
   protected final void setDeselected(JComponent aComponent) {
-    UIUtil.setBackgroundRecursively(aComponent, getBackground());
-    aComponent.setForeground(getForeground());
+    setSelected(aComponent, false);
+  }
+
+  protected final void setSelected(JComponent aComponent, boolean selected) {
+    UIUtil.setBackgroundRecursively(aComponent, selected ? getSelectionBackground() : getBackground());
+    aComponent.setForeground(selected ? getSelectionForeground() : getForeground());
   }
 
   protected abstract Color getSelectionBackground();

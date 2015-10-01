@@ -143,6 +143,11 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
   public boolean JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
 
+  /**
+   * Names of classes and packages excluded from (Java) auto-import and completion. These are only IDE-specific settings
+   * and don't take project-specific settings into account.
+   * So please don't reference this field directly, use JavaProjectCodeInsightSettings instead.
+   */
   @Property(surroundWithTag = false)
   @AbstractCollection(
     surroundWithTag = false,

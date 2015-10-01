@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -465,11 +466,27 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       if (length < 0) throw new IOException("Invalid file length: " + length + ", " + file);
       // io_util.c#readBytes allocates custom native stack buffer for io operation with malloc if io request > 8K
       // so let's do buffered requests with buffer size 8192 that will use stack allocated buffer
-      return FileUtil.loadBytes(length <= 8192 ? stream : new BufferedInputStream(stream), length);
+      return loadBytes(length <= 8192 ? stream : new BufferedInputStream(stream), length);
     }
     finally {
       stream.close();
     }
+  }
+
+  @NotNull
+  private static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException {
+    byte[] bytes = new byte[length];
+    int count = 0;
+    while (count < length) {
+      int n = stream.read(bytes, count, length - count);
+      if (n <= 0) break;
+      count += n;
+    }
+    if (count < length) {
+      // this may happen with encrypted files, see IDEA-143773
+      return Arrays.copyOf(bytes, count);
+    }
+    return bytes;
   }
 
   @Override

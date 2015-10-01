@@ -38,7 +38,13 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
     final PsiElement[] elements = ExtractMethodHandler.getElements(file.getProject(), editor, file);
-    return elements != null && elements.length > 0;
+    if (elements != null && elements.length > 0) return true;
+    return acceptLocalVariable() && 
+           PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiLocalVariable.class) != null;
+  }
+  
+  protected boolean acceptLocalVariable() {
+    return true;
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {

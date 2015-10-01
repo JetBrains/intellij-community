@@ -54,7 +54,7 @@ public class IntelliJLaf extends DarculaLaf {
   }
 
   private static void installMacOSXFonts(UIDefaults defaults) {
-    String face = "HelveticaNeue-CondensedBlack";
+    String face = "HelveticaNeue-Regular";
     LafManagerImpl.initFontDefaults(defaults, face, 13);
     for (Object key : new HashSet<Object>(defaults.keySet())) {
       Object value = defaults.get(key);

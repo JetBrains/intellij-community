@@ -49,43 +49,43 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   @NotNull private final EdgesInRowGenerator myEdgesInRowGenerator;
   @NotNull private final Comparator<GraphElement> myGraphElementComparator;
 
-  private final int myLongSize;
-  private final int myShowingPartSize;
-  private final int myAddNearArrowSize;
+  private final int myLongEdgeSize;
+  private final int myVisiblePartSize;
+  private final int myEdgeWithArrowSize;
 
   public PrintElementGeneratorImpl(@NotNull LinearGraph graph, @NotNull PrintElementManager printElementManager, boolean showLongEdges) {
     super(graph, printElementManager);
     myEdgesInRowGenerator = new EdgesInRowGenerator(graph);
     myGraphElementComparator = printElementManager.getGraphElementComparator();
     if (showLongEdges) {
-      myLongSize = VERY_LONG_EDGE_SIZE;
-      myShowingPartSize = VERY_LONG_EDGE_PART_SIZE;
+      myLongEdgeSize = VERY_LONG_EDGE_SIZE;
+      myVisiblePartSize = VERY_LONG_EDGE_PART_SIZE;
       if (SHOW_ARROW_WHEN_SHOW_LONG_EDGES) {
-        myAddNearArrowSize = LONG_EDGE_SIZE;
+        myEdgeWithArrowSize = LONG_EDGE_SIZE;
       }
       else {
-        myAddNearArrowSize = Integer.MAX_VALUE;
+        myEdgeWithArrowSize = Integer.MAX_VALUE;
       }
     }
     else {
-      myLongSize = LONG_EDGE_SIZE;
-      myShowingPartSize = LONG_EDGE_PART_SIZE;
-      myAddNearArrowSize = Integer.MAX_VALUE;
+      myLongEdgeSize = LONG_EDGE_SIZE;
+      myVisiblePartSize = LONG_EDGE_PART_SIZE;
+      myEdgeWithArrowSize = Integer.MAX_VALUE;
     }
   }
 
   @TestOnly
   public PrintElementGeneratorImpl(@NotNull LinearGraph graph,
                                    @NotNull PrintElementManager printElementManager,
-                                   int longSize,
-                                   int showingPartSize,
-                                   int addNearArrowSize) {
+                                   int longEdgeSize,
+                                   int visiblePartSize,
+                                   int edgeWithArrowSize) {
     super(graph, printElementManager);
     myEdgesInRowGenerator = new EdgesInRowGenerator(graph);
     myGraphElementComparator = printElementManager.getGraphElementComparator();
-    myLongSize = longSize;
-    myShowingPartSize = showingPartSize;
-    myAddNearArrowSize = addNearArrowSize;
+    myLongEdgeSize = longEdgeSize;
+    myVisiblePartSize = visiblePartSize;
+    myEdgeWithArrowSize = edgeWithArrowSize;
   }
 
   @NotNull
@@ -161,9 +161,9 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
           int upOffset = visibleRowIndex - normalEdge.first;
           int downOffset = normalEdge.second - visibleRowIndex;
 
-          if (edgeSize >= myLongSize) addArrowIfNeeded(result, edge, position, upOffset, downOffset, myShowingPartSize);
+          if (edgeSize >= myLongEdgeSize) addArrowIfNeeded(result, edge, position, upOffset, downOffset, myVisiblePartSize);
 
-          if (edgeSize >= myAddNearArrowSize) addArrowIfNeeded(result, edge, position, upOffset, downOffset, 1);
+          if (edgeSize >= myEdgeWithArrowSize) addArrowIfNeeded(result, edge, position, upOffset, downOffset, 1);
 
         }
         else { // special edges
@@ -206,11 +206,11 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     {
       return false;
     }
-    if (normalEdge.second - normalEdge.first < myLongSize) {
+    if (normalEdge.second - normalEdge.first < myLongEdgeSize) {
       return true;
     }
     else {
-      return visibleRowIndex - normalEdge.first <= myShowingPartSize || normalEdge.second - visibleRowIndex <= myShowingPartSize;
+      return visibleRowIndex - normalEdge.first <= myVisiblePartSize || normalEdge.second - visibleRowIndex <= myVisiblePartSize;
     }
   }
 

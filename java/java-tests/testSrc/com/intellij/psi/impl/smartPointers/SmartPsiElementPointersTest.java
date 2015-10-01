@@ -24,6 +24,7 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
@@ -207,7 +208,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     PlatformTestUtil.tryGcSoftlyReachableObjects();
-    assertNull(pointer.getElement());
+    assertEquals(myFile.getFirstChild(), pointer.getElement());
   }
 
   public void testChangeInPsi() {
@@ -754,6 +755,24 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     assertEquals(TextRange.create(2, 3), pointer.getRange());
   }
+  
+  public void testUpdateAfterInsertingIdenticalText() {
+    PsiJavaFile file = (PsiJavaFile)configureByText(StdFileTypes.JAVA, "class Foo {\n" +
+                                                                       "    void m() {\n" +
+                                                                       "    }\n" +
+                                                                       "<caret>}\n");
+    PsiMethod method = file.getClasses()[0].getMethods()[0];
+    TextRange originalRange = method.getTextRange();
+    SmartPsiElementPointer pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(method);
+
+    EditorModificationUtil.insertStringAtCaret(myEditor, "    void m() {\n" +
+                                                         "    }\n");
+    PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
+    PsiElement element = pointer.getElement();
+    assertNotNull(element);
+    TextRange newRange = element.getTextRange();
+    assertEquals(originalRange, newRange);
+  }
 
   public void testAnchorInfoSurvivesPsiChange() {
     PsiJavaFile file = (PsiJavaFile)configureByText(JavaFileType.INSTANCE, "class C1{}\nclass C2 {}");
@@ -811,6 +830,26 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
 
     ref = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("Bar"), PsiJavaCodeReferenceElement.class, false);
     ref.handleElementRename("BarImpl");
+    assertNotNull(pointer.getElement());
+  }
+
+  public void testNonAnchoredStubbedElement() {
+    PsiFile file = configureByText(JavaFileType.INSTANCE, "class Foo { { @NotNull String foo; } }");
+    StubTree stubTree = ((PsiFileImpl)file).getStubTree();
+    assertNotNull(stubTree);
+    PsiElement anno = stubTree.getPlainList().stream().map(element -> element.getPsi()).filter(psiElement -> psiElement instanceof PsiAnnotation).findFirst().get();
+
+    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(anno);
+    assertNotNull(((PsiFileImpl)file).getStubTree());
+
+    stubTree = null;
+    anno = null;
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(((SmartPointerEx) pointer).getCachedElement());
+
+    file.getViewProvider().getDocument().insertString(0, " ");
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
     assertNotNull(pointer.getElement());
   }
 

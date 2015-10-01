@@ -38,7 +38,7 @@ import java.util.Set;
  * @author cdr
  */
 public class SliceForwardUtil {
-  public static boolean processUsagesFlownFromThe(@NotNull PsiElement element, @NotNull final Processor<SliceUsage> processor, @NotNull final SliceUsage parent) {
+  public static boolean processUsagesFlownFromThe(@NotNull PsiElement element, @NotNull final Processor<SliceUsage> processor, @NotNull final JavaSliceUsage parent) {
     Pair<PsiElement, PsiSubstitutor> pair = getAssignmentTarget(element, parent);
     if (pair != null) {
       PsiElement target = pair.getFirst();
@@ -94,7 +94,7 @@ public class SliceForwardUtil {
 
   private static boolean processAssignedFrom(final PsiElement from,
                                              final PsiElement context,
-                                             final SliceUsage parent,
+                                             final JavaSliceUsage parent,
                                              @NotNull final Processor<SliceUsage> processor) {
     if (from instanceof PsiLocalVariable) {
       return searchReferencesAndProcessAssignmentTarget(from, context, parent, processor);
@@ -180,7 +180,7 @@ public class SliceForwardUtil {
     return true;
   }
 
-  private static boolean searchReferencesAndProcessAssignmentTarget(@NotNull PsiElement element, @Nullable final PsiElement context, final SliceUsage parent,
+  private static boolean searchReferencesAndProcessAssignmentTarget(@NotNull PsiElement element, @Nullable final PsiElement context, final JavaSliceUsage parent,
                                                                     final Processor<SliceUsage> processor) {
     return ReferencesSearch.search(element).forEach(new Processor<PsiReference>() {
       @Override
@@ -192,7 +192,7 @@ public class SliceForwardUtil {
     });
   }
 
-  private static boolean processAssignmentTarget(PsiElement element, final SliceUsage parent, final Processor<SliceUsage> processor) {
+  private static boolean processAssignmentTarget(PsiElement element, final JavaSliceUsage parent, final Processor<SliceUsage> processor) {
     if (!parent.params.scope.contains(element)) return true;
     if (element instanceof PsiCompiledElement) element = element.getNavigationElement();
     Pair<PsiElement, PsiSubstitutor> pair = getAssignmentTarget(element, parent);
@@ -201,7 +201,7 @@ public class SliceForwardUtil {
       return processor.process(usage);
     }
     if (parent.params.showInstanceDereferences && isDereferenced(element)) {
-      SliceUsage usage = new SliceDereferenceUsage(element.getParent(), parent, parent.getSubstitutor());
+      SliceUsage usage = new JavaSliceDereferenceUsage(element.getParent(), parent, parent.getSubstitutor());
       return processor.process(usage);
     }
     return true;
@@ -214,7 +214,7 @@ public class SliceForwardUtil {
     return ((PsiReferenceExpression)parent).getQualifierExpression() == element;
   }
 
-  private static Pair<PsiElement,PsiSubstitutor> getAssignmentTarget(PsiElement element, SliceUsage parentUsage) {
+  private static Pair<PsiElement,PsiSubstitutor> getAssignmentTarget(PsiElement element, JavaSliceUsage parentUsage) {
     element = complexify(element);
     PsiElement target = null;
     PsiSubstitutor substitutor = parentUsage.getSubstitutor();

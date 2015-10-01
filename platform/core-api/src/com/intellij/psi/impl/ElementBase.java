@@ -27,7 +27,6 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
@@ -42,7 +41,6 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,12 +55,14 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     @Override
     public Icon fun(ElementIconRequest request) {
       final PsiElement element = request.getElement();
-      if (element == null || !element.isValid()) return null;
-      if (element.getProject().isDisposed()) return null;
-      return computeIconNow(element, request.getFlags());
+      if (element == null || !element.isValid() || element.getProject().isDisposed()) return null;
+
+      int flags = request.getFlags();
+      Icon icon = computeIconNow(element, flags);
+      LastComputedIcon.put(element, icon, flags);
+      return icon;
     }
   };
-  private static final Key<TIntObjectHashMap<Icon>> BASE_ICONS = Key.create("BASE_ICONS");
 
   private static final NotNullLazyValue<Icon> VISIBILITY_ICON_PLACEHOLDER = new NotNullLazyValue<Icon>() {
     @NotNull
@@ -86,9 +86,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (!(this instanceof PsiElement)) return null;
 
     try {
-      Icon icon = computeIcon(flags);
-      LastComputedIcon.put(this, icon, flags);
-      return icon;
+      return computeIcon(flags);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -110,16 +108,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (Registry.is("psi.deferIconLoading")) {
       Icon baseIcon = LastComputedIcon.get(psiElement, flags);
       if (baseIcon == null) {
-        TIntObjectHashMap<Icon> cache = getUserData(BASE_ICONS);
-        if (cache == null) {
-          cache = putUserDataIfAbsent(BASE_ICONS, new TIntObjectHashMap<Icon>());
-        }
-        synchronized (cache) {
-          if (!cache.containsKey(flags)) {
-            cache.put(flags, computeBaseIcon(flags));
-          }
-          baseIcon = cache.get(flags);
-        }
+        baseIcon = computeBaseIcon(flags);
       }
       return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, flags), ICON_COMPUTE);
     }
@@ -128,7 +117,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   @Nullable
-  private static Icon computeIconNow(PsiElement element, @Iconable.IconFlags int flags) {
+  private static Icon computeIconNow(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
     final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
     if (providersIcon != null) {
       return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(element, providersIcon, flags);

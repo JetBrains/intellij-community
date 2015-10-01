@@ -30,17 +30,17 @@ public class TestGraphBuilderTest : AbstractTestWithTwoTextFile("testParser") {
     assertEquals(out, graph.asString(false))
   }
 
-  Test
+  @Test
   public fun specialElements() {
     doTest("specialElements")
   }
 
-  Test
+  @Test
   public fun manyNodes() {
     doTest("manyNodes")
   }
 
-  Test
+  @Test
   public fun notLoadNode() {
     doTest("notLoadNode")
   }

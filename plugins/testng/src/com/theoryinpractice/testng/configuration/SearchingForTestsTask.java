@@ -30,10 +30,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.model.IDEARemoteTestRunnerClient;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGTestObject;
@@ -147,9 +150,14 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     Collection<String> groupNames = null;
     if (TestType.GROUP.getType().equals(myData.TEST_OBJECT)) {
       String groupName = myData.getGroupName();
-      if (groupName != null && groupName.length() > 0) {
-        groupNames = new HashSet<String>(1);
-        groupNames.add(groupName);
+      if (!StringUtil.isEmptyOrSpaces(groupName)) {
+        final List<String> names = ContainerUtil.map(StringUtil.split(groupName, ","), new Function<String, String>() {
+          @Override
+          public String fun(String groupName) {
+            return groupName.trim();
+          }
+        });
+        groupNames = new HashSet<String>(names);
       }
     }
 

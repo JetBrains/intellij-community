@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -43,7 +58,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
         passwordItem = item
       }
       else if (item is CredentialItem.StringType) {
-        val promptText = item.getPromptText()
+        val promptText = item.promptText
         if (promptText != null) {
           val marker = "Passphrase for "
           if (promptText.startsWith(marker) /* JSch prompt */) {
@@ -55,7 +70,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
       }
       else if (item is CredentialItem.YesNoType) {
         UIUtil.invokeAndWaitIfNeeded(Runnable {
-          item.setValue(MessageDialogBuilder.yesNo("", item.getPromptText()!!).show() == Messages.YES)
+          item.value = MessageDialogBuilder.yesNo("", item.promptText!!).show() == Messages.YES
         })
         return true
       }
@@ -71,8 +86,8 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
     var credentials: Credentials?
 
     // SSH URL git@github.com:develar/_idea_settings.git, so, username will be "git", we ignore it because in case of SSH credentials account name equals to key filename, but not to username
-    val userFromUri: String? = if (sshKeyFile == null) uri.getUser().nullize() else null
-    val passwordFromUri: String? = uri.getPass().nullize()
+    val userFromUri: String? = if (sshKeyFile == null) uri.user.nullize() else null
+    val passwordFromUri: String? = uri.pass.nullize()
     var saveCredentialsToStore = false
     if (userFromUri != null && passwordFromUri != null) {
       credentials = Credentials(userFromUri, passwordFromUri)
@@ -91,7 +106,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
 
       if (credentials == null) {
         try {
-          credentials = credentialsStore.getValue().get(uri.getHost(), sshKeyFile)
+          credentials = credentialsStore.value.get(uri.host, sshKeyFile)
         }
         catch (e: Throwable) {
           LOG.error(e)
@@ -112,20 +127,20 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
     }
 
     if (!credentials.isFulfilled()) {
-      credentials = showAuthenticationForm(credentials, uri.toStringWithoutCredentials(), uri.getHost(), uri.getPath(), sshKeyFile)
+      credentials = showAuthenticationForm(credentials, uri.toStringWithoutCredentials(), uri.host, uri.path, sshKeyFile)
     }
 
     if (saveCredentialsToStore && credentials.isFulfilled()) {
-      credentialsStore.getValue().save(uri.getHost(), credentials!!, sshKeyFile)
+      credentialsStore.value.save(uri.host, credentials!!, sshKeyFile)
     }
 
-    userNameItem?.setValue(credentials?.id)
+    userNameItem?.value = credentials?.id
     if (passwordItem != null) {
       if (passwordItem is CredentialItem.Password) {
-        passwordItem.setValue(credentials?.token?.toCharArray())
+        passwordItem.value = credentials?.token?.toCharArray()
       }
       else {
-        (passwordItem as CredentialItem.StringType).setValue(credentials?.token)
+        (passwordItem as CredentialItem.StringType).value = credentials?.token
       }
     }
 
@@ -134,36 +149,36 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
 
   override fun reset(uri: URIish) {
     credentialsFromGit = null
-    credentialsStore.getValue().reset(uri.getHost()!!)
+    credentialsStore.value.reset(uri.host!!)
   }
 }
 
 fun URIish.toStringWithoutCredentials(): String {
   val r = StringBuilder()
-  if (getScheme() != null) {
-    r.append(getScheme())
+  if (scheme != null) {
+    r.append(scheme)
     r.append("://")
   }
 
-  if (getHost() != null) {
-    r.append(getHost())
-    if (getScheme() != null && getPort() > 0) {
+  if (host != null) {
+    r.append(host)
+    if (scheme != null && port > 0) {
       r.append(':')
-      r.append(getPort())
+      r.append(port)
     }
   }
 
-  if (getPath() != null) {
-    if (getScheme() != null) {
-      if (!getPath()!!.startsWith("/")) {
+  if (path != null) {
+    if (scheme != null) {
+      if (!path!!.startsWith("/")) {
         r.append('/')
       }
     }
-    else if (getHost() != null) {
+    else if (host != null) {
       r.append(':')
     }
 
-    r.append(if (getScheme() != null) getRawPath() else getPath())
+    r.append(if (scheme != null) rawPath else path)
   }
   return r.toString()
 }

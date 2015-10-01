@@ -21,6 +21,7 @@ import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -74,7 +75,7 @@ class ChainMethodCallsBlockBuilder {
 
     for (int i = 0; i < methodCall.size(); i++) {
       ChainedCallChunk currentCallChunk = methodCall.get(i);
-      if (isMethodCall(currentCallChunk)) {
+      if (isMethodCall(currentCallChunk) || isComment(currentCallChunk)) {
         if (myWrap == null)
           myWrap = createCallChunkWrap(i, methodCall);
         if (myChainedCallsAlignment == null)
@@ -85,11 +86,19 @@ class ChainMethodCallsBlockBuilder {
         myChainedCallsAlignment = null;
       }
 
-      SyntheticBlockBuilder builder = new SyntheticBlockBuilder(mySettings, myJavaSettings);
+      CallChunkBlockBuilder builder = new CallChunkBlockBuilder(mySettings, myJavaSettings);
       blocks.add(builder.create(currentCallChunk.nodes, myWrap, myChainedCallsAlignment));
     }
 
     return blocks;
+  }
+
+  private static boolean isComment(ChainedCallChunk chunk) {
+    List<ASTNode> nodes = chunk.nodes;
+    if (nodes.size() == 1) {
+      return nodes.get(0).getPsi() instanceof PsiComment;
+    }
+    return false;
   }
 
   private Wrap createCallChunkWrap(int chunkIndex, @NotNull List<ChainedCallChunk> methodCall) {
@@ -119,7 +128,7 @@ class ChainMethodCallsBlockBuilder {
 
     List<ASTNode> current = new ArrayList<ASTNode>();
     for (ASTNode node : nodes) {
-      if (node.getElementType() == JavaTokenType.DOT) {
+      if (node.getElementType() == JavaTokenType.DOT || node.getPsi() instanceof PsiComment) {
         result.add(new ChainedCallChunk(current));
         current = new ArrayList<ASTNode>();
       }

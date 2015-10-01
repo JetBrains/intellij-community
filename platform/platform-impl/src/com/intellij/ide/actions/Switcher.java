@@ -685,12 +685,13 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     private void closeTabOrToolWindow() {
-      final int[] selected = getSelectedList().getSelectedIndices();
+      final JBList selectedList = getSelectedList();
+      final int[] selected = selectedList.getSelectedIndices();
       Arrays.sort(selected);
       int selectedIndex = 0;
       for (int i = selected.length - 1; i >= 0; i--) {
         selectedIndex = selected[i];
-        Object value = getSelectedList().getModel().getElementAt(selectedIndex);
+        Object value = selectedList.getModel().getElementAt(selectedIndex);
         if (value instanceof FileInfo) {
           final FileInfo info = (FileInfo)value;
           final VirtualFile virtualFile = info.first;
@@ -709,7 +710,11 @@ public class Switcher extends AnAction implements DumbAware {
           myAlarm.addRequest(new Runnable() {
             @Override
             public void run() {
-              focusManager.requestFocus(SwitcherPanel.this, true);
+              JComponent focusTarget = selectedList;
+              if (selectedList.getModel().getSize() == 0) {
+                focusTarget = selectedList == files ? toolWindows : files;
+              }
+              focusManager.requestFocus(focusTarget, true);
             }
           }, 300);
           if (jList.getModel().getSize() == 1) {
@@ -1090,9 +1095,6 @@ public class Switcher extends AnAction implements DumbAware {
 
       @Override
       public void propertyChange(@NotNull PropertyChangeEvent evt) {
-        final JBList list = getSelectedList();
-        final Object value = list.getSelectedValue();
-
         if (project.isDisposed()) {
           myPopup.cancel();
           return;
@@ -1106,11 +1108,6 @@ public class Switcher extends AnAction implements DumbAware {
         else {
           files.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
           toolWindows.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
-        }
-        files.repaint();
-        toolWindows.repaint();
-        if (value != null) {
-          ScrollingUtil.ensureSelectionExists(getSelectedList(list));
         }
       }
     }

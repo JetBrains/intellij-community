@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,27 +18,29 @@ package com.intellij.cvsSupport2.javacvsImpl.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.ICvsCommandStopper;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * author: lesya
  */
-
 public class ReadThread implements Runnable {
 
-  public final static Collection<ReadThread> READ_THREADS = new ArrayList<ReadThread>();
+  public final static Collection<ReadThread> READ_THREADS = Collections.synchronizedCollection(new ArrayList<ReadThread>());
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.javacvsImpl.io.ReadThread");
 
+  private static final int INITIAL_BUFFER_SIZE = 128 * 1024;
+  private static final int TIMEOUT = 3000;
+  private static final int END_OF_STREAM = -1;
+
   private boolean myAtEndOfStream = false;
   private final ICvsCommandStopper myCvsCommandStopper;
-  private static final int INITIAL_BUFFER_SIZE = 128 * 1024;
   private final byte[] myBuffer = new byte[INITIAL_BUFFER_SIZE];
   private final byte[] myReadBuffer = new byte[INITIAL_BUFFER_SIZE];
   private int myFirstIndex = 0;
@@ -46,10 +48,7 @@ public class ReadThread implements Runnable {
   private IOException myException;
   private final InputStream myInputStream;
   private final Semaphore myStarted = new Semaphore();
-  public static final int TIMEOUT = 3000;
-  public static final int END_OF_STREAM = -1;
   private boolean myIsClosed = false;
-  @NonNls private static final String NAME = "CvsReadThread";
 
   public ReadThread(InputStream inputStream, ICvsCommandStopper cvsCommandStopper) {
     myInputStream = inputStream;
@@ -66,19 +65,9 @@ public class ReadThread implements Runnable {
   }
 
   public String toString() {
-    @NonNls StringBuffer buffer = new StringBuffer();
-    buffer.append(super.toString());
-    buffer.append(", atEnd: ");
-    buffer.append(myAtEndOfStream);
-    buffer.append(", firstIndex: ");
-    buffer.append(myFirstIndex);
-    buffer.append(", lastIndex: ");
-    buffer.append(myLastIndex);
-    buffer.append(", exception: ");
-    buffer.append(myException);
-    buffer.append(", closed: ");
-    buffer.append(myIsClosed);
-    return buffer.toString();
+    return super.toString() +
+           ", atEnd: " + myAtEndOfStream + ", firstIndex: " + myFirstIndex + ", lastIndex: " + myLastIndex +
+           ", exception: " + myException + ", closed: " + myIsClosed;
   }
 
   public void run() {
@@ -236,7 +225,4 @@ public class ReadThread implements Runnable {
     myFirstIndex += result;
     return result;
   }
-
-
 }
-

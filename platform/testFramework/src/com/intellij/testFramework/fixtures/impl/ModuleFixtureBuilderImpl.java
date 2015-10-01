@@ -32,10 +32,10 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,14 +84,13 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   protected Module createModule() {
     final Project project = myFixtureBuilder.getFixture().getProject();
     Assert.assertNotNull(project);
-    final String moduleFilePath = new File(project.getProjectFilePath()).getParent() + File.separator + getNextIndex() + ModuleFileType.DOT_DEFAULT_EXTENSION;
+    final String moduleFilePath = PathUtil.getParentPath(project.getBasePath()) + "/" + getNextIndex() + ModuleFileType.DOT_DEFAULT_EXTENSION;
     return ModuleManager.getInstance(project).newModule(moduleFilePath, myModuleType.getId());
   }
 
   private static int getNextIndex() {
     return ourIndex++;
   }
-
 
   @Override
   public synchronized T getFixture() {

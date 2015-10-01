@@ -86,7 +86,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     for (QuickFix fix : fixes) {
       if (!checkFix(exact, myFix, fix)) continue;
       if (myFix instanceof IntentionWrapper && fix instanceof IntentionWrapper) {
-        if (!checkFix(exact, ((IntentionWrapper)myFix).getAction(), fix)) continue;
+        if (!checkFix(exact, ((IntentionWrapper)myFix).getAction(), ((IntentionWrapper)fix).getAction())) continue;
       }
       return fix;
     }

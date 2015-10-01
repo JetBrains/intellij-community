@@ -732,7 +732,7 @@ public class FormatProcessor {
 
     BlockAlignmentProcessor.Context context = new BlockAlignmentProcessor.Context(
       myDocument, alignment, myCurrentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks,
-      getIndentOptionsToUse(myCurrentBlock, myDefaultIndentOption), myRightMargin
+      getIndentOptionsToUse(myCurrentBlock, myDefaultIndentOption), CodeStyleSettings.MAX_RIGHT_MARGIN
     );
     BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
     final LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock);
@@ -1629,14 +1629,48 @@ public class FormatProcessor {
       }
 
       if (last != null) {
-        AbstractBlockWrapper prev = getPreviousBlock(last);
-        return prev != null && prev.getWhiteSpace().containsLineFeeds();
+        AbstractBlockWrapper next = getNextBlock(last);
+        if (next != null && next.getWhiteSpace().containsLineFeeds()) {
+          int nextNewLineBlockIndent = next.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
+          if (nextNewLineBlockIndent >= finMinNewLineIndent(blocksToExpandIndent)) {
+            return true;  
+          }
+        }
       }
       
       return false;
     }
+
+    private int finMinNewLineIndent(@NotNull Collection<AbstractBlockWrapper> wrappers) {
+      int totalMinimum = Integer.MAX_VALUE;
+      for (AbstractBlockWrapper wrapper : wrappers) {
+        int minNewLineIndent = findMinNewLineIndent(wrapper);
+        if (minNewLineIndent < totalMinimum) {
+          totalMinimum = minNewLineIndent;
+        }
+      }
+      return totalMinimum;
+    }
     
-    private AbstractBlockWrapper getPreviousBlock(AbstractBlockWrapper block) {
+    private int findMinNewLineIndent(@NotNull AbstractBlockWrapper block) {
+      if (block instanceof LeafBlockWrapper && block.getWhiteSpace().containsLineFeeds()) {
+        return block.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
+      }
+      else if (block instanceof CompositeBlockWrapper) {
+        List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)block).getChildren();
+        int currentMin = Integer.MAX_VALUE;
+        for (AbstractBlockWrapper child : children) {
+          int childIndent = findMinNewLineIndent(child);
+          if (childIndent < currentMin) {
+            currentMin = childIndent;
+          }
+        }
+        return currentMin;
+      }
+      return Integer.MAX_VALUE;
+    }
+    
+    private AbstractBlockWrapper getNextBlock(AbstractBlockWrapper block) {
       List<AbstractBlockWrapper> children = block.getParent().getChildren();
       int nextBlockIndex = children.indexOf(block) + 1;
       if (nextBlockIndex < children.size()) {

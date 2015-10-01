@@ -157,6 +157,18 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     return callee;
   }
 
+  @NotNull
+  @Override
+  public PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext) {
+    return PyCallExpressionHelper.mapArguments(this, resolveContext, 0);
+  }
+
+  @NotNull
+  @Override
+  public PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+    return PyCallExpressionHelper.mapArguments(this, resolveContext, implicitOffset);
+  }
+
   @Override
   public PyCallable resolveCalleeFunction(PyResolveContext resolveContext) {
     return PyCallExpressionHelper.resolveCalleeFunction(this, resolveContext);

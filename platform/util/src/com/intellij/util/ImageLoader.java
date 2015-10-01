@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.ImageFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -68,44 +69,61 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling) {
-    for (Pair<String, Integer> each : getFileNames(url.toString())) {
+    return loadFromUrl(url, allowFloatScaling, null);
+  }
+
+  @Nullable
+  public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling, ImageFilter filter) {
+    final float scaleFactor = allowFloatScaling ? JBUI.scale(1f) : JBUI.scale(1f) > 1.5f ? 2f : 1f;
+    assert scaleFactor >= 1.0f : "By design, only scale factors >= 1.0 are supported";
+
+    // We can't check all 3rd party plugins and convince the authors to add @2x icons.
+    // (scaleFactor > 1.0) != isRetina() => we should scale images manually.
+    // Note we never scale images on Retina displays because scaling is handled by the system.
+    final boolean scaleImages = (scaleFactor > 1.0f) && !UIUtil.isRetina();
+
+    // For any scale factor > 1.0, always prefer retina images, because downscaling
+    // retina images provides a better result than upscaling non-retina images.
+    final boolean loadRetinaImages = UIUtil.isRetina() || scaleImages;
+
+    for (Pair<String, Integer> each : getFileNames(url.toString(), UIUtil.isUnderDarcula(), loadRetinaImages)) {
       try {
-        Image image = loadFromStream(URLUtil.openStream(new URL(each.first)), each.second);
-        float scale = allowFloatScaling ? JBUI.scale(1f) : JBUI.scale(1f) > 1.5f ? 2f : 1f;
-        //we can't check all 3rd party plugins and convince the authors to add @2x icons.
-        // isHiDPI() != isRetina() => we should scale images manually
-        if (image != null && JBUI.isHiDPI() && !each.first.contains("@2x")) {
-          image = upscale(image, scale);
-        } else if (image != null && JBUI.scale(1f) >= 1.5f && JBUI.scale(1f) < 2.0f && each.first.contains("@2x")) {
-          image = downscale(image, scale);
+        Image image = loadFromStream(URLUtil.openStream(new URL(each.first)), each.second, filter);
+        if (image != null && scaleImages) {
+          if (each.first.contains("@2x"))
+            image = scaleImage(image, scaleFactor / 2.0f);  // divide by 2.0 as Retina images are 2x the resolution.
+          else
+            image = scaleImage(image, scaleFactor);
         }
         return image;
       }
       catch (IOException ignore) {
+        // Image file may not exist, try next one
       }
     }
     return null;
   }
 
   @NotNull
-  private static Image upscale(Image image, float scale) {
+  private static Image scaleImage(Image image, float scale) {
     int width = (int)(scale * image.getWidth(null));
     int height = (int)(scale * image.getHeight(null));
-    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
-  }
-
-  @NotNull
-  private static Image downscale(Image image, float scale) {
-    int width = (int)(image.getWidth(null)  / 2f * scale);
-    int height = (int)(image.getHeight(null)/ 2f * scale);
-    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
+    // Using "QUALITY" instead of "ULTRA_QUALITY" results in images that are less blurry
+    // because ultra quality performs a few more passes when scaling, which introduces blurriness
+    // when the scaling factor is relatively small (i.e. <= 3.0f) -- which is the case here.
+    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, width, height);
   }
 
   @Nullable
   public static Image loadFromUrl(URL url, boolean dark, boolean retina) {
+    return loadFromUrl(url, dark, retina, null);
+  }
+
+  @Nullable
+  public static Image loadFromUrl(URL url, boolean dark, boolean retina, ImageFilter filter) {
     for (Pair<String, Integer> each : getFileNames(url.toString(), dark, retina || JBUI.isHiDPI())) {
       try {
-        return loadFromStream(URLUtil.openStream(new URL(each.first)), each.second);
+        return loadFromStream(URLUtil.openStream(new URL(each.first)), each.second, filter);
       }
       catch (IOException ignore) {
       }
@@ -166,6 +184,10 @@ public class ImageLoader implements Serializable {
   }
 
   public static Image loadFromStream(@NotNull final InputStream inputStream, final int scale) {
+    return loadFromStream(inputStream, scale, null);
+  }
+
+  public static Image loadFromStream(@NotNull final InputStream inputStream, final int scale, ImageFilter filter) {
     if (scale <= 0) throw new IllegalArgumentException("Scale must 1 or more");
     try {
       BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
@@ -185,6 +207,7 @@ public class ImageLoader implements Serializable {
 
       waitForImage(image);
 
+      image = ImageUtil.filter(image, filter);
       if (UIUtil.isRetina() && scale > 1) {
         image = RetinaImage.createFrom(image, scale, ourComponent);
       }

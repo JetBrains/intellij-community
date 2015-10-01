@@ -1,7 +1,5 @@
 package org.jetbrains.io.fastCgi
 
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtil
@@ -9,10 +7,10 @@ import io.netty.buffer.ByteBufUtilEx
 import io.netty.channel.Channel
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpHeaderNames
-import org.jetbrains.builtInWebServer.WebServerPathToFileManager
+import org.jetbrains.builtInWebServer.PathInfo
 import org.jetbrains.io.Responses
 import java.net.InetSocketAddress
-import java.util.Locale
+import java.util.*
 
 class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
   companion object {
@@ -34,11 +32,10 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
     buffer!!.writeZero(5)
   }
 
-  public fun writeFileHeaders(file: VirtualFile, project: Project, canonicalRequestPath: CharSequence) {
-    val root = WebServerPathToFileManager.getInstance(project).getRoot(file)
-    LOG.assertTrue(root != null)
-    addHeader("DOCUMENT_ROOT", root!!.getRoot().getPath())
-    addHeader("SCRIPT_FILENAME", file.getPath())
+  public fun writeFileHeaders(pathInfo: PathInfo, canonicalRequestPath: CharSequence) {
+    val root = pathInfo.root
+    addHeader("DOCUMENT_ROOT", root.path)
+    addHeader("SCRIPT_FILENAME", pathInfo.path)
     addHeader("SCRIPT_NAME", canonicalRequestPath)
   }
 
@@ -80,19 +77,19 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
     addHeader("REQUEST_METHOD", request.method().name())
 
     val remote = clientChannel.remoteAddress() as InetSocketAddress
-    addHeader("REMOTE_ADDR", remote.getAddress().getHostAddress())
-    addHeader("REMOTE_PORT", Integer.toString(remote.getPort()))
+    addHeader("REMOTE_ADDR", remote.address.hostAddress)
+    addHeader("REMOTE_PORT", Integer.toString(remote.port))
 
     val local = clientChannel.localAddress() as InetSocketAddress
     addHeader("SERVER_SOFTWARE", Responses.getServerHeaderValue())
     addHeader("SERVER_NAME", Responses.getServerHeaderValue())
 
-    addHeader("SERVER_ADDR", local.getAddress().getHostAddress())
-    addHeader("SERVER_PORT", Integer.toString(local.getPort()))
+    addHeader("SERVER_ADDR", local.address.hostAddress)
+    addHeader("SERVER_PORT", Integer.toString(local.port))
 
     addHeader("GATEWAY_INTERFACE", "CGI/1.1")
     addHeader("SERVER_PROTOCOL", request.protocolVersion().text())
-    addHeader("CONTENT_TYPE", request.headers().get(HttpHeaderNames.CONTENT_TYPE))
+    addHeader("CONTENT_TYPE", request.headers().getAsString(HttpHeaderNames.CONTENT_TYPE))
 
     // PHP only, required if PHP was built with --enable-force-cgi-redirect
     addHeader("REDIRECT_STATUS", "200")
@@ -106,8 +103,8 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
 
     addHeader("CONTENT_LENGTH", request.content().readableBytes().toString())
 
-    for (entry in request.headers()) {
-      addHeader("HTTP_${entry.getKey().replace('-', '_').toUpperCase(Locale.ENGLISH)}", entry.getValue())
+    for ((key, value) in request.headers().iteratorAsString()) {
+      addHeader("HTTP_${key.replace('-', '_').toUpperCase(Locale.ENGLISH)}", value)
     }
   }
 

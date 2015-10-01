@@ -19,9 +19,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -63,24 +60,23 @@ public class RepositoryLibrarySupport {
     if (library == null) {
       library = createNewLibrary(module, modifiableModel);
     }
+    else {
+      modifiableModelsProvider.disposeLibraryTableModifiableModel(modifiableModel);
+    }
     final DependencyScope dependencyScope = LibraryDependencyScopeSuggester.getDefaultScope(library);
     final ModifiableRootModel moduleModifiableModel = modifiableModelsProvider.getModuleModifiableModel(module);
-    try {
-      LibraryOrderEntry foundEntry =
-        (LibraryOrderEntry)Iterables.find(Arrays.asList(moduleModifiableModel.getOrderEntries()), new Predicate<OrderEntry>() {
-          @Override
-          public boolean apply(@Nullable OrderEntry entry) {
-            return entry instanceof LibraryOrderEntry
-                   && ((LibraryOrderEntry)entry).getScope() == dependencyScope
-                   && isLibraryEqualsToSelected(((LibraryOrderEntry)entry).getLibrary());
-          }
-        }, null);
-      if (foundEntry == null) {
-        rootModel.addLibraryEntry(library).setScope(dependencyScope);
-      }
-    }
-    finally {
-      moduleModifiableModel.dispose();
+    LibraryOrderEntry foundEntry =
+      (LibraryOrderEntry)Iterables.find(Arrays.asList(moduleModifiableModel.getOrderEntries()), new Predicate<OrderEntry>() {
+        @Override
+        public boolean apply(@Nullable OrderEntry entry) {
+          return entry instanceof LibraryOrderEntry
+                 && ((LibraryOrderEntry)entry).getScope() == dependencyScope
+                 && isLibraryEqualsToSelected(((LibraryOrderEntry)entry).getLibrary());
+        }
+      }, null);
+    modifiableModelsProvider.disposeModuleModifiableModel(moduleModifiableModel);
+    if (foundEntry == null) {
+      rootModel.addLibraryEntry(library).setScope(dependencyScope);
     }
   }
 
@@ -101,18 +97,12 @@ public class RepositoryLibrarySupport {
         modifiableModel.commit();
       }
     });
-    Task task = new Task.Backgroundable(project, "Maven", false) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        RepositoryUtils.loadDependencies(
-          indicator,
-          module.getProject(),
-          library,
-          model.isDownloadSources(),
-          model.isDownloadJavaDocs());
-      }
-    };
-    ProgressManager.getInstance().run(task);
-
+    RepositoryUtils.loadDependencies(
+      module.getProject(),
+      library,
+      model.isDownloadSources(),
+      model.isDownloadJavaDocs(),
+      null);
     return library;
   }
 

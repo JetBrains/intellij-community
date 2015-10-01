@@ -7,7 +7,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="maven-artifact-resolver-m2" exported="" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -44,6 +43,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="maven-artifact-resolver-common" exported="" />
   </component>
 </module>
-

@@ -442,6 +442,10 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     }
   }
 
+  public boolean isInBatchFoldingOperation() {
+    return myIsBatchFoldingProcessing;
+  }
+
   private void updateCachedOffsets() {
     myFoldTree.updateCachedOffsets();
   }

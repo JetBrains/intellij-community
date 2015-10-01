@@ -116,6 +116,14 @@ public class XDebuggerManagerImpl extends XDebuggerManager
           }
         }
       }
+
+      @Override
+      public void breakpointRemoved(@NotNull XBreakpoint<?> breakpoint) {
+        XDebugSessionImpl session = getCurrentSession();
+        if (session != null && breakpoint == session.getActiveNonLineBreakpoint()) {
+          myExecutionPointHighlighter.updateGutterIcon(null);
+        }
+      }
     });
 
     messageBusConnection.subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {

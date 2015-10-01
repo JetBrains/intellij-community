@@ -34,10 +34,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.AbsentInformationException;
@@ -166,7 +163,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
   }
 
   public String getEventMessage(LocatableEvent event) {
-    String exceptionName = (getQualifiedName() != null)? getQualifiedName() : "java.lang.Throwable";
+    String exceptionName = (getQualifiedName() != null)? getQualifiedName() : CommonClassNames.JAVA_LANG_THROWABLE;
     String threadName    = null;
     if (event instanceof ExceptionEvent) {
       ExceptionEvent exceptionEvent = (ExceptionEvent)event;

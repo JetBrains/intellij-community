@@ -27,6 +27,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 /**
  * @author peter
  */
@@ -285,6 +286,15 @@ class Intf {
 
     assert getPopupElements(new GotoSymbolModel2(project), 'Ba.xpai', false) == [base]
     assert getPopupElements(new GotoSymbolModel2(project), 'Su.xpai', false) == [sub]
+  }
+
+  public void "test groovy script class with non-identifier name"() {
+    GroovyFile file1 = myFixture.addFileToProject('foo.groovy', '')
+    myFixture.addFileToProject('foo-bar.groovy', '')
+
+    def clazz
+    edt { clazz = file1.scriptClass }
+    assert getPopupElements(new GotoSymbolModel2(project), 'foo', false) == [clazz]
   }
 
   private List<Object> getPopupElements(ChooseByNameModel model, String text, boolean checkboxState = false) {

@@ -40,6 +40,10 @@ public class MethodReferenceCompletionProvider extends CompletionProvider<Comple
                                 ProcessingContext context,
                                 @NotNull final CompletionResultSet result) {
     if (!PsiUtil.isLanguageLevel8OrHigher(parameters.getOriginalFile())) return;
+
+    final PsiElement rulezzRef = parameters.getPosition().getParent();
+    if (rulezzRef == null || !LambdaUtil.isValidLambdaContext(rulezzRef.getParent())) return;
+
     final ExpectedTypeInfo[] expectedTypes = JavaSmartCompletionContributor.getExpectedTypes(parameters);
     for (ExpectedTypeInfo expectedType : expectedTypes) {
       final PsiType defaultType = expectedType.getDefaultType();

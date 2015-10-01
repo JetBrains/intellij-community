@@ -15,10 +15,12 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -27,15 +29,15 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.impl.SystemDock;
+import com.intellij.openapi.wm.impl.welcomeScreen.NewRecentProjectPanel;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ImageLoader;
@@ -79,6 +81,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     public Map<String, String> names = ContainerUtil.newLinkedHashMap();
     public List<ProjectGroup> groups = new SmartList<ProjectGroup>();
     public String lastPath;
+    public Map<String, RecentProjectMetaInfo> additionalInfo = ContainerUtil.newLinkedHashMap();
 
     public String lastProjectLocation;
 
@@ -400,6 +403,33 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     }
 
     if (addClearListItem) {
+      AnAction manageAction = new DumbAwareAction("Manage projects...") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          Disposable disposable = new Disposable() {
+            @Override
+            public void dispose() {
+            }
+          };
+          NewRecentProjectPanel panel = new NewRecentProjectPanel(disposable);
+          JList list = UIUtil.findComponentOfType(panel, JList.class);
+          JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)
+            .setTitle("Recent Projects")
+            .setFocusable(true)
+
+            .setMovable(true)
+            .createPopup();
+          Disposer.register(disposable, popup);
+          popup.showCenteredInCurrentWindow(e.getProject());
+          //IdeFocusManager.getGlobalInstance().requestFocus(list, true);
+        }
+      };
+
+      if (Registry.is("ide.manage.recent.project.action.available")) {
+        actions.add(0, manageAction);
+        actions.add(1, Separator.getInstance());
+      }
+
       AnAction clearListAction = new DumbAwareAction(IdeBundle.message("action.clear.list")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -445,6 +475,8 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       myState.lastPath = path;
       removePath(path);
       myState.recentPaths.add(0, path);
+      myState.additionalInfo.remove(path);
+      myState.additionalInfo.put(path, RecentProjectMetaInfo.create());
     }
   }
 
@@ -612,6 +644,26 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     public long getTimestamp() {
       return second;
+    }
+  }
+
+  public static class RecentProjectMetaInfo {
+    public String build;
+    public String productionCode;
+    public boolean eap;
+    public String binFolder;
+    public long projectOpenTimestamp;
+    public long buildTimestamp;
+
+    public static RecentProjectMetaInfo create() {
+      RecentProjectMetaInfo info = new RecentProjectMetaInfo();
+      info.build = ApplicationInfoEx.getInstanceEx().getBuild().asString();
+      info.productionCode = ApplicationInfoEx.getInstanceEx().getBuild().getProductCode();
+      info.eap = ApplicationInfoEx.getInstanceEx().isEAP();
+      info.binFolder = PathManager.getBinPath();
+      info.projectOpenTimestamp = System.currentTimeMillis();
+      info.buildTimestamp = ApplicationInfoEx.getInstanceEx().getBuildDate().getTimeInMillis();
+      return info;
     }
   }
 }

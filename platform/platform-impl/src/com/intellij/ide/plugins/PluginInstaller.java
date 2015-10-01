@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ public class PluginInstaller {
     Map<PluginId, IdeaPluginDescriptor> allPlugins = ContainerUtil.newHashMap();
     for (String host : hosts) {
       try {
-        List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPlugins(host, null, indicator);
+        List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPlugins(host, indicator);
         for (IdeaPluginDescriptor descriptor : descriptors) {
           allPlugins.put(descriptor.getPluginId(), descriptor);
         }

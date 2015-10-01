@@ -502,7 +502,7 @@ public class HtmlUtil {
     XmlElementDescriptor descriptor = context.getDescriptor();
     if (descriptor != null) {
       XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
-      XmlFile descriptorFile = nsDescriptor.getDescriptorFile();
+      XmlFile descriptorFile = nsDescriptor != null ? nsDescriptor.getDescriptorFile() : null;
       String descriptorPath = descriptorFile != null ? descriptorFile.getVirtualFile().getPath() : null;
       return Comparing.equal(Html5SchemaProvider.getHtml5SchemaLocation(), descriptorPath) ||
              Comparing.equal(Html5SchemaProvider.getXhtml5SchemaLocation(), descriptorPath);
@@ -632,7 +632,13 @@ public class HtmlUtil {
   }
 
   public static boolean supportsXmlTypedHandlers(PsiFile file) {
-    return "JavaScript".equals(file.getLanguage().getID());
+    Language language = file.getLanguage();
+    while (language != null) {
+      if ("JavaScript".equals(language.getID())) return true;
+      language = language.getBaseLanguage();
+    }
+
+    return false;
   }
 
   public static boolean hasHtmlPrefix(@NotNull String url) {

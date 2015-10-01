@@ -16,16 +16,13 @@
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -52,6 +49,10 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
       if (exprType instanceof PsiLambdaParameterType) {
         return false;
+      }
+      
+      if (exprType instanceof PsiClassType && ((PsiClassType)exprType).resolve() == null) {
+        return true;
       }
 
       if (exprType != null && exprType != PsiType.NULL) {
@@ -80,13 +81,13 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       return true;
     }
     
-    if (myExpression instanceof PsiCallExpression) {
-      final PsiExpressionList argumentList = ((PsiCallExpression)myExpression).getArgumentList();
+    if (myExpression instanceof PsiCall) {
+      final PsiExpressionList argumentList = ((PsiCall)myExpression).getArgumentList();
       if (argumentList != null) {
-        final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(((PsiCallExpression)myExpression).getArgumentList());
+        final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(((PsiCall)myExpression).getArgumentList());
         PsiType returnType = null;
         PsiTypeParameter[] typeParams = null;
-        final JavaResolveResult resolveResult = candidateProperties != null ? null : InferenceSession.getResolveResult((PsiCallExpression)myExpression, argumentList);
+        final JavaResolveResult resolveResult = candidateProperties != null ? null : InferenceSession.getResolveResult((PsiCall)myExpression, argumentList);
         PsiMethod method = null;
         if (candidateProperties != null) {
           method = candidateProperties.getMethod();
@@ -113,15 +114,14 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         }
 
         if (typeParams != null) {
-          PsiSubstitutor siteSubstitutor =
-            resolveResult instanceof MethodCandidateInfo && method != null && !method.isConstructor() ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() : candidateProperties != null ? candidateProperties.getSubstitutor() : PsiSubstitutor.EMPTY;
+          PsiSubstitutor siteSubstitutor = InferenceSession.chooseSiteSubstitutor(candidateProperties, resolveResult, method);
           final InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, myExpression.getManager(), myExpression);
           callSession.propagateVariables(session.getInferenceVariables());
           if (method != null) {
             final PsiExpression[] args = argumentList.getExpressions();
             final PsiParameter[] parameters = method.getParameterList().getParameters();
-            callSession.initExpressionConstraints(parameters, args, myExpression, method, resolveResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)resolveResult).isVarargs() || 
-                                                                                          candidateProperties != null && candidateProperties.isVarargs());
+            callSession.initExpressionConstraints(parameters, args, myExpression, method, InferenceSession
+              .chooseVarargsMode(candidateProperties, resolveResult));
           }
           final boolean accepted = callSession.repeatInferencePhases(true);
           if (!accepted) {

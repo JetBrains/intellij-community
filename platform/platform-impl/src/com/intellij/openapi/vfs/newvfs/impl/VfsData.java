@@ -144,8 +144,14 @@ public class VfsData {
     if (segment != null || !create) return segment;
     return ourSegments.cacheOrGet(key, new Segment());
   }
+  
+  public static class FileAlreadyCreatedException extends Exception {
+    private FileAlreadyCreatedException(String message) {
+      super(message);
+    }
+  }
 
-  public static void initFile(int id, Segment segment, int nameId, @NotNull Object data) {
+  public static void initFile(int id, Segment segment, int nameId, @NotNull Object data) throws FileAlreadyCreatedException {
     assert id > 0;
     int offset = getOffset(id);
 
@@ -154,12 +160,12 @@ public class VfsData {
     Object existingData = segment.myObjectArray.get(offset);
     if (existingData != null) {
       int parent = FSRecords.getParent(id);
-      String msg = "File already created: " + existingData + "; parentId=" + parent;
+      String msg = "File already created: " + nameId + ", data=" + existingData + "; parentId=" + parent;
       if (parent > 0) {
         msg += "; parent.name=" + FSRecords.getName(parent);
         msg += "; parent.children=" + Arrays.toString(FSRecords.listAll(id));
       }
-      throw new AssertionError(msg);
+      throw new FileAlreadyCreatedException(msg);
     }
     segment.myObjectArray.set(offset, data);
   }

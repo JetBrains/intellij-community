@@ -32,4 +32,9 @@ public interface PyStringLiteralExpression extends PyLiteralExpression, StringLi
 
   @NotNull
   List<Pair<TextRange, String>> getDecodedFragments();
+
+  /**
+   * @return true if this element has single string node and its type is {@link com.jetbrains.python.PyTokenTypes#DOCSTRING}
+   */
+  boolean isDocString();
 }

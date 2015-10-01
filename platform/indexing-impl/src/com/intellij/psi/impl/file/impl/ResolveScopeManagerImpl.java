@@ -61,12 +61,13 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       return scope;
     }
   };
-  private AdditionalIndexableFileSet myAdditionalIndexableFileSet = new AdditionalIndexableFileSet();
+  private final AdditionalIndexableFileSet myAdditionalIndexableFileSet;
 
   public ResolveScopeManagerImpl(Project project, ProjectRootManager projectRootManager, PsiManager psiManager) {
     myProject = project;
     myProjectRootManager = projectRootManager;
     myManager = psiManager;
+    myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
     ((PsiManagerImpl) psiManager).registerRunnableToRunOnChange(new Runnable() {
       @Override

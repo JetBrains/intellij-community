@@ -37,7 +37,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitUIUtil;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
-import git4idea.util.UntrackedFilesNotifier;
+import git4idea.util.GitUntrackedFilesHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +77,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
     final Computable<GitLineHandler> handlerProvider = dialogState.handlerProvider;
     final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before update");
 
-    new Task.Backgroundable(project, dialogState.progressTitle, false) {
+    new Task.Backgroundable(project, dialogState.progressTitle, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
@@ -143,8 +143,8 @@ abstract class GitMergeAction extends GitRepositoryAction {
                                                                  localChangesDetector.getRelativeFilePaths());
     }
     else if (untrackedFilesDetector.wasMessageDetected()) {
-      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(project, root, untrackedFilesDetector.getRelativeFilePaths(),
-                                                               getActionName(), null);
+      GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, root, untrackedFilesDetector.getRelativeFilePaths(),
+                                                                getActionName(), null);
     }
     else {
       GitUIUtil.notifyError(project, "Git " + getActionName() + " Failed", result.getErrorOutputAsJoinedString(), true, null);

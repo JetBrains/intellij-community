@@ -862,7 +862,15 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
       int selectionSize = sel.size();
       if (selectionSize > 1) {
-        myDiffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), myFilePath, sel.get(0).getRevision(), sel.get(sel.size() - 1).getRevision());
+        List<VcsFileRevision> selectedRevisions = ContainerUtil.sorted(ContainerUtil.map(sel, new Function<TreeNodeOnVcsRevision, VcsFileRevision>() {
+          @Override
+          public VcsFileRevision fun(TreeNodeOnVcsRevision treeNode) {
+            return treeNode.getRevision();
+          }
+        }), myRevisionsInOrderComparator);
+        VcsFileRevision olderRevision = selectedRevisions.get(0);
+        VcsFileRevision newestRevision = selectedRevisions.get(sel.size() - 1);
+        myDiffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), myFilePath, olderRevision, newestRevision);
       }
       else if (selectionSize == 1) {
         final TableView<TreeNodeOnVcsRevision> flatView = myDualView.getFlatView();

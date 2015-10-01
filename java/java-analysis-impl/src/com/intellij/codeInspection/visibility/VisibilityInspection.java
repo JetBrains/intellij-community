@@ -347,19 +347,20 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
     if (accessModifier == PsiModifier.PROTECTED) {
       if (SUGGEST_PRIVATE_FOR_INNERS) {
-        return refUtil.isInheritor(fromTopLevel, toOwner)
+        return fromTopLevel != null && refUtil.isInheritor(fromTopLevel, toOwner)
                || fromOwner != null && refUtil.isInheritor(fromOwner, toTopLevel)
                || toOwner != null && refUtil.getOwnerClass(toOwner) == from;
       }
 
-      return refUtil.isInheritor(fromTopLevel, toOwner);
+      return fromTopLevel != null && refUtil.isInheritor(fromTopLevel, toOwner);
     }
 
     if (accessModifier == PsiModifier.PRIVATE) {
       if (SUGGEST_PRIVATE_FOR_INNERS) {
-        if (isInExtendsList(to, fromTopLevel.getElement().getExtendsList())) return false;
-        if (isInExtendsList(to, fromTopLevel.getElement().getImplementsList())) return false;
-        if (isInAnnotations(to, fromTopLevel)) return false;
+        final PsiClass fromTopLevelElement = fromTopLevel != null ? fromTopLevel.getElement() : null;
+        if (fromTopLevelElement != null && isInExtendsList(to, fromTopLevelElement.getExtendsList())) return false;
+        if (fromTopLevelElement != null && isInExtendsList(to, fromTopLevelElement.getImplementsList())) return false;
+        if (fromTopLevelElement != null && isInAnnotations(to, fromTopLevelElement)) return false;
         return fromTopLevel == toOwner || fromOwner == toTopLevel || toOwner != null && refUtil.getOwnerClass(toOwner) == from;
       }
 
@@ -380,8 +381,8 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     return false;
   }
 
-  private static boolean isInAnnotations(final RefJavaElement to, final RefClass fromTopLevel) {
-    final PsiModifierList modifierList = fromTopLevel.getElement().getModifierList();
+  private static boolean isInAnnotations(final RefJavaElement to, @NotNull final PsiClass fromTopLevelElement) {
+    final PsiModifierList modifierList = fromTopLevelElement.getModifierList();
     if (modifierList == null) return false;
     final PsiElement toElement = to.getElement();
 
@@ -469,7 +470,8 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
               if (entryPointsManager.isAddNonJavaEntries()) {
                 final RefClass ownerClass = refMethod.getOwnerClass();
                 if (refMethod.isConstructor() && ownerClass.getDefaultConstructor() != null) {
-                  String qualifiedName = ownerClass.getElement().getQualifiedName();
+                  final PsiClass psiClass = ownerClass.getElement();
+                  String qualifiedName = psiClass != null ? psiClass.getQualifiedName() : null;
                   if (qualifiedName != null) {
                     final Project project = manager.getProject();
                     PsiSearchHelper.SERVICE.getInstance(project)

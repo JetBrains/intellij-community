@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,9 +120,7 @@ public final class ScriptRunnerUtil {
                                             @Nullable VirtualFile scriptFile,
                                             String[] parameters,
                                             @Nullable Charset charset) throws ExecutionException {
-    GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.setExePath(exePath);
-    commandLine.setPassParentEnvironment(true);
+    GeneralCommandLine commandLine = new GeneralCommandLine(exePath);
     if (scriptFile != null) {
       commandLine.addParameter(scriptFile.getPresentableUrl());
     }

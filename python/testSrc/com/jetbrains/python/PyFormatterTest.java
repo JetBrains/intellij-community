@@ -479,7 +479,7 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-14408
   public void testIndentsWithTabsInsideDictLiteral() {
-    getCommonCodeStyleSettings().getIndentOptions().USE_TAB_CHARACTER = true;
+    getIndentOptions().USE_TAB_CHARACTER = true;
     doTest();
   }
 

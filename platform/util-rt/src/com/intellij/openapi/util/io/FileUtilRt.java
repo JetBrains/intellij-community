@@ -97,9 +97,7 @@ public class FileUtilRt {
         ourPathToFileMethod = pathClass.getMethod("toFile");
         ourFilesWalkMethod = filesClass.getMethod("walkFileTree", pathClass, visitorClass);
         ourFilesDeleteIfExistsMethod = filesClass.getMethod("deleteIfExists", pathClass);
-        final Class<?> fileVisitResultClass = Class.forName("java.nio.file.FileVisitResult");
-        final Object Result_Continue = fileVisitResultClass.getDeclaredField("CONTINUE").get(null);
-        final Object Result_Terminate = fileVisitResultClass.getDeclaredField("TERMINATE").get(null);
+        final Object Result_Continue = Class.forName("java.nio.file.FileVisitResult").getDeclaredField("CONTINUE").get(null);
         ourDeletionVisitor = Proxy.newProxyInstance(FileUtilRt.class.getClassLoader(), new Class[]{visitorClass}, new InvocationHandler() {
           @Override
           public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -111,7 +109,13 @@ public class FileUtilRt {
               final String methodName = method.getName();
               if ("visitFile".equals(methodName) || "postVisitDirectory".equals(methodName)) {
                 if (!performDelete(args[0])) {
-                  return Result_Terminate;
+                  throw new IOException("Failed to delete " + args[0]) {
+                    // optimization: the stacktrace is not needed: the exception is used to terminate tree walkup and to pass the result
+                    @Override
+                    public synchronized Throwable fillInStackTrace() {
+                      return this;
+                    }
+                  };
                 }
               }
             }
@@ -617,13 +621,7 @@ public class FileUtilRt {
   @NotNull
   public static byte[] loadBytes(@NotNull InputStream stream) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    final byte[] bytes = BUFFER.get();
-    while (true) {
-      int n = stream.read(bytes, 0, bytes.length);
-      if (n <= 0) break;
-      buffer.write(bytes, 0, n);
-    }
-    buffer.close();
+    copy(stream, buffer);
     return buffer.toByteArray();
   }
 
@@ -678,7 +676,7 @@ public class FileUtilRt {
   /**
    * Warning! this method is _not_ symlinks-aware. Consider using com.intellij.openapi.util.io.FileUtil.delete()
    * @param file file or directory to delete
-   * @return true if the file did not exist or was successfully deleted 
+   * @return true if the file did not exist or was successfully deleted
    */
   public static boolean delete(@NotNull File file) {
     if (NIOReflect.IS_AVAILABLE) {
@@ -696,7 +694,7 @@ public class FileUtilRt {
           Files.deleteIfExists(file);
           return FileVisitResult.CONTINUE;
         }
-      
+
         @Override
         public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
           Files.deleteIfExists(dir);
@@ -718,9 +716,9 @@ public class FileUtilRt {
       logger().info(e);
       return false;
     }
-    return !file.exists();
+    return true;
   }
-  
+
   private static boolean deleteRecursively(@NotNull File file) {
     File[] files = file.listFiles();
     if (files != null) {
@@ -843,7 +841,7 @@ public class FileUtilRt {
       }
     }
     else {
-      final byte[] buffer = BUFFER.get();
+      final byte[] buffer = getThreadLocalBuffer();
       while (true) {
         int read = inputStream.read(buffer);
         if (read < 0) break;
@@ -851,6 +849,12 @@ public class FileUtilRt {
       }
     }
   }
+
+  @NotNull
+  public static byte[] getThreadLocalBuffer() {
+    return BUFFER.get();
+  }
+
 
   public static int getUserFileSizeLimit() {
     try {

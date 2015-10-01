@@ -244,4 +244,15 @@ public class PropertiesUtil {
     }
     return names.isEmpty() ? "" : (" (" + StringUtil.join(names, "/") + ")");
   }
+
+  public static boolean hasDefaultLanguage(Locale locale) {
+    return LOCALES_LANGUAGE_CODES.getValue().contains(locale.getLanguage());
+  }
+
+  @NotNull
+  public static String getSuffix(@NotNull PropertiesFile propertiesFile) {
+    final String baseName = propertiesFile.getResourceBundle().getBaseName();
+    final String propertiesFileName = propertiesFile.getName();
+    return FileUtil.getNameWithoutExtension(propertiesFileName.substring(baseName.length() + 1));
+  }
 }

@@ -22,9 +22,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -75,8 +75,7 @@ public class FacetLibraryConfigurator {
       }
 
       private void createNewLibrary(ModifiableRootModel model) {
-        final LibraryTableBase.ModifiableModelEx projectLibrariesModel =
-          (LibraryTableBase.ModifiableModelEx)modelsProvider.getLibraryTableModifiableModel(model.getProject());
+        final LibraryTable.ModifiableModel projectLibrariesModel = modelsProvider.getLibraryTableModifiableModel(model.getProject());
         Library lib = projectLibrariesModel.createLibrary(libraryName, PythonLibraryType.getInstance().getKind());
         fillLibrary(module.getProject(), lib, paths);
         projectLibrariesModel.commit();

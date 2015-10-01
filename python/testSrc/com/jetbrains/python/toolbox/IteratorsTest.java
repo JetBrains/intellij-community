@@ -32,19 +32,6 @@ public class IteratorsTest extends TestCase {
     super();
   }
 
-  public void testRepeatIterable() {
-    String value = "foo";
-    RepeatIterable<String> tested = new RepeatIterable<String>(value);
-    int count = 0;
-    int times = 10;
-    for (String what : tested) {
-      assertEquals(value, what);
-      count += 1;
-      if (count >= times) break;
-    }
-    assertEquals(times, count);
-  }
-
   public void testChainIterableByLists() {
     List<String> list1 = Arrays.asList("foo", "bar", "baz");
     List<String> list2 = Arrays.asList("ichi", "ni", "san");
@@ -113,82 +100,10 @@ public class IteratorsTest extends TestCase {
     assertEquals(all.size(), count);
   }
 
-
-  public void testChainIteratorByLists() {
-    List<String> list1 = Arrays.asList("foo", "bar", "baz");
-    List<String> list2 = Arrays.asList("ichi", "ni", "san");
-    List<String> list3 = Arrays.asList("a", "s", "d", "f");
-    List<String> all = new ArrayList<String>();
-    all.addAll(list1);
-    all.addAll(list2);
-    all.addAll(list3);
-    ChainIterator<String> tested = new ChainIterator<String>(list1.iterator()).add(list2.iterator()).add(list3.iterator());
-    int count = 0;
-    String what;
-    while (tested.hasNext()) {
-      what = tested.next();
-      assertEquals(all.get(count), what);
-      count += 1;
-    }
-    assertEquals(all.size(), count);
+  public void testToStringDoesntExhaustIterator() {
+    final ChainIterable<String> initial = new ChainIterable<String>();
+    initial.addItem("foo");
+    assertEquals("foo", initial.toString());;
+    assertEquals("foo", initial.toString());
   }
-
-  public void testChainIteratorEmptyFirst() {
-    List<String> list1 = Arrays.asList();
-    List<String> list2 = Arrays.asList("ichi", "ni", "san");
-    List<String> list3 = Arrays.asList("a", "s", "d", "f");
-    List<String> all = new ArrayList<String>();
-    all.addAll(list1);
-    all.addAll(list2);
-    all.addAll(list3);
-    ChainIterator<String> tested = new ChainIterator<String>(list1.iterator()).add(list2.iterator()).add(list3.iterator());
-    int count = 0;
-    String what;
-    while (tested.hasNext()) {
-      what = tested.next();
-      assertEquals(all.get(count), what);
-      count += 1;
-    }
-    assertEquals(all.size(), count);
-  }
-
-  public void testChainIteratorEmptyLast() {
-    List<String> list1 = Arrays.asList("foo", "bar", "baz");
-    List<String> list2 = Arrays.asList("ichi", "ni", "san");
-    List<String> list3 = Arrays.asList();
-    List<String> all = new ArrayList<String>();
-    all.addAll(list1);
-    all.addAll(list2);
-    all.addAll(list3);
-    ChainIterator<String> tested = new ChainIterator<String>(list1.iterator()).add(list2.iterator()).add(list3.iterator());
-    int count = 0;
-    String what;
-    while (tested.hasNext()) {
-      what = tested.next();
-      assertEquals(all.get(count), what);
-      count += 1;
-    }
-    assertEquals(all.size(), count);
-  }
-
-  public void testChainIteratorEmptyMiddle() {
-    List<String> list1 = Arrays.asList("foo", "bar", "baz");
-    List<String> list2 = Arrays.asList();
-    List<String> list3 = Arrays.asList("a", "s", "d", "f");
-    List<String> all = new ArrayList<String>();
-    all.addAll(list1);
-    all.addAll(list2);
-    all.addAll(list3);
-    ChainIterator<String> tested = new ChainIterator<String>(list1.iterator()).add(list2.iterator()).add(list3.iterator());
-    int count = 0;
-    String what;
-    while (tested.hasNext()) {
-      what = tested.next();
-      assertEquals(all.get(count), what);
-      count += 1;
-    }
-    assertEquals(all.size(), count);
-  }
-
-
 }

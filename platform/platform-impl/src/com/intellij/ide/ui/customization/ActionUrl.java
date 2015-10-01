@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,6 +131,7 @@ public class ActionUrl implements JDOMExternalizable {
     myInitialPosition = initialPosition;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     myGroupPath = new ArrayList<String>();
     for (Object o : element.getChildren(PATH)) {
@@ -154,6 +155,7 @@ public class ActionUrl implements JDOMExternalizable {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     for (String s : myGroupPath) {
       Element path = new Element(PATH);

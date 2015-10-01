@@ -47,7 +47,7 @@ public class PsiPolyExpressionUtil {
       return isPolyExpression(((PsiParenthesizedExpression)expression).getExpression());
     }
     else if (expression instanceof PsiNewExpression) {
-      final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)expression).getClassReference();
+      final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)expression).getClassOrAnonymousClassReference();
       if (classReference != null) {
         final PsiReferenceParameterList parameterList = classReference.getParameterList();
         if (parameterList != null) {
@@ -78,6 +78,18 @@ public class PsiPolyExpressionUtil {
           final PsiType returnType = method.getReturnType();
           if (returnType != null) {
             return mentionsTypeParameters(returnType, typeParameters);
+          }
+        }
+        else if (method.isConstructor() && expression instanceof PsiNewExpression) {
+          final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)expression).getClassOrAnonymousClassReference();
+          if (classReference != null) {
+            final PsiReferenceParameterList parameterList = classReference.getParameterList();
+            if (parameterList != null) {
+              final PsiTypeElement[] parameterElements = parameterList.getTypeParameterElements();
+              if (parameterElements.length == 1 && parameterElements[0].getType() instanceof PsiDiamondType) {
+                return true;
+              }
+            }
           }
         }
       } else {

@@ -27,7 +27,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
 import com.intellij.util.containers.ContainerUtil
-import java.util.BitSet
+import java.util.*
 
 public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
   private fun doCharTest(texts: Trio<Document>, expected: List<Change>?, matchings: Trio<BitSet>?) {
@@ -70,7 +70,7 @@ public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
   }
 
   private fun checkDiffChanges(actual: List<Change>, expected: List<Change>) {
-    assertOrderedEquals(actual, expected)
+    assertOrderedEquals(expected, actual)
   }
 
   private fun checkDiffMatching(changes: List<Change>, matchings: Trio<BitSet>) {

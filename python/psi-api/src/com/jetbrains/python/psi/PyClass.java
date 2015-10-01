@@ -38,7 +38,7 @@ import java.util.Map;
  * Represents a class declaration in source.
  */
 public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
-                                 ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner, PyStatementListContainer {
+                                 ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner, PyStatementListContainer, PyWithAncestors {
   ArrayFactory<PyClass> ARRAY_FACTORY = new ArrayFactory<PyClass>() {
     @NotNull
     @Override
@@ -52,13 +52,8 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
 
   /**
-   * Returns types of all ancestors from the hierarchy.
-   */
-  @NotNull
-  List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context);
-
-  /**
    * Returns only those ancestors from the hierarchy, that are resolved to PyClass PSI elements.
+   *
    * @param context type eval context (pass null to use loose, but better provide one)
    * @see #getAncestorTypes(TypeEvalContext) for the full list of ancestors.
    */
@@ -67,7 +62,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   /**
    * Returns types of expressions in the super classes list.
-   *
+   * <p/>
    * If no super classes are specified, returns the type of the implicit super class for old- and new-style classes.
    *
    * @see #getAncestorTypes(TypeEvalContext) for the full list of ancestors.
@@ -77,7 +72,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   /**
    * Returns only those super classes for expressions from the super classes list, that are resolved to PyClass PSI elements.
-   *
+   * <p/>
    * If no super classes are specified, returns the implicit super class for old- and new-style classes.
    *
    * @see #getSuperClassTypes(TypeEvalContext) for the full list of super classes.
@@ -88,7 +83,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   /**
    * Returns a PSI element for the super classes list.
-   *
+   * <p/>
    * Operates at the AST level.
    */
   @Nullable
@@ -96,7 +91,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   /**
    * Returns PSI elements for the expressions in the super classes list.
-   *
+   * <p/>
    * Operates at the AST level.
    */
   @NotNull
@@ -115,6 +110,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   /**
    * Get class properties.
+   *
    * @return Map [property_name] = [{@link com.jetbrains.python.psi.Property}]
    */
   @NotNull
@@ -122,7 +118,8 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   /**
    * Finds a method with given name.
-   * @param name what to look for
+   *
+   * @param name      what to look for
    * @param inherited true: search in superclasses; false: only look for methods defined in this class.
    * @return
    */
@@ -134,8 +131,9 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    * If __init__ is defined, it is found first. This mimics the way initialization methods
    * are searched for and called by Python when a constructor call is made.
    * Since __new__ only makes sense for new-style classes, an old-style class never finds it with this method.
+   *
    * @param inherited true: search in superclasses, too.
-   * @param context TODO: DOC
+   * @param context   TODO: DOC
    * @return a method that would be called first when an instance of this class is instantiated.
    */
   @Nullable
@@ -144,10 +142,9 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   /**
    * Finds a property with the specified name in the class or one of its ancestors.
    *
-   *
-   * @param name of the property
+   * @param name      of the property
    * @param inherited
-   * @param context type eval (null to use loose context, but you better provide one)
+   * @param context   type eval (null to use loose context, but you better provide one)
    * @return descriptor of property accessors, or null if such property does not exist.
    */
   @Nullable
@@ -155,11 +152,20 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   /**
    * Apply a processor to every method, looking at superclasses in method resolution order as needed.
+   * Consider using {@link PyClassLikeType#visitMembers(Processor, boolean, TypeEvalContext)}
+   *
    * @param processor what to apply
    * @param inherited true: search in superclasses, too.
+   * @param context   loose context will be used if no context provided
+   * @see PyClassLikeType#visitMembers(Processor, boolean, TypeEvalContext)
    */
-  boolean visitMethods(Processor<PyFunction> processor, boolean inherited);
+  boolean visitMethods(Processor<PyFunction> processor, boolean inherited, @Nullable TypeEvalContext context);
 
+  /**
+   * Consider using {@link PyClassLikeType#visitMembers(Processor, boolean, TypeEvalContext)}
+   *
+   * @see PyClassLikeType#visitMembers(Processor, boolean, TypeEvalContext)
+   */
   boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited, TypeEvalContext context);
 
   /**
@@ -168,6 +174,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    * This method does not access AST if underlying PSI is stub based.
    * Note that only <strong>own</strong> attrs are fetched, not parent attrs.
    * If you need parent attributes, consider using {@link #getClassAttributesInherited(TypeEvalContext)}
+   *
    * @see #getClassAttributesInherited(TypeEvalContext)
    */
   List<PyTargetExpression> getClassAttributes();
@@ -176,8 +183,11 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   /**
    * Returns all class attributes this class class contains, including inherited one.
    * Process may be heavy, depending or your context.
+   *
    * @param context context to use for this process
    * @return list of attrs.
+   *
+   * TODO: Replace it and {@link #getClassAttributes()} with a single getClassAttributes(@NotNull TypeEvalContext context, boolean inherited)
    */
   @NotNull
   List<PyTargetExpression> getClassAttributesInherited(@NotNull TypeEvalContext context);
@@ -202,13 +212,14 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   PyClass findNestedClass(String name, boolean inherited);
 
   /**
-   * @return true if the class is new-style and descends from 'object'.
    * @param context
+   * @return true if the class is new-style and descends from 'object'.
    */
   boolean isNewStyleClass(TypeEvalContext context);
 
   /**
    * Scan properties in order of definition, until processor returns true for one of them.
+   *
    * @param processor to check properties
    * @param inherited whether inherited properties need to be scanned, too
    * @return a property that processor accepted, or null.
@@ -235,6 +246,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   /**
    * Returns the aggregated list of names defined in __slots__ attributes of the class and its ancestors.
+   *
    * @param context (will be used default if null)
    */
   @Nullable
@@ -253,12 +265,14 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   String getDocStringValue();
 
   boolean processClassLevelDeclarations(@NotNull PsiScopeProcessor processor);
+
   boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PsiElement location);
 
   //TODO: Add "addMetaClass" or move methods out of here
+
   /**
    * Returns the type representing the metaclass of the class if it is explicitly set, null otherwise.
-   *
+   * <p/>
    * The metaclass might be defined outside the class in case of Python 2 file-level __metaclass__ attributes.
    */
   @Nullable
@@ -266,14 +280,13 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   /**
    * Returns the expression that defines the metaclass of the class.
-   *
+   * <p/>
    * Operates at the AST level.
    */
   @Nullable
   PyExpression getMetaClassExpression();
 
   /**
-   *
    * @param context eval context
    * @return {@link com.jetbrains.python.psi.types.PyType} casted if it has right type
    */

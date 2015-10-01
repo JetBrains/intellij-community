@@ -222,13 +222,11 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     final InheritorsHolder inheritors = new InheritorsHolder(result);
-    if (JavaSmartCompletionContributor.IN_TYPE_ARGS.accepts(position)) {
+    if (TypeArgumentCompletionProvider.IN_TYPE_ARGS.accepts(position)) {
       new TypeArgumentCompletionProvider(false, inheritors).addCompletions(parameters, new ProcessingContext(), result);
     }
 
-    if (JavaSmartCompletionContributor.LAMBDA.accepts(parameters.getPosition())) {
-      result.addAllElements(FunctionalExpressionCompletionProvider.getLambdaVariants(parameters, true));
-    }
+    result.addAllElements(FunctionalExpressionCompletionProvider.getLambdaVariants(parameters, true));
 
     PrefixMatcher matcher = result.getPrefixMatcher();
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
@@ -404,7 +402,7 @@ public class JavaCompletionContributor extends CompletionContributor {
           return;
         }
         if (reference instanceof PsiLabelReference) {
-          processLabelReference(result, (PsiLabelReference)reference);
+          LabelReferenceCompletion.processLabelReference(result, (PsiLabelReference)reference);
           return;
         }
 
@@ -656,14 +654,19 @@ public class JavaCompletionContributor extends CompletionContributor {
         PsiType type = expectedTypes.size() == 1 ? expectedTypes.iterator().next() : null;
         if (type != null) {
           final PsiType deepComponentType = type.getDeepComponentType();
+          String expectedType = type.getPresentableText();
+          if (expectedType.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) {
+            return null;
+          }
+
           if (deepComponentType instanceof PsiClassType) {
             if (((PsiClassType)deepComponentType).resolve() != null) {
-              return CompletionBundle.message("completion.no.suggestions.of.type", type.getPresentableText()) + suffix;
+              return CompletionBundle.message("completion.no.suggestions.of.type", expectedType) + suffix;
             }
-            return CompletionBundle.message("completion.unknown.type", type.getPresentableText()) + suffix;
+            return CompletionBundle.message("completion.unknown.type", expectedType) + suffix;
           }
           if (!PsiType.NULL.equals(type)) {
-            return CompletionBundle.message("completion.no.suggestions.of.type", type.getPresentableText()) + suffix;
+            return CompletionBundle.message("completion.no.suggestions.of.type", expectedType) + suffix;
           }
         }
       }
@@ -716,8 +719,6 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
       }
 
-      JavaCompletionUtil.initOffsets(file, context.getOffsetMap());
-
       if (context.getCompletionType() == CompletionType.BASIC) {
         if (semicolonNeeded(context.getEditor(), file, context.getStartOffset())) {
           context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
@@ -767,7 +768,8 @@ public class JavaCompletionContributor extends CompletionContributor {
       iterator.advance();
     }
 
-    if (!iterator.atEnd() && (iterator.getTokenType() == JavaTokenType.LPARENTH)) {
+    if (!iterator.atEnd() && iterator.getTokenType() == JavaTokenType.LPARENTH && PsiTreeUtil.getParentOfType(ref, PsiExpression.class, PsiClass.class) == null) {
+      // looks like a method declaration, e.g. StringBui<caret>methodName() inside a class
       return true;
     }
 
@@ -834,12 +836,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     return null;
   }
 
-  static void processLabelReference(CompletionResultSet result, PsiLabelReference ref) {
-    for (String s : ref.getVariants()) {
-      result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailType.SEMICOLON));
-    }
-  }
-  
   private static class IndentingDecorator extends LookupElementDecorator<LookupElement> {
     public IndentingDecorator(LookupElement delegate) {
       super(delegate);

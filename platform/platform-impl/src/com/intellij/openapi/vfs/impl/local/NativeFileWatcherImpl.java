@@ -552,9 +552,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     myNotificationSink.notifyOnAnyEvent();
   }
 
-  @TestOnly
-  public static Logger getLog() { return LOG; }
-
   @Override
   @TestOnly
   public void startup() throws IOException {

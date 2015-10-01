@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,14 @@ package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.ValidatableSdkAdditionalData;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -32,7 +35,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
  * User: anna
  * Date: Nov 22, 2004
  */
-public class Sandbox implements ValidatableSdkAdditionalData, JDOMExternalizable{
+public class Sandbox implements ValidatableSdkAdditionalData {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.Sandbox");
 
   @SuppressWarnings({"WeakerAccess"})
@@ -68,7 +71,7 @@ public class Sandbox implements ValidatableSdkAdditionalData, JDOMExternalizable
   }
 
   public void checkValid(SdkModel sdkModel) throws ConfigurationException {
-    if (mySandboxHome == null || mySandboxHome.length() == 0 || getJavaSdk() == null){
+    if (StringUtil.isEmpty(mySandboxHome) || getJavaSdk() == null) {
       throw new ConfigurationException(DevKitBundle.message("sandbox.specification"));
     }
   }

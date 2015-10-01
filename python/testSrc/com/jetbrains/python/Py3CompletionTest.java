@@ -157,6 +157,24 @@ public class Py3CompletionTest extends PyTestCase {
     doTest();
   }
 
+  public void testAsync() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
+  }
+
+  public void testAwait() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";

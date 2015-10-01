@@ -114,7 +114,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     String builtInServer = "http://localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort() + "/" + myProject.getName() + "/";
     if (docURL.startsWith(builtInServer)) {
       int refPosition = docURL.lastIndexOf('#');
-      VirtualFile file = WebServerPathToFileManager.getInstance(myProject).get(
+      VirtualFile file = WebServerPathToFileManager.getInstance(myProject).findVirtualFile(
         docURL.substring(builtInServer.length(), refPosition < builtInServer.length() ? docURL.length() : refPosition)
       );
       if (file != null) {

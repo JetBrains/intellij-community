@@ -187,6 +187,7 @@ class FTManager {
       final FileTemplateBase _template = addTemplate(template.getName(), template.getExtension());
       _template.setText(template.getText());
       _template.setReformatCode(template.isReformatCode());
+      _template.setLiveTemplateEnabled(template.isLiveTemplateEnabled());
     }
   }
 

@@ -17,13 +17,15 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -601,6 +603,27 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     if (indentOptions != null) return indentOptions;
 
     return OTHER_INDENT_OPTIONS;
+  }
+
+  /**
+   * If the document has an associated PsiFile, returns options for this file. Otherwise attempts to find associated VirtualFile and
+   * return options for corresponding FileType. If none are found, other indent options are returned.
+   *
+   * @param project  The project in which PsiFile should be searched.
+   * @param document The document to search indent options for.
+   * @return Indent options from the indent options providers or file type indent options or <code>OTHER_INDENT_OPTIONS</code>.
+   * @see FileIndentOptionsProvider
+   * @see FileTypeIndentOptionsProvider
+   * @see LanguageCodeStyleSettingsProvider
+   */
+  @NotNull
+  public IndentOptions getIndentOptionsByDocument(@Nullable Project project, @NotNull Document document) {
+    PsiFile file = project != null ? PsiDocumentManager.getInstance(project).getPsiFile(document) : null;
+    if (file != null) return getIndentOptionsByFile(file);
+
+    VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
+    FileType fileType = vFile != null ? vFile.getFileType() : null;
+    return getIndentOptions(fileType);
   }
 
   @NotNull

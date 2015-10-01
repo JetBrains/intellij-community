@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.Nullable;
-import sun.misc.Resource;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
@@ -45,18 +43,7 @@ public class JarMemoryLoader {
   }
 
   @Nullable
-  public static JarMemoryLoader load(File file, URL baseUrl) throws IOException {
-    ZipFile zipFile = new ZipFile(file);
-    try {
-      return load(zipFile, baseUrl);
-    }
-    finally {
-      zipFile.close();
-    }
-  }
-
-  @Nullable
-  public static JarMemoryLoader load(ZipFile zipFile, URL baseUrl) throws IOException {
+  public static JarMemoryLoader load(ZipFile zipFile, URL baseUrl, Map<Resource.Attribute, String> attributes) throws IOException {
     Enumeration<? extends ZipEntry> entries = zipFile.entries();
     if (!entries.hasMoreElements()) return null;
 
@@ -69,7 +56,7 @@ public class JarMemoryLoader {
     JarMemoryLoader loader = new JarMemoryLoader();
     for (int i = 0; i < size && entries.hasMoreElements(); i++) {
       ZipEntry entry = entries.nextElement();
-      MemoryResource resource = MemoryResource.load(baseUrl, zipFile, entry);
+      MemoryResource resource = MemoryResource.load(baseUrl, zipFile, entry, attributes);
       loader.myResources.put(entry.getName(), resource);
     }
     return loader;

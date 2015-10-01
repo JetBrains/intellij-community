@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.comparison
 
-// TODO
 public class SplitComparisonUtilTest : ComparisonUtilTestBase() {
   public fun testSplitter() {
     splitter {
@@ -32,6 +31,37 @@ public class SplitComparisonUtilTest : ComparisonUtilTestBase() {
       ("x_y" - "a_b y")
       default(mod(0, 0, 1, 1), mod(1, 1, 1, 1))
       testAll()
+    }
+    splitter {
+      ("x y" - "x a_b y")
+      default(mod(0, 0, 1, 2))
+      testAll()
+    }
+    splitter {
+      ("x_y" - "x a_y b")
+      default(mod(0, 0, 1, 1), mod(1, 1, 1, 1))
+      testAll()
+    }
+
+    splitter {
+      ("x_" - "x a_...")
+      default(mod(0, 0, 2, 2))
+      testAll()
+    }
+    splitter {
+      ("x_y_" - "a_b_")
+      default(mod(0, 0, 2, 2))
+      testAll()
+    }
+    splitter {
+      ("x_y" - " x _ y ")
+      default(mod(0, 0, 2, 2))
+      testDefault()
+    }
+    splitter {
+      ("x_y" - " x _ y.")
+      default(mod(0, 0, 1, 1), mod(1, 1, 1, 1))
+      testDefault()
     }
 
     splitter {

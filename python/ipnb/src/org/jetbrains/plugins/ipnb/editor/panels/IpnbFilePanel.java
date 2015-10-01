@@ -168,6 +168,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       panel = new IpnbHeadingPanel((IpnbHeadingCell)cell);
       addComponent(panel);
     }
+    else if (cell instanceof IpnbRawCell) {
+      // A raw cell is defined as content that should be included unmodified in nbconvert output.
+      // It's not visible for user
+    }
     else {
       throw new UnsupportedOperationException(cell.getClass().toString());
     }

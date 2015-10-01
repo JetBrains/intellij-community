@@ -20,21 +20,16 @@ import com.intellij.codeInsight.actions.CodeInsightAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.KeyValue;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.codeInsight.GradlePluginDescriptionsExtension;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleDocumentationBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
@@ -50,17 +45,14 @@ public class AddGradleDslPluginAction extends CodeInsightAction {
     getTemplatePresentation().setText(GradleBundle.message("gradle.codeInsight.action.apply_plugin.text"));
     getTemplatePresentation().setIcon(GradleIcons.GradlePlugin);
 
-    final List<String> plugins = StringUtil.split(
-      "java,groovy,idea,eclipse,scala,antlr,application,ear,jetty,maven,osgi,war,announce," +
-      "build-announcements,checkstyle,codenarc,eclipse-wtp,findbugs,jdepend,pmd,project-report,signing,sonar", ",");
-
-    myPlugins = new KeyValue[plugins.size()];
-    ContainerUtil.map2Array(plugins, myPlugins, new Function<String, KeyValue>() {
-      @Override
-      public KeyValue fun(String o) {
-        return createPluginKey(o);
+    Collection<KeyValue> pluginDescriptions = new ArrayList<KeyValue>();
+    for (GradlePluginDescriptionsExtension extension : GradlePluginDescriptionsExtension.EP_NAME.getExtensions()) {
+      for (Map.Entry<String, String> pluginDescription : extension.getPluginDescriptions().entrySet()) {
+        pluginDescriptions.add(KeyValue.create(pluginDescription.getKey(), pluginDescription.getValue()));
       }
-    });
+    }
+
+    myPlugins = pluginDescriptions.toArray(new KeyValue[pluginDescriptions.size()]);
     Arrays.sort(myPlugins, new Comparator<KeyValue>() {
       @Override
       public int compare(KeyValue o1, KeyValue o2) {
@@ -80,12 +72,5 @@ public class AddGradleDslPluginAction extends CodeInsightAction {
     if (file instanceof PsiCompiledElement) return false;
     if (!GroovyFileType.GROOVY_FILE_TYPE.equals(file.getFileType())) return false;
     return !GradleConstants.SETTINGS_FILE_NAME.equals(file.getName()) && file.getName().endsWith(GradleConstants.EXTENSION);
-  }
-
-  @NotNull
-  private static KeyValue<String, String> createPluginKey(@NotNull String pluginName) {
-    String description = GradleDocumentationBundle.messageOrDefault(
-      String.format("gradle.documentation.org.gradle.api.Project.apply.plugin.%s.non-html", pluginName), "");
-    return KeyValue.create(pluginName, description);
   }
 }

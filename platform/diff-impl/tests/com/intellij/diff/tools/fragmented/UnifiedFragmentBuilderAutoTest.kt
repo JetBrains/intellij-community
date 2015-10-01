@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.containers.HashMap
 
 public class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
   public fun test() {
@@ -109,7 +108,7 @@ public class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
 
     // ranges should have exact same content
     for (range in ranges) {
-      val sideSequence = range.getSide().select(sequence1, sequence2)
+      val sideSequence = range.getSide().select(sequence1, sequence2)!!
       val baseRange = text.subSequence(range.getBase().getStartOffset(), range.getBase().getEndOffset())
       val sideRange = sideSequence.subSequence(range.getChanged().getStartOffset(), range.getChanged().getEndOffset())
       assertTrue(StringUtil.equals(baseRange, sideRange))

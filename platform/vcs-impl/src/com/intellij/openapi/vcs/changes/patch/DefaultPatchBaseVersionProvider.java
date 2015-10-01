@@ -129,12 +129,13 @@ public class DefaultPatchBaseVersionProvider {
     }
     try {
       final Ref<VcsHistorySession> ref = new Ref<VcsHistorySession>();
-      VcsUtil.runVcsProcessWithProgress(new VcsRunnable() {
+      boolean result = VcsUtil.runVcsProcessWithProgress(new VcsRunnable() {
         public void run() throws VcsException {
           ref.set(historyProvider.createSessionFor(filePath));
         }
       }, VcsBundle.message("loading.file.history.progress"), true, myProject);
-      if (ref.isNull()) return;
+      //if not found or cancelled
+      if (ref.isNull() || !result) return;
       final VcsHistorySession session = ref.get();
       final List<VcsFileRevision> list = session.getRevisionList();
       if (list == null) return;

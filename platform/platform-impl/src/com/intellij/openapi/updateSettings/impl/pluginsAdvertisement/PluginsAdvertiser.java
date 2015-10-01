@@ -249,12 +249,14 @@ public class PluginsAdvertiser implements StartupActivity {
 
       @Override
       public void onSuccess() {
-        final PluginsAdvertiserDialog advertiserDialog =
-          new PluginsAdvertiserDialog(null,
-                                      myPlugins.toArray(new PluginDownloader[myPlugins.size()]),
-                                      PluginManagerMain.mapToPluginIds(myAllPlugins));
-        if (advertiserDialog.showAndGet()) {
-          onSuccess.run();
+        if (myAllPlugins != null) {
+          final PluginsAdvertiserDialog advertiserDialog =
+            new PluginsAdvertiserDialog(null,
+                                        myPlugins.toArray(new PluginDownloader[myPlugins.size()]),
+                                        PluginManagerMain.mapToPluginIds(myAllPlugins));
+          if (advertiserDialog.showAndGet()) {
+            onSuccess.run();
+          }
         }
       }
     });

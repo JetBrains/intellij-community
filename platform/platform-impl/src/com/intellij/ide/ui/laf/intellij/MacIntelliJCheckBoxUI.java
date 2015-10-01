@@ -41,9 +41,13 @@ public class MacIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
 
   @Override
   protected void drawCheckIcon(JComponent c, Graphics2D g, JCheckBox b, Rectangle iconRect, boolean selected, boolean enabled) {
-    MacIntelliJIconCache
-      .getIcon("checkBox", selected, c.hasFocus())
-      .paintIcon(c, g, iconRect.x, iconRect.y);
+    String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
+    Icon icon = MacIntelliJIconCache.getIcon(iconName, selected || isIndeterminate(b), c.hasFocus(), b.isEnabled());
+    icon.paintIcon(c, g, iconRect.x, iconRect.y);
+  }
+
+  private static boolean isIndeterminate(JCheckBox checkBox) {
+    return "indeterminate".equals(checkBox.getClientProperty("JButton.selectedState"));
   }
 
   @Override

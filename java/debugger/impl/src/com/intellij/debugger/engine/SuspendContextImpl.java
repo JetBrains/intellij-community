@@ -26,12 +26,12 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.HashSet;
-import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +63,10 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   private JavaExecutionStack myActiveExecutionStack;
 
-  SuspendContextImpl(@NotNull DebugProcessImpl debugProcess, int suspendPolicy, int eventVotes, EventSet set) {
+  SuspendContextImpl(@NotNull DebugProcessImpl debugProcess,
+                     @MagicConstant(flagsFromClass = EventRequest.class) int suspendPolicy,
+                     int eventVotes,
+                     EventSet set) {
     myDebugProcess = debugProcess;
     mySuspendPolicy = suspendPolicy;
     myVotesToVote = eventVotes;
@@ -81,6 +84,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   protected void resume(){
     assertNotResumed();
+    LOG.assertTrue(!isEvaluating(), "resuming context while evaluating");
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
@@ -144,6 +148,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     return myThread;
   }
 
+  @MagicConstant(flagsFromClass = EventRequest.class)
   @Override
   public int getSuspendPolicy() {
     return mySuspendPolicy;
@@ -224,15 +229,18 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   @Nullable
   @Override
-  public XExecutionStack getActiveExecutionStack() {
+  public JavaExecutionStack getActiveExecutionStack() {
     return myActiveExecutionStack;
   }
 
-  public void initExecutionStacks(ThreadReferenceProxyImpl newThread) {
+  public void initExecutionStacks(ThreadReferenceProxyImpl activeThread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    myThread = newThread;
-    if (newThread != null) {
-      myActiveExecutionStack = new JavaExecutionStack(newThread, myDebugProcess, true);
+    if (myThread == null) {
+      myThread = activeThread;
+    }
+    if (activeThread != null) {
+      myActiveExecutionStack = new JavaExecutionStack(activeThread, myDebugProcess, myThread == activeThread);
+      myActiveExecutionStack.initTopFrame();
     }
   }
 

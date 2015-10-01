@@ -16,6 +16,12 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.HighlighterClient;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
@@ -24,6 +30,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.testFramework.TestDataFile;
@@ -54,6 +61,13 @@ public class EditorPaintingTest extends AbstractEditorTest {
     initText("foo");
     addRangeHighlighter(1, 3, HighlighterLayer.WARNING, Color.red, null);
     addRangeHighlighter(2, 3, HighlighterLayer.ERROR, Color.black, null);
+    checkResult();
+  }
+  
+  public void testCaretRowWinsOverSyntaxEvenInPresenceOfHighlighter() throws Exception {
+    initText("foo");
+    ((EditorEx)myEditor).setHighlighter(new UniformHighlighter(new TextAttributes(null, Color.red, null, null, Font.PLAIN)));
+    addRangeHighlighter(0, 3, 0, null, Color.blue);
     checkResult();
   }
 
@@ -259,6 +273,86 @@ public class EditorPaintingTest extends AbstractEditorTest {
             g.fillRect(x + j, y + i - CHAR_HEIGHT + CHAR_DESCENT, 1, 1);
           }
         }
+      }
+    }
+  }
+
+  private static class UniformHighlighter implements EditorHighlighter {
+    private final TextAttributes myAttributes;
+    private Document myDocument;
+
+    private UniformHighlighter(TextAttributes attributes) {
+      myAttributes = attributes;
+    }
+
+    @NotNull
+    @Override
+    public HighlighterIterator createIterator(int startOffset) {
+      return new Iterator(startOffset);
+    }
+
+    @Override
+    public void setText(@NotNull CharSequence text) {}
+
+    @Override
+    public void setEditor(@NotNull HighlighterClient editor) {
+      myDocument = editor.getDocument();
+    }
+
+    @Override
+    public void setColorScheme(@NotNull EditorColorsScheme scheme) {}
+
+    @Override
+    public void beforeDocumentChange(DocumentEvent event) {}
+
+    @Override
+    public void documentChanged(DocumentEvent event) {}
+
+    private class Iterator implements HighlighterIterator {
+      private int myOffset;
+      
+      public Iterator(int startOffset) {
+        myOffset = startOffset;
+      }
+
+      @Override
+      public TextAttributes getTextAttributes() {
+        return myAttributes;
+      }
+
+      @Override
+      public int getStart() {
+        return myOffset;
+      }
+
+      @Override
+      public int getEnd() {
+        return myDocument.getTextLength();
+      }
+
+      @Override
+      public IElementType getTokenType() {
+        return null;
+      }
+
+      @Override
+      public void advance() {
+        myOffset = myDocument.getTextLength();
+      }
+
+      @Override
+      public void retreat() {
+        myOffset = 0;
+      }
+
+      @Override
+      public boolean atEnd() {
+        return myOffset == myDocument.getTextLength();
+      }
+
+      @Override
+      public Document getDocument() {
+        return myDocument;
       }
     }
   }

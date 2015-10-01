@@ -23,7 +23,10 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.EditorTestUtil;
+
+import java.awt.*;
 
 public class EditorImplTest extends AbstractEditorTest {
   public void testPositionCalculationForZeroWidthChars() throws Exception {
@@ -182,14 +185,25 @@ public class EditorImplTest extends AbstractEditorTest {
     final FoldRegion innerRegion = addCollapsedFoldRegion(0, 4, "...");
     final FoldRegion outerRegion = addCollapsedFoldRegion(0, 9, "...");
 
-    myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        myEditor.getFoldingModel().removeFoldRegion(outerRegion);
-        myEditor.getFoldingModel().removeFoldRegion(innerRegion);
-      }
+    myEditor.getFoldingModel().runBatchFoldingOperation(() -> {
+      myEditor.getFoldingModel().removeFoldRegion(outerRegion);
+      myEditor.getFoldingModel().removeFoldRegion(innerRegion);
     });
 
     checkResultByText("so<caret>me long text");
+  }
+  
+  public void testEditorSizeCalculationOnOpening() throws Exception {
+    Registry.get("editor.new.rendering").setValue(true);
+    try {
+      initText("a\nbbb\nccccc");
+      myEditor.putUserData(EditorImpl.DO_DOCUMENT_UPDATE_TEST, Boolean.TRUE);
+      myEditor.getSettings().setAdditionalColumnsCount(0);
+      myEditor.getSettings().setAdditionalLinesCount(0);
+      assertEquals(new Dimension(50, 30), myEditor.getContentComponent().getPreferredSize());
+    }
+    finally {
+      Registry.get("editor.new.rendering").setValue(false);
+    }
   }
 }

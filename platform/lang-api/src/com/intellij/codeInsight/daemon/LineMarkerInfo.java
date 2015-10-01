@@ -110,7 +110,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     return elementRef.get();
   }
 
-  public void setNavigateAction(AnAction navigateAction) {
+  void setNavigateAction(@NotNull  AnAction navigateAction) {
     myNavigateAction = navigateAction;
   }
 

@@ -18,13 +18,13 @@ package com.jetbrains.python.configuration;
 import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -35,9 +35,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.ui.*;
@@ -380,9 +378,19 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private void removeSdk() {
     final Sdk currentSdk = getSelectedSdk();
     if (currentSdk != null) {
+      final Sdk sdk = myProjectSdksModel.findSdk(currentSdk);
       final PySdkService sdkService = PySdkService.getInstance();
       sdkService.removeSdk(currentSdk);
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
+        @Override
+        public void run() {
+          SdkConfigurationUtil.removeSdk(sdk);
+        }
+      });
+
+      myProjectSdksModel.removeSdk(sdk);
       myProjectSdksModel.removeSdk(currentSdk);
+
       if (myModificators.containsKey(currentSdk)) {
         SdkModificator modificator = myModificators.get(currentSdk);
         myModifiedModificators.remove(modificator);
@@ -434,23 +442,12 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
     @Override
     public boolean isEnabled() {
-      return getSelectedSdk() != null;
+      return getSelectedSdk() != null && !(getSelectedSdk() instanceof PyDetectedSdk);
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
       Sdk sdk = getSelectedSdk();
-      if (sdk instanceof PyDetectedSdk) {
-        final String sdkName = sdk.getName();
-        VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-          @Override
-          public VirtualFile compute() {
-            return LocalFileSystem.getInstance().refreshAndFindFileByPath(sdkName);
-          }
-        });
-        sdk =
-          SdkConfigurationUtil.setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, PythonSdkType.getInstance(), true, null, null);
-      }
       final PythonPathEditor pathEditor = createPathEditor(sdk);
       final SdkModificator sdkModificator = myModificators.get(sdk);
 

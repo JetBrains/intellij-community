@@ -41,7 +41,7 @@
        <include name="guava*.jar"/>
        <include name="picocontainer.jar"/>
        <include name="jna.jar"/>
-       <include name="jna-utils.jar"/>
+       <include name="jna-platform.jar"/>
        <include name="oromatcher.jar"/>
        <include name="snappy-in-java-*.jar"/>
        <include name="cli-parser-*.jar"/>

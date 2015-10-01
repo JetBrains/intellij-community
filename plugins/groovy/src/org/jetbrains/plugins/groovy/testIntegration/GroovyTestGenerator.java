@@ -77,7 +77,7 @@ public class GroovyTestGenerator implements TestGenerator {
 
               addSuperClass(targetClass, project, d.getSuperClassName());
 
-              Editor editor = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
+              Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, targetClass.getContainingFile(), targetClass);
               addTestMethods(editor,
                              targetClass,
                              d.getSelectedTestFrameworkDescriptor(),

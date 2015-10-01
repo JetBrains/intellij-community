@@ -66,6 +66,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -398,7 +399,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       return;
     }
 
-    AnnotateToggleAction.doAnnotate(editor, myProject, file, annotation, vcs, false);
+    AnnotateToggleAction.doAnnotate(editor, myProject, file, annotation, vcs);
   }
 
   public void showDifferences(final VcsFileRevision version1, final VcsFileRevision version2, final File file) {
@@ -587,8 +588,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   @Override
   @NotNull
-  public List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider, @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
+  public List<VirtualFile> showMergeDialog(@NotNull List<VirtualFile> files,
+                                           @NotNull MergeProvider provider,
+                                           @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
     if (files.isEmpty()) return Collections.emptyList();
+    VfsUtil.markDirtyAndRefresh(false, false, false, ArrayUtil.toObjectArray(files, VirtualFile.class));
     final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
     fileMergeDialog.show();
     return fileMergeDialog.getProcessedFiles();

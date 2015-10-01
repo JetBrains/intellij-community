@@ -345,7 +345,7 @@ final class CombinedAnalysis {
 
     Type[] args = Type.getArgumentTypes(methodNode.desc);
     int local = 0;
-    if ((methodNode.access & Opcodes.ACC_STATIC) == 0) {
+    if ((methodNode.access & ACC_STATIC) == 0) {
       frame.setLocal(local++, ThisValue);
     }
     for (int i = 0; i < args.length; i++) {
@@ -580,5 +580,198 @@ final class CombinedInterpreter extends BasicInterpreter {
       default:
     }
     return track(origin, super.naryOperation(insn, values));
+  }
+}
+
+class NegationAnalysisFailure extends Exception {
+
+}
+
+final class NegationAnalysis {
+
+  private final ControlFlowGraph controlFlow;
+  private final Method method;
+  private final NegationInterpreter interpreter;
+  private final MethodNode methodNode;
+
+  private TrackableCallValue conditionValue;
+  private BasicValue trueBranchValue;
+  private BasicValue falseBranchValue;
+
+  NegationAnalysis(Method method, ControlFlowGraph controlFlow) {
+    this.method = method;
+    this.controlFlow = controlFlow;
+    methodNode = controlFlow.methodNode;
+    interpreter = new NegationInterpreter(methodNode.instructions);
+  }
+
+  private static void checkAssertion(boolean assertion) throws NegationAnalysisFailure {
+    if (!assertion) {
+      throw new NegationAnalysisFailure();
+    }
+  }
+
+  final void analyze() throws AnalyzerException, NegationAnalysisFailure {
+    Frame<BasicValue> frame = createStartFrame();
+    int insnIndex = 0;
+
+    while (true) {
+      AbstractInsnNode insnNode = methodNode.instructions.get(insnIndex);
+      switch (insnNode.getType()) {
+        case AbstractInsnNode.LABEL:
+        case AbstractInsnNode.LINE:
+        case AbstractInsnNode.FRAME:
+          insnIndex = controlFlow.transitions[insnIndex][0];
+          break;
+        default:
+          switch (insnNode.getOpcode()) {
+            case IFEQ:
+            case IFNE:
+              BasicValue conValue = popValue(frame);
+              checkAssertion(conValue instanceof TrackableCallValue);
+              frame.execute(insnNode, interpreter);
+              conditionValue = (TrackableCallValue)conValue;
+              int jumpIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
+              int nextIndex = insnIndex + 1;
+              proceedBranch(frame, jumpIndex, IFNE == insnNode.getOpcode());
+              proceedBranch(frame, nextIndex, IFEQ == insnNode.getOpcode());
+              checkAssertion(FalseValue == trueBranchValue);
+              checkAssertion(TrueValue == falseBranchValue);
+              return;
+            default:
+              frame.execute(insnNode, interpreter);
+              insnIndex = controlFlow.transitions[insnIndex][0];
+          }
+      }
+    }
+  }
+
+  private void proceedBranch(Frame<BasicValue> startFrame, int startIndex, boolean branchValue)
+    throws NegationAnalysisFailure, AnalyzerException {
+
+    Frame<BasicValue> frame = new Frame<BasicValue>(startFrame);
+    int insnIndex = startIndex;
+
+    while (true) {
+      AbstractInsnNode insnNode = methodNode.instructions.get(insnIndex);
+      switch (insnNode.getType()) {
+        case AbstractInsnNode.LABEL:
+        case AbstractInsnNode.LINE:
+        case AbstractInsnNode.FRAME:
+          insnIndex = controlFlow.transitions[insnIndex][0];
+          break;
+        default:
+          switch (insnNode.getOpcode()) {
+            case IRETURN:
+              BasicValue returnValue = frame.pop();
+              if (branchValue) {
+                trueBranchValue = returnValue;
+              }
+              else {
+                falseBranchValue = returnValue;
+              }
+              return;
+            default:
+              checkAssertion(controlFlow.transitions[insnIndex].length == 1);
+              frame.execute(insnNode, interpreter);
+              insnIndex = controlFlow.transitions[insnIndex][0];
+          }
+      }
+    }
+  }
+
+  final Equation<Key, Value> contractEquation(int i, Value inValue, boolean stable) {
+    final Key key = new Key(method, new InOut(i, inValue), stable);
+    final Result<Key, Value> result;
+    HashSet<Key> keys = new HashSet<Key>();
+    for (int argI = 0; argI < conditionValue.args.size(); argI++) {
+      BasicValue arg = conditionValue.args.get(argI);
+      if (arg instanceof NthParamValue) {
+        NthParamValue npv = (NthParamValue)arg;
+        if (npv.n == i) {
+          keys.add(new Key(conditionValue.method, new InOut(argI, inValue), conditionValue.stableCall, true));
+        }
+      }
+    }
+    if (keys.isEmpty()) {
+      result = new Final<Key, Value>(Value.Top);
+    } else {
+      result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
+    }
+    return new Equation<Key, Value>(key, result);
+  }
+
+  final Frame<BasicValue> createStartFrame() {
+    Frame<BasicValue> frame = new Frame<BasicValue>(methodNode.maxLocals, methodNode.maxStack);
+    Type returnType = Type.getReturnType(methodNode.desc);
+    BasicValue returnValue = Type.VOID_TYPE.equals(returnType) ? null : new BasicValue(returnType);
+    frame.setReturn(returnValue);
+
+    Type[] args = Type.getArgumentTypes(methodNode.desc);
+    int local = 0;
+    if ((methodNode.access & ACC_STATIC) == 0) {
+      frame.setLocal(local++, ThisValue);
+    }
+    for (int i = 0; i < args.length; i++) {
+      BasicValue value = new NthParamValue(args[i], i);
+      frame.setLocal(local++, value);
+      if (args[i].getSize() == 2) {
+        frame.setLocal(local++, BasicValue.UNINITIALIZED_VALUE);
+      }
+    }
+    while (local < methodNode.maxLocals) {
+      frame.setLocal(local++, BasicValue.UNINITIALIZED_VALUE);
+    }
+    return frame;
+  }
+
+  private static BasicValue popValue(Frame<BasicValue> frame) {
+    return frame.getStack(frame.getStackSize() - 1);
+  }
+}
+
+final class NegationInterpreter extends BasicInterpreter {
+  private final InsnList insns;
+
+  NegationInterpreter(InsnList insns) {
+    this.insns = insns;
+  }
+
+  @Override
+  public BasicValue newOperation(AbstractInsnNode insn) throws AnalyzerException {
+    switch (insn.getOpcode()) {
+      case ICONST_0:
+        return FalseValue;
+      case ICONST_1:
+        return TrueValue;
+      default:
+        return super.newOperation(insn);
+    }
+  }
+
+  @Override
+  public BasicValue naryOperation(AbstractInsnNode insn, List<? extends BasicValue> values) throws AnalyzerException {
+    int opCode = insn.getOpcode();
+    int shift = opCode == INVOKESTATIC ? 0 : 1;
+    int origin = insns.indexOf(insn);
+
+    switch (opCode) {
+      case INVOKESTATIC:
+      case INVOKESPECIAL:
+      case INVOKEVIRTUAL:
+      case INVOKEINTERFACE:
+        boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
+        MethodInsnNode mNode = (MethodInsnNode)insn;
+        Method method = new Method(mNode.owner, mNode.name, mNode.desc);
+        Type retType = Type.getReturnType(mNode.desc);
+        BasicValue receiver = null;
+        if (shift == 1) {
+          receiver = values.remove(0);
+        }
+        boolean thisCall = (opCode == INVOKEINTERFACE || opCode == INVOKEVIRTUAL) && receiver == ThisValue;
+        return new TrackableCallValue(origin, retType, method, values, stable, thisCall);
+      default:
+        return super.naryOperation(insn, values);
+    }
   }
 }

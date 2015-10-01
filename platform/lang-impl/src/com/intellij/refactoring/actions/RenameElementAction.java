@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SyntheticElement;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +44,9 @@ public class RenameElementAction extends BaseRefactoringAction {
     if (elements.length != 1) return false;
 
     PsiElement element = elements[0];
-    return element instanceof PsiNamedElement && !(element instanceof SyntheticElement);
+    return element instanceof PsiNamedElement &&
+           !(element instanceof SyntheticElement) && 
+           !PsiElementRenameHandler.isVetoed(element);
   }
 
   @Override

@@ -754,7 +754,8 @@ class EditorPainter implements TextDrawingCallback {
       if (myEditor.isInsertMode() != settings.isBlockCursor()) {
         int lineWidth = JBUI.scale(settings.getLineCursorWidth());
         g.fillRect(x, y, lineWidth, lineHeight);
-        if (myDocument.getTextLength() > 0 && caret != null && !myView.getLineLayout(caret.getLogicalPosition().line).isLtr()) {
+        if (myDocument.getTextLength() > 0 && caret != null && 
+            !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr()) {
           g.fillPolygon(new int[]{
                           isRtl ? x + lineWidth : x,
                           isRtl ? x + lineWidth - CARET_DIRECTION_MARK_SIZE : x + CARET_DIRECTION_MARK_SIZE,

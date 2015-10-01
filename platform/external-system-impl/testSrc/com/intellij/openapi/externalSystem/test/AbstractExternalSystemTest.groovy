@@ -155,13 +155,7 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
       }
 
       final Project myProject = project
-      ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(myProject) {
-        @Override
-        void execute() {
-          ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring {
-            dataManager.importData(node, myProject, true)
-          }
-        }})
+      dataManager.importData(node, myProject, true)
     }
   }
 }

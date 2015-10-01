@@ -334,7 +334,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   }
 
   @Nullable
-  private PsiFile getPsiFileByLocation(final Project project, final Location location) {
+  protected PsiFile getPsiFileByLocation(final Project project, final Location location) {
     if (location == null) {
       return null;
     }
@@ -603,8 +603,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
     @Override public void visitMethod(PsiMethod method) {
       try {
-        //noinspection HardCodedStringLiteral
-        String methodName = method.isConstructor() ? "<init>" : method.getName();
+        String methodName = JVMNameUtil.getJVMMethodName(method);
         PsiClass containingClass = method.getContainingClass();
 
         if(containingClass != null &&

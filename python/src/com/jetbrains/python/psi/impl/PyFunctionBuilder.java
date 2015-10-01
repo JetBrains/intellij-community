@@ -18,32 +18,29 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.documentation.StructuredDocStringBase;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
+import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * @author yole
  */
 public class PyFunctionBuilder {
-  private static final String COMMENTS_BOUNDARY = "\"\"\"";
-  private static final Pattern INDENT_REMOVE_PATTERN = Pattern.compile("^\\s+", Pattern.MULTILINE);
   private final String myName;
   private final List<String> myParameters = new ArrayList<String>();
   private final List<String> myStatements = new ArrayList<String>();
   private final List<String> myDecorators = new ArrayList<String>();
   private String myAnnotation = null;
-  private String[] myDocStringLines = null;
   @NotNull
   private final Map<String, String> myDecoratorValues = new HashMap<String, String>();
+  private boolean myAsync = false;
+  private PyDocstringGenerator myDocStringGenerator;
 
   /**
    * Creates builder copying signature and doc from another one.
@@ -55,7 +52,7 @@ public class PyFunctionBuilder {
   @NotNull
   public static PyFunctionBuilder copySignature(@NotNull final PyFunction source, @NotNull final String... decoratorsToCopyIfExist) {
     final String name = source.getName();
-    final PyFunctionBuilder functionBuilder = new PyFunctionBuilder((name != null) ? name : "");
+    final PyFunctionBuilder functionBuilder = new PyFunctionBuilder((name != null) ? name : "", source);
     for (final PyParameter parameter : source.getParameterList().getParameters()) {
       final String parameterName = parameter.getName();
       if (parameterName != null) {
@@ -73,50 +70,48 @@ public class PyFunctionBuilder {
         }
       }
     }
-    final String docString = source.getDocStringValue();
-    if (docString != null) {
-      functionBuilder.docString(docString);
-    }
+    functionBuilder.myDocStringGenerator = PyDocstringGenerator.forDocStringOwner(source);
     return functionBuilder;
   }
 
-  /**
-   * Adds docstring to function. Provide doc with out of comment blocks.
-   *
-   *
-   * @param docString doc
-   */
-  public void docString(@NotNull final String docString) {
-    final String[] stringsToAdd = StringUtil.splitByLines(removeIndent(docString));
-    if (myDocStringLines == null) {
-      myDocStringLines = stringsToAdd;
-    }
-    else {
-      myDocStringLines = ArrayUtil.mergeArrays(myDocStringLines, stringsToAdd);
-    }
-  }
-
-  @NotNull
-  private static String removeIndent(@NotNull final String string) {
-    return INDENT_REMOVE_PATTERN.matcher(string).replaceAll("");
-  }
-
-  public PyFunctionBuilder(String name) {
+  @Deprecated
+  public PyFunctionBuilder(@NotNull String name) {
     myName = name;
+    myDocStringGenerator = null;
+  }
+
+  /**
+   * @param settingsAnchor any PSI element, presumably in the same file/module where generated function is going to be inserted.
+   *                       It's needed to detect configured docstring format and Python indentation size and, as result, 
+   *                       generate properly formatted docstring. 
+   */
+  public PyFunctionBuilder(@NotNull String name, @NotNull PsiElement settingsAnchor) {
+    myName = name;
+    myDocStringGenerator = PyDocstringGenerator.create(DocStringUtil.getConfiguredDocStringFormat(settingsAnchor), 
+                                                       PyIndentUtil.getIndentFromSettings(settingsAnchor.getProject()), 
+                                                       settingsAnchor);
   }
 
   /**
    * Adds param and its type to doc
+   * @param format what docstyle to use to doc param type
    * @param name param name
    * @param type param type
-   * @param docStyle what docstyle to use to doc param type
    */
   @NotNull
+  public PyFunctionBuilder parameterWithType(@NotNull String name, @NotNull String type) {
+    parameter(name);
+    myDocStringGenerator.withParamTypedByName(name, type);
+    return this;
+  }
+
+  @NotNull
+  @Deprecated
   public PyFunctionBuilder parameterWithType(@NotNull final String name,
                                              @NotNull final String type,
-                                             @NotNull final StructuredDocStringBase docStyle) {
+                                             @NotNull final DocStringFormat format) {
     parameter(name);
-    docString(docStyle.createParameterType(name, type));
+    myDocStringGenerator.withParamTypedByName(name, type);
     return this;
   }
 
@@ -133,6 +128,11 @@ public class PyFunctionBuilder {
 
   public PyFunctionBuilder annotation(String text) {
     myAnnotation = text;
+    return this;
+  }
+
+  public PyFunctionBuilder makeAsync() {
+    myAsync = true;
     return this;
   }
 
@@ -166,6 +166,9 @@ public class PyFunctionBuilder {
       }
       decoratorAppender.append("\n");
     }
+    if (myAsync) {
+      builder.append("async ");
+    }
     builder.append("def ");
     builder.append(myName).append("(");
     builder.append(StringUtil.join(myParameters, ", "));
@@ -176,20 +179,14 @@ public class PyFunctionBuilder {
     builder.append(":");
     List<String> statements = myStatements.isEmpty() ? Collections.singletonList(PyNames.PASS) : myStatements;
 
-    if (myDocStringLines != null) {
-      final List<String> comments = new ArrayList<String>(myDocStringLines.length + 2);
-      comments.add(COMMENTS_BOUNDARY);
-      comments.addAll(Arrays.asList(myDocStringLines));
-      comments.add(COMMENTS_BOUNDARY);
-      statements = new ArrayList<String>(statements);
-      statements.addAll(0, comments);
+    final String indent = PyIndentUtil.getIndentFromSettings(project);
+    // There was original docstring or some parameters were added via parameterWithType()
+    if (!myDocStringGenerator.isNewMode() || myDocStringGenerator.hasParametersToAdd()) {
+      final String docstring = PyIndentUtil.changeIndent(myDocStringGenerator.buildDocString(), true, indent);
+      builder.append('\n').append(indent).append(docstring);
     }
-
-    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    int indentSize = codeStyleSettings.getIndentOptions(PythonFileType.INSTANCE).INDENT_SIZE;
-    String indent = StringUtil.repeatSymbol(' ', indentSize);
     for (String statement : statements) {
-      builder.append("\n").append(indent).append(statement);
+      builder.append('\n').append(indent).append(statement);
     }
     return builder.toString();
   }
@@ -207,12 +204,5 @@ public class PyFunctionBuilder {
 
   public void decorate(String decoratorName) {
     myDecorators.add(decoratorName);
-  }
-
-  @NotNull
-  private static String getIndent(@NotNull final Project project) {
-    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    final int indentSize = codeStyleSettings.getIndentOptions(PythonFileType.INSTANCE).INDENT_SIZE;
-    return StringUtil.repeatSymbol(' ', indentSize);
   }
 }

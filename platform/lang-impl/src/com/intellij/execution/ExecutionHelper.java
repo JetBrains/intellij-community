@@ -388,7 +388,7 @@ public class ExecutionHelper {
         };
       }
       else {
-        process = createTimeLimitedExecutionProcess(processHandler, mode.getTimeout(), presentableCmdline);
+        process = createTimeLimitedExecutionProcess(processHandler, mode, presentableCmdline);
       }
     }
     if (mode.withModalProgress()) {
@@ -482,7 +482,7 @@ public class ExecutionHelper {
   }
 
   private static Runnable createTimeLimitedExecutionProcess(final ProcessHandler processHandler,
-                                                            final int timeout,
+                                                            final ExecutionMode mode,
                                                             @NotNull final String presentableCmdline) {
     return new Runnable() {
       private final Semaphore mySemaphore = new Semaphore();
@@ -491,10 +491,9 @@ public class ExecutionHelper {
         @Override
         public void run() {
           try {
-            final boolean finished = processHandler.waitFor(1000 * timeout);
+            final boolean finished = processHandler.waitFor(1000 * mode.getTimeout());
             if (!finished) {
-              final String msg = "Timeout (" + timeout + " sec) on executing: " + presentableCmdline;
-              LOG.error(msg);
+              mode.getTimeoutCallback().consume(mode, presentableCmdline);
               processHandler.destroyProcess();
             }
           }

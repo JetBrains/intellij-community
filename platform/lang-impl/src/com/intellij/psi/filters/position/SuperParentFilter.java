@@ -31,8 +31,6 @@ public class SuperParentFilter extends PositionElementFilter{
     setFilter(filter);
   }
 
-  public SuperParentFilter(){}
-
   @Override
   public boolean isAcceptable(Object element, PsiElement scope){
     if (!(element instanceof PsiElement)) return false;

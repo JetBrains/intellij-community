@@ -56,7 +56,5 @@ abstract class AbstractEditor extends JPanel implements Disposable {
     return true;
   }
 
-  JComponent getPreferredFocusedComponent() {
-    return null;
-  }
+  abstract JComponent getPreferredFocusedComponent();
 }

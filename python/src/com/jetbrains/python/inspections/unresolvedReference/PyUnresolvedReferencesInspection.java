@@ -49,8 +49,8 @@ import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.codeInsight.imports.PythonReferenceImporter;
 import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.documentation.DocStringParameterReference;
-import com.jetbrains.python.documentation.DocStringTypeReference;
+import com.jetbrains.python.documentation.docstrings.DocStringParameterReference;
+import com.jetbrains.python.documentation.docstrings.DocStringTypeReference;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil;
@@ -534,10 +534,18 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 return;
               }
               addCreateMemberFromUsageFixes(type, reference, refText, actions);
-              if (type instanceof PyClassTypeImpl) {
+              if (type instanceof PyClassType) {
                 if (reference instanceof PyOperatorReference) {
+                  String className = type.getName();
+                  final PyClassType classType = (PyClassType)type;
+                  if (classType.isDefinition()) {
+                    final PyClassLikeType metaClassType = classType.getMetaClassType(myTypeEvalContext, true);
+                    if (metaClassType != null) {
+                      className = metaClassType.getName();
+                    }
+                  }
                   description = PyBundle.message("INSP.unresolved.operator.ref",
-                                                 type.getName(), refName,
+                                                 className, refName,
                                                  ((PyOperatorReference)reference).getReadableOperatorName());
                 }
                 else {
@@ -905,12 +913,13 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         final List<String> components = qname.getComponents();
         if (!components.isEmpty()) {
           final String packageName = components.get(0);
-          if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
+          final Module module = ModuleUtilCore.findModuleForPsiElement(node);
+          if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName) && PythonSdkType.findPythonSdk(module) != null) {
             actions.add(new PyPackageRequirementsInspection.InstallAndImportQuickFix(packageName, packageName, node));
           }
           else {
             final String packageAlias = PyPackageAliasesProvider.commonImportAliases.get(packageName);
-            if (packageAlias != null && PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
+            if (packageAlias != null && PyPIPackageUtil.INSTANCE.isInPyPI(packageName) && PythonSdkType.findPythonSdk(module) != null) {
               actions.add(new PyPackageRequirementsInspection.InstallAndImportQuickFix(packageAlias, packageName, node));
             }
           }

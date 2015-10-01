@@ -106,6 +106,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<Usage, UsageNode>();
   public static final UsageNode NULL_NODE = new UsageNode(NullUsage.INSTANCE, new UsageViewTreeModelBuilder(new UsageViewPresentation(), UsageTarget.EMPTY_ARRAY));
   private final ButtonPanel myButtonPanel = new ButtonPanel();
+  private final JComponent myAdditionalComponent = new JPanel(new BorderLayout());
   private volatile boolean isDisposed;
   private volatile boolean myChangesDetected = false;
   public static final Comparator<Usage> USAGE_COMPARATOR = new Comparator<Usage>() {
@@ -393,7 +394,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       myPreviewSplitter.setProportion(1);
     }
 
-    myCentralPanel.add(myButtonPanel, BorderLayout.SOUTH);
+    myCentralPanel.add(myAdditionalComponent, BorderLayout.SOUTH);
+    myAdditionalComponent.add(myButtonPanel, BorderLayout.SOUTH);
 
     myRootPanel.revalidate();
     myRootPanel.repaint();
@@ -1233,6 +1235,16 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     int index = myButtonPanel.getComponentCount();
     if (!SystemInfo.isMac && index > 0 && myPresentation.isShowCancelButton()) index--;
     myButtonPanel.addButtonRunnable(index, runnable, text);
+  }
+
+  @Override
+  public void setAdditionalComponent(@Nullable JComponent comp) {
+    BorderLayout layout = (BorderLayout)myAdditionalComponent.getLayout();
+    Component prev = layout.getLayoutComponent(myAdditionalComponent, BorderLayout.CENTER);
+    if (prev == comp) return;
+    if (prev != null) myAdditionalComponent.remove(prev);
+    if (comp != null) myAdditionalComponent.add(comp, BorderLayout.CENTER);
+    myAdditionalComponent.revalidate();
   }
 
   @Override

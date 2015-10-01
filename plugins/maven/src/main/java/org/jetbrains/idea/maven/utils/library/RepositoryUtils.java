@@ -20,9 +20,6 @@ import com.google.common.collect.Iterables;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
@@ -36,15 +33,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
-import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.ProjectBundle;
+import org.jetbrains.idea.maven.utils.library.remote.MavenDependenciesRemoteManager;
+import org.jetbrains.idea.maven.utils.library.remote.MavenRemoteTask;
+import org.jetbrains.idea.maven.utils.library.remote.MavenVersionsRemoteManager;
 
 import java.util.*;
 
@@ -55,34 +50,6 @@ public class RepositoryUtils {
   @NotNull static public final String ReleaseVersionDisplayName = "Release";
   @NotNull static public final String SnapshotVersionSuffix = "-SNAPSHOT";
   @NotNull static public final String DefaultVersionId = ReleaseVersionId;
-
-  public static void downloadAsync(final Project project,
-                                   final boolean downloadSources,
-                                   final boolean downloadJavaDocs,
-                                   @NotNull final RepositoryLibraryProperties properties) {
-    String displayName = RepositoryLibraryDescription.findDescription(properties).getDisplayName();
-    Task task = new Task.Backgroundable(project, ProjectBundle.message("maven.loading.library.hint", displayName), false) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        List<OrderRoot> download = download(project, downloadSources, downloadJavaDocs, properties);
-      }
-    };
-    ProgressManager.getInstance().run(task);
-  }
-  public static List<OrderRoot> download(Project project,
-                                         boolean downloadSources,
-                                         boolean downloadJavaDocs,
-                                         @NotNull RepositoryLibraryProperties properties) {
-    String coordinates = properties.getGroupId() + ":" +
-                         properties.getArtifactId() + ":" +
-                         resolveEffectiveVersion(project, properties);
-    return RepositoryAttachHandler.resolveAndDownloadImpl(
-      project,
-      coordinates,
-      downloadJavaDocs,
-      downloadSources,
-      null,
-      RepositoryLibraryDescription.findDescription(properties).getRemoteRepositories());
-  }
 
   public static boolean libraryHasSources(@Nullable Library library) {
     return library != null && library.getUrls(OrderRootType.SOURCES).length > 0;
@@ -101,7 +68,11 @@ public class RepositoryUtils {
   }
 
   public static String getStorageRoot(Library library, Project project) {
-    final String[] urls = library.getUrls(OrderRootType.CLASSES);
+    return getStorageRoot(library.getUrls(OrderRootType.CLASSES), project);
+  }
+
+
+  public static String getStorageRoot(String[] urls, Project project) {
     if (urls.length == 0) {
       return null;
     }
@@ -127,16 +98,14 @@ public class RepositoryUtils {
     }).getKey();
   }
 
-  private static String resolveEffectiveVersion(@NotNull Project project, @NotNull RepositoryLibraryProperties properties) {
+  public static String resolveEffectiveVersion(@NotNull Project project, @NotNull RepositoryLibraryProperties properties) {
     String version = properties.getVersion();
     boolean isLatest = LatestVersionId.equals(version);
     boolean isRelease = ReleaseVersionId.equals(version);
     if (isLatest || isRelease) {
-      Iterable<String> versions = RepositoryAttachHandler.retrieveVersions(
-        project,
+      Iterable<String> versions = MavenVersionsRemoteManager.getInstance(project).getMavenArtifactVersions(
         properties.getGroupId(),
-        properties.getArtifactId(),
-        RepositoryLibraryDescription.findDescription(properties).getRemoteRepositories());
+        properties.getArtifactId());
       if (isRelease) {
         versions = Iterables.filter(versions, new Predicate<String>() {
           @Override
@@ -153,99 +122,52 @@ public class RepositoryUtils {
     return version;
   }
 
-  public static void reloadDependenciesAsync(@NotNull final Project project,
-                                             @NotNull final LibraryEx library) {
-    Task task = new Task.Backgroundable(project, "Maven", false) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        reloadDependencies(
-          indicator,
-          project,
-          library);
-      }
-    };
-    ProgressManager.getInstance().run(task);
-  }
-
-  public static List<MavenExtraArtifactType> createExtraArtifactTypeList(boolean sources, boolean javaDocs) {
-    List<MavenExtraArtifactType> result = new ArrayList<MavenExtraArtifactType>();
-    if (sources) {
-      result.add(MavenExtraArtifactType.SOURCES);
-    }
-    if (javaDocs) {
-      result.add(MavenExtraArtifactType.DOCS);
-    }
-    return result;
-  }
-
-  public static synchronized void loadDependencies(@NotNull ProgressIndicator indicator,
-                                                   @NotNull final Project project,
-                                                   RepositoryLibraryProperties libraryProperties,
-                                                   boolean downloadSources,
-                                                   boolean downloadJavaDocs,
-                                                   String displayName,
-                                                   Processor<List<MavenArtifact>> processor) {
-    indicator.setText(ProjectBundle.message("maven.loading.library.hint", displayName));
-
-    RepositoryAttachHandler.doResolveInner(
-      project,
-      Collections
-        .singletonList(new MavenId(libraryProperties.getGroupId(), libraryProperties.getArtifactId(),
-                                   resolveEffectiveVersion(project, libraryProperties))),
-      createExtraArtifactTypeList(downloadSources, downloadJavaDocs),
-      RepositoryLibraryDescription.findDescription(libraryProperties).getRemoteRepositories(),
-      processor,
-      indicator);
-  }
-
-
-  public static void loadDependencies(@NotNull ProgressIndicator indicator,
-                                      @NotNull final Project project,
+  public static void loadDependencies(@NotNull final Project project,
                                       @NotNull final LibraryEx library,
                                       boolean downloadSources,
-                                      boolean downloadJavaDocs) {
-    final String storageRoot = getStorageRoot(library, project);
-    final RepositoryLibraryProperties libraryProperties = (RepositoryLibraryProperties)library.getProperties();
-    loadDependencies(indicator,
-                     project,
-                     libraryProperties,
-                     downloadSources,
-                     downloadJavaDocs,
-                     library.getName(),
-                     new Processor<List<MavenArtifact>>() {
-                       @Override
-                       public boolean process(List<MavenArtifact> artifacts) {
-                         if (artifacts == null || artifacts.isEmpty()) {
-                           return true;
-                         }
-                         final List<OrderRoot> roots = RepositoryAttachHandler.createRoots(artifacts, storageRoot);
-                         ApplicationManager.getApplication().invokeLater(new Runnable() {
-                           @Override
-                           public void run() {
-                             if (library.isDisposed()) {
-                               return;
-                             }
-                             AccessToken token = WriteAction.start();
-                             try {
-                               final NewLibraryEditor editor = new NewLibraryEditor(null, libraryProperties);
-                               editor.removeAllRoots();
-                               editor.addRoots(roots);
-                               final Library.ModifiableModel model = library.getModifiableModel();
-                               editor.applyTo((LibraryEx.ModifiableModelEx)model);
-                               model.commit();
-                             }
-                             finally {
-                               token.finish();
-                             }
-                           }
-                         });
-                         return true;
-                       }
-                     });
+                                      boolean downloadJavaDocs,
+                                      @Nullable String copyTo) {
+    if (library.getKind() != RepositoryLibraryType.REPOSITORY_LIBRARY_KIND) {
+      return;
+    }
+    final RepositoryLibraryProperties properties = (RepositoryLibraryProperties)library.getProperties();
+
+    MavenDependenciesRemoteManager.getInstance(project)
+      .downloadDependenciesAsync(
+        properties,
+        downloadSources,
+        downloadJavaDocs,
+        copyTo,
+        new MavenRemoteTask.ResultProcessor<List<OrderRoot>>() {
+          @Override
+          public void process(final List<OrderRoot> roots) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (library.isDisposed()) {
+                  return;
+                }
+                AccessToken token = WriteAction.start();
+                try {
+                  final NewLibraryEditor editor = new NewLibraryEditor(null, properties);
+                  editor.removeAllRoots();
+                  editor.addRoots(roots);
+                  final Library.ModifiableModel model = library.getModifiableModel();
+                  editor.applyTo((LibraryEx.ModifiableModelEx)model);
+                  model.commit();
+                }
+                finally {
+                  token.finish();
+                }
+              }
+            });
+          }
+        }
+      );
   }
 
-  public static void reloadDependencies(@NotNull ProgressIndicator indicator,
-                                        @NotNull final Project project,
+  public static void reloadDependencies(@NotNull final Project project,
                                         @NotNull final LibraryEx library) {
-    loadDependencies(indicator, project, library, libraryHasSources(library), libraryHasJavaDocs(library));
+    loadDependencies(project, library, libraryHasSources(library), libraryHasJavaDocs(library), getStorageRoot(library, project));
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 
 /**
  * @author yole
@@ -52,7 +53,7 @@ public class PyFunctionInsertHandler extends ParenthesesInsertHandler<LookupElem
     final PsiElement element = context.getFile().findElementAt(context.getStartOffset());
     PyReferenceExpression refExpr = PsiTreeUtil.getParentOfType(element, PyReferenceExpression.class);
     int implicitArgsCount = refExpr != null
-                            ? PyCallExpressionHelper.getImplicitArgumentCount(refExpr, function)
+                            ? PyCallExpressionHelper.getImplicitArgumentCount(refExpr, function, PyResolveContext.noImplicits())
                             : 0;
     return function.getParameterList().getParameters().length > implicitArgsCount;
   }

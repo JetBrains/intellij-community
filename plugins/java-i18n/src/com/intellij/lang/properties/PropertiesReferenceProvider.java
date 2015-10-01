@@ -40,6 +40,7 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
 
   private final boolean myDefaultSoft;
 
+  @SuppressWarnings("unused") // invoked by reflection
   public PropertiesReferenceProvider() {
     this(false);
   }
@@ -66,7 +67,7 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
 
       final Map<String, Object> annotationParams = new HashMap<String, Object>();
       annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
-      if (JavaI18nUtil.mustBePropertyKey(element.getProject(), literalExpression, annotationParams)) {
+      if (JavaI18nUtil.mustBePropertyKey(literalExpression, annotationParams)) {
         soft = false;
         final Object resourceBundleName = annotationParams.get(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
         if (resourceBundleName instanceof PsiExpression) {
@@ -93,7 +94,7 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
     if (value instanceof String) {
       String text = (String)value;
       PsiReference reference = propertyRefWithPrefix ?
-                               new PrefixBasedPropertyReference(text, element, bundleName, soft):
+                               new PrefixBasedPropertyReference(text, element, null, soft) :
                                new PropertyReference(text, element, bundleName, soft);
       return new PsiReference[]{reference};
     }

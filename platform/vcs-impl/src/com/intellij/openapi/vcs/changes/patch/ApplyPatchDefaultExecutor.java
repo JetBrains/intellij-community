@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
-import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.PatchEP;
-import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
+import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -73,9 +70,9 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
                                                                                   }), localList, null, commitContext);
       appliers.add(patchApplier);
     }
-    PatchApplier.executePatchGroup(appliers, localList);
-
-    applyAdditionalInfo(myProject, additionalInfo, commitContext);
+    if (PatchApplier.executePatchGroup(appliers, localList) != ApplyPatchStatus.ABORT) {
+      applyAdditionalInfo(myProject, additionalInfo, commitContext);
+    }
   }
 
   public static void applyAdditionalInfoBefore(final Project project,

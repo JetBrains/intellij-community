@@ -88,7 +88,7 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
     return holder;
   }
 
-  @NotNull
+  @Nullable
   @Override
   protected JComponent createTitle() {
     List<JComponent> textTitles = DiffUtil.createTextTitles(myRequest, ContainerUtil.list(getEditor(), getEditor()));

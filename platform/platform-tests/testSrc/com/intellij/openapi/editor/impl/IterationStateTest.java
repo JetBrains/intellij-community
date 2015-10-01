@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
 
     Color breakpointColor = Color.RED;
     myFixture.getEditor().getMarkupModel().addLineHighlighter(0,
-                                                              HighlighterLayer.SYNTAX + 1,
+                                                              HighlighterLayer.CARET_ROW + 1,
                                                               new TextAttributes(null, breakpointColor, null, null, 0));
     Color currentDebuggingLineColor = Color.CYAN;
     myFixture.getEditor().getMarkupModel().addLineHighlighter(0,
@@ -144,7 +144,7 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
 
     Color breakpointColor = Color.RED;
     myFixture.getEditor().getMarkupModel().addLineHighlighter(0,
-                                                              HighlighterLayer.SYNTAX + 1,
+                                                              HighlighterLayer.CARET_ROW + 1,
                                                               new TextAttributes(null, breakpointColor, null, null, 0));
 
     verifySplitting(false,

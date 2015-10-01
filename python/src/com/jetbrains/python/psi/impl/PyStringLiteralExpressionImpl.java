@@ -188,6 +188,12 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return myDecodedFragments;
   }
 
+  @Override
+  public boolean isDocString() {
+    final List<ASTNode> stringNodes = getStringNodes();
+    return stringNodes.size() == 1 && stringNodes.get(0).getElementType() == PyTokenTypes.DOCSTRING;
+  }
+
   @NotNull
   private static List<Pair<TextRange, String>> getDecodedFragments(@NotNull String encoded, int offset, boolean raw, boolean unicode) {
     final List<Pair<TextRange, String>> result = new ArrayList<Pair<TextRange, String>>();
@@ -280,7 +286,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       return allRanges.get(0);
     }
     if (allRanges.size() > 1) {
-      return new TextRange(allRanges.get(0).getStartOffset(), allRanges.get(allRanges.size()-1).getEndOffset());
+      return allRanges.get(0).union(allRanges.get(allRanges.size() - 1));
     }
     return new TextRange(0, getTextLength());
   }

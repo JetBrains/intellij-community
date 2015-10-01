@@ -99,7 +99,7 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
 
   private void applyFixInner(final Project project) {
     final PsiFile file = myClass.getContainingFile();
-    final Editor editor = CodeInsightUtil.positionCursor(project, myClass.getContainingFile(), myClass.getLBrace());
+    final Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, myClass.getContainingFile(), myClass);
     if (editor != null) {
       new WriteCommandAction(project, file) {
         @Override

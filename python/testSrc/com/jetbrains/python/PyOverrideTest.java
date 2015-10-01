@@ -54,6 +54,13 @@ public class PyOverrideTest extends PyTestCase {
     return file.getTopLevelClasses().get(index);
   }
 
+  /**
+   * Ensures loops in class hierarchy does not lead to SO
+   */
+  public final void testCircle() throws Exception {
+    doTest();
+  }
+
   public void testSimple() {
     doTest();
   }

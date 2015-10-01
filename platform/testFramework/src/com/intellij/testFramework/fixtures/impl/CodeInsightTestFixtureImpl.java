@@ -1399,32 +1399,37 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
-        FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        VirtualFile[] openFiles = editorManager.getOpenFiles();
-        for (VirtualFile openFile : openFiles) {
-          editorManager.closeFile(openFile);
-        }
+    try {
+      EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
+        @Override
+        public void run() throws Throwable {
+          try {
+            DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
+            FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
+            PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+            VirtualFile[] openFiles = editorManager.getOpenFiles();
+            for (VirtualFile openFile : openFiles) {
+              editorManager.closeFile(openFile);
+            }
+          }
+          finally {
+            myEditor = null;
+            myFile = null;
+            myPsiManager = null;
 
-        myEditor = null;
-        myFile = null;
-        myPsiManager = null;
-
-        try {
-          myProjectFixture.tearDown();
-          myTempDirFixture.tearDown();
+            try {
+              myProjectFixture.tearDown();
+            }
+            finally {
+              myTempDirFixture.tearDown();
+            }
+          }
         }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
-
-    super.tearDown();
+      });
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @NotNull
@@ -1603,14 +1608,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Nullable
-  private Editor createEditor(@NotNull VirtualFile file) {
+  protected Editor createEditor(@NotNull VirtualFile file) {
     final Project project = getProject();
     final FileEditorManager instance = FileEditorManager.getInstance(project);
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     Editor editor = instance.openTextEditor(new OpenFileDescriptor(project, file), false);
     if (editor != null) {
-      editor.getCaretModel().moveToOffset(0);
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
     }
     return editor;

@@ -17,6 +17,7 @@ package git4idea.branch;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
@@ -32,6 +33,7 @@ import git4idea.GitPlatformFacade;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.history.GitHistoryUtils;
+import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitCompareBranchesDialog;
 import git4idea.util.GitCommitCompareInfo;
@@ -119,6 +121,12 @@ public final class GitBranchWorker {
       revisions.put(repository, repository.getCurrentRevision());
     }
     new GitMergeOperation(myProject, myFacade, myGit, myUiHandler, repositories, branchName, deleteOnMerge, revisions).execute();
+  }
+
+  public void rebase(@NotNull List<GitRepository> repositories, @NotNull String branchName) {
+    updateInfo(repositories);
+    GitRebaseUtils.rebase(myProject, repositories, new GitRebaseParams(branchName),
+                          ProgressManager.getInstance().getProgressIndicator());
   }
 
   public void compare(@NotNull final String branchName, @NotNull final List<GitRepository> repositories,

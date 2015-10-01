@@ -17,6 +17,7 @@ package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
+import com.intellij.diff.actions.ProxyUndoRedoAction;
 import com.intellij.diff.comparison.ByLine;
 import com.intellij.diff.comparison.ComparisonMergeUtil;
 import com.intellij.diff.comparison.ComparisonPolicy;
@@ -44,8 +45,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -155,6 +154,7 @@ public class TextMergeTool implements MergeTool {
       return myViewer.getPreferredFocusedComponent();
     }
 
+    @NotNull
     @Override
     public ToolbarComponents init() {
       ToolbarComponents components = new ToolbarComponents();
@@ -166,7 +166,7 @@ public class TextMergeTool implements MergeTool {
       components.closeHandler = new BooleanGetter() {
         @Override
         public boolean get() {
-          return MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext);
+          return MergeUtil.showExitWithoutApplyingChangesDialog(TextMergeViewer.this, myMergeRequest, myMergeContext);
         }
       };
 
@@ -224,10 +224,7 @@ public class TextMergeTool implements MergeTool {
         DiffUtil.registerAction(new IgnoreSelectedChangesAction(Side.LEFT, true), myPanel);
         DiffUtil.registerAction(new IgnoreSelectedChangesAction(Side.RIGHT, true), myPanel);
 
-        if (myUndoManager != null) {
-          new UndoRedoAction(true).register();
-          new UndoRedoAction(false).register();
-        }
+        ProxyUndoRedoAction.register(getProject(), getEditor(ThreeSide.BASE), myContentPanel);
       }
 
       @Override
@@ -312,7 +309,7 @@ public class TextMergeTool implements MergeTool {
               }
             }
             if (result == MergeResult.CANCEL &&
-                !MergeUtil.showExitWithoutApplyingChangesDialog(getComponent(), myMergeRequest, myMergeContext)) {
+                !MergeUtil.showExitWithoutApplyingChangesDialog(TextMergeViewer.this, myMergeRequest, myMergeContext)) {
               return;
             }
             destroyChangedBlocks();
@@ -396,6 +393,7 @@ public class TextMergeTool implements MergeTool {
 
               @Override
               public void onSuccess() {
+                if (isDisposed()) return;
                 myCallback.run();
               }
             });
@@ -416,7 +414,7 @@ public class TextMergeTool implements MergeTool {
           return apply(mergeFragments, outputModificationStamp);
         }
         catch (DiffTooBigException e) {
-          return applyNotification(DiffNotifications.DIFF_TOO_BIG);
+          return applyNotification(DiffNotifications.createDiffTooBig());
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -662,17 +660,18 @@ public class TextMergeTool implements MergeTool {
 
         public MergeCommandAction(@Nullable Project project,
                                   @Nullable String commandName,
+                                  boolean underBulkUpdate,
                                   @Nullable List<TextMergeChange> changes) {
-          super(project, getEditor(ThreeSide.BASE).getDocument(), commandName);
-          myAffectedChanges = collectAffectedChanges(changes);
+          this(project, commandName, null, UndoConfirmationPolicy.DEFAULT, underBulkUpdate, changes);
         }
 
         public MergeCommandAction(@Nullable Project project,
                                   @Nullable String commandName,
                                   @Nullable String commandGroupId,
                                   @NotNull UndoConfirmationPolicy confirmationPolicy,
+                                  boolean underBulkUpdate,
                                   @Nullable List<TextMergeChange> changes) {
-          super(project, getEditor(ThreeSide.BASE).getDocument(), commandName, commandGroupId, confirmationPolicy);
+          super(project, getEditor(ThreeSide.BASE).getDocument(), commandName, commandGroupId, confirmationPolicy, underBulkUpdate);
           myAffectedChanges = collectAffectedChanges(changes);
         }
 
@@ -744,9 +743,10 @@ public class TextMergeTool implements MergeTool {
        * affected changes should be sorted
        */
       public void executeMergeCommand(@Nullable String commandName,
+                                      boolean underBulkUpdate,
                                       @Nullable List<TextMergeChange> affected,
                                       @NotNull final Runnable task) {
-        new MergeCommandAction(getProject(), commandName, affected) {
+        new MergeCommandAction(getProject(), commandName, underBulkUpdate, affected) {
           @Override
           protected void doExecute() {
             task.run();
@@ -754,8 +754,10 @@ public class TextMergeTool implements MergeTool {
         }.run();
       }
 
-      public void executeMergeCommand(@Nullable String commandName, @NotNull final Runnable task) {
-        executeMergeCommand(commandName, null, task);
+      public void executeMergeCommand(@Nullable String commandName,
+                                      @Nullable List<TextMergeChange> affected,
+                                      @NotNull Runnable task) {
+        executeMergeCommand(commandName, false, affected, task);
       }
 
       @CalledInAwt
@@ -972,18 +974,12 @@ public class TextMergeTool implements MergeTool {
 
           String title = e.getPresentation().getText() + " in merge";
 
-          getEditor(ThreeSide.BASE).getDocument().setInBulkUpdate(true);
-          try {
-            executeMergeCommand(title, selectedChanges, new Runnable() {
-              @Override
-              public void run() {
-                apply(side, selectedChanges);
-              }
-            });
-          }
-          finally {
-            getEditor(ThreeSide.BASE).getDocument().setInBulkUpdate(false);
-          }
+          executeMergeCommand(title, true, selectedChanges, new Runnable() {
+            @Override
+            public void run() {
+              apply(side, selectedChanges);
+            }
+          });
         }
 
         private boolean isSomeChangeSelected(@NotNull ThreeSide side) {
@@ -1095,18 +1091,12 @@ public class TextMergeTool implements MergeTool {
         }
 
         public void actionPerformed(AnActionEvent e) {
-          getEditor(ThreeSide.BASE).getDocument().setInBulkUpdate(true);
-          try {
-            executeMergeCommand("Apply Non Conflicted Changes", new Runnable() {
-              @Override
-              public void run() {
-                doPerform();
-              }
-            });
-          }
-          finally {
-            getEditor(ThreeSide.BASE).getDocument().setInBulkUpdate(false);
-          }
+          executeMergeCommand("Apply Non Conflicted Changes", true, null, new Runnable() {
+            @Override
+            public void run() {
+              doPerform();
+            }
+          });
 
           TextMergeChange firstConflict = getFirstUnresolvedChange(true, null);
           if (firstConflict != null) doScrollToChange(firstConflict, true);
@@ -1167,43 +1157,6 @@ public class TextMergeTool implements MergeTool {
       //
       // Helpers
       //
-
-      private class UndoRedoAction extends DumbAwareAction {
-        private final boolean myUndo;
-
-        public UndoRedoAction(boolean undo) {
-          myUndo = undo;
-        }
-
-        public void register() {
-          EmptyAction.setupAction(this, myUndo ? IdeActions.ACTION_UNDO : IdeActions.ACTION_REDO, myContentPanel);
-        }
-
-        @Override
-        public void update(AnActionEvent e) {
-          assert myUndoManager != null;
-          TextEditor textEditor = getTextEditor();
-          e.getPresentation().setEnabled(myUndo ? myUndoManager.isUndoAvailable(textEditor) : myUndoManager.isRedoAvailable(textEditor));
-        }
-
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          assert myUndoManager != null;
-          TextEditor textEditor = getTextEditor();
-          if (myUndo) {
-            myUndoManager.undo(textEditor);
-          }
-          else {
-            myUndoManager.redo(textEditor);
-          }
-        }
-
-        @NotNull
-        private TextEditor getTextEditor() {
-          EditorEx editor = getEditor(ThreeSide.BASE);
-          return TextEditorProvider.getInstance().getTextEditor(editor);
-        }
-      }
 
       private class MyDividerPaintable implements DiffDividerDrawUtil.DividerPaintable {
         @NotNull private final Side mySide;

@@ -31,6 +31,8 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableCardPanel;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -73,7 +75,12 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   private final AbstractAction myApplyAction = new AbstractAction(CommonBundle.getApplyButtonText()) {
     @Override
     public void actionPerformed(ActionEvent event) {
-      apply();
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+        @Override
+        public void run() {
+          apply();
+        }
+      });
     }
   };
   private final AbstractAction myResetAction = new AbstractAction(RESET_NAME) {
@@ -161,7 +168,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       JComponent preferred = ((BaseConfigurable)myConfigurable).getPreferredFocusedComponent();
       if (preferred != null) return preferred;
     }
-    return super.getPreferredFocusedComponent();
+    return UIUtil.getPreferredFocusedComponent(getContent(myConfigurable));
   }
 
   @Override

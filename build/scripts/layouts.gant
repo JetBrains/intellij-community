@@ -315,8 +315,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
   // product specific custom layout
   customLayout(targetDirectory)
 
-  printUnusedModules(info.usedModules)
-
   reorder(home, targetDirectory)
   return info
 }
@@ -391,20 +389,17 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
 
       jar("artifact-resolver-m2.jar") {
         module("maven-artifact-resolver-m2")
+        module("maven-artifact-resolver-common")
       }
 
       jar("artifact-resolver-m3.jar") {
         module("maven-artifact-resolver-m3")
-        module("maven-artifact-resolver-m2") {
-          include(name: 'org/jetbrains/idea/maven/artifactResolver/common/*')
-        }
+        module("maven-artifact-resolver-common")
       }
 
       jar("artifact-resolver-m31.jar") {
         module("maven-artifact-resolver-m31")
-        module("maven-artifact-resolver-m2") {
-          include(name: 'org/jetbrains/idea/maven/artifactResolver/common/*')
-        }
+        module("maven-artifact-resolver-common")
       }
 
       dir("maven3-server-lib") {
@@ -638,11 +633,6 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
           }
         }
 
-        fileset(dir: "${home}/plugins/coverage-common/lib") {
-          exclude(name: "finder.jar")
-          exclude(name: "**/coverage-src.zip")
-        }
-
         fileset(dir: "${home}/plugins/coverage/lib", excludes: "**/jacoco_src.zip")
       }
     }
@@ -661,7 +651,7 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
     }
 
     layoutPlugin("settings-repository") {
-      fileset(dir: "$home/plugins/settings-repository/lib", excludes: "**/*-sources.jar,**/*.xml,**/com/**,**/org/**,**/java/**")
+      fileset(dir: "$home/plugins/settings-repository/lib", excludes: "**/*-sources.jar,**/*.xml,**/com/**,**/org/**,**/java/**,**/dev/**")
     }
   }
 }

@@ -192,7 +192,7 @@ public class PsiTypesUtil {
   }
 
   @Nullable
-  public static PsiType getExpectedTypeByParent(PsiExpression methodCall) {
+  public static PsiType getExpectedTypeByParent(PsiElement methodCall) {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
     if (parent instanceof PsiVariable) {
       if (PsiUtil.checkSameExpression(methodCall, ((PsiVariable)parent).getInitializer())) {

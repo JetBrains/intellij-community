@@ -74,7 +74,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     mainPanel.setPreferredSize(JBUI.size(300, 500));
     mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 0));
 
-    final List<FileColorConfiguration> localConfigurations = manager.getLocalConfigurations();
+    final List<FileColorConfiguration> localConfigurations = manager.getApplicationLevelConfigurations();
     myLocalTable = new FileColorSettingsTable(manager, localConfigurations) {
       @Override
       protected void apply(@NotNull List<FileColorConfiguration> configurations) {
@@ -107,7 +107,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     localPanel.add(panel, BorderLayout.CENTER);
     mainPanel.add(localPanel);
 
-    mySharedTable = new FileColorSettingsTable(manager, manager.getSharedConfigurations()) {
+    mySharedTable = new FileColorSettingsTable(manager, manager.getProjectLevelConfigurations()) {
       @Override
       protected void apply(@NotNull List<FileColorConfiguration> configurations) {
         final List<FileColorConfiguration> copied = new ArrayList<FileColorConfiguration>();

@@ -17,10 +17,12 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ui.ColorPanel;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
+import javax.swing.JTextField;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
 import javax.swing.text.JTextComponent;
@@ -38,6 +40,9 @@ public class DarculaTextBorder implements Border, UIResource {
     }
     else if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
       return JBUI.insets(vOffset, 4 + 16 + 3, vOffset, 7 + 16).asUIResource();
+    }
+    else if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
+      return JBUI.insets(3, 3, 2, 2).asUIResource();
     }
     else {
       return JBUI.insets(vOffset, 7, vOffset, 7).asUIResource();

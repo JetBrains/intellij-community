@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryTypeServiceImpl;
 import com.intellij.openapi.roots.libraries.Library;
@@ -103,8 +102,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
       }
     }
 
-    final Library copied = ((LibraryTableBase.ModifiableModelEx)provider.getModifiableModel())
-      .createLibrary(StringUtil.nullize(dialog.getLibraryName()), library.getKind());
+    final Library copied = provider.getModifiableModel().createLibrary(StringUtil.nullize(dialog.getLibraryName()), library.getKind());
     final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)copied.getModifiableModel();
     LibraryEditingUtil.copyLibrary(library, copiedFiles, model);
 

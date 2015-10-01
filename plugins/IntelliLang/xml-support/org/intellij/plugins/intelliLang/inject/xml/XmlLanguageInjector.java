@@ -212,6 +212,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
       if (areThereInjectionsWithText(attribute.getValue(), index)) return true;
       //if (areThereInjectionsWithText(attribute.getNamespace(), index)) return false;
       tag = attribute.getParent();
+      if (tag == null) return false;
     }
     else if (xmlElement instanceof XmlTag) {
       tag = (XmlTag)xmlElement;

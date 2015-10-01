@@ -19,6 +19,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassLikeTypeUtil;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -28,7 +31,8 @@ import java.util.Set;
  * @author yole
  */
 public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, PySuperMethodsSearch.SearchParameters> {
-  public boolean execute(@NotNull final PySuperMethodsSearch.SearchParameters queryParameters, @NotNull final Processor<PsiElement> consumer) {
+  public boolean execute(@NotNull final PySuperMethodsSearch.SearchParameters queryParameters,
+                         @NotNull final Processor<PsiElement> consumer) {
     PyFunction func = queryParameters.getDerivedMethod();
     String name = func.getName();
     PyClass containingClass = func.getContainingClass();
@@ -54,6 +58,21 @@ public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, P
             final AccessDirection direction = PyUtil.getPropertyAccessDirection(func);
             final PyCallable callable = superProperty.getByDirection(direction).valueOrNull();
             superMethod = (callable instanceof PyFunction) ? (PyFunction)callable : null;
+          }
+        }
+
+
+        final TypeEvalContext context = queryParameters.getContext();
+        if (superMethod == null && context != null) {
+          // If super method still not found and we have context, we may use it to find method
+          final PyClassLikeType classLikeType = PyUtil.as(context.getType(superClass), PyClassLikeType.class);
+          if (classLikeType != null) {
+            for (final PyFunction function : PyClassLikeTypeUtil.getMembersOfType(classLikeType, PyFunction.class, context)) {
+              final String elemName = function.getName();
+              if (elemName != null && elemName.equals(queryParameters.getDerivedMethod().getName())) {
+                consumer.process(function);
+              }
+            }
           }
         }
         if (superMethod != null) {

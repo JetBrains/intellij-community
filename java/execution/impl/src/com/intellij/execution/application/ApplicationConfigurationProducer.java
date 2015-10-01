@@ -31,20 +31,26 @@ import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class ApplicationConfigurationProducer extends JavaRunConfigurationProducerBase<ApplicationConfiguration> {
+public class ApplicationConfigurationProducer<T extends ApplicationConfiguration> extends JavaRunConfigurationProducerBase<T> {
 
-  public ApplicationConfigurationProducer() {
-    super(ApplicationConfigurationType.getInstance());
+  public ApplicationConfigurationProducer(final ApplicationConfigurationType configurationType) {
+    super(configurationType);
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(ApplicationConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
-    Location location = JavaExecutionUtil.stepIntoSingleClass(context.getLocation());
-    if (location == null) return false;
+  protected boolean setupConfigurationFromContext(T configuration, ConfigurationContext context, Ref<PsiElement> sourceElement) {
+    final Location contextLocation = context.getLocation();
+    if (contextLocation == null) {
+      return false;
+    }
+    final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
+    if (location == null) {
+      return false;
+    }
     final PsiElement element = location.getPsiElement();
-    if (!element.isPhysical()) return false;
+    if (!element.isPhysical()) {
+      return false;
+    }
     PsiElement currentElement = element;
     PsiMethod method;
     while ((method = findMain(currentElement)) != null) {
@@ -57,15 +63,15 @@ public class ApplicationConfigurationProducer extends JavaRunConfigurationProduc
       currentElement = method.getParent();
     }
     final PsiClass aClass = ApplicationConfigurationType.getMainClass(element);
-    if (aClass == null) return false;
+    if (aClass == null) {
+      return false;
+    }
     sourceElement.set(aClass);
     setupConfiguration(configuration, aClass, context);
     return true;
   }
 
-  private void setupConfiguration(ApplicationConfiguration configuration,
-                                  final PsiClass aClass,
-                                  final ConfigurationContext context) {
+  private void setupConfiguration(T configuration, final PsiClass aClass, final ConfigurationContext context) {
     configuration.MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(aClass);
     configuration.setGeneratedName();
     setupConfigurationModule(context, configuration);
@@ -82,7 +88,7 @@ public class ApplicationConfigurationProducer extends JavaRunConfigurationProduc
   }
 
   @Override
-  public boolean isConfigurationFromContext(ApplicationConfiguration appConfiguration, ConfigurationContext context) {
+  public boolean isConfigurationFromContext(T appConfiguration, ConfigurationContext context) {
     final PsiElement location = context.getPsiLocation();
     final PsiClass aClass = ApplicationConfigurationType.getMainClass(location);
     if (aClass != null && Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.MAIN_CLASS_NAME)) {
@@ -94,9 +100,8 @@ public class ApplicationConfigurationProducer extends JavaRunConfigurationProduc
       final Module configurationModule = appConfiguration.getConfigurationModule().getModule();
       if (Comparing.equal(context.getModule(), configurationModule)) return true;
 
-      ApplicationConfiguration template = (ApplicationConfiguration)context.getRunManager()
-        .getConfigurationTemplate(getConfigurationFactory())
-        .getConfiguration();
+      ApplicationConfiguration template =
+        (ApplicationConfiguration)context.getRunManager().getConfigurationTemplate(getConfigurationFactory()).getConfiguration();
       final Module predefinedModule = template.getConfigurationModule().getModule();
       if (Comparing.equal(predefinedModule, configurationModule)) {
         return true;

@@ -51,7 +51,7 @@ public class CompletionServiceImpl extends CompletionService{
       public void projectClosing(Project project) {
         CompletionProgressIndicator indicator = getCurrentCompletion();
         if (indicator != null && indicator.getProject() == project) {
-          LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
+          indicator.closeAndFinish(true);
           setCompletionPhase(CompletionPhase.NoCompletion);
         }
         else if (indicator == null) {
@@ -125,7 +125,8 @@ public class CompletionServiceImpl extends CompletionService{
     @Override
     public void addElement(@NotNull final LookupElement element) {
       if (!element.isValid()) {
-        LOG.error("Invalid lookup element: " + element);
+        LOG.error("Invalid lookup element: " + element + " of " + element.getClass() +
+                  " in " + myParameters.getOriginalFile() + " of " + myParameters.getOriginalFile().getClass());
         return;
       }
 

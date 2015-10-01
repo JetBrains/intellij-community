@@ -26,12 +26,14 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ui.UIUtil
+import groovy.transform.CompileStatic
 
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 /**
  * @author peter
  */
+@CompileStatic
 class CompletionAutoPopupTester {
   private final CodeInsightTestFixture myFixture
 

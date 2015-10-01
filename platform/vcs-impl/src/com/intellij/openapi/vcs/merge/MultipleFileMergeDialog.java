@@ -335,12 +335,19 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
       Consumer<MergeResult> callback = new Consumer<MergeResult>() {
         @Override
-        public void consume(MergeResult result) {
+        public void consume(final MergeResult result) {
           Document document = FileDocumentManager.getInstance().getCachedDocument(file);
           if (document != null) FileDocumentManager.getInstance().saveDocument(document);
           checkMarkModifiedProject(file);
 
-          if (result != MergeResult.CANCEL) markFileProcessed(file, MergeSession.Resolution.Merged);
+          if (result != MergeResult.CANCEL) {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                markFileProcessed(file, getSessionResolution(result));
+              }
+            });
+          }
         }
       };
 
@@ -362,6 +369,20 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       DiffManager.getInstance().showMerge(myProject, request);
     }
     updateModelFromFiles();
+  }
+
+  @NotNull
+  private static MergeSession.Resolution getSessionResolution(@NotNull MergeResult result) {
+    switch (result) {
+      case LEFT:
+        return MergeSession.Resolution.AcceptedYours;
+      case RIGHT:
+        return MergeSession.Resolution.AcceptedTheirs;
+      case RESOLVED:
+        return MergeSession.Resolution.Merged;
+      default:
+        throw new IllegalArgumentException(result.name());
+    }
   }
 
   private void checkMarkModifiedProject(@NotNull VirtualFile file) {

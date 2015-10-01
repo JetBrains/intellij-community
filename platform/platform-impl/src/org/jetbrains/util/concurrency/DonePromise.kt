@@ -17,7 +17,7 @@ package org.jetbrains.util.concurrency
 
 import org.jetbrains.concurrency.Obsolescent
 
-private class DonePromise<T>(private val result: T) : Promise<T> {
+internal class DonePromise<T>(private val result: T) : Promise<T> {
   override val state: Promise.State
     get() = Promise.State.FULFILLED
 
@@ -28,7 +28,7 @@ private class DonePromise<T>(private val result: T) : Promise<T> {
     return this
   }
 
-  override fun processed(processed: (T) -> Unit): Promise<T> {
+  override fun processed(processed: (T?) -> Unit): Promise<T> {
     done(processed)
     return this
   }

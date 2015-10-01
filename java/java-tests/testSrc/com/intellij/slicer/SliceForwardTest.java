@@ -35,18 +35,18 @@ public class SliceForwardTest extends DaemonAnalyzerTestCase {
 
   private void dotest() throws Exception {
     configureByFile("/codeInsight/slice/forward/"+getTestName(false)+".java");
-    Map<String, RangeMarker> sliceUsageName2Offset = SliceBackwardTest.extractSliceOffsetsFromDocument(getEditor().getDocument());
+    Map<String, RangeMarker> sliceUsageName2Offset = SliceTestUtil.extractSliceOffsetsFromDocument(getEditor().getDocument());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     PsiElement element = new SliceForwardHandler().getExpressionAtCaret(getEditor(), getFile());
     assertNotNull(element);
-    SliceBackwardTest.calcRealOffsets(element, sliceUsageName2Offset, myFlownOffsets);
+    SliceTestUtil.calcRealOffsets(element, sliceUsageName2Offset, myFlownOffsets);
     Collection<HighlightInfo> errors = highlightErrors();
     assertEmpty(errors);
     SliceAnalysisParams params = new SliceAnalysisParams();
     params.scope = new AnalysisScope(getProject());
     params.dataFlowToThis = false;
-    SliceUsage usage = SliceUsage.createRootUsage(element, params);
-    SliceBackwardTest.checkUsages(usage, myFlownOffsets);
+    SliceUsage usage = LanguageSlicing.getProvider(element).createRootUsage(element, params);
+    SliceTestUtil.checkUsages(usage, myFlownOffsets);
   }
 
   public void testSimple() throws Exception { dotest();}

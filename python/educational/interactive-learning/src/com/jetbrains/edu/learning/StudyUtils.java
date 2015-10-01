@@ -116,7 +116,7 @@ public class StudyUtils {
     if (project != null) {
       final StudyEditor studyEditor = getSelectedStudyEditor(project);
       if (studyEditor != null) {
-        presentation.setEnabled(true);
+        presentation.setEnabledAndVisible(true);
       }
     }
   }

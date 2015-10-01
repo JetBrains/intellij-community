@@ -200,23 +200,22 @@ public class PyTypeModelBuilder {
     TypeModel result = null;
     if (type instanceof PyCollectionType) {
       final String name = type.getName();
-      final PyType elementType = ((PyCollectionType)type).getElementType(myContext);
-      final List<TypeModel> elementTypes = new ArrayList<TypeModel>();
-      if (elementType instanceof PyTupleType) {
-        final PyTupleType tupleType = (PyTupleType)elementType;
-        final int n = tupleType.getElementCount();
-        for (int i = 0; i < n; i++) {
-          final PyType t = tupleType.getElementType(i);
-          if (t != null) {
-            elementTypes.add(build(t, true));
-          }
+      final List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes(myContext);
+      boolean nullOnlyTypes = true;
+      for (PyType elementType : elementTypes) {
+        if (elementType != null) {
+          nullOnlyTypes = false;
+          break;
         }
       }
-      else if (elementType != null) {
-        elementTypes.add(build(elementType, true));
-      }
-      if (!elementTypes.isEmpty()) {
-        result = new CollectionOf(name, elementTypes);
+      final List<TypeModel> elementModels = new ArrayList<TypeModel>();
+      if (!nullOnlyTypes) {
+        for (PyType elementType : elementTypes) {
+          elementModels.add(build(elementType, true));
+        }
+        if (!elementModels.isEmpty()) {
+          result = new CollectionOf(name, elementModels);
+        }
       }
     }
     else if (type instanceof PyUnionType && allowUnions) {

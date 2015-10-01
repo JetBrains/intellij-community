@@ -42,6 +42,8 @@ import java.util.ArrayList;
 /**
  * User: anna
  * Date: Jun 21, 2005
+ *
+ * @deprecated use {@link JrePathEditor} instead
  */
 public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
   private final ComponentWithBrowseButton<TextFieldWithHistory> myPathField;
@@ -144,9 +146,5 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
   public void setAnchor(JComponent anchor) {
     myAnchor = anchor;
     myCbEnabled.setAnchor(anchor);
-  }
-
-  public JBCheckBox getCbEnabled() {
-    return myCbEnabled;
   }
 }

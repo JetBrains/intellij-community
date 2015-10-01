@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -239,8 +239,17 @@ public class HighlightManagerImpl extends HighlightManager {
     for (PsiElement element : elements) {
       TextRange range = element.getTextRange();
       range = InjectedLanguageManager.getInstance(myProject).injectedToHost(element, range);
-      addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, flags, outHighlighters, scrollmarkColor);
+      addOccurrenceHighlight(editor,
+                             trimOffsetToDocumentSize(editor, range.getStartOffset()), 
+                             trimOffsetToDocumentSize(editor, range.getEndOffset()), 
+                             attributes, flags, outHighlighters, scrollmarkColor);
     }
+  }
+
+  private static int trimOffsetToDocumentSize(@NotNull Editor editor, int offset) {
+    if (offset < 0) return 0;
+    int textLength = editor.getDocument().getTextLength();
+    return offset < textLength ? offset : textLength; 
   }
 
   @Nullable

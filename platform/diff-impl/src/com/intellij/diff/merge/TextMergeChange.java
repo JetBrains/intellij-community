@@ -21,14 +21,12 @@ import com.intellij.diff.tools.simple.ThreesideDiffChangeBase;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUtil.UpdatedLineRange;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +38,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class TextMergeChange extends ThreesideDiffChangeBase {
+  private static final String CTRL_CLICK_TO_RESOLVE = "Ctrl+click to resolve conflict";
+
   @NotNull private final TextMergeTool.TextMergeViewer myMergeViewer;
   @NotNull private final TextMergeTool.TextMergeViewer.MyThreesideViewer myViewer;
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
@@ -299,8 +299,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   @Nullable
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
-    Icon icon = isOnesideAppliedConflict() ? AllIcons.Diff.ArrowLeftDown : AllIcons.Diff.Arrow;
-    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), icon, new Runnable() {
+    Icon icon = isOnesideAppliedConflict() ? DiffUtil.getArrowDownIcon(side) : DiffUtil.getArrowIcon(side);
+    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), icon, isConflict(), new Runnable() {
       @Override
       public void run() {
         myViewer.executeMergeCommand("Apply change", Collections.singletonList(TextMergeChange.this), new Runnable() {
@@ -316,7 +316,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   @Nullable
   private GutterIconRenderer createIgnoreRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
-    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, new Runnable() {
+    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, isConflict(), new Runnable() {
       @Override
       public void run() {
         myViewer.executeMergeCommand(null, Collections.singletonList(TextMergeChange.this), new Runnable() {
@@ -330,50 +330,15 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   @Nullable
-  private GutterIconRenderer createIconRenderer(@NotNull final String tooltipText,
+  private GutterIconRenderer createIconRenderer(@NotNull final String text,
                                                 @NotNull final Icon icon,
+                                                boolean ctrlClickVisible,
                                                 @NotNull final Runnable perform) {
-    return new GutterIconRenderer() {
-      @NotNull
+    final String tooltipText = DiffUtil.createTooltipText(text, ctrlClickVisible ? CTRL_CLICK_TO_RESOLVE : null);
+    return new DiffGutterRenderer(icon, tooltipText) {
       @Override
-      public Icon getIcon() {
-        return icon;
-      }
-
-      public boolean isNavigateAction() {
-        return true;
-      }
-
-      @Nullable
-      @Override
-      public AnAction getClickAction() {
-        return new DumbAwareAction() {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            perform.run();
-          }
-        };
-      }
-
-      @Override
-      public boolean equals(Object obj) {
-        return obj == this;
-      }
-
-      @Override
-      public int hashCode() {
-        return System.identityHashCode(this);
-      }
-
-      @Nullable
-      @Override
-      public String getTooltipText() {
-        return tooltipText;
-      }
-
-      @Override
-      public boolean isDumbAware() {
-        return true;
+      protected void performAction(AnActionEvent e) {
+        perform.run();
       }
     };
   }

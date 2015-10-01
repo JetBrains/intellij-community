@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.BoundedTaskExecutorService;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
@@ -39,6 +40,7 @@ import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,6 +49,7 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -273,7 +276,13 @@ public class FSRecords implements Forceable {
             return inlineAttributes && useSmallAttrTable ? new CompactRecordsTable(recordsFile, pool, false) : super.createRecordsTable(pool, recordsFile);
           }
         };
-        myContents = new RefCountingStorage(contentsFile.getCanonicalPath(), CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH, useSnappyForCompression); // sources usually zipped with 4x ratio
+        myContents = new RefCountingStorage(contentsFile.getCanonicalPath(), CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH, useSnappyForCompression) {
+          @NotNull
+          @Override
+          protected ExecutorService createExecutor() {
+            return new BoundedTaskExecutorService(PooledThreadExecutor.INSTANCE, 1);
+          }
+        }; // sources usually zipped with 4x ratio
         myContentHashesEnumerator = weHaveContentHashes ? new ContentHashesUtil.HashEnumerator(contentsHashesFile, storageLockContext): null;
         boolean aligned = PagedFileStorage.BUFFER_SIZE % RECORD_SIZE == 0;
         assert aligned; // for performance

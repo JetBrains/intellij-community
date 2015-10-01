@@ -7,6 +7,7 @@
   <description><![CDATA[
       Educational plugin core for students. 
       ]]></description>
+  <vendor>JetBrains</vendor>
 
   <change-notes><![CDATA[
 
@@ -61,7 +62,7 @@
             description="Show hint for answer placeholder"/>
     <action id="StudyRunAction" class="com.jetbrains.edu.learning.actions.StudyRunAction" text="Run File With Tests"
             description="Run your code with tests"/>
-    <action id="StudyShowAnswersAction" class="com.jetbrains.edu.learning.actions.StudyShowAnswersAction"
+    <action id="StudyShowAnswersAction" class="com.jetbrains.edu.learning.actions.StudyFillPlaceholdersAction"
             text="Fill Answer Placeholders">
       <add-to-group group-id="HelpMenu" anchor="first"/>
     </action>
@@ -69,6 +70,8 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
+                      serviceImplementation="com.jetbrains.edu.learning.StudyDocumentationManager" overrides="true"/>
     <postStartupActivity implementation="com.jetbrains.edu.learning.stepic.StudyCoursesUpdater"/>
 
     <applicationConfigurable groupId="tools" instance="com.jetbrains.edu.learning.stepic.StudyConfigurable"

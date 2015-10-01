@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.io.HttpRequests;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -280,7 +280,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     String ipython = findIPythonRunner(homePath);
     Map<String, String> env = null;
     if (ipython == null) {
-      ipython = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
+      ipython = PythonHelper.LOAD_ENTRY_POINT.asParamString();
       env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
     }
 

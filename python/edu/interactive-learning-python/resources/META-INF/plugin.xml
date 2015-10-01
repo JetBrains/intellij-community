@@ -8,6 +8,7 @@
       Educational plugin for students. This plugin allows to learn Python
        using intelligent PyCharm IDE.
       ]]></description>
+  <vendor>JetBrains</vendor>
 
   <change-notes><![CDATA[
 

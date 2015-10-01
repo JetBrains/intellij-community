@@ -19,6 +19,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -33,9 +34,9 @@ import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
 import git4idea.update.GitUpdateResult;
 import git4idea.util.GitUIUtil;
+import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import git4idea.util.StringScanner;
-import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,23 +46,21 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitRebaser {
 
-  private final Project myProject;
-  private GitVcs myVcs;
-  private List<GitRebaseUtils.CommitInfo> mySkippedCommits;
   private static final Logger LOG = Logger.getInstance(GitRebaser.class);
-  @NotNull private final Git myGit;
-  private @Nullable ProgressIndicator myProgressIndicator;
 
-  public GitRebaser(Project project, @NotNull Git git, @Nullable ProgressIndicator progressIndicator) {
+  @NotNull private final Project myProject;
+  @NotNull private final Git myGit;
+  @NotNull private GitVcs myVcs;
+  @NotNull private ProgressIndicator myProgressIndicator;
+
+  @NotNull private List<GitRebaseUtils.CommitInfo> mySkippedCommits;
+
+  public GitRebaser(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator progressIndicator) {
     myProject = project;
     myGit = git;
     myProgressIndicator = progressIndicator;
@@ -86,43 +85,27 @@ public class GitRebaser {
     GitLocalChangesWouldBeOverwrittenDetector localChangesDetector = new GitLocalChangesWouldBeOverwrittenDetector(root, CHECKOUT);
     rebaseHandler.addLineListener(untrackedFilesDetector);
     rebaseHandler.addLineListener(localChangesDetector);
+    rebaseHandler.addLineListener(GitStandardProgressAnalyzer.createListener(myProgressIndicator));
 
-    String progressTitle = "Rebasing";
-    GitTask rebaseTask = new GitTask(myProject, rebaseHandler, progressTitle);
-    rebaseTask.setProgressIndicator(myProgressIndicator);
-    rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
-    final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
-    final AtomicBoolean failure = new AtomicBoolean();
     AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     try {
-      rebaseTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
-        @Override
-        protected void onSuccess() {
-          updateResult.set(GitUpdateResult.SUCCESS);
-        }
-
-        @Override
-        protected void onCancel() {
-          if (onCancel != null) {
-            onCancel.run();
-          }
-          updateResult.set(GitUpdateResult.CANCEL);
-        }
-
-        @Override
-        protected void onFailure() {
-          failure.set(true);
-        }
-      });
-
-      if (failure.get()) {
-        updateResult.set(handleRebaseFailure(rebaseHandler, root, rebaseConflictDetector, untrackedFilesDetector, localChangesDetector));
+      String oldText = myProgressIndicator.getText();
+      myProgressIndicator.setText("Rebasing...");
+      GitCommandResult result = myGit.runCommand(rebaseHandler);
+      myProgressIndicator.setText(oldText);
+      return result.success() ?
+             GitUpdateResult.SUCCESS :
+             handleRebaseFailure(rebaseHandler, root, rebaseConflictDetector, untrackedFilesDetector, localChangesDetector);
+    }
+    catch (ProcessCanceledException pce) {
+      if (onCancel != null) {
+        onCancel.run();
       }
+      return GitUpdateResult.CANCEL;
     }
     finally {
       DvcsUtil.workingTreeChangeFinished(myProject, token);
     }
-    return updateResult.get();
   }
 
   protected GitLineHandler createHandler(VirtualFile root) {
@@ -353,8 +336,8 @@ public class GitRebaser {
     }
     else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
       LOG.info("handleRebaseFailure: untracked files would be overwritten by checkout");
-      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, root,
-                                                               untrackedWouldBeOverwrittenDetector.getRelativeFilePaths(), "rebase", null);
+      GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, root,
+                                                                untrackedWouldBeOverwrittenDetector.getRelativeFilePaths(), "rebase", null);
       return GitUpdateResult.ERROR;
     }
     else if (localChangesDetector.wasMessageDetected()) {

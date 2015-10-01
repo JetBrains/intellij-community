@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,13 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+// cache for highlighters not needed anymore.
+// You call recycleHighlighter() to put unused highlighter into the cache
+// and then call pickupHighlighterFromGarbageBin() (if there is a sudden need for fresh highlighter with specified offsets) to remove it from the cache to re-initialize and use.
 class HighlightersRecycler {
   private final MultiMap<TextRange, RangeHighlighter> incinerator = MultiMap.createSmart();
 
@@ -32,6 +36,7 @@ class HighlightersRecycler {
     }
   }
 
+  @Nullable // null means no highlighter found in the cache
   RangeHighlighter pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer){
     TextRange range = new TextRange(startOffset, endOffset);
     Collection<RangeHighlighter> collection = incinerator.get(range);

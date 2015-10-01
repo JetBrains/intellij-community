@@ -172,9 +172,9 @@ public abstract class SourcePosition implements Navigatable{
       final PsiFile file = getFile();
       Document document = null;
       try {
-        document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+        document = getDocument(file);
         if (document == null) { // may be decompiled psi - try to get document for the original file
-          document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file.getOriginalFile());
+          document = getDocument(file.getOriginalFile());
         }
       }
       catch (ProcessCanceledException ignored) {}
@@ -192,9 +192,17 @@ public abstract class SourcePosition implements Navigatable{
       return -1;
     }
 
+    private static Document getDocument(PsiFile file) {
+      Project project = file.getProject();
+      if (project.isDisposed()) {
+        return null;
+      }
+      return PsiDocumentManager.getInstance(project).getDocument(file);
+    }
+
     protected int calcOffset() {
       final PsiFile file = getFile();
-      final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      final Document document = getDocument(file);
       if (document != null) {
         try {
           return document.getLineStartOffset(calcLine());
@@ -216,7 +224,7 @@ public abstract class SourcePosition implements Navigatable{
         return psiFile;
       }
 
-      final Document document = PsiDocumentManager.getInstance(origPsiFile.getProject()).getDocument(origPsiFile);
+      final Document document = getDocument(origPsiFile);
       if (document == null) {
         return null;
       }

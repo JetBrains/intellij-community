@@ -140,7 +140,12 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
     if (myChildAttributes != null) {
       return myChildAttributes;
     } else {
-      return new ChildAttributes(getIndent(), null);
+      Alignment alignment = null;
+      if (mySubBlocks.size() > newChildIndex) {
+        Block block = mySubBlocks.get(newChildIndex);
+        alignment = block.getAlignment();
+      }
+      return new ChildAttributes(getIndent(), alignment);
     }
   }
 

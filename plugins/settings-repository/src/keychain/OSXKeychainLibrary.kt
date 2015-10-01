@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.keychain
 
 import com.intellij.openapi.util.SystemInfo
@@ -12,7 +27,7 @@ val isOSXCredentialsStoreSupported: Boolean
 // It is very, very important to use CFRelease/SecKeychainItemFreeContent You must do it, otherwise you can get "An invalid record was encountered."
 public interface OSXKeychainLibrary : com.sun.jna.Library {
   companion object {
-    private val LIBRARY = com.sun.jna.Native.loadLibrary("Security", javaClass<OSXKeychainLibrary>()) as OSXKeychainLibrary
+    private val LIBRARY = com.sun.jna.Native.loadLibrary("Security", OSXKeychainLibrary::class.java) as OSXKeychainLibrary
 
     fun saveGenericPassword(serviceName: ByteArray, accountName: String, password: CharArray) {
       saveGenericPassword(serviceName, accountName, Charsets.UTF_8.encode(CharBuffer.wrap(password)))

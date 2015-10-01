@@ -24,6 +24,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureDialog;
 import com.jetbrains.python.refactoring.changeSignature.PyMethodDescriptor;
 import com.jetbrains.python.refactoring.changeSignature.PyParameterInfo;
@@ -58,7 +59,8 @@ public class PyChangeSignatureQuickFix implements LocalQuickFix {
     assert cls != null;
     final String functionName = function.getName();
     final String complementaryName = PyNames.NEW.equals(functionName) ? PyNames.INIT : PyNames.NEW;
-    final PyFunction complementaryMethod = myOverridenMethod ? (PyFunction)PySuperMethodsSearch.search(function).findFirst()
+    final TypeEvalContext context = TypeEvalContext.userInitiated(project, descriptor.getEndElement().getContainingFile());
+    final PyFunction complementaryMethod = myOverridenMethod ? (PyFunction)PySuperMethodsSearch.search(function, context).findFirst()
                                                              : cls.findMethodByName(complementaryName, true);
 
     assert complementaryMethod != null;

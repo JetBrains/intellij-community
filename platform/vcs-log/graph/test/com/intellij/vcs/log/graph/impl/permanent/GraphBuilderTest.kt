@@ -43,47 +43,47 @@ public abstract class GraphBuilderTest<CommitId : Comparable<CommitId>> : Abstra
 
   protected abstract fun getCommitIdManager(): CommitIdManager<CommitId>
 
-  Test
+  @Test
   public fun simple() {
     doTest("simple")
   }
 
-  Test
+  @Test
   public fun manyNodes() {
     doTest("manyNodes")
   }
 
-  Test
+  @Test
   public fun manyUpNodes() {
     doTest("manyUpNodes")
   }
 
-  Test
+  @Test
   public fun manyDownNodes() {
     doTest("manyDownNodes")
   }
 
-  Test
+  @Test
   public fun oneNode() {
     doTest("oneNode")
   }
 
-  Test
+  @Test
   public fun oneNodeNotFullGraph() {
     doTest("oneNodeNotFullGraph")
   }
 
-  Test
+  @Test
   public fun notFullGraph() {
     doTest("notFullGraph")
   }
 
-  Test
+  @Test
   public fun parentsOrder() {
     doTest("parentsOrder")
   }
 
-  Test
+  @Test
   public fun duplicateParents() {
     doTest("duplicateParents")
   }

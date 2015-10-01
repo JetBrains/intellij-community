@@ -1,6 +1,6 @@
 -HtmlFile:ImplicitSections.html
- -body
-  -[section]
+ -[body]
+  -section
    h5
   h4
   -h3

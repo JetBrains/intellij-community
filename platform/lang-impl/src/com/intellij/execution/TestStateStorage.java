@@ -24,7 +24,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +44,8 @@ import java.util.concurrent.ScheduledFuture;
 public class TestStateStorage implements Disposable {
 
   private static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");
+  private final File myFile;
+
   public static File getTestHistoryRoot(Project project) {
     return new File(TEST_HISTORY_PATH, project.getLocationHash());
   }
@@ -66,10 +71,10 @@ public class TestStateStorage implements Disposable {
 
   public TestStateStorage(Project project) {
 
-    File file = new File(getTestHistoryRoot(project).getPath() + "/testStateMap");
-    FileUtilRt.createParentDirs(file);
+    myFile = new File(getTestHistoryRoot(project).getPath() + "/testStateMap");
+    FileUtilRt.createParentDirs(myFile);
     try {
-      myMap = create(file);
+      myMap = initializeMap();
     } catch (IOException e) {
       LOG.error(e);
     }
@@ -83,14 +88,18 @@ public class TestStateStorage implements Disposable {
     Disposer.register(project, this);
   }
 
+  protected PersistentHashMap<String, Record> initializeMap() throws IOException {
+    return IOUtil.openCleanOrResetBroken(getComputable(myFile), myFile);
+  }
+
   private synchronized void flushMap() {
     if (myMapFlusher == null) return; // disposed
     if (myMap != null && myMap.isDirty()) myMap.force();
   }
 
   @NotNull
-  private static PersistentHashMap<String, Record> create(final File file) throws IOException {
-    return IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentHashMap<String, Record>, IOException>() {
+  private static ThrowableComputable<PersistentHashMap<String, Record>, IOException> getComputable(final File file) {
+    return new ThrowableComputable<PersistentHashMap<String, Record>, IOException>() {
       @Override
       public PersistentHashMap<String, Record> compute() throws IOException {
         return new PersistentHashMap<String, Record>(file, new EnumeratorStringDescriptor(), new DataExternalizer<Record>() {
@@ -106,7 +115,7 @@ public class TestStateStorage implements Disposable {
           }
         });
       }
-    }, file);
+    };
   }
 
   @Nullable
@@ -115,7 +124,7 @@ public class TestStateStorage implements Disposable {
       return myMap == null ? null : myMap.get(testUrl);
     }
     catch (IOException e) {
-      LOG.error(e);
+      thingsWentWrongLetsReinitialize(e);
       return null;
     }
   }
@@ -126,7 +135,7 @@ public class TestStateStorage implements Disposable {
       myMap.put(testUrl, record);
     }
     catch (IOException e) {
-      LOG.error(e);
+      thingsWentWrongLetsReinitialize(e);
     }
   }
 
@@ -140,6 +149,25 @@ public class TestStateStorage implements Disposable {
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+  }
+
+  private void thingsWentWrongLetsReinitialize(IOException e) {
+    try {
+      if (myMap != null) {
+        try {
+          myMap.close();
+        }
+        catch (IOException ignore) {
+        }
+        IOUtil.deleteAllFilesStartingWith(myFile);
+      }
+      myMap = initializeMap();
+      LOG.error("Repaired after crash", e);
+    }
+    catch (IOException e1) {
+      LOG.error("Cannot repair", e1);
+      myMap = null;
     }
   }
 }

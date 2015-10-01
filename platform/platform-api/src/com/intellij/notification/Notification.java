@@ -69,7 +69,7 @@ public class Notification {
     myListener = listener;
     myTimestamp = System.currentTimeMillis();
 
-    LOG.assertTrue(!StringUtil.isEmptyOrSpaces(myContent), "Notification should have content, groupId: " + myGroupId);
+    LOG.assertTrue(!StringUtil.isEmptyOrSpaces(myContent), "Notification should have content, title: " + title + ", groupId: " + myGroupId);
   }
 
   /**

@@ -231,7 +231,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
 
     public void endTest(Test test) {
       final long duration = System.currentTimeMillis() - myCurrentTestStart;
-      System.out.println("\n##teamcity[testFinished name=\'" + getMethodName(test) + 
+      System.out.println("\n##teamcity[testFinished name=\'" + escapeName(getMethodName(test)) + 
                          (duration > 0 ? "\' duration=\'"  + Long.toString(duration) : "") + "\']");
     }
 
@@ -241,16 +241,22 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
       if (className != null && !className.equals(myClassName)) {
         finishSuite();
         myClassName = className;
-        System.out.println("##teamcity[testSuiteStarted name =\'" + myClassName + "\' locationHint=\'java:suite://" + className + "\']");
+        System.out.println("##teamcity[testSuiteStarted name =\'" + escapeName(myClassName) + 
+                           "\' locationHint=\'java:suite://" + escapeName(className) + "\']");
       }
       final String methodName = getMethodName(test);
-      System.out.println("##teamcity[testStarted name=\'" + methodName + "\' locationHint=\'java:test://" + className + "." + methodName + "\']");
+      System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) + 
+                         "\' locationHint=\'java:test://" + escapeName(className + "." + methodName) + "\']");
     }
 
     protected void finishSuite() {
       if (myClassName != null) {
-        System.out.println("##teamcity[testSuiteFinished name=\'" + myClassName + "\']");
+        System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myClassName) + "\']");
       }
+    }
+
+    private static String escapeName(String str) {
+      return MapSerializerUtil.escapeStr(str, MapSerializerUtil.STD_ESCAPER);
     }
   }
 }

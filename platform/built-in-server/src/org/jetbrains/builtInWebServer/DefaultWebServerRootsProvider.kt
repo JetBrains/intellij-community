@@ -15,7 +15,6 @@
  */
 package org.jetbrains.builtInWebServer
 
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -34,30 +33,21 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PairFunction
 import com.intellij.util.PlatformUtils
 import com.intellij.util.Processor
 
 class DefaultWebServerRootsProvider : WebServerRootsProvider() {
   override fun resolve(path: String, project: Project): PathInfo? {
     var effectivePath = path
-    val resolver: PairFunction<String, VirtualFile, VirtualFile>
     if (PlatformUtils.isIntelliJ()) {
       val index = effectivePath.indexOf('/')
-      if (index > 0 && !effectivePath.regionMatches(0, project.getName(), 0, index, !SystemInfo.isFileSystemCaseSensitive)) {
+      if (index > 0 && !effectivePath.regionMatches(0, project.name, 0, index, !SystemInfo.isFileSystemCaseSensitive)) {
         val moduleName = effectivePath.substring(0, index)
-        val token = ReadAction.start()
-        val module: Module?
-        try {
-          module = ModuleManager.getInstance(project).findModuleByName(moduleName)
-        }
-        finally {
-          token.finish()
-        }
+        val module = runReadAction { ModuleManager.getInstance(project).findModuleByName(moduleName) }
 
-        if (module != null && !module.isDisposed()) {
+        if (module != null && !module.isDisposed) {
           effectivePath = effectivePath.substring(index + 1)
-          resolver = WebServerPathToFileManager.getInstance(project).getResolver(effectivePath)
+          val resolver = WebServerPathToFileManager.getInstance(project).getResolver(effectivePath)
 
           val moduleRootManager = ModuleRootManager.getInstance(module)
           for (rootProvider in RootProvider.values()) {
@@ -75,8 +65,8 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       }
     }
 
-    val modules = runReadAction { ModuleManager.getInstance(project).getModules() }
-    resolver = WebServerPathToFileManager.getInstance(project).getResolver(effectivePath)
+    val modules = runReadAction { ModuleManager.getInstance(project).modules }
+    val resolver = WebServerPathToFileManager.getInstance(project).getResolver(effectivePath)
     for (rootProvider in RootProvider.values()) {
       val result = findByRelativePath(project, effectivePath, modules, rootProvider, resolver)
       if (result != null) {
@@ -86,63 +76,57 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
     return findInLibraries(project, modules, effectivePath, resolver)
   }
 
-  override fun getRoot(file: VirtualFile, project: Project): PathInfo? {
+  override fun getPathInfo(file: VirtualFile, project: Project): PathInfo? {
     runReadAction {
       val directoryIndex = DirectoryIndex.getInstance(project)
       val info = directoryIndex.getInfoForFile(file)
       // we serve excluded files
-      if (!info.isExcluded() && !info.isInProject()) {
+      if (!info.isExcluded && !info.isInProject) {
         // javadoc jars is "not under project", but actually is, so, let's check project library table
-        return if (file.getFileSystem() === JarFileSystem.getInstance()) getInfoForDocJar(file, project) else null
+        return if (file.fileSystem == JarFileSystem.getInstance()) getInfoForDocJar(file, project) else null
       }
 
-      var root = info.getSourceRoot()
+      var root = info.sourceRoot
       val isLibrary: Boolean
       if (root == null) {
-        root = info.getContentRoot()
+        root = info.contentRoot
         if (root == null) {
-          root = info.getLibraryClassRoot()
+          root = info.libraryClassRoot
           isLibrary = true
 
-          assert(root != null) { file.getPresentableUrl() }
+          assert(root != null) { file.presentableUrl }
         }
         else {
           isLibrary = false
         }
       }
       else {
-        isLibrary = info.isInLibrarySource()
+        isLibrary = info.isInLibrarySource
       }
 
-      var module = info.getModule()
+      var module = info.module
       if (isLibrary && module == null) {
         for (entry in directoryIndex.getOrderEntries(info)) {
           if (entry is ModuleLibraryOrderEntryImpl) {
-            module = entry.getOwnerModule()
+            module = entry.ownerModule
             break
           }
         }
       }
 
-      return PathInfo(file, root!!, getModuleNameQualifier(project, module), isLibrary)
+      return PathInfo(null, file, root!!, getModuleNameQualifier(project, module), isLibrary)
     }
   }
 
   private enum class RootProvider {
     SOURCE {
-      override fun getRoots(rootManager: ModuleRootManager): Array<VirtualFile> {
-        return rootManager.getSourceRoots()
-      }
+      override fun getRoots(rootManager: ModuleRootManager) = rootManager.sourceRoots
     },
     CONTENT {
-      override fun getRoots(rootManager: ModuleRootManager): Array<VirtualFile> {
-        return rootManager.getContentRoots()
-      }
+      override fun getRoots(rootManager: ModuleRootManager) = rootManager.contentRoots
     },
     EXCLUDED {
-      override fun getRoots(rootManager: ModuleRootManager): Array<VirtualFile> {
-        return rootManager.getExcludeRoots()
-      }
+      override fun getRoots(rootManager: ModuleRootManager) = rootManager.excludeRoots
     };
 
     public abstract fun getRoots(rootManager: ModuleRootManager): Array<VirtualFile>
@@ -168,7 +152,7 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       }
     }
 
-    private fun findInModuleLibraries(path: String, module: Module, resolver: PairFunction<String, VirtualFile, VirtualFile>): PathInfo? {
+    private fun findInModuleLibraries(path: String, module: Module, resolver: FileResolver): PathInfo? {
       val index = path.indexOf('/')
       if (index <= 0) {
         return null
@@ -179,7 +163,7 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       return result.get()
     }
 
-    private fun findInLibraries(project: Project, modules: Array<Module>, path: String, resolver: PairFunction<String, VirtualFile, VirtualFile>): PathInfo? {
+    private fun findInLibraries(project: Project, modules: Array<Module>, path: String, resolver: FileResolver): PathInfo? {
       val index = path.indexOf('/')
       if (index < 0) {
         return null
@@ -190,14 +174,14 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       runReadAction {
         val result = Ref.create<PathInfo>()
         for (module in modules) {
-          if (!module.isDisposed()) {
+          if (!module.isDisposed) {
             if (findInModuleLibraries(resolver, libraryFileName, relativePath, result, module)) {
               return result.get()
             }
           }
         }
 
-        for (library in LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()) {
+        for (library in LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries) {
           val pathInfo = findInLibrary(libraryFileName, relativePath, library, resolver)
           if (pathInfo != null) {
             return pathInfo
@@ -208,24 +192,22 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       return null
     }
 
-    private fun findInModuleLibraries(resolver: PairFunction<String, VirtualFile, VirtualFile>, libraryFileName: String, relativePath: String, result: Ref<PathInfo>, module: Module): Boolean {
+    private fun findInModuleLibraries(resolver: FileResolver, libraryFileName: String, relativePath: String, result: Ref<PathInfo>, module: Module): Boolean {
       ModuleRootManager.getInstance(module).orderEntries().forEachLibrary(object : Processor<Library> {
         override fun process(library: Library): Boolean {
           result.set(findInLibrary(libraryFileName, relativePath, library, resolver))
-          return result.isNull()
+          return result.isNull
         }
       })
-      return !result.isNull()
+      return !result.isNull
     }
 
-    private fun findInLibrary(libraryFileName: String, relativePath: String, library: Library, resolver: PairFunction<String, VirtualFile, VirtualFile>): PathInfo? {
-      for (rootType in ORDER_ROOT_TYPES.getValue()) {
+    private fun findInLibrary(libraryFileName: String, relativePath: String, library: Library, resolver: FileResolver): PathInfo? {
+      for (rootType in ORDER_ROOT_TYPES.value) {
         for (root in library.getFiles(rootType)) {
-          if (StringUtil.equalsIgnoreCase(root.getNameSequence(), libraryFileName)) {
-            val file = resolver.`fun`(relativePath, root)
-            if (file != null) {
-              return PathInfo(file, root, null, true)
-            }
+          if (StringUtil.equalsIgnoreCase(root.nameSequence, libraryFileName)) {
+            val result = resolver.resolve(relativePath, root, isLibrary = true) ?: continue
+            return result
           }
         }
       }
@@ -242,7 +224,7 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
         override fun process(library: Library): Boolean {
           for (root in library.getFiles(javaDocRootType)) {
             if (VfsUtilCore.isAncestor(root, file, false)) {
-              result = PathInfo(file, root, getModuleNameQualifier(project, module), true)
+              result = PathInfo(null, file, root, getModuleNameQualifier(project, module), true)
               return false
             }
           }
@@ -253,8 +235,8 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       val processor = LibraryProcessor()
       runReadAction {
         val moduleManager = ModuleManager.getInstance(project)
-        for (module in moduleManager.getModules()) {
-          if (module.isDisposed()) {
+        for (module in moduleManager.modules) {
+          if (module.isDisposed) {
             continue
           }
 
@@ -266,7 +248,7 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
         }
 
         processor.module = null
-        for (library in LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()) {
+        for (library in LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries) {
           if (!processor.process(library)) {
             return processor.result
           }
@@ -277,25 +259,23 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
     }
 
     private fun getModuleNameQualifier(project: Project, module: Module?): String? {
-      if (module != null && PlatformUtils.isIntelliJ() && !(module.getName().equals(project.getName(), ignoreCase = true) || compareNameAndProjectBasePath(module.getName(), project))) {
-        return module.getName()
+      if (module != null && PlatformUtils.isIntelliJ() && !(module.name.equals(project.name, ignoreCase = true) || compareNameAndProjectBasePath(module.name, project))) {
+        return module.name
       }
       return null
     }
 
-    private fun findByRelativePath(path: String, roots: Array<VirtualFile>, resolver: PairFunction<String, VirtualFile, VirtualFile>, moduleName: String?): PathInfo? {
+    private fun findByRelativePath(path: String, roots: Array<VirtualFile>, resolver: FileResolver, moduleName: String?): PathInfo? {
       for (root in roots) {
-        val file = resolver.`fun`(path, root)
-        if (file != null) {
-          return PathInfo(file, root, moduleName, false)
-        }
+        val result = resolver.resolve(path, root, moduleName) ?: continue
+        return result
       }
       return null
     }
 
-    private fun findByRelativePath(project: Project, path: String, modules: Array<Module>, rootProvider: RootProvider, resolver: PairFunction<String, VirtualFile, VirtualFile>): PathInfo? {
+    private fun findByRelativePath(project: Project, path: String, modules: Array<Module>, rootProvider: RootProvider, resolver: FileResolver): PathInfo? {
       for (module in modules) {
-        if (!module.isDisposed()) {
+        if (!module.isDisposed) {
           val moduleRootManager = ModuleRootManager.getInstance(module)
           val result = findByRelativePath(path, rootProvider.getRoots(moduleRootManager), resolver, null)
           if (result != null) {

@@ -19,10 +19,11 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -91,7 +92,7 @@ public class LibrariesContainerFactory {
 
   @NotNull
   private static Library createLibraryInTable(final @NotNull NewLibraryEditor editor, final LibraryTable table) {
-    LibraryTableBase.ModifiableModelEx modifiableModel = (LibraryTableBase.ModifiableModelEx) table.getModifiableModel();
+    LibraryTable.ModifiableModel modifiableModel = table.getModifiableModel();
     final String name = StringUtil.isEmpty(editor.getName()) ? null : getUniqueLibraryName(editor.getName(), modifiableModel);
     final LibraryType<?> type = editor.getType();
     Library library = modifiableModel.createLibrary(name, type == null ? null : type.getKind());
@@ -297,7 +298,7 @@ public class LibrariesContainerFactory {
         LOG.error("cannot create module library in this context");
       }
 
-      LibraryTableBase.ModifiableModelEx model = (LibraryTableBase.ModifiableModelEx)provider.getModifiableModel();
+      LibraryTable.ModifiableModel model = provider.getModifiableModel();
       final LibraryType<?> type = libraryEditor.getType();
       Library library = model.createLibrary(getUniqueLibraryName(libraryEditor.getName(), model), type == null ? null : type.getKind());
       ExistingLibraryEditor createdLibraryEditor = ((LibrariesModifiableModel)model).getLibraryEditor(library);

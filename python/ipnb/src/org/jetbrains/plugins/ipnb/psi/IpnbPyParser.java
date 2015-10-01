@@ -26,13 +26,13 @@ public class IpnbPyParser extends PyParser {
 
     myIPythonStartSymbol = PyConsoleParser.startsWithIPythonSpecialSymbol(builder);
 
-    ParsingContext context = createParsingContext(builder, LanguageLevel.getDefault(), null);
+    ParsingContext context = createParsingContext(builder, myLanguageLevel, null);
 
     StatementParsing statementParser = context.getStatementParser();
     builder.setTokenTypeRemapper(statementParser);
 
     while (!builder.eof()) {
-      statementParser.parseStatement(context.emptyParsingScope());
+      statementParser.parseStatement();
     }
     rootMarker.done(root);
     return builder.getTreeBuilt();

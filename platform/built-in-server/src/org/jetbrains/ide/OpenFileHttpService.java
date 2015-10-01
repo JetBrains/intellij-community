@@ -218,7 +218,7 @@ class OpenFileHttpService extends RestService {
       }
 
       if (virtualFile == null) {
-        virtualFile = WebServerPathToFileManager.getInstance(openedProject).get(path);
+        virtualFile = WebServerPathToFileManager.getInstance(openedProject).findVirtualFile(path);
       }
       if (virtualFile != null) {
         project = openedProject;

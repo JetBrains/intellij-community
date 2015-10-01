@@ -19,7 +19,6 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -39,7 +38,7 @@ import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.documentation.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -73,8 +72,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
 
   /**
-   * Ancestors cache is lazy because provider ({@link com.jetbrains.python.psi.impl.PyClassImpl.CachedAncestorsProvider}) needs
-   * {@link #getProject()} which is notavailable during consructor time.
+   * Ancestors cache is lazy because provider ({@link PyClassImpl.CachedAncestorsProvider}) needs
+   * {@link #getProject()} which is not available during constructor time.
    */
   private TypeEvalContextBasedCache<List<PyClassLikeType>> myAncestorsCache;
 
@@ -121,9 +120,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   private volatile Map<String, Property> myPropertyCache;
 
-  private final Key<ParameterizedCachedValue<List<PyClassLikeType>, TypeEvalContext>> myCachedValueKey = Key.create("cached ancestors");
-  private final CachedAncestorsProvider myCachedAncestorsProvider = new CachedAncestorsProvider();
-
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return new PyClassTypeImpl(this, true);
@@ -151,7 +147,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   /**
-   * @return ancestors cache. It is created lazyly if needed.
+   * @return ancestors cache. It is created lazily if needed.
    */
   @NotNull
   private TypeEvalContextBasedCache<List<PyClassLikeType>> getAncestorsCache() {
@@ -552,7 +548,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public PyFunction findMethodByName(@Nullable final String name, boolean inherited) {
     if (name == null) return null;
     NameFinder<PyFunction> proc = new NameFinder<PyFunction>(name);
-    visitMethods(proc, inherited);
+    visitMethods(proc, inherited, null);
     return proc.getResult();
   }
 
@@ -920,11 +916,11 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
   }
 
-  public boolean visitMethods(Processor<PyFunction> processor, boolean inherited) {
-    return visitMethods(processor, inherited, false, null);
+  public boolean visitMethods(Processor<PyFunction> processor, boolean inherited, @Nullable final TypeEvalContext context) {
+    return visitMethods(processor, inherited, false, context);
   }
 
-  public boolean visitMethods(Processor<PyFunction> processor,
+  private boolean visitMethods(Processor<PyFunction> processor,
                               boolean inherited,
                               boolean skipClassObj, TypeEvalContext context) {
     PyFunction[] methods = getMethods(false);
@@ -934,7 +930,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         if (skipClassObj && PyNames.FAKE_OLD_BASE.equals(ancestor.getName())) {
           continue;
         }
-        if (!ancestor.visitMethods(processor, false)) {
+        if (!ancestor.visitMethods(processor, false, null)) {
           return false;
         }
       }
@@ -960,7 +956,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     if (!ContainerUtil.process(methods, processor)) return false;
     if (inherited) {
       for (PyClass ancestor : getAncestorClasses(context)) {
-        // TODO: Why there is FALSE here? We support only one level of inheritance?
         if (!ancestor.visitClassAttributes(processor, false, context)) {
           return false;
         }

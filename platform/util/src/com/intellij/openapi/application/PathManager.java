@@ -439,7 +439,7 @@ public class PathManager {
       THashSet.class,               // trove4j
       PicoContainer.class,          // PicoContainer
       TypeMapper.class,             // JNA
-      FileUtils.class,              // JNA (jna-utils)
+      FileUtils.class,              // JNA (jna-platform)
       PatternMatcher.class,          // OROMatcher
       Snappy.class                   // Snappy
     };

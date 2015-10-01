@@ -25,7 +25,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +38,10 @@ import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
+import java.applet.Applet;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
@@ -524,9 +527,7 @@ public class IdeEventQueue extends EventQueue {
     
     traceClipboardEvents(e);
 
-    if (e instanceof WindowEvent) {
-      processAppActivationEvents((WindowEvent)e);
-    }
+    if (processAppActivationEvents(e)) return;
 
     if (!typeAheadFlushing) {
       fixStickyFocusedComponents(e);
@@ -636,11 +637,6 @@ public class IdeEventQueue extends EventQueue {
           }
         });
       }
-      if (me.getButton() != 0) {
-        setLastClickEvent(me);
-      } else if (lastClickEvent != null && Math.abs(System.currentTimeMillis() - lastClickTime) > 200){
-        setLastClickEvent(null);//Obsolete event
-      }
       if (!myMouseEventDispatcher.dispatchMouseEvent(me)) {
         defaultDispatchEvent(e);
       }
@@ -682,19 +678,6 @@ public class IdeEventQueue extends EventQueue {
         LOG.warn("Error accessing java.awt.event.InvocationEvent.runnable field");
       }
     }
-  }
-
-  private MouseEvent lastClickEvent;
-  private long lastClickTime;
-
-  private void setLastClickEvent(@Nullable MouseEvent event) {
-    lastClickEvent = event;
-    lastClickTime = System.currentTimeMillis();
-  }
-
-  public boolean wasRootRecentlyClicked(Component component) {
-    return component != null && lastClickEvent != null && lastClickEvent.getComponent() != null &&
-           SwingUtilities.getRoot(lastClickEvent.getComponent()) == SwingUtilities.getRoot(component);
   }
 
   private static void fixStickyWindow(KeyboardFocusManager mgr, Window wnd, String resetMethod) {
@@ -816,32 +799,36 @@ public class IdeEventQueue extends EventQueue {
     return peekEvent(WindowEvent.WINDOW_OPENED) != null;
   }
 
-  private static final int APP_DEACTIVATION_DELAY = 50;
-  private static final Alarm ourDeactivationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private static boolean processAppActivationEvents(AWTEvent e) {
 
-  /*
-   * This method processes "external" focus events (i.e. those induced by a window manager) and tracks
-   * an application activation/deactivation state from them (an application is active if at least one it's windows has the focus).
-   *
-   * One special case is closing a child dialog: it generates a focus-lost event immediately followed by a focus-gained one.
-   * To avoid (or rather reduce a chance of) unneeded app-deactivation event the processing of the focus-lost event
-   * is slightly delayed.
-   */
-  private static void processAppActivationEvents(final WindowEvent e) {
-    if ((e.getID() == WindowEvent.WINDOW_GAINED_FOCUS || e.getID() == WindowEvent.WINDOW_LOST_FOCUS) && e.getOppositeWindow() == null) {
-      final Application app = ApplicationManager.getApplication();
-      if (app instanceof ApplicationImpl) {
-        if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS) {
-          ourDeactivationAlarm.cancelAllRequests();
-          ((ApplicationImpl)app).tryToApplyActivationState(e.getWindow(), true);
-        }
-        else {
-          ourDeactivationAlarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              ((ApplicationImpl)app).tryToApplyActivationState(e.getWindow(), false);
+    if (e instanceof WindowEvent) {
+      final WindowEvent we = (WindowEvent)e;
+
+      ApplicationActivationStateManager.get().updateState(we);
+
+      storeLastFocusedComponent(we);
+    }
+
+    return false;
+  }
+
+  private static void storeLastFocusedComponent(WindowEvent we) {
+    final Window eventWindow = we.getWindow();
+
+    if (we.getID() == WindowEvent.WINDOW_DEACTIVATED || we.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
+      Component frame = UIUtil.findUltimateParent(eventWindow);
+      Component focusOwnerInDeactivatedWindow = eventWindow.getMostRecentFocusOwner();
+      IdeFrame[] allProjectFrames = WindowManager.getInstance().getAllProjectFrames();
+
+      if (focusOwnerInDeactivatedWindow != null) {
+        for (IdeFrame ideFrame : allProjectFrames) {
+          JFrame aFrame = WindowManager.getInstance().getFrame(ideFrame.getProject());
+          if (aFrame.equals(frame)) {
+            IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
+            if (focusManager instanceof FocusManagerImpl) {
+              ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation(ideFrame, focusOwnerInDeactivatedWindow);
             }
-          }, APP_DEACTIVATION_DELAY);
+          }
         }
       }
     }

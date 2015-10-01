@@ -44,6 +44,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
 import com.intellij.psi.IntentionFilterOwner;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -96,17 +97,18 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                                                    int offset) {
     if (info.quickFixActionMarkers == null) return;
     if (group != -1 && group != info.getGroup()) return;
+    boolean fixRangeIsNotEmpty = !info.getFixTextRange().isEmpty();
     Editor injectedEditor = null;
     PsiFile injectedFile = null;
     for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> pair : info.quickFixActionMarkers) {
       HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
       RangeMarker range = pair.second;
-      if (!range.isValid()) continue;
+      if (!range.isValid() || fixRangeIsNotEmpty && isEmpty(range)) continue;
 
       if (DumbService.isDumb(file.getProject()) && !DumbService.isDumbAware(actionInGroup.getAction())) {
         continue;
       }
-      
+
       int start = range.getStartOffset();
       int end = range.getEndOffset();
       final Project project = file.getProject();
@@ -131,6 +133,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         outList.add(actionInGroup);
       }
     }
+  }
+
+  private static boolean isEmpty(@NotNull Segment segment) {
+    return segment.getEndOffset() <= segment.getStartOffset();
   }
 
   public static class IntentionsInfo {

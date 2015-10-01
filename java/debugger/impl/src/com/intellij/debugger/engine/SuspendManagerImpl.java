@@ -15,13 +15,14 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -57,7 +58,7 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   @Override
-  public SuspendContextImpl pushSuspendContext(final int suspendPolicy, int nVotes) {
+  public SuspendContextImpl pushSuspendContext(@MagicConstant(flagsFromClass = EventRequest.class) final int suspendPolicy, int nVotes) {
     SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, suspendPolicy, nVotes, null) {
       @Override
       protected void resumeImpl() {
@@ -273,7 +274,7 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   @Override
-  public void resumeThread(SuspendContextImpl context, ThreadReferenceProxyImpl thread) {
+  public void resumeThread(SuspendContextImpl context, @NotNull ThreadReferenceProxyImpl thread) {
     //LOG.assertTrue(thread != context.getThread(), "Use resume() instead of resuming breakpoint thread");
     LOG.assertTrue(!context.isExplicitlyResumed(thread));
 
@@ -308,9 +309,9 @@ public class SuspendManagerImpl implements SuspendManager {
     if(suspendContext.myVotesToVote == 0) {
       if(suspendContext.myIsVotedForResume) {
         // resume in a separate request to allow other requests be processed (e.g. dependent bpts enable)
-        myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+        myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
           @Override
-          protected void action() throws Exception {
+          public void contextAction() throws Exception {
             resume(suspendContext);
           }
 
@@ -352,7 +353,7 @@ public class SuspendManagerImpl implements SuspendManager {
     processVote(suspendContext);
   }
 
-  LinkedList<SuspendContextImpl> getPausedContexts() {
+  public List<SuspendContextImpl> getPausedContexts() {
     return myPausedContexts;
   }
 }

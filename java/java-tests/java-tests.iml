@@ -46,5 +46,7 @@
     <orderEntry type="module" module-name="spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="util-tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
+    <orderEntry type="module" module-name="jetgroovy" scope="TEST" />
+    <orderEntry type="module" module-name="lang-tests" scope="TEST" />
   </component>
 </module>

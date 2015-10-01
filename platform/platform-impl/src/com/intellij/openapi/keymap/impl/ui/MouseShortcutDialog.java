@@ -113,7 +113,7 @@ class MouseShortcutDialog extends DialogWrapper{
    * @return created/edited shortcut. Returns <code>null</code> if shortcut is invalid.
    */
   public MouseShortcut getMouseShortcut(){
-    if (myButton > 3 && getClickCount() == 2) {
+    if (myButton > 3 && myButton != MouseShortcut.BUTTON_WHEEL_UP && myButton != MouseShortcut.BUTTON_WHEEL_DOWN && getClickCount() == 2) {
       return null;
     }
 
@@ -289,17 +289,25 @@ class MouseShortcutDialog extends DialogWrapper{
       // Alt+Button2 event.
       // See bug ID 4109826 on Sun's bug parade.
       //cast is needed in order to compile with mustang
-      MouseShortcutDialog.this.addMouseListener((MouseListener)new MouseAdapter(){
+      MouseAdapter adapter = new MouseAdapter() {
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent e) {
+          mouseReleased(e);
+        }
+
         public void mouseReleased(MouseEvent e){
           Component component= SwingUtilities.getDeepestComponentAt(e.getComponent(),e.getX(),e.getY());
           if(component== MyClickPad.this){
             e.consume();
-            myButton=e.getButton();
+            myButton = MouseShortcut.getButton(e);
             myModifiers=e.getModifiersEx();
             updatePreviewAndConflicts();
           }
         }
-      });
+      };
+      Window window = MouseShortcutDialog.this.getPeer().getWindow();
+      window.addMouseListener(adapter);
+      window.addMouseWheelListener(adapter);
     }
   }
 }

@@ -525,5 +525,6 @@ public class PsiManagerImpl extends PsiManagerEx {
   public void cleanupForNextTest() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myFileManager.cleanupForNextTest();
+    dropResolveCaches();
   }
 }

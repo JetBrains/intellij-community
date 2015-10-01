@@ -102,6 +102,15 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     }).assertTiming();
   }
 
+  public void testConstructorOverloadsWithDiamonds() throws Exception {
+    PlatformTestUtil.startPerformanceTest("Overload resolution with chain constructor calls with diamonds", 10000, new ThrowableRunnable() {
+      @Override
+      public void run() throws Throwable {
+        doTest(false);
+      }
+    }).assertTiming();
+  }
+
   public void testMultipleOverloadsWithNestedGeneric() throws Exception {
     doTest(false);
   }
@@ -143,6 +152,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testConflictsWithRawQualifier() throws Exception {
+    doTest();
+  }
+
+  public void testIgnoreCandidatesWithLowerApplicabilityLevel() throws Exception {
     doTest();
   }
 

@@ -35,12 +35,12 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <componentClass value="javax.swing.JComboBox"/>
+          <componentClass value="com.intellij.application.options.ModulesComboBox"/>
           <labelLocation value="West"/>
           <text resource-bundle="messages/ExecutionBundle" key="application.configuration.use.classpath.and.jdk.of.module.label"/>
         </properties>
       </component>
-      <component id="e88bd" class="com.intellij.execution.ui.AlternativeJREPanel" binding="myAlternativeJREPanel">
+      <component id="e88bd" class="com.intellij.execution.ui.JrePathEditor" binding="myJrePathEditor">
         <constraints>
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>

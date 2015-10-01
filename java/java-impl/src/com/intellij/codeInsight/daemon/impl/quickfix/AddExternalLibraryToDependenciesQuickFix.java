@@ -22,7 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ProjectModelModificationService;
+import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Consumer;
@@ -71,7 +71,7 @@ class AddExternalLibraryToDependenciesQuickFix extends OrderEntryFix {
   @Override
   public void invoke(@NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     DependencyScope scope = suggestScopeByLocation(myCurrentModule, myReference.getElement());
-    ProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, myLibraryDescriptor, scope).done(
+    JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, myLibraryDescriptor, scope).done(
       new Consumer<Void>() {
         @Override
         public void consume(Void aVoid) {

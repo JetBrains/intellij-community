@@ -851,7 +851,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   private static boolean isIdeaTask(final String taskName, @Nullable String group) {
     if ((group == null || "ide".equalsIgnoreCase(group)) && StringUtil.containsIgnoreCase(taskName, "idea")) return true;
-    return "other".equalsIgnoreCase(group) && StringUtil.containsIgnoreCase(taskName, "ideaModule");
+    return "other".equalsIgnoreCase(group) && StringUtil.containsIgnoreCase(taskName, "idea");
   }
 
   private static void addCompileOutputPath(@NotNull Map<ExternalSystemSourceType, File> compileOutputPaths,

@@ -46,7 +46,8 @@ public class TestNGTreeHierarchyTest {
     test.getClasses().add(xmlClass);
     suite.getTests().add(test);
     
-    doTest(suite, "\n" +
+    doTest(suite,"##teamcity[enteredTheMatrix]\n" +
+                 "\n" +
                   "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
                   "\n" +
                   "##teamcity[testStarted name='ATest.test1|[0|]' locationHint='java:test://a.ATest.test1|[0|]']\n" +
@@ -187,7 +188,8 @@ public class TestNGTreeHierarchyTest {
     test.getClasses().add(xmlClass);
     suite.getTests().add(test);
 
-    doTest(suite, "\n" +
+    doTest(suite, "##teamcity[enteredTheMatrix]\n" +
+                  "\n" +
                   "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
                   "\n" +
                   "##teamcity[testStarted name='ATest.test1|[0|]' locationHint='java:test://a.ATest.test1|[0|]']\n" +
@@ -222,7 +224,8 @@ public class TestNGTreeHierarchyTest {
     }
     listener.onSuiteFinish(className);
 
-    Assert.assertEquals("output: " + buf, "\n" +
+    Assert.assertEquals("output: " + buf,"##teamcity[enteredTheMatrix]\n" +
+                                         "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp' config='true']\n" +
@@ -262,7 +265,8 @@ public class TestNGTreeHierarchyTest {
     listener.onConfigurationFailure(setUp);
     listener.onSuiteFinish(className);
 
-    Assert.assertEquals("output: " + buf, "\n" +
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp' config='true']\n" +
@@ -279,7 +283,8 @@ public class TestNGTreeHierarchyTest {
     final MockTestNGResult result = new MockTestNGResult("ATest", "testMe", null, new Object[]{null, null});
     listener.onTestStart(result);
     listener.onTestFinished(result);
-    Assert.assertEquals("output: " + buf, "\n" +
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='ATest.testMe|[null, null|]' locationHint='java:test://ATest.testMe|[0|]']\n" +

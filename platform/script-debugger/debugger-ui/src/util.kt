@@ -30,9 +30,9 @@ public fun XDebugSession.rejectedErrorReporter(description: String? = null): (Th
   }
 }
 
-public inline fun <T> contextDependentResultConsumer(context: SuspendContext, @inlineOptions(InlineOption.ONLY_LOCAL_RETURN) done: (result: T, vm: Vm) -> Unit) : (T) -> Unit {
+public inline fun <T> contextDependentResultConsumer(context: SuspendContext, crossinline done: (result: T, vm: Vm) -> Unit) : (T) -> Unit {
   return {
-    val vm = context.getValueManager().getVm()
+    val vm = context.valueManager.vm
     if (vm.attachStateManager.isAttached() && !vm.getSuspendContextManager().isContextObsolete(context)) {
       done(it, vm)
     }

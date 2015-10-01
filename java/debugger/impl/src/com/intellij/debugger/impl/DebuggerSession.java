@@ -111,11 +111,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     mySteppingThroughThread.set(threadProxy);
   }
 
-  void unsetSteppingThrough(ThreadReferenceProxyImpl threadProxy) {
-    mySteppingThroughThread.compareAndSet(threadProxy, null);
-  }
-
-  void clearSteppingThrough() {
+  public void clearSteppingThrough() {
     mySteppingThroughThread.set(null);
   }
 
@@ -346,12 +342,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public void resume() {
     final SuspendContextImpl suspendContext = getSuspendContext();
     if(suspendContext != null) {
-      if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
-        clearSteppingThrough();
-      }
-      else {
-        unsetSteppingThrough(suspendContext.getThread());
-      }
+      clearSteppingThrough();
       resetIgnoreStepFiltersFlag();
       resumeAction(myDebugProcess.createResumeCommand(suspendContext), Event.RESUME);
     }
@@ -478,6 +469,8 @@ public class DebuggerSession implements AbstractDebuggerSession {
         LOG.debug("paused");
       }
 
+      ThreadReferenceProxyImpl currentThread = suspendContext.getThread();
+
       if (!shouldSetAsActiveContext(suspendContext)) {
         DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
           @Override
@@ -485,7 +478,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
             getContextManager().fireStateChanged(getContextManager().getContext(), Event.THREADS_REFRESH);
           }
         });
-        final ThreadReferenceProxyImpl thread = suspendContext.getThread();
+        ThreadReferenceProxyImpl thread = suspendContext.getThread();
         if (thread != null) {
           List<Pair<Breakpoint, com.sun.jdi.event.Event>> descriptors = DebuggerUtilsEx.getEventDescriptors(suspendContext);
           if (!descriptors.isEmpty()) {
@@ -501,7 +494,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
                       @Override
                       public void contextAction() throws Exception {
                         final DebuggerContextImpl debuggerContext =
-                          DebuggerContextImpl.createDebuggerContext(DebuggerSession.this, suspendContext, thread, null);
+                          DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, suspendContext);
 
                         DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
                           @Override
@@ -516,12 +509,17 @@ public class DebuggerSession implements AbstractDebuggerSession {
               }).notify(getProject());
           }
         }
-        return;
+        if (((SuspendManagerImpl)myDebugProcess.getSuspendManager()).getPausedContexts().size() > 1) {
+          return;
+        }
+        else {
+          currentThread = mySteppingThroughThread.get();
+        }
+      }
+      else {
+        setSteppingThrough(currentThread);
       }
 
-      clearSteppingThrough();
-
-      ThreadReferenceProxyImpl currentThread   = suspendContext.getThread();
       final StackFrameContext positionContext;
 
       if (currentThread == null) {
@@ -635,7 +633,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
         @Override
         public void run() {
-          getContextManager().setState(debuggerContext, State.PAUSED, Event.PAUSE, null);
+          getContextManager().setState(debuggerContext, State.PAUSED, Event.PAUSE, getDescription(debuggerContext));
         }
       });
     }
@@ -647,7 +645,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
       }
       final SuspendContextImpl currentSuspendContext = getContextManager().getContext().getSuspendContext();
       if (currentSuspendContext == null) {
-        return true;
+        return mySteppingThroughThread.get() == null;
       }
       if (enableBreakpointsDuringEvaluation()) {
         final ThreadReferenceProxyImpl currentThread = currentSuspendContext.getThread();
@@ -658,20 +656,29 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
 
     @Override
-    public void resumed(final SuspendContextImpl suspendContext) {
-      SuspendManager suspendManager = getProcess().getSuspendManager();
-      SuspendContextImpl context = suspendManager.getPausedContext();
-      if (context != null && suspendContext != null && isSteppingThrough(suspendContext.getThread())) {
-        context = suspendManager.pushSuspendContext(suspendContext.getSuspendPolicy(), 0);
-        context.setThread(suspendContext.getThread().getThreadReference());
+    public void resumed(SuspendContextImpl suspendContext) {
+      SuspendContextImpl context = getProcess().getSuspendManager().getPausedContext();
+      ThreadReferenceProxyImpl steppingThread = null;
+      // single thread stepping
+      if (context != null
+          && suspendContext != null
+          && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD
+          && isSteppingThrough(suspendContext.getThread())) {
+          steppingThread = suspendContext.getThread();
       }
-      final SuspendContextImpl currentContext = context;
+      final DebuggerContextImpl debuggerContext =
+        context != null ?
+          DebuggerContextImpl.createDebuggerContext(DebuggerSession.this,
+                                                                    context,
+                                                                    steppingThread != null ? steppingThread : context.getThread(),
+                                                                    null)
+          : null;
+
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
         @Override
         public void run() {
-          if (currentContext != null) {
-            getContextManager().setState(DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, currentContext),
-                                         State.PAUSED, Event.CONTEXT, null);
+          if (debuggerContext != null) {
+            getContextManager().setState(debuggerContext, State.PAUSED, Event.CONTEXT, getDescription(debuggerContext));
           }
           else {
             getContextManager().setState(SESSION_EMPTY_CONTEXT, State.RUNNING, Event.CONTEXT, null);
@@ -759,6 +766,14 @@ public class DebuggerSession implements AbstractDebuggerSession {
     }
   }
 
+  private static String getDescription(DebuggerContextImpl debuggerContext) {
+    SuspendContextImpl suspendContext = debuggerContext.getSuspendContext();
+    if (suspendContext != null && debuggerContext.getThreadProxy() != suspendContext.getThread()) {
+      return DebuggerBundle.message("status.paused.in.another.thread");
+    }
+    return null;
+  }
+
   private class MyEvaluationListener implements EvaluationListener {
     @Override
     public void evaluationStarted(SuspendContextImpl context) {
@@ -782,6 +797,11 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   public static boolean enableBreakpointsDuringEvaluation() {
     return Registry.is("debugger.enable.breakpoints.during.evaluation");
+  }
+
+  public void sessionResumed() {
+    XDebugSession session = getXDebugSession();
+    if (session != null) session.sessionResumed();
   }
 
   @Nullable

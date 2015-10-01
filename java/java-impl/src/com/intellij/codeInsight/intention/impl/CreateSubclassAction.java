@@ -222,7 +222,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     if (targetClass[0] == null) return null;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !psiClass.hasTypeParameters()) {
 
-      final Editor editor = CodeInsightUtil.positionCursor(project, targetClass[0].getContainingFile(), targetClass[0].getLBrace());
+      final Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, targetClass[0].getContainingFile(), targetClass[0]);
       if (editor == null) return targetClass[0];
 
       chooseAndImplement(psiClass, project, targetClass[0], editor);
@@ -245,7 +245,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
         ref = (PsiJavaCodeReferenceElement)targetClass.getExtendsList().add(ref);
       }
       if (psiClass.hasTypeParameters() || includeClassName) {
-        final Editor editor = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
+        final Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, targetClass.getContainingFile(), targetClass);
         final TemplateBuilderImpl templateBuilder = editor != null
                    ? (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(targetClass) : null;
 

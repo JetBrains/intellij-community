@@ -23,6 +23,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
@@ -93,7 +94,7 @@ public class PyChangeSignatureTest extends PyTestCase {
   }
 
   public void testUpdateDocstring() {
-    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    getIndentOptions().INDENT_SIZE = 2;
     final PyParameterInfo a = new PyParameterInfo(0, "a", null, false);
     final PyParameterInfo d1 = new PyParameterInfo(1, "d", "1", true);
     d1.setName("d1");
@@ -101,8 +102,37 @@ public class PyChangeSignatureTest extends PyTestCase {
   }
 
   public void testFixDocstringRemove() {
-    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
+    getIndentOptions().INDENT_SIZE = 2;
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false)));
+  }
+
+  // PY-9795
+  public void testFixGoogleDocStringRemoveMultiple() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      public void run() {
+        doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false), 
+                                                  new PyParameterInfo(3, "d", null, false)));
+      }
+    });
+  }
+
+  // PY-16761
+  public void testGoogleDocStringRemoveVarargs() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      public void run() {
+        doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "x", null, false)));
+      }
+    });
+  }
+
+  public void testFixSphinxDocStringRemoveMultiple() {
+    runWithDocStringFormat(DocStringFormat.REST, new Runnable() {
+      @Override
+      public void run() {
+        doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
+                                                  new PyParameterInfo(3, "d", null, false)));
+      }
+    });
   }
 
   public void testClassMethod() {

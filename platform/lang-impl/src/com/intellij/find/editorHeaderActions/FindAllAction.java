@@ -15,7 +15,7 @@
  */
 package com.intellij.find.editorHeaderActions;
 
-import com.intellij.find.EditorSearchComponent;
+import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindUtil;
@@ -29,6 +29,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -39,45 +40,58 @@ import javax.swing.*;
 * Time: 10:53
 * To change this template use File | Settings | File Templates.
 */
-public class FindAllAction extends EditorHeaderAction implements DumbAware {
-  public FindAllAction(EditorSearchComponent editorSearchComponent) {
-    super(editorSearchComponent);
-    Icon base = AllIcons.Actions.Find;
-    Icon text = IconUtil.textToIcon("ALL", editorSearchComponent, JBUI.scale(6F));
-    LayeredIcon icon = new LayeredIcon(2);
-    icon.setIcon(base, 0);
-    icon.setIcon(text, 1, 0, base.getIconHeight() - text.getIconHeight());
-    getTemplatePresentation().setIcon(icon);
+public class FindAllAction extends AnAction implements ShortcutProvider, DumbAware {
+  public FindAllAction() {
     getTemplatePresentation().setDescription("Export matches to Find tool window");
     getTemplatePresentation().setText("Find All");
-    final AnAction findUsages = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES);
-    if (findUsages != null) {
-      registerCustomShortcutSet(findUsages.getShortcutSet(),
-                                editorSearchComponent.getSearchTextComponent());
-    }
   }
 
   @Override
   public void update(final AnActionEvent e) {
-    Editor editor = e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
     Project project = e.getProject();
-    if (project != null && !project.isDisposed()) {
-      e.getPresentation().setEnabled(editor != null && myEditorSearchComponent.hasMatches() &&
-                                     PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) != null);
-    }
+    Editor editor = e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
+    EditorSearchSession search = e.getData(EditorSearchSession.SESSION_KEY);
+
+    updateTemplateIcon(search);
+    e.getPresentation().setIcon(getTemplatePresentation().getIcon());
+    e.getPresentation().setEnabled(editor != null && project != null && search != null &&
+                                   !project.isDisposed() && search.hasMatches() &&
+                                   PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) != null);
   }
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    Editor editor = e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
-    Project project = e.getProject();
-    if (editor != null && project != null && !project.isDisposed()) {
-      final FindModel model = FindManager.getInstance(project).getFindInFileModel();
-      final FindModel realModel = (FindModel)model.clone();
-      String text = myEditorSearchComponent.getTextInField();
-      if (StringUtil.isEmpty(text)) return;
-      realModel.setStringToFind(text);
-      FindUtil.findAllAndShow(project, editor, realModel);
-    }
+    Editor editor = e.getRequiredData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    EditorSearchSession search = e.getRequiredData(EditorSearchSession.SESSION_KEY);
+
+    if (project.isDisposed()) return;
+
+    FindModel oldModel = FindManager.getInstance(project).getFindInFileModel();
+    FindModel newModel = oldModel.clone();
+    String text = search.getTextInField();
+    if (StringUtil.isEmpty(text)) return;
+
+    newModel.setStringToFind(text);
+    FindUtil.findAllAndShow(project, editor, newModel);
+  }
+
+  @Nullable
+  @Override
+  public ShortcutSet getShortcut() {
+    AnAction findUsages = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES);
+    return findUsages != null ? findUsages.getShortcutSet() : null;
+  }
+
+  private void updateTemplateIcon(@Nullable EditorSearchSession session) {
+    if (session == null || getTemplatePresentation().getIcon() != null) return;
+
+    Icon base = AllIcons.Actions.Find;
+    Icon text = IconUtil.textToIcon("ALL", session.getComponent(), JBUI.scale(6F));
+
+    LayeredIcon icon = new LayeredIcon(2);
+    icon.setIcon(base, 0);
+    icon.setIcon(text, 1, 0, base.getIconHeight() - text.getIconHeight());
+    getTemplatePresentation().setIcon(icon);
   }
 }

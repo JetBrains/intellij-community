@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
-import com.intellij.ide.ui.LCDRenderingScope;
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.Gray;
@@ -75,7 +75,7 @@ public class BaseLabel extends JLabel {
   protected void paintComponent(final Graphics g) {
     final Color fore = myUi.myWindow.isActive() ? myActiveFg : myPassiveFg;
     setForeground(fore);
-    putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, LCDRenderingScope.getAAHintForSwingComponent());
+    putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
     super.paintComponent(_getGraphics((Graphics2D)g));
   }
 

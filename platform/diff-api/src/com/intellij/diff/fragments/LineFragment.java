@@ -19,6 +19,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * Modified part of the text
+ *
+ * Offset ranges cover whole line, including '\n' at the end. But '\n' can be absent for the last line.
+ */
 public interface LineFragment extends DiffFragment {
   int getStartLine1();
 

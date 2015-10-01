@@ -27,10 +27,12 @@ import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -81,11 +83,23 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
     if (getOperator() == PyTokenTypes.NOT_KEYWORD) {
       return PyBuiltinCache.getInstance(this).getBoolType();
     }
+    final boolean isAwait = getOperator() == PyTokenTypes.AWAIT_KEYWORD;
+    if (isAwait) {
+      final PyExpression operand = getOperand();
+      if (operand != null) {
+        final PyType operandType = context.getType(operand);
+        final PyType type = getGeneratorReturnType(operandType, context);
+        if (type != null) {
+          return type;
+        }
+      }
+    }
     final PsiReference ref = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
     final PsiElement resolved = ref.resolve();
     if (resolved instanceof PyCallable) {
       // TODO: Make PyPrefixExpression a PyCallSiteExpression, use getCallType() here and analyze it in PyTypeChecker.analyzeCallSite()
-      return ((PyCallable)resolved).getReturnType(context, key);
+      final PyType returnType = ((PyCallable)resolved).getReturnType(context, key);
+      return isAwait ? getGeneratorReturnType(returnType, context) : returnType;
     }
     return null;
   }
@@ -122,5 +136,41 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
   public ASTNode getNameElement() {
     final PsiElement op = getPsiOperator();
     return op != null ? op.getNode() : null;
+  }
+
+  @Nullable
+  private static PyType getGeneratorReturnType(@Nullable PyType type, @NotNull TypeEvalContext context) {
+    if (type instanceof PyClassLikeType) {
+      final PyClassLikeType classLikeType = (PyClassLikeType)type;
+      // TODO: Understand typing.Generator as well
+      final String classQName = classLikeType.getClassQName();
+      if (PyNames.FAKE_GENERATOR.equals(classQName)) {
+        if (type instanceof PyCollectionType) {
+          final PyCollectionType collectionType = (PyCollectionType)type;
+          final List<PyType> elementTypes = collectionType.getElementTypes(context);
+          if (elementTypes.size() == 3) {
+            return elementTypes.get(2);
+          }
+        }
+      }
+      else if (PyNames.FAKE_COROUTINE.equals(classQName)) {
+        if (type instanceof PyCollectionType) {
+          final PyCollectionType collectionType = (PyCollectionType)type;
+          final List<PyType> elementTypes = collectionType.getElementTypes(context);
+          if (elementTypes.size() == 1) {
+            return elementTypes.get(0);
+          }
+        }
+      }
+    }
+    else if (type instanceof PyUnionType) {
+      final List<PyType> memberReturnTypes = new ArrayList<PyType>();
+      final PyUnionType unionType = (PyUnionType)type;
+      for (PyType member : unionType.getMembers()) {
+        memberReturnTypes.add(getGeneratorReturnType(member, context));
+      }
+      return PyUnionType.union(memberReturnTypes);
+    }
+    return null;
   }
 }

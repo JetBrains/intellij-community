@@ -127,9 +127,10 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
 
     modifiableRootModel.addContentEntry(modelContentRootDir);
     // todo this should be moved to generic ModuleBuilder
-    if (myJdk != null){
+    if (myJdk != null) {
       modifiableRootModel.setSdk(myJdk);
-    } else {
+    }
+    else {
       modifiableRootModel.inheritSdk();
     }
 
@@ -144,7 +145,11 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     assert rootProjectPath != null;
 
     final VirtualFile gradleBuildFile = setupGradleBuildFile(modelContentRootDir);
-    setupGradleSettingsFile(rootProjectPath, modelContentRootDir, modifiableRootModel);
+    setupGradleSettingsFile(
+      rootProjectPath, modelContentRootDir, modifiableRootModel.getProject().getName(),
+      myProjectId == null ? modifiableRootModel.getModule().getName() : myProjectId.getArtifactId(),
+      myWizardContext.isCreatingNewProject() || myParentProject == null
+    );
 
     if (gradleBuildFile != null) {
       modifiableRootModel.getModule().putUserData(
@@ -269,19 +274,19 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   }
 
   @Nullable
-  private VirtualFile setupGradleSettingsFile(@NotNull String rootProjectPath,
-                                              @NotNull VirtualFile modelContentRootDir,
-                                              @NotNull ModifiableRootModel model)
+  public static VirtualFile setupGradleSettingsFile(@NotNull String rootProjectPath,
+                                                    @NotNull VirtualFile modelContentRootDir,
+                                                    String projectName,
+                                                    String moduleName,
+                                                    boolean renderNewFile)
     throws ConfigurationException {
     final VirtualFile file = getOrCreateExternalProjectConfigFile(rootProjectPath, GradleConstants.SETTINGS_FILE_NAME);
     if (file == null) return null;
 
-    final String moduleName = myProjectId == null ? model.getModule().getName() : myProjectId.getArtifactId();
-    if (myWizardContext.isCreatingNewProject() || myParentProject == null) {
+    if (renderNewFile) {
       final String moduleDirName = VfsUtilCore.getRelativePath(modelContentRootDir, file.getParent(), '/');
 
       Map<String, String> attributes = ContainerUtil.newHashMap();
-      final String projectName = model.getProject().getName();
       attributes.put(TEMPLATE_ATTRIBUTE_PROJECT_NAME, projectName);
       attributes.put(TEMPLATE_ATTRIBUTE_MODULE_PATH, moduleDirName);
       attributes.put(TEMPLATE_ATTRIBUTE_MODULE_NAME, moduleName);

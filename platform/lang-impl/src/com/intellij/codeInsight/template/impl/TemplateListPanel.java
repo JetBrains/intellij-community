@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.CompoundScheme;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.*;
@@ -63,7 +64,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
   public static final Comparator<TemplateImpl> TEMPLATE_COMPARATOR = new Comparator<TemplateImpl>() {
     @Override
     public int compare(@NotNull final TemplateImpl o1, @NotNull final TemplateImpl o2) {
-      return o1.getKey().compareToIgnoreCase(o2.getKey());
+      int compareKey = o1.getKey().compareToIgnoreCase(o2.getKey());
+      return compareKey != 0 ? compareKey : o1.getGroupName().compareToIgnoreCase(o2.getGroupName());
     }
   };
 
@@ -87,6 +89,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private final JPanel myDetailsPanel = new JPanel(new CardLayout());
   private LiveTemplateSettingsEditor myCurrentTemplateEditor;
   private final JLabel myEmptyCardLabel = new JLabel();
+
+  private final CompoundScheme.MutatorHelper<TemplateGroup, TemplateImpl> mutatorHelper = new CompoundScheme.MutatorHelper<TemplateGroup, TemplateImpl>();
 
   public TemplateListPanel() {
     super(new BorderLayout());
@@ -173,10 +177,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
       }
     }
     TemplateSettings templateSettings = TemplateSettings.getInstance();
-    templateSettings.setTemplates(templateGroups);
+    templateSettings.setTemplates(mutatorHelper.apply(templateGroups));
     templateSettings.setDefaultShortcutChar(myExpandByDefaultPanel.getSelectedChar());
-
-    reset();
   }
 
   private final boolean isTest = ApplicationManager.getApplication().isUnitTestMode();
@@ -220,8 +222,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return null;
   }
 
-  private static List<TemplateImpl> collectTemplates(final List<TemplateGroup> groups) {
-    ArrayList<TemplateImpl> result = new ArrayList<TemplateImpl>();
+  private static List<TemplateImpl> collectTemplates(@NotNull List<TemplateGroup> groups) {
+    List<TemplateImpl> result = new ArrayList<TemplateImpl>();
     for (TemplateGroup group : groups) {
       result.addAll(group.getElements());
     }
@@ -238,7 +240,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return result;
   }
 
-  private String checkAreEqual(List<TemplateImpl> originalGroup, List<TemplateImpl> newGroup) {
+  private String checkAreEqual(@NotNull  List<TemplateImpl> originalGroup, @NotNull List<TemplateImpl> newGroup) {
     if (originalGroup.size() != newGroup.size()) return "different sizes";
 
     for (int i = 0; i < newGroup.size(); i++) {
@@ -260,7 +262,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return null;
   }
 
-  private boolean areOptionsEqual(final TemplateImpl newTemplate, final TemplateImpl originalTemplate) {
+  private boolean areOptionsEqual(@NotNull TemplateImpl newTemplate, @NotNull TemplateImpl originalTemplate) {
     Map<TemplateOptionalProcessor, Boolean> templateOptions = getTemplateOptions(newTemplate);
     for (TemplateOptionalProcessor processor : templateOptions.keySet()) {
       if (processor.isEnabled(originalTemplate) != templateOptions.get(processor).booleanValue()) return false;
@@ -272,7 +274,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return myTemplateContext.get(newTemplate);
   }
 
-  private Map<TemplateOptionalProcessor, Boolean> getTemplateOptions(final TemplateImpl newTemplate) {
+  private Map<TemplateOptionalProcessor, Boolean> getTemplateOptions(@NotNull TemplateImpl newTemplate) {
     return myTemplateOptions.get(newTemplate);
   }
 
@@ -922,8 +924,9 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private void initTemplates(List<TemplateGroup> groups, String lastSelectedGroup, String lastSelectedKey) {
     myTreeRoot.removeAllChildren();
     myTemplateGroups.clear();
+    mutatorHelper.clear();
     for (TemplateGroup group : groups) {
-      myTemplateGroups.add((TemplateGroup)group.copy());
+      myTemplateGroups.add(mutatorHelper.copy(group));
     }
 
     for (TemplateGroup group : myTemplateGroups) {

@@ -641,6 +641,10 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     for (int row = 0; row < myModel.getRowCount(); row++) {
       final OrderEntry orderEntry = getItemAt(row).getEntry();
       if (orderEntry != null && entry.getPresentableName().equals(orderEntry.getPresentableName())) {
+        if (orderEntry instanceof ExportableOrderEntry && entry instanceof ExportableOrderEntry &&
+            ((ExportableOrderEntry)entry).getScope() != ((ExportableOrderEntry)orderEntry).getScope()) {
+          continue;
+        }
         myEntryTable.getSelectionModel().setSelectionInterval(row, row);
         TableUtil.scrollSelectionToVisible(myEntryTable);
       }
@@ -818,6 +822,11 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
                                           CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == Messages.OK) {
             removeSelectedItems(TableUtil.removeSelectedItems(myEntryTable));
           }
+          return false;
+        }
+
+        @Override
+        protected boolean canStartInBackground() {
           return false;
         }
       }.analyze();

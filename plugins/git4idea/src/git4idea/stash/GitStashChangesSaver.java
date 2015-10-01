@@ -20,14 +20,14 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -42,29 +42,62 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Set;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitStashChangesSaver extends GitChangesSaver {
 
   private static final Logger LOG = Logger.getInstance(GitStashChangesSaver.class);
-  private final Set<VirtualFile> myStashedRoots = new HashSet<VirtualFile>(); // save stashed roots to unstash only them
-  @NotNull private final GitRepositoryManager myRepositoryManager;
+  private static final String NO_LOCAL_CHANGES_TO_SAVE = "No local changes to save";
 
-  public GitStashChangesSaver(@NotNull Project project, @NotNull GitPlatformFacade platformFacade, @NotNull Git git,
-                              @NotNull ProgressIndicator progressIndicator, @NotNull String stashMessage) {
+  @NotNull private final GitRepositoryManager myRepositoryManager;
+  @NotNull private final Set<VirtualFile> myStashedRoots = ContainerUtil.newHashSet(); // save stashed roots to unstash only them
+
+  public GitStashChangesSaver(@NotNull Project project,
+                              @NotNull GitPlatformFacade platformFacade,
+                              @NotNull Git git,
+                              @NotNull ProgressIndicator progressIndicator,
+                              @NotNull String stashMessage) {
     super(project, platformFacade, git, progressIndicator, stashMessage);
     myRepositoryManager = platformFacade.getRepositoryManager(project);
   }
 
   @Override
-  protected void save(Collection<VirtualFile> rootsToSave) throws VcsException {
-    LOG.info("save " + rootsToSave);
-    final Map<VirtualFile, Collection<Change>> changes =
-      new LocalChangesUnderRoots(myChangeManager, myPlatformFacade.getVcsManager(myProject)).getChangesUnderRoots(rootsToSave);
-    stash(changes.keySet());
+  protected void save(@NotNull Collection<VirtualFile> rootsToSave) throws VcsException {
+    LOG.info("saving " + rootsToSave);
+
+    for (VirtualFile root : rootsToSave) {
+      final String message = GitHandlerUtil.formatOperationName("Stashing changes from", root);
+      LOG.info(message);
+      final String oldProgressTitle = myProgressIndicator.getText();
+      myProgressIndicator.setText(message);
+      GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+      if (repository == null) {
+        LOG.error("Repository is null for root " + root);
+      }
+      else {
+        GitCommandResult result = myGit.stashSave(repository, myStashMessage);
+        if (result.success() && somethingWasStashed(result)) {
+          myStashedRoots.add(root);
+        }
+        else {
+          String error = "stash " + repository.getRoot() + ": " + result.getErrorOutputAsJoinedString();
+          if (!result.success()) {
+            throw new VcsException(error);
+          }
+          else {
+            LOG.warn(error);
+          }
+        }
+      }
+      myProgressIndicator.setText(oldProgressTitle);
+    }
+  }
+
+  private static boolean somethingWasStashed(@NotNull GitCommandResult result) {
+    return !StringUtil.containsIgnoreCase(result.getErrorOutputAsJoinedString(), NO_LOCAL_CHANGES_TO_SAVE) &&
+           !StringUtil.containsIgnoreCase(result.getOutputAsJoinedString(), NO_LOCAL_CHANGES_TO_SAVE);
   }
 
   @Override
@@ -78,7 +111,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
   }
 
   @Override
-  protected boolean wereChangesSaved() {
+  public boolean wereChangesSaved() {
     return !myStashedRoots.isEmpty();
   }
 
@@ -87,26 +120,15 @@ public class GitStashChangesSaver extends GitChangesSaver {
     return "stash";
   }
 
+  @NotNull
   @Override
-  protected void showSavedChanges() {
-    GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myStashedRoots.iterator().next());
+  public String getOperationName() {
+    return "stash";
   }
 
-  private void stash(Collection<VirtualFile> roots) throws VcsException {
-    for (VirtualFile root : roots) {
-      final String message = GitHandlerUtil.formatOperationName("Stashing changes from", root);
-      LOG.info(message);
-      final String oldProgressTitle = myProgressIndicator.getText();
-      myProgressIndicator.setText(message);
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-      if (repository == null) {
-        LOG.error("Repository is null for root " + root);
-      }
-      else if (GitStashUtils.saveStash(myGit, repository, myStashMessage)) {
-          myStashedRoots.add(root);
-      }
-      myProgressIndicator.setText(oldProgressTitle);
-    }
+  @Override
+  public void showSavedChanges() {
+    GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myStashedRoots.iterator().next());
   }
 
   /**

@@ -809,7 +809,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         }
         if (HeavyProcessLatch.INSTANCE.isRunning()) {
           if (myAlarm.isEmpty()) {
-            myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
+            // wait for heavy processing to stop, re-schedule daemon but not too soon
+            myAlarm.addRequest(myUpdateRunnable, Math.max(mySettings.AUTOREPARSE_DELAY,100));
           }
           return;
         }
@@ -868,6 +869,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
     Collection<FileEditor> activeTextEditors = new THashSet<FileEditor>(editors.size());
     for (Editor editor : editors) {
+      if (editor.isDisposed()) continue;
       TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
       activeTextEditors.add(textEditor);
     }

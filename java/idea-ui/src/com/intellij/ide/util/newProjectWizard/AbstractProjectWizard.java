@@ -77,7 +77,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   private static WizardContext initContext(@Nullable Project project, @Nullable String defaultPath, Disposable parentDisposable) {
     WizardContext context = new WizardContext(project, parentDisposable);
     if (defaultPath != null) {
-      context.setProjectFileDirectory(defaultPath);
+      context.setProjectFileDirectory(defaultPath, true);
       context.setProjectName(defaultPath.substring(FileUtil.toSystemIndependentName(defaultPath).lastIndexOf("/") + 1));
     }
    return context;

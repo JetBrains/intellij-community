@@ -22,7 +22,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
@@ -30,14 +30,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
@@ -61,27 +59,18 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
   public void importData(@NotNull Collection<DataNode<ModuleDependencyData>> toImport,
                          @Nullable ProjectData projectData,
                          @NotNull Project project,
-                         @NotNull PlatformFacade platformFacade,
-                         boolean synchronous) {
-    List<ModifiableRootModel> models = ContainerUtilRt.newArrayList();
-    try {
-      MultiMap<DataNode<ModuleData>, DataNode<ModuleDependencyData>> byModule = ExternalSystemApiUtil.groupBy(toImport, MODULE);
-      for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ModuleDependencyData>>> entry : byModule.entrySet()) {
-        Module ideModule = platformFacade.findIdeModule(entry.getKey().getData(), project);
-        if (ideModule == null) {
-          LOG.warn(String.format(
-            "Can't import module dependencies %s. Reason: target module (%s) is not found at the ide and can't be imported",
-            entry.getValue(), entry.getKey()
-          ));
-          continue;
-        }
-        models.add(importData(entry.getValue(), ideModule, platformFacade));
+                         @NotNull IdeModifiableModelsProvider modelsProvider) {
+    MultiMap<DataNode<ModuleData>, DataNode<ModuleDependencyData>> byModule = ExternalSystemApiUtil.groupBy(toImport, MODULE);
+    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ModuleDependencyData>>> entry : byModule.entrySet()) {
+      Module ideModule = modelsProvider.findIdeModule(entry.getKey().getData());
+      if (ideModule == null) {
+        LOG.warn(String.format(
+          "Can't import module dependencies %s. Reason: target module (%s) is not found at the ide and can't be imported",
+          entry.getValue(), entry.getKey()
+        ));
+        continue;
       }
-      ExternalSystemApiUtil.commitModels(synchronous, project, models);
-    }
-    catch (Throwable t) {
-      ExternalSystemApiUtil.disposeModels(models);
-      ExceptionUtil.rethrowAllAsUnchecked(t);
+      importData(entry.getValue(), ideModule, modelsProvider);
     }
   }
 
@@ -96,27 +85,24 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
     return orderEntry.getModuleName();
   }
 
-  @NotNull
-  private ModifiableRootModel importData(@NotNull Collection<DataNode<ModuleDependencyData>> toImport,
-                                         @NotNull Module module,
-                                         @NotNull PlatformFacade platformFacade)
-  {
-    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-    Map<Pair<String /* dependency module internal name */, /* dependency module scope */DependencyScope>, ModuleOrderEntry> toRemove =
+  private void importData(@NotNull final Collection<DataNode<ModuleDependencyData>> toImport,
+                          @NotNull final Module module,
+                          @NotNull final IdeModifiableModelsProvider modelsProvider) {
+    final Map<Pair<String /* dependency module internal name */, /* dependency module scope */DependencyScope>, ModuleOrderEntry> toRemove =
       ContainerUtilRt.newHashMap();
-    for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
+    for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
       if (entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry e = (ModuleOrderEntry)entry;
         toRemove.put(Pair.create(e.getModuleName(), e.getScope()), e);
       }
     }
 
-    ModifiableRootModel moduleRootModel = platformFacade.getModuleModifiableModel(module);
+    final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
     for (DataNode<ModuleDependencyData> dependencyNode : toImport) {
-      ModuleDependencyData dependencyData = dependencyNode.getData();
+      final ModuleDependencyData dependencyData = dependencyNode.getData();
       toRemove.remove(Pair.create(dependencyData.getInternalName(), dependencyData.getScope()));
-      String moduleName = dependencyData.getInternalName();
-      Module ideDependencyModule = platformFacade.findIdeModule(moduleName, module.getProject());
+      final String moduleName = dependencyData.getInternalName();
+      Module ideDependencyModule = modelsProvider.findIdeModule(moduleName);
 
       ModuleOrderEntry orderEntry;
       if (module.equals(ideDependencyModule)) {
@@ -125,14 +111,16 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
       }
       else {
         if (ideDependencyModule == null) {
-          LOG.warn(String.format("Can't import module dependency for '%s' module. Reason: target module (%s) is not found at the ide",
-                                 module.getName(), dependencyData));
+          LOG.warn(String.format(
+            "Can't import module dependency for '%s' module. Reason: target module (%s) is not found at the ide",
+            module.getName(), dependencyData
+          ));
         }
-        orderEntry = platformFacade.findIdeModuleDependency(dependencyData, moduleRootModel);
+        orderEntry = modelsProvider.findIdeModuleDependency(dependencyData, module);
         if (orderEntry == null) {
           orderEntry = ideDependencyModule == null
-                       ? moduleRootModel.addInvalidModuleEntry(moduleName)
-                       : moduleRootModel.addModuleOrderEntry(ideDependencyModule);
+                       ? modifiableRootModel.addInvalidModuleEntry(moduleName)
+                       : modifiableRootModel.addModuleOrderEntry(ideDependencyModule);
         }
       }
 
@@ -141,9 +129,7 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
     }
 
     if (!toRemove.isEmpty()) {
-      removeData(toRemove.values(), moduleRootModel);
+      removeData(toRemove.values(), module, modelsProvider);
     }
-
-    return moduleRootModel;
   }
 }

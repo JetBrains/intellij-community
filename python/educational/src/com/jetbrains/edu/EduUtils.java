@@ -4,6 +4,7 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -11,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -288,16 +291,20 @@ public class EduUtils {
     course.setName(oldCourse.name);
     course.setAuthors(new String[]{oldCourse.author});
 
+    String updatedCoursePath = FileUtil.join(PathManager.getConfigPath(), "courses", oldCourse.name);
+    if (new File(updatedCoursePath).exists()) {
+      course.setCourseDirectory(FileUtil.toSystemIndependentName(updatedCoursePath));
+    }
     final ArrayList<Lesson> lessons = new ArrayList<Lesson>();
     for (com.jetbrains.edu.oldCourseFormat.Lesson oldLesson : oldCourse.lessons) {
       final Lesson lesson = new Lesson();
       lesson.setName(oldLesson.name);
-      lesson.setIndex(oldLesson.myIndex);
+      lesson.setIndex(oldLesson.myIndex + 1);
 
       final ArrayList<Task> tasks = new ArrayList<Task>();
       for (com.jetbrains.edu.oldCourseFormat.Task oldTask : oldLesson.taskList) {
         final Task task = new Task();
-        task.setIndex(oldTask.myIndex);
+        task.setIndex(oldTask.myIndex + 1);
         task.setName(oldTask.name);
         task.setLesson(lesson);
         final HashMap<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
@@ -317,6 +324,9 @@ public class EduUtils {
             placeholder.setPossibleAnswer(window.possibleAnswer);
             placeholder.setStart(window.start);
             placeholders.add(placeholder);
+            placeholder.setInitialState(new AnswerPlaceholder.MyInitialState(window.myInitialLine,
+                                                                             window.myInitialLength,
+                                                                             window.myInitialStart));
             if (setStatus != null) {
               setStatus.fun(Pair.create(placeholder, window.myStatus));
             }
@@ -334,7 +344,7 @@ public class EduUtils {
       lessons.add(lesson);
     }
     course.setLessons(lessons);
-    course.initCourse(false);
+    course.initCourse(true);
     return course;
   }
 

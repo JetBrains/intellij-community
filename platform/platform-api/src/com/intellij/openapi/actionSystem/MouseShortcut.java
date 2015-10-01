@@ -18,15 +18,29 @@ package com.intellij.openapi.actionSystem;
 import org.intellij.lang.annotations.JdkConstants;
 
 import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 
 /**
  * A mouse shortcut, which can consist of a specific mouse button, click count and modifier keys
  * (Shift, Ctrl or Alt).
  */
 public final class MouseShortcut extends Shortcut {
+  public static final int BUTTON_WHEEL_UP = 143;
+  public static final int BUTTON_WHEEL_DOWN = 142;
   private final int myButton;
   @JdkConstants.InputEventMask private final int myModifiers;
   private final int myClickCount;
+
+  public static int getButton(MouseEvent event) {
+    if (event instanceof MouseWheelEvent) {
+      MouseWheelEvent wheel = (MouseWheelEvent)event;
+      return 0 < wheel.getWheelRotation()
+             ? BUTTON_WHEEL_DOWN
+             : BUTTON_WHEEL_UP;
+    }
+    return event.getButton();
+  }
 
   public MouseShortcut(int button, @JdkConstants.InputEventMask int modifiers, int clickCount) {
     myButton = button;

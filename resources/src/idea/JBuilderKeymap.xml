@@ -149,6 +149,7 @@
       <keyboard-shortcut first-keystroke="F5"/>
     </action>
     <action id="ViewSource"/>
+    <action id="EditorMatchBrace"/>
   </keymap>
 </component>
     

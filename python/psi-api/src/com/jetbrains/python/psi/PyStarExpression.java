@@ -23,4 +23,6 @@ import org.jetbrains.annotations.Nullable;
 public interface PyStarExpression extends PyExpression {
   @Nullable
   PyExpression getExpression();
+  boolean isAssignmentTarget();
+  boolean isUnpacking();
 }

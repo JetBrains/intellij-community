@@ -21,7 +21,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -32,13 +31,13 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
-import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
@@ -501,7 +500,7 @@ public class ExternalSystemApiUtil {
   }
 
   public static void executeProjectChangeAction(@NotNull final DisposeAwareProjectChange task) {
-    executeProjectChangeAction(false, task);
+    executeProjectChangeAction(true, task);
   }
 
   public static void executeProjectChangeAction(boolean synchronous, @NotNull final DisposeAwareProjectChange task) {
@@ -548,10 +547,19 @@ public class ExternalSystemApiUtil {
     return result.get();
   }
 
-  public static <T> T executeOnEdtUnderWriteAction(@NotNull final Computable<T> task) {
+  public static <T> T doWriteAction(@NotNull final Computable<T> task) {
     return executeOnEdt(new Computable<T>() {
       public T compute() {
         return ApplicationManager.getApplication().runWriteAction(task);
+      }
+    });
+  }
+
+  public static void doWriteAction(@NotNull final Runnable task) {
+    executeOnEdt(true, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(task);
       }
     });
   }
@@ -651,8 +659,7 @@ public class ExternalSystemApiUtil {
     }
     externalModulePaths.remove(linkedExternalProjectPath);
 
-    PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
-    for (Module module : platformFacade.getModules(ideProject)) {
+    for (Module module : ModuleManager.getInstance(ideProject).getModules()) {
       String path = getExternalProjectPath(module);
       if (!StringUtil.isEmpty(path) && !externalModulePaths.remove(path)) {
         return false;
@@ -660,6 +667,8 @@ public class ExternalSystemApiUtil {
     }
     return externalModulePaths.isEmpty();
   }
+
+
 
   public static void storeLastUsedExternalProjectPath(@Nullable String path, @NotNull ProjectSystemId externalSystemId) {
     if (path != null) {

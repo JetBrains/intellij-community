@@ -24,6 +24,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
@@ -118,7 +119,7 @@ public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExce
   @Override
   public XBreakpoint<JavaExceptionBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
     final PsiClass throwableClass =
-      JavaPsiFacade.getInstance(project).findClass("java.lang.Throwable", GlobalSearchScope.allScope(project));
+      JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_THROWABLE, GlobalSearchScope.allScope(project));
     TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
       .createInheritanceClassChooser(DebuggerBundle.message("add.exception.breakpoint.classchooser.title"),
                                      GlobalSearchScope.allScope(project), throwableClass, true, true, null);
