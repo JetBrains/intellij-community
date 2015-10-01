@@ -36,9 +36,14 @@ public class SuspendManagerUtil {
     return false;
   }
 
-  public static SuspendContextImpl findContextByThread(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
+  /**
+   * Returns suspend context that suspends the thread specified (may be currently evaluating)
+   */
+  @Nullable
+  public static SuspendContextImpl findContextByThread(@NotNull SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
     for (SuspendContextImpl context : ((SuspendManagerImpl)suspendManager).getPausedContexts()) {
-      if (context.getThread() == thread || context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
+      if ((context.getThread() == thread || context.getSuspendPolicy() == EventRequest.SUSPEND_ALL)
+          && !context.isExplicitlyResumed(thread)){
         return context;
       }
     }
