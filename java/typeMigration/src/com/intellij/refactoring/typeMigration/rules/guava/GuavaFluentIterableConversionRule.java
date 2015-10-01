@@ -20,11 +20,15 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -105,6 +109,9 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
                                                                  String methodName,
                                                                  PsiExpression context,
                                                                  TypeMigrationLabeler labeler) {
+    if (context instanceof PsiMethodCallExpression) {
+      return buildCompoundDescriptor((PsiMethodCallExpression)context, to);
+    }
     final TypeConversionDescriptorFactory base = DESCRIPTORS_MAP.get(methodName);
     if (base != null) {
       final TypeConversionDescriptor descriptor = base.create();
@@ -115,6 +122,88 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     }
     else {
       return null;
+    }
+  }
+
+  @Nullable
+  private GuavaChainedConversionDescriptor buildCompoundDescriptor(PsiMethodCallExpression expression, PsiType to) {
+    List<TypeConversionDescriptor> methodDescriptors = new SmartList<TypeConversionDescriptor>();
+
+    PsiMethodCallExpression current = expression;
+    while (true) {
+      final PsiMethod method = current.resolveMethod();
+      if (method == null) {
+        break;
+      }
+      final String methodName = method.getName();
+      final PsiClass containingClass = method.getContainingClass();
+      //TODO for optional too
+      if (containingClass == null || !FLUENT_ITERABLE.equals(containingClass.getQualifiedName())) {
+        break;
+      }
+      final TypeConversionDescriptorFactory descriptorFactory = DESCRIPTORS_MAP.get(methodName);
+      if (descriptorFactory == null) {
+        return null;
+      }
+      methodDescriptors.add(descriptorFactory.create());
+      final PsiExpression qualifier = current.getMethodExpression().getQualifierExpression();
+      if (qualifier instanceof PsiMethodCallExpression) {
+        current = (PsiMethodCallExpression)qualifier;
+      }
+      else if (qualifier instanceof PsiReferenceExpression) {
+        if (!methodName.equals("from")) {
+          return null;
+        }
+        final PsiElement maybeClass = ((PsiReferenceExpression)qualifier).resolve();
+        if (!(maybeClass instanceof PsiClass)) {
+          return null;
+        }
+        if (!FLUENT_ITERABLE.equals(((PsiClass)maybeClass).getQualifiedName())) {
+          return null;
+        }
+        break;
+      }
+      else {
+        return null;
+      }
+    }
+
+    return new GuavaChainedConversionDescriptor(methodDescriptors, to);
+  }
+
+  private static class GuavaChainedConversionDescriptor extends TypeConversionDescriptorBase {
+    private final List<TypeConversionDescriptor> myMethodDescriptors;
+    private final PsiType myToType;
+
+    private GuavaChainedConversionDescriptor(List<TypeConversionDescriptor> descriptors, PsiType to) {
+      myMethodDescriptors = descriptors;
+      myToType = to;
+    }
+
+    @Override
+    public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
+      PsiMethodCallExpression toReturn = null;
+      PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression) expression;
+      for (TypeConversionDescriptor descriptor : myMethodDescriptors) {
+        final PsiMethodCallExpression replaced = (PsiMethodCallExpression)descriptor.replace(methodCallExpression);
+        if (toReturn == null) {
+          toReturn = replaced;
+        }
+
+        final PsiExpression qualifier = replaced.getMethodExpression().getQualifierExpression();
+        if (qualifier instanceof PsiMethodCallExpression) {
+          methodCallExpression = (PsiMethodCallExpression)qualifier;
+        } else {
+          return toReturn;
+        }
+      }
+      return toReturn;
+    }
+
+    @Nullable
+    @Override
+    public PsiType conversionType() {
+      return myToType;
     }
   }
 

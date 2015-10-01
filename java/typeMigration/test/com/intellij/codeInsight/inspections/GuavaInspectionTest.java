@@ -67,7 +67,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
-  public void _testChainedFluentIterableWithChainedInitializer() {
+  public void testChainedFluentIterableWithChainedInitializer() {
     doTest();
   }
 
