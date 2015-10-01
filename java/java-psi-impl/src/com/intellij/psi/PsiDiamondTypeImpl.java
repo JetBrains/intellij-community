@@ -147,24 +147,21 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
   public static DiamondInferenceResult resolveInferredTypesNoCheck(final PsiNewExpression newExpression, final PsiElement context) {
-    final PsiClass psiClass = findClass(newExpression);
-    if (psiClass == null) return DiamondInferenceResult.NULL_RESULT;
-    final PsiExpressionList argumentList = newExpression.getArgumentList();
-    if (argumentList == null) return DiamondInferenceResult.NULL_RESULT;
     final Ref<MethodCandidateInfo> staticFactoryRef = new Ref<MethodCandidateInfo>();
     final PsiSubstitutor inferredSubstitutor = ourDiamondGuard.doPreventingRecursion(context, false, new Computable<PsiSubstitutor>() {
       @Override
       public PsiSubstitutor compute() {
-        final MethodCandidateInfo staticFactoryCandidateInfo = context == newExpression ?
+        final MethodCandidateInfo staticFactoryCandidateInfo = context == newExpression ? 
                                                                CachedValuesManager.getCachedValue(context,
                                                                                                   new CachedValueProvider<MethodCandidateInfo>() {
                                                                                                     @Nullable
                                                                                                     @Override
                                                                                                     public Result<MethodCandidateInfo> compute() {
-                                                                                                      return new Result<MethodCandidateInfo>(getStaticFactoryCandidateInfo(psiClass, newExpression, newExpression, argumentList), PsiModificationTracker.MODIFICATION_COUNT);
+                                                                                                      return new Result<MethodCandidateInfo>(getStaticFactoryCandidateInfo(newExpression, newExpression), 
+                                                                                                                                             PsiModificationTracker.MODIFICATION_COUNT);
                                                                                                     }
                                                                                                   }) 
-                                                                                        : getStaticFactoryCandidateInfo(psiClass, newExpression, context, argumentList);
+                                                                                        : getStaticFactoryCandidateInfo(newExpression, context);
         staticFactoryRef.set(staticFactoryCandidateInfo);
         return staticFactoryCandidateInfo != null ? staticFactoryCandidateInfo.getSubstitutor() : null;
       }
@@ -179,16 +176,22 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     }
     final PsiMethod staticFactory = staticFactoryInfo.getElement();
     final PsiTypeParameter[] parameters = staticFactory.getTypeParameters();
+    final PsiElement staticFactoryContext = staticFactory.getContext();
+    final PsiClass psiClass = PsiTreeUtil.getContextOfType(staticFactoryContext, PsiClass.class, false);
+    if (psiClass == null) {
+      LOG.error("failed for expression:" + newExpression);
+      return DiamondInferenceResult.NULL_RESULT;
+    }
     final PsiTypeParameter[] classParameters = psiClass.getTypeParameters();
     final PsiJavaCodeReferenceElement classOrAnonymousClassReference = newExpression.getClassOrAnonymousClassReference();
     LOG.assertTrue(classOrAnonymousClassReference != null);
     final DiamondInferenceResult result = new DiamondInferenceResult(classOrAnonymousClassReference.getReferenceName() + "<>");
 
     if (PsiUtil.isRawSubstitutor(staticFactory, inferredSubstitutor)) {
-      if (!JavaVersionService.getInstance().isAtLeast(argumentList, JavaSdkVersion.JDK_1_8) && 
+      if (!JavaVersionService.getInstance().isAtLeast(newExpression, JavaSdkVersion.JDK_1_8) && 
           PsiUtil.skipParenthesizedExprUp(newExpression.getParent()) instanceof PsiExpressionList) {
-        for (PsiTypeParameter parameter : parameters) {
-          result.addInferredType(PsiType.getJavaLangObject(psiClass.getManager(), GlobalSearchScope.allScope(psiClass.getProject())));
+        for (PsiTypeParameter ignored : parameters) {
+          result.addInferredType(PsiType.getJavaLangObject(newExpression.getManager(), GlobalSearchScope.allScope(newExpression.getProject())));
         }
       }
       return result;
@@ -205,10 +208,18 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     return result;
   }
 
-  private static MethodCandidateInfo getStaticFactoryCandidateInfo(PsiClass psiClass,
-                                                                   PsiNewExpression newExpression,
-                                                                   PsiElement context,
-                                                                   PsiExpressionList argumentList) {
+  private static MethodCandidateInfo getStaticFactoryCandidateInfo(PsiNewExpression newExpression,
+                                                                   PsiElement context) {
+    final PsiExpressionList argumentList = newExpression.getArgumentList();
+    if (argumentList == null) {
+      return null;
+    }
+
+    final PsiClass psiClass = findClass(newExpression);
+    if (psiClass == null) {
+      return null;
+    }
+
     final PsiMethod staticFactory = findConstructorStaticFactory(psiClass, newExpression);
     if (staticFactory == null) {
       return null;
