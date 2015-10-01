@@ -22,7 +22,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -119,7 +118,7 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
     myPathField.addBrowseFolderListener(ExecutionBundle.message("run.configuration.select.alternate.jre.label"),
                                         ExecutionBundle.message("run.configuration.select.jre.dir.label"),
                                         null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
-                                        TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
+                                        JreComboboxEditor.TEXT_COMPONENT_ACCESSOR);
 
     setLayout(new MigLayout("ins 0, gap 10, fill, flowx"));
     add(myLabel, "shrinkx");
