@@ -166,7 +166,7 @@ public class TemplateState implements Disposable {
   }
 
   private boolean isCaretOutsideCurrentSegment() {
-    if (myEditor != null) {
+    if (myEditor != null && myCurrentSegmentNumber >= 0) {
       final int offset = myEditor.getCaretModel().getOffset();
       return offset < mySegments.getSegmentStart(myCurrentSegmentNumber) || offset > mySegments.getSegmentEnd(myCurrentSegmentNumber);
     }
