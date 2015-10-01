@@ -32,6 +32,7 @@ public class MacIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
 
   public MacIntelliJCheckBoxUI(JCheckBox c) {
     c.setBorder(new MacCheckBoxBorder());
+    c.setOpaque(false);
   }
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
