@@ -327,7 +327,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element != null) {
-        replacePsiElementWithLambda(element, false, true);
+        replacePsiElementWithLambda(element, false, false);
       }
     }
 
