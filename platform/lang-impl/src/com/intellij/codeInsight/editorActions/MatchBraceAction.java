@@ -76,8 +76,9 @@ public class MatchBraceAction extends EditorAction {
 
       while (!BraceMatchingUtil.isLBraceToken(iterator, text, fileType) &&
              !BraceMatchingUtil.isRBraceToken(iterator, text, fileType)) {
-        iterator.retreat();
-        offset = iterator.getStart();
+        offset--;
+        if (offset < 0) return;
+        iterator = highlighter.createIterator(offset);
       }
 
       if (BraceMatchingUtil.matchBrace(text, fileType, iterator, true)) {
