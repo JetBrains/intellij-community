@@ -30,13 +30,14 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.parentPath
 import com.intellij.util.Consumer
 import gnu.trove.THashSet
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.io.InputStream
 import java.util.zip.ZipException
-import java.util.zip.ZipFile
+import java.util.zip.ZipInputStream
 
 private class ImportSettingsAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
@@ -68,40 +69,26 @@ private class ImportSettingsAction : AnAction(), DumbAware {
       return
     }
 
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    val magicEntry = ZipFile(saveFile).getEntry(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)
-    if (magicEntry == null) {
+    val relativePaths = getPaths(saveFile.inputStream())
+    if (!relativePaths.contains(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)) {
       Messages.showErrorDialog(
         IdeBundle.message("error.file.contains.no.settings.to.import", presentableFileName(saveFile), promptLocationMessage()),
         IdeBundle.message("title.invalid.file"))
       return
     }
 
-    val fileToComponents = getExportableComponentsMap(false, true)
-    val components = getComponentsStored(saveFile, fileToComponents.values())
-    fileToComponents.values().retainAll(components)
-    val dialog = ChooseComponentsToExportDialog(fileToComponents, false,
+    val configPath = FileUtil.toSystemIndependentName(PathManager.getConfigPath())
+    val dialog = ChooseComponentsToExportDialog(getExportableComponentsMap(false, true, onlyPaths = relativePaths), false,
       IdeBundle.message("title.select.components.to.import"),
       IdeBundle.message("prompt.check.components.to.import"))
     if (!dialog.showAndGet()) {
       return
     }
 
-    val chosenComponents = dialog.exportableComponents
-    val relativeNamesToExtract = THashSet<String>()
-    for (chosenComponent in chosenComponents) {
-      for (exportFile in chosenComponent.files) {
-        relativeNamesToExtract.add(FileUtil.toSystemIndependentName(FileUtilRt.getRelativePath(File(PathManager.getConfigPath()), exportFile)!!))
-      }
-    }
-
-    relativeNamesToExtract.add(PluginManager.INSTALLED_TXT)
-
     val tempFile = File(PathManager.getPluginTempPath(), saveFile.name)
     FileUtil.copy(saveFile, tempFile)
-    val outDir = File(PathManager.getConfigPath())
-    val filenameFilter = ImportSettingsFilenameFilter(relativeNamesToExtract)
-    StartupActionScriptManager.addActionCommand(StartupActionScriptManager.UnzipCommand(tempFile, outDir, filenameFilter))
+    val filenameFilter = ImportSettingsFilenameFilter(getRelativeNamesToExtract(dialog.exportableComponents))
+    StartupActionScriptManager.addActionCommand(StartupActionScriptManager.UnzipCommand(tempFile, File(configPath), filenameFilter))
     // remove temp file
     StartupActionScriptManager.addActionCommand(StartupActionScriptManager.DeleteCommand(tempFile))
 
@@ -119,38 +106,39 @@ private class ImportSettingsAction : AnAction(), DumbAware {
     }
   }
 
+  private fun getRelativeNamesToExtract(chosenComponents: Set<ExportableItem>): Set<String> {
+    val result = THashSet<String>()
+    for (chosenComponent in chosenComponents) {
+      for (exportFile in chosenComponent.files) {
+        result.add(FileUtil.toSystemIndependentName(FileUtilRt.getRelativePath(File(PathManager.getConfigPath()), exportFile)!!))
+      }
+    }
+
+    result.add(PluginManager.INSTALLED_TXT)
+    return result
+  }
+
   private fun presentableFileName(file: File) = "'" + FileUtil.toSystemDependentName(file.path) + "'"
 
   private fun promptLocationMessage() = IdeBundle.message("message.please.ensure.correct.settings")
+}
 
-  private fun getComponentsStored(settings: File, registeredComponents: Collection<ExportableItem>): List<ExportableItem> {
-    val zipEntries = THashSet<String>()
-    val zipFile = ZipFile(settings)
-    try {
-      val enumeration = zipFile.entries()
-      while (enumeration.hasMoreElements()) {
-        zipEntries.add(enumeration.nextElement().name)
+fun getPaths(input: InputStream): Set<String> {
+  val result = THashSet<String>()
+  val zipIn = ZipInputStream(input)
+  try {
+    while (true) {
+      val entry = zipIn.nextEntry ?: break
+      var path = entry.name
+      result.add(path)
+      while (true) {
+        path = path.parentPath ?: break
+        result.add("$path/")
       }
     }
-    finally {
-      zipFile.close()
-    }
-
-    val configPath = File(PathManager.getConfigPath())
-    val components = ArrayList<ExportableItem>()
-    for (component in registeredComponents) {
-      for (exportFile in component.files) {
-        var relativePath = FileUtilRt.getRelativePath(configPath, exportFile)!!
-        relativePath = FileUtilRt.toSystemIndependentName(relativePath)
-        if (exportFile.name.indexOf('.') == -1 && !exportFile.isFile) {
-          relativePath += '/'
-        }
-        if (zipEntries.contains(relativePath)) {
-          components.add(component)
-          break
-        }
-      }
-    }
-    return components
   }
+  finally {
+    zipIn.close()
+  }
+  return result
 }
