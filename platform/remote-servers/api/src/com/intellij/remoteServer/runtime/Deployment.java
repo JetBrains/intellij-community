@@ -29,4 +29,8 @@ public interface Deployment {
 
   @NotNull
   DeploymentLogManager getOrCreateLogManager(@NotNull Project project);
+
+  void setStatus(@NotNull DeploymentStatus status, @Nullable String statusText);
+
+  ServerConnection<?> getConnection();
 }

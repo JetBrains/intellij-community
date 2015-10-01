@@ -3,6 +3,7 @@ package com.intellij.remoteServer.impl.runtime.deployment;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.impl.runtime.ServerConnectionImpl;
 import com.intellij.remoteServer.runtime.Deployment;
+import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
@@ -45,7 +46,7 @@ public class DeploymentImpl implements Deployment {
   @NotNull
   public String getStatusText() {
     String statusText = myState.getStatusText();
-    return statusText != null ? statusText : getStatus().getPresentableText();
+    return statusText != null ? statusText : myState.getStatus().getPresentableText();
   }
 
   public DeploymentRuntime getRuntime() {
@@ -64,6 +65,22 @@ public class DeploymentImpl implements Deployment {
     return myConnection.getOrCreateLogManager(project, this);
   }
 
+  @Override
+  public void setStatus(@NotNull final DeploymentStatus status, @Nullable final String statusText) {
+    myConnection.changeDeploymentState(new Runnable() {
+
+      @Override
+      public void run() {
+        changeState(myState.getStatus(), status, statusText, getRuntime());
+      }
+    });
+  }
+
+  @Override
+  public ServerConnection<?> getConnection() {
+    return myConnection;
+  }
+
   public boolean changeState(@NotNull DeploymentStatus oldStatus, @NotNull DeploymentStatus newStatus, @Nullable String statusText,
                              @Nullable DeploymentRuntime runtime) {
     if (myState.getStatus() == oldStatus) {
@@ -73,7 +90,7 @@ public class DeploymentImpl implements Deployment {
     return false;
   }
 
-  private static class DeploymentState {
+  protected static class DeploymentState {
     private final DeploymentStatus myStatus;
     private final String myStatusText;
     private final DeploymentRuntime myRuntime;

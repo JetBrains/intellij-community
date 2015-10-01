@@ -385,20 +385,9 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @Override
     protected void update(PresentationData presentation) {
       Deployment deployment = getValue();
-      presentation.setIcon(getStatusIcon(deployment.getStatus()));
+      presentation.setIcon(deployment.getStatus().getIcon());
       presentation.setPresentableText(deployment.getName());
       presentation.setTooltip(deployment.getStatusText());
-    }
-
-    @Nullable
-    private Icon getStatusIcon(DeploymentStatus status) {
-      switch (status) {
-        case DEPLOYED: return AllIcons.RunConfigurations.TestPassed;
-        case NOT_DEPLOYED: return AllIcons.RunConfigurations.TestIgnored;
-        case DEPLOYING: return AllIcons.RunConfigurations.TestInProgress4;
-        case UNDEPLOYING: return AllIcons.RunConfigurations.TestInProgress4;
-      }
-      return null;
     }
   }
 
