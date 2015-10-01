@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.module;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SettingsStep;
@@ -25,21 +26,21 @@ import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.run.PluginConfigurationType;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 public class PluginModuleBuilder extends JavaModuleBuilder{
-  @NonNls private static final String META_INF = "META-INF";
-  @NonNls private static final String PLUGIN_XML = "plugin.xml";
 
 
   public ModuleType getModuleType() {
@@ -48,7 +49,19 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
 
   public void setupRootModel(final ModifiableRootModel rootModel) throws ConfigurationException {
     super.setupRootModel(rootModel);
-    final String defaultPluginXMLLocation = getModuleFileDirectory() + '/' + META_INF + '/' + PLUGIN_XML;
+    String contentEntryPath = getContentEntryPath();
+    if (contentEntryPath == null) return;
+
+    String resourceRootPath = contentEntryPath + "/resources";
+    VirtualFile contentRoot = LocalFileSystem.getInstance().findFileByPath(contentEntryPath);
+    if (contentRoot == null) return;
+
+    ContentEntry contentEntry = MarkRootActionBase.findContentEntry(rootModel, contentRoot);
+    if (contentEntry != null) {
+      contentEntry.addSourceFolder(VfsUtilCore.pathToUrl(resourceRootPath), JavaResourceRootType.RESOURCE);
+    }
+
+    final String defaultPluginXMLLocation = resourceRootPath + "/META-INF/plugin.xml";
     final Module module = rootModel.getModule();
     final Project project = module.getProject();
     StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
