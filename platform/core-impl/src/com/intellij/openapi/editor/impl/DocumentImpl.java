@@ -121,8 +121,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   /**
    * NOTE: if client sets forUseInNonAWTThread to true it's supposed that client will completely control document and its listeners.
-   * The noticable peculiarity of DocumentImpl behavior in this mode is that DocumentImpl will survive after ProcessCancelledException 
-   * thrown from listeners during changedUpdate event, the exception will be rethrown and rest of the listeners WON'T be notified.
+   * The noticable peculiarity of DocumentImpl behavior in this mode is that DocumentImpl won't suppress ProcessCancelledException 
+   * thrown from listeners during changedUpdate event, so the exception will be rethrown and rest of the listeners WON'T be notified.
    */
   public DocumentImpl(@NotNull CharSequence chars, boolean forUseInNonAWTThread) {
     this(chars, false, forUseInNonAWTThread);
@@ -767,7 +767,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
               throw e;
             }
             else {
-              LOG.error("ProceeCanceledException shouldn't be thrown from document listeners on real document");
+              LOG.error("ProcessCanceledException must not be thrown from document listeners for real document", new Throwable(e));
             }
           }
           catch (Throwable e) {
