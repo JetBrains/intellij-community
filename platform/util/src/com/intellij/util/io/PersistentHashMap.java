@@ -647,13 +647,17 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       try {
         myAppendCacheFlusher.stop();
         myAppendCache.clear();
-        final PersistentHashMapValueStorage valueStorage = myValueStorage;
-        if (valueStorage != null) {
-          valueStorage.dispose();
-        }
       }
       finally {
-        super.close();
+        final PersistentHashMapValueStorage valueStorage = myValueStorage;
+        try {
+          if (valueStorage != null) {
+            valueStorage.dispose();
+          }
+        }
+        finally {
+          super.close();
+        }
       }
     }
     finally {
