@@ -147,6 +147,41 @@ at org.apache.velocity.Template.merge(Template.java:256)""");
  java.util.concurrent.ForkJoinTask.invokeAll(ForkJoinTask.java:837)''');
   }
 
+  public void "test do not merge words"() {
+    def text = '''
+"Performance watcher" #35 prio=1 os_prio=-2 tid=0x3ea60c00 nid=0xbfc
+waiting on condition [0x445ef000]
+ java.lang.Thread.State: TIMED_WAITING (parking)
+ at sun.misc.Unsafe.park(Native Method)
+ - parking to wait for <0x1e45d2d8> (a
+java.util.concurrent.Semaphore$NonfairSync)
+
+"ApplicationImpl pooled thread 5" #33 prio=4 os_prio=-1 tid=0x3ea60000
+nid=0x898 runnable [0x4424f000]
+ java.lang.Thread.State: RUNNABLE
+ at java.io.FileInputStream.readBytes(Native Method)
+ at java.io.FileInputStream.read(FileInputStream.java:255)
+ at sun.nio.cs.StreamDecoder.readBytes(StreamDecoder.java:284)
+ at sun.nio.cs.StreamDecoder.implRead(StreamDecoder.java:326)
+ at sun.nio.cs.StreamDecoder.read(StreamDecoder.java:178)
+'''
+    doTest(text, '''
+
+"Performance watcher" #35 prio=1 os_prio=-2 tid=0x3ea60c00 nid=0xbfc waiting on condition [0x445ef000]
+ java.lang.Thread.State: TIMED_WAITING (parking)
+ at sun.misc.Unsafe.park(Native Method)
+ - parking to wait for <0x1e45d2d8> (a java.util.concurrent.Semaphore$NonfairSync)
+
+"ApplicationImpl pooled thread 5" #33 prio=4 os_prio=-1 tid=0x3ea60000 nid=0x898 runnable [0x4424f000]
+ java.lang.Thread.State: RUNNABLE
+ at java.io.FileInputStream.readBytes(Native Method)
+ at java.io.FileInputStream.read(FileInputStream.java:255)
+ at sun.nio.cs.StreamDecoder.readBytes(StreamDecoder.java:284)
+ at sun.nio.cs.StreamDecoder.implRead(StreamDecoder.java:326)
+ at sun.nio.cs.StreamDecoder.read(StreamDecoder.java:178)''')
+    assert ThreadDumpParser.parse(UnscrambleDialog.normalizeText(text)).size() == 2
+  }
+
   private static void doTest(@NonNls String stackTrace, @NonNls String expected) {
     String normalized = UnscrambleDialog.normalizeText(stackTrace);
     assertEquals(expected, normalized);
