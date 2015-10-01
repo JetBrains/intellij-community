@@ -17,7 +17,9 @@ package com.intellij.ui;
 
 import junit.framework.TestCase;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import javax.swing.JLabel;
 
 /**
  * @author Sergey.Malenkov
@@ -35,7 +37,7 @@ public final class RelativeFontTest extends TestCase {
   }
 
   private static Font toMonospaced(Font font, boolean monospaced) {
-    FontMetrics fm = new Label().getFontMetrics(font);
+    FontMetrics fm = new JLabel().getFontMetrics(font);
     assertEquals(monospaced, fm.charWidth('i') == fm.charWidth('m'));
     return MONOSPACED_FONT.derive(font);
   }
@@ -90,7 +92,7 @@ public final class RelativeFontTest extends TestCase {
   }
 
   public void testAutoUpdate() {
-    Label label = new Label();
+    JLabel label = new JLabel();
     label.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
     MONOSPACED_FONT.install(label);
     checkAutoUpdate(label.getFont(), Font.PLAIN, 12);
@@ -99,7 +101,7 @@ public final class RelativeFontTest extends TestCase {
   }
 
   public void testAutoUpdateClash() {
-    Label label = new Label();
+    JLabel label = new JLabel();
     label.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
     BOLD_ITALIC_FONT.install(label);
     MONOSPACED_FONT.install(label); // modifies bold-italic font
