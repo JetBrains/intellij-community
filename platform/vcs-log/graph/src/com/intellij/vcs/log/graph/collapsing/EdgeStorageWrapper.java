@@ -17,6 +17,7 @@ package com.intellij.vcs.log.graph.collapsing;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
+import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
@@ -145,6 +146,6 @@ public class EdgeStorageWrapper {
   }
 
   public static EdgeStorageWrapper createSimpleEdgeStorage() {
-    return new EdgeStorageWrapper(new EdgeStorage(), new Function.Self<Integer, Integer>(), new Function.Self<Integer, Integer>());
+    return new EdgeStorageWrapper(new EdgeStorage(), Functions.<Integer>id() , Functions.<Integer>id());
   }
 }
