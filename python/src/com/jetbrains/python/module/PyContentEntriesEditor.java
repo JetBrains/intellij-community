@@ -50,14 +50,14 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
   private final Module myModule;
   private Disposable myFilePointersDisposable;
   private MyContentEntryEditor myContentEntryEditor;
-  private FacetErrorPanel myErrorPanel;
+  private FacetErrorPanel myWarningPanel;
 
   public PyContentEntriesEditor(Module module, ModuleConfigurationState moduleConfigurationState,
                                       JpsModuleSourceRootType<?>... rootTypes) {
     super(module.getName(), moduleConfigurationState, rootTypes);
     myRootTypeProviders = Extensions.getExtensions(PyRootTypeProvider.EP_NAME);
     myModule = module;
-    myErrorPanel = new FacetErrorPanel();
+    myWarningPanel = new FacetErrorPanel();
     reset();
   }
 
@@ -104,6 +104,10 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
     super.disposeUIResources();
     if (myFilePointersDisposable != null) {
       Disposer.dispose(myFilePointersDisposable);
+    }
+
+    for (PyRootTypeProvider provider : myRootTypeProviders) {
+      provider.disposeUIResources(myModule);
     }
   }
 
@@ -292,10 +296,10 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
 
   @Override
   protected void addAdditionalSettingsToPanel(JPanel mainPanel) {
-    mainPanel.add(myErrorPanel.getComponent(), BorderLayout.SOUTH);
+    mainPanel.add(myWarningPanel.getComponent(), BorderLayout.SOUTH);
   }
 
-  public FacetErrorPanel getErrorPanel() {
-    return myErrorPanel;
+  public FacetErrorPanel getWarningPanel() {
+    return myWarningPanel;
   }
 }
