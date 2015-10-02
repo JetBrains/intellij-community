@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public class EditorDocumentPriorities {
   public static final int RANGE_MARKER = 40;
 
   public static final int FOLD_MODEL = 60;
+  public static final int LOGICAL_POSITION_CACHE = 65;
   public static final int EDITOR_TEXT_LAYOUT_CACHE = 70;
   public static final int EDITOR_TEXT_WIDTH_CACHE = 75;
   public static final int LEXER_EDITOR = 80;
