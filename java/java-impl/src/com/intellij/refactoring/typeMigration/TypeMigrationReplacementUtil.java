@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -138,7 +139,7 @@ public class TypeMigrationReplacementUtil {
     }
   }
 
-  static void replaceNewExpressionType(final Project project, final PsiNewExpression expression, final Map.Entry<TypeMigrationUsageInfo, PsiType> info) {
+  static PsiNewExpression replaceNewExpressionType(final Project project, final PsiNewExpression expression, final Map.Entry<TypeMigrationUsageInfo, PsiType> info) {
     final PsiType changeType = info.getValue();
     if (changeType != null) {
       try {
@@ -147,11 +148,8 @@ public class TypeMigrationReplacementUtil {
         if (classReference != null) {
           final PsiElement psiElement = replaceTypeWithClassReferenceOrKeyword(project, componentType, classReference);
           final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(psiElement, PsiNewExpression.class);
-          if (newExpression != null && PsiDiamondTypeUtil.canCollapseToDiamond(newExpression, newExpression, changeType)) {
-            final PsiJavaCodeReferenceElement anonymousClassReference = newExpression.getClassOrAnonymousClassReference();
-            if (anonymousClassReference != null) {
-              PsiDiamondTypeUtil.replaceExplicitWithDiamond(anonymousClassReference.getParameterList());
-            }
+          if (!tryToReplaceWithDiamond(newExpression, changeType)) {
+            return newExpression;
           }
         }
         else {
@@ -165,6 +163,18 @@ public class TypeMigrationReplacementUtil {
         LOG.error(e);
       }
     }
+    return null;
+  }
+
+  static boolean tryToReplaceWithDiamond(PsiNewExpression newExpression, @Nullable PsiType changeType) {
+    if (newExpression != null && PsiDiamondTypeUtil.canCollapseToDiamond(newExpression, newExpression, changeType)) {
+      final PsiJavaCodeReferenceElement anonymousClassReference = newExpression.getClassOrAnonymousClassReference();
+      if (anonymousClassReference != null) {
+        PsiDiamondTypeUtil.replaceExplicitWithDiamond(anonymousClassReference.getParameterList());
+      }
+      return true;
+    }
+    return false;
   }
 
   private static PsiElement replaceTypeWithClassReferenceOrKeyword(Project project, PsiType componentType, PsiElement typePlace) {

@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.PsiSearchScopeUtil;
@@ -36,12 +37,14 @@ import com.intellij.refactoring.typeMigration.usageInfo.OverridenUsageInfo;
 import com.intellij.refactoring.typeMigration.usageInfo.OverriderUsageInfo;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.containers.*;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -245,7 +248,7 @@ public class TypeMigrationLabeler {
   }
 
 
-  public void change(final TypeMigrationUsageInfo usageInfo) {
+  public void change(final TypeMigrationUsageInfo usageInfo, @NotNull  Consumer<PsiNewExpression> consumer) {
     final PsiElement element = usageInfo.getElement();
     if (element == null) return;
     final Project project = element.getProject();
@@ -255,7 +258,11 @@ public class TypeMigrationLabeler {
         for (Map.Entry<TypeMigrationUsageInfo, PsiType> info : myNewExpressionTypeChange.entrySet()) {
           final PsiElement expressionToReplace = info.getKey().getElement();
           if (expression.equals(expressionToReplace)) {
-            TypeMigrationReplacementUtil.replaceNewExpressionType(project, (PsiNewExpression)expressionToReplace, info);
+            final PsiNewExpression newExpression =
+              TypeMigrationReplacementUtil.replaceNewExpressionType(project, (PsiNewExpression)expressionToReplace, info);
+            if (newExpression != null) {
+              consumer.consume(newExpression);
+            }
           }
         }
       }
@@ -280,6 +287,10 @@ public class TypeMigrationLabeler {
     else {
       TypeMigrationReplacementUtil.migratePsiMemberType(element, project, getTypeEvaluator().getType(usageInfo));
     }
+  }
+
+  void postProcessNewExpression(@NotNull PsiNewExpression expression) {
+    TypeMigrationReplacementUtil.tryToReplaceWithDiamond(expression, null);
   }
 
   @Nullable
