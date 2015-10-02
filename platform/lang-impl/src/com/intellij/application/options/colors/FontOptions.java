@@ -268,7 +268,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     mySecondaryCombo.setEnabled(isThereSecondaryFont && !readOnly);
     myOnlyMonospacedCheckBox.setEnabled(!readOnly);
     myLineSpacingField.setEnabled(!readOnly);
-    myEditorFontSizeField.setEditable(!readOnly);
+    myEditorFontSizeField.setEnabled(!readOnly);
     myUseSecondaryFontCheckbox.setEnabled(!readOnly);
 
     myIsInSchemeChange = false;
