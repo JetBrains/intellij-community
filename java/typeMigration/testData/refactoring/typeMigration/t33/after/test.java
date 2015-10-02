@@ -2,6 +2,6 @@ import java.util.*;
 class Test {
   List<Integer> l;
   void foo() {
-     l = new ArrayList<>();
+     l = new ArrayList<Integer>();
   }
 }

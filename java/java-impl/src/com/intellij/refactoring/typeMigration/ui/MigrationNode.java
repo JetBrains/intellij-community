@@ -81,10 +81,8 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
       
       final PsiElement element = myInfo.getElement();
       if (element != null) {
-        myLabeler.setCurrentRoot(myInfo);
-
         try {
-          myLabeler.migrateRoot(element, myMigrationType, myLabeler.markRootUsages(element, myMigrationType));
+          myLabeler.setRootAndMigrate(myInfo, myMigrationType, myLabeler.markRootUsages(element, myMigrationType));
         }
         catch (TypeMigrationLabeler.MigrateException e) {
           //skip warning

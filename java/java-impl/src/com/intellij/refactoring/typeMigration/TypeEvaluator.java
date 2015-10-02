@@ -88,6 +88,7 @@ public class TypeEvaluator {
 
       e.addFirst(type);
 
+      usageInfo.setOwnerRoot(myLabeler.getCurrentRoot());
       myTypeMap.put(usageInfo, e);
       return true;
     }
