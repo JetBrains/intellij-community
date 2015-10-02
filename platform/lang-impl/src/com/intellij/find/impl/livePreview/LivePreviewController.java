@@ -274,7 +274,6 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   public void dispose() {
     if (myDisposed) return;
 
-    myLivePreview.cleanUp();
     off();
 
     mySearchResults.dispose();
