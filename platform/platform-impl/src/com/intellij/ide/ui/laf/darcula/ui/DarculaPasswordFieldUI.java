@@ -31,21 +31,23 @@ import java.awt.event.FocusEvent;
  */
 public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
 
-  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
-  public static ComponentUI createUI(final JComponent c) {
-    c.addFocusListener(new FocusAdapter() {
+  public DarculaPasswordFieldUI(final JPasswordField passwordField) {
+    passwordField.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        c.repaint();
+        passwordField.repaint();
       }
 
       @Override
       public void focusLost(FocusEvent e) {
-        c.repaint();
+        passwordField.repaint();
       }
     });
+  }
 
-    return new DarculaPasswordFieldUI();
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
+  public static ComponentUI createUI(final JComponent c) {
+    return new DarculaPasswordFieldUI((JPasswordField) c);
   }
 
   @Override
