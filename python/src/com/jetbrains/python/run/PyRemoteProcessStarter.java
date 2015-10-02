@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.util.Key;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteProcessHandlerBase;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -35,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
  * @author traff
  */
 public class PyRemoteProcessStarter {
+  public static final Key<Boolean> OPEN_FOR_INCOMING_CONNECTION = Key.create("OPEN_FOR_INCOMING_CONNECTION");
+
   public ProcessHandler startRemoteProcess(@NotNull Sdk sdk,
                                            @NotNull GeneralCommandLine commandLine,
                                            @Nullable Project project,
