@@ -75,8 +75,8 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
                         new TypeConversionDescriptorFactory("$it$.contains($o$)", "$it$.anyMatch(e -> e != null && e.equals($o$))", false));
     DESCRIPTORS_MAP.put("from", new TypeConversionDescriptorFactory("FluentIterable.from($it$)", "$it$.stream()", false, true));
     DESCRIPTORS_MAP.put("isEmpty", new TypeConversionDescriptorFactory("$q$.isEmpty()", "$q$.findAny().isPresent()", false));
-    DESCRIPTORS_MAP.put("skip", new TypeConversionDescriptorFactory("$q$.skip($p$)", "$q$.skip($p$)", false, true));
-    DESCRIPTORS_MAP.put("limit", new TypeConversionDescriptorFactory("$q$.limit($p$)", "$q$.limit($p$)", false, true));
+    DESCRIPTORS_MAP.put("skip", new TypeConversionDescriptorFactory("$q$.skip($p$)", "$q$.skip($p$)", false, false));
+    DESCRIPTORS_MAP.put("limit", new TypeConversionDescriptorFactory("$q$.limit($p$)", "$q$.limit($p$)", false, false));
     DESCRIPTORS_MAP.put("first", new TypeConversionDescriptorFactory("$q$.first()", "$q$.findFirst()", false));
     DESCRIPTORS_MAP.put("transform", new TypeConversionDescriptorFactory("$q$.transform($params$)", "$q$.map($params$)", true, true));
     //TODO support
@@ -184,15 +184,21 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
       PsiMethodCallExpression toReturn = null;
       PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression) expression;
+      final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(expression.getProject());
+
       for (TypeConversionDescriptor descriptor : myMethodDescriptors) {
+        final PsiExpression oldQualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
+        final SmartPsiElementPointer<PsiExpression> qualifierRef = oldQualifier == null
+                                                                   ? null
+                                                                   : smartPointerManager.createSmartPsiElementPointer(oldQualifier);
         final PsiMethodCallExpression replaced = (PsiMethodCallExpression)descriptor.replace(methodCallExpression);
         if (toReturn == null) {
           toReturn = replaced;
         }
 
-        final PsiExpression qualifier = replaced.getMethodExpression().getQualifierExpression();
-        if (qualifier instanceof PsiMethodCallExpression) {
-          methodCallExpression = (PsiMethodCallExpression)qualifier;
+        final PsiExpression newQualifier = qualifierRef == null ? null : qualifierRef.getElement();
+        if (newQualifier instanceof PsiMethodCallExpression) {
+          methodCallExpression = (PsiMethodCallExpression)newQualifier;
         } else {
           return toReturn;
         }
