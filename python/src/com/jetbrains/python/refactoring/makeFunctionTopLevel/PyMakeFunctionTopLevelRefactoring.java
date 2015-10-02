@@ -31,6 +31,9 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
+import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyBaseRefactoringAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +66,7 @@ public class PyMakeFunctionTopLevelRefactoring extends PyBaseRefactoringAction {
 
   @Nullable
   private static PyFunction findTargetFunction(@NotNull PsiElement element) {
-    if (isLocalFunction(element) || isInstanceMethod(element)) {
+    if (isLocalFunction(element) || isSuitableInstanceMethod(element)) {
       return (PyFunction)element;
     }
     final PyReferenceExpression refExpr = PsiTreeUtil.getParentOfType(element, PyReferenceExpression.class);
@@ -71,19 +74,27 @@ public class PyMakeFunctionTopLevelRefactoring extends PyBaseRefactoringAction {
       return null;
     }
     final PsiElement resolved = refExpr.getReference().resolve();
-    if (isLocalFunction(resolved) || isInstanceMethod(resolved)) {
+    if (isLocalFunction(resolved) || isSuitableInstanceMethod(resolved)) {
       return (PyFunction)resolved;
     }
     return null;
   }
 
-  private static boolean isInstanceMethod(@Nullable PsiElement element) {
+  private static boolean isSuitableInstanceMethod(@Nullable PsiElement element) {
     final PyFunction function = as(element, PyFunction.class);
-    if (function == null) {
+    if (function == null || function.getContainingClass() == null) {
       return false;
     }
-    final PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(function);
-    return flags != null && flags.isInstanceMethod();
+    final String funcName = function.getName();
+    if (funcName == null || PyUtil.isSpecialName(funcName)) {
+      return false;
+    }
+    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(function.getProject(), function.getContainingFile());
+    if (PySuperMethodsSearch.search(function, typeEvalContext).findFirst() != null) return false;
+    if (PyOverridingMethodsSearch.search(function, true).findFirst() != null) return false;
+    if (function.getDecoratorList() != null || function.getModifier() != null) return false;
+    if (function.getContainingClass().findPropertyByCallable(function) != null) return false;
+    return true;
   }
 
   private static boolean isLocalFunction(@Nullable PsiElement resolved) {
@@ -101,7 +112,7 @@ public class PyMakeFunctionTopLevelRefactoring extends PyBaseRefactoringAction {
           final PyFunction function = findTargetFunction(element);
           if (function != null) {
             final PyBaseMakeFunctionTopLevelProcessor processor;
-            if (isInstanceMethod(function)) {
+            if (isSuitableInstanceMethod(function)) {
               processor = new PyMakeMethodTopLevelProcessor(function, editor);
             }
             else {

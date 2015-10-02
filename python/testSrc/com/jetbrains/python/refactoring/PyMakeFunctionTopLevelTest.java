@@ -96,6 +96,15 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     assertFalse(isActionEnabled());
     moveByText("class_method");
     assertFalse(isActionEnabled());
+    
+    // Super method
+    moveByText("overridden_method");
+    assertFalse(isActionEnabled());
+    
+    moveByText("property");
+    assertFalse(isActionEnabled());
+    moveByText("__magic__");
+    assertFalse(isActionEnabled());
   }
 
   // PY-6637
