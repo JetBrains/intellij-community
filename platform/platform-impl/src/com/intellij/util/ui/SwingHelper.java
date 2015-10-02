@@ -32,6 +32,7 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
 import com.intellij.util.NotNullProducer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -295,7 +296,7 @@ public class SwingHelper {
                                 boolean mergeWithPrevHistory) {
     Set<String> newHistorySet = ContainerUtil.newHashSet(history);
     List<String> prevHistory = textFieldWithHistory.getHistory();
-    List<String> mergedHistory = ContainerUtil.newArrayList();
+    List<String> mergedHistory = ContainerUtil.newArrayListWithCapacity(history.size());
     if (mergeWithPrevHistory) {
       for (String item : prevHistory) {
         if (!newHistorySet.contains(item)) {
@@ -303,15 +304,20 @@ public class SwingHelper {
         }
       }
     }
-    else {
-      String currentText = textFieldWithHistory.getText();
-      if (StringUtil.isNotEmpty(currentText) && !newHistorySet.contains(currentText)) {
-        mergedHistory.add(currentText);
-      }
-    }
     mergedHistory.addAll(history);
+    String oldText = StringUtil.notNullize(textFieldWithHistory.getText());
+    String oldSelectedItem = ObjectUtils.tryCast(textFieldWithHistory.getSelectedItem(), String.class);
+    if (!mergedHistory.contains(oldSelectedItem)) {
+      oldSelectedItem = null;
+    }
     textFieldWithHistory.setHistory(mergedHistory);
     setLongestAsPrototype(textFieldWithHistory, mergedHistory);
+    if (oldSelectedItem != null) {
+      textFieldWithHistory.setSelectedItem(oldSelectedItem);
+    }
+    if (!oldText.equals(oldSelectedItem)) {
+      textFieldWithHistory.setText(oldText);
+    }
   }
 
   private static void setLongestAsPrototype(@NotNull JComboBox comboBox, @NotNull List<String> variants) {
