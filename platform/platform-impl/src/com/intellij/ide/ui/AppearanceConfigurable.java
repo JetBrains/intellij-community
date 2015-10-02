@@ -175,6 +175,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     if (!myComponent.myAntialiasingInIDE.getSelectedItem().equals(settings.IDE_AA_TYPE)) {
       settings.IDE_AA_TYPE = (AntialiasingType)myComponent.myAntialiasingInIDE.getSelectedItem();
+      for (Window w : Window.getWindows()) {
+        for (JComponent c : UIUtil.uiTraverser(w).filter(JComponent.class)) {
+          c.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
+        }
+      }
       shouldUpdateUI = true;
     }
 
@@ -523,8 +528,10 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   }
 
   private static class AAListCellRenderer extends ListCellRendererWrapper<AntialiasingType> {
-    private static final SwingUtilities2.AATextInfo SUBPIXEL_HINT = new SwingUtilities2.AATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, 140);
-    private static final SwingUtilities2.AATextInfo GREYSCALE_HINT = new SwingUtilities2.AATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_ON, 140);
+    private static final SwingUtilities2.AATextInfo SUBPIXEL_HINT = new SwingUtilities2.AATextInfo(
+      RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, UIUtil.getLcdContrastValue());
+    private static final SwingUtilities2.AATextInfo GREYSCALE_HINT = new SwingUtilities2.AATextInfo(
+      RenderingHints.VALUE_TEXT_ANTIALIAS_ON, UIUtil.getLcdContrastValue());
 
     @Override
     public void customize(JList list, AntialiasingType value, int index, boolean selected, boolean hasFocus) {
