@@ -15,13 +15,18 @@
  */
 package com.jetbrains.python.refactoring;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeFunctionTopLevelRefactoring;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
 
 /**
  * @author Mikhail Golubev
@@ -49,8 +54,21 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     }
   }
 
-  private void doTest() {
+  private void doMultiFileTest() throws IOException {
+    final String rootBeforePath = getTestName(true) + "/before";
+    final String rootAfterPath = getTestName(true) + "/after";
+    final VirtualFile copiedDirectory = myFixture.copyDirectoryToProject(rootBeforePath, "");
+    myFixture.configureByFile("main.py");
+    myFixture.testAction(new PyMakeFunctionTopLevelRefactoring());
+    PlatformTestUtil.assertDirectoriesEqual(getVirtualFileByName(getTestDataPath() + rootAfterPath), copiedDirectory);
+  }
+
+  private void doTestSuccess() {
     doTest(true, null);
+  }
+
+  private void doTestFailure(@NotNull String message) {
+    doTest(true, message);
   }
 
   private static boolean isActionEnabled() {
@@ -62,7 +80,7 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
 
   // PY-6637
   public void testLocalFunctionSimple() {
-    doTest();
+    doTestSuccess();
   }
 
   // PY-6637
@@ -85,7 +103,7 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
       @Override
       public void run() {
-        doTest(true, PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes"));
+        doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes"));
       }
     });
   }
@@ -95,47 +113,59 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
       @Override
       public void run() {
-        doTest();
+        doTestSuccess();
       }
     });
   }
 
   // PY-6637
   public void testLocalFunctionReferenceToSelf() {
-    doTest(true, PyBundle.message("refactoring.make.function.top.level.error.self.reads"));
+    doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.self.reads"));
   }
 
   public void testMethodNonlocalReferenceToOuterScope() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
       @Override
       public void run() {
-        doTest(true, PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes"));
+        doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes"));
       }
     });
   }
 
   public void testMethodOuterScopeReads() {
-    doTest(true, PyBundle.message("refactoring.make.function.top.level.error.outer.scope.reads"));
+    doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.outer.scope.reads"));
   }
 
   public void testMethodOtherMethodCalls() {
-    doTest(true, PyBundle.message("refactoring.make.function.top.level.error.method.calls"));
+    doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.method.calls"));
   }
 
   public void testMethodAttributeWrites() {
-    doTest(true, PyBundle.message("refactoring.make.function.top.level.error.attribute.writes"));
+    doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.attribute.writes"));
   }
 
   public void testMethodReadPrivateAttributes() {
-    doTest(true, PyBundle.message("refactoring.make.function.top.level.error.private.attributes"));
+    doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.private.attributes"));
   }
 
   public void testMethodSelfUsedAsOperand() {
-    doTest(true, PyBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
+    doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
   }
 
   public void testMethodOverriddenSelf() {
-    doTest(true, PyBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
+    doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
+  }
+
+  public void testMethodSingleAttributeRead() {
+    doTestSuccess();
+  }
+
+  public void testMethodMultipleAttributesRead() {
+    doTestSuccess();
+  }
+
+  public void testMethodImportUpdates() throws IOException {
+    doMultiFileTest();
   }
 
   @Override

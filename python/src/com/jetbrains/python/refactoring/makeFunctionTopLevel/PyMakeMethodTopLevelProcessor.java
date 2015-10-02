@@ -18,18 +18,21 @@ package com.jetbrains.python.refactoring.makeFunctionTopLevel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -37,6 +40,8 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author Mikhail Golubev
  */
 public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelProcessor {
+
+  private final List<PyReferenceExpression> myReferencesToSelf = new ArrayList<PyReferenceExpression>();
 
   public PyMakeMethodTopLevelProcessor(@NotNull PyFunction targetFunction, @NotNull Editor editor) {
     super(targetFunction, editor);
@@ -51,19 +56,69 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
   }
 
   @Override
-  protected void updateExistingFunctionUsages(@NotNull Collection<String> newParamNames, @NotNull UsageInfo[] usages) {
+  protected void updateExistingFunctionUsages(@NotNull final Collection<String> newParamNames, @NotNull UsageInfo[] usages) {
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(myProject);
 
+    for (UsageInfo usage : usages) {
+      final PsiElement usageElem = usage.getElement();
+      if (usageElem == null) {
+        continue;
+      }
+
+      if (usageElem instanceof PyReferenceExpression) {
+        final PyExpression qualifier = ((PyReferenceExpression)usageElem).getQualifier();
+        final PyCallExpression callExpr = as(usageElem.getParent(), PyCallExpression.class);
+        if (qualifier != null && callExpr != null && callExpr.getArgumentList() != null) {
+          if (newParamNames.size() == 1) {
+            addArguments(callExpr.getArgumentList(), Collections.singleton(qualifier.getText() + "." + ContainerUtil.getFirstItem(newParamNames)));
+          }
+          else if (!newParamNames.isEmpty()) {
+            final PyStatement anchor = PsiTreeUtil.getParentOfType(callExpr, PyStatement.class);
+            // TODO meaningful unique target name
+            final String targetName = "foo";
+            final String assignmentText = targetName + " = " + qualifier.getText();
+            final PyAssignmentStatement assignment = elementGenerator.createFromText(LanguageLevel.forElement(callExpr),
+                                                                                     PyAssignmentStatement.class,
+                                                                                     assignmentText);
+            anchor.getParent().addBefore(assignment, anchor);
+            addArguments(callExpr.getArgumentList(), ContainerUtil.map(newParamNames, new Function<String, String>() {
+              @Override
+              public String fun(String attribute) {
+                return targetName + "." + attribute;
+              }
+            }));
+          }
+        }
+        
+        final PsiFile usageFile = usage.getFile();
+        final PsiFile origFile = myFunction.getContainingFile();
+        if (usageFile != origFile) {
+          final String funcName = myFunction.getName();
+          final String origModuleName = QualifiedNameFinder.findShortestImportableName(origFile, origFile.getVirtualFile());
+          if (usageFile != null && origModuleName != null && funcName != null) {
+            AddImportHelper.addOrUpdateFromImportStatement(usageFile, origModuleName, funcName, null, ImportPriority.PROJECT, null);
+          }
+        }
+
+        // Will replace/invalidate entire expression
+        PyUtil.removeQualifier((PyReferenceExpression)usageElem);
+      }
+    }
   }
 
   @NotNull
   @Override
-  protected PyFunction createNewFunction(@NotNull Collection<String> newParamNames) {
+  protected PyFunction createNewFunction(@NotNull Collection<String> newParams) {
+    for (PyReferenceExpression expr : myReferencesToSelf) {
+      PyUtil.removeQualifier(expr);
+    }
     final PyFunction copied = (PyFunction)myFunction.copy();
     final PyParameter[] params = copied.getParameterList().getParameters();
     if (params.length > 0) {
       params[0].delete();
     }
-    return addParameters(copied, newParamNames);
+    addParameters(copied.getParameterList(), newParams);
+    return copied;
   }
 
   @NotNull
@@ -97,7 +152,8 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
           if (parentReference.getParent() instanceof PyCallExpression) {
             throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.method.calls"));
           }
-          ContainerUtil.addIfNotNull(paramNames, attrName);
+          paramNames.add(attrName);
+          myReferencesToSelf.add(parentReference);
         }
         else {
           throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));

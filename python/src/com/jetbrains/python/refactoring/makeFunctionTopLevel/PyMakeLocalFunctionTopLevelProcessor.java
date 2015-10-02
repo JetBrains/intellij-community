@@ -16,7 +16,6 @@
 package com.jetbrains.python.refactoring.makeFunctionTopLevel;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
@@ -24,7 +23,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -51,19 +52,12 @@ public class PyMakeLocalFunctionTopLevelProcessor extends PyBaseMakeFunctionTopL
 
   @Override
   protected void updateExistingFunctionUsages(@NotNull Collection<String> newParamNames, @NotNull UsageInfo[] usages) {
-    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(myProject);
-    final String commaSeparatedNames = StringUtil.join(newParamNames, ", ");
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
       if (element != null) {
         final PyCallExpression parentCall = as(element.getParent(), PyCallExpression.class);
-        if (parentCall != null) {
-          final PyArgumentList argList = parentCall.getArgumentList();
-          if (argList != null) {
-            final StringBuilder argListText = new StringBuilder(argList.getText());
-            argListText.insert(1, commaSeparatedNames + (argList.getArguments().length > 0 ? ", " : ""));
-            argList.replace(elementGenerator.createArgumentList(LanguageLevel.forElement(element), argListText.toString()));
-          }
+        if (parentCall != null && parentCall.getArgumentList() != null) {
+          addArguments(parentCall.getArgumentList(), newParamNames);
         }
       }
     }
@@ -72,7 +66,9 @@ public class PyMakeLocalFunctionTopLevelProcessor extends PyBaseMakeFunctionTopL
   @Override
   @NotNull
   protected PyFunction createNewFunction(@NotNull Collection<String> newParamNames) {
-    return addParameters((PyFunction)myFunction.copy(), newParamNames);
+    final PyFunction copied = (PyFunction)myFunction.copy();
+    addParameters(copied.getParameterList(), newParamNames);
+    return copied;
   }
 
   @Override
