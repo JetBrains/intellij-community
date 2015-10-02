@@ -219,6 +219,11 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.options.SchemeImporter"/>
     </extensionPoint>
 
+    <extensionPoint name="schemeExporter" beanClass="com.intellij.openapi.options.SchemeExporterEP">
+      <with attribute="schemeClass" implements="com.intellij.openapi.options.Scheme"/>
+      <with attribute="implementationClass" implements="com.intellij.openapi.options.SchemeExporter"/>
+    </extensionPoint>
+
     <extensionPoint qualifiedName="org.jetbrains.urlOpener" interface="com.intellij.ide.browsers.UrlOpener"/>
     <extensionPoint name="tipAndTrick" beanClass="com.intellij.ide.util.TipAndTrickBean"/>
 
