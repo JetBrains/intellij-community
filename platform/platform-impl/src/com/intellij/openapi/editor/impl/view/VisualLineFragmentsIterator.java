@@ -34,11 +34,11 @@ import java.util.NoSuchElementException;
  */
 class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterator.Fragment> {
 
-  static Iterable<Fragment> create(final EditorView view, final int offset, final boolean beforeSoftWrap) {
+  static Iterable<Fragment> create(final EditorView view, final int offset, final boolean beforeSoftWrap, final boolean quick) {
     return new Iterable<Fragment>() {
       @Override
       public Iterator<Fragment> iterator() {
-        return new VisualLineFragmentsIterator(view, offset, beforeSoftWrap);
+        return new VisualLineFragmentsIterator(view, offset, beforeSoftWrap, quick);
       }
     };
   }
@@ -48,6 +48,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
   private final FoldRegion[] myRegions;
   private final Fragment myFragment = new Fragment();
   private final int myVisualLineStartOffset;
+  private final boolean myQuick;
   
   private int mySegmentStartOffset;
   private int mySegmentEndOffset;
@@ -61,7 +62,8 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
   private int myCurrentEndLogicalLine;
   private int myNextWrapOffset;
 
-  private VisualLineFragmentsIterator(EditorView view, int offset, boolean beforeSoftWrap) {
+  private VisualLineFragmentsIterator(EditorView view, int offset, boolean beforeSoftWrap, boolean quick) {
+    myQuick = quick;
     myView = view;
     EditorImpl editor = view.getEditor();
     myDocument = editor.getDocument();
@@ -108,9 +110,9 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       int line = myDocument.getLineNumber(mySegmentStartOffset);
       mySegmentEndOffset = Math.min(myNextWrapOffset, Math.min(mySegmentEndOffset, myDocument.getLineEndOffset(line)));
       int lineStartOffset = myDocument.getLineStartOffset(line);
-      myFragmentIterator = myView.getTextLayoutCache().getLineLayout(line).getFragmentsInVisualOrder(myCurrentX, myCurrentVisualColumn,
-                                                                                mySegmentStartOffset - lineStartOffset, 
-                                                                                mySegmentEndOffset - lineStartOffset).iterator();
+      myFragmentIterator = myView.getTextLayoutCache().getLineLayout(line).
+        getFragmentsInVisualOrder(myView, lineStartOffset, myCurrentX, myCurrentVisualColumn, 
+                                  mySegmentStartOffset - lineStartOffset, mySegmentEndOffset - lineStartOffset, myQuick).iterator();
     }
   }
 
