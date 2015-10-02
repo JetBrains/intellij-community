@@ -17,7 +17,6 @@ package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.SortByVcsRoots;
@@ -36,7 +35,6 @@ public class TriggerAdditionOrDeletion {
   private final Collection<FilePath> myDeleted;
   private final Set<FilePath> myAffected;
   private final Project myProject;
-  private final boolean mySilentAddDelete;
   private ProjectLevelVcsManager myVcsManager;
   private AbstractVcsHelper myVcsHelper;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.patch.formove.TriggerAdditionOrDeletion");
@@ -45,9 +43,8 @@ public class TriggerAdditionOrDeletion {
   private MultiMap<VcsRoot, FilePath> myPreparedAddition;
   private MultiMap<VcsRoot, FilePath> myPreparedDeletion;
 
-  public TriggerAdditionOrDeletion(final Project project, boolean silentAddDelete) {
+  public TriggerAdditionOrDeletion(final Project project) {
     myProject = project;
-    mySilentAddDelete = Registry.is("vcs.add.remove.silent"); // TODO there is no sense in making add/remove non-silent anywhen; wait for users feedback, then remove
     myExisting = new HashSet<FilePath>();
     myDeleted = new HashSet<FilePath>();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
@@ -100,7 +97,6 @@ public class TriggerAdditionOrDeletion {
           myAffected.addAll(filePaths);
           continue;
         }
-        askUserIfNeededDeletion(vcsRoot.getVcs(), (List<FilePath>)filePaths);
         myAffected.addAll(filePaths);
         localChangesProvider.scheduleMissingFileForDeletion((List<FilePath>)filePaths);
       }
@@ -115,7 +111,6 @@ public class TriggerAdditionOrDeletion {
           myAffected.addAll(filePaths);
           continue;
         }
-        askUserIfNeededAddition(vcsRoot.getVcs(), (List<FilePath>)filePaths);
         myAffected.addAll(filePaths);
         localChangesProvider.scheduleUnversionedFilesForAddition(ObjectsConvertor.fp2vf(filePaths));
       }
@@ -189,38 +184,6 @@ public class TriggerAdditionOrDeletion {
           }
         }
         myPreparedAddition.put(vcsRoot, toBeAdded);
-      }
-    }
-  }
-
-  private void askUserIfNeededAddition(final AbstractVcs vcs, final List<FilePath> toBeAdded) {
-    if (mySilentAddDelete) return;
-    final VcsShowConfirmationOption confirmationOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
-    if (VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY.equals(confirmationOption.getValue())) {
-      toBeAdded.clear();
-    } else if (VcsShowConfirmationOption.Value.SHOW_CONFIRMATION.equals(confirmationOption.getValue())) {
-      final Collection<FilePath> files = myVcsHelper.selectFilePathsToProcess(toBeAdded, "Select files to add to " + vcs.getDisplayName(), null,
-        "Schedule for addition", "Do you want to schedule the following file for addition to " + vcs.getDisplayName() + "\n{0}", confirmationOption);
-      if (files == null) {
-        toBeAdded.clear();
-      } else {
-        toBeAdded.retainAll(files);
-      }
-    }
-  }
-
-  private void askUserIfNeededDeletion(final AbstractVcs vcs, final List<FilePath> toBeDeleted) {
-    if (mySilentAddDelete) return;
-    final VcsShowConfirmationOption confirmationOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, vcs);
-    if (VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY.equals(confirmationOption.getValue())) {
-      toBeDeleted.clear();
-    } else if (VcsShowConfirmationOption.Value.SHOW_CONFIRMATION.equals(confirmationOption.getValue())) {
-      final Collection<FilePath> files = myVcsHelper.selectFilePathsToProcess(toBeDeleted, "Select files to remove from " + vcs.getDisplayName(), null,
-        "Schedule for deletion", "Do you want to schedule the following file for deletion from " + vcs.getDisplayName() + "\n{0}", confirmationOption);
-      if (files == null) {
-        toBeDeleted.clear();
-      } else {
-        toBeDeleted.retainAll(files);
       }
     }
   }
