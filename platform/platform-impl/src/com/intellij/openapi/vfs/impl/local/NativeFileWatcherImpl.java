@@ -168,11 +168,11 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
   @Nullable
   private static String getExecutableName(final boolean withSubDir) {
-    if (SystemInfo.isWindows) return (withSubDir ? "win" + File.separator : "") + "fsnotifier.exe";
-    else if (SystemInfo.isMac) return (withSubDir ? "mac" + File.separator : "") + "fsnotifier";
-    else if (SystemInfo.isLinux) return (withSubDir ? "linux" + File.separator : "") +
-                                        ("arm".equals(SystemInfo.OS_ARCH) ? (SystemInfo.is32Bit ? "fsnotifier-arm" : null)
-                                                                          : (SystemInfo.isAMD64 ? "fsnotifier64" : "fsnotifier"));
+    if (SystemInfo.isWindows) return (withSubDir ? "win" + File.separator : "") + (SystemInfo.isAMD64 ? "fsnotifier64.exe" : "fsnotifier.exe");
+    if (SystemInfo.isMac) return (withSubDir ? "mac" + File.separator : "") + "fsnotifier";
+    if (SystemInfo.isLinux) return (withSubDir ? "linux" + File.separator : "") +
+                                   ("arm".equals(SystemInfo.OS_ARCH) ? (SystemInfo.is32Bit ? "fsnotifier-arm" : null)
+                                                                     : (SystemInfo.isAMD64 ? "fsnotifier64" : "fsnotifier"));
     return null;
   }
 

@@ -127,7 +127,7 @@ void PrintRemapForSubstDrives() {
 const int BUFSIZE = 1024;
 
 void PrintDirectoryReparsePoint(const char *path) {
-    int size = strlen(path) + 2;
+    int size = (int)(strlen(path) + 2);
     char *directory = (char *) malloc(size);
     strcpy_s(directory, size, path);
     NormalizeSlashes(directory, '\\');

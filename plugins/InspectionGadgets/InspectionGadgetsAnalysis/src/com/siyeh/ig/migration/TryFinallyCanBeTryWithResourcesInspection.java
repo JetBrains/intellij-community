@@ -142,8 +142,8 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         }
         separator = true;
       }
-      int j = 1;
       if (!unwantedChildren.isEmpty()) {
+        int j = 1;
         while (!unwantedChildren.contains(Integer.valueOf(j)) && j < tryBlockChildren.length - 1) {
           tryStatement.getParent().addBefore(tryBlockChildren[j], tryStatement);
           unwantedChildren.add(j);
@@ -329,7 +329,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
           hasInitializer = !PsiType.NULL.equals(type);
         }
         final int index = findInitialization(tryBlockStatements, variable, hasInitializer);
-        if (!(index >= 0 ^ hasInitializer) || isVariableUsedOutsideContext(variable, tryBlock)) {
+        if ((index >= 0) == hasInitializer || isVariableUsedOutsideContext(variable, tryBlock)) {
           return;
         }
       }

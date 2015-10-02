@@ -281,6 +281,9 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
    */
   public static void setupAntialiasing(final Graphics g) {
 
+    Graphics2D g2d = (Graphics2D)g;
+    g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST,  UIUtil.getLcdContrastValue());
+
     Application application = ApplicationManager.getApplication();
     if (application == null) {
       // We cannot use services while Aplication has not been loaded yet
@@ -289,7 +292,6 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
       return;
     }
 
-    Graphics2D g2d = (Graphics2D)g;
     UISettings uiSettings = getInstance();
 
     if (uiSettings != null) {

@@ -22,24 +22,28 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 
 /**
- * Editor text layout storage. It's cached on a per-line basis, created lazily (when requested), and invalidated on document changes or
- * when explicitly requested.
+ * Editor text layout storage. Layout is stored on a per-logical-line basis, 
+ * it's created lazily (when requested) and invalidated on document changes or when explicitly requested.
+ * 
+ * @see LineLayout
  */
 class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private final EditorView myView;
   private final Document myDocument;
+  private final LineLayout myBidiNotRequiredMarker;
   private ArrayList<LineLayout> myLines = new ArrayList<LineLayout>();
   private int myDocumentChangeOldEndLine;
-  private boolean myQuickLayoutsEnabled;
 
   TextLayoutCache(EditorView view) {
     myView = view;
     myDocument = view.getEditor().getDocument();
     myDocument.addDocumentListener(this, this);
+    myBidiNotRequiredMarker = new LineLayout(view, "", Font.PLAIN);
   }
 
   @Override
@@ -56,7 +60,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   public void documentChanged(DocumentEvent event) {
     int startLine = myDocument.getLineNumber(event.getOffset());
     int newEndLine = getAdjustedLineNumber(event.getOffset() + event.getNewLength());
-    invalidateLines(startLine, myDocumentChangeOldEndLine, newEndLine);
+    invalidateLines(startLine, myDocumentChangeOldEndLine, newEndLine, !LineLayout.isBidiLayoutRequired(event.getNewFragment()));
   }
 
   @Override
@@ -67,17 +71,24 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private int getAdjustedLineNumber(int offset) {
     return myDocument.getTextLength() == 0 ? -1 : myDocument.getLineNumber(offset);
   }
-
-  void resetToDocumentSize() {
+  
+  void resetToDocumentSize(boolean documentChangedWithoutNotification) {
     checkDisposed();
-    invalidateLines(0, myLines.size() - 1, myDocument.getLineCount() - 1);
+    invalidateLines(0, myLines.size() - 1, myDocument.getLineCount() - 1, !documentChangedWithoutNotification);
+  }
+
+  void invalidateLines(int startLine, int endLine) {
+    invalidateLines(startLine, endLine, endLine, true);
   }
   
-  void invalidateLines(int startLine, int oldEndLine, int newEndLine) {
+  private void invalidateLines(int startLine, int oldEndLine, int newEndLine, boolean keepBidiNotRequiredState) {
     checkDisposed();
     int endLine = Math.min(oldEndLine, newEndLine);
     for (int line = startLine; line <= endLine; line++) {
-      myLines.set(line, null);
+      LineLayout lineLayout = myLines.get(line);
+      if (lineLayout != null) {
+        myLines.set(line, keepBidiNotRequiredState && lineLayout.isLtr() ? myBidiNotRequiredMarker : null);
+      }
     }
     if (oldEndLine < newEndLine) {
       myLines.addAll(oldEndLine + 1, Collections.nCopies(newEndLine - oldEndLine, (LineLayout)null));
@@ -85,31 +96,25 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
       myLines.subList(newEndLine + 1, oldEndLine + 1).clear();
     }
   }
-  
+
   @NotNull
   LineLayout getLineLayout(int line) {
     checkDisposed();
     LineLayout result = myLines.get(line);
-    if (result == null) {
-      int lineStart = myDocument.getLineStartOffset(line);
-      int lineEnd = myDocument.getLineEndOffset(line);
-      if (myQuickLayoutsEnabled) {
-        result = new LineLayout(myView, lineEnd - lineStart);
-        myView.getSizeManager().quickLineLayoutCreated();
-      }
-      else {
-        result = new LineLayout(myView, lineStart, lineEnd, myView.getFontRenderContext());
-        myLines.set(line, result);
-        myView.getSizeManager().lineLayoutCreated(line);
-      }
+    if (result == null || result == myBidiNotRequiredMarker) {
+      result = createLineLayout(line, result == myBidiNotRequiredMarker);
+      myLines.set(line, result);
     }
     return result;
   }
-  
-  void enableQuickLayouts(boolean enabled) {
-    myQuickLayoutsEnabled = enabled;
+
+  @NotNull
+  private LineLayout createLineLayout(int line, boolean skipBidiLayout) {
+    int lineStart = myDocument.getLineStartOffset(line);
+    int lineEnd = myDocument.getLineEndOffset(line);
+    return new LineLayout(myView, lineStart, lineEnd, skipBidiLayout);
   }
-  
+
   private void checkDisposed() {
     if (myLines == null) throw new IllegalStateException("Editor is already disposed");
   }

@@ -246,12 +246,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
   @NotNull
   public static ExpectedTypeInfo[] getExpectedTypes(final CompletionParameters parameters) {
-    return getExpectedTypes(parameters, parameters.getCompletionType() == CompletionType.SMART);
+    return getExpectedTypes(parameters.getPosition(), parameters.getCompletionType() == CompletionType.SMART);
   }
 
   @NotNull
-  public static ExpectedTypeInfo[] getExpectedTypes(final CompletionParameters parameters, boolean voidable) {
-    final PsiElement position = parameters.getPosition();
+  public static ExpectedTypeInfo[] getExpectedTypes(PsiElement position, boolean voidable) {
     if (psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiThrowStatement.class)).accepts(position)) {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(position.getProject()).getElementFactory();
       final PsiClassType classType = factory

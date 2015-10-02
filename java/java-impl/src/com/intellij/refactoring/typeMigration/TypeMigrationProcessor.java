@@ -33,7 +33,9 @@ import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewManager;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -180,6 +182,8 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   }
 
   public static void change(TypeMigrationLabeler labeler, UsageInfo[] usages) {
+    final List<PsiNewExpression> newExpressionsToCheckDiamonds = new SmartList<PsiNewExpression>();
+
     List<UsageInfo> nonCodeUsages = new ArrayList<UsageInfo>();
     for (UsageInfo usage : usages) {
       if (((TypeMigrationUsageInfo)usage).isExcluded()) continue;
@@ -188,12 +192,22 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
           element instanceof PsiMember ||
           element instanceof PsiExpression ||
           element instanceof PsiReferenceParameterList) {
-        labeler.change((TypeMigrationUsageInfo)usage);
+        labeler.change((TypeMigrationUsageInfo)usage, new Consumer<PsiNewExpression>() {
+          @Override
+          public void consume(@NotNull PsiNewExpression expression) {
+            newExpressionsToCheckDiamonds.add(expression);
+          }
+        });
       }
       else {
         nonCodeUsages.add(usage);
       }
     }
+
+    for (PsiNewExpression newExpression : newExpressionsToCheckDiamonds) {
+      labeler.postProcessNewExpression(newExpression);
+    }
+
     for (UsageInfo usageInfo : nonCodeUsages) {
       final PsiElement element = usageInfo.getElement();
       if (element != null) {

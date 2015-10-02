@@ -216,6 +216,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (ANNOTATION_ATTRIBUTE_NAME.accepts(position) && !JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position)) {
       JavaKeywordCompletion.addExpectedTypeMembers(parameters, result);
+      JavaKeywordCompletion.addPrimitiveTypes(result, position);
       completeAnnotationAttributeName(result, position, parameters);
       result.stopHere();
       return;

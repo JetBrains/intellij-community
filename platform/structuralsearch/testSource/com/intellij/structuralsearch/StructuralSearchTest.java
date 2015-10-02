@@ -685,14 +685,42 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       1,
       findMatchesCount(s11,s12_3)
     );
+  }
 
-    String source = "class A { String ss[][]; }";
+  public void testFindArrayDeclarations() {
+    String source = "class A {" +
+                    "  String ss[][];" +
+                    "  int f()[] {" +
+                    "    return null;" +
+                    "  }" +
+                    "}";
+
     String target = "String[][] $s$;";
-    assertEquals(
-      "should find multi dimensional c-style array declarations",
-      1,
-      findMatchesCount(source, target)
-    );
+    assertEquals("should find multi-dimensional c-style array declarations", 1, findMatchesCount(source, target));
+
+    String target2 = "class '_A { int[] 'f(); }";
+    assertEquals("should find c-style method return type declarations", 1, findMatchesCount(source, target2));
+
+    String target3 = "class '_A { int 'f(); }";
+    assertEquals("should not find methods with array return types",0, findMatchesCount(source, target3));
+
+    String source2 = "class A {" +
+                     "  void y(int... i) {}" +
+                     "  void y(String... ss) {}" +
+                     "  void y(boolean b) {}" +
+                     "}";
+    assertEquals("find ellipsis type 1", 1, findMatchesCount(source2, "String[] '_a"));
+    assertEquals("find ellipsis type 2", 1, findMatchesCount(source2, "int[] '_a"));
+    assertEquals("find ellipsis type 3", 1, findMatchesCount(source2, "class '_X { void '_m(int... '_a); }"));
+    assertEquals("find ellipsis type 4", 2, findMatchesCount(source2, "'_T[] '_a"));
+
+    String source3 = "class A {" +
+                     "  private int[] is;" +
+                     "}";
+    assertEquals("find primitive array 1", 1, findMatchesCount(source3, "int[] '_a;"));
+    assertEquals("find primitive array 2", 1, findMatchesCount(source3, "'_T[] '_a;"));
+    assertEquals("find primitive array 3", 1, findMatchesCount(source3, "'_T:[regex( int )][] '_a;"));
+    assertEquals("find primitive array 4", 1, findMatchesCount(source3, "'_T:[regex( int\\[\\] )] '_a;"));
   }
 
   // @todo support back references (\1 in another reg exp or as fild member)

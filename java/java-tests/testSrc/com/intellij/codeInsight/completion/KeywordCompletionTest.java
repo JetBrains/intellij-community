@@ -112,7 +112,13 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     selectItem(myItems[0], '!');
     checkResultByFile(BASE_PATH + "/" + getTestName(true) + "_after.java");
   }
-  
+
+  public void testNoPrimitivesInBooleanAnnotationAttribute() { doTest(1, "true", "int", "boolean"); }
+  public void testNoPrimitivesInIntAnnotationValueAttribute() { doTest(0, "true", "int", "boolean"); }
+  public void testNoPrimitivesInEnumAnnotationAttribute() { doTest(0, "true", "int", "boolean"); }
+  public void testPrimitivesInClassAnnotationValueAttribute() { doTest(2, "true", "int", "boolean"); }
+  public void testPrimitivesInClassAnnotationAttribute() { doTest(3, "true", "int", "boolean"); }
+
   public void testImportStatic() throws Exception { doTest(1, "static"); }
   public void testAbstractInInterface() throws Exception { doTest(1, "abstract"); }
   public void testCharInAnnotatedParameter() throws Exception { doTest(1, "char"); }

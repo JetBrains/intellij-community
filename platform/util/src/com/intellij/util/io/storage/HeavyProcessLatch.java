@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class HeavyProcessLatch {
   }
 
   /**
-   * @deprecated use {@link #processStarted(java.lang.String)} instead
+   * @deprecated use {@link #processStarted(String)} instead
    */
   @Deprecated
   public void processStarted() {
@@ -54,17 +54,22 @@ public class HeavyProcessLatch {
     return new AccessToken() {
       @Override
       public void finish() {
-        synchronized (myHeavyProcesses) {
-          myHeavyProcesses.remove(operationName);
-        }
+        processFinished(operationName);
       }
     };
   }
 
-  @Deprecated // use processStarted(String)
+  /**
+   * @deprecated use {@link #processStarted(String)} instead
+   */
+  @Deprecated
   public void processFinished() {
+    processFinished("");
+  }
+
+  private void processFinished(@NotNull String operationName) {
     synchronized (myHeavyProcesses) {
-      myHeavyProcesses.remove("");
+      myHeavyProcesses.remove(operationName);
     }
     myEventDispatcher.getMulticaster().processFinished();
   }
@@ -83,9 +88,8 @@ public class HeavyProcessLatch {
 
 
   public interface HeavyProcessListener extends EventListener {
-    public void processStarted();
-
-    public void processFinished();
+    void processStarted();
+    void processFinished();
   }
 
   public void addListener(@NotNull Disposable parentDisposable, @NotNull HeavyProcessListener listener) {

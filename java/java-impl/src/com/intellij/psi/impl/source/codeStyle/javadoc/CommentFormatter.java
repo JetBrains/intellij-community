@@ -49,7 +49,7 @@ public class CommentFormatter {
 
   public CommentFormatter(@NotNull Project project) {
     mySettings = CodeStyleSettingsManager.getSettings(project);
-    myParser = new JDParser(mySettings, LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
+    myParser = new JDParser(mySettings);
     myProject = project;
   }
 

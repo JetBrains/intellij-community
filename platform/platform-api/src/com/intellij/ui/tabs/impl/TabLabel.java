@@ -149,11 +149,6 @@ public class TabLabel extends JPanel {
           g.setClip(oldClip);
         }
       }
-
-      @Override
-      protected void applyAdditionalHints(@NotNull Graphics2D g) {
-        UISettings.setupAntialiasing(g);
-      }
     };
     label.setOpaque(false);
     label.setBorder(null);

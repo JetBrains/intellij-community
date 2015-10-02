@@ -309,22 +309,37 @@ public class LocalVariablesUtil {
     private int myCurrentSlotIndex;
     private final PsiElement myElement;
     private final Stack<Integer> myIndexStack;
+    private boolean myReached = false;
 
     public LocalVariableNameFinder(int startSlot, MultiMap<Integer, String> names, PsiElement element) {
       myNames = names;
       myCurrentSlotIndex = startSlot;
       myElement = element;
       myIndexStack = new Stack<Integer>();
+
     }
 
     private boolean shouldVisit(PsiElement scope) {
-      return PsiTreeUtil.isContextAncestor(scope, myElement, false);
+      return !myReached && PsiTreeUtil.isContextAncestor(scope, myElement, false);
+    }
+
+    @Override
+    public void visitElement(PsiElement element) {
+      if (element == myElement) {
+        myReached = true;
+      }
+      else {
+        super.visitElement(element);
+      }
     }
 
     @Override
     public void visitLocalVariable(PsiLocalVariable variable) {
-      appendName(variable.getName());
-      myCurrentSlotIndex += getTypeSlotSize(variable.getType());
+      super.visitLocalVariable(variable);
+      if (!myReached) {
+        appendName(variable.getName());
+        myCurrentSlotIndex += getTypeSlotSize(variable.getType());
+      }
     }
 
     public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
