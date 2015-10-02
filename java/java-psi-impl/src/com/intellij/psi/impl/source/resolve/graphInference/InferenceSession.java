@@ -1195,7 +1195,9 @@ public class InferenceSession {
       }
     }
     finally {
-      LambdaUtil.ourFunctionTypes.set(null);
+      if (formula instanceof InputOutputConstraintFormula) {
+        LambdaUtil.getFunctionalTypeMap().remove(((InputOutputConstraintFormula)formula).getExpression());
+      }
     }
     return true;
   }
