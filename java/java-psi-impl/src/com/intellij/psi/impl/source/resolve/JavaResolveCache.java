@@ -84,9 +84,8 @@ public class JavaResolveCache {
     PsiType type = isOverloadCheck ? null : myCalculatedTypes.get(expr);
     if (type == null) {
       final RecursionGuard.StackStamp dStackStamp = PsiDiamondType.ourDiamondGuard.markStack();
-      final RecursionGuard.StackStamp gStackStamp = PsiResolveHelper.ourGraphGuard.markStack();
       type = f.fun(expr);
-      if (!dStackStamp.mayCacheNow() || !gStackStamp.mayCacheNow() || isOverloadCheck) {
+      if (!dStackStamp.mayCacheNow() || isOverloadCheck) {
         return type;
       }
       if (type == null) type = TypeConversionUtil.NULL_TYPE;
