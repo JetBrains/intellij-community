@@ -28,9 +28,18 @@ import java.awt.*;
  */
 public class MacIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
 
+  public MacIntelliJPasswordFieldUI(JPasswordField c) {
+    super(c);
+  }
+
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
-    return new MacIntelliJPasswordFieldUI();
+    return new MacIntelliJPasswordFieldUI((JPasswordField)c);
+  }
+
+  @Override
+  protected void paintSafely(Graphics g) {
+    super.paintSafely(g);
   }
 
   @Override
