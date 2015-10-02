@@ -19,7 +19,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -54,7 +53,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.ar;
@@ -93,18 +91,21 @@ public class UnscrambleDialog extends DialogWrapper {
 
     populateRegisteredUnscramblerList();
     myUnscrambleChooser.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         UnscrambleSupport unscrambleSupport = getSelectedUnscrambler();
         GuiUtils.enableChildren(myLogFileChooserPanel, unscrambleSupport != null);
       }
     });
     myUseUnscrambler.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         useUnscramblerChanged();
       }
     });
     myOnTheFly.setSelected(Registry.get("analyze.exceptions.on.the.fly").asBoolean());
     myOnTheFly.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         Registry.get("analyze.exceptions.on.the.fly").setValue(myOnTheFly.isSelected());
       }
@@ -172,10 +173,9 @@ public class UnscrambleDialog extends DialogWrapper {
 
   @Nullable
   private UnscrambleSupport getSavedUnscrambler() {
-    final List<UnscrambleSupport> registeredUnscramblers = getRegisteredUnscramblers();
     final String savedUnscramblerName = getPropertyValue(PROPERTY_UNSCRAMBLER_NAME_USED);
     UnscrambleSupport selectedUnscrambler = null;
-    for (final UnscrambleSupport unscrambleSupport : registeredUnscramblers) {
+    for (UnscrambleSupport unscrambleSupport : UnscrambleSupport.EP_NAME.getExtensions()) {
       if (Comparing.strEqual(unscrambleSupport.getPresentableName(), savedUnscramblerName)) {
         selectedUnscrambler = unscrambleSupport;
       }
@@ -206,11 +206,13 @@ public class UnscrambleDialog extends DialogWrapper {
     myEditorPanel.add(myStacktraceEditorPanel, BorderLayout.CENTER);
   }
 
+  @Override
   @NotNull
   protected Action[] createActions(){
     return new Action[]{createNormalizeTextAction(), getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     JRootPane pane = getRootPane();
     return pane != null ? pane.getDefaultButton() : super.getPreferredFocusedComponent();
@@ -219,6 +221,7 @@ public class UnscrambleDialog extends DialogWrapper {
   private void createLogFileChooser() {
     myLogFile = new TextFieldWithHistory();
     JPanel panel = GuiUtils.constructFieldWithBrowseButton(myLogFile, new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
         FileChooser.chooseFiles(descriptor, myProject, null, new Consumer<List<VirtualFile>>() {
@@ -234,10 +237,11 @@ public class UnscrambleDialog extends DialogWrapper {
   }
 
   private void populateRegisteredUnscramblerList() {
-    List<UnscrambleSupport> unscrambleComponents = getRegisteredUnscramblers();
-    for (final UnscrambleSupport unscrambleSupport : unscrambleComponents) {
+    for (UnscrambleSupport unscrambleSupport : UnscrambleSupport.EP_NAME.getExtensions()) {
+      //noinspection unchecked
       myUnscrambleChooser.addItem(unscrambleSupport);
     }
+    //noinspection unchecked
     myUnscrambleChooser.setRenderer(new ListCellRendererWrapper<UnscrambleSupport>() {
       @Override
       public void customize(JList list, UnscrambleSupport unscrambleSupport, int index, boolean selected, boolean hasFocus) {
@@ -246,22 +250,21 @@ public class UnscrambleDialog extends DialogWrapper {
     });
   }
 
-  private static List<UnscrambleSupport> getRegisteredUnscramblers() {
-    final UnscrambleSupport[] components = Extensions.getExtensions(UnscrambleSupport.EP_NAME);
-    return Arrays.asList(components);
-  }
-
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
+  @Override
   public void dispose() {
     if (isOK()){
       final List<String> list = myLogFile.getHistory();
-      PropertiesComponent.getInstance().setValue(PROPERTY_LOG_FILE_HISTORY_URLS, list.isEmpty() ? null : StringUtil.join(list, ":::"), null);
+      PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
+      propertyComponent.setValue(PROPERTY_LOG_FILE_HISTORY_URLS, list.isEmpty() ? null : StringUtil.join(list, ":::"), null);
       UnscrambleSupport selectedUnscrambler = getSelectedUnscrambler();
-      PropertiesComponent.getInstance().setValue(PROPERTY_UNSCRAMBLER_NAME_USED, selectedUnscrambler == null ? null : selectedUnscrambler.getPresentableName(), null);
-      PropertiesComponent.getInstance().setValue(PROPERTY_LOG_FILE_LAST_URL, StringUtil.nullize(myLogFile.getText()), null);
+      propertyComponent
+        .setValue(PROPERTY_UNSCRAMBLER_NAME_USED, selectedUnscrambler == null ? null : selectedUnscrambler.getPresentableName(), null);
+      propertyComponent.setValue(PROPERTY_LOG_FILE_LAST_URL, StringUtil.nullize(myLogFile.getText()), null);
     }
     super.dispose();
   }
@@ -289,6 +292,7 @@ public class UnscrambleDialog extends DialogWrapper {
       putValue(DEFAULT_ACTION, Boolean.FALSE);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e){
       String text = myStacktraceEditorPanel.getText();
       myStacktraceEditorPanel.setText(normalizeText(text));
@@ -366,6 +370,7 @@ public class UnscrambleDialog extends DialogWrapper {
     return false;
   }
 
+  @Override
   protected void doOKAction() {
     if (myConfigurable != null && myConfigurable.isModified()) {
       try {
@@ -382,6 +387,7 @@ public class UnscrambleDialog extends DialogWrapper {
     }
   }
 
+  @Override
   public void doHelpAction() {
     HelpManager.getInstance().invokeHelp("find.analyzeStackTrace");
   }
@@ -423,6 +429,7 @@ public class UnscrambleDialog extends DialogWrapper {
     return AnalyzeStacktraceUtil.addConsole(project, threadDump.size() > 1 ? new ThreadDumpConsoleFactory(project, threadDump) : null, message, unscrambledTrace, icon);
   }
 
+  @Override
   protected String getDimensionServiceKey(){
     return "#com.intellij.unscramble.UnscrambleDialog";
   }
@@ -474,5 +481,4 @@ public class UnscrambleDialog extends DialogWrapper {
       }
       return builder.toString();
   }
-
 }
