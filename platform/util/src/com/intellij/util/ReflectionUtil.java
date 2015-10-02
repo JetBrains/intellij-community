@@ -634,4 +634,29 @@ public class ReflectionUtil {
   public static boolean isAssignable(@NotNull Class<?> ancestor, @NotNull Class<?> descendant) {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
   }
+
+  public static List<Class<?>> getAllInterfaces(final Class<?> cls) {
+    if (cls == null) {
+      return null;
+    }
+
+    final HashSet<Class<?>> interfacesFound = new HashSet<Class<?>>();
+    getAllInterfaces(cls, interfacesFound);
+
+    return new ArrayList<Class<?>>(interfacesFound);
+  }
+
+  private static void getAllInterfaces(Class<?> clazz, final HashSet<Class<?>> interfacesFound) {
+    while (clazz != null) {
+      final Class<?>[] interfaces = clazz.getInterfaces();
+
+      for (final Class<?> i : interfaces) {
+        if (interfacesFound.add(i)) {
+          getAllInterfaces(i, interfacesFound);
+        }
+      }
+
+      clazz = clazz.getSuperclass();
+    }
+  }
 }
