@@ -256,14 +256,18 @@ public class UnscrambleDialog extends DialogWrapper {
   public void dispose() {
     if (isOK()){
       final List<String> list = myLogFile.getHistory();
-      PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
-      propertyComponent.setValue(PROPERTY_LOG_FILE_HISTORY_URLS, list.isEmpty() ? null : StringUtil.join(list, ":::"), null);
+      PropertiesComponent.getInstance().setValue(PROPERTY_LOG_FILE_HISTORY_URLS, list.isEmpty() ? null : StringUtil.join(list, ":::"), null);
       UnscrambleSupport selectedUnscrambler = getSelectedUnscrambler();
-      propertyComponent
-        .setValue(PROPERTY_UNSCRAMBLER_NAME_USED, selectedUnscrambler == null ? null : selectedUnscrambler.getPresentableName(), null);
-      propertyComponent.setValue(PROPERTY_LOG_FILE_LAST_URL, StringUtil.nullize(myLogFile.getText()), null);
+      saveProperty(PROPERTY_UNSCRAMBLER_NAME_USED, selectedUnscrambler == null ? null : selectedUnscrambler.getPresentableName());
+      saveProperty(PROPERTY_LOG_FILE_LAST_URL, StringUtil.nullize(myLogFile.getText()));
     }
     super.dispose();
+  }
+
+  // IDEA-125302 The Analyze Stacktrace menu option remembers only one log file across multiple projects
+  private void saveProperty(@NotNull  String name, @Nullable String value) {
+    PropertiesComponent.getInstance(myProject).setValue(name, value);
+    PropertiesComponent.getInstance().setValue(name, value);
   }
 
   @Nullable
