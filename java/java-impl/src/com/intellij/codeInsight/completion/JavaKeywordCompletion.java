@@ -22,6 +22,7 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.pom.java.LanguageLevel;
@@ -32,10 +33,12 @@ import com.intellij.psi.filters.position.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -578,8 +581,9 @@ public class JavaKeywordCompletion {
            isAfterPrimitiveOrArrayType(position);
   }
 
-  private static void addPrimitiveTypes(final Consumer<LookupElement> result, PsiElement position) {
-    if (AFTER_DOT.accepts(position)) {
+  static void addPrimitiveTypes(final Consumer<LookupElement> result, PsiElement position) {
+    if (AFTER_DOT.accepts(position) ||
+        psiElement().inside(psiAnnotation()).accepts(position) && !expectsClassLiteral(position)) {
       return;
     }
 
@@ -621,6 +625,15 @@ public class JavaKeywordCompletion {
     else if (typeFragment && ((PsiTypeCodeFragment)position.getContainingFile()).isVoidValid()) {
       result.consume(createKeyword(position, PsiKeyword.VOID));
     }
+  }
+
+  private static boolean expectsClassLiteral(PsiElement position) {
+    return ContainerUtil.find(JavaSmartCompletionContributor.getExpectedTypes(position, false), new Condition<ExpectedTypeInfo>() {
+      @Override
+      public boolean value(ExpectedTypeInfo info) {
+        return InheritanceUtil.isInheritor(info.getType(), CommonClassNames.JAVA_LANG_CLASS);
+      }
+    }) != null;
   }
 
   private static boolean isAtResourceVariableStart(PsiElement position) {
