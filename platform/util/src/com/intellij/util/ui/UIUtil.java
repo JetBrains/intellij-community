@@ -3092,7 +3092,8 @@ public class UIUtil {
         if (map == null) {
           lcdContrastValue = 140;
         } else {
-          lcdContrastValue = ((Integer)map.get(RenderingHints.KEY_TEXT_LCD_CONTRAST));
+          Object o = map.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
+          lcdContrastValue = (o == null) ? 140 : ((Integer)o);
         }
       }
     }
