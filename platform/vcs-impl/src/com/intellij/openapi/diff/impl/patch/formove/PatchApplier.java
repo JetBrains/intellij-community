@@ -15,11 +15,14 @@
  */
 package com.intellij.openapi.diff.impl.patch.formove;
 
+import com.intellij.history.Label;
+import com.intellij.history.LocalHistory;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
+import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyTextFilePatch;
@@ -35,6 +38,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -42,6 +46,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +66,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
   private final CommitContext myCommitContext;
   private final Consumer<Collection<FilePath>> myToTargetListsMover;
   private final List<FilePatch> myRemainingPatches;
+  private final List<FilePatch> mySuccessfullyApplied;
   private final PathsVerifier<BinaryType> myVerifier;
   private boolean mySystemOperation;
 
@@ -82,6 +88,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     myLeftConflictPanelTitle = leftConflictPanelTitle;
     myRightConflictPanelTitle = rightConflictPanelTitle;
     myRemainingPatches = new ArrayList<FilePatch>();
+    mySuccessfullyApplied = new ArrayList<FilePatch>();
     myVerifier = new PathsVerifier<BinaryType>(myProject, myBaseDirectory, myPatches, new PathsVerifier.BaseMapper() {
       @Override
       @Nullable
@@ -155,7 +162,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
         return;
       }
 
-      final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject, mySystemOperation);
+      final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject);
       final ApplyPatchStatus applyStatus = getApplyPatchStatus(trigger);
       myStatus = ApplyPatchStatus.SUCCESS.equals(patchStatus) ? applyStatus :
                  ApplyPatchStatus.and(patchStatus, applyStatus);
@@ -240,7 +247,9 @@ public class PatchApplier<BinaryType extends FilePatch> {
       result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
       if (ApplyPatchStatus.FAILURE.equals(result)) return result;
     }
-    final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(project, false);
+    final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before patch");
+    final Label afterLabel;
+    final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(project);
     final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(null);
     try {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -262,11 +271,20 @@ public class PatchApplier<BinaryType extends FilePatch> {
       }, VcsBundle.message("patch.apply.command"), null);
     } finally {
       VcsFileListenerContextHelper.getInstance(project).clearContext();
+      afterLabel = LocalHistory.getInstance().putSystemLabel(project, "After patch");
     }
-    result =  refStatus.get();
+    result = refStatus.get();
     result = result == null ? ApplyPatchStatus.FAILURE : result;
-
-    trigger.processIt();
+    if (result == ApplyPatchStatus.ABORT) {
+      final List<Change> successfullyApplied = new ArrayList<Change>();
+      for (final PatchApplier applier : group) {
+        successfullyApplied.addAll(applier.constructAppliedChangesForRollbackDialog(beforeLabel, afterLabel));
+      }
+      UndoApplyPatchDialog.undo(project, successfullyApplied);
+    }
+    else {
+      trigger.processIt();
+    }
     final Set<FilePath> directlyAffected = new HashSet<FilePath>();
     final Set<VirtualFile> indirectlyAffected = new HashSet<VirtualFile>();
     for (PatchApplier applier : group) {
@@ -278,6 +296,25 @@ public class PatchApplier<BinaryType extends FilePatch> {
     refreshPassedFilesAndMoveToChangelist(project, directlyAffected, indirectlyAffected, mover);
     showApplyStatus(project, result);
     return result;
+  }
+
+  @NotNull
+  private Collection<? extends Change> constructAppliedChangesForRollbackDialog(@NotNull final Label before, @NotNull final Label after) {
+    List<Change> successChanges = ContainerUtil.newArrayList();
+    for (FilePatch patch : mySuccessfullyApplied) {
+      FilePath beforeFilePath = VcsUtil.getFilePath(myBaseDirectory, patch.getBeforeName());
+      FilePath afterFilePath = VcsUtil.getFilePath(myBaseDirectory, patch.getAfterName());
+      if (patch instanceof BinaryFilePatch || patch instanceof ShelveChangesManager.ShelvedBinaryFilePatch) {
+        successChanges.add(ChangeListManager.getInstance(myProject).getChange(afterFilePath));
+      }
+      else {
+        successChanges.add(
+          new Change(patch.isNewFile() ? null : new LabelContentRevision(before, beforeFilePath, afterFilePath),
+                     patch.isDeletedFile() ? null :
+                     new LabelContentRevision(after, afterFilePath, (FilePath)null)));
+      }
+    }
+    return successChanges;
   }
 
   protected void addSkippedItems(final TriggerAdditionOrDeletion trigger) {
@@ -405,6 +442,8 @@ public class PatchApplier<BinaryType extends FilePatch> {
         final List<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>> binaryPatches = verifier.getBinaryPatches();
         ApplyPatchStatus patchStatus = myCustomForBinaries.apply(binaryPatches);
         final List<FilePatch> appliedPatches = myCustomForBinaries.getAppliedPatches();
+        // add all custom applied
+        mySuccessfullyApplied.addAll(appliedPatches);
         moveForCustomBinaries(binaryPatches, appliedPatches);
 
         status = ApplyPatchStatus.and(status, patchStatus);
@@ -439,6 +478,9 @@ public class PatchApplier<BinaryType extends FilePatch> {
       myVerifier.doMoveIfNeeded(patch.getFirst());
 
       status = ApplyPatchStatus.and(status, patchStatus);
+      if (patchStatus == ApplyPatchStatus.SUCCESS || patchStatus == ApplyPatchStatus.PARTIAL) {
+        mySuccessfullyApplied.add(patch.getSecond().getPatch());//new LocalFilePath(patch.getFirst().getPath(), false));
+      }
       if (patchStatus != ApplyPatchStatus.FAILURE) {
         myRemainingPatches.remove(patch.getSecond().getPatch());
       } else {
@@ -455,9 +497,14 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
     else if (status == ApplyPatchStatus.PARTIAL) {
       showError(project, VcsBundle.message("patch.apply.partially.applied"), false);
-    } else if (ApplyPatchStatus.SUCCESS.equals(status)) {
+    }
+    else if (ApplyPatchStatus.SUCCESS.equals(status)) {
       final String message = VcsBundle.message("patch.apply.success.applied.text");
       VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
+    }
+    else if (status == ApplyPatchStatus.ABORT) {
+      VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification("Applying patch action was aborted.", MessageType.INFO)
+        .notify(project);
     }
   }
 

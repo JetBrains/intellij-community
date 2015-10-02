@@ -30,7 +30,7 @@ class LabelContentRevision implements ContentRevision {
   private final FilePath myFilePath;
   private final FilePath myContentDetectorPath;
 
-  private LabelContentRevision(@NotNull Label label, @NotNull FilePath filePath, @Nullable FilePath contentFilePath) {
+  LabelContentRevision(@NotNull Label label, @NotNull FilePath filePath, @Nullable FilePath contentFilePath) {
     myLabel = label;
     myFilePath = filePath;
     myContentDetectorPath = contentFilePath != null ? contentFilePath : myFilePath;
