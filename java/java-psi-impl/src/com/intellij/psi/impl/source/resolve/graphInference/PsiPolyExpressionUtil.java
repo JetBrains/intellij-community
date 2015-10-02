@@ -80,6 +80,18 @@ public class PsiPolyExpressionUtil {
             return mentionsTypeParameters(returnType, typeParameters);
           }
         }
+        else if (method.isConstructor() && expression instanceof PsiNewExpression) {
+          final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)expression).getClassOrAnonymousClassReference();
+          if (classReference != null) {
+            final PsiReferenceParameterList parameterList = classReference.getParameterList();
+            if (parameterList != null) {
+              final PsiTypeElement[] parameterElements = parameterList.getTypeParameterElements();
+              if (parameterElements.length == 1 && parameterElements[0].getType() instanceof PsiDiamondType) {
+                return true;
+              }
+            }
+          }
+        }
       } else {
         return true;
       }

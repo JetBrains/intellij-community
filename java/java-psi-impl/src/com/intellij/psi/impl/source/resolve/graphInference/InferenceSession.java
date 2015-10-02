@@ -418,8 +418,7 @@ public class InferenceSession {
         final PsiExpression[] newArgs = argumentList.getExpressions();
         final PsiParameter[] newParams = method.getParameterList().getParameters();
         if (newParams.length > 0) {
-          collectAdditionalConstraints(newParams, newArgs, method, result != null ? ((MethodCandidateInfo)result).getSiteSubstitutor() : properties.getSubstitutor(),
-                                       additionalConstraints, result != null ?  ((MethodCandidateInfo)result).isVarargs() : properties.isVarargs());
+          collectAdditionalConstraints(newParams, newArgs, method, chooseSiteSubstitutor(properties, result, method), additionalConstraints, chooseVarargsMode(properties, result));
         }
       }
     }
@@ -442,22 +441,44 @@ public class InferenceSession {
            : PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, false, computableResolve);
   }
 
-  public static JavaResolveResult getResolveResult(PsiCall callExpression, PsiExpressionList argumentList) {
+  public static JavaResolveResult getResolveResult(final PsiCall callExpression, final PsiExpressionList argumentList) {
     if (callExpression instanceof PsiNewExpression) {
       final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)callExpression).getClassOrAnonymousClassReference();
-      final JavaResolveResult resolveResult = classReference != null ? classReference.advancedResolve(false) : null;
-      final PsiElement psiClass = resolveResult != null ? resolveResult.getElement() : null;
-      if (psiClass instanceof PsiClass) {
-        final JavaPsiFacade facade = JavaPsiFacade.getInstance(callExpression.getProject());
-        final JavaResolveResult constructor = facade.getResolveHelper()
-          .resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(), argumentList, callExpression);
-        return constructor.getElement() == null ? resolveResult : constructor;
+      if (classReference != null) {
+        return CachedValuesManager.getCachedValue(classReference, new CachedValueProvider<JavaResolveResult>() {
+          @Nullable
+          @Override
+          public Result<JavaResolveResult> compute() {
+            final JavaResolveResult resolveResult = classReference.advancedResolve(false);
+            final PsiElement psiClass = resolveResult.getElement();
+            JavaResolveResult constructor = JavaResolveResult.EMPTY;
+            if (psiClass != null) {
+              final JavaPsiFacade facade = JavaPsiFacade.getInstance(callExpression.getProject());
+              constructor = facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(), argumentList, callExpression);
+            }
+            return new Result<JavaResolveResult>(constructor.getElement() == null ? resolveResult : constructor, PsiModificationTracker.MODIFICATION_COUNT);
+          }
+        });
       }
       else {
         return JavaResolveResult.EMPTY;
       }
     }
     return callExpression.resolveMethodGenerics();
+  }
+
+  public static PsiSubstitutor chooseSiteSubstitutor(MethodCandidateInfo.CurrentCandidateProperties candidateProperties,
+                                                     JavaResolveResult resolveResult, PsiMethod method) {
+    return resolveResult instanceof MethodCandidateInfo && method != null && !method.isConstructor() //constructor reference was erased 
+           ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() 
+           : candidateProperties != null ? candidateProperties.getSubstitutor() : PsiSubstitutor.EMPTY;
+  }
+
+
+  public static boolean chooseVarargsMode(MethodCandidateInfo.CurrentCandidateProperties candidateProperties,
+                                          JavaResolveResult resolveResult) {
+    return resolveResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)resolveResult).isVarargs() ||
+           candidateProperties != null && candidateProperties.isVarargs();
   }
 
   public PsiSubstitutor retrieveNonPrimitiveEqualsBounds(Collection<InferenceVariable> variables) {
@@ -656,7 +677,7 @@ public class InferenceSession {
             return getTypeByMethod(context, argumentList, properties.getMethod(), properties.isVarargs(), properties.getSubstitutor());
           }
           final JavaResolveResult result = properties != null ? properties.getInfo() : ((PsiCall)gParent).resolveMethodGenerics();
-          final boolean varargs = properties != null && properties.isVarargs() || result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isVarargs();
+          final boolean varargs = chooseVarargsMode(properties, result);
           PsiSubstitutor substitutor = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(context, false,
                                                                                             new Computable<PsiSubstitutor>() {
                                                                                               @Override
@@ -1174,7 +1195,9 @@ public class InferenceSession {
       }
     }
     finally {
-      LambdaUtil.ourFunctionTypes.set(null);
+      if (formula instanceof InputOutputConstraintFormula) {
+        LambdaUtil.getFunctionalTypeMap().remove(((InputOutputConstraintFormula)formula).getExpression());
+      }
     }
     return true;
   }

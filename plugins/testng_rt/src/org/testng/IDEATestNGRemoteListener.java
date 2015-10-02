@@ -31,39 +31,45 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
 
   public synchronized void onStart(final ISuite suite) {
     if (suite != null) {
-      final List<ITestNGMethod> allMethods = suite.getAllMethods();
-      if (allMethods != null) {
-        int count = 0;
-        for (ITestNGMethod method : allMethods) {
-          if (method.isTest()) count += method.getInvocationCount();
+      try {
+        final List<ITestNGMethod> allMethods = suite.getAllMethods();
+        if (allMethods != null) {
+          int count = 0;
+          for (ITestNGMethod method : allMethods) {
+            if (method.isTest()) count += method.getInvocationCount();
+          }
+          myPrintStream.println("##teamcity[testCount count = \'" + count + "\']");
         }
-        myPrintStream.println("##teamcity[testCount count = \'" + count + "\']");
       }
+      catch (NoSuchMethodError ignore) {}
       myPrintStream.println("##teamcity[rootName name = '" + suite.getName() + "' location = 'file://" + suite.getXmlSuite().getFileName() + "']");
     }
   }
 
   public synchronized void onFinish(ISuite suite) {
-    if (suite != null && suite.getAllInvokedMethods().size() < suite.getAllMethods().size()) {
-      for (ITestNGMethod method : suite.getAllMethods()) {
-        if (method.isTest()) {
-          boolean found = false;
-          for (IInvokedMethod invokedMethod : suite.getAllInvokedMethods()) {
-            if (invokedMethod.getTestMethod() == method) {
-              found = true;
+    try {
+      if (suite != null && suite.getAllInvokedMethods().size() < suite.getAllMethods().size()) {
+        for (ITestNGMethod method : suite.getAllMethods()) {
+          if (method.isTest()) {
+            boolean found = false;
+            for (IInvokedMethod invokedMethod : suite.getAllInvokedMethods()) {
+              if (invokedMethod.getTestMethod() == method) {
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              final String fullEscapedMethodName = escapeName(getShortName(method.getTestClass().getName()) + "." + method.getMethodName());
+              myPrintStream.println("##teamcity[testStarted name=\'" + fullEscapedMethodName + "\']");
+              myPrintStream.println("##teamcity[testIgnored name=\'" + fullEscapedMethodName + "\']");
+              myPrintStream.println("##teamcity[testFinished name=\'" + fullEscapedMethodName + "\']");
               break;
             }
-          }
-          if (!found) {
-            final String fullEscapedMethodName = escapeName(getShortName(method.getTestClass().getName()) + "." + method.getMethodName());
-            myPrintStream.println("##teamcity[testStarted name=\'" + fullEscapedMethodName + "\']");
-            myPrintStream.println("##teamcity[testIgnored name=\'" + fullEscapedMethodName + "\']");
-            myPrintStream.println("##teamcity[testFinished name=\'" + fullEscapedMethodName + "\']");
-            break;
           }
         }
       }
     }
+    catch (NoSuchMethodError ignored) {}
     for (int i = myCurrentSuites.size() - 1; i >= 0; i--) {
       onSuiteFinish(myCurrentSuites.remove(i));
     }
