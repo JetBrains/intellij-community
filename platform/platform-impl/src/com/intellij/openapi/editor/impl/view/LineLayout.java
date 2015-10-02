@@ -107,7 +107,7 @@ class LineLayout {
     List<BidiRun> runs = createRuns(editor, chars, -1);
     for (BidiRun run : runs) {
       for (Chunk chunk : run.getChunks()) {
-        addFragments(chunk, run.isRtl(), chars, chunk.startOffset, chunk.endOffset, fontStyle, fontPreferences, fontRenderContext, null);
+        addFragments(run, chunk, chars, chunk.startOffset, chunk.endOffset, fontStyle, fontPreferences, fontRenderContext, null);
       }
     }
     return runs;
@@ -150,6 +150,18 @@ class LineLayout {
   }
   
   private static void addRuns(List<BidiRun> runs, char[] text, int start, int end) {
+    int afterLastTabPosition = start;
+    for (int i = start; i < end; i++) {
+      if (text[i] == '\t') {
+        addRunsNoTabs(runs, text, afterLastTabPosition, i);
+        afterLastTabPosition = i + 1;
+        addOrMergeRun(runs, new BidiRun((byte)0, i, i + 1));
+      }
+    }
+    addRunsNoTabs(runs, text, afterLastTabPosition, end);
+  }
+
+  private static void addRunsNoTabs(List<BidiRun> runs, char[] text, int start, int end) {
     if (start >= end) return;
     Bidi bidi = new Bidi(text, start, null, 0, end - start, Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT);
     int runCount = bidi.getRunCount();
@@ -170,7 +182,7 @@ class LineLayout {
     }
   }
   
-  private static void addFragments(Chunk chunk, boolean isRtl, char[] text, int start, int end, int fontStyle,
+  private static void addFragments(BidiRun run, Chunk chunk, char[] text, int start, int end, int fontStyle,
                                    FontPreferences fontPreferences, FontRenderContext fontRenderContext, 
                                    @Nullable TabFragment tabFragment) {
     assert start < end;
@@ -179,7 +191,7 @@ class LineLayout {
     for(int i = start; i < end; i++) {
       char c = text[i];
       if (c == '\t' && tabFragment != null) {
-        assert !isRtl;
+        assert run.level == 0;
         addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFont, fontRenderContext, false);
         chunk.fragments.add(tabFragment);
         currentFont = null;
@@ -188,13 +200,13 @@ class LineLayout {
       else {
         Font font = ComplementaryFontsRegistry.getFontAbleToDisplay(c, fontStyle, fontPreferences).getFont();
         if (!font.equals(currentFont)) {
-          addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFont, fontRenderContext, isRtl);
+          addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFont, fontRenderContext, run.isRtl());
           currentFont = font;
           currentIndex = i;
         }
       }
     }
-    addTextFragmentIfNeeded(chunk, text, currentIndex, end, currentFont, fontRenderContext, isRtl);
+    addTextFragmentIfNeeded(chunk, text, currentIndex, end, currentFont, fontRenderContext, run.isRtl());
     assert !chunk.fragments.isEmpty();
   }
   
@@ -342,7 +354,7 @@ class LineLayout {
       for (Chunk chunk : getChunks()) {
         if (chunk.endOffset <= start) continue;
         if (chunk.startOffset >= end) break;
-        subChunks.add(chunk.subChunk(view, lineStartOffset, isRtl(), start, end, quick));
+        subChunks.add(chunk.subChunk(view, this, lineStartOffset, start, end, quick));
       }
       subRun.chunks = subChunks.toArray(new Chunk[subChunks.size()]);
       return subRun;
@@ -359,7 +371,7 @@ class LineLayout {
       this.endOffset = endOffset;
     }
 
-    private void ensureLayout(@NotNull EditorView view, int lineStartOffset, boolean isRtl) {
+    private void ensureLayout(@NotNull EditorView view, BidiRun run, int lineStartOffset) {
       if (!fragments.isEmpty()) return;
       int start = lineStartOffset + startOffset;
       int end = lineStartOffset + endOffset;
@@ -367,7 +379,7 @@ class LineLayout {
       FontPreferences fontPreferences = view.getEditor().getColorsScheme().getFontPreferences();
       char[] chars = CharArrayUtil.fromSequence(view.getEditor().getDocument().getImmutableCharSequence(), start, end);
       while (!it.atEnd()) {
-        addFragments(this, isRtl, chars, it.getStartOffset() - start, it.getEndOffset() - start,
+        addFragments(run, this, chars, it.getStartOffset() - start, it.getEndOffset() - start,
                      it.getMergedAttributes().getFontType(), fontPreferences, view.getFontRenderContext(), view.getTabFragment());
         it.advance();
       }
@@ -375,7 +387,7 @@ class LineLayout {
       assert !fragments.isEmpty();
     }
     
-    private Chunk subChunk(EditorView view, int lineStartOffset, boolean isRtl, int targetStartOffset, int targetEndOffset, boolean quick) {
+    private Chunk subChunk(EditorView view, BidiRun run, int lineStartOffset, int targetStartOffset, int targetEndOffset, boolean quick) {
       assert targetStartOffset < endOffset;
       assert targetEndOffset > startOffset;
       int start = Math.max(startOffset, targetStartOffset);
@@ -390,7 +402,7 @@ class LineLayout {
       if (start == startOffset && end == this.endOffset) {
         return this;
       }
-      ensureLayout(view, lineStartOffset, isRtl);
+      ensureLayout(view, run, lineStartOffset);
       Chunk chunk = new Chunk(start, end);
       int offset = startOffset;
       for (LineFragment fragment : fragments) {
@@ -434,7 +446,7 @@ class LineLayout {
       if (myChunkIndex >= chunks.length) return false;
       Chunk chunk = chunks[run.isRtl() ? chunks.length - 1 - myChunkIndex : myChunkIndex];
       if (myView != null) {
-        chunk.ensureLayout(myView, myLineStartOffset, run.isRtl());
+        chunk.ensureLayout(myView, run, myLineStartOffset);
       }
       return myFragmentIndex < chunk.fragments.size();
     }
