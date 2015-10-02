@@ -335,6 +335,7 @@ public class LocalVariablesUtil {
 
     @Override
     public void visitLocalVariable(PsiLocalVariable variable) {
+      super.visitLocalVariable(variable);
       if (!myReached) {
         appendName(variable.getName());
         myCurrentSlotIndex += getTypeSlotSize(variable.getType());
