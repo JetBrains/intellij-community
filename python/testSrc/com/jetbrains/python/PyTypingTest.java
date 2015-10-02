@@ -352,6 +352,19 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n");
   }
 
+  // PY-16353
+  public void testAssignedType() {
+    doTest("Iterable[int]",
+           "from typing import Iterable\n" +
+           "\n" +
+           "IntIterable = Iterable[int]\n" +
+           "\n" +
+           "def foo() -> IntIterable:\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = foo()\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
