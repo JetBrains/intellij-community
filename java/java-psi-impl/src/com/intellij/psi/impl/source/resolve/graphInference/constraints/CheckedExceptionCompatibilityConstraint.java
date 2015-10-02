@@ -157,7 +157,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
   }
 
   @Override
-  protected PsiExpression getExpression() {
+  public PsiExpression getExpression() {
     return myExpression;
   }
 
