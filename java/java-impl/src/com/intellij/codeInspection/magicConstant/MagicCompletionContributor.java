@@ -45,7 +45,7 @@ public class MagicCompletionContributor extends CompletionContributor {
   private static final ElementPattern<PsiElement> IN_METHOD_CALL_ARGUMENT =
     psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiExpressionList.class).withParent(PsiCall.class)));
   private static final ElementPattern<PsiElement> IN_BINARY_COMPARISON =
-    psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiBinaryExpression.class)));
+    psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiPolyadicExpression.class)));
   private static final ElementPattern<PsiElement> IN_ASSIGNMENT =
     psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiAssignmentExpression.class)));
   private static final ElementPattern<PsiElement> IN_RETURN =
@@ -129,17 +129,13 @@ public class MagicCompletionContributor extends CompletionContributor {
       }
     }
     else if (IN_BINARY_COMPARISON.accepts(pos)) {
-      PsiBinaryExpression exp = PsiTreeUtil.getParentOfType(pos, PsiBinaryExpression.class);
+      PsiPolyadicExpression exp = PsiTreeUtil.getParentOfType(pos, PsiPolyadicExpression.class);
       if (exp != null && (exp.getOperationTokenType() == JavaTokenType.EQEQ || exp.getOperationTokenType() == JavaTokenType.NE)) {
-        PsiExpression l = exp.getLOperand();
-        PsiModifierListOwner resolved = resolveExpression(l);
-        if (resolved != null) {
-          result.add(Pair.create(resolved, l.getType()));
-        }
-        PsiExpression r = exp.getROperand();
-        resolved = resolveExpression(r);
-        if (r != null && resolved != null) {
-          result.add(Pair.create(resolved, r.getType()));
+        for (PsiExpression operand : exp.getOperands()) {
+          PsiModifierListOwner resolved = resolveExpression(operand);
+          if (resolved != null) {
+            result.add(Pair.create(resolved, operand.getType()));
+          }
         }
       }
     }
