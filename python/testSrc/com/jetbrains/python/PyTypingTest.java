@@ -151,7 +151,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testGenericType() {
-    doTest("A",
+    doTest("TypeVar('A')",
            "from typing import TypeVar\n" +
            "\n" +
            "T = TypeVar('A')\n" +
@@ -161,7 +161,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testGenericBoundedType() {
-    doTest("T <= int | str",
+    doTest("TypeVar('T', int, str)",
            "from typing import TypeVar\n" +
            "\n" +
            "T = TypeVar('T', int, str)\n" +
