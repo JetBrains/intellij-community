@@ -189,10 +189,10 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
     return b;
   }
 
-  static class LayoutManagerDelegate implements LayoutManager {
+  protected static class LayoutManagerDelegate implements LayoutManager {
     protected final LayoutManager myDelegate;
 
-    LayoutManagerDelegate(LayoutManager delegate) {
+    public LayoutManagerDelegate(LayoutManager delegate) {
       myDelegate = delegate;
     }
 
