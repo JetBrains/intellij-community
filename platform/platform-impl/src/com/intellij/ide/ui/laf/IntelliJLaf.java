@@ -73,6 +73,7 @@ public class IntelliJLaf extends DarculaLaf {
     defaults.put("Menu.font", menuFont);
     defaults.put("MenuItem.font", menuFont);
     defaults.put("MenuItem.acceleratorFont", menuFont);
+    defaults.put("PasswordField.font", defaults.getFont("TextField.font"));
   }
 
   public static boolean isGraphite() {
