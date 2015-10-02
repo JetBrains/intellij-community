@@ -47,7 +47,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
       UIUtil.invokeAndWaitIfNeeded(Runnable { ApplicationManager.getApplication()!!.saveSettings() })
       try {
         writeAndDeleteProhibited = true
-        ProgressManager.getInstance().run(object : Task.Modal(project, IcsBundle.message("task.sync.title"), true) {
+        ProgressManager.getInstance().run(object : Task.Modal(project, icsMessage("task.sync.title"), true) {
           override fun run(indicator: ProgressIndicator) {
             indicator.isIndeterminate = true
 

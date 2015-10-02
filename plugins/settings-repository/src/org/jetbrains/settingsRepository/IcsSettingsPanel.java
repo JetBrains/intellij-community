@@ -38,10 +38,10 @@ public class IcsSettingsPanel extends DialogWrapper {
   public IcsSettingsPanel(@Nullable Project project) {
     super(project, true);
 
-    urlTextField.setText(SettingsRepositoryPackage.getIcsManager().getRepositoryManager().getUpstream());
+    urlTextField.setText(IcsManagerKt.getIcsManager().getRepositoryManager().getUpstream());
     urlTextField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
 
-    syncActions = SettingsRepositoryPackage.createMergeActions(project, urlTextField, getRootPane(), new Function0<Unit>() {
+    syncActions = UpstreamEditorKt.createMergeActions(project, urlTextField, getRootPane(), new Function0<Unit>() {
       @Override
       public Unit invoke() {
         doOKAction();
@@ -52,13 +52,13 @@ public class IcsSettingsPanel extends DialogWrapper {
     urlTextField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        SettingsRepositoryPackage.updateSyncButtonState(StringUtil.nullize(urlTextField.getText()), syncActions);
+        UpstreamEditorKt.updateSyncButtonState(StringUtil.nullize(urlTextField.getText()), syncActions);
       }
     });
 
-    SettingsRepositoryPackage.updateSyncButtonState(StringUtil.nullize(urlTextField.getText()), syncActions);
+    UpstreamEditorKt.updateSyncButtonState(StringUtil.nullize(urlTextField.getText()), syncActions);
 
-    setTitle(IcsBundle.message("settings.panel.title"));
+    setTitle(IcsBundleKt.icsMessage("settings.panel.title"));
     setResizable(false);
     init();
   }
