@@ -258,7 +258,9 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
     @Override
     public void render(SimpleColoredComponent component, boolean selected) {
       component.append(DEFAULT_JRE_TEXT);
-      component.append(myDefaultJreSelector.getDescriptionString(), SimpleTextAttributes.GRAY_ATTRIBUTES);
+      if (myDefaultJreSelector != null) {
+        component.append(myDefaultJreSelector.getDescriptionString(), SimpleTextAttributes.GRAY_ATTRIBUTES);
+      }
     }
 
     @Override
