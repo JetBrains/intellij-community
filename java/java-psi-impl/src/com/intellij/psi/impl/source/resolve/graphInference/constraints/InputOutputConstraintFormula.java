@@ -30,7 +30,7 @@ import java.util.*;
  */
 public abstract class InputOutputConstraintFormula implements ConstraintFormula {
 
-  protected abstract PsiExpression getExpression();
+  public abstract PsiExpression getExpression();
   protected abstract PsiType getT();
   protected abstract void setT(PsiType t);
   protected abstract InputOutputConstraintFormula createSelfConstraint(PsiType type, PsiExpression expression);
