@@ -23,7 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.scratch.ScratchRootType;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
@@ -55,6 +55,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
@@ -1832,8 +1833,7 @@ public class PyUtil {
   }
 
   public static boolean isInScratchFile(@NotNull PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    return file != null && ScratchRootType.getInstance().isScratchFile(file.getVirtualFile());
+    return ScratchFileService.isInScratchRoot(PsiUtilCore.getVirtualFile(element));
   }
 
   /**
