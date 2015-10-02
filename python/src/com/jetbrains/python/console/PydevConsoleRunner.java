@@ -67,6 +67,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.remote.RemoteProcess;
+import com.intellij.remote.Tunnelable;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -87,10 +88,7 @@ import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteProcessHandlerBase;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
-import com.jetbrains.python.run.PyRemoteProcessStarterManagerUtil;
-import com.jetbrains.python.run.PythonCommandLineState;
-import com.jetbrains.python.run.PythonRunParams;
-import com.jetbrains.python.run.PythonTracebackFilter;
+import com.jetbrains.python.run.*;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -481,10 +479,11 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     try {
       PyRemotePathMapper pathMapper = manager.setupMappings(getProject(), data, null);
 
-      //TODO
-      //commandLine.withExePath(myRemoteCredentials.getFullInterpreterPath());
+      commandLine.withExePath(data.getInterpreterPath()); //TODO: set getFullInterpreterPath() instead
 
       myCommandLine = commandLine.getCommandLineString();
+
+      commandLine.putUserData(PyRemoteProcessStarter.OPEN_FOR_INCOMING_CONNECTION, true);
 
       myRemoteProcessHandlerBase = PyRemoteProcessStarterManagerUtil
         .getManager(data).startRemoteProcess(getProject(), commandLine, manager, data,
@@ -494,15 +493,17 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
       Couple<Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);
 
-      //remoteProcess.addLocalTunnel(myPorts[0], myRemoteCredentials.getHost(), remotePorts.first);
-      remoteProcess.addRemoteTunnel(remotePorts.second, "localhost", myPorts[1]);
-
+      if (remoteProcess instanceof Tunnelable) {
+        Tunnelable tunnelableProcess = (Tunnelable) remoteProcess;
+        tunnelableProcess.addLocalTunnel(myPorts[0], remotePorts.first);
+        tunnelableProcess.addRemoteTunnel(remotePorts.second, "localhost", myPorts[1]);
+      }
 
       myPydevConsoleCommunication = new PydevRemoteConsoleCommunication(getProject(), myPorts[0], remoteProcess, myPorts[1]);
       return remoteProcess;
     }
     catch (Exception e) {
-      throw new ExecutionException(e.getMessage());
+      throw new ExecutionException(e.getMessage(), e);
     }
   }
 
