@@ -22,10 +22,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.options.SchemeFactory;
-import com.intellij.openapi.options.SchemeImportException;
-import com.intellij.openapi.options.SchemeImporter;
-import com.intellij.openapi.options.SchemeImporterEP;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
@@ -124,6 +121,19 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
         @Override
         public void actionPerformed(@NotNull final ActionEvent e) {
           chooseAndImport();
+        }
+      });
+    }
+
+    if (SchemeExporterEP.getExtensions(CodeStyleScheme.class).isEmpty()) {
+      myExportButton.setVisible(false);
+    }
+    else {
+      myExportButton.setVisible(true);
+      myExportButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          exportSelectedScheme();
         }
       });
     }
@@ -453,4 +463,12 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
     }
   }
 
+  private void exportSelectedScheme() {
+    new CodeStyleSchemeExporterUI(myExportButton, getSelectedScheme(), new CodeStyleSchemeExporterUI.StatusCallback() {
+      @Override
+      public void showMessage(@NotNull String message, @NotNull MessageType messageType) {
+        showStatus(myExportButton, message, messageType);
+      }
+    }).export();
+  }
 }
