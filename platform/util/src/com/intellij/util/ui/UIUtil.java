@@ -3084,13 +3084,24 @@ public class UIUtil {
 
     // Evaluate the value depending on our current theme
     if (lcdContrastValue == 0) {
-      lcdContrastValue = UIUtil.isUnderDarcula() ? 100 : 250;
+      if (SystemInfo.isMacIntel64) {
+        lcdContrastValue = UIUtil.isUnderDarcula() ? 100 : 250;
+      } else {
+        Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
+
+        if (map == null) {
+          lcdContrastValue = 140;
+        } else {
+          lcdContrastValue = ((Integer)map.get(RenderingHints.KEY_TEXT_LCD_CONTRAST));
+        }
+      }
     }
 
     if (lcdContrastValue < 100 || lcdContrastValue > 250) {
       // the default value
       lcdContrastValue = 140;
     }
+
     return lcdContrastValue;
   }
 
