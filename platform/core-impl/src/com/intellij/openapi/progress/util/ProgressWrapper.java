@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.progress.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 import com.intellij.openapi.progress.WrappedProgressIndicator;
@@ -30,8 +31,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ProgressWrapper extends AbstractProgressIndicatorBase implements WrappedProgressIndicator, StandardProgressIndicator {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressWrapper");
+
   private final ProgressIndicator myOriginal;
   private final boolean myCheckCanceledForMe;
+  private final int nested;
 
   protected ProgressWrapper(@NotNull ProgressIndicator original) {
     this(original, false);
@@ -40,8 +44,11 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
   protected ProgressWrapper(@NotNull ProgressIndicator original, boolean checkCanceledForMe) {
     myOriginal = original;
     myCheckCanceledForMe = checkCanceledForMe;
+    nested = 1 + (original instanceof ProgressWrapper ? ((ProgressWrapper)original).nested : -1);
+    if (nested > 50) {
+      LOG.error("Too many wrapped indicators");
+    }
   }
-
 
   @Override
   public final void cancel() {
