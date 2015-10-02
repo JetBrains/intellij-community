@@ -88,7 +88,7 @@ class IcsManager(dir: File) {
 
   private val commitAlarm = SingleAlarm(object : Runnable {
     override fun run() {
-      ProgressManager.getInstance().run(object : Task.Backgroundable(null, IcsBundle.message("task.commit.title")) {
+      ProgressManager.getInstance().run(object : Task.Backgroundable(null, icsMessage("task.commit.title")) {
         override fun run(indicator: ProgressIndicator) {
           try {
             repositoryManager.commit(indicator, fixStateIfCannotCommit = false)

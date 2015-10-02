@@ -40,9 +40,9 @@ import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import org.jetbrains.settingsRepository.CommitToIcsDialog
-import org.jetbrains.settingsRepository.IcsBundle
 import org.jetbrains.settingsRepository.ProjectId
 import org.jetbrains.settingsRepository.icsManager
+import org.jetbrains.settingsRepository.icsMessage
 import java.util.*
 
 class CommitToIcsAction : CommonCheckinFilesAction() {
@@ -67,7 +67,7 @@ class CommitToIcsAction : CommonCheckinFilesAction() {
     }
   }
 
-  override fun getActionName(dataContext: VcsContext) = IcsBundle.message("action.CommitToIcs.text")
+  override fun getActionName(dataContext: VcsContext) = icsMessage("action.CommitToIcs.text")
 
   override fun isApplicableRoot(file: VirtualFile, status: FileStatus, dataContext: VcsContext): Boolean {
     val project = dataContext.project
