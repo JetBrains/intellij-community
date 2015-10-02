@@ -1,32 +1,22 @@
 package com.intellij.testFramework
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
-import java.io.IOException
-import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.SimpleFileVisitor
-import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 
 fun Path.exists(): Boolean = Files.exists(this)
 
 fun Path.createDirectories(): Path = Files.createDirectories(this)
 
-fun Path.deleteRecursively(): Path = if (exists()) Files.walkFileTree(this, object : SimpleFileVisitor<Path>() {
-  override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-    Files.delete(file)
-    return FileVisitResult.CONTINUE
-  }
-
-  override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
-    Files.delete(dir)
-    return FileVisitResult.CONTINUE
-  }
-}) else this
+fun Path.deleteRecursively(): Path {
+  FileUtil.delete(toFile())
+  return this
+}
 
 fun Path.getLastModifiedTime(): FileTime? = Files.getLastModifiedTime(this)
 
