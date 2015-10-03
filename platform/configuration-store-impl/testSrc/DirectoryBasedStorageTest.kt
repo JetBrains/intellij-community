@@ -44,7 +44,7 @@ private fun StateStorageBase<*>.setStateAndSave(componentName: String, state: St
   externalizationSession.save()
 }
 
-@Bombed(year = 2015, month = Calendar.SEPTEMBER, day = 30)
+@Bombed(year = 2015, month = Calendar.OCTOBER, day = 10)
 class DirectoryBasedStorageTest {
   companion object {
     @ClassRule val projectRule = ProjectRule()
