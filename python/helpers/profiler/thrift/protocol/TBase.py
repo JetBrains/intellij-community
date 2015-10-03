@@ -16,10 +16,12 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+from __future__ import absolute_import
 
 from thrift.Thrift import *
-from thrift.protocol import TBinaryProtocol
 from thrift.transport import TTransport
+
+from thrift.protocol import TBinaryProtocol
 
 try:
   from thrift.protocol import fastbinary
