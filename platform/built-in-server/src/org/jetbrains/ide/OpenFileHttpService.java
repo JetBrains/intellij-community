@@ -160,7 +160,8 @@ class OpenFileHttpService extends RestService {
       }
     }
 
-    new OpenFileDescriptor(project, file, request.line, request.column).navigate(true);
+    // OpenFileDescriptor line and column number are 0-based.
+    new OpenFileDescriptor(project, file, Math.max(request.line - 1, 0), Math.max(request.column - 1, 0)).navigate(true);
     if (request.focused) {
       com.intellij.ide.impl.ProjectUtil.focusProjectWindow(project, true);
     }
@@ -306,7 +307,9 @@ class OpenFileHttpService extends RestService {
 
   static final class OpenFileRequest {
     public String file;
+    // The line number of the file (1-based)
     public int line;
+    // The column number of the file (1-based)
     public int column;
 
     public boolean focused = true;
