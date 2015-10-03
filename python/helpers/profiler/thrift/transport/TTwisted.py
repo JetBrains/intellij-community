@@ -16,19 +16,18 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+from __future__ import absolute_import
 
 import struct
 from cStringIO import StringIO
-
-from zope.interface import implements, Interface, Attribute
+from thrift.transport import TTransport
+from twisted.internet import defer
 from twisted.internet.protocol import ServerFactory, ClientFactory, \
     connectionDone
-from twisted.internet import defer
 from twisted.internet.threads import deferToThread
 from twisted.protocols import basic
 from twisted.web import server, resource, http
-
-from thrift.transport import TTransport
+from zope.interface import implements, Interface, Attribute
 
 
 class TMessageSenderTransport(TTransport.TTransportBase):
