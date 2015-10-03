@@ -23,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
 import com.intellij.util.xmlb.annotations.*
 import com.intellij.util.xmlb.annotations.AbstractCollection
-import gnu.trove.THashMap
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
@@ -89,7 +88,7 @@ internal class XmlSerializerTest {
   }
 
 
-  private class BeanWithPublicFieldsDescendant(var NEW_S: String = "foo") : BeanWithPublicFields()
+  private class BeanWithPublicFieldsDescendant(var NEW_S: String? = "foo") : BeanWithPublicFields()
 
   @Test fun publicFieldSerializationWithInheritance() {
     val bean = BeanWithPublicFieldsDescendant()
@@ -512,7 +511,7 @@ internal class XmlSerializerTest {
 
     val bean = BeanWithPolymorphicArray()
 
-    doSerializerTest("<bean>\n" + "  <option name=\"v\">\n" + "    <array />\n" + "  </option>\n" + "</bean>", bean)
+    doSerializerTest("<bean>\n  <option name=\"v\">\n    <array />\n  </option>\n</bean>", bean)
 
     bean.v = arrayOf(BeanWithPublicFields(), BeanWithPublicFieldsDescendant(), BeanWithPublicFields())
 
