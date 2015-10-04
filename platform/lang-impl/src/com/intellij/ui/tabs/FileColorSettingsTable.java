@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,10 @@ import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -308,7 +311,7 @@ public abstract class FileColorSettingsTable extends JBTable {
     @Override
     Icon getIcon(FileColorConfiguration configuration) {
       Color color = myManager.getColor(configuration.getColorName());
-      return color == null ? EmptyIcon.ICON_16 : new ColorIcon(16, color, true);
+      return color == null ? EmptyIcon.ICON_16 : new ColorIcon(16, 13, color, true);
     }
 
     @Override
