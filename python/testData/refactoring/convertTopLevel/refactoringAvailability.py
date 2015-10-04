@@ -31,3 +31,8 @@ class Base:
 class Subclass(Base):
     def overridden_method(self):
         super(Subclass, self).overridden_method()
+        
+
+class MyString(str):
+    def upper(self):
+        pass

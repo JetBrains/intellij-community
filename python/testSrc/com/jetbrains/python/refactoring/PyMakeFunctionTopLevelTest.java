@@ -97,8 +97,12 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     moveByText("class_method");
     assertFalse(isActionEnabled());
     
-    // Super method
+    // Overridden method
     moveByText("overridden_method");
+    assertFalse(isActionEnabled());
+
+    // Overriding method
+    moveByText("upper");
     assertFalse(isActionEnabled());
     
     moveByText("property");
