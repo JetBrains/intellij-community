@@ -40,6 +40,10 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
+    if (!(c.getBorder() instanceof MacIntelliJButtonBorder)) {
+      super.paint(g, c);
+      return;
+    }
     int w = c.getWidth();
     int h = c.getHeight();
     if (isHelpButton(c)) {
@@ -145,7 +149,10 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   @Override
   public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
-    return new Dimension(size.width + 16, 27);
+    if (c.getBorder() instanceof MacIntelliJButtonBorder) {
+      return new Dimension(size.width + 16, 27);
+    }
+    return size;
   }
 
   @Override
