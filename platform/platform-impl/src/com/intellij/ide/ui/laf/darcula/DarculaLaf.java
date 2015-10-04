@@ -20,6 +20,8 @@ import com.intellij.ide.ui.laf.DarculaMetalTheme;
 import com.intellij.ide.ui.laf.IdeaLaf;
 import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -423,6 +425,10 @@ public class DarculaLaf extends BasicLookAndFeel {
       base.initialize();
     } catch (Exception ignore) {}
     myDisposable = Disposer.newDisposable();
+    Application application = ApplicationManager.getApplication();
+    if (application != null) {
+      Disposer.register(application, myDisposable);
+    }
     myMnemonicAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myDisposable);
     IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
       @Override
