@@ -13,5 +13,6 @@
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="projectModel-impl" />
     <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="bootstrap" />
   </component>
 </module>
