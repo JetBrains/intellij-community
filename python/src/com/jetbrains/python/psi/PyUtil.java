@@ -296,64 +296,6 @@ public class PyUtil {
   }
 
   /**
-   * Removes an element from a a comma-separated list in a PSI tree. E.g. can turn "foo, bar, baz" into "foo, baz",
-   * removing commas as needed. It removes a trailing comma if it results from deletion.
-   *
-   * @param item what to remove. Its parent is considered the list, and commas must be its peers.
-   */
-  public static void removeListNode(PsiElement item) {
-    PsiElement parent = item.getParent();
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(parent)) {
-      return;
-    }
-    // remove comma after the item
-    ASTNode binder = parent.getNode();
-    assert binder != null : "parent node is null, ensureWritable() lied";
-    boolean got_comma_after = eraseWhitespaceAndComma(binder, item, false);
-    if (!got_comma_after) {
-      // there was not a comma after the item; remove a comma before the item
-      eraseWhitespaceAndComma(binder, item, true);
-    }
-    // finally
-    item.delete();
-  }
-
-  /**
-   * Removes whitespace and comma(s) that are siblings of the item, up to the first non-whitespace and non-comma.
-   *
-   * @param parent_node node of the parent of item.
-   * @param item        starting point; we erase left or right of it, but not it.
-   * @param backwards   true to erase prev siblings, false to erase next siblings.
-   * @return true       if a comma was found and removed.
-   */
-  public static boolean eraseWhitespaceAndComma(ASTNode parent_node, PsiElement item, boolean backwards) {
-    // we operate on AST, PSI won't let us delete whitespace easily.
-    boolean is_comma;
-    boolean got_comma = false;
-    ASTNode current = item.getNode();
-    ASTNode candidate;
-    boolean have_skipped_the_item = false;
-    while (current != null) {
-      candidate = current;
-      current = backwards ? current.getTreePrev() : current.getTreeNext();
-      if (have_skipped_the_item) {
-        is_comma = ",".equals(candidate.getText());
-        got_comma |= is_comma;
-        if (is_comma || candidate.getElementType() == TokenType.WHITE_SPACE) {
-          parent_node.removeChild(candidate);
-        }
-        else {
-          break;
-        }
-      }
-      else {
-        have_skipped_the_item = true;
-      }
-    }
-    return got_comma;
-  }
-
-  /**
    * Collects superclasses of a class all the way up the inheritance chain. The order is <i>not</i> necessarily the MRO.
    */
   @NotNull
@@ -597,19 +539,6 @@ public class PyUtil {
       }
     }
     return AccessDirection.READ;
-  }
-
-  public static boolean deleteParameter(@NotNull final PyFunction problemFunction, int index) {
-    final PyParameterList parameterList = problemFunction.getParameterList();
-    final PyParameter[] parameters = parameterList.getParameters();
-    if (parameters.length <= 0) return false;
-
-    PsiElement first = parameters[index];
-    PsiElement last = parameters.length > index + 1 ? parameters[index + 1] : parameterList.getLastChild();
-    PsiElement prevSibling = last.getPrevSibling() != null ? last.getPrevSibling() : parameters[index];
-
-    parameterList.deleteChildRange(first, prevSibling);
-    return true;
   }
 
   public static void removeQualifier(@NotNull final PyReferenceExpression element) {
@@ -1264,10 +1193,10 @@ public class PyUtil {
 
   public static class MethodFlags {
 
-    private boolean myIsStaticMethod;
-    private boolean myIsMetaclassMethod;
-    private boolean myIsSpecialMetaclassMethod;
-    private boolean myIsClassMethod;
+    private final boolean myIsStaticMethod;
+    private final boolean myIsMetaclassMethod;
+    private final boolean myIsSpecialMetaclassMethod;
+    private final boolean myIsClassMethod;
 
     /**
      * @return true iff the method belongs to a metaclass (an ancestor of 'type').
