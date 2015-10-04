@@ -30,7 +30,6 @@ import com.intellij.openapi.components.store.ReadOnlyModificationException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pair as JBPair
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
@@ -51,6 +50,7 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
+import com.intellij.openapi.util.Pair as JBPair
 
 internal val LOG = Logger.getInstance(ComponentStoreImpl::class.java)
 
@@ -438,15 +438,6 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   companion object {
-    private fun findNonDeprecated(storages: Array<Storage>): Storage {
-      for (storage in storages) {
-        if (!storage.deprecated) {
-          return storage
-        }
-      }
-      throw AssertionError("All storages are deprecated")
-    }
-
     protected fun executeSave(session: SaveSession, readonlyFiles: MutableList<JBPair<SaveSession, VirtualFile>>, previousErrors: MutableList<Throwable>?): MutableList<Throwable>? {
       var errors = previousErrors
       try {
@@ -466,6 +457,15 @@ abstract class ComponentStoreImpl : IComponentStore {
       return errors
     }
   }
+}
+
+private fun findNonDeprecated(storages: Array<Storage>): Storage {
+  for (storage in storages) {
+    if (!storage.deprecated) {
+      return storage
+    }
+  }
+  throw AssertionError("All storages are deprecated")
 }
 
 enum class StateLoadPolicy {
