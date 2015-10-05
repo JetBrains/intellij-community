@@ -75,11 +75,6 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public VcsLogUiProperties getUiProperties() {
-    return myUiProperties;
-  }
-
-  @NotNull
   protected Collection<VcsRoot> getVcsRoots() {
     return Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots());
   }
