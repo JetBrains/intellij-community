@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.refactoring.makeFunctionTopLevel;
 
+import com.google.common.collect.Iterables;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
@@ -25,11 +26,14 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.refactoring.NameSuggesterUtil;
+import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -96,8 +100,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
           // Class().method() -> inst = Class(); method(inst.foo, inst.bar)
           else if (!newParamNames.isEmpty()) {
             final PyStatement anchor = PsiTreeUtil.getParentOfType(callExpr, PyStatement.class);
-            // TODO meaningful unique target name
-            final String targetName = "foo";
+            final String targetName = selectUniqueName(usageElem);
             final String assignmentText = targetName + " = " + instanceExpr.getText();
             final PyAssignmentStatement assignment = myGenerator.createFromText(LanguageLevel.forElement(callExpr),
                                                                                 PyAssignmentStatement.class,
@@ -127,6 +130,33 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
         removeQualifier((PyReferenceExpression)usageElem);
       }
     }
+  }
+
+  @NotNull
+  private String selectUniqueName(@NotNull PsiElement anchor) {
+    final PyClass pyClass = myFunction.getContainingClass();
+    assert pyClass != null;
+    final Collection<String> suggestions;
+    if (pyClass.getName() != null) {
+      suggestions = NameSuggesterUtil.generateNamesByType(pyClass.getName());
+    }
+    else {
+      suggestions = Collections.singleton("inst");
+    }
+    for (String name : suggestions) {
+      if (!(IntroduceValidator.isDefinedInScope(name, anchor) || PyNames.isReserved(name))) {
+        return name;
+      }
+    }
+    final String shortestName = Iterables.getLast(suggestions);
+    int counter = 1;
+    String name = shortestName;
+    while (IntroduceValidator.isDefinedInScope(name, anchor) || PyNames.isReserved(name)) {
+      name = shortestName + counter;
+      counter++;
+    }
+    //noinspection ConstantConditions
+    return name;
   }
 
   private boolean resolvesToClass(PyExpression qualifier) {

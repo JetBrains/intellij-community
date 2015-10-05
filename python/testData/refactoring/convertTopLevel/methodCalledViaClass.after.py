@@ -6,5 +6,5 @@ def method(foo, bar, x):
     print(foo, bar, x)
 
 
-foo = C()
-method(foo.foo, foo.bar, 42)
+c = C()
+method(c.foo, c.bar, 42)
