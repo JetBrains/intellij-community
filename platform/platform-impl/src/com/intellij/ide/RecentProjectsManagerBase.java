@@ -406,20 +406,15 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       AnAction manageAction = new DumbAwareAction("Manage projects...") {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          Disposable disposable = new Disposable() {
-            @Override
-            public void dispose() {
-            }
-          };
+          Disposable disposable = Disposer.newDisposable();
           NewRecentProjectPanel panel = new NewRecentProjectPanel(disposable);
           JList list = UIUtil.findComponentOfType(panel, JList.class);
           JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)
             .setTitle("Recent Projects")
             .setFocusable(true)
-
             .setMovable(true)
             .createPopup();
-          Disposer.register(disposable, popup);
+          Disposer.register(popup, disposable);
           popup.showCenteredInCurrentWindow(e.getProject());
           //IdeFocusManager.getGlobalInstance().requestFocus(list, true);
         }
