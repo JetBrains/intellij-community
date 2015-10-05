@@ -259,7 +259,7 @@ class EditVariableDialog extends DialogWrapper {
       Variable variable = myVariables.get(row);
       if (col == 0) {
         String varName = (String) aValue;
-        if (TemplateImplUtil.parseVariables("$" + varName + "$").containsKey(varName)) {
+        if (TemplateImplUtil.isValidVariableName(varName)) {
           Variable newVar = new Variable(varName, variable.getExpressionString(), variable.getDefaultValueString(),
                                          variable.isAlwaysStopAt());
           myVariables.set(row, newVar);
