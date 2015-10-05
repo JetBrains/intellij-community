@@ -1,81 +1,78 @@
 <root>
-  <item name="org.apache.commons.collections.ExtendedProperties ExtendedProperties(java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties ExtendedProperties(java.lang.String, java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties ExtendedProperties(java.lang.String, java.lang.String) 1">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties boolean access$000(java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties boolean endsWithSlash(java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties boolean isInitialized()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties java.lang.String escape(java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties java.lang.String escape(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties java.lang.String getInclude()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties java.lang.String interpolate(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties java.lang.String interpolateHelper(java.lang.String, java.util.List) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties java.lang.String interpolateHelper(java.lang.String, java.util.List)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
-    </annotation>
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties java.lang.String testBoolean(java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties java.lang.String testBoolean(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties java.lang.String unescape(java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties java.lang.String unescape(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties org.apache.commons.collections.ExtendedProperties convertProperties(java.util.Properties) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties org.apache.commons.collections.ExtendedProperties subset(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties void combine(org.apache.commons.collections.ExtendedProperties) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties void save(java.io.OutputStream, java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties void save(java.io.OutputStream, java.lang.String) 1">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties void setInclude(java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties.PropertiesReader java.lang.String readProperty()">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.commons.collections.ExtendedProperties.PropertiesTokenizer java.lang.String nextToken()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
+    <item name='org.apache.commons.collections.ExtendedProperties ExtendedProperties(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties ExtendedProperties(java.lang.String, java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties ExtendedProperties(java.lang.String, java.lang.String) 1'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties boolean endsWithSlash(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties boolean isInitialized()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties java.lang.String escape(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties java.lang.String escape(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties java.lang.String getInclude()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties java.lang.String interpolate(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties java.lang.String interpolateHelper(java.lang.String, java.util.List)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties java.lang.String interpolateHelper(java.lang.String, java.util.List) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties java.lang.String testBoolean(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties java.lang.String testBoolean(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties java.lang.String unescape(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties java.lang.String unescape(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties org.apache.commons.collections.ExtendedProperties convertProperties(java.util.Properties) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties org.apache.commons.collections.ExtendedProperties subset(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties void combine(org.apache.commons.collections.ExtendedProperties) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties void save(java.io.OutputStream, java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties void save(java.io.OutputStream, java.lang.String) 1'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties void setInclude(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties.PropertiesReader java.lang.String readProperty()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.ExtendedProperties.PropertiesTokenizer java.lang.String nextToken()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
 </root>

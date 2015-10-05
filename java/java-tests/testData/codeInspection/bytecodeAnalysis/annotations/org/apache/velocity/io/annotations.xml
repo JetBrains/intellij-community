@@ -1,60 +1,57 @@
 <root>
-  <item name="org.apache.velocity.io.UnicodeInputStream boolean isSkipBOM()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.velocity.io.UnicodeInputStream java.lang.String getEncodingFromStream()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.velocity.io.UnicodeInputStream java.lang.String readEncoding()">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.velocity.io.UnicodeInputStream org.apache.velocity.io.UnicodeInputStream.UnicodeBOM match(org.apache.velocity.io.UnicodeInputStream.UnicodeBOM, org.apache.velocity.io.UnicodeInputStream.UnicodeBOM) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.velocity.io.UnicodeInputStream void pushback(org.apache.velocity.io.UnicodeInputStream.UnicodeBOM) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.velocity.io.UnicodeInputStream.UnicodeBOM UnicodeBOM(java.lang.String, byte[], org.apache.velocity.io.UnicodeInputStream.1) 2">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.velocity.io.UnicodeInputStream.UnicodeBOM byte[] getBytes()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.velocity.io.UnicodeInputStream.UnicodeBOM java.lang.String getEncoding()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.velocity.io.VelocityWriter boolean isAutoFlush()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.velocity.io.VelocityWriter int getBufferSize()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.velocity.io.VelocityWriter int getRemaining()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.velocity.io.VelocityWriter int min(int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.velocity.io.VelocityWriter void write(char[]) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.velocity.io.VelocityWriter void write(java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
+    <item name='org.apache.velocity.io.UnicodeInputStream boolean isSkipBOM()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.io.UnicodeInputStream java.lang.String getEncodingFromStream()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.io.UnicodeInputStream java.lang.String readEncoding()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.velocity.io.UnicodeInputStream org.apache.velocity.io.UnicodeInputStream.UnicodeBOM match(org.apache.velocity.io.UnicodeInputStream.UnicodeBOM, org.apache.velocity.io.UnicodeInputStream.UnicodeBOM) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.io.UnicodeInputStream void pushback(org.apache.velocity.io.UnicodeInputStream.UnicodeBOM) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.velocity.io.UnicodeInputStream.UnicodeBOM byte[] getBytes()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.io.UnicodeInputStream.UnicodeBOM java.lang.String getEncoding()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.io.VelocityWriter boolean isAutoFlush()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.io.VelocityWriter int getBufferSize()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.io.VelocityWriter int getRemaining()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.io.VelocityWriter int min(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.io.VelocityWriter void write(char[]) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.io.VelocityWriter void write(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
 </root>

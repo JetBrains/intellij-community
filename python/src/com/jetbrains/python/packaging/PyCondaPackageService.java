@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.SystemInfo;
@@ -98,6 +99,8 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   @Nullable
   public static String getCondaExecutable() {
     final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
+    final File condaInPath = PathEnvironmentVariableUtil.findInPath(condaName);
+    if (condaInPath != null) return condaInPath.getPath();
     return getCondaExecutable(condaName);
   }
 
@@ -127,7 +130,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   @Nullable
-  private static String findExecutable(String condaName, VirtualFile condaFolder) {
+  private static String findExecutable(String condaName, @Nullable final VirtualFile condaFolder) {
     if (condaFolder != null) {
       final VirtualFile bin = condaFolder.findChild(SystemInfo.isWindows ? "Scripts" : "bin");
       if (bin != null) {
