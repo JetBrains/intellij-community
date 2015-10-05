@@ -5,4 +5,5 @@ class B(object):
 def foo(c):
     x = A if c else B
     y = A if c else 10
-    return x(), <warning descr="'y' is not callable">y()</warning>
+    z = A() if c else 10
+    return x(), y(), <warning descr="'z' is not callable">z()</warning>
