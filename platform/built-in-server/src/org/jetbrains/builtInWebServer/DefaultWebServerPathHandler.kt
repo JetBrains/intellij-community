@@ -16,6 +16,7 @@
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.parentPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.PathUtilRt
 import io.netty.channel.ChannelHandlerContext
@@ -76,8 +77,8 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       }
       else {
         // FallbackResource feature in action, /login requested, /index.php retrieved, we must not redirect /login to /login/
-        if (path.endsWith(PathUtilRt.getFileName(PathUtilRt.getParentPath(pathInfo.path)))) {
-          WebServerPathHandler.redirectToDirectory(request, channel, if (isCustomHost) path else (projectName + '/' + path))
+        if (path.endsWith(PathUtilRt.getFileName(pathInfo.path.parentPath!!))) {
+          WebServerPathHandler.redirectToDirectory(request, channel, if (isCustomHost) path else ("$projectName/$path"))
           return true
         }
       }
