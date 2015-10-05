@@ -73,7 +73,7 @@ class EditorCoordinateMapper {
     int visualLine = offsetToVisualLine(offset, beforeSoftWrap);
     int maxVisualColumn = 0;
     int maxLogicalColumn = 0;
-    for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, beforeSoftWrap, false)) {
+    for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, beforeSoftWrap, null)) {
       if (!pos.leansForward && offset == fragment.getVisualLineStartOffset()) {
         return new VisualPosition(visualLine, fragment.getStartVisualColumn());
       }
@@ -125,7 +125,7 @@ class EditorCoordinateMapper {
     int maxVisualColumn = 0;
     int maxLogicalColumn = 0;
     int maxOffset = offset;
-    for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, false, false)) {
+    for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, false, null)) {
       int minColumn = fragment.getStartVisualColumn();
       int maxColumn = fragment.getEndVisualColumn();
       if (column < minColumn || column == minColumn && !pos.leansRight) {
@@ -240,7 +240,7 @@ class EditorCoordinateMapper {
     if (visualLine < myView.getEditor().getVisibleLineCount()) {
       int visualLineStartOffset = visualLineToOffset(visualLine);
       int maxOffset = 0;
-      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false, false)) {
+      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false, null)) {
         if (p.x <= fragment.getStartX()) {
           int markerWidth = myView.getEditor().getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
           float indent = fragment.getStartX() - markerWidth;
@@ -286,7 +286,7 @@ class EditorCoordinateMapper {
     if (visualLine < myView.getEditor().getVisibleLineCount()) {
       int visualLineStartOffset = visualLineToOffset(visualLine);
       int maxOffset = 0;
-      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false, false)) {
+      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false, null)) {
         if (column < fragment.getStartVisualColumn()) {
           break;
         }
@@ -317,7 +317,7 @@ class EditorCoordinateMapper {
     float x = getStartX(logicalLine);
     if (myDocument.getTextLength() > 0) {
       boolean firstFragment = true;
-      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, beforeSoftWrap, false)) {
+      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, beforeSoftWrap, null)) {
         if (firstFragment && offset == visualLineStartOffset && !leanTowardsLargerOffsets) {
           x = fragment.getStartX();
           break;

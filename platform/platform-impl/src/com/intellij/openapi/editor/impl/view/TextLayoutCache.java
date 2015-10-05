@@ -20,11 +20,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * Editor text layout storage. Layout is stored on a per-logical-line basis, 
@@ -33,17 +35,39 @@ import java.util.Collections;
  * @see LineLayout
  */
 class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
+  private static final int MAX_CHUNKS_IN_ACTIVE_EDITOR = 1000;
+  private static final int MAX_CHUNKS_IN_INACTIVE_EDITOR = 10;
+  
   private final EditorView myView;
   private final Document myDocument;
   private final LineLayout myBidiNotRequiredMarker;
   private ArrayList<LineLayout> myLines = new ArrayList<LineLayout>();
   private int myDocumentChangeOldEndLine;
+  
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") 
+  private LinkedHashMap<LineLayout.Chunk, Object> myLaidOutChunks = 
+    new LinkedHashMap<LineLayout.Chunk, Object>(MAX_CHUNKS_IN_ACTIVE_EDITOR, 0.75f, true) {
+      @Override
+      protected boolean removeEldestEntry(Map.Entry<LineLayout.Chunk, Object> eldest) {
+        if (size() > getChunkCacheSizeLimit()) {
+          eldest.getKey().clearCache();
+          return true;
+        }
+        return false;
+      }
+    };
 
   TextLayoutCache(EditorView view) {
     myView = view;
     myDocument = view.getEditor().getDocument();
     myDocument.addDocumentListener(this, this);
     myBidiNotRequiredMarker = new LineLayout(view, "", Font.PLAIN);
+    Disposer.register(this, new UiNotifyConnector(view.getEditor().getContentComponent(), new Activatable.Adapter() {
+      @Override
+      public void hideNotify() {
+        trimChunkCache();
+      }
+    }));
   }
 
   @Override
@@ -66,12 +90,13 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   @Override
   public void dispose() {
     myLines = null;
+    myLaidOutChunks = null;
   }
 
   private int getAdjustedLineNumber(int offset) {
     return myDocument.getTextLength() == 0 ? -1 : myDocument.getLineNumber(offset);
   }
-  
+
   void resetToDocumentSize(boolean documentChangedWithoutNotification) {
     checkDisposed();
     invalidateLines(0, myLines.size() - 1, myDocument.getLineCount() - 1, !documentChangedWithoutNotification);
@@ -80,7 +105,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   void invalidateLines(int startLine, int endLine) {
     invalidateLines(startLine, endLine, endLine, true);
   }
-  
+
   private void invalidateLines(int startLine, int oldEndLine, int newEndLine, boolean keepBidiNotRequiredState) {
     checkDisposed();
     int endLine = Math.min(oldEndLine, newEndLine);
@@ -113,6 +138,26 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     int lineStart = myDocument.getLineStartOffset(line);
     int lineEnd = myDocument.getLineEndOffset(line);
     return new LineLayout(myView, lineStart, lineEnd, skipBidiLayout);
+  }
+
+  private int getChunkCacheSizeLimit() {
+    return myView.getEditor().getContentComponent().isShowing() ? MAX_CHUNKS_IN_ACTIVE_EDITOR : MAX_CHUNKS_IN_INACTIVE_EDITOR;
+  }
+
+  void onChunkAccess(LineLayout.Chunk chunk) {
+    myLaidOutChunks.put(chunk, null);
+  }
+
+  private void trimChunkCache() {
+    int limit = getChunkCacheSizeLimit();
+    if (myLaidOutChunks.size() > limit) {
+      Iterator<LineLayout.Chunk> it = myLaidOutChunks.keySet().iterator();
+      while (myLaidOutChunks.size() > limit) {
+        LineLayout.Chunk chunk = it.next();
+        chunk.clearCache();
+        it.remove();
+      }
+    }
   }
 
   private void checkDisposed() {

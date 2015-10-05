@@ -240,13 +240,17 @@ class LineLayout {
     };
   }
 
+  /**
+   * If <code>quickEvaluationListener</code> is provided, quick approximate iteration becomes enabled, listener will be invoked
+   * if approximation will in fact be used during width calculation.
+   */
   Iterable<VisualFragment> getFragmentsInVisualOrder(@NotNull final EditorView view,
                                                      final int lineStartOffset,
                                                      final float startX,
                                                      final int startVisualColumn,
                                                      final int startOffset,
                                                      int endOffset,
-                                                     boolean quick) {
+                                                     @Nullable Runnable quickEvaluationListener) {
     assert startOffset <= endOffset;
     final BidiRun[] runs;
     if (startOffset == endOffset) {
@@ -257,7 +261,7 @@ class LineLayout {
       for (BidiRun run : myBidiRunsInLogicalOrder) {
         if (run.endOffset <= startOffset) continue;
         if (run.startOffset >= endOffset) break;
-        runList.add(run.subRun(view, lineStartOffset, startOffset, endOffset, quick));
+        runList.add(run.subRun(view, lineStartOffset, startOffset, endOffset, quickEvaluationListener));
       }
       runs = runList.toArray(new BidiRun[runList.size()]);
       reorderRunsVisually(runs);
@@ -344,7 +348,8 @@ class LineLayout {
       return chunks;
     }
 
-    private BidiRun subRun(@NotNull EditorView view, int lineStartOffset, int targetStartOffset, int targetEndOffset, boolean quick) {
+    private BidiRun subRun(@NotNull EditorView view, int lineStartOffset, int targetStartOffset, int targetEndOffset, 
+                           @Nullable Runnable quickEvaluationListener) {
       assert targetStartOffset < endOffset;
       assert targetEndOffset > startOffset;
       int start = Math.max(startOffset, targetStartOffset);
@@ -354,15 +359,15 @@ class LineLayout {
       for (Chunk chunk : getChunks()) {
         if (chunk.endOffset <= start) continue;
         if (chunk.startOffset >= end) break;
-        subChunks.add(chunk.subChunk(view, this, lineStartOffset, start, end, quick));
+        subChunks.add(chunk.subChunk(view, this, lineStartOffset, start, end, quickEvaluationListener));
       }
       subRun.chunks = subChunks.toArray(new Chunk[subChunks.size()]);
       return subRun;
     }
   }
   
-  private static class Chunk {
-    private final List<LineFragment> fragments = new ArrayList<LineFragment>(); // in logical order
+  static class Chunk {
+    final List<LineFragment> fragments = new ArrayList<LineFragment>(); // in logical order
     private int startOffset;
     private int endOffset;
 
@@ -372,6 +377,9 @@ class LineLayout {
     }
 
     private void ensureLayout(@NotNull EditorView view, BidiRun run, int lineStartOffset) {
+      if (isReal()) {
+        view.getTextLayoutCache().onChunkAccess(this);
+      }
       if (!fragments.isEmpty()) return;
       int start = lineStartOffset + startOffset;
       int end = lineStartOffset + endOffset;
@@ -387,17 +395,15 @@ class LineLayout {
       assert !fragments.isEmpty();
     }
     
-    private Chunk subChunk(EditorView view, BidiRun run, int lineStartOffset, int targetStartOffset, int targetEndOffset, boolean quick) {
+    private Chunk subChunk(EditorView view, BidiRun run, int lineStartOffset, int targetStartOffset, int targetEndOffset,
+                           @Nullable Runnable quickEvaluationListener) {
       assert targetStartOffset < endOffset;
       assert targetEndOffset > startOffset;
       int start = Math.max(startOffset, targetStartOffset);
       int end = Math.min(endOffset, targetEndOffset);
-      if (quick && fragments.isEmpty()) {
-        Chunk chunk = new Chunk(start, end);
-        int startColumn = view.offsetToLogicalPosition(lineStartOffset + start).column;
-        int endColumn = view.offsetToLogicalPosition(lineStartOffset + end).column;
-        chunk.fragments.add(new ApproximationFragment(end - start, endColumn - startColumn, view.getMaxCharWidth()));
-        return chunk;
+      if (quickEvaluationListener != null && fragments.isEmpty()) {
+        quickEvaluationListener.run();
+        return new ApproximationChunk(view, lineStartOffset, start, end);
       }
       if (start == startOffset && end == this.endOffset) {
         return this;
@@ -414,6 +420,28 @@ class LineLayout {
         offset = endOffset;
       }
       return chunk;
+    }
+    
+    boolean isReal() {
+      return true;
+    }
+
+    void clearCache() {
+      fragments.clear();
+    }
+  }
+  
+  private static class ApproximationChunk extends Chunk {
+    private ApproximationChunk(@NotNull EditorView view, int lineStartOffset, int start, int end) {
+      super(start, end);
+      int startColumn = view.offsetToLogicalPosition(lineStartOffset + start).column;
+      int endColumn = view.offsetToLogicalPosition(lineStartOffset + end).column;
+      fragments.add(new ApproximationFragment(end - start, endColumn - startColumn, view.getMaxCharWidth()));
+    }
+
+    @Override
+    boolean isReal() {
+      return false;
     }
   }
 

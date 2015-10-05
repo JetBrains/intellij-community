@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.TIntArrayList;
@@ -43,14 +44,15 @@ import java.util.List;
  * Calculates width (in pixels) of editor contents.
  */
 class EditorSizeManager implements PrioritizedDocumentListener, Disposable, FoldingListener {
-  private static final int UNKNOWN_WIDTH = -1;
+  private static final int UNKNOWN_WIDTH = Integer.MAX_VALUE;
   
   private final EditorView myView;
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
   
   private final TIntArrayList myLineWidths = new TIntArrayList(); // cached widths of visual lines (in pixels)
-                                                                  // UNKNOWN_WIDTH(-1) means no value
+                                                                  // negative value means an estimated (not precise) width 
+                                                                  // UNKNOWN_WIDTH(Integer.MAX_VALUE) means no value
   private int myWidthInPixels;
 
   private int myMaxLineWithExtensionWidth;
@@ -175,7 +177,14 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     for (int i = 0; i < lineCount; i++) {
       int width = myLineWidths.get(i);
       if (width == UNKNOWN_WIDTH) {
-        width = myView.getMaxWidthInLineRange(i, i, true);
+        final Ref<Boolean> approximateValue = new Ref<Boolean>(Boolean.FALSE);
+        width = myView.getMaxWidthInLineRange(i, i, new Runnable() {
+          @Override
+          public void run() {
+            approximateValue.set(Boolean.TRUE);
+          }
+        });
+        if (approximateValue.get()) width = -width;
         myLineWidths.set(i, width);
       }
       maxWidth = Math.max(maxWidth, Math.abs(width));
@@ -230,11 +239,17 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     try {
       int startVisualLine = myView.offsetToVisualLine(startOffset, false);
       int endVisualLine = myView.offsetToVisualLine(endOffset, true);
+      boolean sizeInvalidated = false;
       for (int i = startVisualLine; i <= endVisualLine; i++) {
-        myLineWidths.set(i, UNKNOWN_WIDTH);
+        if (myLineWidths.get(i) < 0) {
+          myLineWidths.set(i, UNKNOWN_WIDTH);
+          sizeInvalidated = true;
+        }
       }
-      myWidthInPixels = -1;
-      myEditor.getContentComponent().revalidate();
+      if (sizeInvalidated) {
+        myWidthInPixels = -1;
+        myEditor.getContentComponent().revalidate();
+      }
     }
     finally {
       myEditor.setPurePaintingMode(purePaintingMode);
