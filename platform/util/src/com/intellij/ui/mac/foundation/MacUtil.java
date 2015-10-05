@@ -214,4 +214,19 @@ public class MacUtil {
       cfRelease((ID)activity);
     }
   }
+
+  @NotNull
+  public static Color colorFromNative(ID color) {
+    final ID colorSpace = invoke("NSColorSpace", "genericRGBColorSpace");
+    final ID colorInSpace = invoke(color, "colorUsingColorSpace:", colorSpace);
+    final long red = invoke(colorInSpace, "redComponent").longValue();
+    final long green = invoke(colorInSpace, "greenComponent").longValue();
+    final long blue = invoke(colorInSpace, "blueComponent").longValue();
+    final long alpha = invoke(colorInSpace, "alphaComponent").longValue();
+    //noinspection UseJBColor
+    return new Color((float)Double.longBitsToDouble(red),
+                     (float)Double.longBitsToDouble(green),
+                     (float)Double.longBitsToDouble(blue),
+                     (float)Double.longBitsToDouble(alpha));
+  }
 }
