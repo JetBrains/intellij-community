@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.impl.PyKeywordArgumentProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -50,6 +50,27 @@ public class KeywordArgumentCompletionUtil {
           if (init != null) {
             addKeywordArgumentVariants(init, callExpr, ret);
           }
+        }
+
+        final PyUnionType unionType = PyUtil.as(context.getType(callee), PyUnionType.class);
+        if (unionType != null) {
+          fetchCallablesFromUnion(ret, callExpr, unionType);
+        }
+      }
+    }
+  }
+
+  private static void fetchCallablesFromUnion(@NotNull final List<LookupElement> ret,
+                                              @NotNull final PyCallExpression callExpr,
+                                              @NotNull final PyUnionType unionType) {
+    for (final PyType memberType : unionType.getMembers()) {
+      if (memberType instanceof PyUnionType) {
+        fetchCallablesFromUnion(ret, callExpr, (PyUnionType)memberType);
+      }
+      if (memberType instanceof PyFunctionType) {
+        final PyFunctionType type = (PyFunctionType)memberType;
+        if (type.isCallable()) {
+          addKeywordArgumentVariants(type.getCallable(), callExpr, ret);
         }
       }
     }
@@ -75,7 +96,6 @@ public class KeywordArgumentCompletionUtil {
     else {
       addKeywordArgumentVariantsForCallable(callExpr, ret, parameters);
     }
-
   }
 
   private static void addKeywordArgumentVariantsForCallable(@NotNull final PyCallExpression callExpr,
