@@ -75,6 +75,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   private ProcessOutput getCondaOutput(@NotNull final String command, List<String> arguments) throws ExecutionException {
     final String condaExecutable = PyCondaPackageService.getCondaExecutable();
+    if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.<String>emptyList(), new ProcessOutput());
 
     final String path = getCondaDirectory();
     if (path == null) throw new PyExecutionException("Empty conda name for " + mySdk, command, arguments);
