@@ -30,7 +30,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -38,11 +39,11 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import java.lang.ref.WeakReference;
 import java.util.List;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author peter
@@ -50,7 +51,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class EditorNotificationsImpl extends EditorNotifications {
   private static final ExtensionPointName<Provider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.editorNotificationProvider");
   private static final Key<WeakReference<ProgressIndicator>> CURRENT_UPDATES = Key.create("CURRENT_UPDATES");
-  private final ThreadPoolExecutor myExecutor = ConcurrencyUtil.newSingleThreadExecutor("EditorNotifications executor");
+  private static final BoundedTaskExecutor ourExecutor = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
   private final MergingUpdateQueue myUpdateMerger;
 
   public EditorNotificationsImpl(Project project) {
@@ -101,7 +102,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
           task.computeInReadAction(indicator);
         }
         else {
-          ProgressIndicatorUtils.scheduleWithWriteActionPriority(indicator, myExecutor, task);
+          ProgressIndicatorUtils.scheduleWithWriteActionPriority(indicator, ourExecutor, task);
         }
       }
     });
