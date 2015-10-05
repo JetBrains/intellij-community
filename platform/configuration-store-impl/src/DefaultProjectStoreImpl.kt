@@ -26,7 +26,7 @@ import java.io.File
 
 internal class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
   companion object {
-    val FILE_SPEC = "${StoragePathMacros.APP_CONFIG}/project.default.xml"
+    const val FILE_SPEC = "${StoragePathMacros.APP_CONFIG}/project.default.xml"
   }
 
   // see note about default state in project store
