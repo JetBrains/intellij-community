@@ -512,6 +512,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testBreakInIfCondition() throws Throwable { doTest(); }
   public void testAccessStaticViaInstance() throws Throwable { doTest(); }
 
+  public void testIfConditionLt() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'getAnnotationsAreaOffset'
+  }
+
   public void testAccessStaticViaInstanceSecond() throws Throwable {
     configure()
     myFixture.complete(CompletionType.BASIC, 2)
