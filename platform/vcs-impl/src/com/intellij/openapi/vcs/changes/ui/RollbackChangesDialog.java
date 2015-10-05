@@ -46,12 +46,12 @@ public class RollbackChangesDialog extends DialogWrapper {
   private final Project myProject;
   private final boolean myRefreshSynchronously;
   private final Runnable myAfterVcsRefreshInAwt;
-  private final MultipleChangeListBrowser myBrowser;
+  protected final MultipleChangeListBrowser myBrowser;
   private final boolean myInvokedFromModalContext;
-  @Nullable private JCheckBox myDeleteLocallyAddedFiles;
+  @Nullable protected JCheckBox myDeleteLocallyAddedFiles;
   private final ChangeInfoCalculator myInfoCalculator;
   private final CommitLegendPanel myCommitLegendPanel;
-  private Runnable myListChangeListener;
+  @Nullable  private Runnable myListChangeListener;
   private String myOperationName;
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes) {
@@ -79,7 +79,14 @@ public class RollbackChangesDialog extends DialogWrapper {
   public RollbackChangesDialog(final Project project,
                                List<LocalChangeList> changeLists,
                                final List<Change> changes,
-                               final boolean refreshSynchronously, final Runnable afterVcsRefreshInAwt) {
+                               final boolean refreshSynchronously, final Runnable afterVcsRefreshInAwt){
+    this(project,changeLists,changes,refreshSynchronously,afterVcsRefreshInAwt,true);
+  }
+
+  public RollbackChangesDialog(final Project project,
+                               List<LocalChangeList> changeLists,
+                               final List<Change> changes,
+                               final boolean refreshSynchronously, final Runnable afterVcsRefreshInAwt,boolean createChangeLIstListener) {
     super(project, true);
 
     myProject = project;
@@ -89,7 +96,7 @@ public class RollbackChangesDialog extends DialogWrapper {
 
     myInfoCalculator = new ChangeInfoCalculator();
     myCommitLegendPanel = new CommitLegendPanel(myInfoCalculator);
-    myListChangeListener = new Runnable() {
+    myListChangeListener = createChangeLIstListener ?  new Runnable() {
       @Override
       public void run() {
         if (myBrowser != null) {
@@ -107,7 +114,7 @@ public class RollbackChangesDialog extends DialogWrapper {
           }
         }
       }
-    };
+    } : null;
     myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, getDisposable(), null, true, true, myListChangeListener, myListChangeListener);
 
     myOperationName = operationNameByChanges(project, changes);
@@ -119,7 +126,9 @@ public class RollbackChangesDialog extends DialogWrapper {
     myBrowser.setToggleActionTitle("&Include in " + myOperationName.toLowerCase());
     myDeleteLocallyAddedFiles = createDeleteLocallyAddedSetting(changes);
     init();
-    myListChangeListener.run();
+    if (myListChangeListener != null) {
+      myListChangeListener.run();
+    }
   }
 
   @Nullable

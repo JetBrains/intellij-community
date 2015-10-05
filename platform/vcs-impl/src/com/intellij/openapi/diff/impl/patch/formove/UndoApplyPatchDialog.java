@@ -18,62 +18,43 @@ package com.intellij.openapi.diff.impl.patch.formove;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.ui.MultipleChangeListBrowser;
+import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
-public class UndoApplyPatchDialog extends DialogWrapper {
+public class UndoApplyPatchDialog extends RollbackChangesDialog {
 
 
   private static final Logger LOG = Logger.getInstance(UndoApplyPatchDialog.class);
-  private final MultipleChangeListBrowser myBrowser;
 
   private UndoApplyPatchDialog(@Nullable Project project, @NotNull List<Change> changes) {
-    super(project, true);
-    setTitle("Undo Applying Patch Action for Selected Files");
-    myBrowser =
-      new MultipleChangeListBrowser(project, ContainerUtil.<LocalChangeList>emptyList(), changes, this.getDisposable(), null, true, true, null,
-                                    null);
-    setOKButtonText("Undo Changes");
+    super(project, ContainerUtil.<LocalChangeList>emptyList(), changes, true, null, false);
     myBrowser.setChangesToDisplay(changes);
+    setTitle("Undo Applying Patch Action for Selected Files");
+    setOKButtonText("Undo & Revert Changes");
     init();
-  }
-
-  @Nullable
-  @Override
-  protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
-    JLabel infoLabel = new JBLabel("All files will be rolled back to state before 'Apply patch' according to local history except binaries, they will be reverted.");
-    panel.add(infoLabel, BorderLayout.NORTH);
-    panel.add(myBrowser, BorderLayout.CENTER);
-    return panel;
-  }
-
-  @Override
-  protected void dispose() {
-    super.dispose();
-    myBrowser.dispose();
   }
 
   @Override
   protected void doOKAction() {
-    super.doOKAction();
+    processDoNotAskOnOk(OK_EXIT_CODE);
+
+    if (getOKAction().isEnabled()) {
+      close(OK_EXIT_CODE);
+    }
+
     Collection<Change> selectedToRevert = myBrowser.getChangesIncludedInAllLists();
     for (Change change : selectedToRevert) {
       ContentRevision afterRevision = change.getAfterRevision();
@@ -107,15 +88,22 @@ public class UndoApplyPatchDialog extends DialogWrapper {
           LOG.error("Couldn't load before patch content for " + vf.getName());
         }
       }
+      //added
+      else if (vf != null && (myDeleteLocallyAddedFiles == null || myDeleteLocallyAddedFiles.isSelected())) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              vf.delete(this);
+            }
+            catch (IOException e) {
+              LOG.warn("Couldn't delete newly created file " + vf.getName() + "\n Please, remove manually.");
+            }
+          }
+        });
+      }
+      //deleted
     }
-  }
-
-  public JComponent getPreferredFocusedComponent() {
-    return myBrowser.getPreferredFocusedComponent();
-  }
-
-  protected String getDimensionServiceKey() {
-    return "RollbackChangesDialog";
   }
 
   public static void undo(@NotNull Project project, @NotNull List<Change> changes) {
