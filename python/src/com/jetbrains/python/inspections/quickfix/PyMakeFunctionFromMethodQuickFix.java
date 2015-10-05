@@ -106,9 +106,7 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
         updateAssignment(element, resolved);
       }
       else if (resolved instanceof PyClass) {     //call with first instance argument A.m(A())
-        final PsiElement dot = qualifier.getNextSibling();
-        if (dot != null) dot.delete();
-        qualifier.delete();
+        PyUtil.removeQualifier(element);
         updateArgumentList(element);
       }
     }
