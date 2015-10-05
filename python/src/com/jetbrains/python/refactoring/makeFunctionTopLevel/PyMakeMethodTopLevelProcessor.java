@@ -16,6 +16,7 @@
 package com.jetbrains.python.refactoring.makeFunctionTopLevel;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
@@ -25,6 +26,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -45,7 +47,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelProcessor {
 
-  private final List<PyReferenceExpression> myReferencesToSelf = new ArrayList<PyReferenceExpression>();
+  private final MultiMap<String, PyReferenceExpression> myAttrReferences = MultiMap.create();
 
   public PyMakeMethodTopLevelProcessor(@NotNull PyFunction targetFunction, @NotNull Editor editor) {
     super(targetFunction, editor);
@@ -133,7 +135,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
   }
 
   @NotNull
-  private String selectUniqueName(@NotNull PsiElement anchor) {
+  private String selectUniqueName(@NotNull PsiElement scopeAnchor) {
     final PyClass pyClass = myFunction.getContainingClass();
     assert pyClass != null;
     final Collection<String> suggestions;
@@ -144,22 +146,31 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
       suggestions = Collections.singleton("inst");
     }
     for (String name : suggestions) {
-      if (!(IntroduceValidator.isDefinedInScope(name, anchor) || PyNames.isReserved(name))) {
+      if (isValidName(name, scopeAnchor)) {
         return name;
       }
     }
-    final String shortestName = Iterables.getLast(suggestions);
-    int counter = 1;
-    String name = shortestName;
-    while (IntroduceValidator.isDefinedInScope(name, anchor) || PyNames.isReserved(name)) {
-      name = shortestName + counter;
-      counter++;
-    }
+
     //noinspection ConstantConditions
-    return name;
+    return appendNumberUntilValid(Iterables.getLast(suggestions), scopeAnchor);
   }
 
-  private boolean resolvesToClass(PyExpression qualifier) {
+  private static boolean isValidName(@NotNull String name, @NotNull PsiElement scopeAnchor) {
+    return !(IntroduceValidator.isDefinedInScope(name, scopeAnchor) || PyNames.isReserved(name));
+  }
+
+  @NotNull
+  private static String appendNumberUntilValid(@NotNull String name, @NotNull PsiElement scopeAnchor) {
+    int counter = 1;
+    String candidate = name;
+    while (!isValidName(candidate, scopeAnchor)) {
+      candidate = name + counter;
+      counter++;
+    }
+    return candidate;
+  }
+
+  private boolean resolvesToClass(@NotNull PyExpression qualifier) {
     for (PsiElement element : PyUtil.multiResolveTopPriority(qualifier, myResolveContext)) {
       if (element == myFunction.getContainingClass()) {
         return true;
@@ -188,21 +199,37 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
   @NotNull
   @Override
   protected PyFunction createNewFunction(@NotNull Collection<String> newParams) {
-    for (PyReferenceExpression expr : myReferencesToSelf) {
-      PyUtil.removeQualifier(expr);
+    final List<String> updatedParamNames = new ArrayList<String>();
+    for (String name : newParams) {
+      final Collection<PyReferenceExpression> reads = myAttrReferences.get(name);
+      final PsiElement anchor = ContainerUtil.getFirstItem(reads);
+      //noinspection ConstantConditions
+      if (!isValidName(name, anchor)) {
+        final String indexedName = appendNumberUntilValid(name, anchor);
+        updatedParamNames.add(indexedName);
+        for (PyReferenceExpression read : reads) {
+          read.replace(myGenerator.createExpressionFromText(LanguageLevel.forElement(read), indexedName));
+        }
+      }
+      else {
+        updatedParamNames.add(name);
+        for (PyReferenceExpression read : reads) {
+          removeQualifier(read);
+        }
+      }
     }
     final PyFunction copied = (PyFunction)myFunction.copy();
     final PyParameter[] params = copied.getParameterList().getParameters();
     if (params.length > 0) {
       params[0].delete();
     }
-    addParameters(copied.getParameterList(), newParams);
+    addParameters(copied.getParameterList(), updatedParamNames);
     return copied;
   }
 
   @NotNull
   @Override
-  protected Set<String> collectNewParameterNames() {
+  protected List<String> collectNewParameterNames() {
     final Set<String> paramNames = new LinkedHashSet<String>();
     for (ScopeOwner owner : PsiTreeUtil.collectElementsOfType(myFunction, ScopeOwner.class)) {
       final AnalysisResult result = analyseScope(owner);
@@ -232,13 +259,13 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
             throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.method.calls"));
           }
           paramNames.add(attrName);
-          myReferencesToSelf.add(parentReference);
+          myAttrReferences.putValue(attrName, parentReference);
         }
         else {
           throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
         }
       }
     }
-    return paramNames;
+    return Lists.newArrayList(paramNames);
   }
 }

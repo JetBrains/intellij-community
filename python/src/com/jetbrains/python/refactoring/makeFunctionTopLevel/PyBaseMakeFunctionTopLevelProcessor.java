@@ -42,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Mikhail Golubev
@@ -92,7 +91,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
 
   @Override
   protected final void performRefactoring(@NotNull UsageInfo[] usages) {
-    final Set<String> newParameters = collectNewParameterNames();
+    final List<String> newParameters = collectNewParameterNames();
 
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
@@ -131,7 +130,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   }
 
   @NotNull
-  protected abstract Set<String> collectNewParameterNames();
+  protected abstract List<String> collectNewParameterNames();
 
   @NotNull
   protected PyFunction insertNewFunction(@NotNull PyFunction newFunction) {

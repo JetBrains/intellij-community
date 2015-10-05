@@ -194,6 +194,10 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     doTestSuccess();
   }
 
+  public void testMethodUniqueParamNames() {
+    doTestSuccess();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/refactoring/convertTopLevel/";
