@@ -156,7 +156,7 @@ class RuleChain(vararg val rules: TestRule) : TestRule {
       try {
         statement = rules[i].apply(statement, description)
       }
-      catch(e: Throwable) {
+      catch (e: Throwable) {
         if (errors == null) {
           errors = SmartList<Throwable>()
         }

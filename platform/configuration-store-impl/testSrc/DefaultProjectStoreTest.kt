@@ -5,8 +5,6 @@ import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.externalDependencies.ProjectExternalDependency
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.ProjectManager
@@ -21,7 +19,7 @@ import org.junit.Test
 import org.junit.rules.ExternalResource
 import java.nio.file.Paths
 
-class DefaultProjectStoreTest {
+internal class DefaultProjectStoreTest {
   companion object {
     @ClassRule val projectRule = ProjectRule()
   }
@@ -47,7 +45,7 @@ class DefaultProjectStoreTest {
           app.doNotSave(isDoNotSave)
         }
         finally {
-          Paths.get(app.stateStore.storageManager.expandMacros(StoragePathMacros.APP_CONFIG)).deleteRecursively()
+          Paths.get(app.stateStore.stateStorageManager.expandMacros(StoragePathMacros.APP_CONFIG)).deleteRecursively()
         }
       }
     },
@@ -55,7 +53,8 @@ class DefaultProjectStoreTest {
       private var externalDependenciesManager: ExternalDependenciesManager? = null
 
       override fun before() {
-        externalDependenciesManager = ProjectManager.getInstance().defaultProject.service<ExternalDependenciesManager>()
+        val defaultProject = ProjectManager.getInstance().defaultProject
+        externalDependenciesManager = defaultProject.service<ExternalDependenciesManager>()
         externalDependenciesManager!!.allDependencies = requiredPlugins
       }
 
@@ -73,6 +72,3 @@ class DefaultProjectStoreTest {
     }
   }
 }
-
-val IComponentStore.storageManager: StateStorageManager
-  get() = stateStorageManager
