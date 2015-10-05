@@ -17,6 +17,7 @@ package com.intellij.ide.actions
 
 import com.intellij.AbstractBundle
 import com.intellij.CommonBundle
+import com.intellij.configurationStore.ROOT_CONFIG
 import com.intellij.configurationStore.sortStoragesByDeprecated
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -39,7 +40,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.systemIndependentPath
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PairProcessor
 import com.intellij.util.PlatformUtils
@@ -180,8 +180,7 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
   ApplicationManager.getApplication().getComponents(ExportableApplicationComponent::class.java).forEach(processor)
   ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent::class.java).forEach(processor)
 
-  @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
-  val configPath = storageManager.expandMacros(StoragePathMacros.ROOT_CONFIG)
+  val configPath = storageManager.expandMacros(ROOT_CONFIG)
 
   fun isSkipFile(file: File): Boolean {
     if (onlyPaths != null) {
@@ -209,39 +208,36 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
   ServiceManagerImpl.processAllImplementationClasses(ApplicationManager.getApplication() as ApplicationImpl, object : PairProcessor<Class<*>, PluginDescriptor> {
     override fun process(aClass: Class<*>, pluginDescriptor: PluginDescriptor?): Boolean {
       val stateAnnotation = StoreUtil.getStateSpec(aClass)
-      if (stateAnnotation != null && !StringUtil.isEmpty(stateAnnotation.name)) {
-        if (ExportableComponent::class.java.isAssignableFrom(aClass)) {
-          return true
-        }
+      if (stateAnnotation == null || stateAnnotation.name.isNullOrEmpty() || ExportableComponent::class.java.isAssignableFrom(aClass)) {
+        return true
+      }
 
-        val storage = sortStoragesByDeprecated(stateAnnotation.storages).firstOrNull() ?: return true
-        if (!(storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && storage.scheme == StorageScheme.DEFAULT && !storage.file.isNullOrEmpty())) {
-          return true
-        }
+      val storage = sortStoragesByDeprecated(stateAnnotation.storages).firstOrNull() ?: return true
+      if (!(storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && storage.scheme == StorageScheme.DEFAULT && !storage.file.isNullOrEmpty())) {
+        return true
+      }
 
-        var additionalExportFile: File? = null
-        var additionalExportPath = stateAnnotation.additionalExportFile
-        if (additionalExportPath.isNotEmpty()) {
-          // backward compatibility - path can contain macro
-          @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
-          if (additionalExportPath[0] != '$') {
-            additionalExportPath = StoragePathMacros.ROOT_CONFIG + "/" + additionalExportPath
-          }
-          additionalExportFile = File(storageManager.expandMacros(additionalExportPath))
-          if (isSkipFile(additionalExportFile)) {
-            additionalExportFile = null
-          }
+      var additionalExportFile: File? = null
+      var additionalExportPath = stateAnnotation.additionalExportFile
+      if (additionalExportPath.isNotEmpty()) {
+        // backward compatibility - path can contain macro
+        if (additionalExportPath[0] != '$') {
+          additionalExportPath = "$ROOT_CONFIG/$additionalExportPath"
         }
+        additionalExportFile = File(storageManager.expandMacros(additionalExportPath))
+        if (isSkipFile(additionalExportFile)) {
+          additionalExportFile = null
+        }
+      }
 
-        val file = File(storageManager.expandMacros(storage.file))
-        val isFileIncluded = !isSkipFile(file)
-        if (isFileIncluded || additionalExportFile != null) {
-          val files = if (additionalExportFile == null) listOf(file) else if (isFileIncluded) listOf(file, additionalExportFile) else listOf(additionalExportFile)
-          val item = ExportableItem(files, if (computePresentableNames) getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor) else "", storage.roamingType)
-          result.putValue(file, item)
-          if (additionalExportFile != null) {
-            result.putValue(additionalExportFile, item)
-          }
+      val file = File(storageManager.expandMacros(storage.file))
+      val isFileIncluded = !isSkipFile(file)
+      if (isFileIncluded || additionalExportFile != null) {
+        val files = if (additionalExportFile == null) listOf(file) else if (isFileIncluded) listOf(file, additionalExportFile) else listOf(additionalExportFile)
+        val item = ExportableItem(files, if (computePresentableNames) getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor) else "", storage.roamingType)
+        result.putValue(file, item)
+        if (additionalExportFile != null) {
+          result.putValue(additionalExportFile, item)
         }
       }
       return true
