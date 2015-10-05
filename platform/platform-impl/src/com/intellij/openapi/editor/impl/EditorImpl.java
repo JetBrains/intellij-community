@@ -1511,6 +1511,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     return result;
   }
+  
+  public int visualLineStartOffset(int visualLine) {
+    if (myUseNewRendering) return myView.visualLineStartOffset(visualLine);
+    throw new UnsupportedOperationException();
+  }
 
   private int logicalToVisualLine(int line) {
     assertReadAccess();

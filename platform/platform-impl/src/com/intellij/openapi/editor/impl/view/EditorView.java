@@ -172,6 +172,12 @@ public class EditorView implements TextDrawingCallback, Disposable {
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.offsetToVisualLine(offset, beforeSoftWrap);
   }
+  
+  public int visualLineStartOffset(int visualLine) {
+    assertIsDispatchThread();
+    myEditor.getSoftWrapModel().prepareToMapping();
+    return myMapper.visualLineToOffset(visualLine);
+  }
 
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull Point p) {
