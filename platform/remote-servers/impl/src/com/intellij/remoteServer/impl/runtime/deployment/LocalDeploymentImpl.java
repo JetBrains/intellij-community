@@ -31,8 +31,9 @@ public class LocalDeploymentImpl extends DeploymentImpl {
                              @NotNull DeploymentStatus status,
                              @Nullable String statusText,
                              @Nullable DeploymentRuntime runtime,
-                             @Nullable DeploymentTask<?> deploymentTask) {
-    super(connection, name, status, statusText, runtime, deploymentTask);
+                             @Nullable DeploymentTask<?> deploymentTask,
+                             @Nullable String group) {
+    super(connection, name, status, statusText, runtime, deploymentTask, group);
   }
 
   public void setRemoteDeployment(DeploymentImpl remoteDeployment) {

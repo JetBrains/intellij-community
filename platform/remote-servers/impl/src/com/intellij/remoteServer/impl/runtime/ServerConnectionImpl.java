@@ -131,10 +131,17 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
         DeploymentSource source = task.getSource();
-        String deploymentName = instance.getDeploymentName(source, task.getConfiguration());
+        D configuration = task.getConfiguration();
+        String deploymentName = instance.getDeploymentName(source, configuration);
         LocalDeploymentImpl deployment;
         synchronized (myLocalDeployments) {
-          deployment = new LocalDeploymentImpl(ServerConnectionImpl.this, deploymentName, DeploymentStatus.DEPLOYING, null, null, task);
+          deployment = new LocalDeploymentImpl(ServerConnectionImpl.this,
+                                               deploymentName,
+                                               DeploymentStatus.DEPLOYING,
+                                               null,
+                                               null,
+                                               task,
+                                               instance.getDeploymentGroup(source, configuration));
           myLocalDeployments.put(deploymentName, deployment);
         }
         DeploymentLogManagerImpl logManager = new DeploymentLogManagerImpl(task.getProject(), new ChangeListener())
@@ -186,14 +193,15 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
       @Override
       public void addDeployment(@NotNull String deploymentName, @Nullable DeploymentRuntime deploymentRuntime) {
-        addDeployment(deploymentName, deploymentRuntime, null, null);
+        addDeployment(deploymentName, deploymentRuntime, null, null, null);
       }
 
       @Override
       public Deployment addDeployment(@NotNull String deploymentName,
                                       @Nullable DeploymentRuntime deploymentRuntime,
                                       @Nullable DeploymentStatus deploymentStatus,
-                                      @Nullable String deploymentStatusText) {
+                                      @Nullable String deploymentStatusText,
+                                      @Nullable String deploymentGroup) {
         DeploymentImpl result;
         if (deploymentStatus == null) {
           deploymentStatus = DeploymentStatus.DEPLOYED;
@@ -206,7 +214,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
                                         deploymentStatus,
                                         deploymentStatusText,
                                         deploymentRuntime,
-                                        null);
+                                        null,
+                                        deploymentGroup);
           }
           else if (!result.getStatus().isTransition()) {
             result.changeState(result.getStatus(), deploymentStatus, deploymentStatusText, deploymentRuntime);

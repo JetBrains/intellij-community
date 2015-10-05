@@ -32,5 +32,9 @@ public interface Deployment {
 
   void setStatus(@NotNull DeploymentStatus status, @Nullable String statusText);
 
+  @NotNull
   ServerConnection<?> getConnection();
+
+  @Nullable
+  String getGroup();
 }
