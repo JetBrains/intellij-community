@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -28,7 +29,10 @@ import java.util.Set;
 public interface FrameExtraVariablesProvider {
   ExtensionPointName<FrameExtraVariablesProvider> EP_NAME = ExtensionPointName.create("com.intellij.debugger.frameExtraVarsProvider");
 
-  boolean isAvailable(SourcePosition sourcePosition, EvaluationContext evalContext);
+  boolean isAvailable(@NotNull SourcePosition sourcePosition, @NotNull EvaluationContext evalContext);
 
-  Set<TextWithImports> collectVariables(SourcePosition sourcePosition, EvaluationContext evalContext, Set<String> alreadyCollected);
+  @NotNull
+  Set<TextWithImports> collectVariables(@NotNull SourcePosition sourcePosition,
+                                        @NotNull EvaluationContext evalContext,
+                                        @NotNull Set<String> alreadyCollected);
 }
