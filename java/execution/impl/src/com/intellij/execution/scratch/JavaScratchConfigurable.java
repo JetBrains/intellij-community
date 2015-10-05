@@ -98,8 +98,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
         myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
       }
     });
-    myJrePathEditor = new JrePathEditor();
-    myJrePathEditor.setDefaultJreSelector(DefaultJreSelector.projectSdk(project));
+    myJrePathEditor = new JrePathEditor(DefaultJreSelector.projectSdk(project));
 
     myWholePanel = new JPanel(new GridBagLayout());
     myWholePanel.add(myMainClass, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(6, 0, 0, 0),0, 0 ));
