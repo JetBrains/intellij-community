@@ -643,10 +643,14 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       }
       finally {
         final PersistentHashMapValueStorage valueStorage = myValueStorage;
-        if (valueStorage != null) {
-          valueStorage.dispose();
+        try {
+          if (valueStorage != null) {
+            valueStorage.dispose();
+          }
         }
-        super.close();
+        finally {
+          super.close();
+        }
       }
     }
     finally {
