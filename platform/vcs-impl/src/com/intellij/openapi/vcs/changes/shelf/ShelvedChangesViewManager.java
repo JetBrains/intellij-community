@@ -474,7 +474,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION);
         }
         int count = node.getChildCount();
-        String numFilesText = spaceAndThinSpace() + count + " " + StringUtil.pluralize("file", 1) + ",";
+        String numFilesText = spaceAndThinSpace() + count + " " + StringUtil.pluralize("file", count) + ",";
         append(numFilesText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
         
         String date = DateFormatUtil.formatPrettyDateTime(changeListData.DATE);
