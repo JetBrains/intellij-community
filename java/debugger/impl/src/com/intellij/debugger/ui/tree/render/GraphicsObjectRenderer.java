@@ -45,9 +45,15 @@ public class GraphicsObjectRenderer extends ToStringBasedRenderer implements Ful
       Field surfaceField = ((ClassType)value.type()).fieldByName("surfaceData");
       if (surfaceField == null) return null;
       ObjectReference surfaceDataValue = (ObjectReference)value.getValue(surfaceField);
-      final Field bufImgField = ((ClassType)surfaceDataValue.type()).fieldByName("bufImg");
-      if (bufImgField == null) return null;
-      final Value bufImgValue = surfaceDataValue.getValue(bufImgField);
+      if (surfaceDataValue == null) return null;
+
+      Field imgField = ((ReferenceType)surfaceDataValue.type()).fieldByName("bufImg"); // BufImgSurfaceData
+      if (imgField == null) {
+        imgField = ((ReferenceType)surfaceDataValue.type()).fieldByName("offscreenImage"); // CGLSurfaceData
+      }
+      if (imgField == null) return null;
+
+      final Value bufImgValue = surfaceDataValue.getValue(imgField);
       Type type = bufImgValue.type();
       if (!(type instanceof ReferenceType) || !DebuggerUtils.instanceOf(type, "java.awt.Image")) {
         return null;
