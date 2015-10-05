@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.RollbackUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -116,24 +117,28 @@ public class RollbackChangesDialog extends DialogWrapper {
     setTitle(VcsBundle.message("changes.action.rollback.custom.title", myOperationName));
     setCancelButtonText(CommonBundle.getCloseButtonText());
     myBrowser.setToggleActionTitle("&Include in " + myOperationName.toLowerCase());
+    myDeleteLocallyAddedFiles = createDeleteLocallyAddedSetting(changes);
+    init();
+    myListChangeListener.run();
+  }
 
+  @Nullable
+  public static JCheckBox createDeleteLocallyAddedSetting(@NotNull List<Change> changes) {
     for (Change c : changes) {
       if (c.getType() == Change.Type.NEW) {
-        myDeleteLocallyAddedFiles = new JCheckBox(VcsBundle.message("changes.checkbox.delete.locally.added.files"));
-        myDeleteLocallyAddedFiles.setSelected(PropertiesComponent.getInstance().isTrueValue(DELETE_LOCALLY_ADDED_FILES_KEY));
-        myDeleteLocallyAddedFiles.addActionListener(new ActionListener() {
+        final JCheckBox deleteLocallyAddedFiles = new JCheckBox(VcsBundle.message("changes.checkbox.delete.locally.added.files"));
+        deleteLocallyAddedFiles.setSelected(PropertiesComponent.getInstance().isTrueValue(DELETE_LOCALLY_ADDED_FILES_KEY));
+        deleteLocallyAddedFiles.addActionListener(new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
-            final boolean value = myDeleteLocallyAddedFiles.isSelected();
+            final boolean value = deleteLocallyAddedFiles.isSelected();
             PropertiesComponent.getInstance().setValue(DELETE_LOCALLY_ADDED_FILES_KEY, String.valueOf(value));
           }
         });
-        break;
+        return deleteLocallyAddedFiles;
       }
     }
-
-    init();
-    myListChangeListener.run();
+    return null;
   }
 
   public static String operationNameByChanges(Project project, Collection<Change> changes) {
