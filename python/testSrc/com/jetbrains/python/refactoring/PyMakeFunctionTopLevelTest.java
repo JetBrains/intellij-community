@@ -185,6 +185,10 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     doMultiFileTest();
   }
 
+  public void testMethodCalledViaClass() {
+    doTestSuccess();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/refactoring/convertTopLevel/";

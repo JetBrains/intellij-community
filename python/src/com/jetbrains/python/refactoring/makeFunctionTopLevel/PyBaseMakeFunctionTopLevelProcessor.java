@@ -49,15 +49,17 @@ import java.util.Set;
  */
 public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
   protected final PyFunction myFunction;
-  protected final PyResolveContext myContext;
+  protected final PyResolveContext myResolveContext;
   protected final Editor myEditor;
+  protected final PyElementGenerator myGenerator;
 
   public PyBaseMakeFunctionTopLevelProcessor(@NotNull PyFunction targetFunction, @NotNull Editor editor) {
     super(targetFunction.getProject());
     myFunction = targetFunction;
     myEditor = editor;
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(myProject, targetFunction.getContainingFile());
-    myContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
+    myResolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
+    myGenerator = PyElementGenerator.getInstance(myProject);
   }
 
   @NotNull
@@ -115,18 +117,16 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     final String commaSeparatedNames = StringUtil.join(newParameters, ", ");
     final StringBuilder paramListText = new StringBuilder(paramList.getText());
     paramListText.insert(1, commaSeparatedNames + (paramList.getParameters().length > 0 ? ", " : ""));
-    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(myProject);
-    paramList.replace(elementGenerator.createParameterList(LanguageLevel.forElement(myFunction), paramListText.toString()));
+    paramList.replace(myGenerator.createParameterList(LanguageLevel.forElement(myFunction), paramListText.toString()));
     return paramList;
   }
 
   @NotNull
   protected PyArgumentList addArguments(@NotNull PyArgumentList argList, @NotNull Collection<String> newArguments) {
-    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(myProject);
     final String commaSeparatedNames = StringUtil.join(newArguments, ", ");
     final StringBuilder argListText = new StringBuilder(argList.getText());
     argListText.insert(1, commaSeparatedNames + (argList.getArguments().length > 0 ? ", " : ""));
-    argList.replace(elementGenerator.createArgumentList(LanguageLevel.forElement(argList), argListText.toString()));
+    argList.replace(myGenerator.createArgumentList(LanguageLevel.forElement(argList), argListText.toString()));
     return argList;
   }
 
@@ -153,7 +153,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
           continue;
         }
         if (readWriteInstruction.getAccess().isReadAccess()) {
-          for (PsiElement resolved : PyUtil.multiResolveTopPriority(element, myContext)) {
+          for (PsiElement resolved : PyUtil.multiResolveTopPriority(element, myResolveContext)) {
             if (resolved != null) {
               if (isFromEnclosingScope(resolved)) {
                 result.readsFromEnclosingScope.add(element);
@@ -170,7 +170,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
           }
         }
         if (readWriteInstruction.getAccess().isWriteAccess() && element instanceof PyTargetExpression) {
-          for (PsiElement resolved : PyUtil.multiResolveTopPriority(element, myContext)) {
+          for (PsiElement resolved : PyUtil.multiResolveTopPriority(element, myResolveContext)) {
             if (resolved != null) {
               if (element.getParent() instanceof PyNonlocalStatement && isFromEnclosingScope(resolved)) {
                 result.nonlocalWritesToEnclosingScope.add((PyTargetExpression)element);
