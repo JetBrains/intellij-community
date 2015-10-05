@@ -250,6 +250,12 @@ public class PythonSdkType extends SdkType {
     return false;
   }
 
+  public static boolean isDocker(@Nullable final Sdk sdk) {
+    return sdk != null && sdk.getSdkAdditionalData() instanceof  RemoteSdkAdditionalData &&
+           ((RemoteSdkAdditionalData) sdk.getSdkAdditionalData()).getRemoteConnectionType() == CredentialsType.DOCKER;
+
+  }
+
   public static boolean isRemote(@Nullable String sdkPath) {
     return isRemote(findSdkByPath(sdkPath));
   }
