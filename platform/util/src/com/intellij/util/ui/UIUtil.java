@@ -3078,7 +3078,7 @@ public class UIUtil {
     // Evaluate the value depending on our current theme
     if (lcdContrastValue == 0) {
       if (SystemInfo.isMacIntel64) {
-        lcdContrastValue = UIUtil.isUnderDarcula() ? 100 : 250;
+        lcdContrastValue = isUnderDarcula() ? 140 : 200;
       } else {
         Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
 

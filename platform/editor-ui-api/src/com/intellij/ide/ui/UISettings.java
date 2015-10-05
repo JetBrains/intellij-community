@@ -294,6 +294,8 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
 
     UISettings uiSettings = getInstance();
 
+    g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+
     if (uiSettings != null) {
       g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false));
     } else {
