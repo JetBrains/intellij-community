@@ -18,6 +18,7 @@ public class DeploymentImpl implements Deployment {
   private final ServerConnectionImpl<?> myConnection;
   private final String myName;
   private final DeploymentTask<?> myDeploymentTask;
+  private final String myGroup;
   private volatile DeploymentState myState;
 
   public DeploymentImpl(@NotNull ServerConnectionImpl<?> connection,
@@ -25,10 +26,12 @@ public class DeploymentImpl implements Deployment {
                         @NotNull DeploymentStatus status,
                         @Nullable String statusText,
                         @Nullable DeploymentRuntime runtime,
-                        @Nullable DeploymentTask<?> deploymentTask) {
+                        @Nullable DeploymentTask<?> deploymentTask,
+                        @Nullable String group) {
     myConnection = connection;
     myName = name;
     myDeploymentTask = deploymentTask;
+    myGroup = group;
     myState = new DeploymentState(status, statusText, runtime);
   }
 
@@ -76,9 +79,16 @@ public class DeploymentImpl implements Deployment {
     });
   }
 
+  @NotNull
   @Override
   public ServerConnection<?> getConnection() {
     return myConnection;
+  }
+
+  @Nullable
+  @Override
+  public String getGroup() {
+    return myGroup;
   }
 
   public boolean changeState(@NotNull DeploymentStatus oldStatus, @NotNull DeploymentStatus newStatus, @Nullable String statusText,
