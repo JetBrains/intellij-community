@@ -16,9 +16,10 @@
 package com.intellij.execution.scratch;
 
 import com.intellij.application.options.ModulesComboBox;
-import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.execution.ui.DefaultJreSelector;
+import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.scratch.ScratchRootType;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -56,7 +57,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
   private JPanel myWholePanel;
 
   private final ConfigurationModuleSelector myModuleSelector;
-  private AlternativeJREPanel myAlternativeJREPanel;
+  private JrePathEditor myJrePathEditor;
   private JComponent myAnchor;
 
   public JavaScratchConfigurable(final Project project) {
@@ -97,16 +98,16 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
         myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
       }
     });
-    myAlternativeJREPanel = new AlternativeJREPanel();
+    myJrePathEditor = new JrePathEditor(DefaultJreSelector.projectSdk(project));
 
     myWholePanel = new JPanel(new GridBagLayout());
     myWholePanel.add(myMainClass, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(6, 0, 0, 0),0, 0 ));
     myWholePanel.add(myScratchPathField, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(6, 0, 0, 0),0, 0 ));
     myWholePanel.add(myCommonProgramParameters, new GridBagConstraints(GridBagConstraints.RELATIVE, 2, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(12, 0, 12, 0),0, 0 ));
     myWholePanel.add(myModule, new GridBagConstraints(GridBagConstraints.RELATIVE, 3, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0),0, 0 ));
-    myWholePanel.add(myAlternativeJREPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 4, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(6, 0, 0, 0),0, 0 ));
+    myWholePanel.add(myJrePathEditor, new GridBagConstraints(GridBagConstraints.RELATIVE, 4, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(6, 0, 0, 0),0, 0 ));
 
-    myAnchor = UIUtil.mergeComponentsWithAnchor(myMainClass, myScratchPathField, myCommonProgramParameters, myAlternativeJREPanel, myModule);
+    myAnchor = UIUtil.mergeComponentsWithAnchor(myMainClass, myScratchPathField, myCommonProgramParameters, myJrePathEditor, myModule);
   }
 
   @Override
@@ -114,8 +115,8 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     myCommonProgramParameters.applyTo(configuration);
     myModuleSelector.applyTo(configuration);
     configuration.MAIN_CLASS_NAME = myMainClass.getComponent().getText().trim();
-    configuration.ALTERNATIVE_JRE_PATH = myAlternativeJREPanel.getPath();
-    configuration.ALTERNATIVE_JRE_PATH_ENABLED = myAlternativeJREPanel.isPathEnabled();
+    configuration.ALTERNATIVE_JRE_PATH = myJrePathEditor.getJrePathOrName();
+    configuration.ALTERNATIVE_JRE_PATH_ENABLED = myJrePathEditor.isAlternativeJreSelected();
 
     final VirtualFile vFile = getVFileFromEditor();
     configuration.SCRATCH_FILE_ID = vFile instanceof VirtualFileWithId ? ((VirtualFileWithId)vFile).getId() : 0;
@@ -132,7 +133,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     myCommonProgramParameters.reset(configuration);
     myModuleSelector.reset(configuration);
     myMainClass.getComponent().setText(configuration.MAIN_CLASS_NAME != null ? configuration.MAIN_CLASS_NAME.replaceAll("\\$", "\\.") : "");
-    myAlternativeJREPanel.init(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
+    myJrePathEditor.setPathOrName(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
     setVFileToEditor(configuration.getScratchVirtualFile());
   }
 
@@ -157,7 +158,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     myMainClass.setAnchor(anchor);
     myScratchPathField.setAnchor(anchor);
     myCommonProgramParameters.setAnchor(anchor);
-    myAlternativeJREPanel.setAnchor(anchor);
+    myJrePathEditor.setAnchor(anchor);
     myModule.setAnchor(anchor);
   }
 }
