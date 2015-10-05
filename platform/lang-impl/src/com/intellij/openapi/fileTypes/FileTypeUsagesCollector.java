@@ -58,6 +58,7 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
       if (project.isDisposed()) {
         throw new CollectUsagesException("Project is disposed");
       }
+      final String ideaDirPath = project.getBaseDir().findChild(Project.DIRECTORY_STORE_FOLDER).getPath();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
@@ -68,14 +69,17 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
             new FileBasedIndex.ValueProcessor<Void>() {
               @Override
               public boolean process(VirtualFile file, Void value) {
-                usedFileTypes.add(fileType);
-                return false;
+                //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
+                if (!file.getPath().startsWith(ideaDirPath)) {
+                  usedFileTypes.add(fileType);
+                  return false;
+                }
+                return true;
               }
             }, GlobalSearchScope.projectScope(project));
         }
       });
     }
-    usedFileTypes.add(UnknownFileType.INSTANCE);
     return ContainerUtil.map2Set(usedFileTypes, new NotNullFunction<FileType, UsageDescriptor>() {
       @NotNull
       @Override
