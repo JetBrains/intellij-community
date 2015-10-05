@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.ui.Gray;
@@ -45,7 +46,9 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
     if (c.hasFocus()) {
       MacIntelliJBorderPainter.paintBorder(c, g, 0, 0, c.getWidth(), c.getHeight());
     }
-    g.setColor(Gray.xB1);
-    g.drawRect(3, 3, c.getWidth() - 6, c.getHeight() - 6);
+    if (!IntelliJLaf.isGraphite()) {
+      g.setColor(Gray.xB1);
+      g.drawRect(3, 3, c.getWidth() - 6, c.getHeight() - 6);
+    }
   }
 }
