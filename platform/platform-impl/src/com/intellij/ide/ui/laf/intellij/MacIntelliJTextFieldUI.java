@@ -147,10 +147,15 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   @Override
   protected Rectangle getVisibleEditorRect() {
     Rectangle rect = super.getVisibleEditorRect();
-    if (rect != null && isSearchField(myTextField)) {
-      rect.width -= 36;
-      rect.x += 19;
-      rect.y +=1;
+    if (rect != null) {
+      if (isSearchField(myTextField)) {
+        rect.width -= 36;
+        rect.x += 19;
+        rect.y += 1;
+      } else {
+        rect.x += 2;
+        rect.width -=4;
+      }
     }
     return rect;
   }
