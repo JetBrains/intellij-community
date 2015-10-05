@@ -19,6 +19,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -56,11 +57,17 @@ public class RemoteDesktopDetector {
         if (newValue != myRemoteDesktopConnected) {
           myRemoteDesktopConnected = newValue;
           if (myRemoteDesktopConnected) {
-            Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                                                      ApplicationBundle.message("remote.desktop.detected.title"),
-                                                      ApplicationBundle
-                                                        .message("remote.desktop.detected.message"),
-                                                      NotificationType.INFORMATION));
+            // We postpone notification to avoid recursive initialization of RemoteDesktopDetector 
+            // (in case it's initialized by request from com.intellij.notification.EventLog)
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
+                                                          ApplicationBundle.message("remote.desktop.detected.title"),
+                                                          ApplicationBundle
+                                                            .message("remote.desktop.detected.message"),
+                                                          NotificationType.INFORMATION));
+              }
+            });
           }
         }
       }
