@@ -67,6 +67,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
   private final DefaultTreeModel myTreeModel;
   private TreeBuilderBase myBuilder;
   private AbstractTreeNode<?> myLastSelection;
+  private Set<Object> myCollapsedTreeNodeValues = new HashSet<Object>();
 
   private final Project myProject;
 
@@ -113,6 +114,36 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
         return true;
       }
     }.installOn(myTree);
+    myTree.addTreeExpansionListener(new TreeExpansionListener() {
+
+      @Override
+      public void treeExpanded(TreeExpansionEvent event) {
+        Object value = getNodeValue(event);
+        if (value != null) {
+          myCollapsedTreeNodeValues.remove(value);
+        }
+      }
+
+      @Override
+      public void treeCollapsed(TreeExpansionEvent event) {
+        Object value = getNodeValue(event);
+        if (value != null) {
+          myCollapsedTreeNodeValues.add(value);
+        }
+      }
+
+      private Object getNodeValue(TreeExpansionEvent event) {
+        DefaultMutableTreeNode treeNode = ObjectUtils.tryCast(event.getPath().getLastPathComponent(), DefaultMutableTreeNode.class);
+        if (treeNode == null) {
+          return null;
+        }
+        AbstractTreeNode nodeDescriptor = ObjectUtils.tryCast(treeNode.getUserObject(), AbstractTreeNode.class);
+        if (nodeDescriptor == null) {
+          return null;
+        }
+        return nodeDescriptor.getValue();
+      }
+    });
 
     DefaultActionGroup popupActionGroup = new DefaultActionGroup();
     popupActionGroup.add(ActionManager.getInstance().getAction(SERVERS_TOOL_WINDOW_TOOLBAR));
@@ -183,9 +214,10 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
     myBuilder = new TreeBuilderBase(myTree, structure, myTreeModel) {
       @Override
       protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-        return nodeDescriptor instanceof ServersTreeStructure.RemoteServerNode
-               || nodeDescriptor instanceof ServersTreeStructure.DeploymentNodeImpl
-               || nodeDescriptor instanceof ServersTreeStructure.GroupNode;
+        return (nodeDescriptor instanceof ServersTreeStructure.RemoteServerNode
+                || nodeDescriptor instanceof ServersTreeStructure.DeploymentNodeImpl
+                || nodeDescriptor instanceof ServersTreeStructure.GroupNode)
+               && (!myCollapsedTreeNodeValues.contains(((AbstractTreeNode)nodeDescriptor).getValue()));
       }
     };
     Disposer.register(this, myBuilder);
