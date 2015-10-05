@@ -43,8 +43,6 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.*;
-import com.intellij.util.containers.hash.HashSet;
 import icons.RemoteServersIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +50,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
-import java.util.HashMap;
 
 /**
  * @author michael.golubev
@@ -63,6 +60,9 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
   private final ServersTreeRootNode myRootElement;
   private final Project myProject;
+
+  private final Map<RemoteServer, Map<String, DeploymentGroup>> myServer2DeploymentGroups
+    = new HashMap<RemoteServer, Map<String, DeploymentGroup>>();
 
   public ServersTreeStructure(@NotNull Project project) {
     super(project);
@@ -154,15 +154,38 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
         return Collections.emptyList();
       }
 
+      Map<DeploymentGroup, GroupNode> group2node = new HashMap<DeploymentGroup, GroupNode>();
       final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
-      Set<String> groups = new HashSet<String>();
       for (Deployment deployment : connection.getDeployments()) {
         final String groupName = deployment.getGroup();
         if (groupName == null) {
           children.add(new DeploymentNodeImpl(connection, this, deployment));
         }
-        else if (groups.add(groupName)) {
-          children.add(new GroupNode(connection, this, groupName));
+        else {
+          Map<String, DeploymentGroup> groups
+            = ContainerUtil.getOrCreate(myServer2DeploymentGroups, getServer(), new Factory<Map<String, DeploymentGroup>>() {
+            @Override
+            public Map<String, DeploymentGroup> create() {
+              return new HashMap<String, DeploymentGroup>();
+            }
+          });
+
+          final DeploymentGroup group
+            = ContainerUtil.getOrCreate(groups, groupName, new Factory<DeploymentGroup>() {
+            @Override
+            public DeploymentGroup create() {
+              return new DeploymentGroup(groupName);
+            }
+          });
+
+          ContainerUtil.getOrCreate(group2node, group, new Factory<GroupNode>() {
+            @Override
+            public GroupNode create() {
+              GroupNode result = new GroupNode(connection, RemoteServerNode.this, group);
+              children.add(result);
+              return result;
+            }
+          });
         }
       }
       return children;
@@ -447,19 +470,32 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
   }
 
-  public class GroupNode extends AbstractTreeNode<String> implements ServersTreeNode {
+  private static class DeploymentGroup {
+
+    private final String myName;
+
+    private DeploymentGroup(String name) {
+      myName = name;
+    }
+
+    public String getName() {
+      return myName;
+    }
+  }
+
+  public class GroupNode extends AbstractTreeNode<DeploymentGroup> implements ServersTreeNode {
 
     @NotNull private final ServerConnection<?> myConnection;
     @NotNull private final RemoteServerNode myServerNode;
 
-    public GroupNode(@NotNull ServerConnection<?> connection, @NotNull RemoteServerNode serverNode, @NotNull String group) {
+    public GroupNode(@NotNull ServerConnection<?> connection, @NotNull RemoteServerNode serverNode, @NotNull DeploymentGroup group) {
       super(doGetProject(), group);
       myConnection = connection;
       myServerNode = serverNode;
     }
 
     @NotNull
-    public String getGroup() {
+    public DeploymentGroup getGroup() {
       return getValue();
     }
 
@@ -468,7 +504,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     public Collection<? extends AbstractTreeNode> getChildren() {
       List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
       for (Deployment deployment : myConnection.getDeployments()) {
-        if (StringUtil.equals(getGroup(), deployment.getGroup())) {
+        if (StringUtil.equals(getGroup().getName(), deployment.getGroup())) {
           children.add(new DeploymentNodeImpl(myConnection, myServerNode, deployment));
         }
       }
@@ -478,7 +514,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @Override
     protected void update(PresentationData presentation) {
       presentation.setIcon(myServerNode.getServer().getType().getIcon());
-      presentation.setPresentableText(getGroup());
+      presentation.setPresentableText(getGroup().getName());
     }
   }
 }
