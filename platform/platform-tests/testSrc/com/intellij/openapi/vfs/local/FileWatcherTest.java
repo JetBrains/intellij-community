@@ -339,6 +339,11 @@ public class FileWatcherTest extends PlatformTestCase {
     LocalFileSystem.WatchRequest requestForSideDir = watch(sideDir);
     try {
       myAccept = true;
+      FileUtil.writeToFile(fileInSubDir, "first content");
+      FileUtil.writeToFile(fileInSideDir, "first content");
+      assertEvent(VFileContentChangeEvent.class, fileInSubDir.getPath(), fileInSideDir.getPath());
+
+      myAccept = true;
       FileUtil.writeToFile(fileInTopDir, "new content");
       FileUtil.writeToFile(fileInSubDir, "new content");
       FileUtil.writeToFile(fileInSideDir, "new content");

@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.local.FileWatcherResponsePath;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -140,7 +141,7 @@ public class FileWatcher {
     }
     if (result == null) return emptyList();
     synchronized (myLock) {
-      return myCanonicalFileMapper.getMapping(result);
+      return myCanonicalFileMapper.getMapping(FileWatcherResponsePath.toFileWatcherResponsePaths(result, false /* isParentOfDirtyPath */));
     }
   }
 
@@ -178,7 +179,9 @@ public class FileWatcher {
   }
 
   private boolean isUnderWatchRoot(@NotNull VirtualFile canonicalFile) {
-    return !myCanonicalFileMapper.getMapping(canonicalFile.getPath()).isEmpty();
+    List<String> mapping = myCanonicalFileMapper.getMapping(new FileWatcherResponsePath(canonicalFile.getPath(),
+                                                                                        false /* isParentOfDirtyPath */));
+    return !mapping.isEmpty();
   }
 
   public void notifyOnFailure(final String cause, @Nullable final NotificationListener listener) {
@@ -195,7 +198,7 @@ public class FileWatcher {
 
   private class MyFileWatcherNotificationSink implements FileWatcherNotificationSink {
     @Override
-    public void notifyDirtyPaths(Collection<String> paths) {
+    public void notifyDirtyPaths(Collection<FileWatcherResponsePath> paths) {
       synchronized (myLock) {
         Collection<String> nonCanonicalPaths = myCanonicalFileMapper.getMapping(paths);
         myDirtyPaths.dirtyPaths.addAll(nonCanonicalPaths);
@@ -203,7 +206,7 @@ public class FileWatcher {
     }
 
     @Override
-    public void notifyDirtyDirectories(Collection<String> paths) {
+    public void notifyDirtyDirectories(Collection<FileWatcherResponsePath> paths) {
       synchronized (myLock) {
         Collection<String> nonCanonicalPaths = myCanonicalFileMapper.getMapping(paths);
         myDirtyPaths.dirtyDirectories.addAll(nonCanonicalPaths);
@@ -211,7 +214,7 @@ public class FileWatcher {
     }
 
     @Override
-    public void notifyPathsRecursive(Collection<String> paths) {
+    public void notifyPathsRecursive(Collection<FileWatcherResponsePath> paths) {
       synchronized (myLock) {
         Collection<String> nonCanonicalPaths = myCanonicalFileMapper.getMapping(paths);
         myDirtyPaths.dirtyPathsRecursive.addAll(nonCanonicalPaths);
@@ -219,7 +222,7 @@ public class FileWatcher {
     }
 
     @Override
-    public void notifyPathsCreatedOrDeleted(Collection<String> paths) {
+    public void notifyPathsCreatedOrDeleted(Collection<FileWatcherResponsePath> paths) {
       synchronized (myLock) {
         Collection<String> nonCanonicalPaths = myCanonicalFileMapper.getMapping(paths);
         for (String p : nonCanonicalPaths) {

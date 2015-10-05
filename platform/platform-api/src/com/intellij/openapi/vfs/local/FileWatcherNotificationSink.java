@@ -24,13 +24,13 @@ import java.util.Collection;
  * @author dslomov
  */
 public interface FileWatcherNotificationSink {
-  void notifyDirtyPaths(Collection<String> paths);
+  void notifyDirtyPaths(Collection<FileWatcherResponsePath> paths);
 
-  void notifyDirtyDirectories(Collection<String> paths);
+  void notifyDirtyDirectories(Collection<FileWatcherResponsePath> paths);
 
-  void notifyPathsRecursive(Collection<String> paths);
+  void notifyPathsRecursive(Collection<FileWatcherResponsePath> paths);
 
-  void notifyPathsCreatedOrDeleted(Collection<String> paths);
+  void notifyPathsCreatedOrDeleted(Collection<FileWatcherResponsePath> paths);
 
   void notifyUserOnFailure(String cause, NotificationListener listener);
 

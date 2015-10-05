@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.local.FileWatcherResponsePath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,13 +57,13 @@ public abstract class CanonicalFileMapper {
   }
 
   @NotNull
-  public abstract List<String> getMapping(@NotNull String canonicalPath);
+  public abstract List<String> getMapping(@NotNull FileWatcherResponsePath canonicalPath);
 
   @NotNull
-  public final List<String> getMapping(@NotNull Collection<String> paths) {
+  public final List<String> getMapping(@NotNull Collection<FileWatcherResponsePath> paths) {
     // Use a set so we don't have duplicates in our list that we return
     ImmutableSet.Builder<String> setBuilder = ImmutableSet.builder();
-    for (String path : paths) {
+    for (FileWatcherResponsePath path : paths) {
       setBuilder.addAll(getMapping(path));
     }
     return setBuilder.build().asList();

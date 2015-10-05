@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.impl.local;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.local.FileWatcherResponsePath;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,11 +40,11 @@ public final class CanonicalFileMap extends CanonicalFileMapper {
     }
   }
 
-  private final MultiMap<String, OriginalWatchPath> canonicalPathToOriginalPath = MultiMap.createSet();
+  private final MultiMap<String, OriginalWatchPath> myCanonicalPathToOriginalPath = MultiMap.createSet();
 
-  // This is for the special case where we create/delete a file inside the root of a recursive watch. It comes from the old code in
-  // the native file watcher.
-  private final MultiMap<String, OriginalWatchPath> recursiveRootParents = MultiMap.createSet();
+  // The native filewatcher may report the root's parent as dirty when the root itself is dirty. In that situation, we want to record the
+  // root itself as dirty. So this is a map from root parent to root.
+  private final MultiMap<String, OriginalWatchPath> myRecursiveRootParents = MultiMap.createSet();
 
   /**
    * @return the canonical path for {@param file}
@@ -56,14 +57,16 @@ public final class CanonicalFileMap extends CanonicalFileMapper {
       LOG.warn("Could not find canonical path for " + file.getPath());
       return null;
     }
-    Collection<OriginalWatchPath> possibleOriginalPaths = canonicalPathToOriginalPath.getModifiable(canonicalFilePath);
+    Collection<OriginalWatchPath> possibleOriginalPaths = myCanonicalPathToOriginalPath.getModifiable(canonicalFilePath);
     possibleOriginalPaths.add(new OriginalWatchPath(file.getPath(), mappingType));
 
+    // If we are returned a path that is the parent of the actual dirty path, we need a way to see if it might indicate that a recursive
+    // root is dirty. This allows us a cheap map lookup instead of child traversal.
     if (mappingType == MappingType.RECURSIVE) {
       File parentFile = file.getParentFile();
       if (parentFile != null) {
-        Collection<OriginalWatchPath> originalWatchPaths = recursiveRootParents.getModifiable(symLinkToRealPath(parentFile));
-        originalWatchPaths.add(new OriginalWatchPath(parentFile.getPath(), MappingType.RECURSIVE));
+        Collection<OriginalWatchPath> originalWatchPaths = myRecursiveRootParents.getModifiable(symLinkToRealPath(parentFile));
+        originalWatchPaths.add(new OriginalWatchPath(file.getPath(), MappingType.RECURSIVE));
       }
     }
     return canonicalFilePath;
@@ -71,29 +74,46 @@ public final class CanonicalFileMap extends CanonicalFileMapper {
 
   @Override
   @NotNull
-  public List<String> getMapping(@NotNull String canonicalPath) {
-    List<String> pathComponents = FileUtil.splitPath(canonicalPath);
+  public List<String> getMapping(@NotNull FileWatcherResponsePath canonicalPath) {
+    List<String> pathComponents = FileUtil.splitPath(canonicalPath.getPath());
     List<String> originalPathsToFile = Lists.newArrayList();
 
-    // The first position will always be the root
     File runningPath = null;
     for (int i = 0; i < pathComponents.size(); ++i) {
-      runningPath = new File(runningPath, pathComponents.get(i));
-      Collection<OriginalWatchPath> possibleOriginalPaths = canonicalPathToOriginalPath.get(runningPath.getPath());
+      if (runningPath == null) {
+        runningPath = new File(pathComponents.get(i) + File.separator);
+      }
+      else {
+        runningPath = new File(runningPath, pathComponents.get(i));
+      }
+      Collection<OriginalWatchPath> possibleOriginalPaths = myCanonicalPathToOriginalPath.get(runningPath.getPath());
       for (OriginalWatchPath possibleOriginalPath : possibleOriginalPaths) {
-        // For a flat root, we will match if this is a direct child of the root or if this is the root exactly
-        if (possibleOriginalPath.mappingType == MappingType.RECURSIVE ||
-            (i + 1) == (pathComponents.size() - 1)) {
-          originalPathsToFile.add(combine(possibleOriginalPath.path, pathComponents, i + 1));
-        } else if (i == (pathComponents.size() - 1)) {
-          originalPathsToFile.add(possibleOriginalPath.path);
+        switch (possibleOriginalPath.mappingType) {
+          case FLAT:
+            // If we were returned the parent of a dirty path, the last item in the path should be the flat root.
+            // Else
+            // If we were returned the actual dirty path, the second to last item in the path should be the flat root and the last item in
+            // the path should be the dirty file name
+            if (canonicalPath.isParentOfDirtyPath() && i == (pathComponents.size() - 1)) {
+              originalPathsToFile.add(possibleOriginalPath.path);
+            }
+            else if (!canonicalPath.isParentOfDirtyPath() && (i + 1) == (pathComponents.size() - 1)) {
+              originalPathsToFile.add(combine(possibleOriginalPath.path, pathComponents, i + 1));
+            }
+            break;
+          case RECURSIVE:
+            originalPathsToFile.add(combine(possibleOriginalPath.path, pathComponents, i + 1));
+            break;
+          default:
+            LOG.error("Unhandled mapping type: " + possibleOriginalPath.mappingType);
         }
       }
     }
 
-    // Special case for recursive roots that comes from old native file watcher
-    if (runningPath != null) {
-      Collection<OriginalWatchPath> originalWatchPaths = recursiveRootParents.get(runningPath.getPath());
+    // If we were returned a path that is the parent of the actual dirty path, we need to see if it might indicate that a recursive root is
+    // dirty.
+    if (runningPath != null && canonicalPath.isParentOfDirtyPath()) {
+      Collection<OriginalWatchPath> originalWatchPaths = myRecursiveRootParents.get(runningPath.getPath());
       for (OriginalWatchPath originalWatchPath : originalWatchPaths) {
         originalPathsToFile.add(originalWatchPath.path);
       }

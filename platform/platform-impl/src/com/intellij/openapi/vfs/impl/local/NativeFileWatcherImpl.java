@@ -34,6 +34,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.local.FileWatcherResponsePath;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -455,7 +456,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       for (VirtualFile root : localRoots) {
         urls.add(root.getPresentableUrl());
       }
-      myNotificationSink.notifyPathsRecursive(urls);
+      myNotificationSink.notifyPathsRecursive(FileWatcherResponsePath.toFileWatcherResponsePaths(urls, false /* isParentOfDirtyPath */));
       notifyOnAnyEvent();
     }
 
@@ -463,7 +464,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       if (SystemInfo.isWindows && op == WatcherOp.RECDIRTY && path.length() == 3 && Character.isLetter(path.charAt(0))) {
         VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
         if (root != null) {
-          myNotificationSink.notifyPathsRecursive(list(root.getPresentableUrl()));
+          myNotificationSink.notifyPathsRecursive(FileWatcherResponsePath.toFileWatcherResponsePaths(list(root.getPresentableUrl()),
+                                                                                                     false /* isParentOfDirtyPath */));
         }
         notifyOnAnyEvent();
         return;
@@ -488,7 +490,9 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
       int length = path.length();
       if (length > 1 && path.charAt(length - 1) == '/') path = path.substring(0, length - 1);
-      Collection<String> paths = getRemappedFiles(path);
+      boolean pathReportedIsParentOfDirtyPath = op == WatcherOp.DIRTY || op == WatcherOp.RECDIRTY;
+      Collection<FileWatcherResponsePath> paths = FileWatcherResponsePath.toFileWatcherResponsePaths(getRemappedFiles(path),
+                                                                                                     pathReportedIsParentOfDirtyPath);
 
       if (paths.isEmpty()) {
         if (LOG.isDebugEnabled()) {
