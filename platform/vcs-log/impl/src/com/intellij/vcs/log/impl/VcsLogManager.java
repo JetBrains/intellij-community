@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -62,10 +63,11 @@ public class VcsLogManager implements Disposable {
   private VcsLogColorManagerImpl myColorManager;
   private PostponableLogRefresher myLogRefresher;
 
-  public VcsLogManager(@NotNull Project project,
-                       @NotNull VcsLogUiProperties uiProperties) {
+  public VcsLogManager(@NotNull Project project, @NotNull VcsLogUiProperties uiProperties) {
     myProject = project;
     myUiProperties = uiProperties;
+
+    Disposer.register(project, this);
   }
 
   public VcsLogDataManager getDataManager() {
@@ -108,10 +110,8 @@ public class VcsLogManager implements Disposable {
   public boolean initData() {
     if (myDataManager != null) return true;
 
-    Disposer.register(myProject, this);
-
     Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(getVcsRoots(), myProject);
-    myDataManager = new VcsLogDataManager(myProject, this, logProviders);
+    myDataManager = new VcsLogDataManager(myProject, logProviders);
     myLogRefresher = new PostponableLogRefresher(myProject, myDataManager);
 
     refreshLogOnVcsEvents(logProviders, myLogRefresher);
@@ -163,12 +163,22 @@ public class VcsLogManager implements Disposable {
     return myUi;
   }
 
-  @Override
-  public void dispose() {
+  public void disposeLog() {
+    if (myDataManager != null) Disposer.dispose(myDataManager);
+
     myDataManager = null;
     myLogRefresher = null;
     myColorManager = null;
     myUi = null;
+  }
+
+  public static VcsLogManager getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, VcsLogManager.class);
+  }
+
+  @Override
+  public void dispose() {
+    disposeLog();
   }
 
   private static class PostponableLogRefresher implements VcsLogRefresher, Disposable {

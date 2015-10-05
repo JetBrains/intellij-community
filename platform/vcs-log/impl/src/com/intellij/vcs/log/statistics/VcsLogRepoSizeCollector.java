@@ -29,9 +29,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
@@ -51,9 +52,10 @@ public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector 
   @NotNull
   @Override
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
-    VcsLogManager logManager = VcsLogContentProvider.findLogManager(project);
-    VisiblePack dataPack = getDataPack(logManager);
-    if (dataPack != null) {
+    VcsLogManager logManager = VcsLogManager.getInstance(project);
+    VcsLogDataManager dataManager = logManager.getDataManager();
+    if (dataManager != null) {
+      DataPack dataPack = dataManager.getDataPack();
       PermanentGraph<Integer> permanentGraph = dataPack.getPermanentGraph();
       MultiMap<VcsKey, VirtualFile> groupedRoots = groupRootsByVcs(dataPack.getLogProviders());
 
@@ -69,24 +71,6 @@ public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector 
       return usages;
     }
     return Collections.emptySet();
-  }
-
-  @Nullable
-  private static VisiblePack getDataPack(@Nullable VcsLogManager logManager) {
-    if (logManager != null) {
-      final VcsLogUiImpl ui = logManager.getMainLogUi();
-      if (ui != null) {
-        final Ref<VisiblePack> dataPack = Ref.create();
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            dataPack.set(ui.getDataPack());
-          }
-        }, ModalityState.defaultModalityState());
-        return dataPack.get();
-      }
-    }
-    return null;
   }
 
   @NotNull

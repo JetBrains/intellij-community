@@ -95,10 +95,8 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
   @NotNull
   @Override
   protected Collection<String> getDebugLogCategories() {
-    return Arrays.asList("#" + SingleTaskController.class.getName(),
-                         "#" + VcsLogRefresherImpl.class.getName(),
-                         "#" + VcsLogRefresherTest.class.getName(),
-                         "#" + TestVcsLogProvider.class.getName());
+    return Arrays.asList("#" + SingleTaskController.class.getName(), "#" + VcsLogRefresherImpl.class.getName(),
+                         "#" + VcsLogRefresherTest.class.getName(), "#" + TestVcsLogProvider.class.getName());
   }
 
   public void test_initialize_shows_short_history() throws InterruptedException, ExecutionException, TimeoutException {
@@ -177,8 +175,8 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
     }
   }
 
-  public void test_two_immediately_consecutive_refreshes_causes_only_one_data_pack_update() throws InterruptedException,
-                                                                                                   ExecutionException, TimeoutException {
+  public void test_two_immediately_consecutive_refreshes_causes_only_one_data_pack_update()
+    throws InterruptedException, ExecutionException, TimeoutException {
     initAndWaitForFirstRefresh();
     myLogProvider.blockRefresh();
     myLoader.refresh(Collections.singletonList(myProjectRoot)); // this refresh hangs in VcsLogProvider.readFirstBlock()
@@ -189,9 +187,7 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
     assertTimeout("Second refresh shouldn't cause the data pack update"); // it may also fail in beforehand in set().
   }
 
-  private void initAndWaitForFirstRefresh()
-    throws InterruptedException, ExecutionException, TimeoutException
-  {
+  private void initAndWaitForFirstRefresh() throws InterruptedException, ExecutionException, TimeoutException {
     // wait for the first block and the whole log to complete
     myLoader.readFirstBlock();
     DataPack fullDataPack = myDataWaiter.get();
@@ -204,9 +200,9 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
   }
 
   private VcsLogRefresherImpl createLoader(Consumer<DataPack> dataPackConsumer) {
-    myDataManager = new VcsLogDataManager(myProject, myProject, myLogProviders);
-    return new VcsLogRefresherImpl(myProject, myDataManager.getHashMap(), myLogProviders, myDataManager.getUserRegistry(), myTopDetailsCache,
-                                   dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT) {
+    myDataManager = new VcsLogDataManager(myProject, myLogProviders);
+    return new VcsLogRefresherImpl(myProject, myDataManager.getHashMap(), myLogProviders, myDataManager.getUserRegistry(),
+                                   myTopDetailsCache, dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT) {
       @Override
       protected void startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
         UIUtil.invokeLaterIfNeeded(new Runnable() {

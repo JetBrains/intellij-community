@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,9 +70,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
   @NotNull private final List<Consumer<DataPack>> myConsumers = ContainerUtil.newArrayList();
 
   public VcsLogDataManager(@NotNull Project project,
-                           @NotNull Disposable parentDisposable,
                            @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
-    Disposer.register(parentDisposable, this);
     myProject = project;
     myLogProviders = logProviders;
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
