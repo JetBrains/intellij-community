@@ -305,7 +305,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
+  protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
     val storages = stateSpec.storages
     if (storages.size() == 1 || component is StateStorageChooserEx) {
       return storages
@@ -324,29 +324,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       return defaultStorages
     }
 
-    if (!storages[0].deprecated) {
-      var othersAreDeprecated = true
-      for (i in 1..storages.size() - 1) {
-        if (!storages[i].deprecated) {
-          othersAreDeprecated = false
-          break
-        }
-      }
-
-      if (othersAreDeprecated) {
-        return storages
-      }
-    }
-
-    val sorted = Arrays.copyOf(storages, storages.size())
-    Arrays.sort(sorted, object : Comparator<Storage> {
-      override fun compare(o1: Storage, o2: Storage): Int {
-        val w1 = if (o1.deprecated) 1 else 0
-        val w2 = if (o2.deprecated) 1 else 0
-        return w1 - w2
-      }
-    })
-    return sorted
+    return sortStoragesByDeprecated(storages)
   }
 
   override final fun isReloadPossible(componentNames: MutableSet<String>) = !componentNames.any { isNotReloadable(it) }
@@ -470,4 +448,30 @@ private fun findNonDeprecated(storages: Array<Storage>): Storage {
 
 enum class StateLoadPolicy {
   LOAD, LOAD_ONLY_DEFAULT, NOT_LOAD
+}
+
+internal fun sortStoragesByDeprecated(storages: Array<Storage>): Array<out Storage> {
+  if (storages.isEmpty()) {
+    return storages
+  }
+
+  if (!storages[0].deprecated) {
+    var othersAreDeprecated = true
+    for (i in 1..storages.size() - 1) {
+      if (!storages[i].deprecated) {
+        othersAreDeprecated = false
+        break
+      }
+    }
+
+    if (othersAreDeprecated) {
+      return storages
+    }
+  }
+
+  return storages.sortedArrayWith(comparator { o1, o2 ->
+    val w1 = if (o1.deprecated) 1 else 0
+    val w2 = if (o2.deprecated) 1 else 0
+    w1 - w2
+  })
 }
