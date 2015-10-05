@@ -100,11 +100,12 @@ public class MyTestInjector {
         .doneInjecting();
       }
     };
-    JavaConcatenationInjectorManager.getInstance(project).registerConcatenationInjector(injector);
+    final JavaConcatenationInjectorManager injectorManager = JavaConcatenationInjectorManager.getInstance(project);
+    injectorManager.registerConcatenationInjector(injector);
     Disposer.register(parent, new Disposable() {
       @Override
       public void dispose() {
-        boolean b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(injector);
+        boolean b = injectorManager.unregisterConcatenationInjector(injector);
         assert b;
       }
     });
@@ -149,11 +150,12 @@ public class MyTestInjector {
         }
       }
     };
-    JavaConcatenationInjectorManager.getInstance(project).registerConcatenationInjector(injector);
+    final JavaConcatenationInjectorManager injectorManager = JavaConcatenationInjectorManager.getInstance(project);
+    injectorManager.registerConcatenationInjector(injector);
     Disposer.register(parent, new Disposable() {
       @Override
       public void dispose() {
-        boolean b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(injector);
+        boolean b = injectorManager.unregisterConcatenationInjector(injector);
         assert b;
       }
     });
