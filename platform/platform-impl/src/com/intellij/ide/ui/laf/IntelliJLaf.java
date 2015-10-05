@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.MacUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -84,5 +85,10 @@ public class IntelliJLaf extends DarculaLaf {
     } catch (Exception e) {
       return false;
     }
+  }
+
+  public static Color getSelectedControlColor() {
+    // https://developer.apple.com/library/mac/e/Cocoa/Reference/ApplicationKit/Classes/NSColor_Class/#//apple_ref/occ/clm/NSColor/alternateSelectedControlColor
+    return MacUtil.colorFromNative(Foundation.invoke("NSColor", "alternateSelectedControlColor"));
   }
 }
