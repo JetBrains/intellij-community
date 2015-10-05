@@ -219,6 +219,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
       outCommand(String.format(TEMPLATE_SCENARIO_FINISHED, getCurrentTime()), true);
       outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getName(currentScenario)));
     }
+    scenarioPassed = true;
     currentScenario = null;
   }
 
@@ -274,7 +275,6 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
   @Override
   public void after(Match match, Result result) {
-    outCommand("after\n");
   }
 
   @Override
@@ -303,7 +303,6 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
   @Override
   public void before(Match match, Result result) {
-    outCommand("before\n");
   }
 
   private static String getCurrentTime() {
