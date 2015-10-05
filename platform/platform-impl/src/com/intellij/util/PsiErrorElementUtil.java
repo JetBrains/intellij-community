@@ -45,6 +45,9 @@ public class PsiErrorElementUtil {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
+        if (project.isDisposed()) {
+          return false;
+        }
         PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(project);
         PsiFile psiFile = psiManager.getFileManager().findFile(virtualFile);
         return psiFile != null && hasErrors(psiFile);
