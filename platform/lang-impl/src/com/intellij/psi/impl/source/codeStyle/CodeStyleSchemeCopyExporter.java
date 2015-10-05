@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.SchemeExporter;
-import com.intellij.openapi.options.SchemeExporterException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,23 +35,11 @@ import java.io.OutputStreamWriter;
  *
  * @author Rustam Vishnyakov
  */
-public class CodeStyleSchemeCopyExporter implements SchemeExporter<CodeStyleScheme> {
+public class CodeStyleSchemeCopyExporter extends SchemeExporter<CodeStyleScheme> {
   @Override
-  public void exportScheme(@NotNull final CodeStyleScheme scheme, @NotNull final VirtualFile targetFile) throws SchemeExporterException {
+  public void exportScheme(@NotNull final CodeStyleScheme scheme, @NotNull OutputStream outputStream) throws Exception {
     assert scheme instanceof CodeStyleSchemeImpl;
-    try {
-      final Element root = schemeToDom((CodeStyleSchemeImpl)scheme);
-      ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Boolean, IOException>() {
-        @Override
-        public Boolean compute() throws IOException {
-          writeToFile(targetFile, root);
-          return Boolean.TRUE;
-        }
-      });
-    }
-    catch (Exception e) {
-      throw new SchemeExporterException("Export failed: " + e.getMessage());
-    }
+    writeToStream(outputStream, schemeToDom((CodeStyleSchemeImpl)scheme));
   }
 
   @Override
@@ -67,16 +54,10 @@ public class CodeStyleSchemeCopyExporter implements SchemeExporter<CodeStyleSche
     return newElement;
   }
 
-  private void writeToFile(@NotNull VirtualFile file, @NotNull Element element) throws IOException {
-    OutputStream targetStream = file.getOutputStream(this);
-    try {
-      OutputStreamWriter writer = new OutputStreamWriter(targetStream);
-      Format format = Format.getPrettyFormat();
-      format.setLineSeparator("\n");
-      new XMLOutputter(format).output(element, writer);
-    }
-    finally {
-      targetStream.close();
-    }
+  private static void writeToStream(@NotNull OutputStream outputStream, @NotNull Element element) throws IOException {
+    OutputStreamWriter writer = new OutputStreamWriter(outputStream);
+    Format format = Format.getPrettyFormat();
+    format.setLineSeparator("\n");
+    new XMLOutputter(format).output(element, writer);
   }
 }
