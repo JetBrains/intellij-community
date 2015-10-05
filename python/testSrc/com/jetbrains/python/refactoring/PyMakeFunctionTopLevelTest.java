@@ -173,7 +173,11 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     doTestSuccess();
   }
 
-  public void testMethodMultipleAttributesRead() {
+  public void testMethodMultipleAttributesReadReferenceQualifier() {
+    doTestSuccess();
+  }
+
+  public void testMethodMultipleAttributesConstructorQualifier() {
     doTestSuccess();
   }
 

@@ -56,7 +56,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
   }
 
   @Override
-  protected void updateExistingFunctionUsages(@NotNull final Collection<String> newParamNames, @NotNull UsageInfo[] usages) {
+  protected void updateExistingFunctionUsages(@NotNull Collection<String> newParamNames, @NotNull UsageInfo[] usages) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(myProject);
 
     for (UsageInfo usage : usages) {
@@ -69,7 +69,15 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
         final PyExpression qualifier = ((PyReferenceExpression)usageElem).getQualifier();
         final PyCallExpression callExpr = as(usageElem.getParent(), PyCallExpression.class);
         if (qualifier != null && callExpr != null && callExpr.getArgumentList() != null) {
-          if (newParamNames.size() == 1) {
+          if (isPureReferenceExpression(qualifier)) {
+            addArguments(callExpr.getArgumentList(), ContainerUtil.map(newParamNames, new Function<String, String>() {
+              @Override
+              public String fun(String attribute) {
+                return qualifier.getText() + "." + attribute;
+              }
+            }));
+          }
+          else if (newParamNames.size() == 1) {
             addArguments(callExpr.getArgumentList(), Collections.singleton(qualifier.getText() + "." + ContainerUtil.getFirstItem(newParamNames)));
           }
           else if (!newParamNames.isEmpty()) {
@@ -80,6 +88,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
             final PyAssignmentStatement assignment = elementGenerator.createFromText(LanguageLevel.forElement(callExpr),
                                                                                      PyAssignmentStatement.class,
                                                                                      assignmentText);
+            //noinspection ConstantConditions
             anchor.getParent().addBefore(assignment, anchor);
             addArguments(callExpr.getArgumentList(), ContainerUtil.map(newParamNames, new Function<String, String>() {
               @Override
@@ -104,6 +113,14 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
         PyUtil.removeQualifier((PyReferenceExpression)usageElem);
       }
     }
+  }
+
+  private static boolean isPureReferenceExpression(@NotNull PyExpression expr) {
+    if (!(expr instanceof PyReferenceExpression)) {
+      return false;
+    }
+    final PyExpression qualifier = ((PyReferenceExpression)expr).getQualifier();
+    return qualifier == null || isPureReferenceExpression(qualifier);
   }
 
   @NotNull
