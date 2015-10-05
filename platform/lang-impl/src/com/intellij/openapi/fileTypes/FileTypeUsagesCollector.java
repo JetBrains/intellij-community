@@ -58,7 +58,8 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
       if (project.isDisposed()) {
         throw new CollectUsagesException("Project is disposed");
       }
-      final String ideaDirPath = project.getBaseDir().findChild(Project.DIRECTORY_STORE_FOLDER).getPath();
+      VirtualFile ideaDir = project.getBaseDir().findChild(Project.DIRECTORY_STORE_FOLDER);
+      final String ideaDirPath = ideaDir == null ? null : ideaDir.getPath();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
@@ -70,7 +71,7 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
               @Override
               public boolean process(VirtualFile file, Void value) {
                 //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
-                if (!file.getPath().startsWith(ideaDirPath)) {
+                if (ideaDirPath == null || !file.getPath().startsWith(ideaDirPath)) {
                   usedFileTypes.add(fileType);
                   return false;
                 }
