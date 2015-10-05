@@ -12,16 +12,14 @@ import org.jetbrains.io.Responses
 import java.net.InetSocketAddress
 import java.util.*
 
-class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
-  companion object {
-    private val PARAMS = 4
-    private val BEGIN_REQUEST = 1
-    private val RESPONDER = 1
-    private val FCGI_KEEP_CONNECTION = 1
-    private val STDIN = 5
-    private val VERSION = 1
-  }
+private val PARAMS = 4
+private val BEGIN_REQUEST = 1
+private val RESPONDER = 1
+private val FCGI_KEEP_CONNECTION = 1
+private val STDIN = 5
+private val VERSION = 1
 
+class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
   private var buffer: ByteBuf? = allocator.ioBuffer(4096)
 
   init {

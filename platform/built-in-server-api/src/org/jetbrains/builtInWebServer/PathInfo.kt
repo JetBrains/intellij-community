@@ -22,11 +22,12 @@ class PathInfo(val ioFile: File?, val file: VirtualFile?, val root: VirtualFile,
     }
 
     if (file == null) {
-      builder.append(FileUtilRt.getRelativePath(FileUtilRt.toSystemIndependentName(ioFile!!.path), root.path, '/')).toString()
+      builder.append(FileUtilRt.getRelativePath(FileUtilRt.toSystemIndependentName(ioFile!!.path), root.path, '/'))
     }
     else {
-      builder.append(VfsUtilCore.getRelativePath(file, root, '/')).toString()
+      builder.append(VfsUtilCore.getRelativePath(file, root, '/'))
     }
+    builder.toString()
   }
 
   val isValid: Boolean
