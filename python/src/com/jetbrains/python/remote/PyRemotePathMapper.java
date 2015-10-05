@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.remote;
 
-import com.intellij.util.PathMappingSettings;
 import com.intellij.util.AbstractPathMapper;
+import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,5 +110,10 @@ public class PyRemotePathMapper extends AbstractPathMapper implements Cloneable 
       }
     }
     return pathMapper;
+  }
+
+  @Override
+  public PyRemotePathMapper clone() {
+    return cloneMapper(this);
   }
 }

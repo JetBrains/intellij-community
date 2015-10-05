@@ -14,7 +14,7 @@ else:
 
 coverage_file = os.getenv('PYCHARM_COVERAGE_FILE')
 run_cov = os.getenv('PYCHARM_RUN_COVERAGE')
-if os.getenv('JETBRAINS_REMOTE_RUN'):
+if os.getenv('CREATE_TEMP_COVERAGE_FILE'):
     line = 'LOG: PyCharm: File mapping:%s\t%s\n'
     import tempfile
     (h, new_cov_file) = tempfile.mkstemp(prefix='pycharm-coverage')
