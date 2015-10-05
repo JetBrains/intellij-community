@@ -37,9 +37,9 @@ TR=`which tr`
 
 #Disbale Jayatana on linux
 
-if [ -n "$JAVA_TOOL_OPTIONS" ]; then
-  JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS%-javaagent*jayatanaag.jar*}${JAVA_TOOL_OPTIONS#*jayatanaag.jar}
-  message "Jayatana global menu integration is disabled."
+if [ -n "$JAVA_TOOL_OPTIONS" -a "$JAVA_TOOL_OPTIONS" != "${JAVA_TOOL_OPTIONS%-javaagent*jayatanaag.jar*"}" ] ; then
+    JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS%-javaagent*jayatanaag.jar*}${JAVA_TOOL_OPTIONS#*jayatanaag.jar};
+    message "Jayatana global menu integration is disabled.";
 fi
 
 if [ -z "$UNAME" -o -z "$GREP" -o -z "$CUT" -o -z "$MKTEMP" -o -z "$RM" -o -z "$CAT" -o -z "$TR" ]; then
