@@ -46,8 +46,8 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
     if (c.hasFocus()) {
       MacIntelliJBorderPainter.paintBorder(c, g, 0, 0, c.getWidth(), c.getHeight());
     }
-    if (!IntelliJLaf.isGraphite()) {
-      g.setColor(Gray.xB1);
+    if (!IntelliJLaf.isGraphite() || !c.hasFocus()) {
+      g.setColor(Gray.xB4);
       g.drawRect(3, 3, c.getWidth() - 6, c.getHeight() - 6);
     }
   }
