@@ -248,6 +248,9 @@ public class JavaStackFrame extends XStackFrame {
     }
   }
 
+  private static final Pair<Set<String>, Set<TextWithImports>> EMPTY_USED_VARS =
+    Pair.create(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
+
   // copied from FrameVariablesTree
   private void buildVariables(DebuggerContextImpl debuggerContext,
                               final EvaluationContextImpl evaluationContext,
@@ -276,10 +279,6 @@ public class JavaStackFrame extends XStackFrame {
     if (evaluationContext == null) {
       return;
     }
-    final SourcePosition sourcePosition = debuggerContext.getSourcePosition();
-    if (sourcePosition == null) {
-      return;
-    }
 
     try {
       if (!XDebuggerSettingsManager.getInstance().getDataViewSettings().isAutoExpressions() && !myAutoWatchMode) {
@@ -287,15 +286,19 @@ public class JavaStackFrame extends XStackFrame {
         superBuildVariables(evaluationContext, children);
       }
       else {
+        final SourcePosition sourcePosition = debuggerContext.getSourcePosition();
         final Map<String, LocalVariableProxyImpl> visibleVariables = getVisibleVariables(getStackFrameProxy());
-        final Pair<Set<String>, Set<TextWithImports>> usedVars =
-          ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
+
+        Pair<Set<String>, Set<TextWithImports>> usedVars = EMPTY_USED_VARS;
+        if (sourcePosition != null) {
+          usedVars = ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
             @Override
             public Pair<Set<String>, Set<TextWithImports>> compute() {
               return findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition);
             }
           });
-        // add locals
+        }
+          // add locals
         if (myAutoWatchMode) {
           for (String var : usedVars.first) {
             LocalVariableProxyImpl local = visibleVariables.get(var);
@@ -310,10 +313,11 @@ public class JavaStackFrame extends XStackFrame {
         final EvaluationContextImpl evalContextCopy = evaluationContext.createEvaluationContext(evaluationContext.getThisObject());
         evalContextCopy.setAutoLoadClasses(false);
 
-        final Set<TextWithImports> extraVars = computeExtraVars(usedVars, sourcePosition, evaluationContext);
-
-        // add extra vars
-        addToChildrenFrom(extraVars, children, evaluationContext);
+        if (sourcePosition != null) {
+          Set<TextWithImports> extraVars = computeExtraVars(usedVars, sourcePosition, evaluationContext);
+          // add extra vars
+          addToChildrenFrom(extraVars, children, evaluationContext);
+        }
 
         // add expressions
         addToChildrenFrom(usedVars.second, children, evalContextCopy);
@@ -340,8 +344,8 @@ public class JavaStackFrame extends XStackFrame {
   }
 
   private static Set<TextWithImports> computeExtraVars(Pair<Set<String>, Set<TextWithImports>> usedVars,
-                                                       SourcePosition sourcePosition,
-                                                       EvaluationContextImpl evalContext) {
+                                                       @NotNull SourcePosition sourcePosition,
+                                                       @NotNull EvaluationContextImpl evalContext) {
     Set<String> alreadyCollected = new HashSet<String>(usedVars.first);
     for (TextWithImports text : usedVars.second) {
       alreadyCollected.add(text.getText());
@@ -578,7 +582,7 @@ public class JavaStackFrame extends XStackFrame {
     return true;
   }
 
-  private static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(Set<String> visibleVars, SourcePosition position) {
+  private static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(Set<String> visibleVars, @NotNull SourcePosition position) {
     final int line = position.getLine();
     if (line < 0) {
       return Pair.create(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
