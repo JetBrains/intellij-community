@@ -51,8 +51,6 @@ public class ContainingBranchesGetter {
   @NotNull private SLRUMap<CommitId, List<String>> myCache = createCache();
   @NotNull private Map<VirtualFile, ContainedInBranchCondition> myConditions = ContainerUtil.newHashMap();
   private int myCurrentBranchesChecksum;
-  @Nullable private RefsModel myRefs;
-  @Nullable private PermanentGraph<Integer> myGraph;
 
   ContainingBranchesGetter(@NotNull VcsLogDataManager dataManager, @NotNull Disposable parentDisposable) {
     myDataManager = dataManager;
@@ -74,14 +72,12 @@ public class ContainingBranchesGetter {
     myDataManager.addConsumer(new Consumer<DataPack>() {
       @Override
       public void consume(DataPack dataPack) {
-        myRefs = dataPack.getRefsModel();
-        Collection<VcsRef> currentBranches = myRefs.getBranches();
+        Collection<VcsRef> currentBranches = dataPack.getRefsModel().getBranches();
         int checksum = currentBranches.hashCode();
         if (myCurrentBranchesChecksum != 0 && myCurrentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
           clearCache();
         }
         myCurrentBranchesChecksum = checksum;
-        myGraph = dataPack.getPermanentGraph();
       }
     });
   }
@@ -132,7 +128,8 @@ public class ContainingBranchesGetter {
     LOG.assertTrue(EventQueue.isDispatchThread());
     List<String> refs = myCache.get(new CommitId(hash, root));
     if (refs == null) {
-      myTaskExecutor.queue(new Task(root, hash, myCache, myGraph, myRefs));
+      DataPack dataPack = myDataManager.getDataPack();
+      myTaskExecutor.queue(new Task(root, hash, myCache, dataPack.getPermanentGraph(), dataPack.getRefsModel()));
     }
     return refs;
   }
@@ -145,8 +142,14 @@ public class ContainingBranchesGetter {
   @NotNull
   public Condition<CommitId> getContainedInBranchCondition(@NotNull final String branchName, @NotNull final VirtualFile root) {
     LOG.assertTrue(EventQueue.isDispatchThread());
-    if (myRefs == null || myGraph == null) return Conditions.alwaysFalse();
-    VcsRef branchRef = ContainerUtil.find(myRefs.getBranches(), new Condition<VcsRef>() {
+
+    DataPack dataPack = myDataManager.getDataPack();
+    if (dataPack == DataPack.EMPTY) return Conditions.alwaysFalse();
+
+    PermanentGraph<Integer> graph = dataPack.getPermanentGraph();
+    VcsLogRefs refs = dataPack.getRefsModel();
+
+    VcsRef branchRef = ContainerUtil.find(refs.getBranches(), new Condition<VcsRef>() {
       @Override
       public boolean value(VcsRef vcsRef) {
         return vcsRef.getRoot().equals(root) && vcsRef.getName().equals(branchName);
@@ -155,7 +158,7 @@ public class ContainingBranchesGetter {
     if (branchRef == null) return Conditions.alwaysFalse();
     ContainedInBranchCondition condition = myConditions.get(root);
     if (condition == null || !condition.getBranch().equals(branchName)) {
-      condition = new ContainedInBranchCondition(myGraph.getContainedInBranchCondition(
+      condition = new ContainedInBranchCondition(graph.getContainedInBranchCondition(
         Collections.singleton(myDataManager.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot()))), branchName);
       myConditions.put(root, condition);
     }
