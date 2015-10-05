@@ -458,13 +458,15 @@ public class DarculaLaf extends BasicLookAndFeel {
   private static void repaintMnemonics(@NotNull Component focusOwner, boolean pressed) {
     if (pressed != myAltPressed) return;
     Window window = SwingUtilities.windowForComponent(focusOwner);
-    for (Component component : window.getComponents()) {
-      if (component instanceof JComponent) {
-        for (JComponent c : UIUtil.findComponentsOfType((JComponent)component, JComponent.class)) {
-          if ((c instanceof JLabel && ((JLabel)c).getDisplayedMnemonicIndex() != -1)
-            || (c instanceof AbstractButton && ((AbstractButton)c).getDisplayedMnemonicIndex() != -1)
-            ) {
-            c.repaint();
+    if (window != null) {
+      for (Component component : window.getComponents()) {
+        if (component instanceof JComponent) {
+          for (JComponent c : UIUtil.findComponentsOfType((JComponent)component, JComponent.class)) {
+            if ((c instanceof JLabel && ((JLabel)c).getDisplayedMnemonicIndex() != -1)
+              || (c instanceof AbstractButton && ((AbstractButton)c).getDisplayedMnemonicIndex() != -1)
+              ) {
+              c.repaint();
+            }
           }
         }
       }
