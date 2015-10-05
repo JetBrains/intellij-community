@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -238,7 +239,8 @@ public final class UpdateChecker {
 
     ApplicationInfo appInfo = ApplicationInfo.getInstance();
     int majorVersion = Integer.parseInt(appInfo.getMajorVersion());
-    UpdateStrategy strategy = new UpdateStrategy(majorVersion, appInfo.getBuild(), updateInfo, settings);
+    UpdateStrategyCustomization customization = UpdateStrategyCustomization.getInstance();
+    UpdateStrategy strategy = new UpdateStrategy(majorVersion, appInfo.getBuild(), updateInfo, settings, customization);
     return strategy.checkForUpdates();
   }
 

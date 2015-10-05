@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.updates;
 
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.updateSettings.impl.*;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -27,12 +27,13 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class UpdateStrategyTest extends BareTestFixtureTestCase {
+public class UpdateStrategyTest {
   @Test
   public void testWithUndefinedSelection() {
     // could be if somebody used before previous version of IDEA
     TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
-    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-98.520"), InfoReader.read("idea-same.xml"), settings);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-98.520"), InfoReader.read("idea-same.xml"), settings, customization);
 
     CheckForUpdateResult result = strategy.checkForUpdates();
     assertEquals(UpdateStrategy.State.LOADED, result.getState());
@@ -43,7 +44,8 @@ public class UpdateStrategyTest extends BareTestFixtureTestCase {
   public void testWithUserSelection() {
     // assume user has version 9 eap - and used eap channel - we want to introduce new eap
     TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
-    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), InfoReader.read("idea-new9eap.xml"), settings);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), InfoReader.read("idea-new9eap.xml"), settings, customization);
 
     CheckForUpdateResult result = strategy.checkForUpdates();
     assertEquals(UpdateStrategy.State.LOADED, result.getState());
@@ -56,7 +58,8 @@ public class UpdateStrategyTest extends BareTestFixtureTestCase {
   public void testIgnore() {
     // assume user has version 9 eap - and used eap channel - we want to introduce new eap
     TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, "95.627", "98.620");
-    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), InfoReader.read("idea-new9eap.xml"), settings);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), InfoReader.read("idea-new9eap.xml"), settings, customization);
 
     CheckForUpdateResult result = strategy.checkForUpdates();
     assertEquals(UpdateStrategy.State.LOADED, result.getState());
@@ -69,7 +72,8 @@ public class UpdateStrategyTest extends BareTestFixtureTestCase {
     // assume user has version 9 eap subscription (default or selected)
     // and new channel appears - eap of version 10 is there
     TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.RELEASE);
-    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.627"), InfoReader.read("idea-newChannel-release.xml"), settings);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.627"), InfoReader.read("idea-newChannel-release.xml"), settings, customization);
 
     CheckForUpdateResult result = strategy.checkForUpdates();
     assertEquals(UpdateStrategy.State.LOADED, result.getState());
@@ -85,7 +89,8 @@ public class UpdateStrategyTest extends BareTestFixtureTestCase {
   @Test
   public void testNewChannelWithOlderBuild() {
     TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
-    UpdateStrategy strategy = new UpdateStrategy(10, BuildNumber.fromString("IU-107.80"), InfoReader.read("idea-newChannel.xml"), settings);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(10, BuildNumber.fromString("IU-107.80"), InfoReader.read("idea-newChannel.xml"), settings, customization);
 
     CheckForUpdateResult result = strategy.checkForUpdates();
     assertEquals(UpdateStrategy.State.LOADED, result.getState());
@@ -103,7 +108,8 @@ public class UpdateStrategyTest extends BareTestFixtureTestCase {
     // and new build withing old channel appears also
     // we need to show only one dialog
     TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
-    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), InfoReader.read("idea-newChannel.xml"), settings);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), InfoReader.read("idea-newChannel.xml"), settings, customization);
 
     CheckForUpdateResult result = strategy.checkForUpdates();
     assertEquals(UpdateStrategy.State.LOADED, result.getState());
@@ -119,9 +125,10 @@ public class UpdateStrategyTest extends BareTestFixtureTestCase {
 
   @Test
   public void testChannelWithCurrentStatusPreferred() {
-    TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
     BuildNumber currentBuild = BuildNumber.fromString("IU-139.658");
-    UpdateStrategy strategy = new UpdateStrategy(14, currentBuild, InfoReader.read("idea-patchAvailable.xml"), settings);
+    TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(14, currentBuild, InfoReader.read("idea-patchAvailable.xml"), settings, customization);
 
     CheckForUpdateResult result = strategy.checkForUpdates();
     assertEquals(UpdateStrategy.State.LOADED, result.getState());
