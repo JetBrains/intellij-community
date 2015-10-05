@@ -51,6 +51,13 @@ public class DescriptionTypeRelatedItemLineMarkerProviderTest extends JavaCodeIn
     DevKitGutterTargetsChecker.checkGutterTargets(gutter, "Description", AllIcons.FileTypes.Html, "MyWithDescription.html");
   }
 
+  public void testInspectionDescriptionFromFieldReference() {
+    myFixture.copyDirectoryToProject("inspectionDescriptions", "inspectionDescriptions");
+
+    final GutterMark gutter = myFixture.findGutter("MyWithDescriptionFromFieldReferenceInspection.java");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter, "Description", AllIcons.FileTypes.Html, "MyWithDescriptionFromFieldReferenceInspection.html");
+  }
+
   public void testIntentionDescription() {
     myFixture.copyDirectoryToProject("intentionDescriptions", "intentionDescriptions");
 

@@ -95,7 +95,17 @@ public class PsiUtil {
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
       if (statements.length == 1 && statements[0] instanceof PsiReturnStatement) {
-        return ((PsiReturnStatement)statements[0]).getReturnValue();
+        final PsiExpression value = ((PsiReturnStatement)statements[0]).getReturnValue();
+        if (value instanceof PsiReferenceExpression) {
+          final PsiElement element = ((PsiReferenceExpression)value).resolve();
+          if (element instanceof PsiField) {
+            final PsiField field = (PsiField)element;
+            if (field.hasModifierProperty(PsiModifier.FINAL)) {
+              return field.getInitializer();
+            }
+          }
+        }
+        return value;
       }
     }
 
