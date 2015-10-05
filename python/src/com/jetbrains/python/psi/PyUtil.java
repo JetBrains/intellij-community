@@ -545,23 +545,18 @@ public class PyUtil {
     if (qualifier == null) return;
 
     if (qualifier instanceof PyCallExpression) {
-      final StringBuilder newElement = new StringBuilder(element.getLastChild().getText());
       final PyExpression callee = ((PyCallExpression)qualifier).getCallee();
       if (callee instanceof PyReferenceExpression) {
         final PyExpression calleeQualifier = ((PyReferenceExpression)callee).getQualifier();
         if (calleeQualifier != null) {
-          newElement.insert(0, calleeQualifier.getText() + ".");
+          qualifier.replace(calleeQualifier);
+          return;
         }
       }
-      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(element.getProject());
-      final PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), newElement.toString());
-      element.replace(expression);
     }
-    else {
-      final PsiElement dot = qualifier.getNextSibling();
-      if (dot != null) dot.delete();
-      qualifier.delete();
-    }
+    final PsiElement dot = PyPsiUtils.getNextNonWhitespaceSibling(qualifier);
+    if (dot != null) dot.delete();
+    qualifier.delete();
   }
 
   /**
