@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -238,17 +239,22 @@ public class EditorView implements TextDrawingCallback, Disposable {
 
   public int getMaxWidthInRange(int startOffset, int endOffset) {
     assertIsDispatchThread();
-    return getMaxWidthInLineRange(offsetToVisualLine(startOffset, false), offsetToVisualLine(endOffset, true), false);
+    return getMaxWidthInLineRange(offsetToVisualLine(startOffset, false), offsetToVisualLine(endOffset, true), null);
   }
-  
-  int getMaxWidthInLineRange(int startVisualLine, int endVisualLine, boolean quick) {
+
+  /**
+   * If <code>quickEvaluationListener</code> is provided, quick approximate size evaluation becomes enabled, listener will be invoked
+   * if approximation will in fact be used during width calculation.
+   */
+  int getMaxWidthInLineRange(int startVisualLine, int endVisualLine, @Nullable Runnable quickEvaluationListener) {
     int maxWidth = 0;
     endVisualLine = Math.min(endVisualLine, myEditor.getVisibleLineCount() - 1);
     for (int i = startVisualLine; i <= endVisualLine; i++) {
       int startOffset = myMapper.visualLineToOffset(i);
       float x = 0;
       int maxOffset = 0;
-      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(this, startOffset, false, quick)) {
+      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(this, startOffset, false, 
+                                                                                              quickEvaluationListener)) {
         x = fragment.getEndX();
         maxOffset = Math.max(maxOffset, fragment.getMaxOffset());
       }
