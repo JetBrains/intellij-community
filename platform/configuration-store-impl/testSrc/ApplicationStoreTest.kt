@@ -132,6 +132,7 @@ internal class ApplicationStoreTest {
 
     test(ExportableItem(listOf(File(optionsPath, "filetypes.xml"), File(rootConfigPath, "filetypes")), "File types", RoamingType.DEFAULT))
     test(ExportableItem(listOf(File(optionsPath, "customization.xml")), "Menus and toolbars customization", RoamingType.DEFAULT))
+    test(ExportableItem(listOf(File(optionsPath, "templates.xml"), File(rootConfigPath, "templates")), "Live templates", RoamingType.DEFAULT))
   }
 
   @Test fun `import settings`() {

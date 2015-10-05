@@ -17,6 +17,7 @@ package com.intellij.ide.actions
 
 import com.intellij.AbstractBundle
 import com.intellij.CommonBundle
+import com.intellij.configurationStore.sortStoragesByDeprecated
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
@@ -213,16 +214,7 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
           return true
         }
 
-        val storageIndex: Int
-        val storages = stateAnnotation.storages
-        if (storages.size() == 1) {
-          storageIndex = 0
-        }
-        else {
-          return true
-        }
-
-        val storage = storages[storageIndex]
+        val storage = sortStoragesByDeprecated(stateAnnotation.storages).firstOrNull() ?: return true
         if (!(storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && storage.scheme == StorageScheme.DEFAULT && !storage.file.isNullOrEmpty())) {
           return true
         }

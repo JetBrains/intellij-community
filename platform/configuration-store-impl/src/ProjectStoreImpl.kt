@@ -242,7 +242,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
   protected open fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
   }
 
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
     // if we create project from default, component state written not to own storage file, but to project file,
     // we don't have time to fix it properly, so, ancient hack restored.
     val result = super.getStorageSpecs(component, stateSpec, operation)
