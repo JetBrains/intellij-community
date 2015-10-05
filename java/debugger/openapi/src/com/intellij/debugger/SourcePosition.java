@@ -192,7 +192,8 @@ public abstract class SourcePosition implements Navigatable{
       return -1;
     }
 
-    private static Document getDocument(PsiFile file) {
+    @Nullable
+    private static Document getDocument(@NotNull PsiFile file) {
       Project project = file.getProject();
       if (project.isDisposed()) {
         return null;
