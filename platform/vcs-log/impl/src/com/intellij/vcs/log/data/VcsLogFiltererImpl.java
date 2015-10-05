@@ -50,9 +50,6 @@ public class VcsLogFiltererImpl implements VcsLogFilterer, Disposable {
   @NotNull private List<MoreCommitsRequest> myRequestsToRun = ContainerUtil.newArrayList();
   @NotNull private List<Consumer<VisiblePack>> myConsumers = ContainerUtil.newArrayList();
 
-  @Nullable private DataPack myDataPack;
-
-
   public VcsLogFiltererImpl(@NotNull final Project project,
                             @NotNull VcsLogDataManager dataManager,
                             @NotNull PermanentGraph.SortType initialSortType) {
@@ -102,7 +99,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer, Disposable {
 
   @Override
   public void onRefresh(@NotNull DataPack dataPack) {
-    myTaskController.request(new RefreshRequest(dataPack));
+    myTaskController.request(new RefreshRequest());
   }
 
   @Override
@@ -167,15 +164,13 @@ public class VcsLogFiltererImpl implements VcsLogFilterer, Disposable {
 
     @Nullable
     private VisiblePack getVisiblePack(@Nullable VisiblePack visiblePack, @NotNull List<Request> requests) {
-      RefreshRequest refreshRequest = ContainerUtil.findLastInstance(requests, RefreshRequest.class);
       FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
       SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);
       List<MoreCommitsRequest> moreCommitsRequests = ContainerUtil.findAll(requests, MoreCommitsRequest.class);
       myRequestsToRun.addAll(moreCommitsRequests);
 
-      if (refreshRequest != null) {
-        myDataPack = refreshRequest.dataPack;
-      }
+      DataPack dataPack = myDataManager.getDataPack();
+
       if (filterRequest != null) {
         myFilters = filterRequest.filters;
       }
@@ -183,7 +178,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer, Disposable {
         mySortType = sortTypeRequest.sortType;
       }
 
-      if (myDataPack == null) { // when filter is set during initialization, just remember filters
+      if (dataPack == DataPack.EMPTY) { // when filter is set during initialization, just remember filters
         return visiblePack;
       }
 
@@ -195,7 +190,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer, Disposable {
         myCommitCount = myCommitCount.next();
       }
 
-      Pair<VisiblePack, CommitCountStage> pair = myVisiblePackBuilder.build(myDataPack, mySortType, myFilters, myCommitCount);
+      Pair<VisiblePack, CommitCountStage> pair = myVisiblePackBuilder.build(dataPack, mySortType, myFilters, myCommitCount);
       visiblePack = pair.first;
       myCommitCount = pair.second;
       return visiblePack;
@@ -206,11 +201,6 @@ public class VcsLogFiltererImpl implements VcsLogFilterer, Disposable {
   }
 
   private static final class RefreshRequest implements Request {
-    private final DataPack dataPack;
-
-    RefreshRequest(DataPack dataPack) {
-      this.dataPack = dataPack;
-    }
   }
 
   private static final class FilterRequest implements Request {

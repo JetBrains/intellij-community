@@ -148,6 +148,11 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
   }
 
   @NotNull
+  public DataPack getDataPack() {
+    return myRefresher.requestCurrentData();
+  }
+
+  @NotNull
   public VisiblePackBuilder createVisiblePackBuilder() {
     return new VisiblePackBuilder(myLogProviders, myHashMap, myTopCommitsDetailsCache, myDetailsGetter);
   }
