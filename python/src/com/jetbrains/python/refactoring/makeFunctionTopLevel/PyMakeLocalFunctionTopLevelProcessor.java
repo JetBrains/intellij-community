@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.refactoring.makeFunctionTopLevel;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -73,7 +75,7 @@ public class PyMakeLocalFunctionTopLevelProcessor extends PyBaseMakeFunctionTopL
 
   @Override
   @NotNull
-  protected Set<String> collectNewParameterNames() {
+  protected List<String> collectNewParameterNames() {
     final Set<String> enclosingScopeReads = new LinkedHashSet<String>();
     for (ScopeOwner owner : PsiTreeUtil.collectElementsOfType(myFunction, ScopeOwner.class)) {
       final AnalysisResult result = analyseScope(owner);
@@ -89,6 +91,6 @@ public class PyMakeLocalFunctionTopLevelProcessor extends PyBaseMakeFunctionTopL
         }
       }
     }
-    return enclosingScopeReads;
+    return Lists.newArrayList(enclosingScopeReads);
   }
 }
