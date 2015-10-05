@@ -6,7 +6,6 @@ automaton.jar
 cglib-2.2.2.jar
 cli-parser-1.1.jar
 commons-codec-1.9.jar
-commons-io-2.4.jar
 commons-httpclient-3.1-patched.jar
 commons-logging-1.2.jar
 commons-net-3.3.jar
