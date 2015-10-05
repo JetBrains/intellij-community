@@ -223,10 +223,11 @@ public class MacUtil {
     final long green = invoke(colorInSpace, "greenComponent").longValue();
     final long blue = invoke(colorInSpace, "blueComponent").longValue();
     final long alpha = invoke(colorInSpace, "alphaComponent").longValue();
+    final double realAlpha = alpha != 0 && (int)((alpha >> 52) & 0x7ffL) == 0 ? 1.0 : Double.longBitsToDouble(alpha);
     //noinspection UseJBColor
     return new Color((float)Double.longBitsToDouble(red),
                      (float)Double.longBitsToDouble(green),
                      (float)Double.longBitsToDouble(blue),
-                     (float)Double.longBitsToDouble(alpha));
+                     (float)realAlpha);
   }
 }
