@@ -22,8 +22,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
-import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyTextFilePatch;
 import com.intellij.openapi.fileTypes.FileType;
@@ -299,19 +299,21 @@ public class PatchApplier<BinaryType extends FilePatch> {
   }
 
   @NotNull
-  private Collection<? extends Change> constructAppliedChangesForRollbackDialog(@NotNull final Label before, @NotNull final Label after) {
+  private Collection<Change> constructAppliedChangesForRollbackDialog(@NotNull final Label before, @NotNull final Label after) {
     List<Change> successChanges = ContainerUtil.newArrayList();
     for (FilePatch patch : mySuccessfullyApplied) {
-      FilePath beforeFilePath = VcsUtil.getFilePath(myBaseDirectory, patch.getBeforeName());
-      FilePath afterFilePath = VcsUtil.getFilePath(myBaseDirectory, patch.getAfterName());
-      if (patch instanceof BinaryFilePatch || patch instanceof ShelveChangesManager.ShelvedBinaryFilePatch) {
-        successChanges.add(ChangeListManager.getInstance(myProject).getChange(afterFilePath));
+      String beforeName = patch.getBeforeName();
+      FilePath beforeFilePath = beforeName != null ? VcsUtil.getFilePath(myBaseDirectory, beforeName) : null;
+      String afterName = patch.getAfterName();
+      FilePath afterFilePath = afterName != null ? VcsUtil.getFilePath(myBaseDirectory, afterName) : null;
+      if (patch instanceof ShelveChangesManager.ShelvedBinaryFilePatch) {
+        successChanges.add(((ShelveChangesManager.ShelvedBinaryFilePatch)patch).getShelvedBinaryFile().createChange(myProject));
       }
-      else {
+      else if (patch instanceof TextFilePatch) {
         successChanges.add(
-          new Change(patch.isNewFile() ? null : new LabelContentRevision(before, beforeFilePath, afterFilePath),
-                     patch.isDeletedFile() ? null :
-                     new LabelContentRevision(after, afterFilePath, (FilePath)null)));
+          new Change(patch.isNewFile() || beforeFilePath == null ? null : new LabelContentRevision(before, beforeFilePath, afterFilePath),
+                     patch.isDeletedFile() || afterFilePath == null ? null :
+                     new LabelContentRevision(after, afterFilePath, null)));
       }
     }
     return successChanges;
