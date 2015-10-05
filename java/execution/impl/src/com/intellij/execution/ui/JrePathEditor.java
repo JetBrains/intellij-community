@@ -258,6 +258,7 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
     @Override
     public void render(SimpleColoredComponent component, boolean selected) {
       component.append(DEFAULT_JRE_TEXT);
+      //may be null if JrePathEditor is added to a GUI Form where the default constructor is used and setDefaultJreSelector isn't called
       if (myDefaultJreSelector != null) {
         component.append(myDefaultJreSelector.getDescriptionString(), SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
