@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -119,60 +120,65 @@ public class UrlClassLoaderTest extends TestCase {
     final int resourceCount = 20;
 
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(threadCount, ConcurrencyUtil.newNamedThreadFactory("conc loading"));
-    final Random random = new Random();
-    UrlClassLoader.CachePool pool = UrlClassLoader.createCachePool();
-    for (int attempt = 0; attempt < attemptCount; attempt++) {
-      final UrlClassLoader loader = UrlClassLoader.build().urls(urls).parent(null).
-        useCache(pool, new UrlClassLoader.CachingCondition() {
-          @Override
-          public boolean shouldCacheData(@NotNull URL url) {
-            return true; // fails also without cache pool (but with cache enabled), but takes much longer
-          }
-        }).get();
-      //if (attempt % 10 == 0) System.out.println("Attempt " + attempt);
+    try {
+      final Random random = new Random();
+      UrlClassLoader.CachePool pool = UrlClassLoader.createCachePool();
+      for (int attempt = 0; attempt < attemptCount; attempt++) {
+        final UrlClassLoader loader = UrlClassLoader.build().urls(urls).parent(null).
+          useCache(pool, new UrlClassLoader.CachingCondition() {
+            @Override
+            public boolean shouldCacheData(@NotNull URL url) {
+              return true; // fails also without cache pool (but with cache enabled), but takes much longer
+            }
+          }).get();
+        //if (attempt % 10 == 0) System.out.println("Attempt " + attempt);
 
-      final List<String> namesToLoad = ContainerUtil.newArrayList();
-      for (int j = 0; j < resourceCount; j++) {
-        namesToLoad.add(resourceNames.get(random.nextInt(resourceNames.size())));
-      }
+        final List<String> namesToLoad = ContainerUtil.newArrayList();
+        for (int j = 0; j < resourceCount; j++) {
+          namesToLoad.add(resourceNames.get(random.nextInt(resourceNames.size())));
+        }
 
-      List<Future> futures = ContainerUtil.newArrayList();
-      for (int i = 0; i < threadCount; i++) {
-        futures.add(executor.submit(new Runnable() {
-          @Override
-          public void run() {
-            for (String name : namesToLoad) {
-              try {
-                assertNotNull(findResource(name));
-              }
-              catch (Throwable e) {
-                System.out.println("Failed loading " + name);
-                throw new RuntimeException(e);
+        List<Future> futures = ContainerUtil.newArrayList();
+        for (int i = 0; i < threadCount; i++) {
+          futures.add(executor.submit(new Runnable() {
+            @Override
+            public void run() {
+              for (String name : namesToLoad) {
+                try {
+                  assertNotNull(findResource(name));
+                }
+                catch (Throwable e) {
+                  System.out.println("Failed loading " + name);
+                  throw new RuntimeException(e);
+                }
               }
             }
-          }
 
-          private final Random findResourceOrFindResourcesChooser = new Random();
-          private URL findResource(String name) {
-            if (findResourceOrFindResourcesChooser.nextBoolean()) {
-              try {
-                Enumeration<URL> resources = loader.getResources(name);
-                assertTrue(resources.hasMoreElements());
-                return resources.nextElement();
+            private final Random findResourceOrFindResourcesChooser = new Random();
+            private URL findResource(String name) {
+              if (findResourceOrFindResourcesChooser.nextBoolean()) {
+                try {
+                  Enumeration<URL> resources = loader.getResources(name);
+                  assertTrue(resources.hasMoreElements());
+                  return resources.nextElement();
+                }
+                catch (IOException e) {
+                  throw new RuntimeException(e);
+                }
               }
-              catch (IOException e) {
-                throw new RuntimeException(e);
-              }
+              return loader.findResource(name);
             }
-            return loader.findResource(name);
-          }
-        }));
-      }
+          }));
+        }
 
-      for (Future future : futures) {
-        future.get();
+        for (Future future : futures) {
+          future.get();
+        }
       }
     }
-
+    finally {
+      executor.shutdownNow();
+      executor.awaitTermination(1000, TimeUnit.SECONDS);
+    }
   }
 }
