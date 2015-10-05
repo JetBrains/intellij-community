@@ -51,9 +51,20 @@ public class InlineUtil {
 
     PsiClass thisClass = RefactoringChangeUtil.getThisClass(initializer);
     PsiClass refParent = RefactoringChangeUtil.getThisClass(ref);
-    boolean insertCastWhenUnchecked = ref.getParent() instanceof PsiForeachStatement;
+    final PsiElement parent = ref.getParent();
+    boolean insertCastWhenUnchecked = parent instanceof PsiForeachStatement;
     final PsiType varType = variable.getType();
     initializer = RefactoringUtil.convertInitializerToNormalExpression(initializer, varType);
+    if (initializer instanceof PsiPolyadicExpression &&
+        ((PsiPolyadicExpression)initializer).getOperationTokenType() == JavaTokenType.PLUS &&
+        parent instanceof PsiPolyadicExpression &&
+        ((PsiPolyadicExpression)parent).getOperationTokenType() == JavaTokenType.PLUS) {
+      final PsiType type = ((PsiPolyadicExpression)parent).getType();
+      if (type != null && (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) ^ varType.equalsToText(CommonClassNames.JAVA_LANG_STRING))) {
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(initializer.getProject());
+        initializer = factory.createExpressionFromText("(" + initializer.getText() + ")", initializer);
+      }
+    }
     solveVariableNameConflicts(initializer, ref, initializer);
 
     ChangeContextUtil.encodeContextInfo(initializer, false);
