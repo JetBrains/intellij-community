@@ -245,7 +245,7 @@ class DisposeModulesRule(private val projectRule: ProjectRule) : ExternalResourc
           try {
             moduleManager.disposeModule(module)
           }
-          catch(e: Throwable) {
+          catch (e: Throwable) {
             if (errors == null) {
               errors = SmartList()
             }
@@ -254,6 +254,26 @@ class DisposeModulesRule(private val projectRule: ProjectRule) : ExternalResourc
         }
       }
       CompoundRuntimeException.throwIfNotEmpty(errors)
+    }
+  }
+}
+
+/**
+ * Only and only if "before" logic in case of exception doesn't require "after" logic - must be no side effects if "before" finished abnormally.
+ * So, should be one task per rule.
+ */
+class WrapRule(private val before: () -> () -> Unit) : TestRule {
+  override final fun apply(base: Statement, description: Description): Statement {
+    return object : Statement() {
+      override fun evaluate() {
+        val after = before()
+        try {
+          base.evaluate()
+        }
+        finally {
+          after()
+        }
+      }
     }
   }
 }

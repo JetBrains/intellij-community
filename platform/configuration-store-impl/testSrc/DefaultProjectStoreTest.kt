@@ -8,15 +8,11 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.RuleChain
-import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.deleteRecursively
+import com.intellij.testFramework.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExternalResource
 import java.nio.file.Paths
 
 internal class DefaultProjectStoreTest {
@@ -30,17 +26,11 @@ internal class DefaultProjectStoreTest {
 
   private val ruleChain = RuleChain(
     tempDirManager,
-    object : ExternalResource() {
-      private var isDoNotSave = false
-
-      override fun before() {
-        val app = ApplicationManagerEx.getApplicationEx()
-        isDoNotSave = app.isDoNotSave
-        app.doNotSave(false)
-      }
-
-      override fun after() {
-        val app = ApplicationManagerEx.getApplicationEx()
+    WrapRule {
+      val app = ApplicationManagerEx.getApplicationEx()
+      val isDoNotSave = app.isDoNotSave
+      app.doNotSave(false);
+      {
         try {
           app.doNotSave(isDoNotSave)
         }
@@ -49,17 +39,11 @@ internal class DefaultProjectStoreTest {
         }
       }
     },
-    object : ExternalResource() {
-      private var externalDependenciesManager: ExternalDependenciesManager? = null
-
-      override fun before() {
-        val defaultProject = ProjectManager.getInstance().defaultProject
-        externalDependenciesManager = defaultProject.service<ExternalDependenciesManager>()
-        externalDependenciesManager!!.allDependencies = requiredPlugins
-      }
-
-      override fun after() {
-        externalDependenciesManager?.allDependencies = emptyList()
+    WrapRule {
+      val externalDependenciesManager = ProjectManager.getInstance().defaultProject.service<ExternalDependenciesManager>()
+      externalDependenciesManager.allDependencies = requiredPlugins
+      {
+        externalDependenciesManager.allDependencies = emptyList()
       }
     }
   )
