@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Dumps environment variables into specified file.
 # Format: zero-separated "name=value" pairs in platform encoding.
