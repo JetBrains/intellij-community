@@ -401,7 +401,7 @@ public class JavaValueModifier extends XValueModifier {
     };
 
     progressWindow.setTitle(DebuggerBundle.message("title.evaluating"));
-    debuggerContext.getDebugProcess().getManagerThread().startProgress(askSetAction, progressWindow);
+    evaluationContext.getDebugProcess().getManagerThread().startProgress(askSetAction, progressWindow);
   }
 
   //private void showEditor(final TextWithImports initialString,
