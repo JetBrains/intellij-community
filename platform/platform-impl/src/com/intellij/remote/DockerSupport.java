@@ -51,6 +51,8 @@ public abstract class DockerSupport {
   @NotNull
   public abstract String getStatus(@NotNull String machineName);
 
+  public abstract void startMachine(@NotNull String machineName);
+
   @NotNull
   public abstract ConnectionInfo getConnectionInfo(@NotNull String machineName) throws DockerMachineException, DockerMachineCommandException;
 
