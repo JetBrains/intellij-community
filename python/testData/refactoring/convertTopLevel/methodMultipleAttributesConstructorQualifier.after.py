@@ -8,5 +8,5 @@ def method(foo, bar, x):
     print(foo, bar)
 
 
-foo = C()
-method(foo.foo, foo.bar, 1)
+c = C()
+method(c.foo, c.bar, 1)

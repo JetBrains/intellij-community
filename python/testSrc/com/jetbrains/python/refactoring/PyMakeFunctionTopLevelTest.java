@@ -189,6 +189,11 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     doTestSuccess();
   }
 
+
+  public void testMethodUniqueNameOfExtractedQualifier() {
+    doTestSuccess();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/refactoring/convertTopLevel/";
