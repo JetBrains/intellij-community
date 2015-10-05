@@ -84,7 +84,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   public SourcePosition getSourcePosition(final Location location) {
     if (location == null) return null;
     SourcePosition res = mySourcePositionCache.get(location);
-    if (res != null) return res;
+    if (res != null && res.getFile().isValid()) return res;
 
     return iterate(new Processor<SourcePosition>() {
       @Override
