@@ -15,27 +15,27 @@
  */
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.OutputStream;
 
 /**
  * Base interface to export a scheme.
  *
  * @author Rustam Vishnyakov
  */
-public interface SchemeExporter <T extends Scheme> {
+public abstract class SchemeExporter<T extends Scheme> {
   /**
-   * Writes a scheme to existing <code>targetFile</code>. An implementor may use <code>targetFile.getOutputStream()</code> method to
-   * obtain a stream to write to.
+   * Writes a scheme to a given <code>outputStream</code>.
    *
-   * @param scheme     The scheme to export.
-   * @param targetFile The target virtual file.
-   * @throws SchemeExporterException
+   * @param scheme       The scheme to export.
+   * @param outputStream The output stream to write to.
+   * @throws Exception
    */
-  void exportScheme(@NotNull T scheme, @NotNull VirtualFile targetFile) throws SchemeExporterException;
+  public abstract void exportScheme(@NotNull T scheme, @NotNull OutputStream outputStream) throws Exception;
 
   /**
    * @return Target file extension without a dot, for example "xml".
    */
-  String getExtension();
+  public abstract String getExtension();
 }

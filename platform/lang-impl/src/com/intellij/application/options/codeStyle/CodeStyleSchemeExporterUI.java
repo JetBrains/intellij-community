@@ -15,13 +15,14 @@
  */
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.options.SchemeExporter;
 import com.intellij.openapi.options.SchemeExporterEP;
-import com.intellij.openapi.options.SchemeExporterException;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -34,6 +35,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -55,7 +57,7 @@ class CodeStyleSchemeExporterUI {
 
   void export() {
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(
-      new BaseListPopupStep<String>(ApplicationBundle.message("code.style.scheme.exporter.ui.export.as.title"), enumExporters()) {
+      new BaseListPopupStep<String>(ApplicationBundle.message("scheme.exporter.ui.export.as.title"), enumExporters()) {
         @Override
         public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
           return doFinalStep(new Runnable() {
@@ -85,26 +87,41 @@ class CodeStyleSchemeExporterUI {
       FileSaverDialog saver =
         FileChooserFactory.getInstance()
           .createSaveFileDialog(new FileSaverDescriptor(
-            ApplicationBundle.message("code.style.scheme.exporter.ui.file.chooser.title"),
-            ApplicationBundle.message("code.style.scheme.exporter.ui.file.chooser.message"),
+            ApplicationBundle.message("scheme.exporter.ui.file.chooser.title"),
+            ApplicationBundle.message("scheme.exporter.ui.file.chooser.message"),
             ext), myParentComponent);
       VirtualFileWrapper target = saver.save(null, getFileNameSuggestion() + "." + ext);
       if (target != null) {
         VirtualFile targetFile = target.getVirtualFile(true);
+        String message;
+        MessageType messageType;
         if (targetFile != null) {
+          final AccessToken writeToken = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
           try {
-            exporter.exportScheme(myScheme, targetFile);
-            myStatusCallback
-              .showMessage(ApplicationBundle.message("code.style.scheme.exporter.ui.code.style.exported.message", myScheme.getName(),
-                                                     targetFile.getPresentableUrl()), MessageType.INFO);
+            OutputStream outputStream = targetFile.getOutputStream(this);
+            try {
+              exporter.exportScheme(myScheme, outputStream);
+            }
+            finally {
+              outputStream.close();
+            }
+            message = ApplicationBundle
+              .message("scheme.exporter.ui.code.style.exported.message", myScheme.getName(), targetFile.getPresentableUrl());
+            messageType = MessageType.INFO;
           }
-          catch (SchemeExporterException e) {
-            myStatusCallback.showMessage(e.getMessage(), MessageType.ERROR);
+          catch (Exception e) {
+            message = ApplicationBundle.message("scheme.exporter.ui.export.failed", e.getMessage());
+            messageType = MessageType.ERROR;
+          }
+          finally {
+            writeToken.finish();
           }
         }
         else {
-          myStatusCallback.showMessage(ApplicationBundle.message("code.style.scheme.exporter.ui.cannot.write.message"), MessageType.ERROR);
+          message = ApplicationBundle.message("scheme.exporter.ui.cannot.write.message");
+          messageType = MessageType.ERROR;
         }
+        myStatusCallback.showMessage(message, messageType);
       }
     }
   }
