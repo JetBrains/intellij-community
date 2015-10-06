@@ -236,4 +236,9 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
       return myClosed;
     }
   }
+
+  @Nullable
+  public String getCommandLine() {
+    return myCommandLine;
+  }
 }
