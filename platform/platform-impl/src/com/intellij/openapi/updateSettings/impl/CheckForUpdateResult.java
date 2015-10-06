@@ -24,16 +24,18 @@ import java.util.List;
 public class CheckForUpdateResult {
   private final BuildInfo myNewBuildInSelectedChannel;
   private final UpdateChannel myUpdatedChannel;
+  private final UpdateChannel myChannelToPropose;
   private final List<String> myAllChannelIds;
   private final UpdateStrategy.State myState;
   private final Exception myError;
-  private UpdateChannel myChannelToPropose = null;
 
-  public CheckForUpdateResult(@Nullable UpdateChannel updated,
-                              @Nullable BuildInfo newBuildInSelectedChannel,
+  public CheckForUpdateResult(@Nullable BuildInfo newBuildInSelectedChannel,
+                              @Nullable UpdateChannel updated,
+                              @Nullable UpdateChannel channelToPropose,
                               @NotNull List<String> allChannelsIds) {
     myNewBuildInSelectedChannel = newBuildInSelectedChannel;
     myUpdatedChannel = updated;
+    myChannelToPropose = channelToPropose;
     myAllChannelIds = allChannelsIds;
     myState = UpdateStrategy.State.LOADED;
     myError = null;
@@ -42,6 +44,7 @@ public class CheckForUpdateResult {
   public CheckForUpdateResult(@NotNull UpdateStrategy.State state, @Nullable Exception e) {
     myNewBuildInSelectedChannel = null;
     myUpdatedChannel = null;
+    myChannelToPropose = null;
     myAllChannelIds = Collections.emptyList();
     myState = state;
     myError = e;
@@ -57,6 +60,11 @@ public class CheckForUpdateResult {
     return myUpdatedChannel;
   }
 
+  @Nullable
+  public UpdateChannel getChannelToPropose() {
+    return myChannelToPropose;
+  }
+
   @NotNull
   public List<String> getAllChannelsIds() {
     return myAllChannelIds;
@@ -70,14 +78,5 @@ public class CheckForUpdateResult {
   @Nullable
   public Exception getError() {
     return myError;
-  }
-
-  @Nullable
-  public UpdateChannel getChannelToPropose() {
-    return myChannelToPropose;
-  }
-
-  public void setChannelToPropose(@Nullable UpdateChannel channelToPropose) {
-    myChannelToPropose = channelToPropose;
   }
 }
