@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.ui.search;
+package com.intellij.ui;
 
 /**
  * This markup interface is used to provide meta-information to element renderers
