@@ -737,6 +737,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
   private static SimplifyBooleanExpressionFix createIntention(PsiElement element, boolean value) {
     if (!(element instanceof PsiExpression)) return null;
+    if (PsiTreeUtil.findChildOfType(element, PsiAssignmentExpression.class) != null) return null;
+
     final PsiExpression expression = (PsiExpression)element;
     while (element.getParent() instanceof PsiExpression) {
       element = element.getParent();
