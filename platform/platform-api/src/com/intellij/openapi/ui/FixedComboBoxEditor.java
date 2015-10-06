@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.Gray;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
   private Object oldValue;
 
   public FixedComboBoxEditor() {
-    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) {
+    if (SystemInfo.isMac && (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderIntelliJLaF())) {
       myField = new MacComboBoxTextField();
     }
     else {
@@ -130,7 +131,12 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
 
   private class MacComboBoxTextField extends JBTextField implements DocumentListener, FocusListener {
     private MacComboBoxTextField() {
-      setBorder(isEnabled() ? EDITOR_BORDER : DISABLED_EDITOR_BORDER);
+      if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+        setBorder(JBUI.Borders.empty());
+        setOpaque(false);
+      } else {
+        setBorder(isEnabled() ? EDITOR_BORDER : DISABLED_EDITOR_BORDER);
+      }
       //setFont(UIUtil.getListFont());
 
       final InputMap inputMap = getInputMap();
