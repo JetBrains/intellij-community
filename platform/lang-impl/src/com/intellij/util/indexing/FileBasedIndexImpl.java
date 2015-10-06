@@ -1748,7 +1748,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     } catch (RuntimeException exception) {
       Throwable causeToRebuildIndex = getCauseToRebuildIndex(exception);
       if (causeToRebuildIndex != null && (updateCalculated || causeToRebuildIndex instanceof IOException)) {
-        LOG.error("Exception in update single index:" + exception);
         requestRebuild(indexId, exception);
         return;
       }
