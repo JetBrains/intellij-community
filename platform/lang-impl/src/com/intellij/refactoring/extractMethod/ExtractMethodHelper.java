@@ -55,6 +55,7 @@ public class ExtractMethodHelper {
                                        @NotNull final SimpleDuplicatesFinder finder,
                                        @NotNull final Editor editor,
                                        @NotNull final Consumer<Pair<SimpleMatch, PsiElement>> replacer) {
+    finder.setReplacement(callElement);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       replaceDuplicates(callElement, editor, replacer, finder.findDuplicates(scope, generatedMethod));
       return;
