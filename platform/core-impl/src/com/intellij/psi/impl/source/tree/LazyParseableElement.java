@@ -74,27 +74,6 @@ public class LazyParseableElement extends CompositeElement {
     }
   }
 
-  public void chameleonBack() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    DebugUtil.startPsiModification("chameleon-back");
-    try {
-      synchronized (lock) {
-        if (myText == null) {
-          String text = super.getText();
-          TreeElement node = rawFirstChild();
-          if (node != null) {
-            node.rawRemoveUpToWithoutNotifications(null, true);
-          }
-          myText = text;
-          setCachedLength(myText.length());
-        }
-      }
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
-  }
-
   @NotNull
   @Override
   public String getText() {
