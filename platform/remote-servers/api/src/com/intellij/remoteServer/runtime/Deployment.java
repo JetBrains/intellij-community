@@ -16,6 +16,9 @@ public interface Deployment {
   String getName();
 
   @NotNull
+  String getPresentableName();
+
+  @NotNull
   DeploymentStatus getStatus();
 
   @NotNull
