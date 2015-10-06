@@ -479,15 +479,13 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     try {
       PyRemotePathMapper pathMapper = manager.setupMappings(getProject(), data, null);
 
-      commandLine.withExePath(data.getInterpreterPath()); //TODO: set getFullInterpreterPath() instead
-
-      myCommandLine = commandLine.getCommandLineString();
-
       commandLine.putUserData(PyRemoteProcessStarter.OPEN_FOR_INCOMING_CONNECTION, true);
 
       myRemoteProcessHandlerBase = PyRemoteProcessStarterManagerUtil
         .getManager(data).startRemoteProcess(getProject(), commandLine, manager, data,
                                                                       pathMapper);
+
+      myCommandLine = myRemoteProcessHandlerBase.getCommandLine();
 
       RemoteProcess remoteProcess = myRemoteProcessHandlerBase.getProcess();
 

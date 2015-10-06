@@ -49,4 +49,8 @@ public interface PyRemoteProcessStarterManager {
                                      @NotNull PythonRemoteInterpreterManager manager,
                                      @NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData,
                                      @NotNull PyRemotePathMapper pathMapper, boolean askForSudo, boolean checkHelpers) throws ExecutionException, InterruptedException;
+
+
+  String getFullInterpreterPath(@NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData)
+    throws ExecutionException, InterruptedException;
 }
