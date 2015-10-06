@@ -51,10 +51,9 @@ public class EditSourceAction extends DebuggerAction{
   }
 
   private SourcePosition getSourcePosition(DebuggerTreeNodeImpl selectedNode, DebuggerContextImpl debuggerContext) {
-    DebuggerTreeNodeImpl node = selectedNode;
     final DebuggerContextImpl context = debuggerContext;
 
-    if(node == null || context == null) {
+    if (selectedNode == null || context == null) {
       return null;
     }
 
@@ -66,7 +65,7 @@ public class EditSourceAction extends DebuggerAction{
       return null;
     }
 
-    NodeDescriptorImpl nodeDescriptor = node.getDescriptor();
+    NodeDescriptorImpl nodeDescriptor = selectedNode.getDescriptor();
     if(nodeDescriptor instanceof WatchItemDescriptor) {
       Modifier modifier = ((WatchItemDescriptor)nodeDescriptor).getModifier();
       if(modifier == null) {

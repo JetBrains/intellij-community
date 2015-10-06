@@ -32,7 +32,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -70,11 +69,9 @@ public final class EnumerationChildrenRenderer extends com.intellij.debugger.ui.
     myChildren.clear();
 
     List<Element> children = element.getChildren(CHILDREN_EXPRESSION);
-    for (Iterator<Element> iterator = children.iterator(); iterator.hasNext();) {
-      Element item = iterator.next();
-
+    for (Element item : children) {
       String name = item.getAttributeValue(CHILD_NAME);
-      TextWithImports text = DebuggerUtils.getInstance().readTextWithImports((Element) item.getChildren().get(0));
+      TextWithImports text = DebuggerUtils.getInstance().readTextWithImports(item.getChildren().get(0));
 
       myChildren.add(Pair.create(name, text));
     }
@@ -83,8 +80,7 @@ public final class EnumerationChildrenRenderer extends com.intellij.debugger.ui.
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
 
-    for (Iterator<Pair<String, TextWithImports>> iterator = myChildren.iterator(); iterator.hasNext();) {
-      Pair<String, TextWithImports> pair = iterator.next();
+    for (Pair<String, TextWithImports> pair : myChildren) {
       Element child = new Element(CHILDREN_EXPRESSION);
       child.setAttribute(CHILD_NAME, pair.getFirst());
       child.addContent(DebuggerUtils.getInstance().writeTextWithImports(pair.getSecond()));

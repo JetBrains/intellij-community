@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -575,8 +575,8 @@ class Bytecodes {
     b[PUTFIELD_QUICK_W] = FIELDORMETH_INSN; // = 228;
 
 
-    for (int i = 0; i < b.length; ++i) {
-      System.err.print((char)('A' + b[i]));
+    for (int aB : b) {
+      System.err.print((char)('A' + aB));
     }
     System.err.println();
 
