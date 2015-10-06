@@ -30,7 +30,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.io.parentPath
+import com.intellij.openapi.util.io.getParentPath
 import com.intellij.util.Consumer
 import gnu.trove.THashSet
 import java.io.File
@@ -132,7 +132,7 @@ fun getPaths(input: InputStream): Set<String> {
       var path = entry.name
       result.add(path)
       while (true) {
-        path = path.parentPath ?: break
+        path = getParentPath(path) ?: break
         result.add("$path/")
       }
     }
