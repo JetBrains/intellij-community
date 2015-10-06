@@ -106,9 +106,6 @@ class ReloadClassesWorker {
 
     final DebugProcessImpl debugProcess = getDebugProcess();
     final VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
-    if(virtualMachineProxy == null) {
-      return;
-    }
 
     final Project project = debugProcess.getProject();
     final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
