@@ -16,7 +16,9 @@
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.parentPath
+import com.intellij.openapi.util.io.endsWithName
+import com.intellij.openapi.util.io.endsWithSlash
+import com.intellij.openapi.util.io.getParentPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.PathUtilRt
 import io.netty.channel.ChannelHandlerContext
@@ -51,7 +53,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
         var virtualFile = pathInfo.file
         val isDirectory = if (virtualFile == null) pathInfo.ioFile!!.isDirectory else virtualFile.isDirectory
         if (isDirectory) {
-          if (!WebServerPathHandler.endsWithSlash(decodedRawPath)) {
+          if (!endsWithSlash(decodedRawPath)) {
             WebServerPathHandler.redirectToDirectory(request, channel, if (isCustomHost) path else (projectName + '/' + path))
             return true
           }
@@ -71,13 +73,14 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
 
       pathToFileManager.pathToInfoCache.put(path, pathInfo)
     }
-    else if (!path.endsWith(pathInfo.name)) {
-      if (WebServerPathHandler.endsWithSlash(decodedRawPath)) {
+    else if (!endsWithName(path, pathInfo.name)) {
+      if (endsWithSlash(decodedRawPath)) {
         indexUsed = true
       }
       else {
         // FallbackResource feature in action, /login requested, /index.php retrieved, we must not redirect /login to /login/
-        if (path.endsWith(PathUtilRt.getFileName(pathInfo.path.parentPath!!))) {
+        val parentPath = getParentPath(pathInfo.path)
+        if (parentPath != null && endsWithName(path, PathUtilRt.getFileName(parentPath))) {
           WebServerPathHandler.redirectToDirectory(request, channel, if (isCustomHost) path else ("$projectName/$path"))
           return true
         }

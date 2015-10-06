@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.util.io
 
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.PathUtilRt
 import java.io.File
 
 val File.systemIndependentPath: String
@@ -23,14 +25,9 @@ val File.systemIndependentPath: String
 val File.parentSystemIndependentPath: String
   get() = getParent().replace(File.separatorChar, '/')
 
-val String.parentPath: String?
-  get() {
-    if (isEmpty()) {
-      return null
-    }
-    var end = Math.max(lastIndexOf('/'), lastIndexOf('\\'))
-    if (end == length() - 1) {
-      end = Math.max(lastIndexOf('/', end - 1), lastIndexOf('\\', end - 1))
-    }
-    return if (end == -1) null else substring(0, end)
-  }
+// PathUtilRt.getParentPath returns empty string if no parent path, but in Kotlin "null" is better because elvis operator could be used
+fun getParentPath(path: String) = StringUtil.nullize(PathUtilRt.getParentPath(path))
+
+fun endsWithSlash(path: String) = path.getOrNull(path.length() - 1) == '/'
+
+fun endsWithName(path: String, name: String) = path.endsWith(name) && (path.length() == name.length() || path.getOrNull(path.length() - name.length() - 1) == '/')

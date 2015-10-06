@@ -51,8 +51,4 @@ public abstract class WebServerPathHandler {
     response.headers().add(HttpHeaderNames.LOCATION, url.toASCIIString());
     Responses.send(response, channel, request);
   }
-
-  protected static boolean endsWithSlash(@NotNull String path) {
-    return path.charAt(path.length() - 1) == '/';
-  }
 }
