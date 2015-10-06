@@ -164,7 +164,7 @@ public class FieldEvaluator implements Evaluator {
       if (field == null) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.instance.field", myFieldName));
       }
-      myEvaluatedQualifier = field.isStatic()? (Object)refType : (Object)objRef;
+      myEvaluatedQualifier = field.isStatic() ? refType : objRef;
       myEvaluatedField = field;
       return field.isStatic()? refType.getValue(field) : objRef.getValue(field);
     }

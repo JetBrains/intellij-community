@@ -116,6 +116,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return myValueDescriptor;
   }
 
+  @NotNull
   public EvaluationContextImpl getEvaluationContext() {
     return myEvaluationContext;
   }

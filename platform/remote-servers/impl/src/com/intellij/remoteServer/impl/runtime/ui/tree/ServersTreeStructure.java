@@ -428,7 +428,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     protected void update(PresentationData presentation) {
       Deployment deployment = getDeployment();
       presentation.setIcon(deployment.getStatus().getIcon());
-      presentation.setPresentableText(deployment.getName());
+      presentation.setPresentableText(deployment.getPresentableName());
       presentation.setTooltip(deployment.getStatusText());
     }
   }

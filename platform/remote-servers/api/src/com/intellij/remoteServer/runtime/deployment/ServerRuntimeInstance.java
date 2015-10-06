@@ -30,6 +30,11 @@ public abstract class ServerRuntimeInstance<D extends DeploymentConfiguration> {
     return source.getPresentableName();
   }
 
+  @NotNull
+  public String getRuntimeDeploymentName(@NotNull DeploymentRuntime deploymentRuntime, @NotNull DeploymentSource source, D configuration) {
+    return getDeploymentName(source, configuration);
+  }
+
   @Nullable
   public String getDeploymentGroup(@NotNull DeploymentSource source, D configuration) {
     return null;

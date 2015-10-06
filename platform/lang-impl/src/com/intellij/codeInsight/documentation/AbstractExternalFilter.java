@@ -63,6 +63,7 @@ public abstract class AbstractExternalFilter {
     Pattern.compile("<meta[^>]+\\s*charset=\"?([\\w\\-]*)\\s*\">", Pattern.CASE_INSENSITIVE);
   private static final String FIELD_SUMMARY = "<!-- =========== FIELD SUMMARY =========== -->";
   private static final String CLASS_SUMMARY = "<div class=\"summary\">";
+  @NonNls private static final String GREATEST_END_SECTION = "<!-- ========= END OF CLASS DATA ========= -->";
 
   protected static abstract class RefConvertor {
     @NotNull
@@ -182,7 +183,6 @@ public abstract class AbstractExternalFilter {
     @NonNls Pattern startSection = settings.startPattern;
     @NonNls Pattern endSection = settings.endPattern;
     boolean useDt = settings.useDt;
-    @NonNls String greatestEndSection = "<!-- ========= END OF CLASS DATA ========= -->";
 
     data.append(HTML);
     URL baseUrl = VfsUtilCore.convertToURL(url);
@@ -254,7 +254,7 @@ public abstract class AbstractExternalFilter {
           data.append(H2);
           skip = true;
         }
-        else if (endSection.matcher(read).find() || StringUtil.indexOfIgnoreCase(read, greatestEndSection, 0) != -1) {
+        else if (endSection.matcher(read).find() || StringUtil.indexOfIgnoreCase(read, GREATEST_END_SECTION, 0) != -1) {
           data.append(HTML_CLOSE);
           return;
         }
@@ -287,7 +287,7 @@ public abstract class AbstractExternalFilter {
 
     while (((read = buf.readLine()) != null) &&
            !endSection.matcher(read).find() &&
-           StringUtil.indexOfIgnoreCase(read, greatestEndSection, 0) == -1) {
+           StringUtil.indexOfIgnoreCase(read, GREATEST_END_SECTION, 0) == -1) {
       if (!StringUtil.toUpperCase(read).contains(HR)
           && !StringUtil.containsIgnoreCase(read, "<ul class=\"blockList\">")
           && !StringUtil.containsIgnoreCase(read, "<li class=\"blockList\">")) {
@@ -315,7 +315,8 @@ public abstract class AbstractExternalFilter {
 
   private static boolean reachTheEnd(StringBuilder data, String read, StringBuilder classDetails) {
     if (StringUtil.indexOfIgnoreCase(read, FIELD_SUMMARY, 0) != -1 ||
-        StringUtil.indexOfIgnoreCase(read, CLASS_SUMMARY, 0) != -1) {
+        StringUtil.indexOfIgnoreCase(read, CLASS_SUMMARY, 0) != -1 ||
+        StringUtil.indexOfIgnoreCase(read, GREATEST_END_SECTION, 0) != -1) {
       data.append(classDetails);
       data.append(HTML_CLOSE);
       return true;

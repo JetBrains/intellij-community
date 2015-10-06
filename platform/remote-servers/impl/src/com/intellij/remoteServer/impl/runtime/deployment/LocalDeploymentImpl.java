@@ -15,29 +15,47 @@
  */
 package com.intellij.remoteServer.impl.runtime.deployment;
 
+import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.impl.runtime.ServerConnectionImpl;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
+import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LocalDeploymentImpl extends DeploymentImpl {
+public class LocalDeploymentImpl<D extends DeploymentConfiguration> extends DeploymentImpl<D> {
 
+  private final ServerRuntimeInstance<D> myServerInstance;
   private DeploymentImpl myRemoteDeployment;
 
-  public LocalDeploymentImpl(@NotNull ServerConnectionImpl<?> connection,
-                             @NotNull String name,
+  public LocalDeploymentImpl(@NotNull ServerRuntimeInstance<D> instance,
+                             @NotNull ServerConnectionImpl<D> connection,
                              @NotNull DeploymentStatus status,
                              @Nullable String statusText,
                              @Nullable DeploymentRuntime runtime,
-                             @Nullable DeploymentTask<?> deploymentTask,
-                             @Nullable String group) {
-    super(connection, name, status, statusText, runtime, deploymentTask, group);
+                             @NotNull DeploymentTask<D> deploymentTask) {
+    super(connection,
+          instance.getDeploymentName(deploymentTask.getSource(), deploymentTask.getConfiguration()),
+          status,
+          statusText,
+          runtime,
+          deploymentTask,
+          instance.getDeploymentGroup(deploymentTask.getSource(), deploymentTask.getConfiguration()));
+    myServerInstance = instance;
   }
 
   public void setRemoteDeployment(DeploymentImpl remoteDeployment) {
     myRemoteDeployment = remoteDeployment;
+    String presentableName = null;
+    if (remoteDeployment != null) {
+      DeploymentRuntime deploymentRuntime = remoteDeployment.getRuntime();
+      DeploymentTask<D> task = getDeploymentTask();
+      if (deploymentRuntime != null) {
+        presentableName = myServerInstance.getRuntimeDeploymentName(deploymentRuntime, task.getSource(), task.getConfiguration());
+      }
+    }
+    setPresentableName(presentableName);
   }
 
   private boolean isLocalState() {

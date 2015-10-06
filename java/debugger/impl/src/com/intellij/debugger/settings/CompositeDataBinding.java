@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  */
 package com.intellij.debugger.settings;
 
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -31,20 +30,20 @@ public class CompositeDataBinding implements DataBinding{
   }
 
   public void loadData(Object from) {
-    for (Iterator<DataBinding> it = myBindings.iterator(); it.hasNext();) {
-      it.next().loadData(from);
+    for (DataBinding myBinding : myBindings) {
+      myBinding.loadData(from);
     }
   }
 
   public void saveData(Object to) {
-    for (Iterator<DataBinding> it = myBindings.iterator(); it.hasNext();) {
-      it.next().saveData(to);
+    for (DataBinding myBinding : myBindings) {
+      myBinding.saveData(to);
     }
   }
 
   public boolean isModified(Object obj) {
-    for (Iterator<DataBinding> it = myBindings.iterator(); it.hasNext();) {
-      if (it.next().isModified(obj)) {
+    for (DataBinding myBinding : myBindings) {
+      if (myBinding.isModified(obj)) {
         return true;
       }
     }

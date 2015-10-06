@@ -98,7 +98,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
   @Nullable
   @Override
   public String getDeclaredType() {
-    return myLocalVariable.typeName();
+    return myTypeName;
   }
 
   @Override
