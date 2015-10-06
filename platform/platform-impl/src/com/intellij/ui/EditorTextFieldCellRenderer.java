@@ -94,7 +94,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int column) {
-    SimpleRendererComponent panel = getEditorPanel(table);
+    RendererComponent panel = getEditorPanel(table);
     EditorEx editor = panel.getEditor();
     editor.getColorsScheme().setEditorFontSize(table.getFont().getSize());
 
@@ -110,8 +110,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   }
 
   @NotNull
-  private SimpleRendererComponent getEditorPanel(final JTable table) {
-    SimpleRendererComponent panel = UIUtil.getClientProperty(table, MY_PANEL_PROPERTY);
+  private RendererComponent getEditorPanel(final JTable table) {
+    RendererComponent panel = UIUtil.getClientProperty(table, MY_PANEL_PROPERTY);
     if (panel != null) {
       DelegateColorScheme scheme = (DelegateColorScheme)panel.getEditor().getColorsScheme();
       scheme.setDelegate(EditorColorsManager.getInstance().getGlobalScheme());
@@ -132,20 +132,20 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   }
 
   @NotNull
-  protected SimpleRendererComponent createRendererComponent(@Nullable Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
-    return new RendererComponent(project, fileType, inheritFontFromLaF);
+  protected RendererComponent createRendererComponent(@Nullable Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
+    return new AbbreviatingRendererComponent(project, fileType, inheritFontFromLaF);
   }
 
   @Override
   public void dispose() {
   }
 
-  public static class SimpleRendererComponent extends CellRendererPanel implements Disposable {
+  public abstract static class RendererComponent extends CellRendererPanel implements Disposable {
     private final EditorEx myEditor;
     protected TextAttributes myTextAttributes;
     private boolean mySelected;
 
-    public SimpleRendererComponent(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
+    public RendererComponent(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
       myEditor = createEditor(project, fileType, inheritFontFromLaF);
       add(myEditor.getContentComponent());
     }
@@ -178,9 +178,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       setText(text);
     }
 
-    public void setText(String text) {
-      setTextToEditor(text);
-    }
+    public abstract void setText(String text);
 
     @Override
     public void setBackground(Color bg) {
@@ -218,7 +216,17 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
   }
 
-  public static class RendererComponent extends SimpleRendererComponent {
+  public static class SimpleRendererComponent extends RendererComponent implements Disposable {
+    public SimpleRendererComponent(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
+      super(project, fileType, inheritFontFromLaF);
+    }
+
+    public void setText(String text) {
+      setTextToEditor(text);
+    }
+  }
+
+  public static class AbbreviatingRendererComponent extends RendererComponent {
     private static final char ABBREVIATION_SUFFIX = '\u2026'; // 2026 '...'
     private static final char RETURN_SYMBOL = '\u23ce';
 
@@ -227,7 +235,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     private Dimension myPreferredSize;
     private String myRawText;
 
-    public RendererComponent(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
+    public AbbreviatingRendererComponent(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
       super(project, fileType, inheritFontFromLaF);
     }
 

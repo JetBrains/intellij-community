@@ -60,9 +60,9 @@ public class CheckboxTreeBase extends Tree {
     myHelper = new CheckboxTreeHelper(checkPolicy, myEventDispatcher);
     myHelper.initTree(this, this, cellRenderer);
 
-    setSelectionRow(0);
     if (root != null) {
       setModel(new DefaultTreeModel(root));
+      setSelectionRow(0);
     }
   }
 

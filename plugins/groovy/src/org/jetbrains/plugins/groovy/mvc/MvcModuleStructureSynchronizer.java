@@ -88,13 +88,12 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
+        myModificationCount++;
         queue(SyncAction.SyncLibrariesInPluginsModule, myProject);
         queue(SyncAction.UpgradeFramework, myProject);
         queue(SyncAction.CreateAppStructureIfNeeded, myProject);
         queue(SyncAction.UpdateProjectStructure, myProject);
         queue(SyncAction.EnsureRunConfigurationExists, myProject);
-        myModificationCount++;
-
         updateProjectViewVisibility();
       }
     });
