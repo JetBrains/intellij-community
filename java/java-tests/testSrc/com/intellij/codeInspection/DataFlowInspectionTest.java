@@ -371,6 +371,11 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
+  public void testDontSimplifyAssignment() {
+    doTest();
+    assertEmpty(myFixture.filterAvailableIntentions("Simplify"));
+  }
+
   public void testAssertThat() {
     myFixture.addClass("package org.hamcrest; public class CoreMatchers { " +
                        "public static <T> Matcher<T> notNullValue() {}\n" +
