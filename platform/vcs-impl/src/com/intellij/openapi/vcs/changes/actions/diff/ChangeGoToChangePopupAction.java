@@ -54,6 +54,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
                 .setMovable(true)
                 .setCancelKeyEnabled(true)
                 .setCancelOnClickOutside(true)
+                .setDimensionServiceKey(project, "Diff.GoToChangePopup", false)
                 .createPopup());
 
     return popup.get();
