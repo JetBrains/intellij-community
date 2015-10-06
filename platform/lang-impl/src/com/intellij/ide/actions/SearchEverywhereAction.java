@@ -1454,7 +1454,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         return;
       }
       final List<ActivateToolWindowAction> actions = new ArrayList<ActivateToolWindowAction>();
-      for (ActivateToolWindowAction action : ToolWindowsGroup.getToolWindowActions(project)) {
+      for (ActivateToolWindowAction action : ToolWindowsGroup.getToolWindowActions(project, false)) {
         String text = action.getTemplatePresentation().getText();
         if (text != null && StringUtil.startsWithIgnoreCase(text, pattern)) {
           actions.add(action);
