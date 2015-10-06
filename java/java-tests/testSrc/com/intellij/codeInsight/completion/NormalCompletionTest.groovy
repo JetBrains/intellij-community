@@ -441,6 +441,13 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assert myFixture.lookupElementStrings == ['Inner']
   }
 
+  public void testStaticMethodOfExcludedClass() {
+    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo")
+    myFixture.addClass 'package foo; public class Outer { public static void method() {} }'
+    configure()
+    assert myFixture.lookupElementStrings == ['method']
+  }
+
   public void testAtUnderClass() throws Throwable {
     doTest('\n');
   }

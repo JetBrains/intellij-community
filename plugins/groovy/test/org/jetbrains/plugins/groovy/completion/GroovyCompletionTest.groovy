@@ -959,6 +959,11 @@ class Fopppp {
     assert !doContainsTest('StringBuffer', 'StringBuff<caret>f')
   }
 
+  public void testStaticMethodOnExcludedClass() {
+    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, String.name)
+    assert doContainsTest('valueOf', 'String.val<caret>f')
+  }
+
   private doContainsTest(String itemToCheck, String text) {
     myFixture.configureByText "a.groovy", text
 
