@@ -272,7 +272,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", false);
 
   public static void setupFractionalMetrics(final Graphics2D g2d) {
-    if (FORCE_USE_FRACTIONAL_METRICS) {
+    if ((SystemInfo.isMac && !SystemInfo.isAppleJvm) || FORCE_USE_FRACTIONAL_METRICS) {
       g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
     }
   }
