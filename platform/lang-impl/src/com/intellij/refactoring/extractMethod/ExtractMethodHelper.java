@@ -98,6 +98,7 @@ public class ExtractMethodHelper {
         boolean replaceAll = false;
         final Map<SimpleMatch, RangeHighlighter> highlighterMap = new HashMap<SimpleMatch, RangeHighlighter>();
         for (SimpleMatch match : duplicates) {
+          if (!match.getStartElement().isValid() || !match.getEndElement().isValid()) continue;
           final Pair<SimpleMatch, PsiElement> replacement = Pair.create(match, callElement);
           if (!replaceAll) {
             highlightInEditor(project, match, editor, highlighterMap);
