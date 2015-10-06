@@ -302,7 +302,10 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
       g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
 
-    setupFractionalMetrics(g2d);
+    // We have found some issues with greyscale antialiasing on mac
+    if (getInstance().IDE_AA_TYPE == AntialiasingType.SUBPIXEL) {
+      setupFractionalMetrics(g2d);
+    }
   }
 
   /**
