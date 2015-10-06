@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ public class EditorHeaderComponent extends JPanel {
 
   @Override
   public void paint(@NotNull Graphics g) {
-    Graphics2D g2 = (Graphics2D)g;
     UISettings.setupAntialiasing(g);
     super.paint(g);
   }
