@@ -21,7 +21,6 @@ package com.intellij.ui;
 
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
@@ -238,9 +237,6 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     try {
       result = nonNull(myEvaluator.fun(myParam));
     }
-    catch (ProcessCanceledException e) {
-      result = EMPTY_ICON;
-    }
     catch (IndexNotReadyException e) {
       result = EMPTY_ICON;
     }
@@ -356,5 +352,10 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     return icon instanceof DeferredIconImpl &&
            Comparing.equal(myParam, ((DeferredIconImpl)icon).myParam) &&
            equalIcons(myDelegateIcon, ((DeferredIconImpl)icon).myDelegateIcon);
+  }
+
+  @Override
+  public String toString() {
+    return "Deferred. Base=" + myDelegateIcon;
   }
 }
