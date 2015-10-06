@@ -11,10 +11,12 @@ import org.jetbrains.ide.TestManager.TestDescriptor
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.Timeout
 import java.io.BufferedOutputStream
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.concurrent.TimeUnit
 
 class RestApiTest {
   companion object {
@@ -24,52 +26,52 @@ class RestApiTest {
   private val tempDirManager = TemporaryDirectory()
   private val manager = TestManager(projectRule, tempDirManager)
 
-  private val ruleChain = RuleChain(tempDirManager, manager)
+  private val ruleChain = RuleChain(tempDirManager, Timeout(60, TimeUnit.SECONDS), manager)
   @Rule fun getChain() = ruleChain
 
-  @Test(timeout = 60000)
+  @Test
   @TestDescriptor(filePath = "", status = 400)
   fun fileEmptyRequest() {
     doTest()
   }
 
-  @Test(timeout = 60000)
+  @Test
   @TestDescriptor(filePath = "foo.txt", relativeToProject = true, status = 200)
   fun relativeToProject() {
     doTest()
   }
 
-  @Test(timeout = 60000)
+  @Test
   @TestDescriptor(filePath = "foo.txt", relativeToProject = true, line = 1, status = 200)
   fun relativeToProjectWithLine() {
     doTest()
   }
 
-  @Test(timeout = 60000)
+  @Test
   @TestDescriptor(filePath = "foo.txt", relativeToProject = true, line = 1, column = 13, status = 200)
   fun relativeToProjectWithLineAndColumn() {
     doTest()
   }
 
   @TestDescriptor(filePath = "fileInExcludedDir.txt", excluded = true, status = 200)
-  @Test(timeout = 60000)
+  @Test
   fun inExcludedDir() {
     doTest()
   }
 
-  @Test(timeout = 60000)
+  @Test
   @TestDescriptor(filePath = "bar/42/foo.txt", doNotCreate = true, status = 404)
   fun relativeNonExistent() {
     doTest()
   }
 
-  @Test(timeout = 60000)
+  @Test
   @TestDescriptor(filePath = "_tmp_", doNotCreate = true, status = 404)
   fun absoluteNonExistent() {
     doTest()
   }
 
-  @Test(timeout = 60000)
+  @Test
   @TestDescriptor(filePath = "_tmp_", status = 200)
   fun absolute() {
     doTest()
