@@ -42,6 +42,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
 
   public MacIntelliJComboBoxUI(JComboBox comboBox) {
     myComboBox = comboBox;
+    comboBox.setOpaque(false);
     currentValuePane = new CellRendererPane() {
       @Override
       public void paintComponent(Graphics g, Component c, Container p, int x, int y, int w, int h, boolean shouldValidate) {
