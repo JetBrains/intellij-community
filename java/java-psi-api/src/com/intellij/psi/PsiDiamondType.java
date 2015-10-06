@@ -111,10 +111,10 @@ public abstract class PsiDiamondType extends PsiType {
     }
 
     public boolean failedToInfer() {
-      return myErrorMessage != null;
+      return getErrorMessage() != null;
     }
 
-    public void addInferredType(PsiType psiType) {
+    protected void addInferredType(PsiType psiType) {
       if (myErrorMessage != null) return;
       if (psiType == null) {
         myErrorMessage = "Cannot infer type arguments for " + myNewExpressionPresentableText;
