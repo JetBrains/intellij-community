@@ -82,4 +82,13 @@ public class Functions {
   public static <B> Function<Pair<?, B>, B> pairSecond() {
     return (Function<Pair<?, B>, B>)PAIR_SECOND;
   }
+
+  public static Function.Mono<Integer> intIncrement() {
+    return new Function.Mono<Integer>() {
+      @Override
+      public Integer fun(Integer integer) {
+        return integer + 1;
+      }
+    };
+  }
 }
