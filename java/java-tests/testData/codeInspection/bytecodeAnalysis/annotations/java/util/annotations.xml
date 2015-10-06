@@ -2252,6 +2252,47 @@
     <item name='java.util.IdentityHashMap.Values java.util.Iterator&lt;V&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.LinkedHashMap LinkedHashMap(java.util.Map&lt;? extends K,? extends V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.LinkedHashMap V get(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.LinkedHashMap boolean containsValue(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.LinkedHashMap boolean removeEldestEntry(java.util.Map.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;!null-&gt;false;null-&gt;false&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.LinkedHashMap boolean removeEldestEntry(java.util.Map.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.LinkedHashMap java.util.Iterator&lt;K&gt; newKeyIterator()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.LinkedHashMap java.util.Iterator&lt;V&gt; newValueIterator()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.LinkedHashMap java.util.Iterator&lt;java.util.Map.Entry&lt;K,V&gt;&gt; newEntryIterator()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.LinkedHashMap.Entry void addBefore(java.util.LinkedHashMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.LinkedHashMap.Entry void recordAccess(java.util.HashMap&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.LinkedHashMap.Entry void recordRemoval(java.util.HashMap&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.LinkedHashMap.LinkedHashIterator boolean hasNext()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.Locale Locale(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>

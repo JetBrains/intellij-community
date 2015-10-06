@@ -65,7 +65,6 @@ import javax.swing.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -86,7 +85,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     ourUpdateAlarm.set(createChangeListExecutor());
   }
 
-  private static ScheduledThreadPoolExecutor createChangeListExecutor() {
+  private static ScheduledExecutorService createChangeListExecutor() {
     return VcsUtil.createExecutor("Change List Updater");
   }
 
@@ -95,7 +94,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private FileHolderComposite myComposite;
 
   private ChangeListWorker myWorker;
-  private VcsException myUpdateException = null;
+  private VcsException myUpdateException;
   private Factory<JComponent> myAdditionalInfo;
 
   private final EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
@@ -466,7 +465,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             final Iterator<FilePath> filesIterator = modifier.getDirtyFilesIterator();
             while (filesIterator.hasNext()) {
               final FilePath dirtyFile = filesIterator.next();
-              if ((dirtyFile.getVirtualFile() != null) && isIgnoredFile(dirtyFile.getVirtualFile())) {
+              if (dirtyFile.getVirtualFile() != null && isIgnoredFile(dirtyFile.getVirtualFile())) {
                 filesIterator.remove();
                 fileHolder.addFile(dirtyFile.getVirtualFile());
                 refreshFiles.add(dirtyFile.getVirtualFile());
@@ -477,7 +476,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
               final Iterator<FilePath> dirIterator = modifier.getDirtyDirectoriesIterator(root);
               while (dirIterator.hasNext()) {
                 final FilePath dir = dirIterator.next();
-                if ((dir.getVirtualFile() != null) && isIgnoredFile(dir.getVirtualFile())) {
+                if (dir.getVirtualFile() != null && isIgnoredFile(dir.getVirtualFile())) {
                   dirIterator.remove();
                   fileHolder.addFile(dir.getVirtualFile());
                   refreshFiles.add(dir.getVirtualFile());
@@ -531,7 +530,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           myAdditionalInfo = null;
         }
       }
-      final String scopeInString = (!LOG.isDebugEnabled()) ? "" : StringUtil.join(scopes, new Function<VcsDirtyScope, String>() {
+      final String scopeInString = !LOG.isDebugEnabled() ? "" : StringUtil.join(scopes, new Function<VcsDirtyScope, String>() {
         @Override
         public String fun(VcsDirtyScope scope) {
           return scope.toString();
@@ -545,7 +544,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
       iterateScopes(dataHolder, scopes, wasEverythingDirty);
 
-      final boolean takeChanges = (myUpdateException == null);
+      final boolean takeChanges = myUpdateException == null;
       if (takeChanges) {
         // update IDEA-level ignored files
         updateIgnoredFiles(dataHolder.getComposite());
@@ -696,8 +695,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private class DataHolder {
     private final boolean myWasEverythingDirty;
-    final FileHolderComposite myComposite;
-    final ChangeListWorker myChangeListWorker;
+    private final FileHolderComposite myComposite;
+    private final ChangeListWorker myChangeListWorker;
 
     private DataHolder(FileHolderComposite composite, ChangeListWorker changeListWorker, boolean wasEverythingDirty) {
       myComposite = composite;
@@ -705,14 +704,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       myWasEverythingDirty = wasEverythingDirty;
     }
 
-    public void notifyStart() {
+    private void notifyStart() {
       if (myWasEverythingDirty) {
         myComposite.cleanAll();
         myChangeListWorker.notifyStartProcessingChanges(null);
       }
     }
 
-    public void notifyStartProcessingChanges(@NotNull final VcsModifiableDirtyScope scope) {
+    private void notifyStartProcessingChanges(@NotNull final VcsModifiableDirtyScope scope) {
       if (!myWasEverythingDirty) {
         myComposite.cleanAndAdjustScope(scope);
         myChangeListWorker.notifyStartProcessingChanges(scope);
@@ -722,13 +721,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       myChangeListWorker.notifyVcsStarted(scope.getVcs());
     }
 
-    public void notifyDoneProcessingChanges() {
+    private void notifyDoneProcessingChanges() {
       if (!myWasEverythingDirty) {
         myChangeListWorker.notifyDoneProcessingChanges(myDelayedNotificator.getProxyDispatcher());
       }
     }
 
-    public void notifyEnd() {
+    void notifyEnd() {
       if (myWasEverythingDirty) {
         myChangeListWorker.notifyDoneProcessingChanges(myDelayedNotificator.getProxyDispatcher());
       }
@@ -738,7 +737,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       return myComposite;
     }
 
-    public ChangeListWorker getChangeListWorker() {
+    ChangeListWorker getChangeListWorker() {
       return myChangeListWorker;
     }
   }
@@ -927,7 +926,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  public Factory<JComponent> getAdditionalUpdateInfo() {
+  Factory<JComponent> getAdditionalUpdateInfo() {
     synchronized (myDataLock) {
       return myAdditionalInfo;
     }
@@ -1258,7 +1257,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
     });
 
-    if (exceptions.size() > 0) {
+    if (!exceptions.isEmpty()) {
       StringBuilder message = new StringBuilder(VcsBundle.message("error.adding.files.prompt"));
       for (VcsException ex : exceptions) {
         message.append("\n").append(ex.getMessage());
@@ -1292,7 +1291,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                   }
                 }
 
-                if (changesToMove.size() > 0) {
+                if (!changesToMove.isEmpty()) {
                   moveChangesTo(list, changesToMove.toArray(new Change[changesToMove.size()]));
                 }
               }
@@ -1389,13 +1388,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   public void readExternal(Element element) throws InvalidDataException {
     if (!myProject.isDefault()) {
       synchronized (myDataLock) {
         myIgnoredIdeaLevel.clear();
         new ChangeListManagerSerialization(myIgnoredIdeaLevel, myWorker).readExternal(element);
-        if ((!myWorker.isEmpty()) && getDefaultChangeList() == null) {
+        if (!myWorker.isEmpty() && getDefaultChangeList() == null) {
           setDefaultChangeList(myWorker.getListsCopy().get(0));
         }
       }
@@ -1442,8 +1441,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private static class MyDirtyFilesScheduler {
     private static final int ourPiecesLimit = 100;
-    final List<VirtualFile> myFiles = new ArrayList<VirtualFile>();
-    final List<VirtualFile> myDirs = new ArrayList<VirtualFile>();
+    private final List<VirtualFile> myFiles = new ArrayList<VirtualFile>();
+    private final List<VirtualFile> myDirs = new ArrayList<VirtualFile>();
     private boolean myEveryThing;
     private int myCnt;
     private final Project myProject;

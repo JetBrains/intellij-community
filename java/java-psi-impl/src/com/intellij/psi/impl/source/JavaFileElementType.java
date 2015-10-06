@@ -22,9 +22,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.impl.java.stubs.hierarchy.JavaStubIndexer;
@@ -113,7 +111,8 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
 
   @Override
   public void indexStub(@NotNull final PsiJavaFileStub stub, @NotNull final IndexSink sink) {
-    int fileId = stub.getUserData(IndexingDataKeys.VIRTUAL_FILE_ID);
+    Integer fileId = stub.getUserData(IndexingDataKeys.VIRTUAL_FILE_ID);
+    if (fileId == null) return;
     IndexTree.Unit unit = JavaStubIndexer.translate(fileId, stub);
     if (unit != null) {
       sink.occurrence(JavaStubIndexKeys.UNITS, unit);

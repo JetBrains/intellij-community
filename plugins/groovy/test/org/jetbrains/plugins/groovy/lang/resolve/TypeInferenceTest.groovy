@@ -289,7 +289,7 @@ List<Integer> l2
   }
 
   void testIndexPropertyInLHS() {
-    assertTypeEquals("java.util.Map", 'a.groovy')
+    assertTypeEquals("java.util.LinkedHashMap", 'a.groovy')
   }
 
   void testEmptyMapTypeArgs() {
@@ -300,7 +300,7 @@ X<String, Integer> x = [:]
 ''')
 
     def type = ((myFixture.file as GroovyFile).statements[0] as GrVariableDeclaration).variables[0].initializerGroovy.type
-    assertEquals("java.util.Map<java.lang.String,java.lang.Integer>", type.canonicalText)
+    assertEquals("java.util.LinkedHashMap<java.lang.String,java.lang.Integer>", type.canonicalText)
   }
 
   void testRawCollectionsInCasts() {
@@ -411,7 +411,7 @@ print lis<caret>t
     doTest('''\
 def map = cond ? [1:'a', 2:'a', 3:'a'] : [:]
 print ma<caret>p
-''', "$JAVA_UTIL_MAP<$JAVA_LANG_STRING, $JAVA_LANG_STRING>")
+''', "java.util.LinkedHashMap<$JAVA_LANG_STRING, $JAVA_LANG_STRING>")
   }
 
   void testEmptyMapOrMapWithGenerics2() {
@@ -702,7 +702,7 @@ def foo(Map map) {
   while(true)
     ma<caret>p = [a:map]
 }
-''', 'java.util.Map<java.lang.String, java.util.Map>')
+''', 'java.util.LinkedHashMap<java.lang.String, java.util.Map>')
   }
 
   void testRecursionWithLists() {
