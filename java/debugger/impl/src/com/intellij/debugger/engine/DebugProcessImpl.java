@@ -1307,12 +1307,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                  ClassLoaderReference classLoader) throws EvaluateException {
     try {
       DebuggerManagerThreadImpl.assertIsManagerThread();
-      final VirtualMachineProxyImpl vmProxy = getVirtualMachineProxy();
-      if (vmProxy == null) {
-        throw new VMDisconnectedException();
-      }
       ReferenceType result = null;
-      for (final ReferenceType refType : vmProxy.classesByName(className)) {
+      for (final ReferenceType refType : getVirtualMachineProxy().classesByName(className)) {
         if (refType.isPrepared() && isVisibleFromClassLoader(classLoader, refType)) {
           result = refType;
           break;

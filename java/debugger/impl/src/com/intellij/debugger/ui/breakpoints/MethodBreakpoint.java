@@ -63,7 +63,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import javax.swing.*;
-import java.util.Iterator;
 import java.util.Set;
 
 public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakpointProperties> {
@@ -127,8 +126,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   protected void createRequestForPreparedClass(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType) {
     try {
       boolean hasMethod = false;
-      for (Iterator iterator = classType.allMethods().iterator(); iterator.hasNext();) {
-        Method method = (Method)iterator.next();
+      for (Method method : classType.allMethods()) {
         String signature = method.signature();
         String name = method.name();
 
@@ -368,11 +366,11 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     super.readExternal(breakpointNode);
     try {
       getProperties().WATCH_ENTRY = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ENTRY"));
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
     try {
       getProperties().WATCH_EXIT = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_EXIT"));
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
   }
 

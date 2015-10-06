@@ -37,6 +37,26 @@
       <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
     </action>
 
+    <action id="StubHierarchy" class="com.intellij.psi.stubsHierarchy.impl.test.BuildStubsHierarchyAction" text="Build Stub Hierarchy">
+      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
+    </action>
+
+    <action id="TestStubHierarchy" class="com.intellij.psi.stubsHierarchy.impl.test.TestStubHierarchyAction" text="Test Stub Hierarchy">
+      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
+    </action>
+
+    <action id="LogSubtypes" class="com.intellij.psi.stubsHierarchy.impl.test.LogSubtypesAction" text="Log Subtypes">
+      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
+    </action>
+
+    <action id="CountInheritors" class="com.intellij.psi.stubsHierarchy.impl.test.GetAllInheritorsAction" text="Count Inheritors">
+      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
+    </action>
+
+    <action id="ClearSubtypes" class="com.intellij.psi.stubsHierarchy.impl.test.ClearSubtypesAction" text="Clear Subtypes">
+      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
+    </action>
+
     <group id="AnalyzeJavaMenu">
       <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction"/>
       <separator/>

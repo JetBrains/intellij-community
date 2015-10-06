@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class EditSourceAction extends DebuggerAction{
 
     final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
-    if(debuggerContext != null && selectedNode != null) {
+    if (selectedNode != null) {
       debuggerContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
         public void threadAction() {
           final SourcePosition sourcePosition = getSourcePosition(selectedNode, debuggerContext);
@@ -51,10 +51,9 @@ public class EditSourceAction extends DebuggerAction{
   }
 
   private SourcePosition getSourcePosition(DebuggerTreeNodeImpl selectedNode, DebuggerContextImpl debuggerContext) {
-    DebuggerTreeNodeImpl node = selectedNode;
     final DebuggerContextImpl context = debuggerContext;
 
-    if(node == null || context == null) {
+    if (selectedNode == null || context == null) {
       return null;
     }
 
@@ -66,7 +65,7 @@ public class EditSourceAction extends DebuggerAction{
       return null;
     }
 
-    NodeDescriptorImpl nodeDescriptor = node.getDescriptor();
+    NodeDescriptorImpl nodeDescriptor = selectedNode.getDescriptor();
     if(nodeDescriptor instanceof WatchItemDescriptor) {
       Modifier modifier = ((WatchItemDescriptor)nodeDescriptor).getModifier();
       if(modifier == null) {
@@ -90,7 +89,7 @@ public class EditSourceAction extends DebuggerAction{
     final DebuggerTreeNodeImpl node = getSelectedNode(e.getDataContext());
 
     final Presentation presentation = e.getPresentation();
-    if(debuggerContext != null && debuggerContext.getDebugProcess() != null) {
+    if (debuggerContext.getDebugProcess() != null) {
       presentation.setEnabled(true);
       debuggerContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
         public void threadAction() {

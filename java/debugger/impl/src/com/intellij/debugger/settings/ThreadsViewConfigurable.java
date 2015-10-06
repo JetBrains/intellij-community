@@ -24,7 +24,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 
 import javax.swing.*;
-import java.util.Iterator;
 
 /**
  * @author Eugene Belyaev
@@ -63,11 +62,9 @@ public class ThreadsViewConfigurable extends BaseConfigurable {
 
   public void apply() {
     myDataBinding.saveData(mySettings);
-    final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    for (int i = 0; i < openProjects.length; i++) {
-      Project project = openProjects[i];
-      for (Iterator iterator = (DebuggerManagerEx.getInstanceEx(project)).getSessions().iterator(); iterator.hasNext();) {
-        ((DebuggerSession)iterator.next()).refresh(false);
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      for (DebuggerSession session : (DebuggerManagerEx.getInstanceEx(project)).getSessions()) {
+        (session).refresh(false);
       }
       XDebuggerUtilImpl.rebuildAllSessionsViews(project);
     }

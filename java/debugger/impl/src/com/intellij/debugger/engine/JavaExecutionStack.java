@@ -25,6 +25,7 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.sun.jdi.ThreadReference;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,8 @@ import java.util.Iterator;
  * @author egor
  */
 public class JavaExecutionStack extends XExecutionStack {
+  private static final Logger LOG = Logger.getInstance(JavaExecutionStack.class);
+
   private final ThreadReferenceProxyImpl myThreadProxy;
   private final DebugProcessImpl myDebugProcess;
   private volatile JavaStackFrame myTopFrame;
@@ -79,7 +82,7 @@ public class JavaExecutionStack extends XExecutionStack {
       }
     }
     catch (EvaluateException e) {
-      e.printStackTrace();
+      LOG.info(e);
     }
     finally {
       myTopFrameReady = true;

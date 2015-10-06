@@ -77,7 +77,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
       final List<JavaValue> values = getSelectedValues(e);
       final List<XValueNodeImpl> selectedNodes = XDebuggerTreeActionBase.getSelectedNodes(e.getDataContext());
 
-      LOG.assertTrue(debuggerContext != null && !values.isEmpty());
+      LOG.assertTrue(!values.isEmpty());
 
       DebugProcessImpl process = debuggerContext.getDebugProcess();
       if (process == null) {
