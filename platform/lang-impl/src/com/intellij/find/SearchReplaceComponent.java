@@ -215,6 +215,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   public void requestFocus() {
     mySearchTextComponent.setSelectionStart(0);
     mySearchTextComponent.setSelectionEnd(mySearchTextComponent.getText().length());
+    mySearchTextComponent.requestFocus();
     IdeFocusManager.getInstance(myProject).requestFocus(mySearchTextComponent, true);
   }
 
