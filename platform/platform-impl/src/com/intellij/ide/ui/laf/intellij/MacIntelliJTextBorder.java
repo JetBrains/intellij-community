@@ -21,6 +21,7 @@ import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -43,6 +44,8 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
       return;
     }
     Graphics2D g = (Graphics2D)g2d;
+    //todo[kb]: make a better solution
+    if (c.getParent() instanceof JComboBox) return;
     if (c.hasFocus()) {
       MacIntelliJBorderPainter.paintBorder(c, g, 0, 0, c.getWidth(), c.getHeight());
     }
