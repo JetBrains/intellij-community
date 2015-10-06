@@ -72,8 +72,6 @@ public class UpdateStrategy {
       }
     }
 
-    CheckForUpdateResult result = new CheckForUpdateResult(updatedChannel, newBuild, product.getAllChannelIds());
-
     UpdateChannel channelToPropose = null;
     for (UpdateChannel channel : product.getChannels()) {
       if (!myUpdateSettings.getKnownChannelsIds().contains(channel.getId()) &&
@@ -84,9 +82,8 @@ public class UpdateStrategy {
         channelToPropose = channel;
       }
     }
-    result.setChannelToPropose(channelToPropose);
 
-    return result;
+    return new CheckForUpdateResult(newBuild, updatedChannel, channelToPropose, product.getAllChannelIds());
   }
 
   private List<UpdateChannel> getActiveChannels(Product product) {
