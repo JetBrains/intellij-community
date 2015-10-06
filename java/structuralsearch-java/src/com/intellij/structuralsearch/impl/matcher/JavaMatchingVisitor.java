@@ -350,7 +350,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
 
     // check if element is declared in current class (not in ancestors)
-    return element.getContainingClass() == myClazz;
+    return myClazz == null || element.getContainingClass() == myClazz;
   }
 
   @Override

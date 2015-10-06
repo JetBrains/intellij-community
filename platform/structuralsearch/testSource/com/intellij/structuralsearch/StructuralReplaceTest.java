@@ -2403,5 +2403,14 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "    System.out.println();\n" +
                  "  }\n" +
                  "}\n", replacer.testReplace(in, what, by, options));
+
+    final String what2 = "void '_a:[regex( test.* )]();";
+    final String by2 = "@org.junit.Test void $a$();";
+    assertEquals("class A extends TestCase {\n" +
+                 "  @org.junit.Test void testOne(){\n" +
+                 "    System.out.println();\n" +
+                 "  }\n" +
+                 "}\n",
+                 replacer.testReplace(in, what2, by2, options));
   }
 }

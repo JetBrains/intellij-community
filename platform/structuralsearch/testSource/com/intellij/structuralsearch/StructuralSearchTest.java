@@ -3327,4 +3327,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}";
     assertEquals("find incomplete code", 1, findMatchesCount(source2, "'_a '_b{2,100};"));
   }
+
+  public void testFindWithSimpleMemberPattern() {
+    String source  = "class X {" +
+                     "  static {}" +
+                     "  static {}" +
+                     "  static {" +
+                     "    System.out.println();" +
+                     "  }" +
+                     "  void one() {}" +
+                     "  void two() {" +
+                     "    System.out.println();" +
+                     "  }" +
+                     "}";
+
+    assertEquals("find with simple method pattern", 2, findMatchesCount(source, "void '_a();"));
+    assertEquals("find with simple method pattern 2", 1, findMatchesCount(source, "void one();"));
+    assertEquals("find with simple static initializer pattern", 3, findMatchesCount(source, "static { '_statement*;}"));
+  }
 }
