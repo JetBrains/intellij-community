@@ -136,9 +136,12 @@ public class JavaStubIndexer {
   private static void processImport(PsiImportListStub el, List<Import> imports, Set<String> namesCache) {
     for (StubElement<?> importElem : el.getChildrenStubs()) {
       PsiImportStatementStub imp = (PsiImportStatementStub)importElem;
-      String fullName = PsiNameHelper.getQualifiedClassName(imp.getImportReferenceText(), true);
-      if (imp.isOnDemand() || namesCache.contains(shortName(fullName))) {
-        imports.add(new Import(fullName, imp.isStatic(), imp.isOnDemand(), null));
+      String importReferenceText = imp.getImportReferenceText();
+      if (importReferenceText != null) {
+        String fullName = PsiNameHelper.getQualifiedClassName(importReferenceText, true);
+        if (imp.isOnDemand() || namesCache.contains(shortName(fullName))) {
+          imports.add(new Import(fullName, imp.isStatic(), imp.isOnDemand(), null));
+        }
       }
     }
   }
