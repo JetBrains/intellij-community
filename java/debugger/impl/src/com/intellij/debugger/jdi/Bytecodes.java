@@ -564,7 +564,7 @@ class Bytecodes {
     b[INVOKESTATIC_QUICK] = FIELDORMETH_INSN; // = 217;
     b[INVOKEINTERFACE_QUICK] = ITFMETH_INSN; // = 218;
     b[INVOKEVIRTUALOBJECT_QUICK] = FIELDORMETH_INSN; // = 219;
-    b[220] = Bytecodes.NOARG_INSN; // the ID is not used for any opcode
+    b[220] = NOARG_INSN; // the ID is not used for any opcode
     b[NEW_QUICK] = TYPE_INSN; // = 221;
     b[ANEWARRAY_QUICK] = TYPE_INSN; // = 222;
     b[MULTIANEWARRAY_QUICK] = MANA_INSN; // = 223;

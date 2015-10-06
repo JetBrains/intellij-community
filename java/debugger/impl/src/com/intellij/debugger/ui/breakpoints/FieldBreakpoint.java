@@ -382,11 +382,11 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     }
     try {
       getProperties().WATCH_MODIFICATION = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_MODIFICATION"));
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
     try {
       getProperties().WATCH_ACCESS = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ACCESS"));
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
   }
   //

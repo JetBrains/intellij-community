@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,18 @@
 package com.intellij.debugger;
 
 public class NoDataException extends Exception {
+  @SuppressWarnings({"deprecation", "ThrowableInstanceNeverThrown"})
   public static final NoDataException INSTANCE = new NoDataException();
 
   /**
-   * @deprecated Use shared {@link com.intellij.debugger.NoDataException#INSTANCE} instead
+   * @deprecated Use shared {@link NoDataException#INSTANCE} instead
    */
   @Deprecated
   public NoDataException() {
   }
 
   @Override
-  public Throwable fillInStackTrace() {
+  public synchronized Throwable fillInStackTrace() {
     return this;
   }
 }

@@ -73,7 +73,7 @@ public class RunHotswapDialog extends OptionsDialog {
     else {
       setTitle(DebuggerBundle.message("hotswap.dialog.title"));
     }
-    setButtonsAlignment(SwingUtilities.CENTER);
+    setButtonsAlignment(SwingConstants.CENTER);
     this.init();
   }
 
