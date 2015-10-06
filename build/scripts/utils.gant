@@ -852,7 +852,7 @@ binding.setVariable("bundledJDKs"){
     }
     def customLinuxJdkDir = new File("${home}/build/jdk/custom/linux")
     if (p("jdk.custom.linux") == "true" && (customLinuxJdkDir.exists() && customLinuxJdkDir.isDirectory())) {
-      setProperty("linuxCustomJDK", getPathToBundledJDK(customLinuxJdkDir, "openjdk.1.8", ".tar"))
+      setProperty("linuxCustomJDK", getPathToBundledJDK(customLinuxJdkDir, "openjdk.1.8", ".tar.gz"))
       extractRedistJre(linuxCustomJDK, "${paths.sandbox}/custom.linux.jdk")
     }
     if (p("jdk.bundled.mac") != "false") {
