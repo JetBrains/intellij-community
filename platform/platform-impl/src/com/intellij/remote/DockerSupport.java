@@ -16,6 +16,9 @@
 package com.intellij.remote;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,5 +80,16 @@ public abstract class DockerSupport {
     public String getCertificatesPath() {
       return myCertificatesPath;
     }
+  }
+
+  public final void startMachineWithProgressIndicator(@Nullable Project project, @NotNull final String machineName) {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Void, RuntimeException>() {
+      @Override
+      public Void compute() {
+        ProgressManager.progress("Starting Docker Machine \'" + machineName + "\'");
+        startMachine(machineName);
+        return null;
+      }
+    }, "Starting Docker Machine", true, project);
   }
 }
