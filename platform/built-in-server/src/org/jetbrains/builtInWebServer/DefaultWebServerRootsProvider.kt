@@ -67,10 +67,12 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
 
     val modules = runReadAction { ModuleManager.getInstance(project).modules }
     val resolver = WebServerPathToFileManager.getInstance(project).getResolver(effectivePath)
-    for (rootProvider in RootProvider.values()) {
-      val result = findByRelativePath(project, effectivePath, modules, rootProvider, resolver)
-      if (result != null) {
-        return result
+    if (!modules.isEmpty()) {
+      for (rootProvider in RootProvider.values()) {
+        val result = findByRelativePath(project, effectivePath, modules, rootProvider, resolver)
+        if (result != null) {
+          return result
+        }
       }
     }
     return findInLibraries(project, modules, effectivePath, resolver)

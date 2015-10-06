@@ -33,7 +33,7 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
   fun writeFileHeaders(pathInfo: PathInfo, canonicalRequestPath: CharSequence) {
     val root = pathInfo.root
     addHeader("DOCUMENT_ROOT", root.path.separatorsToSystem())
-    addHeader("SCRIPT_FILENAME", if (pathInfo.ioFile == null) pathInfo.file!!.path.separatorsToSystem() else pathInfo.ioFile!!.path)
+    addHeader("SCRIPT_FILENAME", pathInfo.filePath)
     addHeader("SCRIPT_NAME", canonicalRequestPath)
   }
 

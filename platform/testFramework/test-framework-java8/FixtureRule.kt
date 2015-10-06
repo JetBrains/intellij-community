@@ -46,6 +46,8 @@ import java.io.PrintStream
 import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicBoolean
 
+private var sharedModule: Module? = null
+
 /**
  * Project created on request, so, could be used as a bare (only application).
  */
@@ -56,7 +58,6 @@ class ProjectRule() : ExternalResource() {
     }
 
     private var sharedProject: ProjectEx? = null
-    private var sharedModule: Module? = null
     private val projectOpened = AtomicBoolean()
 
     private fun createLightProject(): ProjectEx {
@@ -234,28 +235,32 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
 class DisposeModulesRule(private val projectRule: ProjectRule) : ExternalResource() {
   override fun after() {
     projectRule.projectIfOpened?.let {
-      var errors: MutableList<Throwable>? = null
       val moduleManager = ModuleManager.getInstance(it)
       runInEdtAndWait {
-        for (module in moduleManager.modules) {
-          if (module.isDisposed) {
-            continue
-          }
-
-          try {
-            moduleManager.disposeModule(module)
-          }
-          catch (e: Throwable) {
-            if (errors == null) {
-              errors = SmartList()
-            }
-            errors!!.add(e)
+        moduleManager.modules.forEachGuaranteed {
+          if (!it.isDisposed && it !== sharedModule) {
+            moduleManager.disposeModule(it)
           }
         }
       }
-      CompoundRuntimeException.throwIfNotEmpty(errors)
     }
   }
+}
+
+inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit): Unit {
+  var errors: MutableList<Throwable>? = null
+  for (element in this) {
+    try {
+      operation(element)
+    }
+    catch (e: Throwable) {
+      if (errors == null) {
+        errors = SmartList()
+      }
+      errors.add(e)
+    }
+  }
+  CompoundRuntimeException.throwIfNotEmpty(errors)
 }
 
 /**

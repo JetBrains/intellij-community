@@ -49,31 +49,29 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
           return false
         }
       }
-      else {
-        var virtualFile = pathInfo.file
-        val isDirectory = if (virtualFile == null) pathInfo.ioFile!!.isDirectory else virtualFile.isDirectory
-        if (isDirectory) {
-          if (!endsWithSlash(decodedRawPath)) {
-            WebServerPathHandler.redirectToDirectory(request, channel, if (isCustomHost) path else (projectName + '/' + path))
-            return true
-          }
-
-          if (virtualFile == null) {
-            virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(pathInfo.ioFile!!)
-          }
-
-          virtualFile = if (virtualFile == null) null else findIndexFile(virtualFile)
-          if (virtualFile == null) {
-            Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, "Index file doesn't exist.", request)
-            return true
-          }
-          indexUsed = true
-        }
-      }
 
       pathToFileManager.pathToInfoCache.put(path, pathInfo)
     }
-    else if (!endsWithName(path, pathInfo.name)) {
+
+    if (pathInfo.isDirectory) {
+      if (!endsWithSlash(decodedRawPath)) {
+        WebServerPathHandler.redirectToDirectory(request, channel, if (isCustomHost) path else ("$projectName/$path"))
+        return true
+      }
+
+      var virtualFile = pathInfo.file ?: LocalFileSystem.getInstance().refreshAndFindFileByIoFile(pathInfo.ioFile!!)
+      virtualFile = if (virtualFile == null) null else findIndexFile(virtualFile)
+      if (virtualFile == null) {
+        Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, "Index file doesn't exist.", request)
+        return true
+      }
+
+      indexUsed = true
+      pathInfo = PathInfo(null, virtualFile, pathInfo.root, pathInfo.moduleName, pathInfo.isLibrary)
+      pathToFileManager.pathToInfoCache.put(path, pathInfo)
+    }
+
+    if (!indexUsed && !endsWithName(path, pathInfo.name)) {
       if (endsWithSlash(decodedRawPath)) {
         indexUsed = true
       }
