@@ -22,13 +22,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzerListener;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -39,14 +35,12 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -323,24 +317,53 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   @Nullable
   protected abstract AbstractAddGroup createAddAction();
 
+  protected List<? extends RemoveConfigurableHandler<?>> getRemoveHandlers() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  private MultiMap<RemoveConfigurableHandler, MyNode> groupNodes(List<MyNode> nodes) {
+    List<? extends RemoveConfigurableHandler<?>> handlers = getRemoveHandlers();
+    MultiMap<RemoveConfigurableHandler, MyNode> grouped = new LinkedMultiMap<RemoveConfigurableHandler, MyNode>();
+    for (MyNode node : nodes) {
+      final NamedConfigurable<?> configurable = node.getConfigurable();
+      if (configurable == null) continue;
+      RemoveConfigurableHandler handler = findHandler(handlers, configurable.getClass());
+      if (handler == null) continue;
+
+      grouped.putValue(handler, node);
+    }
+    return grouped;
+  }
+
+  private static RemoveConfigurableHandler<?> findHandler(List<? extends RemoveConfigurableHandler<?>> handlers,
+                                                          Class<? extends NamedConfigurable> configurableClass) {
+    for (RemoveConfigurableHandler<?> handler : handlers) {
+      if (handler.getConfigurableClass().isAssignableFrom(configurableClass)) {
+        return handler;
+      }
+    }
+    return null;
+  }
+
   protected class MyRemoveAction extends MyDeleteAction {
     public MyRemoveAction() {
       super(new Condition<Object[]>() {
         @Override
         public boolean value(final Object[] objects) {
-          Object[] editableObjects = ContainerUtil.mapNotNull(objects, new Function<Object, Object>() {
-            @Override
-            public Object fun(Object object) {
-              if (object instanceof MyNode) {
-                final NamedConfigurable namedConfigurable = ((MyNode)object).getConfigurable();
-                if (namedConfigurable != null) {
-                  return namedConfigurable.getEditableObject();
-                }
-              }
-              return null;
+          List<MyNode> nodes = new ArrayList<MyNode>();
+          for (Object object : objects) {
+            if (!(object instanceof MyNode)) return false;
+            nodes.add((MyNode)object);
+          }
+          MultiMap<RemoveConfigurableHandler, MyNode> map = groupNodes(nodes);
+          for (Map.Entry<RemoveConfigurableHandler, Collection<MyNode>> entry : map.entrySet()) {
+            //noinspection unchecked
+            if (!entry.getKey().canBeRemoved(getEditableObjects(entry.getValue()))) {
+              return false;
             }
-          }, new Object[0]);
-          return editableObjects.length == objects.length && canBeRemoved(editableObjects);
+          }
+          return true;
         }
       });
     }
@@ -350,77 +373,40 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       final TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) return;
 
-      final Set<TreePath> pathsToRemove = new HashSet<TreePath>();
-      for (TreePath path : paths) {
-        if (removeFromModel(path)) {
-          pathsToRemove.add(path);
+      List<MyNode> removedNodes = removeFromModel(paths);
+      removeNodes(removedNodes);
+    }
+
+    private List<MyNode> removeFromModel(final TreePath[] paths) {
+      List<MyNode> nodes = ContainerUtil.mapNotNull(paths, new Function<TreePath, MyNode>() {
+        @Override
+        public MyNode fun(TreePath path) {
+          Object node = path.getLastPathComponent();
+          return node instanceof MyNode ? (MyNode)node : null;
+        }
+      });
+      MultiMap<RemoveConfigurableHandler, MyNode> grouped = groupNodes(nodes);
+
+      List<MyNode> removedNodes = new ArrayList<MyNode>();
+      for (Map.Entry<RemoveConfigurableHandler, Collection<MyNode>> entry : grouped.entrySet()) {
+        //noinspection unchecked
+        boolean removed = entry.getKey().remove(getEditableObjects(entry.getValue()));
+        if (removed) {
+          removedNodes.addAll(entry.getValue());
         }
       }
-      removePaths(pathsToRemove.toArray(new TreePath[pathsToRemove.size()]));
-    }
-
-    private boolean removeFromModel(final TreePath selectionPath) {
-      final Object last = selectionPath.getLastPathComponent();
-
-      if (!(last instanceof MyNode)) return false;
-
-      final MyNode node = (MyNode)last;
-      final NamedConfigurable configurable = node.getConfigurable();
-      if (configurable == null) return false;
-      final Object editableObject = configurable.getEditableObject();
-
-      return removeObject(editableObject);
+      return removedNodes;
     }
   }
 
-  protected boolean canBeRemoved(final Object[] editableObjects) {
-    for (Object editableObject : editableObjects) {
-      if (!canObjectBeRemoved(editableObject)) return false;
+  private static List<?> getEditableObjects(Collection<MyNode> value) {
+    List<Object> objects = new ArrayList<Object>();
+    for (MyNode node : value) {
+      objects.add(node.getConfigurable().getEditableObject());
     }
-    return true;
+    return objects;
   }
 
-  private static boolean canObjectBeRemoved(Object editableObject) {
-    if (editableObject instanceof Sdk ||
-        editableObject instanceof Module ||
-        editableObject instanceof Facet ||
-        editableObject instanceof Artifact) {
-      return true;
-    }
-    if (editableObject instanceof Library) {
-      final LibraryTable table = ((Library)editableObject).getTable();
-      return table == null || table.isEditable();
-    }
-    return false;
-  }
-
-  protected boolean removeObject(final Object editableObject) {
-    // todo keep only removeModule() and removeFacet() here because other removeXXX() are empty here and overridden in subclasses? Override removeObject() instead?
-    if (editableObject instanceof Sdk) {
-      removeJdk((Sdk)editableObject);
-    }
-    else if (editableObject instanceof Module) {
-      if (!removeModule((Module)editableObject)) return false;
-    }
-    else if (editableObject instanceof Facet) {
-      if (removeFacet((Facet)editableObject).isEmpty()) return false;
-    }
-    else if (editableObject instanceof Library) {
-      if (!removeLibrary((Library)editableObject)) return false;
-    }
-    else if (editableObject instanceof Artifact) {
-      removeArtifact((Artifact)editableObject);
-    }
-    return true;
-  }
-
-  protected void removeArtifact(Artifact artifact) {
-  }
-
-
-  protected boolean removeLibrary(Library library) {
-    return false;
-  }
 
   protected void removeFacetNodes(@NotNull List<Facet> facets) {
     for (Facet facet : facets) {
@@ -429,17 +415,6 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
         removePaths(TreeUtil.getPathFromRoot(node));
       }
     }
-  }
-
-  protected List<Facet> removeFacet(final Facet facet) {
-    return myContext.myModulesConfigurator.getFacetsConfigurator().removeFacet(facet);
-  }
-
-  protected boolean removeModule(final Module module) {
-    return true;
-  }
-
-  protected void removeJdk(final Sdk editableObject) {
   }
 
   protected abstract static class AbstractAddGroup extends ActionGroup implements ActionGroupWithPreselection {

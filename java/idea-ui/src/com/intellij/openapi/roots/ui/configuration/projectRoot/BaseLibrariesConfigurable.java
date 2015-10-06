@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
@@ -38,6 +39,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -277,63 +279,95 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     removePaths(pathsToRemove.toArray(new TreePath[pathsToRemove.size()]));
   }
 
-
   @Override
-  protected boolean removeLibrary(final Library library) {
-    final LibraryTable table = library.getTable();
-    if (table != null) {
-      final LibraryProjectStructureElement libraryElement = new LibraryProjectStructureElement(myContext, library);
-      final Collection<ProjectStructureElementUsage> usages = new ArrayList<ProjectStructureElementUsage>(myContext.getDaemonAnalyzer().getUsages(libraryElement));
-      if (usages.size() > 0) {
-        final MultiMap<String, ProjectStructureElementUsage> containerType2Usage = new MultiMap<String, ProjectStructureElementUsage>();
-        for (final ProjectStructureElementUsage usage : usages) {
-          containerType2Usage.putValue(usage.getContainingElement().getTypeName(), usage);
+  protected List<? extends RemoveConfigurableHandler<?>> getRemoveHandlers() {
+    return Collections.singletonList(new RemoveConfigurableHandler<Library>(LibraryConfigurable.class) {
+      @Override
+      public boolean remove(@NotNull Collection<Library> libraries) {
+        List<Pair<LibraryProjectStructureElement, Collection<ProjectStructureElementUsage>>> toRemove = new ArrayList<Pair<LibraryProjectStructureElement, Collection<ProjectStructureElementUsage>>>();
+
+        String firstLibraryUsageDescription = null;
+        String firstLibraryWithUsageName = null;
+        int librariesWithUsages = 0;
+        for (Library library : libraries) {
+          final LibraryTable table = library.getTable();
+          if (table == null) continue;
+
+          final LibraryProjectStructureElement libraryElement = new LibraryProjectStructureElement(myContext, library);
+          final Collection<ProjectStructureElementUsage> usages =
+            new ArrayList<ProjectStructureElementUsage>(myContext.getDaemonAnalyzer().getUsages(libraryElement));
+          if (usages.size() > 0) {
+            if (librariesWithUsages == 0) {
+              final MultiMap<String, ProjectStructureElementUsage> containerType2Usage = new MultiMap<String, ProjectStructureElementUsage>();
+              for (final ProjectStructureElementUsage usage : usages) {
+                containerType2Usage.putValue(usage.getContainingElement().getTypeName(), usage);
+              }
+
+              List<String> types = new ArrayList<String>(containerType2Usage.keySet());
+              Collections.sort(types);
+
+              final StringBuilder sb = new StringBuilder("Library '");
+              Library libraryModel = myContext.getLibraryModel(library);
+              sb.append(libraryModel != null ? libraryModel.getName() : library.getName()).append("' is used in ");
+              for (int i = 0; i < types.size(); i++) {
+                if (i > 0 && i == types.size() - 1) {
+                  sb.append(" and in ");
+                }
+                else if (i > 0) {
+                  sb.append(", in ");
+                }
+                String type = types.get(i);
+                Collection<ProjectStructureElementUsage> usagesOfType = containerType2Usage.get(type);
+                if (usagesOfType.size() > 1) {
+                  sb.append(usagesOfType.size()).append(" ").append(StringUtil.decapitalize(StringUtil.pluralize(type)));
+                }
+                else {
+                  sb.append(StringUtil.decapitalize(usagesOfType.iterator().next().getContainingElement().getPresentableName()));
+                }
+              }
+              firstLibraryWithUsageName = library.getName();
+              firstLibraryUsageDescription = sb.toString();
+            }
+            librariesWithUsages++;
+          }
+          toRemove.add(Pair.create(libraryElement, usages));
         }
-
-        List<String> types = new ArrayList<String>(containerType2Usage.keySet());
-        Collections.sort(types);
-
-        final StringBuilder sb = new StringBuilder("Library '");
-        Library libraryModel = myContext.getLibraryModel(library);
-        sb.append(libraryModel != null ? libraryModel.getName() : library.getName()).append("' is used in ");
-        for (int i = 0; i < types.size(); i++) {
-          if (i > 0 && i == types.size() - 1) {
-            sb.append(" and in ");
-          }
-          else if (i > 0) {
-            sb.append(", in ");
-          }
-          String type = types.get(i);
-          Collection<ProjectStructureElementUsage> usagesOfType = containerType2Usage.get(type);
-          if (usagesOfType.size() > 1) {
-            sb.append(usagesOfType.size()).append(" ").append(StringUtil.decapitalize(StringUtil.pluralize(type)));
+        if (librariesWithUsages > 0) {
+          String message;
+          if (librariesWithUsages == 1) {
+            message = firstLibraryUsageDescription + ".\nAre you sure you want to delete this library?";
           }
           else {
-            sb.append(StringUtil.decapitalize(usagesOfType.iterator().next().getContainingElement().getPresentableName()));
+            message = ProjectBundle.message("libraries.remove.confirmation.text", firstLibraryWithUsageName, librariesWithUsages-1);
+          }
+
+          if (Messages.OK != Messages.showOkCancelDialog(myProject, message,
+                                                         ProjectBundle.message("libraries.remove.confirmation.title", librariesWithUsages), Messages.getQuestionIcon())) {
+            return false;
           }
         }
 
-        sb.append(".\n\nAre you sure you want to delete this library?");
-
-        if (Messages.OK == Messages.showOkCancelDialog(myProject, sb.toString(),
-                                    "Delete Library", Messages.getQuestionIcon())) {
-
-          for (final ProjectStructureElementUsage usage : usages) {
+        for (Pair<LibraryProjectStructureElement, Collection<ProjectStructureElementUsage>> pair : toRemove) {
+          for (ProjectStructureElementUsage usage : pair.getSecond()) {
             usage.removeSourceElement();
           }
-
-          getModelProvider().getModifiableModel().removeLibrary(library);
-          myContext.getDaemonAnalyzer().removeElement(libraryElement);
-          return true;
+          getModelProvider().getModifiableModel().removeLibrary(pair.getFirst().getLibrary());
+          myContext.getDaemonAnalyzer().removeElement(pair.getFirst());
         }
-      } else {
-        getModelProvider().getModifiableModel().removeLibrary(library);
-        myContext.getDaemonAnalyzer().removeElement(libraryElement);
         return true;
       }
-    }
 
-    return false;
+      @Override
+      public boolean canBeRemoved(@NotNull Collection<Library> libraries) {
+        for (Library library : libraries) {
+          LibraryTable table = library.getTable();
+          if (table != null && !table.isEditable()) {
+            return false;
+          }
+        }
+        return true;
+      }
+    });
   }
 
   @Override

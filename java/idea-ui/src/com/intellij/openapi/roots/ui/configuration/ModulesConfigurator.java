@@ -354,10 +354,20 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return myModuleModelCommitted;
   }
 
-  public boolean deleteModule(final Module module) {
-    ModuleEditor moduleEditor = getModuleEditor(module);
-    if (moduleEditor == null) return true;
-    return doRemoveModule(moduleEditor);
+  public List<Module> deleteModules(final Collection<Module> modules) {
+    List<Module> deleted = new ArrayList<Module>();
+    List<ModuleEditor> moduleEditors = new ArrayList<ModuleEditor>();
+    for (Module module : modules) {
+      ModuleEditor moduleEditor = getModuleEditor(module);
+      if (moduleEditor != null) {
+        deleted.add(module);
+        moduleEditors.add(moduleEditor);
+      }
+    }
+    if (doRemoveModules(moduleEditors)) {
+      return deleted;
+    }
+    return Collections.emptyList();
   }
 
 
@@ -464,37 +474,37 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  private boolean doRemoveModule(@NotNull ModuleEditor selectedEditor) {
+  private boolean doRemoveModules(@NotNull List<ModuleEditor> selectedEditors) {
+    if (selectedEditors.isEmpty()) return true;
 
     String question;
-    if (myModuleEditors.size() == 1) {
-      question = ProjectBundle.message("module.remove.last.confirmation");
+    if (myModuleEditors.size() == selectedEditors.size()) {
+      question = ProjectBundle.message("module.remove.last.confirmation", selectedEditors.size());
     }
     else {
-      question = ProjectBundle.message("module.remove.confirmation", selectedEditor.getModule().getName());
+      question = ProjectBundle.message("module.remove.confirmation", selectedEditors.get(0).getModule().getName(), selectedEditors.size());
     }
     int result =
-      Messages.showYesNoDialog(myProject, question, ProjectBundle.message("module.remove.confirmation.title"), Messages.getQuestionIcon());
+      Messages.showYesNoDialog(myProject, question, ProjectBundle.message("module.remove.confirmation.title", selectedEditors.size()), Messages.getQuestionIcon());
     if (result != Messages.YES) {
       return false;
     }
-    // do remove
-    myModuleEditors.remove(selectedEditor.getModule());
+    for (ModuleEditor editor : selectedEditors) {
+      myModuleEditors.remove(editor.getModule());
 
-    // destroyProcess removed module
-    final Module moduleToRemove = selectedEditor.getModule();
-    // remove all dependencies on the module that is about to be removed
-    List<ModifiableRootModel> modifiableRootModels = new ArrayList<ModifiableRootModel>();
-    for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
-      final ModifiableRootModel modifiableRootModel = moduleEditor.getModifiableRootModelProxy();
-      ContainerUtil.addIfNotNull(modifiableRootModels, modifiableRootModel);
+      final Module moduleToRemove = editor.getModule();
+      // remove all dependencies on the module which is about to be removed
+      List<ModifiableRootModel> modifiableRootModels = new ArrayList<ModifiableRootModel>();
+      for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
+        final ModifiableRootModel modifiableRootModel = moduleEditor.getModifiableRootModelProxy();
+        ContainerUtil.addIfNotNull(modifiableRootModels, modifiableRootModel);
+      }
+
+      ModuleDeleteProvider.removeModule(moduleToRemove, null, modifiableRootModels, myModuleModel);
+      Disposer.dispose(editor);
     }
-
-    // destroyProcess editor
-    ModuleDeleteProvider.removeModule(moduleToRemove, null, modifiableRootModels, myModuleModel);
     processModuleCountChanged();
-    Disposer.dispose(selectedEditor);
-    
+
     return true;
   }
 
