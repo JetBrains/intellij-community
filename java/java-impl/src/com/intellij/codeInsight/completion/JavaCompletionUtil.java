@@ -285,6 +285,9 @@ public class JavaCompletionUtil {
 
     final boolean pkgContext = inSomePackage(element);
 
+    PsiClass qualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifierType);
+    final boolean honorExcludes = qualifierClass == null || !isInExcludedPackage(qualifierClass, false);
+
     final Set<PsiMember> mentioned = new THashSet<PsiMember>();
     for (CompletionElement completionElement : processor.getResults()) {
       for (LookupElement item : createLookupElements(completionElement, javaReference)) {
@@ -294,7 +297,7 @@ public class JavaCompletionUtil {
           continue;
         }
         if (o instanceof PsiMember) {
-          if (isInExcludedPackage((PsiMember)o, true)) {
+          if (honorExcludes && isInExcludedPackage((PsiMember)o, true)) {
             continue;
           }
           mentioned.add(CompletionUtil.getOriginalOrSelf((PsiMember)o));
