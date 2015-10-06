@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
-import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.impl.runtime.deployment.DeploymentImpl;
 import com.intellij.remoteServer.impl.runtime.deployment.DeploymentTaskImpl;
 import com.intellij.remoteServer.impl.runtime.deployment.LocalDeploymentImpl;
@@ -130,18 +129,14 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     connectIfNeeded(new ConnectionCallbackBase<D>() {
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
-        DeploymentSource source = task.getSource();
-        D configuration = task.getConfiguration();
-        String deploymentName = instance.getDeploymentName(source, configuration);
-        LocalDeploymentImpl deployment;
+        LocalDeploymentImpl deployment = new LocalDeploymentImpl(instance,
+                                                                 ServerConnectionImpl.this,
+                                                                 DeploymentStatus.DEPLOYING,
+                                                                 null,
+                                                                 null,
+                                                                 task);
+        String deploymentName = deployment.getName();
         synchronized (myLocalDeployments) {
-          deployment = new LocalDeploymentImpl(ServerConnectionImpl.this,
-                                               deploymentName,
-                                               DeploymentStatus.DEPLOYING,
-                                               null,
-                                               null,
-                                               task,
-                                               instance.getDeploymentGroup(source, configuration));
           myLocalDeployments.put(deploymentName, deployment);
         }
         DeploymentLogManagerImpl logManager = new DeploymentLogManagerImpl(task.getProject(), new ChangeListener())
