@@ -398,7 +398,7 @@ println(new CccMap(foo: [:]))
 println(new CccList(foo: []))
 
 println(new CccMap(foo: <warning descr="Type of argument 'foo' can not be 'ArrayList'">[]</warning>))
-println(new CccList(foo: <warning descr="Type of argument 'foo' can not be 'Map'">[:]</warning>))
+println(new CccList(foo: <warning descr="Type of argument 'foo' can not be 'LinkedHashMap'">[:]</warning>))
 """
   }
 
