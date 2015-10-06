@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
@@ -409,55 +410,35 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testExcludeStringBuffer() throws Throwable {
-    CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = [StringBuffer.name] as String[]
-    try {
-      doAntiTest()
-    }
-    finally {
-      CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = new String[0]
-    }
+    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, StringBuffer.name)
+    doAntiTest()
   }
 
   public void testExcludeInstanceInnerClasses() throws Throwable {
-    CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = ['foo']
+    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo")
     myFixture.addClass 'package foo; public class Outer { public class Inner {} }'
     myFixture.addClass 'package bar; public class Inner {}'
-    try {
-      configure()
-      assert 'bar.Inner' == ((JavaPsiClassReferenceElement)myFixture.lookupElements[0]).qualifiedName
-      assert myFixture.lookupElementStrings == ['Inner']
-    }
-    finally {
-      CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = new String[0]
-    }
+    configure()
+    assert 'bar.Inner' == ((JavaPsiClassReferenceElement)myFixture.lookupElements[0]).qualifiedName
+    assert myFixture.lookupElementStrings == ['Inner']
   }
 
   public void testExcludedInstanceInnerClassCreation() throws Throwable {
-    CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = ['foo']
+    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo")
     myFixture.addClass 'package foo; public class Outer { public class Inner {} }'
     myFixture.addClass 'package bar; public class Inner {}'
-    try {
-      configure()
-      assert 'foo.Outer.Inner' == ((JavaPsiClassReferenceElement)myFixture.lookupElements[0]).qualifiedName
-      assert myFixture.lookupElementStrings == ['Inner']
-    }
-    finally {
-      CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = new String[0]
-    }
+    configure()
+    assert 'foo.Outer.Inner' == ((JavaPsiClassReferenceElement)myFixture.lookupElements[0]).qualifiedName
+    assert myFixture.lookupElementStrings == ['Inner']
   }
 
   public void testExcludedInstanceInnerClassQualifiedReference() throws Throwable {
-    CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = ['foo']
+    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo")
     myFixture.addClass 'package foo; public class Outer { public class Inner {} }'
     myFixture.addClass 'package bar; public class Inner {}'
-    try {
-      configure()
-      assert 'foo.Outer.Inner' == ((JavaPsiClassReferenceElement)myFixture.lookupElements[0]).qualifiedName
-      assert myFixture.lookupElementStrings == ['Inner']
-    }
-    finally {
-      CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = new String[0]
-    }
+    configure()
+    assert 'foo.Outer.Inner' == ((JavaPsiClassReferenceElement)myFixture.lookupElements[0]).qualifiedName
+    assert myFixture.lookupElementStrings == ['Inner']
   }
 
   public void testAtUnderClass() throws Throwable {
