@@ -225,7 +225,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     try {
       final List<LocalQuickFix> fixes = new SmartList<LocalQuickFix>();
 
-      if (!(qualifier instanceof PsiLiteralExpression && ((PsiLiteralExpression)qualifier).getValue() == null))  {
+      if (isVolatileFieldReference(qualifier)) {
+        ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix(qualifier));
+      }
+      else if (!(qualifier instanceof PsiLiteralExpression && ((PsiLiteralExpression)qualifier).getValue() == null))  {
         if (PsiUtil.getLanguageLevel(qualifier).isAtLeast(LanguageLevel.JDK_1_4)) {
           final Project project = qualifier.getProject();
           final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
@@ -248,6 +251,16 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       LOG.error(e);
       return null;
     }
+  }
+
+  @Nullable
+  protected LocalQuickFixOnPsiElement createIntroduceVariableFix(PsiExpression expression) {
+    return null;
+  }
+
+  private static boolean isVolatileFieldReference(PsiExpression qualifier) {
+    PsiElement target = qualifier instanceof PsiReferenceExpression ? ((PsiReferenceExpression)qualifier).resolve() : null;
+    return target instanceof PsiField && ((PsiField)target).hasModifierProperty(PsiModifier.VOLATILE);
   }
 
   protected LocalQuickFix createAssertFix(PsiBinaryExpression binary, PsiExpression expression) {
