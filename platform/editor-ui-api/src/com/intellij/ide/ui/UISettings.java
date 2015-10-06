@@ -151,7 +151,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   }
 
   /**
-   * @deprecated use {@link UISettings#addUISettingsListener(com.intellij.ide.ui.UISettingsListener, Disposable disposable)} instead.
+   * @deprecated use {@link UISettings#addUISettingsListener(UISettingsListener, Disposable disposable)} instead.
    */
   public void addUISettingsListener(UISettingsListener listener) {
     myDispatcher.addListener(listener);
@@ -283,7 +283,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
 
     Application application = ApplicationManager.getApplication();
     if (application == null) {
-      // We cannot use services while Aplication has not been loaded yet
+      // We cannot use services while Application has not been loaded yet
       // So let's apply the default hints.
       UIUtil.applyRenderingHints(g);
       return;
