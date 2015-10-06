@@ -55,7 +55,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private List<ReferenceType> myAllClasses;
   private Map<ReferenceType, List<ReferenceType>> myNestedClassesCache = new HashMap<ReferenceType, List<ReferenceType>>();
 
-  public Throwable mySuspendLogger = new Throwable();
+  public final Throwable mySuspendLogger = new Throwable();
   private final boolean myVersionHigher_15;
   private final boolean myVersionHigher_14;
 

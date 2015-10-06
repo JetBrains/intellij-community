@@ -52,7 +52,7 @@ class StackTraceElementObjectRenderer extends ToStringBasedRenderer implements F
   public XFullValueEvaluator getFullValueEvaluator(final EvaluationContextImpl evaluationContext, final ValueDescriptorImpl valueDescriptor) {
     return new JavaValue.JavaFullValueEvaluator(DebuggerBundle.message("message.node.navigate"), evaluationContext) {
       @Override
-      public void evaluate(@NotNull XFullValueEvaluationCallback callback) throws Exception {
+      public void evaluate(@NotNull XFullValueEvaluationCallback callback) {
         Value value = valueDescriptor.getValue();
         ClassType type = ((ClassType)value.type());
         Method toString = type.concreteMethodByName("toString", "()Ljava/lang/String;");

@@ -58,7 +58,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     myPositionManagers.add(0, manager);
   }
 
-  private Cache<Location, SourcePosition> mySourcePositionCache = new Cache<Location, SourcePosition>();
+  private final Cache<Location, SourcePosition> mySourcePositionCache = new Cache<Location, SourcePosition>();
 
   private interface Processor<T> {
     T process(PositionManager positionManager) throws NoDataException;

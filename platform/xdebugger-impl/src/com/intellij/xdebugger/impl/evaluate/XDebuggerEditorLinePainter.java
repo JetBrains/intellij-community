@@ -279,7 +279,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
   }
 
   private static class VariableText {
-    List<LineExtensionInfo> infos = new ArrayList<LineExtensionInfo>();
+    final List<LineExtensionInfo> infos = new ArrayList<LineExtensionInfo>();
     int length = 0;
 
     void add(LineExtensionInfo info) {

@@ -137,19 +137,16 @@ public class ToStringRenderer extends NodeRendererImpl {
   }
 
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
-    final DebugProcessImpl debugProcess = (DebugProcessImpl)evaluationContext.getDebugProcess();
-    debugProcess.getDefaultRenderer(value).buildChildren(value, builder, evaluationContext);
+    DebugProcessImpl.getDefaultRenderer(value).buildChildren(value, builder, evaluationContext);
   }
 
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     final Value parentValue = ((ValueDescriptor)node.getParent().getDescriptor()).getValue();
-    final DebugProcessImpl debugProcess = (DebugProcessImpl)context.getDebugProcess();
-    return debugProcess.getDefaultRenderer(parentValue).getChildValueExpression(node, context);
+    return DebugProcessImpl.getDefaultRenderer(parentValue).getChildValueExpression(node, context);
   }
 
   public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    final DebugProcessImpl debugProcess = (DebugProcessImpl)evaluationContext.getDebugProcess();
-    return debugProcess.getDefaultRenderer(value).isExpandable(value, evaluationContext, parentDescriptor);
+    return DebugProcessImpl.getDefaultRenderer(value).isExpandable(value, evaluationContext, parentDescriptor);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

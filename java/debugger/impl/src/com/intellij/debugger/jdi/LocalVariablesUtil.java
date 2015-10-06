@@ -19,7 +19,6 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.StackFrameContext;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.SimpleStackFrameContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -215,7 +214,7 @@ public class LocalVariablesUtil {
 
   @NotNull
   private static List<DecompiledLocalVariable> collectVariablesFromBytecode(StackFrameProxyImpl frame,
-                                                                            final MultiMap<Integer, String> namesMap) throws EvaluateException {
+                                                                            final MultiMap<Integer, String> namesMap) {
     if (!frame.getVirtualMachine().canGetBytecodes()) {
       return Collections.emptyList();
     }

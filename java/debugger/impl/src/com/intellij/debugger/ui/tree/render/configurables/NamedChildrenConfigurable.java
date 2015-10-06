@@ -54,7 +54,7 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable, Disposabl
   private JButton myButtonRemove;
   private JButton myButtonUp;
   private JButton myButtonDown;
-  private CompletionEditor myCompletionEditor;
+  private final CompletionEditor myCompletionEditor;
 
   public NamedChildrenConfigurable(@NotNull Project project, EnumerationChildrenRenderer renderer) {
     myRenderer = renderer;
