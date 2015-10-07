@@ -21,6 +21,9 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiKeyword;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.reflect.Field;
 
 /**
  * @author Eugene Zhuravlev
@@ -53,7 +56,12 @@ public class JavadocConfiguration implements JDOMExternalizable {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    DefaultJDOMExternalizer.writeExternal(this, element, new DefaultJDOMExternalizer.JDOMFilter() {
+      @Override
+      public boolean isAccept(@NotNull Field field) {
+        return !field.getName().equals("OPTION_LINK_TO_JDK_DOCS") || OPTION_LINK_TO_JDK_DOCS;
+      }
+    });
   }
 }
 
