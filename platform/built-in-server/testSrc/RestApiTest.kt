@@ -1,13 +1,10 @@
 package org.jetbrains.ide
 
 import com.google.gson.stream.JsonWriter
-import com.intellij.openapi.vfs.CharsetToolkit
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.ide.TestManager.TestDescriptor
 import org.junit.Test
-import java.io.BufferedOutputStream
-import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -72,13 +69,13 @@ private class RestApiTest : BuiltInServerTestCase() {
     connection = URL("$serviceUrl").openConnection() as HttpURLConnection
     connection.requestMethod = "POST"
     connection.doOutput = true
-    val writer = JsonWriter(OutputStreamWriter(BufferedOutputStream(connection.outputStream), CharsetToolkit.UTF8_CHARSET))
-    writer.beginObject()
-    writer.name("file").value(manager.filePath)
-    writer.name("line").value(line)
-    writer.name("column").value(column)
-    writer.endObject()
-    writer.close()
+    JsonWriter(connection.outputStream.bufferedWriter()).use {
+      it.beginObject()
+      it.name("file").value(manager.filePath)
+      it.name("line").value(line)
+      it.name("column").value(column)
+      it.endObject()
+    }
     assertThat(HttpResponseStatus.valueOf(connection.responseCode)).isEqualTo(expectedStatus)
   }
 }
