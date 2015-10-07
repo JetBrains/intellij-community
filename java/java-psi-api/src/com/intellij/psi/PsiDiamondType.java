@@ -111,7 +111,7 @@ public abstract class PsiDiamondType extends PsiType {
     }
 
     public boolean failedToInfer() {
-      return getErrorMessage() != null;
+      return myErrorMessage != null;
     }
 
     protected void addInferredType(PsiType psiType) {
