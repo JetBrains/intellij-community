@@ -29,6 +29,23 @@ import java.util.List;
  * @author yole
  */
 public class PyTypeTest extends PyTestCase {
+  /**
+   * Call of union returns union of all callable types in this union
+   */
+  public void testCallableInUnion() throws Exception {
+    doTest("str",
+           "import random\n" +
+           "def spam():\n" +
+           "    return \"D\"\n" +
+           "class Eggs:\n" +
+           "    pass\n" +
+           "class Eggs2:\n" +
+           "    pass\n" +
+           "dd = spam if random.randint != 42 else Eggs2()\n" +
+           "var = dd if random.randint != 42 else dd\n" +
+           "expr = var()");
+  }
+
   public void testTupleType() {
     doTest("str",
            "t = ('a', 2)\n" +
