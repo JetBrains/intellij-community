@@ -16,10 +16,13 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeFunctionTopLevelRefactoring;
@@ -86,12 +89,23 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
   // PY-6637
   public void testRefactoringAvailability() {
     myFixture.configureByFile(getTestName(true) + ".py");
+    
+    final PsiFile file = myFixture.getFile();
     moveByText("func");
     assertFalse(isActionEnabled());
     moveByText("local");
     assertTrue(isActionEnabled());
+    
+    // move to "def" keyword
+    myFixture.getEditor().getCaretModel().moveCaretRelatively(-3, 0, false, false, false);
+    final PsiElement tokenAtCaret = file.findElementAt(myFixture.getCaretOffset());
+    assertNotNull(tokenAtCaret);
+    assertEquals(tokenAtCaret.getNode().getElementType(), PyTokenTypes.DEF_KEYWORD);
+    assertTrue(isActionEnabled());
+    
     moveByText("method");
     assertTrue(isActionEnabled());
+    
     moveByText("static_method");
     assertFalse(isActionEnabled());
     moveByText("class_method");

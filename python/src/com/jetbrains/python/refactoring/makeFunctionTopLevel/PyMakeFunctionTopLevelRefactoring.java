@@ -69,6 +69,10 @@ public class PyMakeFunctionTopLevelRefactoring extends PyBaseRefactoringAction {
     if (isLocalFunction(element) || isSuitableInstanceMethod(element)) {
       return (PyFunction)element;
     }
+    // e.g. caret is on "def" keyword
+    if (isLocalFunction(element.getParent()) || isSuitableInstanceMethod(element.getParent())) {
+      return (PyFunction)element.getParent();
+    }
     final PyReferenceExpression refExpr = PsiTreeUtil.getParentOfType(element, PyReferenceExpression.class);
     if (refExpr == null) {
       return null;
@@ -96,7 +100,7 @@ public class PyMakeFunctionTopLevelRefactoring extends PyBaseRefactoringAction {
     if (function.getContainingClass().findPropertyByCallable(function) != null) return false;
     return true;
   }
-
+  
   private static boolean isLocalFunction(@Nullable PsiElement resolved) {
     return resolved instanceof PyFunction && PsiTreeUtil.getParentOfType(resolved, ScopeOwner.class, true) instanceof PyFunction;
   }
