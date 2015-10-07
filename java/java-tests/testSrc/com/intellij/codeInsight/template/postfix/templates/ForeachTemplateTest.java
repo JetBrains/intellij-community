@@ -37,6 +37,10 @@ public class ForeachTemplateTest extends PostfixTemplateTestCase {
   public void testInAnonymousRunnable() {
     doTest();
   }
+  
+  public void testIterSameAsFor() {
+    doTest();
+  }
 
   public void testFinalLocals() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
