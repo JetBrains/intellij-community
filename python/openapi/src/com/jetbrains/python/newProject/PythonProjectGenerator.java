@@ -65,7 +65,7 @@ public abstract class PythonProjectGenerator {
   }
 
   @Nullable
-  public BooleanFunction<PythonProjectGenerator> beforeProjectGenerated() {
+  public BooleanFunction<PythonProjectGenerator> beforeProjectGenerated(@NotNull final Sdk sdk) {
     return null;
   }
 }
