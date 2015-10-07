@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -32,6 +33,8 @@ import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,7 +150,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
 
-    JLabel type = new JLabel(getTypeLabel());
+    final JLabel type = new JLabel(getTypeLabel());
 
     panel.add(type, gbConstraints);
 
@@ -163,7 +166,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     gbConstraints.weighty = 1;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 1;
-    JLabel namePrompt = new JLabel(RefactoringBundle.message("name.prompt"));
+    final JLabel namePrompt = new JLabel(RefactoringBundle.message("name.prompt"));
     panel.add(namePrompt, gbConstraints);
 
     gbConstraints.insets = new Insets(4, 0, 4, 4);
@@ -180,10 +183,24 @@ class IntroduceFieldDialog extends DialogWrapper {
     });
     namePrompt.setLabelFor(myNameField.getFocusableComponent());
 
-    myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,
-                                                          createGenerator(myWillBeDeclaredStatic, myLocalVariable, myInitializerExpression, myIsInvokedOnDeclaration, myEnteredName,
-                                                                          myParentClass, myProject));
-    myNameSuggestionsManager.setLabelsFor(type, namePrompt);
+    // We delay initialization of name field till dialog is shown, so that it will be executed in a different command and won't 
+    // be tied to any document changes performed in current command (and won't prevent undo for them later)
+    new UiNotifyConnector.Once(panel, new Activatable.Adapter() {
+      @Override
+      public void showNotify() {
+        myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,
+                                                              createGenerator(myWillBeDeclaredStatic, myLocalVariable, 
+                                                                              myInitializerExpression, myIsInvokedOnDeclaration, 
+                                                                              myEnteredName, myParentClass, myProject));
+        myNameSuggestionsManager.setLabelsFor(type, namePrompt);
+        
+        Editor editor = myNameField.getEditor();
+        if (editor != null) {
+          editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
+        }
+      }
+    });
+
 
     return panel;
   }

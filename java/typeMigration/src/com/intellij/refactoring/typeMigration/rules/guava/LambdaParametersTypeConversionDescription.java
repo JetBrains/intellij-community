@@ -27,10 +27,6 @@ import org.jetbrains.annotations.NonNls;
 public class LambdaParametersTypeConversionDescription extends TypeConversionDescriptor {
   private static final Logger LOG = Logger.getInstance(LambdaParametersTypeConversionDescription.class);
 
-  public LambdaParametersTypeConversionDescription(@NonNls String stringToReplace, @NonNls String replaceByString, PsiType conversionType) {
-    super(stringToReplace, replaceByString, conversionType);
-  }
-
   public LambdaParametersTypeConversionDescription(@NonNls String stringToReplace, @NonNls String replaceByString) {
     super(stringToReplace, replaceByString);
   }
@@ -52,7 +48,16 @@ public class LambdaParametersTypeConversionDescription extends TypeConversionDes
   }
 
   private static PsiExpression addApplyReference(final PsiExpression expression) {
-    return (PsiExpression)expression.replace(JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::apply", null));
+    boolean isSupplier = false;
+    PsiType type = expression.getType();
+    if (type instanceof PsiClassType) {
+      PsiClass resolvedClass = ((PsiClassType)type).resolve();
+      if (resolvedClass != null && GuavaSupplierConversionRule.GUAVA_SUPPLIER.equals(resolvedClass.getQualifiedName())) {
+        isSupplier = true;
+      }
+    }
+    return (PsiExpression)expression.replace(
+      JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::" + (isSupplier ? "get" : "apply"), null));
   }
 
   public static PsiExpression convertParameter(PsiExpression expression) {
