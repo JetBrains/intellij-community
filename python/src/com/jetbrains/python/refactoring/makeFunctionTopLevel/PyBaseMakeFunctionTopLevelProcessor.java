@@ -28,6 +28,7 @@ import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -42,6 +43,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author Mikhail Golubev
@@ -95,9 +98,8 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
 
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
-    updateExistingFunctionUsages(newParameters, usages);
-    final PyFunction newFunction = insertNewFunction(createNewFunction(newParameters));
-    myFunction.delete();
+    updateUsages(newParameters, usages);
+    final PyFunction newFunction = replaceFunction(createNewFunction(newParameters));
 
     myEditor.getSelectionModel().removeSelection();
     myEditor.getCaretModel().moveToOffset(newFunction.getTextOffset());
@@ -106,8 +108,11 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   @NotNull
   protected abstract String getRefactoringName();
 
-  protected abstract void updateExistingFunctionUsages(@NotNull Collection<String> newParamNames, @NotNull UsageInfo[] usages);
+  @NotNull
+  protected abstract List<String> collectNewParameterNames();
 
+  protected abstract void updateUsages(@NotNull Collection<String> newParamNames, @NotNull UsageInfo[] usages);
+  
   @NotNull
   protected abstract PyFunction createNewFunction(@NotNull Collection<String> newParamNames);
 
@@ -117,7 +122,8 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
       final String commaSeparatedNames = StringUtil.join(newParameters, ", ");
       final StringBuilder paramListText = new StringBuilder(paramList.getText());
       paramListText.insert(1, commaSeparatedNames + (paramList.getParameters().length > 0 ? ", " : ""));
-      paramList.replace(myGenerator.createParameterList(LanguageLevel.forElement(myFunction), paramListText.toString()));
+      final PyParameterList newElement = myGenerator.createParameterList(LanguageLevel.forElement(myFunction), paramListText.toString());
+      return (PyParameterList)paramList.replace(newElement);
     }
     return paramList;
   }
@@ -128,19 +134,18 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
       final String commaSeparatedNames = StringUtil.join(newArguments, ", ");
       final StringBuilder argListText = new StringBuilder(argList.getText());
       argListText.insert(1, commaSeparatedNames + (argList.getArguments().length > 0 ? ", " : ""));
-      argList.replace(myGenerator.createArgumentList(LanguageLevel.forElement(argList), argListText.toString()));
+      final PyArgumentList newElement = myGenerator.createArgumentList(LanguageLevel.forElement(argList), argListText.toString());
+      return (PyArgumentList)argList.replace(newElement);
     }
     return argList;
   }
 
   @NotNull
-  protected abstract List<String> collectNewParameterNames();
-
-  @NotNull
-  protected PyFunction insertNewFunction(@NotNull PyFunction newFunction) {
+  protected PyFunction replaceFunction(@NotNull PyFunction newFunction) {
     final PsiFile file = myFunction.getContainingFile();
     final PsiElement anchor = PyPsiUtils.getParentRightBefore(myFunction, file);
 
+    myFunction.delete();
     return (PyFunction)file.addAfter(newFunction, anchor);
   }
 
@@ -158,6 +163,9 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
         if (readWriteInstruction.getAccess().isReadAccess()) {
           for (PsiElement resolved : PyUtil.multiResolveTopPriority(element, myResolveContext)) {
             if (resolved != null) {
+              if (isInitOrNewMethod(resolved)) {
+                resolved = ((PyFunction)resolved).getContainingClass();
+              }
               if (isFromEnclosingScope(resolved)) {
                 result.readsFromEnclosingScope.add(element);
               }
@@ -188,6 +196,11 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
       }
     }
     return result;
+  }
+
+  private static boolean isInitOrNewMethod(@NotNull PsiElement elem) {
+    final PyFunction func = as(elem, PyFunction.class);
+    return func != null && (PyNames.INIT.equals(func.getName()) || PyNames.NEW.equals(func.getName()));
   }
 
   private boolean isFromEnclosingScope(@NotNull PsiElement element) {

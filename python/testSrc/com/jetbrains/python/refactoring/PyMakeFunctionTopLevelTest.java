@@ -212,6 +212,14 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     doTestSuccess();
   }
 
+  public void testRecursiveMethod() {
+    doTestSuccess();
+  }
+
+  public void testRecursiveLocalFunction() {
+    doTestSuccess();
+  }
+
   public void testMethodNoNewParams() {
     doTestSuccess();
   }
