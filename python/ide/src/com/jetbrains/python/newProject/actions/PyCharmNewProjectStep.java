@@ -81,8 +81,9 @@ public class PyCharmNewProjectStep extends DefaultActionGroup implements DumbAwa
       if (base == null) return;
       final DirectoryProjectGenerator generator = base.getProjectGenerator();
       final NullableConsumer<ProjectSettingsStepBase> callback = new GenerateProjectCallback();
-      if (generator instanceof PythonProjectGenerator) {
-        final BooleanFunction<PythonProjectGenerator> beforeProjectGenerated = ((PythonProjectGenerator)generator).beforeProjectGenerated();
+      if (generator instanceof PythonProjectGenerator && base instanceof ProjectSpecificSettingsStep) {
+        final BooleanFunction<PythonProjectGenerator> beforeProjectGenerated = ((PythonProjectGenerator)generator).
+          beforeProjectGenerated(((ProjectSpecificSettingsStep)base).getSdk());
         if (beforeProjectGenerated != null) {
           final boolean result = beforeProjectGenerated.fun((PythonProjectGenerator)generator);
           if (result) {
