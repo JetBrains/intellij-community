@@ -143,10 +143,10 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     return myExceptionMark;
   }
 
-  @Nullable
+  @NotNull
   public List<DiffHyperlink> getDiffViewerProviders() {
     final DiffHyperlink provider = getDiffViewerProvider();
-    return provider == null ? null : Collections.singletonList(provider);
+    return provider == null ? Collections.<DiffHyperlink>emptyList() : Collections.singletonList(provider);
   }
   
   @Nullable
