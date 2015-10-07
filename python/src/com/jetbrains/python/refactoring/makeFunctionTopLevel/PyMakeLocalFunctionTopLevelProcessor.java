@@ -53,7 +53,7 @@ public class PyMakeLocalFunctionTopLevelProcessor extends PyBaseMakeFunctionTopL
   }
 
   @Override
-  protected void updateExistingFunctionUsages(@NotNull Collection<String> newParamNames, @NotNull UsageInfo[] usages) {
+  protected void updateUsages(@NotNull Collection<String> newParamNames, @NotNull UsageInfo[] usages) {
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
       if (element != null) {

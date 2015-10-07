@@ -19,6 +19,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,6 +27,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -47,7 +49,9 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelProcessor {
 
-  private final MultiMap<String, PyReferenceExpression> myAttrReferences = MultiMap.create();
+  private final LinkedHashMap<String, String> myAttributeToParameterName = new LinkedHashMap<String, String>();
+  private final MultiMap<String, PyReferenceExpression> myAttributeReferences = MultiMap.create();
+  private final Set<PsiElement> myReadsOfSelfParam = new HashSet<PsiElement>();
 
   public PyMakeMethodTopLevelProcessor(@NotNull PyFunction targetFunction, @NotNull Editor editor) {
     super(targetFunction, editor);
@@ -62,8 +66,25 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
   }
 
   @Override
-  protected void updateExistingFunctionUsages(@NotNull Collection<String> newParamNames, @NotNull UsageInfo[] usages) {
+  protected void updateUsages(@NotNull Collection<String> newParamNames, @NotNull UsageInfo[] usages) {
+    // Field usages
+    for (String attrName : myAttributeReferences.keySet()) {
+      final Collection<PyReferenceExpression> reads = myAttributeReferences.get(attrName);
+      final String paramName = myAttributeToParameterName.get(attrName);
+      if (!attrName.equals(paramName)) {
+        for (PyReferenceExpression read : reads) {
+          read.replace(myGenerator.createExpressionFromText(LanguageLevel.forElement(read), paramName));
+        }
+      }
+      else {
+        for (PyReferenceExpression read : reads) {
+          removeQualifier(read);
+        }
+      }
+    }
 
+    // Function usages
+    final Collection<String> attrNames = myAttributeToParameterName.keySet();
     for (UsageInfo usage : usages) {
       final PsiElement usageElem = usage.getElement();
       if (usageElem == null) {
@@ -87,17 +108,23 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
           
           // module.inst.method() -> method(module.inst.foo, module.inst.bar)
           if (isPureReferenceExpression(instanceExpr)) {
-            final String instanceExprText = instanceExpr.getText();
-            addArguments(argumentList, ContainerUtil.map(newParamNames, new Function<String, String>() {
-              @Override
-              public String fun(String attribute) {
-                return instanceExprText + "." + attribute;
-              }
-            }));
+            // recursive call inside the method
+            if (myReadsOfSelfParam.contains(instanceExpr)) {
+              addArguments(argumentList, newParamNames);
+            }
+            else {
+              final String instanceExprText = instanceExpr.getText();
+              addArguments(argumentList, ContainerUtil.map(attrNames, new Function<String, String>() {
+                @Override
+                public String fun(String attribute) {
+                  return instanceExprText + "." + attribute;
+                }
+              }));
+            }
           }
           // Class().method() -> method(Class().foo)
           else if (newParamNames.size() == 1) {
-            addArguments(argumentList, Collections.singleton(instanceExpr.getText() + "." + ContainerUtil.getFirstItem(newParamNames)));
+            addArguments(argumentList, Collections.singleton(instanceExpr.getText() + "." + ContainerUtil.getFirstItem(attrNames)));
           }
           // Class().method() -> inst = Class(); method(inst.foo, inst.bar)
           else if (!newParamNames.isEmpty()) {
@@ -109,7 +136,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
                                                                                 assignmentText);
             //noinspection ConstantConditions
             anchor.getParent().addBefore(assignment, anchor);
-            addArguments(argumentList, ContainerUtil.map(newParamNames, new Function<String, String>() {
+            addArguments(argumentList, ContainerUtil.map(attrNames, new Function<String, String>() {
               @Override
               public String fun(String attribute) {
                 return targetName + "." + attribute;
@@ -199,40 +226,21 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
   @NotNull
   @Override
   protected PyFunction createNewFunction(@NotNull Collection<String> newParams) {
-    final List<String> updatedParamNames = new ArrayList<String>();
-    for (String name : newParams) {
-      final Collection<PyReferenceExpression> reads = myAttrReferences.get(name);
-      final PsiElement anchor = ContainerUtil.getFirstItem(reads);
-      //noinspection ConstantConditions
-      if (!isValidName(name, anchor)) {
-        final String indexedName = appendNumberUntilValid(name, anchor);
-        updatedParamNames.add(indexedName);
-        for (PyReferenceExpression read : reads) {
-          read.replace(myGenerator.createExpressionFromText(LanguageLevel.forElement(read), indexedName));
-        }
-      }
-      else {
-        updatedParamNames.add(name);
-        for (PyReferenceExpression read : reads) {
-          removeQualifier(read);
-        }
-      }
-    }
     final PyFunction copied = (PyFunction)myFunction.copy();
     final PyParameter[] params = copied.getParameterList().getParameters();
     if (params.length > 0) {
       params[0].delete();
     }
-    addParameters(copied.getParameterList(), updatedParamNames);
+    addParameters(copied.getParameterList(), newParams);
     return copied;
   }
 
   @NotNull
   @Override
   protected List<String> collectNewParameterNames() {
-    final Set<String> paramNames = new LinkedHashSet<String>();
+    final Set<String> attributeNames = new LinkedHashSet<String>();
     for (ScopeOwner owner : PsiTreeUtil.collectElementsOfType(myFunction, ScopeOwner.class)) {
-      final AnalysisResult result = analyseScope(owner);
+      final AnalysisResult result =  analyseScope(owner);
       if (!result.nonlocalWritesToEnclosingScope.isEmpty()) {
         throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes"));
       }
@@ -245,6 +253,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
       if (!result.writesToSelfParameter.isEmpty()) {
         throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
       }
+      myReadsOfSelfParam.addAll(result.readsOfSelfParameter);
       for (PsiElement usage : result.readsOfSelfParameter) {
         if (usage.getParent() instanceof PyTargetExpression) {
           throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.attribute.writes"));
@@ -256,16 +265,34 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
             throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.private.attributes"));
           }
           if (parentReference.getParent() instanceof PyCallExpression) {
-            throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.method.calls"));
+            if (!(Comparing.equal(myFunction.getName(), parentReference.getName()))) {
+              throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.method.calls"));
+            }
+            else {
+              // do not add method itself to its parameters
+              continue;
+            }
           }
-          paramNames.add(attrName);
-          myAttrReferences.putValue(attrName, parentReference);
+          attributeNames.add(attrName);
+          myAttributeReferences.putValue(attrName, parentReference);
         }
         else {
           throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.special.usage.of.self"));
         }
       }
     }
-    return Lists.newArrayList(paramNames);
+    for (String name : attributeNames) {
+      final Collection<PyReferenceExpression> reads = myAttributeReferences.get(name);
+      final PsiElement anchor = ContainerUtil.getFirstItem(reads);
+      //noinspection ConstantConditions
+      if (!isValidName(name, anchor)) {
+        final String indexedName = appendNumberUntilValid(name, anchor);
+        myAttributeToParameterName.put(name, indexedName);
+      }
+      else {
+        myAttributeToParameterName.put(name, name);
+      }
+    }
+    return Lists.newArrayList(myAttributeToParameterName.values());
   }
 }
