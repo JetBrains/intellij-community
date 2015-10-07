@@ -27,6 +27,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.components.store.ReadOnlyModificationException
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -113,9 +114,7 @@ open class FileBasedStorage(file: File,
     try {
       val file = getVirtualFile()
       if (file == null || file.isDirectory || !file.isValid) {
-        if (LOG.isDebugEnabled) {
-          LOG.debug("Document was not loaded for $fileSpec file is ${if (file == null) "null" else "directory"}")
-        }
+        LOG.debug { "Document was not loaded for $fileSpec file is ${if (file == null) "null" else "directory"}" }
       }
       else if (file.length == 0L) {
         processReadException(null)
@@ -194,10 +193,7 @@ private fun isEqualContent(result: VirtualFile, lineSeparator: LineSeparator, co
 }
 
 private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparator: LineSeparator, prependXmlProlog: Boolean) {
-  if (LOG.isDebugEnabled) {
-    LOG.debug("Save ${file.presentableUrl}")
-  }
-
+  LOG.debug { "Save ${file.presentableUrl}" }
   val token = WriteAction.start()
   try {
     val out = file.getOutputStream(requestor)

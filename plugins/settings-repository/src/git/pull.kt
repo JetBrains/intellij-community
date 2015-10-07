@@ -15,6 +15,7 @@
  */
 package org.jetbrains.settingsRepository.git
 
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
@@ -64,9 +65,7 @@ open internal class Pull(val manager: GitRepositoryManager, val indicator: Progr
     var refToMerge = prefetchedRefToMerge ?: fetch() ?: return null
     val mergeResult = merge(refToMerge, mergeStrategy, commitMessage = commitMessage)
     val mergeStatus = mergeResult.status
-    if (LOG.isDebugEnabled) {
-      LOG.debug(mergeStatus.toString())
-    }
+    LOG.debug { mergeStatus.toString() }
 
     if (mergeStatus == MergeStatus.CONFLICTING) {
       return resolveConflicts(mergeResult, repository)

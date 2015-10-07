@@ -15,6 +15,7 @@
  */
 package org.jetbrains.settingsRepository.git
 
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
@@ -54,9 +55,7 @@ fun commit(repository: Repository, indicator: ProgressIndicator?, commitMessageF
     }
   }
 
-  if (LOG.isDebugEnabled) {
-    LOG.debug(indexDiffToString(diff))
-  }
+  LOG.debug { indexDiffToString(diff) }
 
   indicator?.checkCanceled()
 
