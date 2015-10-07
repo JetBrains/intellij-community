@@ -354,7 +354,7 @@ public class PersistentHashMapValueStorage {
     forceAppender(myPath);
 
     checkCancellation();
-    long startedTime = System.nanoTime();
+    long startedTime = ourDumpChunkRemovalTime ? System.nanoTime() : 0;
     long chunk = tailChunkAddress;
     int chunkCount = 0;
 
@@ -426,7 +426,7 @@ public class PersistentHashMapValueStorage {
 
     if (chunkCount > 1 && !myCompactionMode) {
       checkCancellation();
-      long endCompactionTime = System.nanoTime();
+      long endCompactionTime = ourDumpChunkRemovalTime ? System.nanoTime() : 0;
       long diff = endCompactionTime - startedTime;
 
       myChunksRemovalTime += diff;
