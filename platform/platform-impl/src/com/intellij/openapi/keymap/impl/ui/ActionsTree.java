@@ -203,7 +203,7 @@ public class ActionsTree {
     reset(myKeymap, currentQuickListIds, filter, null);
   }
 
-  private void reset(@NotNull Keymap keymap, @NotNull QuickList[] allQuickLists, String filter, @Nullable KeyboardShortcut shortcut) {
+  private void reset(@NotNull Keymap keymap, @NotNull QuickList[] allQuickLists, String filter, @Nullable Shortcut shortcut) {
     myKeymap = keymap;
 
     final PathsKeeper pathsKeeper = new PathsKeeper();
@@ -228,8 +228,8 @@ public class ActionsTree {
     pathsKeeper.restorePaths();
   }
 
-  public void filterTree(final KeyboardShortcut keyboardShortcut, final QuickList [] currentQuickListIds) {
-    reset(myKeymap, currentQuickListIds, myFilter, keyboardShortcut);
+  public void filterTree(Shortcut shortcut, QuickList[] currentQuickListIds) {
+    reset(myKeymap, currentQuickListIds, myFilter, shortcut);
   }
 
   private class MyModel extends DefaultTreeModel implements TreeTableModel {

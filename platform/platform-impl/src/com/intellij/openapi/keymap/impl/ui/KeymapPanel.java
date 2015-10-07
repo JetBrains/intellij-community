@@ -513,9 +513,14 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
                                     final ShortcutTextField secondShortcut) {
     final KeyStroke keyStroke = firstShortcut.getKeyStroke();
     if (keyStroke != null) {
+      filterTreeByShortcut(new KeyboardShortcut(keyStroke, enable2Shortcut.isSelected() ? secondShortcut.getKeyStroke() : null));
+    }
+  }
+
+  private void filterTreeByShortcut(Shortcut shortcut) {
+    if (shortcut != null) {
       myTreeExpansionMonitor.freeze();
-      myActionsTree.filterTree(new KeyboardShortcut(keyStroke, enable2Shortcut.isSelected() ? secondShortcut.getKeyStroke() : null),
-                               myQuickLists);
+      myActionsTree.filterTree(shortcut, myQuickLists);
       final JTree tree = myActionsTree.getTree();
       TreeUtil.expandAll(tree);
       myTreeExpansionMonitor.restore();
