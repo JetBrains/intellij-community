@@ -113,19 +113,23 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
 
   @NotNull
   protected final PyParameterList addParameters(@NotNull PyParameterList paramList, @NotNull Collection<String> newParameters) {
-    final String commaSeparatedNames = StringUtil.join(newParameters, ", ");
-    final StringBuilder paramListText = new StringBuilder(paramList.getText());
-    paramListText.insert(1, commaSeparatedNames + (paramList.getParameters().length > 0 ? ", " : ""));
-    paramList.replace(myGenerator.createParameterList(LanguageLevel.forElement(myFunction), paramListText.toString()));
+    if (!newParameters.isEmpty()) {
+      final String commaSeparatedNames = StringUtil.join(newParameters, ", ");
+      final StringBuilder paramListText = new StringBuilder(paramList.getText());
+      paramListText.insert(1, commaSeparatedNames + (paramList.getParameters().length > 0 ? ", " : ""));
+      paramList.replace(myGenerator.createParameterList(LanguageLevel.forElement(myFunction), paramListText.toString()));
+    }
     return paramList;
   }
 
   @NotNull
   protected PyArgumentList addArguments(@NotNull PyArgumentList argList, @NotNull Collection<String> newArguments) {
-    final String commaSeparatedNames = StringUtil.join(newArguments, ", ");
-    final StringBuilder argListText = new StringBuilder(argList.getText());
-    argListText.insert(1, commaSeparatedNames + (argList.getArguments().length > 0 ? ", " : ""));
-    argList.replace(myGenerator.createArgumentList(LanguageLevel.forElement(argList), argListText.toString()));
+    if (!newArguments.isEmpty()) {
+      final String commaSeparatedNames = StringUtil.join(newArguments, ", ");
+      final StringBuilder argListText = new StringBuilder(argList.getText());
+      argListText.insert(1, commaSeparatedNames + (argList.getArguments().length > 0 ? ", " : ""));
+      argList.replace(myGenerator.createArgumentList(LanguageLevel.forElement(argList), argListText.toString()));
+    }
     return argList;
   }
 
