@@ -640,7 +640,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (classCopy == null) {
         return null;
       }
-      final PsiMethod emptyMethod = (PsiMethod)classCopy.add(generateEmptyMethod("name"));
+      final PsiMethod emptyMethod = (PsiMethod)classCopy.addAfter(generateEmptyMethod("name"), PsiTreeUtil.getParentOfType(classCopy, PsiMember.class));
       prepareMethodBody(emptyMethod, false);
       if (myNotNullConditionalCheck || myNullConditionalCheck) {
         return Nullness.NULLABLE;
