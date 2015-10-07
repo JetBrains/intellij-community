@@ -403,6 +403,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       else if (expression == null && !ImportsUtil.hasStaticImportOn(parent, method, true)) {
         return PsiTreeUtil.getParentOfType(parent, PsiClass.class);
       }
+
+      if (expression != null) {
+        return PsiUtil.resolveClassInType(expression.getType());
+      }
     }
     return null;
   }
@@ -616,22 +620,15 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
         if (applicable12 && !applicable21) return Specifics.SECOND;
         if (applicable21 && !applicable12) return Specifics.FIRST;
-
-        final boolean abstract1 = method1.hasModifierProperty(PsiModifier.ABSTRACT);
-        final boolean abstract2 = method2.hasModifierProperty(PsiModifier.ABSTRACT);
+  
+        //from 15.12.2.5 Choosing the Most Specific Method: concrete = nonabstract or default
+        final boolean abstract1 = method1.hasModifierProperty(PsiModifier.ABSTRACT) || method1.hasModifierProperty(PsiModifier.DEFAULT);
+        final boolean abstract2 = method2.hasModifierProperty(PsiModifier.ABSTRACT) || method2.hasModifierProperty(PsiModifier.DEFAULT);
         if (abstract1 && !abstract2) {
           return Specifics.SECOND;
         }
         if (abstract2 && !abstract1) {
           return Specifics.FIRST;
-        }
-
-        if (method1.hasModifierProperty(PsiModifier.DEFAULT) && method2.hasModifierProperty(PsiModifier.STATIC)) {
-          return Specifics.FIRST;
-        }
-
-        if (method2.hasModifierProperty(PsiModifier.DEFAULT) && method1.hasModifierProperty(PsiModifier.STATIC)) {
-          return Specifics.SECOND;
         }
       }
     } 
