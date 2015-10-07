@@ -32,6 +32,9 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicReferenceArray
 
 class StateMap private constructor(private val names: Array<String>, private val states: AtomicReferenceArray<Any?>) {
+  override fun toString(): String =
+    if (this == EMPTY) "EMPTY" else states.toString();
+
   companion object {
     private val XML_FORMAT = Format.getRawFormat().setTextMode(Format.TextMode.TRIM).setOmitEncoding(true).setOmitDeclaration(true)
 

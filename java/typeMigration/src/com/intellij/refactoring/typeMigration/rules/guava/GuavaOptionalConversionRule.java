@@ -36,10 +36,10 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
 
   @Nullable
   @Override
-  protected TypeConversionDescriptorBase findConversionForMethod(@NotNull PsiType from,
-                                                                 @NotNull PsiType to,
+  protected TypeConversionDescriptorBase findConversionForMethod(@Nullable PsiType from,
+                                                                 @Nullable PsiType to,
                                                                  @NotNull PsiMethod method,
-                                                                 String methodName,
+                                                                 @NotNull String methodName,
                                                                  PsiExpression context,
                                                                  TypeMigrationLabeler labeler) {
     if ("or".equals(methodName)) {
@@ -53,9 +53,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
         if (aClass != null) {
           final String qName = aClass.getQualifiedName();
           String pattern =
-            GUAVA_OPTIONAL.equals(qName) ? "java.util.Optional.ofNullable($expr$.get())" : "com.google.common.bas.Supplier".equals(qName)
-                                                                                           ? "java.util.Optional.ofNullable($expr$)"
-                                                                                           : "java.util.Optional.ofNullable($expr$)";
+            GUAVA_OPTIONAL.equals(qName) ? "java.util.Optional.ofNullable($expr$.get())" : "java.util.Optional.ofNullable($expr$)";
           return new TypeConversionDescriptor("$expr$", pattern);
         }
         return null;
@@ -73,10 +71,15 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
       if (aClass != null) {
         final String qName = aClass.getQualifiedName();
         if (GUAVA_OPTIONAL.equals(qName)) {
-          return new TypeConversionDescriptor("$val$.or($other$)", "java.util.Optional.ofNullable($val$.orElseGet($other$::get))", to);
+          TypeConversionDescriptor descriptor =
+            new TypeConversionDescriptor("$val$.or($other$)", "java.util.Optional.ofNullable($val$.orElseGet($other$::get))");
+          if (to != null) {
+            descriptor.withConversionType(to);
+          }
+          return descriptor;
         }
-        String pattern = "com.google.common.bas.Supplier".equals(qName) ? "$val$.orElseGet($other$::get)" : "$val$.orElse($other$)";
-        return new TypeConversionDescriptor("$val$.or($other$)", pattern);
+        String pattern = GuavaSupplierConversionRule.GUAVA_SUPPLIER.equals(qName) ? "$val$.orElseGet($other$)" : "$val$.orElse($other$)";
+        return new LambdaParametersTypeConversionDescription("$val$.or($other$)", pattern);
       }
       return null;
     }

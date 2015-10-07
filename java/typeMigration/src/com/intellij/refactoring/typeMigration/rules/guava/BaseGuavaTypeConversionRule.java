@@ -45,10 +45,10 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
   protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {};
 
   @Nullable
-  protected TypeConversionDescriptorBase findConversionForMethod(@NotNull PsiType from,
-                                                                 @NotNull PsiType to,
+  protected TypeConversionDescriptorBase findConversionForMethod(PsiType from,
+                                                                 PsiType to,
                                                                  @NotNull PsiMethod method,
-                                                                 String methodName,
+                                                                 @NotNull String methodName,
                                                                  PsiExpression context,
                                                                  TypeMigrationLabeler labeler) {
     return null;
@@ -62,12 +62,12 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
 
   @Nullable
   @Override
-  public final TypeConversionDescriptorBase findConversion(PsiType from,
-                                                     PsiType to,
-                                                     PsiMember member,
-                                                     PsiExpression context,
-                                                     TypeMigrationLabeler labeler) {
-    if (!canConvert(from, to)) {
+  public final TypeConversionDescriptorBase findConversion(@Nullable PsiType from,
+                                                           @Nullable PsiType to,
+                                                           PsiMember member,
+                                                           PsiExpression context,
+                                                           TypeMigrationLabeler labeler) {
+    if (from != null && to != null && !canConvert(from, to)) {
       return null;
     }
     if (member instanceof PsiMethod) {

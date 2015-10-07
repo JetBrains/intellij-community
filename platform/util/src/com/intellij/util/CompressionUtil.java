@@ -63,12 +63,12 @@ public class CompressionUtil {
   public static final boolean DUMP_COMPRESSION_STATS = SystemProperties.getBooleanProperty("idea.dump.compression.stats", false);
 
   public static int writeCompressedWithoutOriginalBufferLength(@NotNull DataOutput out, @NotNull byte[] bytes, int length) throws IOException {
-    long started = System.nanoTime();
+    long started = DUMP_COMPRESSION_STATS ? System.nanoTime() : 0;
 
     final byte[] compressedOutputBuffer = spareBufferLocal.getBuffer(Snappy.maxCompressedLength(length));
     int compressedSize = Snappy.compress(bytes, 0, length, compressedOutputBuffer, 0);
 
-    final long time = System.nanoTime() - started;
+    final long time = (DUMP_COMPRESSION_STATS ? System.nanoTime() : 0) - started;
     mySizeAfterCompression.addAndGet(compressedSize);
     mySizeBeforeCompression.addAndGet(length);
     int requests = myCompressionRequests.incrementAndGet();
@@ -92,11 +92,11 @@ public class CompressionUtil {
     in.readFully(bytes, 0, size);
 
     int decompressedRequests = myDecompressionRequests.incrementAndGet();
-    long started = System.nanoTime();
+    long started = DUMP_COMPRESSION_STATS ? System.nanoTime() : 0;
 
     byte[] decompressedResult = Snappy.uncompress(bytes, 0, size);
 
-    long doneTime = System.nanoTime() - started;
+    long doneTime = (DUMP_COMPRESSION_STATS ? System.nanoTime() : 0) - started;
     long decompressedSize = myDecompressedSize.addAndGet(size);
     long decompressedTime = myDecompressionTime.addAndGet(doneTime);
     if (DUMP_COMPRESSION_STATS && decompressedRequests % 1000 == 0) {

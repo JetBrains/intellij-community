@@ -1221,7 +1221,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
         else if (isSetting(value)) {
           String text = getSettingText((OptionDescription)value);
-          append(text);
+          SimpleTextAttributes attrs = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+          if (value instanceof Changeable && ((Changeable)value).hasChanged()) {
+            if (selected) {
+              attrs = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+            } else {
+              SimpleTextAttributes base = SimpleTextAttributes.LINK_BOLD_ATTRIBUTES;
+              attrs = base.derive(SimpleTextAttributes.STYLE_BOLD, base.getFgColor(), null, null);
+            }
+          }
+          append(text, attrs);
           final String id = ((OptionDescription)value).getConfigurableId();
           final String name = myConfigurables.get(id);
           if (name != null) {

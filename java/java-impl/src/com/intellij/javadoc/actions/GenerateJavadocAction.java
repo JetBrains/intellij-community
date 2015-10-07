@@ -44,7 +44,7 @@ public final class GenerateJavadocAction extends BaseAnalysisAction{
 
   @Override
   protected JComponent getAdditionalActionSettings(Project project, final BaseAnalysisActionDialog dialog) {
-    myConfigurable = JavadocGenerationManager.getInstance(project).getConfiguration().createConfigurable();
+    myConfigurable = new JavadocConfigurable(JavadocGenerationManager.getInstance(project).getConfiguration(), project);
     final JComponent component = myConfigurable.createComponent();
     myConfigurable.reset();
     myConfigurable.getOutputDirField().getDocument().addDocumentListener(new DocumentAdapter() {

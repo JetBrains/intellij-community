@@ -24,7 +24,8 @@ import org.jetbrains.annotations.Nullable;
  * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html">IntelliJ Platform SDK DevGuide</a>
  * for detailed description.
  *
- * Implementation must be thread-safe - a component should expect these methods to be called at any moment of its lifecycle.
+ * In general, implementation should be thread-safe, because "loadState" is called from the same thread where component is initialized.
+ * If component used only from one thread (e.g. EDT), thread-safe implementation is not required.
  */
 public interface PersistentStateComponent<T> {
   /**

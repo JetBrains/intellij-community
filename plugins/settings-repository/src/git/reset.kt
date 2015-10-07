@@ -15,6 +15,7 @@
  */
 package org.jetbrains.settingsRepository.git
 
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import org.eclipse.jgit.api.MergeResult
 import org.eclipse.jgit.merge.MergeStrategy
@@ -26,9 +27,7 @@ import org.jetbrains.settingsRepository.UpdateResult
 internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(manager, indicator) {
   fun reset(toTheirs: Boolean, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult {
     val message = if (toTheirs) "Overwrite local to ${manager.getUpstream()}" else "Overwrite remote ${manager.getUpstream()} to local"
-    if (LOG.isDebugEnabled) {
-      LOG.debug(message)
-    }
+    LOG.debug { message }
 
     val resetResult = repository.resetHard()
     val result = MutableUpdateResult(resetResult.updated.keySet(), resetResult.removed)

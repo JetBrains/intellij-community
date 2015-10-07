@@ -292,7 +292,7 @@ public class HighlightClassUtil {
     }
 
     PsiField field = (PsiField)keyword.getParent().getParent();
-    if (PsiUtilCore.hasErrorElementChild(field) || PsiUtil.isCompileTimeConstant(field)) {
+    if (PsiUtilCore.hasErrorElementChild(field) || PsiUtil.isCompileTimeConstant((PsiVariable)field)) {
       return null;
     }
 

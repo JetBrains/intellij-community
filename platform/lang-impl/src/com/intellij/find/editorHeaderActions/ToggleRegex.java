@@ -35,7 +35,7 @@ public class ToggleRegex extends EditorHeaderToggleAction {
     FindModel findModel = session.getFindModel();
     findModel.setRegularExpressions(selected);
     if (selected) {
-      findModel.setWholeWordsOnly(true);
+      findModel.setWholeWordsOnly(false);
     }
     FindSettings.getInstance().setLocalRegularExpressions(selected);
   }

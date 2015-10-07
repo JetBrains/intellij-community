@@ -367,7 +367,7 @@ public class SheetController {
   }
 
   private static String handleBreaks(final String message) {
-    return message.replaceAll("(\r\n|\n)", "<br/>");
+    return message == null ? "" : message.replaceAll("(\r\n|\n)", "<br/>");
   }
 
   private void shiftButtonsToTheBottom(int shiftDistance) {
