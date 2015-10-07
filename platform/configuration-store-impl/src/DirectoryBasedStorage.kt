@@ -62,11 +62,12 @@ open class DirectoryBasedStorage(private val dir: File,
 
   override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? {
     this.componentName = componentName
-    val state = Element(FileStorageCoreUtil.COMPONENT)
+
     if (storageData.isEmpty()) {
-      return state
+      return null
     }
 
+    val state = Element(FileStorageCoreUtil.COMPONENT)
     if (splitter is StateSplitterEx) {
       for (fileName in storageData.keys()) {
         val subState = storageData.getState(fileName, archive) ?: return null
