@@ -89,6 +89,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testDefaultAbstractConflictResolution() throws Exception {
+    doTest();
+  }
+
   public void testLambdaValueCompatibleWithNestedTryWithResources() throws Exception {
     doTest(false);
   }

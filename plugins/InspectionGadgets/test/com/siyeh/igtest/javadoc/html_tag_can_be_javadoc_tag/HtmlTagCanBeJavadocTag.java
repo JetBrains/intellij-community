@@ -15,4 +15,9 @@ class HtmlTagCanBeJavadocTag {
    * <warning descr="'<CODE>...</code>' can be replaced with '{@code ...}'"><CODE></warning>HEAVY CODE</CODE>
    */
   void bar() {}
+
+  /**
+   * <code>if (foo) {<br>  System.out.println();<br>}</code>
+   */
+  void extremeFormatting() {}
 }

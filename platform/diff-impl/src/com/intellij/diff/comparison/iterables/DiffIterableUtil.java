@@ -29,12 +29,15 @@ import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class DiffIterableUtil {
+  private static boolean SHOULD_VERIFY_ITERABLE = Registry.is("diff.verify.iterable");
+
   /*
    * Compare two arrays, basing on equals() and hashCode() of it's elements
    */
@@ -186,8 +189,13 @@ public class DiffIterableUtil {
   // Verification
   //
 
+  @TestOnly
+  public static void setVerifyEnabled(boolean value) {
+    SHOULD_VERIFY_ITERABLE = value;
+  }
+
   private static boolean isVerifyEnabled() {
-    return Registry.is("diff.verify.iterable"); // TODO: Leave verification for tests only ?
+    return SHOULD_VERIFY_ITERABLE;
   }
 
   public static void verify(@NotNull DiffIterable iterable) {

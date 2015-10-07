@@ -39,9 +39,11 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.config.DumbAwareToggleBooleanProperty;
+import com.intellij.util.config.DumbAwareToggleInvertedBooleanProperty;
 import com.intellij.util.config.ToggleBooleanProperty;
-import com.intellij.util.config.ToggleInvertedBooleanProperty;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -60,39 +62,20 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
                       final JComponent parent) {
     super(new BorderLayout());
     final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
-    actionGroup.addAction(new ToggleInvertedBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"),
-                                                    ExecutionBundle.message("junit.run.hide.passed.action.description"),
-                                                    AllIcons.RunConfigurations.TestPassed,
-                                                    properties, TestConsoleProperties.HIDE_PASSED_TESTS));
-    actionGroup.add(new ToggleInvertedBooleanProperty("Show Ignored", "Show Ignored", AllIcons.RunConfigurations.TestIgnored, properties,
-                                                      TestConsoleProperties.HIDE_IGNORED_TEST));
+    actionGroup.addAction(new DumbAwareToggleInvertedBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"), ExecutionBundle.message("junit.run.hide.passed.action.description"), 
+                                                                     AllIcons.RunConfigurations.TestPassed, 
+                                                                     properties, TestConsoleProperties.HIDE_PASSED_TESTS));
+    actionGroup.add(new DumbAwareToggleInvertedBooleanProperty("Show Ignored", "Show Ignored", AllIcons.RunConfigurations.TestIgnored, 
+                                                               properties, TestConsoleProperties.HIDE_IGNORED_TEST));
     actionGroup.addSeparator();
 
    
 
-    actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
-                                                    ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),
-                                                    AllIcons.ObjectBrowser.Sorted,
-                                                    properties, TestConsoleProperties.SORT_ALPHABETICALLY));
-    final ToggleModelAction sortByStatistics = new ToggleModelAction(ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.name"),
-                                                            ExecutionBundle
-                                                              .message("junit.runing.info.sort.by.statistics.action.description"),
-                                                            AllIcons.RunConfigurations.SortbyDuration,
-                                                            properties, TestConsoleProperties.SORT_BY_DURATION) {
-
-      private TestFrameworkRunningModel myModel;
-
-      @Override
-      protected boolean isEnabled() {
-        final TestFrameworkRunningModel model = myModel;
-        return model != null && !model.isRunning();
-      }
-
-      @Override
-      public void setModel(TestFrameworkRunningModel model) {
-        myModel = model;
-      }
-    };
+    actionGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
+                                                             ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),
+                                                             AllIcons.ObjectBrowser.Sorted,
+                                                             properties, TestConsoleProperties.SORT_ALPHABETICALLY));
+    final ToggleModelAction sortByStatistics = new SortByDurationAction(properties);
     myActions.add(sortByStatistics);
     actionGroup.addAction(sortByStatistics);
     actionGroup.addSeparator();
@@ -131,17 +114,17 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     final DefaultActionGroup secondaryGroup = new DefaultActionGroup();
     secondaryGroup.setPopup(true);
     secondaryGroup.getTemplatePresentation().setIcon(AllIcons.General.SecondaryGroup);
-    secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.track.test.action.name"),
+    secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.track.test.action.name"),
                                                  ExecutionBundle.message("junit.runing.info.track.test.action.description"),
                                                  null, properties, TestConsoleProperties.TRACK_RUNNING_TEST));
     if (Registry.is("tests.view.old.statistics.panel")) {
       secondaryGroup.add(new ShowStatisticsAction(properties));
     }
-    secondaryGroup.add(new ToggleBooleanProperty("Show Inline Statistics", "Toggle the visibility of the test duration in the tree",
+    secondaryGroup.add(new DumbAwareToggleBooleanProperty("Show Inline Statistics", "Toggle the visibility of the test duration in the tree",
                                                  null, properties, TestConsoleProperties.SHOW_INLINE_STATISTICS));
 
     secondaryGroup.addSeparator();
-    secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.name"),
+    secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.name"),
                                                  ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.description"),
                                                  null, properties, TestConsoleProperties.SCROLL_TO_STACK_TRACE));
     secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.name"),
@@ -152,7 +135,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     secondaryGroup.add(new AdjustAutotestDelayActionGroup(parent));
     secondaryGroup.addSeparator();
-    secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.select.first.failed.action.name"),
+    secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.select.first.failed.action.name"),
                                                  null, null, properties, TestConsoleProperties.SELECT_FIRST_DEFECT));
     properties.appendAdditionalActions(secondaryGroup, parent, properties);
     actionGroup.add(secondaryGroup);
@@ -221,6 +204,29 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     myScrollToSource.setModel(null);
     if (myExportAction != null) {
       myExportAction.setModel(null);
+    }
+  }
+
+  private static class SortByDurationAction extends ToggleModelAction implements DumbAware {
+
+    private TestFrameworkRunningModel myModel;
+
+    public SortByDurationAction(TestConsoleProperties properties) {
+      super(ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.name"), 
+            ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.description"),
+            AllIcons.RunConfigurations.SortbyDuration, properties,
+            TestConsoleProperties.SORT_BY_DURATION);
+    }
+
+    @Override
+    protected boolean isEnabled() {
+      final TestFrameworkRunningModel model = myModel;
+      return model != null && !model.isRunning();
+    }
+
+    @Override
+    public void setModel(TestFrameworkRunningModel model) {
+      myModel = model;
     }
   }
 }

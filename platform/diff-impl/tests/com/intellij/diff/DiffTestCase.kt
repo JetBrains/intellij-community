@@ -16,6 +16,7 @@
 package com.intellij.diff
 
 import com.intellij.diff.comparison.ComparisonManagerImpl
+import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.DumbProgressIndicator
@@ -31,8 +32,6 @@ import java.util.concurrent.atomic.AtomicLong
 
 public abstract class DiffTestCase : UsefulTestCase() {
   companion object {
-    private val REGISTRY = Registry.get("diff.verify.iterable")
-
     private val DEFAULT_CHAR_COUNT = 12
     private val DEFAULT_CHAR_TABLE: Map<Int, Char> = {
       val map = HashMap<Int, Char>()
@@ -44,20 +43,17 @@ public abstract class DiffTestCase : UsefulTestCase() {
   public val RNG: Random = Random()
   private var gotSeedException = false
 
-  private var oldRegistryValue: Boolean = false
-
   public val INDICATOR: ProgressIndicator = DumbProgressIndicator.INSTANCE
   public val MANAGER: ComparisonManagerImpl = ComparisonManagerImpl()
 
 
   override fun setUp() {
     super.setUp()
-    oldRegistryValue = REGISTRY.asBoolean()
-    REGISTRY.setValue(true)
+    DiffIterableUtil.setVerifyEnabled(true)
   }
 
   override fun tearDown() {
-    REGISTRY.setValue(oldRegistryValue)
+    DiffIterableUtil.setVerifyEnabled(Registry.`is`("diff.verify.iterable"))
     super.tearDown()
   }
 

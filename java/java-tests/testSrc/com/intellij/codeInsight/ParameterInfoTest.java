@@ -109,6 +109,19 @@ public class ParameterInfoTest extends LightCodeInsightTestCase {
     assertTrue(updateParameterInfoContext.isUIComponentEnabled(0) || updateParameterInfoContext.isUIComponentEnabled(1));
   }
 
+  public void testStopAtAccessibleStaticCorrectCandidate() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+
+    final MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
+    final CreateParameterInfoContext context = new MockCreateParameterInfoContext(myEditor, myFile);
+    final PsiExpressionList list = handler.findElementForParameterInfo(context);
+    assertNotNull(list);
+    final Object[] itemsToShow = context.getItemsToShow();
+    assertNotNull(itemsToShow);
+    assertEquals(1, itemsToShow.length);
+    assertEquals(0, ((MethodCandidateInfo)itemsToShow[0]).getElement().getParameterList().getParametersCount());
+  }
+
   public void testAfterGenericsInsideCall() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
 

@@ -27,6 +27,7 @@
     <httpRequestHandler implementation="org.jetbrains.ide.XmlRpcServerImpl$XmlRpcRequestHandler"/>
     <httpRequestHandler implementation="org.jetbrains.ide.ProjectSetRequestHandler"/>
     <httpRequestHandler implementation="org.jetbrains.ide.DiffHttpService"/>
+    <httpRequestHandler implementation="org.jetbrains.ide.ActivateApplicationHttpService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.OpenFileHttpService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.AboutHttpService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.JetBrainsProtocolHandlerHttpService"/>
