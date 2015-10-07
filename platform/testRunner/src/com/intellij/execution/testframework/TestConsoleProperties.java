@@ -20,7 +20,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunProfile;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.ui.ConsoleView;
@@ -32,10 +31,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.config.AbstractProperty;
-import com.intellij.util.config.BooleanProperty;
-import com.intellij.util.config.Storage;
-import com.intellij.util.config.ToggleBooleanProperty;
+import com.intellij.util.config.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -207,14 +203,14 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   @NotNull
   protected ToggleBooleanProperty createIncludeNonStartedInRerun(TestConsoleProperties target) {
     String text = ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name");
-    return new ToggleBooleanProperty(text, null, null, target, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
+    return new DumbAwareToggleBooleanProperty(text, null, null, target, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
   }
   
   @NotNull
   protected ToggleBooleanProperty createHideSuccessfulConfig(TestConsoleProperties target) {
     String text = ExecutionBundle.message("junit.runing.info.hide.successful.config.action.name");
     setIfUndefined(HIDE_SUCCESSFUL_CONFIG, true);
-    return new ToggleBooleanProperty(text, null, null, target, HIDE_SUCCESSFUL_CONFIG);
+    return new DumbAwareToggleBooleanProperty(text, null, null, target, HIDE_SUCCESSFUL_CONFIG);
   }
 
   @JdkConstants.TreeSelectionMode
