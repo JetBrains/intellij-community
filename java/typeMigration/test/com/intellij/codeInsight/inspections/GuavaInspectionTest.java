@@ -63,11 +63,15 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
-  public void _testFluentIterableChainWithoutVariable() {
+  public void testFluentIterableChainWithoutVariable() {
     doTest();
   }
 
   public void testChainedFluentIterableWithChainedInitializer() {
+    doTest();
+  }
+
+  public void testFluentIterableChainWithOptional() {
     doTest();
   }
 
@@ -77,13 +81,13 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     boolean actionFound = false;
     myFixture.doHighlighting();
     for (IntentionAction action : myFixture.getAvailableIntentions()) {
-      if (action instanceof VariableTypeFix) {
+      if (action instanceof VariableTypeFix || action instanceof GuavaInspection.MigrateFluentIterableChainQuickFix) {
         myFixture.launchAction(action);
         actionFound = true;
         break;
       }
     }
-    assertTrue(actionFound);
+    assertTrue("Quick fix isn't found", actionFound);
     myFixture.checkResultByFile(getTestName(true) + "_after.java");
   }
 }

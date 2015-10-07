@@ -16,10 +16,12 @@
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.java18StreamApi.StreamApiConstants;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.hash.HashMap;
@@ -27,7 +29,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -75,8 +76,8 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
                         new TypeConversionDescriptorFactory("$it$.contains($o$)", "$it$.anyMatch(e -> e != null && e.equals($o$))", false));
     DESCRIPTORS_MAP.put("from", new TypeConversionDescriptorFactory("FluentIterable.from($it$)", "$it$.stream()", false, true));
     DESCRIPTORS_MAP.put("isEmpty", new TypeConversionDescriptorFactory("$q$.isEmpty()", "$q$.findAny().isPresent()", false));
-    DESCRIPTORS_MAP.put("skip", new TypeConversionDescriptorFactory("$q$.skip($p$)", "$q$.skip($p$)", false, false));
-    DESCRIPTORS_MAP.put("limit", new TypeConversionDescriptorFactory("$q$.limit($p$)", "$q$.limit($p$)", false, false));
+    DESCRIPTORS_MAP.put("skip", new TypeConversionDescriptorFactory("$q$.skip($p$)", "$q$.skip($p$)", false, true));
+    DESCRIPTORS_MAP.put("limit", new TypeConversionDescriptorFactory("$q$.limit($p$)", "$q$.limit($p$)", false, true));
     DESCRIPTORS_MAP.put("first", new TypeConversionDescriptorFactory("$q$.first()", "$q$.findFirst()", false));
     DESCRIPTORS_MAP.put("transform", new TypeConversionDescriptorFactory("$q$.transform($params$)", "$q$.map($params$)", true, true));
     //TODO support
@@ -106,11 +107,11 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   protected TypeConversionDescriptorBase findConversionForMethod(@NotNull PsiType from,
                                                                  @NotNull PsiType to,
                                                                  @NotNull PsiMethod method,
-                                                                 String methodName,
+                                                                 @NotNull String methodName,
                                                                  PsiExpression context,
                                                                  TypeMigrationLabeler labeler) {
     if (context instanceof PsiMethodCallExpression) {
-      return buildCompoundDescriptor((PsiMethodCallExpression)context, to);
+      return buildCompoundDescriptor((PsiMethodCallExpression)context, to, labeler);
     }
     final TypeConversionDescriptorFactory base = DESCRIPTORS_MAP.get(methodName);
     if (base != null) {
@@ -126,8 +127,23 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   }
 
   @Nullable
-  private GuavaChainedConversionDescriptor buildCompoundDescriptor(PsiMethodCallExpression expression, PsiType to) {
-    List<TypeConversionDescriptor> methodDescriptors = new SmartList<TypeConversionDescriptor>();
+  private static GuavaChainedConversionDescriptor buildCompoundDescriptor(PsiMethodCallExpression expression,
+                                                                          PsiType to,
+                                                                          TypeMigrationLabeler labeler) {
+    List<TypeConversionDescriptorBase> methodDescriptors = new SmartList<TypeConversionDescriptorBase>();
+
+    NotNullLazyValue<TypeConversionRule> optionalDescriptor = new NotNullLazyValue<TypeConversionRule>() {
+      @NotNull
+      @Override
+      protected TypeConversionRule compute() {
+        for (TypeConversionRule rule : TypeConversionRule.EP_NAME.getExtensions()) {
+          if (rule instanceof GuavaOptionalConversionRule) {
+            return rule;
+          }
+        }
+        throw new RuntimeException("GuavaOptionalConversionRule extension is not found");
+      }
+    };
 
     PsiMethodCallExpression current = expression;
     while (true) {
@@ -137,15 +153,26 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       }
       final String methodName = method.getName();
       final PsiClass containingClass = method.getContainingClass();
-      //TODO for optional too
-      if (containingClass == null || !FLUENT_ITERABLE.equals(containingClass.getQualifiedName())) {
+      if (containingClass == null) {
         break;
       }
-      final TypeConversionDescriptorFactory descriptorFactory = DESCRIPTORS_MAP.get(methodName);
-      if (descriptorFactory == null) {
-        return null;
+      TypeConversionDescriptorBase descriptor;
+      if (FLUENT_ITERABLE.equals(containingClass.getQualifiedName())) {
+        final TypeConversionDescriptorFactory descriptorFactory = DESCRIPTORS_MAP.get(methodName);
+        if (descriptorFactory == null) {
+          return null;
+        }
+        descriptor = descriptorFactory.create();
       }
-      methodDescriptors.add(descriptorFactory.create());
+      else if (GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(containingClass.getQualifiedName())) {
+        descriptor = optionalDescriptor.getValue().findConversion(null, null, method, current.getMethodExpression(), labeler);
+        if (descriptor == null) {
+          return null;
+        }
+      } else {
+        break;
+      }
+      methodDescriptors.add(descriptor);
       final PsiExpression qualifier = current.getMethodExpression().getQualifierExpression();
       if (qualifier instanceof PsiMethodCallExpression) {
         current = (PsiMethodCallExpression)qualifier;
@@ -172,10 +199,10 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   }
 
   private static class GuavaChainedConversionDescriptor extends TypeConversionDescriptorBase {
-    private final List<TypeConversionDescriptor> myMethodDescriptors;
+    private final List<TypeConversionDescriptorBase> myMethodDescriptors;
     private final PsiType myToType;
 
-    private GuavaChainedConversionDescriptor(List<TypeConversionDescriptor> descriptors, PsiType to) {
+    private GuavaChainedConversionDescriptor(List<TypeConversionDescriptorBase> descriptors, PsiType to) {
       myMethodDescriptors = descriptors;
       myToType = to;
     }
@@ -186,7 +213,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression) expression;
       final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(expression.getProject());
 
-      for (TypeConversionDescriptor descriptor : myMethodDescriptors) {
+      for (TypeConversionDescriptorBase descriptor : myMethodDescriptors) {
         final PsiExpression oldQualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
         final SmartPsiElementPointer<PsiExpression> qualifierRef = oldQualifier == null
                                                                    ? null
