@@ -42,4 +42,17 @@ public class IfMayBeConditional {
           i = b < c ? b : c;
       }
     }
+
+    void largeIf(boolean a, boolean b, boolean c) {
+        final String value;
+        if (a) {
+            value = "a";
+        } else if (b) {
+            value = "b";
+        } else if (c) {
+            value = "c";
+        } else {
+            value = "d";
+        }
+    }
 }
