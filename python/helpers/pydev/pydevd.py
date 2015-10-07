@@ -2222,6 +2222,7 @@ if __name__ == '__main__':
     f = setup['file']
     fix_app_engine_debug = False
 
+    debugger = PyDB()
 
     try:
         import pydev_monkey
@@ -2309,7 +2310,6 @@ if __name__ == '__main__':
     except:
         pass  # It's ok not having stackless there...
 
-    debugger = PyDB()
     is_module = setup['module']
 
     if fix_app_engine_debug:

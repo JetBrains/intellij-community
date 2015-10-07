@@ -16,6 +16,9 @@
 package com.intellij.javadoc;
 
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.psi.PsiKeyword;
 
 import javax.swing.*;
@@ -24,14 +27,21 @@ import java.io.File;
 public final class JavadocConfigurable implements Configurable {
   private JavadocGenerationPanel myPanel;
   private final JavadocConfiguration myConfiguration;
+  private final Project myProject;
 
-  public JavadocConfigurable(JavadocConfiguration configuration) {
+  public JavadocConfigurable(JavadocConfiguration configuration, Project project) {
     myConfiguration = configuration;
+    myProject = project;
+  }
+
+  public static boolean sdkHasJavadocUrls(Project project) {
+    Sdk sdk = JavadocGeneratorRunProfile.getSdk(project);
+    return sdk != null && sdk.getRootProvider().getFiles(JavadocOrderRootType.getInstance()).length > 0;
   }
 
   public JComponent createComponent() {
     myPanel = new JavadocGenerationPanel();
-    myPanel.myLinkToJdkDocs.setEnabled(myConfiguration.sdkHasJavadocUrls());
+    myPanel.myLinkToJdkDocs.setEnabled(sdkHasJavadocUrls(myProject));
     return myPanel.myPanel;
   }
 

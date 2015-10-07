@@ -61,7 +61,7 @@ class WebServerPathToFileManager(application: Application, private val project: 
     return pathInfo.file ?: return LocalFileSystem.getInstance().findFileByIoFile(pathInfo.ioFile!!)
   }
 
-  fun getPathInfo(path: String, cacheResult: Boolean = true): PathInfo? {
+  @JvmOverloads fun getPathInfo(path: String, cacheResult: Boolean = true): PathInfo? {
     var pathInfo = pathToInfoCache.getIfPresent(path)
     if (pathInfo == null || !pathInfo.isValid) {
       pathInfo = doFindByRelativePath(path)

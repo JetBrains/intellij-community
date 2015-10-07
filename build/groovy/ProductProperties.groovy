@@ -46,6 +46,8 @@ public abstract class ProductProperties {
 
   abstract def String archiveName()
 
+  boolean setPluginAndIDEVersionInPluginXml = true
+
   String ideJvmArgs = null
   boolean maySkipAndroidPlugin
   String relativeAndroidHome

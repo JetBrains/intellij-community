@@ -97,7 +97,11 @@ public abstract class CloudServerRuntimeInstance
         try {
           for (CloudApplicationRuntime application : getApplications()) {
             Deployment deployment
-              = callback.addDeployment(application.getApplicationName(), application, application.getStatus(), application.getStatusText());
+              = callback.addDeployment(application.getApplicationName(),
+                                       application,
+                                       application.getStatus(),
+                                       application.getStatusText(),
+                                       application.getGroup());
             application.setDeploymentModel(deployment);
           }
           callback.succeeded();

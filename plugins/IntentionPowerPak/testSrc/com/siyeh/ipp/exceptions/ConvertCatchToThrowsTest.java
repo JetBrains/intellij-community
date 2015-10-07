@@ -26,6 +26,7 @@ public class ConvertCatchToThrowsTest extends IPPTestCase {
   public void testArmWithSingleCatch() { doTest(); }
   public void testExistingThrows() { doTest(); }
   public void testLambda() { doTest(); }
+  public void testLeaveFinallySection() { doTest(); }
 
   @Override
   protected String getIntentionName() {

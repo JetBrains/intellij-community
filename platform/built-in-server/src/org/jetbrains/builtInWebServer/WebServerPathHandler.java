@@ -46,13 +46,9 @@ public abstract class WebServerPathHandler {
 
   protected static void redirectToDirectory(@NotNull HttpRequest request, @NotNull Channel channel, @NotNull String path) {
     FullHttpResponse response = Responses.response(HttpResponseStatus.MOVED_PERMANENTLY);
-    URI url = VfsUtil.toUri("http://" + request.headers().get(HttpHeaderNames.HOST) + '/' + path + '/');
+    URI url = VfsUtil.toUri("http://" + request.headers().getAsString(HttpHeaderNames.HOST) + '/' + path + '/');
     BuiltInWebServer.LOG.assertTrue(url != null);
     response.headers().add(HttpHeaderNames.LOCATION, url.toASCIIString());
     Responses.send(response, channel, request);
-  }
-
-  protected static boolean endsWithSlash(@NotNull String path) {
-    return path.charAt(path.length() - 1) == '/';
   }
 }

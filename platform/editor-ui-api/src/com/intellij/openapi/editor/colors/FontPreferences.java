@@ -163,6 +163,7 @@ public class FontPreferences {
     preferences.myRealFontFamilies.clear();
     preferences.myRealFontFamilies.addAll(myRealFontFamilies);
     preferences.myFontSizes.clear();
+    preferences.myTemplateFontSize = myTemplateFontSize;
     for (String fontFamily : myRealFontFamilies) {
       if (myFontSizes.containsKey(fontFamily)) {
         preferences.myFontSizes.put(fontFamily, myFontSizes.get(fontFamily));

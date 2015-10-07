@@ -74,7 +74,7 @@ import java.util.*;
  * @author Mike
  */
 
-public class XmlTagImpl extends XmlElementImpl implements XmlTag {
+public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenceHost {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTagImpl");
   @NonNls private static final String XML_NS_PREFIX = "xml";
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("xmlTag");
@@ -93,10 +93,17 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
           .create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag.getContainingFile());
       }
     };
+  private static final Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
+    @Override
+    public int compare(TextRange range1, TextRange range2) {
+      return range1.getStartOffset() - range2.getStartOffset();
+    }
+  };
   private final int myHC = ourHC++;
   private volatile String myName = null;
   private volatile String myLocalName;
   private volatile XmlAttribute[] myAttributes = null;
+  private volatile TextRange[] myTextElements = null;
   private volatile Map<String, String> myAttributeValueMap = null;
   private volatile XmlTagValue myValue = null;
   private volatile Map<String, CachedValue<XmlNSDescriptor>> myNSDescriptorsMap = null;
@@ -152,6 +159,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     myCachedDescriptor = null;
     myDescriptorModCount = -1;
     myAttributes = null;
+    myTextElements = null;
     myAttributeValueMap = null;
     myHasNamespaceDeclarations = false;
     myValue = null;
@@ -159,9 +167,24 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     super.clearCaches();
   }
 
-  @Override
+  /**
+   * Use {@link #getReferences(PsiReferenceService.Hints)} instead of calling or overriding this method.
+   */
+  @Deprecated
   @NotNull
-  public PsiReference[] getReferences() {
+  @Override
+  public final PsiReference[] getReferences() {
+    return getReferences(PsiReferenceService.Hints.NO_HINTS);
+  }
+
+  @Override
+  public boolean shouldAskParentForReferences(@NotNull PsiReferenceService.Hints hints) {
+    return false;
+  }
+
+  @NotNull
+  @Override
+  public PsiReference[] getReferences(@NotNull PsiReferenceService.Hints hints) {
     ProgressManager.checkCanceled();
     final ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(this);
     if (startTagName == null) return PsiReference.EMPTY_ARRAY;
@@ -169,14 +192,18 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     List<PsiReference> refs = new ArrayList<PsiReference>();
     String prefix = getNamespacePrefix();
 
-    TagNameReference startTagRef = TagNameReference.createTagNameReference(this, startTagName, true);
-    if (startTagRef != null) {
-      refs.add(startTagRef);
+    boolean inStartTag = hints.offsetInElement == null || childContainsOffset(startTagName.getPsi(), hints.offsetInElement);
+    if (inStartTag) {
+      TagNameReference startTagRef = TagNameReference.createTagNameReference(this, startTagName, true);
+      if (startTagRef != null) {
+        refs.add(startTagRef);
+      }
+      if (!prefix.isEmpty()) {
+        refs.add(createPrefixReference(startTagName, prefix, startTagRef));
+      }
     }
-    if (!prefix.isEmpty()) {
-      refs.add(createPrefixReference(startTagName, prefix, startTagRef));
-    }
-    if (endTagName != null) {
+    boolean inEndTag = endTagName != null && (hints.offsetInElement == null || childContainsOffset(endTagName.getPsi(), hints.offsetInElement));
+    if (inEndTag) {
       TagNameReference endTagRef = TagNameReference.createTagNameReference(this, endTagName, false);
       if (endTagRef != null) {
         refs.add(endTagRef);
@@ -187,14 +214,41 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       }
     }
 
-
-    // ArrayList.addAll() makes a clone of the collection
-    //noinspection ManualArrayToCollectionCopy
-    for (PsiReference ref : ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlTag.class)) {
-      refs.add(ref);
+    if (hints.offsetInElement == null || inStartTag || inEndTag || isInsideXmlText(hints.offsetInElement)) {
+      Collections.addAll(refs, ReferenceProvidersRegistry.getReferencesFromProviders(this, hints));
     }
 
     return ContainerUtil.toArray(refs, new PsiReference[refs.size()]);
+  }
+
+  private static boolean childContainsOffset(PsiElement child, int offsetInTag) {
+    return child.getStartOffsetInParent() <= offsetInTag && offsetInTag <= child.getStartOffsetInParent() + child.getTextLength();
+  }
+
+  private boolean isInsideXmlText(int offsetInTag) {
+    TextRange[] ranges = getValueTextRanges();
+    if (ranges.length == 0) return false;
+    if (offsetInTag < ranges[0].getStartOffset() || offsetInTag > ranges[ranges.length - 1].getEndOffset()) return false;
+
+    int i = Arrays.binarySearch(ranges, TextRange.from(offsetInTag, 0), RANGE_COMPARATOR);
+    return i >= 0 || ranges[-i - 2].containsOffset(offsetInTag);
+  }
+
+  @NotNull
+  private TextRange[] getValueTextRanges() {
+    TextRange[] elements = myTextElements;
+    if (elements == null) {
+      List<TextRange> list = ContainerUtil.newSmartList();
+      // don't use getValue().getXmlElements() because it processes includes & entities, and we only need textual AST here
+      for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+        PsiElement psi = child.getPsi();
+        if (psi instanceof XmlText) {
+          list.add(TextRange.from(psi.getStartOffsetInParent(), psi.getTextLength()));
+        }
+      }
+      myTextElements = elements = list.toArray(new TextRange[list.size()]);
+    }
+    return elements;
   }
 
   private SchemaPrefixReference createPrefixReference(ASTNode startTagName, String prefix, TagNameReference tagRef) {
@@ -428,7 +482,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   @Override
   public PsiReference getReference() {
-    return ArrayUtil.getFirstElement(getReferences());
+    return ArrayUtil.getFirstElement(getReferences(PsiReferenceService.Hints.NO_HINTS));
   }
 
   @Override

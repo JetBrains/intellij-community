@@ -15,11 +15,13 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -42,10 +44,14 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
       return;
     }
     Graphics2D g = (Graphics2D)g2d;
+    //todo[kb]: make a better solution
+    if (c.getParent() instanceof JComboBox) return;
     if (c.hasFocus()) {
       MacIntelliJBorderPainter.paintBorder(c, g, 0, 0, c.getWidth(), c.getHeight());
     }
-    g.setColor(Gray.xB1);
-    g.drawRect(3, 3, c.getWidth() - 6, c.getHeight() - 6);
+    if (!IntelliJLaf.isGraphite() || !c.hasFocus()) {
+      g.setColor(Gray.xB4);
+      g.drawRect(3, 3, c.getWidth() - 6, c.getHeight() - 6);
+    }
   }
 }

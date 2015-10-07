@@ -105,4 +105,5 @@ public class DataFlowInspection8Test extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testPrimitiveInVoidLambda() { doTest(); }
 }

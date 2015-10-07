@@ -91,7 +91,7 @@ public class DebugAttachDetector {
         }
         myAlarm.request();
       }
-    }, 5000, Alarm.ThreadToUse.POOLED_THREAD, null);
+    }, 5000, Alarm.ThreadToUse.POOLED_THREAD, app);
     myAlarm.request();
   }
 }

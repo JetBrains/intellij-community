@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -367,7 +367,7 @@ public class SheetController {
   }
 
   private static String handleBreaks(final String message) {
-    return message.replaceAll("(\r\n|\n)", "<br/>");
+    return message == null ? "" : message.replaceAll("(\r\n|\n)", "<br/>");
   }
 
   private void shiftButtonsToTheBottom(int shiftDistance) {
@@ -441,7 +441,7 @@ public class SheetController {
   private void layoutDoNotAskCheckbox(JPanel sheetPanel) {
     doNotAskCheckBox.setText(myDoNotAskOption.getDoNotShowMessage());
     doNotAskCheckBox.setSelected(!myDoNotAskOption.isToBeShown());
-
+    doNotAskCheckBox.setOpaque(false);
     doNotAskCheckBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(@NotNull ItemEvent e) {

@@ -64,7 +64,7 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
           final PsiElement next = superMethods.iterator().next();
           // TODO should do this for Jython functions overriding Java methods too
           if (next instanceof PyFunction && !isInObject((PyFunction)next)) {
-            int rc = Messages.showYesNoCancelDialog(element.getProject(), "Method " +
+            int rc = Messages.showYesNoDialog(element.getProject(), "Method " +
                                                                           ((PyFunction)element).getName() +
                                                                           " overrides method of class " +
                                                                           ((PyFunction)next).getContainingClass().getName() +
@@ -75,10 +75,9 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
               allMethods.addAll(superMethods);
               return new PyFunctionFindUsagesHandler(element, allMethods);
             }
-            if (rc == Messages.NO) {
+            else {
               return new PyFunctionFindUsagesHandler(element);
             }
-            return FindUsagesHandler.NULL_HANDLER;
           }
         }
 

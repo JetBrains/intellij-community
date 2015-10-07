@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -25,16 +23,17 @@ import java.awt.*;
  */
 @SuppressWarnings("UnnecessaryLocalVariable")
 public class MacIntelliJBorderPainter {
-  private static final Icon L = DarculaLaf.loadIcon("macBorderLeft.png");
-  private static final Icon R = DarculaLaf.loadIcon("macBorderRight.png");
-  private static final Icon T = DarculaLaf.loadIcon("macBorderTop.png");
-  private static final Icon B = DarculaLaf.loadIcon("macBorderBottom.png");
-  private static final Icon TL = DarculaLaf.loadIcon("macBorderTopLeft.png");
-  private static final Icon TR = DarculaLaf.loadIcon("macBorderTopRight.png");
-  private static final Icon BL = DarculaLaf.loadIcon("macBorderBottomLeft.png");
-  private static final Icon BR = DarculaLaf.loadIcon("macBorderBottomRight.png");
 
   public static void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    final Icon L = MacIntelliJIconCache.getIcon("macBorderLeft");
+    final Icon R = MacIntelliJIconCache.getIcon("macBorderRight");
+    final Icon T = MacIntelliJIconCache.getIcon("macBorderTop");
+    final Icon B = MacIntelliJIconCache.getIcon("macBorderBottom");
+    final Icon TL = MacIntelliJIconCache.getIcon("macBorderTopLeft");
+    final Icon TR = MacIntelliJIconCache.getIcon("macBorderTopRight");
+    final Icon BL = MacIntelliJIconCache.getIcon("macBorderBottomLeft");
+    final Icon BR = MacIntelliJIconCache.getIcon("macBorderBottomRight");
+
     g = g.create(x,y,width,height);
     //corners
     TL.paintIcon(c, g, x, y);

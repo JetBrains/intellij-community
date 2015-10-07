@@ -29,7 +29,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.CompoundRuntimeException
 import java.io.File
 
-val ROOT_CONFIG = "\$ROOT_CONFIG$"
+const val ROOT_CONFIG = "\$ROOT_CONFIG$"
 
 sealed class SchemeManagerFactoryBase : SchemesManagerFactory(), SettingsSavingComponent {
   private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, ExternalizableScheme>>()

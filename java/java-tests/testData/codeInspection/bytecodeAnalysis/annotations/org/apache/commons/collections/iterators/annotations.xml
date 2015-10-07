@@ -1,61 +1,61 @@
 <root>
-  <item name="org.apache.commons.collections.iterators.AbstractEmptyIterator AbstractEmptyIterator()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.commons.collections.iterators.AbstractEmptyIterator boolean hasNext()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.commons.collections.iterators.AbstractEmptyIterator boolean hasPrevious()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.commons.collections.iterators.AbstractEmptyIterator int nextIndex()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.commons.collections.iterators.AbstractEmptyIterator int previousIndex()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object setValue(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.commons.collections.iterators.AbstractEmptyIterator void add(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.commons.collections.iterators.AbstractEmptyIterator void reset()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.commons.collections.iterators.AbstractEmptyIterator void set(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.commons.collections.iterators.EmptyIterator EmptyIterator()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.commons.collections.iterators.EmptyMapIterator EmptyMapIterator()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.commons.collections.iterators.EmptyOrderedIterator EmptyOrderedIterator()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.commons.collections.iterators.EmptyOrderedMapIterator EmptyOrderedMapIterator()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator AbstractEmptyIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator boolean hasNext()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator boolean hasPrevious()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator int nextIndex()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator int previousIndex()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object setValue(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator void add(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator void reset()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator void set(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.iterators.EmptyIterator EmptyIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.EmptyMapIterator EmptyMapIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.EmptyOrderedIterator EmptyOrderedIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.EmptyOrderedMapIterator EmptyOrderedMapIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
 </root>

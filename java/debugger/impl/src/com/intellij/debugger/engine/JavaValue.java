@@ -116,6 +116,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return myValueDescriptor;
   }
 
+  @NotNull
   public EvaluationContextImpl getEvaluationContext() {
     return myEvaluationContext;
   }
@@ -163,7 +164,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             else if (value.length() > XValueNode.MAX_VALUE_LENGTH) {
               node.setFullValueEvaluator(new JavaFullValueEvaluator(myEvaluationContext) {
                 @Override
-                public void evaluate(@NotNull final XFullValueEvaluationCallback callback) throws Exception {
+                public void evaluate(@NotNull final XFullValueEvaluationCallback callback) {
                   final ValueDescriptorImpl fullValueDescriptor = myValueDescriptor.getFullValueDescriptor();
                   fullValueDescriptor.updateRepresentation(myEvaluationContext, new DescriptorLabelListener() {
                     @Override

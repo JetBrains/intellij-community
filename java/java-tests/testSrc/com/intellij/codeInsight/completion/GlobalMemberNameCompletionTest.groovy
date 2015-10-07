@@ -1,11 +1,8 @@
-package com.intellij.codeInsight.completion;
-
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.util.ArrayUtil
+package com.intellij.codeInsight.completion
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.codeInsight.lookup.LookupElement;
-
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author peter
  */
@@ -31,8 +28,8 @@ class Bar {{ abcmethod()<caret> }}"""
 package foo;
 
 public class Foo {
-  public static int abcfield = 2
-  static final int fieldThatsNotVisible = 3
+  public static int abcfield = 2;
+  static final int fieldThatsNotVisible = 3;
 }
 """)
 
@@ -46,8 +43,8 @@ class Bar {{ abcfield<caret> }}"""
 package foo;
 
 public class Foo {
-  public static int abcfield = 2
-  static final int fieldThatsNotVisible = 3
+  public static int abcfield = 2;
+  static final int fieldThatsNotVisible = 3;
 }
 """)
 
@@ -61,8 +58,8 @@ class Bar {{ Foo.abcfield<caret> }}"""
 package foo;
 
 public class Foo {
-  public static int abcfield = 2
-  static final int fieldThatsNotVisible = 3
+  public static int abcfield = 2;
+  static final int fieldThatsNotVisible = 3;
 }
 """)
     myFixture.configureByText "a.java", "class Bar {{ abcf<caret> }}"
@@ -112,11 +109,6 @@ class Bar {{ abcmethod(); anotherMethod(<caret>) }}"""
   }
 
 
-  @Override protected void tearDown() {
-    CodeInsightSettings.instance.EXCLUDED_PACKAGES = ArrayUtil.EMPTY_STRING_ARRAY
-    super.tearDown()
-  }
-
   public void testExcludeClassFromCompletion() throws Exception {
     myFixture.addClass("""package foo;
       public class Foo {
@@ -129,7 +121,7 @@ class Bar {{ abcmethod(); anotherMethod(<caret>) }}"""
       }
     """)
 
-    CodeInsightSettings.instance.EXCLUDED_PACKAGES = ["foo.Excl"] as String[]
+    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo.Excl")
 
     doTest "class Bar {{ abcm<caret> }}", true, """import static foo.Foo.abcmethod;
 
@@ -144,7 +136,7 @@ class Bar {{ abcmethod()<caret> }}"""
       }
     """)
 
-    CodeInsightSettings.instance.EXCLUDED_PACKAGES = ["foo.Foo.abcmethodExcluded"] as String[]
+    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo.Foo.abcmethodExcluded")
 
     doTest "class Bar {{ abcm<caret> }}", true, """import static foo.Foo.abcmethod1;
 

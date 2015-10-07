@@ -106,7 +106,7 @@ class FooSpec extends spock.lang.Specification {
   }
 
   public void testShlSimple() {
-    doTest(CommonClassNames.JAVA_UTIL_MAP, """
+    doTest(AbstractMap.name, """
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {
     expect:

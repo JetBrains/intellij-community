@@ -9,11 +9,11 @@ public class IfMayBeConditional {
 
     void foo2(int a, int b) {
         int c = 0;
-        if (a < b) { c += a - b; } else { c += b; }
+        <warning descr="'if' could be replaced with conditional expression">if</warning> (a < b) { c += a - b; } else { c += b; }
     }
 
     void foo3(int i, StringBuilder sb) {
-        if (i == 0) {
+        <warning descr="'if' could be replaced with conditional expression">if</warning> (i == 0) {
             sb.append("type.getConstructor()", 0, 1);
         }
         else {
@@ -22,7 +22,7 @@ public class IfMayBeConditional {
     }
 
     int foo4(int a, int b) {
-        if (a < b) return a;
+        <warning descr="'if' could be replaced with conditional expression">if</warning> (a < b) return a;
         else return b;
     }
 
@@ -41,5 +41,18 @@ public class IfMayBeConditional {
       } else {
           i = b < c ? b : c;
       }
+    }
+
+    void largeIf(boolean a, boolean b, boolean c) {
+        final String value;
+        if (a) {
+            value = "a";
+        } else if (b) {
+            value = "b";
+        } else if (c) {
+            value = "c";
+        } else {
+            value = "d";
+        }
     }
 }

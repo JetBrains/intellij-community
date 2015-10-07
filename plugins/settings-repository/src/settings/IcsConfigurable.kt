@@ -19,7 +19,7 @@ import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
 import java.awt.BorderLayout
 
-class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings>("ics", IcsBundle.message("ics.settings"), "reference.settings.ics") {
+class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings>("ics", icsMessage("ics.settings"), "reference.settings.ics") {
   override fun getSettings() = icsManager.settings
 
   override fun createUi() = IcsConfigurableUi()

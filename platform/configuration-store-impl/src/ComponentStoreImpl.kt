@@ -30,7 +30,6 @@ import com.intellij.openapi.components.store.ReadOnlyModificationException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pair as JBPair
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
@@ -51,6 +50,7 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
+import com.intellij.openapi.util.Pair as JBPair
 
 internal val LOG = Logger.getInstance(ComponentStoreImpl::class.java)
 
@@ -305,7 +305,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<Storage> {
+  protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
     val storages = stateSpec.storages
     if (storages.size() == 1 || component is StateStorageChooserEx) {
       return storages
@@ -324,29 +324,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       return defaultStorages
     }
 
-    if (!storages[0].deprecated) {
-      var othersAreDeprecated = true
-      for (i in 1..storages.size() - 1) {
-        if (!storages[i].deprecated) {
-          othersAreDeprecated = false
-          break
-        }
-      }
-
-      if (othersAreDeprecated) {
-        return storages
-      }
-    }
-
-    val sorted = Arrays.copyOf(storages, storages.size())
-    Arrays.sort(sorted, object : Comparator<Storage> {
-      override fun compare(o1: Storage, o2: Storage): Int {
-        val w1 = if (o1.deprecated) 1 else 0
-        val w2 = if (o2.deprecated) 1 else 0
-        return w1 - w2
-      }
-    })
-    return sorted
+    return sortStoragesByDeprecated(storages)
   }
 
   override final fun isReloadPossible(componentNames: MutableSet<String>) = !componentNames.any { isNotReloadable(it) }
@@ -438,15 +416,6 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   companion object {
-    private fun findNonDeprecated(storages: Array<Storage>): Storage {
-      for (storage in storages) {
-        if (!storage.deprecated) {
-          return storage
-        }
-      }
-      throw AssertionError("All storages are deprecated")
-    }
-
     protected fun executeSave(session: SaveSession, readonlyFiles: MutableList<JBPair<SaveSession, VirtualFile>>, previousErrors: MutableList<Throwable>?): MutableList<Throwable>? {
       var errors = previousErrors
       try {
@@ -468,6 +437,41 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 }
 
+private fun findNonDeprecated(storages: Array<Storage>): Storage {
+  for (storage in storages) {
+    if (!storage.deprecated) {
+      return storage
+    }
+  }
+  throw AssertionError("All storages are deprecated")
+}
+
 enum class StateLoadPolicy {
   LOAD, LOAD_ONLY_DEFAULT, NOT_LOAD
+}
+
+internal fun sortStoragesByDeprecated(storages: Array<Storage>): Array<out Storage> {
+  if (storages.isEmpty()) {
+    return storages
+  }
+
+  if (!storages[0].deprecated) {
+    var othersAreDeprecated = true
+    for (i in 1..storages.size() - 1) {
+      if (!storages[i].deprecated) {
+        othersAreDeprecated = false
+        break
+      }
+    }
+
+    if (othersAreDeprecated) {
+      return storages
+    }
+  }
+
+  return storages.sortedArrayWith(comparator { o1, o2 ->
+    val w1 = if (o1.deprecated) 1 else 0
+    val w2 = if (o2.deprecated) 1 else 0
+    w1 - w2
+  })
 }

@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ObjectUtils;
@@ -100,7 +101,7 @@ public class DarculaButtonUI extends BasicButtonUI {
     g.setColor(fg);
 
     FontMetrics metrics = SwingUtilities2.getFontMetrics(c, g);
-    int mnemonicIndex = button.getDisplayedMnemonicIndex();
+    int mnemonicIndex = DarculaLaf.isAltPressed() ? button.getDisplayedMnemonicIndex() : -1;
     if (model.isEnabled()) {
 
       SwingUtilities2.drawStringUnderlineCharAt(c, g, text, mnemonicIndex,

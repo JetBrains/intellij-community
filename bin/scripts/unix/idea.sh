@@ -35,6 +35,13 @@ RM=`which rm`
 CAT=`which cat`
 TR=`which tr`
 
+#Disbale Jayatana on linux
+
+if [ -n "$JAVA_TOOL_OPTIONS" -a "$JAVA_TOOL_OPTIONS" != "${JAVA_TOOL_OPTIONS%-javaagent*jayatanaag.jar*"}" ] ; then
+    JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS%-javaagent*jayatanaag.jar*}${JAVA_TOOL_OPTIONS#*jayatanaag.jar};
+    message "Jayatana global menu integration is disabled.";
+fi
+
 if [ -z "$UNAME" -o -z "$GREP" -o -z "$CUT" -o -z "$MKTEMP" -o -z "$RM" -o -z "$CAT" -o -z "$TR" ]; then
   message "Required tools are missing - check beginning of \"$0\" file for details."
   exit 1
@@ -192,9 +199,13 @@ LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JAVA_BIN" \
   com.intellij.idea.Main \
   "$@"
 EC=$?
+
 test $EC -ne 88 && exit $EC
-if [ -x "$HOME/.@@system_selector@@/restart/restarter.sh" ]; then
-  "$HOME/.@@system_selector@@/restart/restarter.sh"
-  "$RM" -f "$HOME/.@@system_selector@@/restart/restarter.sh"
+
+RESTARTER="$HOME/.@@system_selector@@/restart/restarter.sh"
+if [ -x "$RESTARTER" ]; then
+  "$RESTARTER"
+  "$RM" -f "$RESTARTER"
 fi
+
 exec "$0" "$@"

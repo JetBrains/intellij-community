@@ -97,7 +97,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
       final DebuggerTreeNodeImpl root = getNodeFactory().getDefaultNode();
 
       final DebugProcessImpl debugProcess = mySession.getProcess();
-      if(debugProcess == null || !debugProcess.isAttached()) {
+      if (!debugProcess.isAttached()) {
         return;
       }
       final DebuggerContextImpl context = mySession.getContextManager().getContext();

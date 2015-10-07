@@ -35,6 +35,7 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.StringReader;
@@ -112,6 +113,13 @@ public class HyperlinkLabel extends HighlightableComponent {
     this.setMinimumSize(preferredSize);
   }
 
+  @Override
+  protected void processComponentKeyEvent(KeyEvent event) {
+    if (event.getModifiers() == 0 && event.getKeyCode() == KeyEvent.VK_SPACE) {
+      event.consume();
+      fireHyperlinkEvent();
+    }
+  }
 
   protected void processMouseEvent(MouseEvent e) {
     if (e.getID() == MouseEvent.MOUSE_EXITED) {

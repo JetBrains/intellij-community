@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,117 +15,163 @@
  */
 package com.intellij.ide.updates;
 
-
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.updateSettings.impl.*;
 import com.intellij.openapi.util.BuildNumber;
-import junit.framework.Assert;
-import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-public class UpdateStrategyTest extends TestCase {
+import static org.junit.Assert.*;
 
-  //could be if somebody used before previous version of IDEA
+public class UpdateStrategyTest {
+  @Test
   public void testWithUndefinedSelection() {
-    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
-    //first time load
-    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-98.520"), UpdatesInfoXppParserTest.InfoReader.read("idea-same.xml"), settings);
+    // could be if somebody used before previous version of IDEA
+    TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-98.520"), InfoReader.read("idea-same.xml"), settings, customization);
 
-    final CheckForUpdateResult result1 = strategy.checkForUpdates();
-    Assert.assertEquals(UpdateStrategy.State.LOADED, result1.getState());
-    Assert.assertNull(result1.getNewBuildInSelectedChannel());
+    CheckForUpdateResult result = strategy.checkForUpdates();
+    assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    assertNull(result.getNewBuildInSelectedChannel());
   }
 
-
+  @Test
   public void testWithUserSelection() {
-    //assume user has version 9 eap - and used eap channel - we want to introduce new eap
-    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
-    //first time load
-    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), UpdatesInfoXppParserTest.InfoReader.read("idea-new9eap.xml"), settings);
+    // assume user has version 9 eap - and used eap channel - we want to introduce new eap
+    TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), InfoReader.read("idea-new9eap.xml"), settings, customization);
 
-    final CheckForUpdateResult result = strategy.checkForUpdates();
-    Assert.assertEquals(UpdateStrategy.State.LOADED, result.getState());
-    final BuildInfo update = result.getNewBuildInSelectedChannel();
-    Assert.assertNotNull(update);
-    Assert.assertEquals("95.627", update.getNumber().toString());
+    CheckForUpdateResult result = strategy.checkForUpdates();
+    assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    BuildInfo update = result.getNewBuildInSelectedChannel();
+    assertNotNull(update);
+    assertEquals("95.627", update.getNumber().toString());
   }
 
+  @Test
   public void testIgnore() {
-    //assume user has version 9 eap - and used eap channel - we want to introduce new eap
-    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
-    settings.addIgnoredBuildNumber("95.627");
-    settings.addIgnoredBuildNumber("98.620");
-    //first time load
-    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), UpdatesInfoXppParserTest.InfoReader.read("idea-new9eap.xml"), settings);
+    // assume user has version 9 eap - and used eap channel - we want to introduce new eap
+    TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP, "95.627", "98.620");
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), InfoReader.read("idea-new9eap.xml"), settings, customization);
 
-    final CheckForUpdateResult result = strategy.checkForUpdates();
-    Assert.assertEquals(UpdateStrategy.State.LOADED, result.getState());
-    final BuildInfo update = result.getNewBuildInSelectedChannel();
-    Assert.assertNull(update);
+    CheckForUpdateResult result = strategy.checkForUpdates();
+    assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    BuildInfo update = result.getNewBuildInSelectedChannel();
+    assertNull(update);
   }
 
+  @Test
   public void testNewChannelAppears() {
     // assume user has version 9 eap subscription (default or selected)
     // and new channel appears - eap of version 10 is there
-    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.RELEASE);
-    //first time load
-    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.627"), UpdatesInfoXppParserTest.InfoReader.read("idea-newChannel-release.xml"), settings);
+    TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.RELEASE);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.627"), InfoReader.read("idea-newChannel-release.xml"), settings, customization);
 
+    CheckForUpdateResult result = strategy.checkForUpdates();
+    assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    BuildInfo update = result.getNewBuildInSelectedChannel();
+    assertNull(update);
 
-    final CheckForUpdateResult result = strategy.checkForUpdates();
-    Assert.assertEquals(UpdateStrategy.State.LOADED, result.getState());
-    final BuildInfo update = result.getNewBuildInSelectedChannel();
-    Assert.assertNull(update);
-
-    final UpdateChannel newChannel = result.getChannelToPropose();
-    Assert.assertNotNull(newChannel);
-    Assert.assertEquals("IDEA10EAP", newChannel.getId());
-    Assert.assertEquals("IntelliJ IDEA X EAP", newChannel.getName());
+    UpdateChannel newChannel = result.getChannelToPropose();
+    assertNotNull(newChannel);
+    assertEquals("IDEA10EAP", newChannel.getId());
+    assertEquals("IntelliJ IDEA X EAP", newChannel.getName());
   }
 
+  @Test
   public void testNewChannelWithOlderBuild() {
-    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
-    //first time load
-    UpdateStrategy strategy = new UpdateStrategy(10, BuildNumber.fromString("IU-107.80"), UpdatesInfoXppParserTest.InfoReader.read("idea-newChannel.xml"), settings);
+    TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(10, BuildNumber.fromString("IU-107.80"), InfoReader.read("idea-newChannel.xml"), settings, customization);
 
-    final CheckForUpdateResult result = strategy.checkForUpdates();
-    Assert.assertEquals(UpdateStrategy.State.LOADED, result.getState());
-    final BuildInfo update = result.getNewBuildInSelectedChannel();
-    Assert.assertNull(update);
+    CheckForUpdateResult result = strategy.checkForUpdates();
+    assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    BuildInfo update = result.getNewBuildInSelectedChannel();
+    assertNull(update);
 
-    final UpdateChannel newChannel = result.getChannelToPropose();
-    Assert.assertNull(newChannel);
+    UpdateChannel newChannel = result.getChannelToPropose();
+    assertNull(newChannel);
   }
 
+  @Test
   public void testNewChannelAndNewBuildAppear() {
-    //assume user has version 9 eap subscription (default or selected)
-    //and new channels appears - eap of version 10 is there
-    //and new build withing old channel appears also
-    //we need to show only one dialog
-    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
-    //first time load
-    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), UpdatesInfoXppParserTest.InfoReader.read("idea-newChannel.xml"), settings);
+    // assume user has version 9 eap subscription (default or selected)
+    // and new channels appears - eap of version 10 is there
+    // and new build withing old channel appears also
+    // we need to show only one dialog
+    TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(9, BuildNumber.fromString("IU-95.429"), InfoReader.read("idea-newChannel.xml"), settings, customization);
 
-    final CheckForUpdateResult result = strategy.checkForUpdates();
-    Assert.assertEquals(UpdateStrategy.State.LOADED, result.getState());
-    final BuildInfo update = result.getNewBuildInSelectedChannel();
-    Assert.assertNotNull(update);
-    Assert.assertEquals("95.627", update.getNumber().toString());
+    CheckForUpdateResult result = strategy.checkForUpdates();
+    assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    BuildInfo update = result.getNewBuildInSelectedChannel();
+    assertNotNull(update);
+    assertEquals("95.627", update.getNumber().toString());
 
-    final UpdateChannel newChannel = result.getChannelToPropose();
-    Assert.assertNotNull(newChannel);
-    Assert.assertEquals("IDEA10EAP", newChannel.getId());
-    Assert.assertEquals("IntelliJ IDEA X EAP", newChannel.getName());
+    UpdateChannel newChannel = result.getChannelToPropose();
+    assertNotNull(newChannel);
+    assertEquals("IDEA10EAP", newChannel.getId());
+    assertEquals("IntelliJ IDEA X EAP", newChannel.getName());
   }
 
+  @Test
   public void testChannelWithCurrentStatusPreferred() {
-    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
-
     BuildNumber currentBuild = BuildNumber.fromString("IU-139.658");
-    UpdateStrategy strategy = new UpdateStrategy(14, currentBuild, UpdatesInfoXppParserTest.InfoReader.read("idea-patchAvailable.xml"), settings);
+    TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(14, currentBuild, InfoReader.read("idea-patchAvailable.xml"), settings, customization);
 
-    final CheckForUpdateResult result = strategy.checkForUpdates();
-    Assert.assertEquals(UpdateStrategy.State.LOADED, result.getState());
-    Assert.assertEquals(result.getUpdatedChannel().getStatus(), ChannelStatus.EAP);
-    Assert.assertNotNull(result.getNewBuildInSelectedChannel().findPatchForBuild(currentBuild));
+    CheckForUpdateResult result = strategy.checkForUpdates();
+    assertEquals(UpdateStrategy.State.LOADED, result.getState());
+
+    UpdateChannel channel = result.getUpdatedChannel();
+    assertNotNull(channel);
+    assertEquals(ChannelStatus.EAP, channel.getStatus());
+
+    BuildInfo selectedChannel = result.getNewBuildInSelectedChannel();
+    assertNotNull(selectedChannel);
+    assertNotNull(selectedChannel.findPatchForBuild(currentBuild));
+  }
+
+  private static class TestUpdateSettings implements UserUpdateSettings {
+    private final ChannelStatus myChannelStatus;
+    private final List<String> myIgnoredBuildNumbers;
+    private List<String> myKnownChannelIds = Collections.emptyList();
+
+    public TestUpdateSettings(ChannelStatus channelStatus, String... ignoredBuilds) {
+      myChannelStatus = channelStatus;
+      myIgnoredBuildNumbers = Arrays.asList(ignoredBuilds);
+    }
+
+    @NotNull
+    @Override
+    public List<String> getKnownChannelsIds() {
+      return myKnownChannelIds;
+    }
+
+    @Override
+    public List<String> getIgnoredBuildNumbers() {
+      return myIgnoredBuildNumbers;
+    }
+
+    @Override
+    public void setKnownChannelIds(List<String> ids) {
+      myKnownChannelIds = ids;
+    }
+
+    @NotNull
+    @Override
+    public ChannelStatus getSelectedChannelStatus() {
+      return myChannelStatus;
+    }
   }
 }

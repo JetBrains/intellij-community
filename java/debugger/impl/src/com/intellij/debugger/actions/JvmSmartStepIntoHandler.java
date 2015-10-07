@@ -42,7 +42,7 @@ import java.util.List;
  * Date: 22.11.11
  */
 public abstract class JvmSmartStepIntoHandler {
-  public static ExtensionPointName<JvmSmartStepIntoHandler> EP_NAME = ExtensionPointName.create("com.intellij.debugger.jvmSmartStepIntoHandler");
+  public static final ExtensionPointName<JvmSmartStepIntoHandler> EP_NAME = ExtensionPointName.create("com.intellij.debugger.jvmSmartStepIntoHandler");
 
   @NotNull
   public abstract List<SmartStepTarget> findSmartStepTargets(SourcePosition position);

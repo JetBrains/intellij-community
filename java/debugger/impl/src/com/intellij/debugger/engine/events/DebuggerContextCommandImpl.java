@@ -45,7 +45,7 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
   @Override
   public SuspendContextImpl getSuspendContext() {
     if (myCustomThread != null) {
-      return SuspendManagerUtil.getSuspendingContext(myDebuggerContext.getDebugProcess().getSuspendManager(), myCustomThread);
+      return SuspendManagerUtil.findContextByThread(myDebuggerContext.getDebugProcess().getSuspendManager(), getThread());
     }
     return super.getSuspendContext();
   }
@@ -60,6 +60,12 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
 
   @Override
   public final void contextAction() throws Exception {
+    // with custom thread we have the right context already
+    if (myCustomThread != null) {
+      threadAction();
+      return;
+    }
+
     SuspendManager suspendManager = myDebuggerContext.getDebugProcess().getSuspendManager();
     boolean isSuspendedByContext;
     try {

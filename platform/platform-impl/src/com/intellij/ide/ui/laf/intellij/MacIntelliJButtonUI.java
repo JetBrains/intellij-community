@@ -40,6 +40,10 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
+    if (!(c.getBorder() instanceof MacIntelliJButtonBorder) && !isComboButton(c)) {
+      super.paint(g, c);
+      return;
+    }
     int w = c.getWidth();
     int h = c.getHeight();
     if (isHelpButton(c)) {
@@ -54,10 +58,11 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
       boolean isFocused = c.hasFocus();
       if (isSquare(c)) {
-        g.setColor(Gray.xFF);
-        g.fillRect(1, 1, w - 2, h - 2);
-        g.setColor(Gray.xB4);
-        g.drawRect(1, 1, w - 2, h - 2);
+        Icon icon = MacIntelliJIconCache.getIcon("browseButton");
+        int x = (c.getWidth() - icon.getIconWidth()) / 2;
+        int y = (c.getHeight() - icon.getIconHeight()) / 2;
+        icon.paintIcon(c, g, x, y);
+        return;
       } else {
         int x = isFocused ? 0 : 2;
         int y = isFocused ? 0 : (h - viewRect.height) / 2;
@@ -96,6 +101,10 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     }
   }
 
+  protected static boolean isComboButton(JComponent c) {
+    return c instanceof AbstractButton && c.getClientProperty("styleCombo") == Boolean.TRUE;
+  }
+
   private static Icon getLeftIcon(AbstractButton button) {
     return getIcon("Left", button);
   }
@@ -111,7 +120,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   private static Icon getIcon(String suffix, AbstractButton button) {
     boolean isDefault = isDefaultButton(button);
     boolean isFocused = button.hasFocus();
-    boolean combo = button.getClientProperty("styleCombo") == Boolean.TRUE;
+    boolean combo = isComboButton(button);
     String comboPrefix = combo ? "Combo" : "";
     String iconName = "button" + comboPrefix + suffix;
     return MacIntelliJIconCache.getIcon(iconName, isDefault, isFocused && !combo);
@@ -128,7 +137,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     textRect.x = textRect.y = textRect.width = textRect.height = 0;
     iconRect.x = iconRect.y = iconRect.width = iconRect.height = 0;
 
-    if (b.getClientProperty("styleCombo") == Boolean.TRUE) {
+    if (isComboButton(b)) {
       viewRect.x += 6;
     }
 
@@ -144,7 +153,10 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   @Override
   public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
-    return new Dimension(size.width + 16, 27);
+    if (c.getBorder() instanceof MacIntelliJButtonBorder || isComboButton(c)) {
+      return new Dimension(size.width + (isComboButton(c) ? 8 : 16), 27);
+    }
+    return size;
   }
 
   @Override

@@ -3072,6 +3072,33 @@ public class UIUtil {
     return null;
   }
 
+  public static int getLcdContrastValue() {
+    int lcdContrastValue  = Registry.get("lcd.contrast.value").asInteger();
+
+    // Evaluate the value depending on our current theme
+    if (lcdContrastValue == 0) {
+      if (SystemInfo.isMacIntel64) {
+        lcdContrastValue = isUnderDarcula() ? 140 : 200;
+      } else {
+        Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
+
+        if (map == null) {
+          lcdContrastValue = 140;
+        } else {
+          Object o = map.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
+          lcdContrastValue = (o == null) ? 140 : ((Integer)o);
+        }
+      }
+    }
+
+    if (lcdContrastValue < 100 || lcdContrastValue > 250) {
+      // the default value
+      lcdContrastValue = 140;
+    }
+
+    return lcdContrastValue;
+  }
+
   /**
    * Adds the specified border to the specified component.
    * If the component already has a border it will be preserved.

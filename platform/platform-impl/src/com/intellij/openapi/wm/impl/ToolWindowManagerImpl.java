@@ -1049,11 +1049,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     }
     //todo[kb] it's just a temporary solution due a number of focus issues in JDK 7
-    if (SystemInfo.isJavaVersionAtLeast("1.7")) {
+    if (SystemInfo.isJavaVersionAtLeast("1.7") && moveFocus) {
       if (hasOpenEditorFiles()) {
         activateEditorComponentImpl(commandList, false);
-      }
-      else {
+      } else {
         focusToolWinowByDefault(id);
       }
     }

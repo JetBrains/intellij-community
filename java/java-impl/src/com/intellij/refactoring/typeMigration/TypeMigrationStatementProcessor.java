@@ -219,12 +219,13 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
           myLabeler.markFailedConversion(typePair, qualifierExpression);
         } else {
           final PsiElement parent = Util.getEssentialParent(expression);
+          final PsiType type = conversion.conversionType();
           if (parent instanceof PsiMethodCallExpression) {
             myLabeler.setConversionMapping((PsiMethodCallExpression)parent, conversion);
-            myTypeEvaluator.setType(new TypeMigrationUsageInfo(parent), myTypeEvaluator.evaluateType((PsiExpression)parent));
+            myTypeEvaluator.setType(new TypeMigrationUsageInfo(parent), type != null ? type: myTypeEvaluator.evaluateType((PsiExpression)parent));
           } else {
             myLabeler.setConversionMapping(expression, conversion);
-            myTypeEvaluator.setType(new TypeMigrationUsageInfo(expression), myTypeEvaluator.evaluateType(expression));
+            myTypeEvaluator.setType(new TypeMigrationUsageInfo(expression), type != null ? type: myTypeEvaluator.evaluateType(expression));
           }
         }
       }

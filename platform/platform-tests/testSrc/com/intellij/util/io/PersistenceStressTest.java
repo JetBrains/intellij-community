@@ -15,11 +15,20 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.ide.caches.FileContent;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.project.CacheUpdateRunner;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import junit.framework.TestCase;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -38,7 +47,7 @@ import java.util.concurrent.Future;
 /**
  * @author Dmitry Avdeev
  */
-public class PersistenceStressTest extends TestCase {
+public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public static final Condition<Future<Boolean>> CONDITION = new Condition<Future<Boolean>>() {
     @Override
@@ -83,9 +92,28 @@ public class PersistenceStressTest extends TestCase {
         }
       }
     });
+
+    ArrayList<VirtualFile> files = new ArrayList<>();
+    for (int i = 0; i < 100; i++) {
+      File file = FileUtil.createTempFile("", ".txt");
+      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      assertNotNull(virtualFile);
+      VfsUtil.saveText(virtualFile, "foo bar");
+      files.add(virtualFile);
+    }
+
+    FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     while (ContainerUtil.find(futures, CONDITION) != null) {
       Thread.sleep(100);
-//      System.out.println("Waiting... ");
+      CacheUpdateRunner.processFiles(new EmptyProgressIndicator(), true, files, getProject(), new Consumer<FileContent>() {
+        @Override
+        public void consume(FileContent content) {
+          index.indexFileContent(getProject(), content);
+        }
+      });
+    }
+    for (Future<Boolean> future : futures) {
+      assertTrue(future.get());
     }
   }
 
@@ -95,8 +123,7 @@ public class PersistenceStressTest extends TestCase {
       @Override
       public Boolean call() throws Exception {
         try {
-          doTask(map);
-          return true;
+          return doTask(map);
         }
         catch (IOException e) {
           e.printStackTrace();
@@ -106,25 +133,33 @@ public class PersistenceStressTest extends TestCase {
     });
   }
 
-  protected void doTask(PersistentHashMap<String, Record> map) throws IOException {
+  protected boolean doTask(PersistentHashMap<String, Record> map) throws IOException {
     Random random = new Random();
-    for (int i = 0; i < 100000; i++) {
-      if (random.nextInt(1000) == 1) {
-        map.force();
-        continue;
+    try {
+      for (int i = 0; i < 100000; i++) {
+        if (random.nextInt(1000) == 1) {
+          map.force();
+          continue;
+        }
+        String key = myKeys.get(random.nextInt(myKeys.size()));
+        myEnumerator.enumerate(key);
+        if (random.nextBoolean()) {
+  //        for (int j = 0; j < 10; j++) {
+            map.put(key, new Record(random.nextInt(), new Date()));
+  //        }
+        }
+        else {
+  //        for (int j = 0; j < 10; j++) {
+            map.get(key);
+  //        }
+        }
       }
-      String key = myKeys.get(random.nextInt(myKeys.size()));
-      myEnumerator.enumerate(key);
-      if (random.nextBoolean()) {
-//        for (int j = 0; j < 10; j++) {
-          map.put(key, new Record(random.nextInt(), new Date()));
-//        }
-      }
-      else {
-//        for (int j = 0; j < 10; j++) {
-          map.get(key);
-//        }
-      }
+      System.out.println("Done!");
+      return true;
+    }
+    catch (Throwable e) {
+      e.printStackTrace();
+      return false;
     }
   }
 
@@ -138,14 +173,14 @@ public class PersistenceStressTest extends TestCase {
       String key = new String(bytes, CharsetToolkit.UTF8_CHARSET);
       myKeys.add(key);
     }
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 5; i++) {
       PersistentHashMap<String, Record> map = createMap(FileUtil.createTempFile("persistent", "map" + i));
       myMaps.add(map);
     }
     PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
     myEnumerator = new PersistentStringEnumerator(FileUtil.createTempFile("persistent", "enum"), storageLockContext);
 
-    myThreadPool = Executors.newFixedThreadPool(myMaps.size() + 1);
+    myThreadPool = Executors.newFixedThreadPool(myMaps.size() + 2);
   }
 
   @Override

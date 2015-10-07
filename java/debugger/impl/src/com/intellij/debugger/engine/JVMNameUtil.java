@@ -125,7 +125,7 @@ public class JVMNameUtil {
   }
 
   private static class JVMNameBuffer {
-    List<JVMName> myList = new ArrayList<JVMName>();
+    private final List<JVMName> myList = new ArrayList<JVMName>();
 
     public void append(@NotNull JVMName evaluator){
       myList.add(evaluator);

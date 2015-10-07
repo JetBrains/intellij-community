@@ -59,7 +59,7 @@ import java.util.Set;
  * ProjectRootManager extended with ability to watch events.
  */
 public class ProjectRootManagerComponent extends ProjectRootManagerImpl implements ProjectComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ProjectManagerComponent");
+  private static final Logger LOG = Logger.getInstance(ProjectRootManagerComponent.class);
 
   private boolean myPointerChangesDetected = false;
   private int myInsideRefresh = 0;

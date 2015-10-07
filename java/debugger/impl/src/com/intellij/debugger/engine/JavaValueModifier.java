@@ -18,13 +18,13 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.*;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.impl.watch.*;
@@ -273,7 +273,7 @@ public class JavaValueModifier extends XValueModifier {
     return value;
   }
 
-  private static interface SetValueRunnable {
+  private interface SetValueRunnable {
     void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
                                                                                           InvalidTypeException,
                                                                                           EvaluateException,
@@ -341,10 +341,10 @@ public class JavaValueModifier extends XValueModifier {
       }
 
       public void threadAction() {
-        ExpressionEvaluator evaluator = null;
+        ExpressionEvaluator evaluator;
         try {
           evaluator = DebuggerInvocationUtil
-            .commitAndRunReadAction(evaluationContext.getProject(), new com.intellij.debugger.EvaluatingComputable<ExpressionEvaluator>() {
+            .commitAndRunReadAction(evaluationContext.getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
               public ExpressionEvaluator compute() throws EvaluateException {
                 return EvaluatorBuilderImpl
                   .build(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression), ContextUtil.getContextElement(evaluationContext),
@@ -401,7 +401,7 @@ public class JavaValueModifier extends XValueModifier {
     };
 
     progressWindow.setTitle(DebuggerBundle.message("title.evaluating"));
-    debuggerContext.getDebugProcess().getManagerThread().startProgress(askSetAction, progressWindow);
+    evaluationContext.getDebugProcess().getManagerThread().startProgress(askSetAction, progressWindow);
   }
 
   //private void showEditor(final TextWithImports initialString,
@@ -565,7 +565,7 @@ public class JavaValueModifier extends XValueModifier {
   //  editor.show();
   //}
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings({"HardCodedStringLiteral", "StringToUpperCaseOrToLowerCaseWithoutLocale"})
   private static String getDisplayableString(PrimitiveValue value, boolean showAsHex) {
     if (value instanceof CharValue) {
       long longValue = value.longValue();
@@ -595,7 +595,7 @@ public class JavaValueModifier extends XValueModifier {
       long val = value.longValue();
       return showAsHex ? "0x" + Long.toHexString(val).toUpperCase() + "L" : value.toString() + "L";
     }
-    return DebuggerUtilsEx.translateStringValue(value.toString());
+    return DebuggerUtils.translateStringValue(value.toString());
   }
 
 }

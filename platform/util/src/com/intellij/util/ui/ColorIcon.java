@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -59,7 +60,7 @@ public class ColorIcon extends EmptyIcon {
     g.fillRect(x, y, myColorSize, myColorSize);
     
     if (myBorder) {
-      g.setColor(Color.BLACK);
+      g.setColor(Gray.x00.withAlpha(40));
       g.drawRect(x, y, myColorSize, myColorSize);
     }
   }

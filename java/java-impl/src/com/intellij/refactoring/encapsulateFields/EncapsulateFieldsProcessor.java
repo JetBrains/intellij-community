@@ -340,7 +340,9 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       CommonRefactoringUtil.sortDepthFirstRightLeftOrder(infos);
 
       for (EncapsulateFieldUsageInfo info : infos) {
-        EncapsulateFieldHelper helper = EncapsulateFieldHelper.getHelper(info.getElement().getLanguage());
+        final PsiElement element = info.getElement();
+        if (element == null) continue;
+        EncapsulateFieldHelper helper = EncapsulateFieldHelper.getHelper(element.getLanguage());
         helper.processUsage(info,
                             myDescriptor,
                             myNameToSetter.get(info.getFieldDescriptor().getSetterName()),

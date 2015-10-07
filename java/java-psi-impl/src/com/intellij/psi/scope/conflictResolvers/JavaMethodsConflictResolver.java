@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -687,26 +688,29 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
   private boolean isApplicableTo(@NotNull PsiType[] types2AtSite,
                                  @NotNull PsiMethod method1,
-                                 @NotNull LanguageLevel languageLevel,
+                                 @NotNull final LanguageLevel languageLevel,
                                  boolean varargsPosition,
                                  @NotNull PsiSubstitutor methodSubstitutor1,
-                                 @NotNull PsiMethod method2, 
-                                 PsiSubstitutor siteSubstitutor1) {
+                                 @NotNull PsiMethod method2,
+                                 final PsiSubstitutor siteSubstitutor1) {
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && method1.getTypeParameters().length > 0 && myArgumentsList instanceof PsiExpressionList) {
       final PsiElement parent = myArgumentsList.getParent();
       if (parent instanceof PsiCallExpression) {
         return InferenceSession.isMoreSpecific(method2, method1, siteSubstitutor1,  ((PsiExpressionList)myArgumentsList).getExpressions(), myArgumentsList, varargsPosition);
       }
     }
-    final PsiUtil.ApplicabilityChecker applicabilityChecker = languageLevel.isAtLeast(LanguageLevel.JDK_1_8) 
-    ? new PsiUtil.ApplicabilityChecker() {
+    final PsiUtil.ApplicabilityChecker applicabilityChecker = new PsiUtil.ApplicabilityChecker() {
       @Override
-      public boolean isApplicable(PsiType left, PsiType right,
-                                  boolean allowUncheckedConversion, int argId) {
-        return isTypeMoreSpecific(left, right, argId);
+      public boolean isApplicable(PsiType left, PsiType right, boolean allowUncheckedConversion, int argId) {
+        if (right instanceof PsiClassType) {
+          final PsiClass rightClass = ((PsiClassType)right).resolve();
+          if (rightClass instanceof PsiTypeParameter) {
+            right = new PsiImmediateClassType(rightClass, siteSubstitutor1);
+          }
+        }
+        return languageLevel.isAtLeast(LanguageLevel.JDK_1_8) ? isTypeMoreSpecific(left, right, argId) : TypeConversionUtil.isAssignable(left, right, allowUncheckedConversion);
       }
-    } 
-    : PsiUtil.ApplicabilityChecker.ASSIGNABILITY_CHECKER;
+    };
     final int applicabilityLevel = PsiUtil.getApplicabilityLevel(method1, methodSubstitutor1, types2AtSite, languageLevel, false, varargsPosition, applicabilityChecker);
     return applicabilityLevel > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
   }

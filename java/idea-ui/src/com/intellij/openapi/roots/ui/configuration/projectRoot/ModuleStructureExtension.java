@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 public abstract class ModuleStructureExtension {
 
@@ -45,12 +46,8 @@ public abstract class ModuleStructureExtension {
   public void disposeUIResources() {
   }
 
-  public boolean canBeRemoved(final Object[] editableObjects) {
-    return false;
-  }
-
-  public boolean removeObject(final Object editableObject) {
-    return false;
+  public List<RemoveConfigurableHandler<?>> getRemoveHandlers() {
+    return Collections.emptyList();
   }
 
   public Collection<AnAction> createAddActions(final NullableComputable<MasterDetailsComponent.MyNode> selectedNodeRetriever,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Bas Leijdekkers
+ * Copyright 2003-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,9 +96,8 @@ public class IteratorUtils {
         }
       }
       else {
-        if (!MethodCallUtils.isCallToMethod(expression,
-                                            CommonClassNames.JAVA_UTIL_ITERATOR, null,
-                                            HardcodedMethodConstants.NEXT)) {
+        if (!MethodCallUtils.isCallToMethod(expression, CommonClassNames.JAVA_UTIL_ITERATOR, null, HardcodedMethodConstants.NEXT)
+          && !MethodCallUtils.isCallToMethod(expression, "java.util.ListIterator", null, "previous")) {
           return;
         }
       }

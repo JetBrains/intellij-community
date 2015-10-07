@@ -141,14 +141,11 @@ public class DebuggerTreeNodeExpression {
 
   private static boolean isSuperMethod(PsiMethod superMethod, PsiMethod overridingMethod) {
     PsiMethod[] superMethods = overridingMethod.findSuperMethods();
-      for (int i = 0; i < superMethods.length; i++) {
-        if (superMethods[i] == superMethod) {
-          return true;
-        }
-        else if (isSuperMethod(superMethod, superMethods[i])) {
-          return true;
-        }
+    for (PsiMethod method : superMethods) {
+      if (method == superMethod || isSuperMethod(superMethod, method)) {
+        return true;
       }
+    }
       return false;
     }
 

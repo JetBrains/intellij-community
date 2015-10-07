@@ -808,9 +808,24 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
           return;
         }
         if (HeavyProcessLatch.INSTANCE.isRunning()) {
-          if (myAlarm.isEmpty()) {
-            // wait for heavy processing to stop, re-schedule daemon but not too soon
-            myAlarm.addRequest(myUpdateRunnable, Math.max(mySettings.AUTOREPARSE_DELAY,100));
+          final Disposable removeListenerDisposable = Disposer.newDisposable();
+          Disposer.register(DaemonCodeAnalyzerImpl.this, removeListenerDisposable);
+          // wait for heavy processing to stop, re-schedule daemon but not too soon
+          HeavyProcessLatch.HeavyProcessListener heavyProcessListener = new HeavyProcessLatch.HeavyProcessListener() {
+            @Override
+            public void processStarted() {
+            }
+
+            @Override
+            public void processFinished() {
+              Disposer.dispose(removeListenerDisposable);
+              myAlarm.addRequest(myUpdateRunnable, Math.max(mySettings.AUTOREPARSE_DELAY, 100), ModalityState.NON_MODAL);
+            }
+          };
+          HeavyProcessLatch.INSTANCE.addListener(removeListenerDisposable, heavyProcessListener);
+          if (!HeavyProcessLatch.INSTANCE.isRunning()) {
+            // in case heavy operation finished right before listener added
+            heavyProcessListener.processFinished();
           }
           return;
         }
@@ -820,9 +835,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
           submitPassesRunnable.run();
         }
         else {
-          ((PsiDocumentManagerBase)myPsiDocumentManager).cancelAndRunWhenAllCommitted("start daemon when all committed",
-                                                                                      submitPassesRunnable);
+          ((PsiDocumentManagerBase)myPsiDocumentManager).cancelAndRunWhenAllCommitted("start daemon when all committed", submitPassesRunnable);
         }
+      }
+
+      @Override
+      public String toString() {
+        return "Daemon update runnable";
       }
     };
   }

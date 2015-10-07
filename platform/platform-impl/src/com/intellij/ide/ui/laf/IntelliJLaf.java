@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.MacUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -54,7 +55,7 @@ public class IntelliJLaf extends DarculaLaf {
   }
 
   private static void installMacOSXFonts(UIDefaults defaults) {
-    String face = "HelveticaNeue-CondensedBlack";
+    String face = "HelveticaNeue-Regular";
     LafManagerImpl.initFontDefaults(defaults, face, 13);
     for (Object key : new HashSet<Object>(defaults.keySet())) {
       Object value = defaults.get(key);
@@ -73,6 +74,7 @@ public class IntelliJLaf extends DarculaLaf {
     defaults.put("Menu.font", menuFont);
     defaults.put("MenuItem.font", menuFont);
     defaults.put("MenuItem.acceleratorFont", menuFont);
+    defaults.put("PasswordField.font", defaults.getFont("TextField.font"));
   }
 
   public static boolean isGraphite() {
@@ -83,5 +85,10 @@ public class IntelliJLaf extends DarculaLaf {
     } catch (Exception e) {
       return false;
     }
+  }
+
+  public static Color getSelectedControlColor() {
+    // https://developer.apple.com/library/mac/e/Cocoa/Reference/ApplicationKit/Classes/NSColor_Class/#//apple_ref/occ/clm/NSColor/alternateSelectedControlColor
+    return MacUtil.colorFromNative(Foundation.invoke("NSColor", "alternateSelectedControlColor"));
   }
 }

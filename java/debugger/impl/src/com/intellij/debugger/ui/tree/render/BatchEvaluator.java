@@ -138,8 +138,7 @@ public class BatchEvaluator {
             myBuffer.remove(suspendContext);
 
             if(!doEvaluateBatch(commands, evaluationContext)) {
-              for (Iterator<ToStringCommand> iterator = commands.iterator(); iterator.hasNext();) {
-                ToStringCommand toStringCommand = iterator.next();
+              for (ToStringCommand toStringCommand : commands) {
                 toStringCommand.action();
               }
             }
@@ -170,10 +169,9 @@ public class BatchEvaluator {
     try {
       DebugProcess debugProcess = evaluationContext.getDebugProcess();
       List<Value> values = new ArrayList<Value>();
-      for (Iterator<ToStringCommand> iterator = requests.iterator(); iterator.hasNext();) {
-        ToStringCommand toStringCommand = iterator.next();
-        final Value value = toStringCommand.getValue();
-        values.add(value instanceof ObjectReference? ((ObjectReference)value) : value);
+      for (ToStringCommand toStringCommand : requests) {
+        Value value = toStringCommand.getValue();
+        values.add(value instanceof ObjectReference ? ((ObjectReference)value) : value);
       }
 
       ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UpdatesInfo {
-  @NotNull private final List<Product> myProducts;
+  private final List<Product> myProducts;
 
   public UpdatesInfo(@NotNull Element element) {
     myProducts = new ArrayList<Product>();
@@ -33,9 +33,9 @@ public class UpdatesInfo {
   }
 
   @Nullable
-  public Product getProduct(@NotNull String code){
+  public Product getProduct(@NotNull String code) {
     for (Product product : myProducts) {
-      if (product.hasCode(code)){
+      if (product.hasCode(code)) {
         return product;
       }
     }

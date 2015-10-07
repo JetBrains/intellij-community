@@ -2389,4 +2389,28 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     options.clearVariableDefinitions();
   }
+
+  public void testMethodContentReplacement() {
+    final String in = "class A extends TestCase {\n" +
+                      "  void testOne() {\n" +
+                      "    System.out.println();\n" +
+                      "  }\n" +
+                      "}\n";
+    final String what = "class '_A { void '_b:[regex( test.* )](); }";
+    final String by = "class $A$ {\n  @java.lang.Override void $b$();\n}";
+    assertEquals("class A extends TestCase {\n" +
+                 "  @Override void testOne(){\n" +
+                 "    System.out.println();\n" +
+                 "  }\n" +
+                 "}\n", replacer.testReplace(in, what, by, options));
+
+    final String what2 = "void '_a:[regex( test.* )]();";
+    final String by2 = "@org.junit.Test void $a$();";
+    assertEquals("class A extends TestCase {\n" +
+                 "  @org.junit.Test void testOne(){\n" +
+                 "    System.out.println();\n" +
+                 "  }\n" +
+                 "}\n",
+                 replacer.testReplace(in, what2, by2, options));
+  }
 }

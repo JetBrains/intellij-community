@@ -58,7 +58,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     myPositionManagers.add(0, manager);
   }
 
-  private Cache<Location, SourcePosition> mySourcePositionCache = new Cache<Location, SourcePosition>();
+  private final Cache<Location, SourcePosition> mySourcePositionCache = new Cache<Location, SourcePosition>();
 
   private interface Processor<T> {
     T process(PositionManager positionManager) throws NoDataException;
@@ -84,7 +84,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   public SourcePosition getSourcePosition(final Location location) {
     if (location == null) return null;
     SourcePosition res = mySourcePositionCache.get(location);
-    if (res != null) return res;
+    if (res != null && res.getFile().isValid()) return res;
 
     return iterate(new Processor<SourcePosition>() {
       @Override

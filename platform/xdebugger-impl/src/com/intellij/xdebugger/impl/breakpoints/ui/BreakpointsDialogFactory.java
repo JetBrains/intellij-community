@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class BreakpointsDialogFactory {
 
-  private Project myProject;
+  private final Project myProject;
   private Balloon myBalloonToHide;
   private Object myBreakpoint;
   private BreakpointsDialog myDialogShowing;

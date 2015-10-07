@@ -45,9 +45,9 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
   }
 
   protected BasicStepMethodFilter(@NotNull JVMName declaringClassName,
-                               @NotNull String targetMethodName,
-                               JVMName targetMethodSignature,
-                               Range<Integer> callingExpressionLines) {
+                                  @NotNull String targetMethodName,
+                                  @Nullable JVMName targetMethodSignature,
+                                  Range<Integer> callingExpressionLines) {
     myDeclaringClassName = declaringClassName;
     myTargetMethodName = targetMethodName;
     myTargetMethodSignature = targetMethodSignature;

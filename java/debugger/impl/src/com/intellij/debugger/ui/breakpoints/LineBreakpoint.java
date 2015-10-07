@@ -191,7 +191,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     updateUI();
   }
 
-  private static Pattern ourAnonymousPattern = Pattern.compile(".*\\$\\d*$");
+  private static final Pattern ourAnonymousPattern = Pattern.compile(".*\\$\\d*$");
   private static boolean isAnonymousClass(ReferenceType classType) {
     if (classType instanceof ClassType) {
       return ourAnonymousPattern.matcher(classType.name()).matches();

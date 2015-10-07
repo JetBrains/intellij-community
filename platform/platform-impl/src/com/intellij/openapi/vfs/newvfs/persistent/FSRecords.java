@@ -387,7 +387,7 @@ public class FSRecords implements Forceable {
 
     private static void setupFlushing() {
       myFlushingFuture = FlushingDaemon.everyFiveSeconds(new Runnable() {
-        int lastModCount = 0;
+        private int lastModCount;
 
         @Override
         public void run() {

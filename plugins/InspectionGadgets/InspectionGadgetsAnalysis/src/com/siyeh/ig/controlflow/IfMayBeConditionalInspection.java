@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 Bas Leijdekkers
+ * Copyright 2008-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,6 +190,9 @@ public class IfMayBeConditionalInspection extends BaseInspection {
     @Override
     public void visitIfStatement(PsiIfStatement statement) {
       super.visitIfStatement(statement);
+      if (ControlFlowUtils.isElseIf(statement)) {
+        return;
+      }
       final PsiStatement thenBranch = statement.getThenBranch();
       final PsiStatement elseBranch = statement.getElseBranch();
       final PsiStatement thenStatement = ControlFlowUtils.stripBraces(thenBranch);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,7 @@ public class XSourcePositionImpl implements XSourcePosition {
   }
 
   /**
-   * do not call this method from plugins, use {@link com.intellij.xdebugger.XDebuggerUtil#createPositionByOffset(com.intellij.openapi.vfs.VirtualFile, int)} instead
+   * do not call this method from plugins, use {@link XDebuggerUtil#createPositionByOffset(VirtualFile, int)} instead
    */
   @Nullable
   public static XSourcePositionImpl createByOffset(@Nullable VirtualFile file, final int offset) {
@@ -94,7 +95,7 @@ public class XSourcePositionImpl implements XSourcePosition {
   }
 
   /**
-   * do not call this method from plugins, use {@link com.intellij.xdebugger.XDebuggerUtil#createPosition(com.intellij.openapi.vfs.VirtualFile, int)} instead
+   * do not call this method from plugins, use {@link XDebuggerUtil#createPosition(VirtualFile, int)} instead
    */
   @Nullable
   public static XSourcePositionImpl create(@Nullable VirtualFile file, int line) {

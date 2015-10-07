@@ -118,7 +118,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
         return
       }
 
-      ProgressManager.getInstance().run(object : Task.Modal(null, IcsBundle.message("task.sync.title"), true) {
+      ProgressManager.getInstance().run(object : Task.Modal(null, icsMessage("task.sync.title"), true) {
         override fun run(indicator: ProgressIndicator) {
           indicator.isIndeterminate = true
 

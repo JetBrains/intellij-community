@@ -43,6 +43,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
 
 public class NamedChildrenConfigurable implements UnnamedConfigurable, Disposable {
   private Table myTable;
@@ -53,7 +54,7 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable, Disposabl
   private JButton myButtonRemove;
   private JButton myButtonUp;
   private JButton myButtonDown;
-  private CompletionEditor myCompletionEditor;
+  private final CompletionEditor myCompletionEditor;
 
   public NamedChildrenConfigurable(@NotNull Project project, EnumerationChildrenRenderer renderer) {
     myRenderer = renderer;
@@ -139,7 +140,7 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable, Disposabl
     DefaultTableModel model = getModel();
 
     final int size = model.getRowCount();
-    java.util.List<Pair<String, TextWithImports>> result = new ArrayList<Pair<String, TextWithImports>>();
+    List<Pair<String, TextWithImports>> result = new ArrayList<Pair<String, TextWithImports>>();
 
     for (int idx = 0; idx < size; idx++) {
       result.add(Pair.create((String)model.getValueAt(idx, 0), (TextWithImports)model.getValueAt(idx, 1)));

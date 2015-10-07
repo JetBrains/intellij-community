@@ -19,7 +19,6 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.StackFrameContext;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.SimpleStackFrameContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -215,7 +214,7 @@ public class LocalVariablesUtil {
 
   @NotNull
   private static List<DecompiledLocalVariable> collectVariablesFromBytecode(StackFrameProxyImpl frame,
-                                                                            final MultiMap<Integer, String> namesMap) throws EvaluateException {
+                                                                            final MultiMap<Integer, String> namesMap) {
     if (!frame.getVirtualMachine().canGetBytecodes()) {
       return Collections.emptyList();
     }
@@ -309,22 +308,37 @@ public class LocalVariablesUtil {
     private int myCurrentSlotIndex;
     private final PsiElement myElement;
     private final Stack<Integer> myIndexStack;
+    private boolean myReached = false;
 
     public LocalVariableNameFinder(int startSlot, MultiMap<Integer, String> names, PsiElement element) {
       myNames = names;
       myCurrentSlotIndex = startSlot;
       myElement = element;
       myIndexStack = new Stack<Integer>();
+
     }
 
     private boolean shouldVisit(PsiElement scope) {
-      return PsiTreeUtil.isContextAncestor(scope, myElement, false);
+      return !myReached && PsiTreeUtil.isContextAncestor(scope, myElement, false);
+    }
+
+    @Override
+    public void visitElement(PsiElement element) {
+      if (element == myElement) {
+        myReached = true;
+      }
+      else {
+        super.visitElement(element);
+      }
     }
 
     @Override
     public void visitLocalVariable(PsiLocalVariable variable) {
-      appendName(variable.getName());
-      myCurrentSlotIndex += getTypeSlotSize(variable.getType());
+      super.visitLocalVariable(variable);
+      if (!myReached) {
+        appendName(variable.getName());
+        myCurrentSlotIndex += getTypeSlotSize(variable.getType());
+      }
     }
 
     public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {

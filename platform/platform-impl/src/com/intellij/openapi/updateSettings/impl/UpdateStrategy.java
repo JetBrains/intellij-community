@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,29 +25,40 @@ import java.util.List;
 public class UpdateStrategy {
   public enum State {LOADED, CONNECTION_ERROR, NOTHING_LOADED}
 
-  private UserUpdateSettings myUpdateSettings;
-  private int myMajorVersion;
-  private BuildNumber myCurrentBuild;
+  private final int myMajorVersion;
+  private final BuildNumber myCurrentBuild;
+  private final UpdatesInfo myUpdatesInfo;
+  private final UserUpdateSettings myUpdateSettings;
+  private final ChannelStatus myChannelStatus;
+  private final UpdateStrategyCustomization myStrategyCustomization;
 
-  private ChannelStatus myChannelStatus;
-  private UpdatesInfo myUpdatesInfo;
-
+  /** @deprecated use {@link #UpdateStrategy(int, BuildNumber, UpdatesInfo, UserUpdateSettings, UpdateStrategyCustomization)} */
+  @SuppressWarnings("unused")
   public UpdateStrategy(int majorVersion,
                         @NotNull BuildNumber currentBuild,
                         @NotNull UpdatesInfo updatesInfo,
                         @NotNull UserUpdateSettings updateSettings) {
+    this(majorVersion, currentBuild, updatesInfo, updateSettings, UpdateStrategyCustomization.getInstance());
+  }
+
+  public UpdateStrategy(int majorVersion,
+                        @NotNull BuildNumber currentBuild,
+                        @NotNull UpdatesInfo updatesInfo,
+                        @NotNull UserUpdateSettings updateSettings,
+                        @NotNull UpdateStrategyCustomization customization) {
     myMajorVersion = majorVersion;
+    myCurrentBuild = currentBuild;
     myUpdatesInfo = updatesInfo;
     myUpdateSettings = updateSettings;
-    myCurrentBuild = currentBuild;
     myChannelStatus = updateSettings.getSelectedChannelStatus();
+    myStrategyCustomization = customization;
   }
 
   public final CheckForUpdateResult checkForUpdates() {
-    final Product product = myUpdatesInfo.getProduct(myCurrentBuild.getProductCode());
+    Product product = myUpdatesInfo.getProduct(myCurrentBuild.getProductCode());
 
     if (product == null || product.getChannels().isEmpty()) {
-      return new CheckForUpdateResult(State.NOTHING_LOADED);
+      return new CheckForUpdateResult(State.NOTHING_LOADED, null);
     }
 
     UpdateChannel updatedChannel = null;
@@ -61,58 +72,52 @@ public class UpdateStrategy {
       }
     }
 
-    CheckForUpdateResult result = new CheckForUpdateResult(updatedChannel, newBuild, product.getAllChannelIds());
-
     UpdateChannel channelToPropose = null;
     for (UpdateChannel channel : product.getChannels()) {
       if (!myUpdateSettings.getKnownChannelsIds().contains(channel.getId()) &&
           channel.getMajorVersion() >= myMajorVersion &&
           channel.getStatus().compareTo(myChannelStatus) >= 0 &&
-          hasNewVersion(channel)) {
-        if (channelToPropose == null || isBetter(channelToPropose, channel)) {
-          channelToPropose = channel;
-        }
+          hasNewVersion(channel) &&
+          (channelToPropose == null || isBetter(channelToPropose, channel))) {
+        channelToPropose = channel;
       }
     }
-    result.setChannelToPropose(channelToPropose);
-    return result;
-  }
 
-  private static boolean isBetter(UpdateChannel channelToPropose, UpdateChannel channel) {
-    return channel.getMajorVersion() > channelToPropose.getMajorVersion() ||
-           (channel.getMajorVersion() == channelToPropose.getMajorVersion() &&
-            channel.getStatus().compareTo(channelToPropose.getStatus()) > 0);
+    return new CheckForUpdateResult(newBuild, updatedChannel, channelToPropose, product.getAllChannelIds());
   }
 
   private List<UpdateChannel> getActiveChannels(Product product) {
-    List<UpdateChannel> channels = product.getChannels();
     List<UpdateChannel> result = new ArrayList<UpdateChannel>();
-    for (UpdateChannel channel : channels) {
 
+    for (UpdateChannel channel : product.getChannels()) {
       // If the update is to a new version and on a stabler channel, choose it.
-      if ((channel.getMajorVersion() >= myMajorVersion && channel.getStatus().compareTo(myChannelStatus) >= 0)) {
-        if (UpdateStrategyCustomization.getInstance().allowMajorVersionUpdate()
-            || channel.getMajorVersion() == myMajorVersion
-            || channel.getStatus() == ChannelStatus.EAP && myChannelStatus == ChannelStatus.EAP) {
-          // Prefer channel that has same status as our selected channel status
-          if (channel.getMajorVersion() == myMajorVersion && channel.getStatus().compareTo(myChannelStatus) == 0) {
-            result.add(0, channel);
-          }
-          else {
-            result.add(channel);
-          }
+      if ((channel.getMajorVersion() >= myMajorVersion && channel.getStatus().compareTo(myChannelStatus) >= 0) &&
+          (myStrategyCustomization.allowMajorVersionUpdate() ||
+           channel.getMajorVersion() == myMajorVersion ||
+           channel.getStatus() == ChannelStatus.EAP && myChannelStatus == ChannelStatus.EAP)) {
+        // Prefer channel that has same status as our selected channel status
+        if (channel.getMajorVersion() == myMajorVersion && channel.getStatus().compareTo(myChannelStatus) == 0) {
+          result.add(0, channel);
+        }
+        else {
+          result.add(channel);
         }
       }
     }
+
     return result;
   }
 
   private boolean hasNewVersion(@NotNull UpdateChannel channel) {
     BuildInfo latestBuild = channel.getLatestBuild();
-    if (latestBuild == null || latestBuild.getNumber() == null ||
-        myUpdateSettings.getIgnoredBuildNumbers().contains(latestBuild.getNumber().asStringWithoutProductCode())) {
-      return false;
-    }
-    return myCurrentBuild.compareTo(latestBuild.getNumber()) < 0;
+    return latestBuild != null &&
+           latestBuild.getNumber() != null &&
+           !myUpdateSettings.getIgnoredBuildNumbers().contains(latestBuild.getNumber().asStringWithoutProductCode()) &&
+           myCurrentBuild.compareTo(latestBuild.getNumber()) < 0;
+  }
+
+  private static boolean isBetter(UpdateChannel channelToPropose, UpdateChannel channel) {
+    return channel.getMajorVersion() > channelToPropose.getMajorVersion() ||
+           channel.getMajorVersion() == channelToPropose.getMajorVersion() && channel.getStatus().compareTo(channelToPropose.getStatus()) > 0;
   }
 }

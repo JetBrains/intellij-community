@@ -21,6 +21,7 @@ import java.util.Set;
  * User : ktisha
  */
 public class SimpleDuplicatesFinder {
+  protected PsiElement myReplacement;
   private final ArrayList<PsiElement> myPattern;
   private final Set<String> myParameters;
   public static final Key<PsiElement> PARAMETER = Key.create("PARAMETER");
@@ -100,6 +101,7 @@ public class SimpleDuplicatesFinder {
 
   @Nullable
   protected SimpleMatch isDuplicateFragment(@NotNull final PsiElement candidate) {
+    if (!canReplace(myReplacement, candidate)) return null;
     for (PsiElement pattern : myPattern) {
       if (PsiTreeUtil.isAncestor(pattern, candidate, false)) return null;
     }
@@ -157,6 +159,14 @@ public class SimpleDuplicatesFinder {
     }
 
     return true;
+  }
+
+  protected boolean canReplace(PsiElement replacement, PsiElement element) {
+    return !PsiTreeUtil.isAncestor(replacement, element, false);
+  }
+
+  public void setReplacement(PsiElement replacement) {
+    myReplacement = replacement;
   }
 
 }

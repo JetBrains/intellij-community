@@ -25,6 +25,7 @@ import com.intellij.diff.tools.holders.BinaryEditorHolder;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.StatusPanel;
 import com.intellij.diff.tools.util.side.TwosideDiffViewer;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -157,7 +158,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       setCurrentSide(getCurrentSide().other());
-      myContext.requestFocus();
+      DiffUtil.requestFocus(getProject(), getPreferredFocusedComponent());
     }
   }
 }

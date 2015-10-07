@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,20 +29,18 @@ public class AutoRendererAction extends AnAction{
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
 
-    if(debuggerContext != null) {
-      final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-      if(debugProcess != null) {
-        final List<JavaValue> selectedValues = ViewAsGroup.getSelectedValues(e);
-        if (!selectedValues.isEmpty()) {
-          debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
-              public void threadAction() {
-                for (JavaValue selectedValue : selectedValues) {
-                  selectedValue.getDescriptor().setRenderer(null);
-                }
-                DebuggerAction.refreshViews(e);
+    final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
+    if(debugProcess != null) {
+      final List<JavaValue> selectedValues = ViewAsGroup.getSelectedValues(e);
+      if (!selectedValues.isEmpty()) {
+        debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+            public void threadAction() {
+              for (JavaValue selectedValue : selectedValues) {
+                selectedValue.getDescriptor().setRenderer(null);
               }
-            });
-        }
+              DebuggerAction.refreshViews(e);
+            }
+          });
       }
     }
   }

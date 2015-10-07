@@ -21,6 +21,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -81,6 +82,21 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
   }
 
   @Override
+  protected LayoutManager createLayout() {
+    return new LayoutManagerDelegate(super.createLayout()) {
+      @Override
+      public Dimension preferredLayoutSize(Container parent) {
+        return toConstantHeight(super.preferredLayoutSize(parent), 26);
+      }
+
+      @Override
+      public Dimension minimumLayoutSize(Container parent) {
+        return toConstantHeight(super.minimumLayoutSize(parent), 26);
+      }
+    };
+  }
+
+  @Override
   protected void layoutEditor(@NotNull JComponent editor) {
     int w = spinner.getWidth();
     int h = spinner.getHeight();
@@ -88,14 +104,22 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
     editor.setBounds(insets.left + 5, insets.top + 5, w - 5 - 26 - insets.width(), h - insets.height() - 10);
   }
 
+  private static Dimension toConstantHeight(@Nullable Dimension size, int height) {
+    return size == null ? null : new Dimension(size.width, height);
+  }
+
   @Override
   public Dimension getPreferredSize(JComponent c) {
-    Dimension size = super.getPreferredSize(c);
-    if (size != null) {
-      size = new Dimension(size.width, 26);
-    } else {
-      return new Dimension(-1, 26);
-    }
-    return size;
+    return toConstantHeight(super.getPreferredSize(c), 26);
+  }
+
+  @Override
+  public Dimension getMinimumSize(JComponent c) {
+    return toConstantHeight(super.getMinimumSize(c), 26);
+  }
+
+  @Override
+  public Dimension getMaximumSize(JComponent c) {
+    return toConstantHeight(super.getMaximumSize(c), 26);
   }
 }

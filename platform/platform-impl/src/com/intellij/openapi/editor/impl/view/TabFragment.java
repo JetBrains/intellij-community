@@ -51,16 +51,6 @@ class TabFragment implements LineFragment {
   }
 
   @Override
-  public int offsetToLogicalColumn(int startColumn, int offset) {
-    return startColumn + (offset == 0 ? 0 : getLogicalColumnCount(startColumn));
-  }
-
-  @Override
-  public int logicalColumnToOffset(int startColumn, int column) {
-    return column < (startColumn + getLogicalColumnCount(startColumn)) ? 0 : 1;
-  }
-
-  @Override
   public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
   }
 

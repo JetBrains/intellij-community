@@ -480,6 +480,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
     VerticalInfo oldInfo = myCaretInfo;
     LogicalPosition oldCaretPosition = myLogicalCaret;
+    VisualPosition oldVisualPosition = myVisibleCaret;
 
     LogicalPosition logicalPositionToUse;
     if (pos.visualPositionAware) {
@@ -566,7 +567,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
       }
     }
 
-    if (!oldCaretPosition.toVisualPosition().equals(myLogicalCaret.toVisualPosition())) {
+    if (myEditor.myUseNewRendering ? !oldVisualPosition.equals(myVisibleCaret) : 
+        !oldCaretPosition.toVisualPosition().equals(myLogicalCaret.toVisualPosition())) {
       CaretEvent event = new CaretEvent(myEditor, this, oldCaretPosition, myLogicalCaret);
       if (fireListeners) {
         myEditor.getCaretModel().fireCaretPositionChanged(event);

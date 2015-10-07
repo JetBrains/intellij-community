@@ -111,7 +111,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   /**
-   * use {@link com.intellij.debugger.ui.tree.render.NodeRenderer} extension
+   * use {@link NodeRenderer} extension
    * @param renderer
    */
   @Deprecated

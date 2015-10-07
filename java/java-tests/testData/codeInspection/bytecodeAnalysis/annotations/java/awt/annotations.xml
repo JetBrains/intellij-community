@@ -1,1060 +1,520 @@
 <root>
-  <item name="java.awt.Component boolean action(java.awt.Event, java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean action(java.awt.Event, java.lang.Object) 1">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean action(java.awt.Event, java.lang.Object)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="value=&quot;!null,_-&gt;false;_,!null-&gt;false;_,null-&gt;false;null,_-&gt;false&quot;,pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean areInputMethodsEnabled()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean contains(java.awt.Point) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component boolean dispatchMouseWheelToAncestor(java.awt.event.MouseWheelEvent) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component boolean dispatchMouseWheelToAncestor(java.awt.event.MouseWheelEvent)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;true&quot;"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean eventEnabled(java.awt.AWTEvent) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component boolean eventTypeEnabled(int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean getFocusTraversalKeysEnabled()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean getIgnoreRepaint()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean gotFocus(java.awt.Event, java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean gotFocus(java.awt.Event, java.lang.Object) 1">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean gotFocus(java.awt.Event, java.lang.Object)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="value=&quot;!null,_-&gt;false;_,!null-&gt;false;_,null-&gt;false;null,_-&gt;false&quot;,pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean handleEvent(java.awt.Event) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component boolean imageUpdate(java.awt.Image, int, int, int, int, int) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean inside(int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean isBackgroundSet()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean isCursorSet()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean isDoubleBuffered()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean isEnabled()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean isEnabledImpl()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean isFocusCycleRoot(java.awt.Container) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean isFocusTraversableOverridden()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean isFontSet()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean isForegroundSet()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean isMaximumSizeSet()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean isMinimumSizeSet()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean isPreferredSizeSet()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean isSameOrAncestorOf(java.awt.Component, boolean) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean isSameOrAncestorOf(java.awt.Component, boolean)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean isValid()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean isVisible()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean keyDown(java.awt.Event, int) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean keyDown(java.awt.Event, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="value=&quot;!null,_-&gt;false;null,_-&gt;false&quot;,pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean keyUp(java.awt.Event, int) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean keyUp(java.awt.Event, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="value=&quot;!null,_-&gt;false;null,_-&gt;false&quot;,pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean lostFocus(java.awt.Event, java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean lostFocus(java.awt.Event, java.lang.Object) 1">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean lostFocus(java.awt.Event, java.lang.Object)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="value=&quot;!null,_-&gt;false;_,!null-&gt;false;_,null-&gt;false;null,_-&gt;false&quot;,pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean mouseDown(java.awt.Event, int, int) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean mouseDown(java.awt.Event, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="value=&quot;!null,_,_-&gt;false;null,_,_-&gt;false&quot;,pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean mouseDrag(java.awt.Event, int, int) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean mouseDrag(java.awt.Event, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="value=&quot;!null,_,_-&gt;false;null,_,_-&gt;false&quot;,pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean mouseEnter(java.awt.Event, int, int) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean mouseEnter(java.awt.Event, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="value=&quot;!null,_,_-&gt;false;null,_,_-&gt;false&quot;,pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean mouseExit(java.awt.Event, int, int) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean mouseExit(java.awt.Event, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="value=&quot;!null,_,_-&gt;false;null,_,_-&gt;false&quot;,pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean mouseMove(java.awt.Event, int, int) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean mouseMove(java.awt.Event, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="value=&quot;!null,_,_-&gt;false;null,_,_-&gt;false&quot;,pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean mouseUp(java.awt.Event, int, int) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component boolean mouseUp(java.awt.Event, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="value=&quot;!null,_,_-&gt;false;null,_,_-&gt;false&quot;,pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component boolean postEvent(java.awt.Event) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component boolean postsOldMouseEvents()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component float getAlignmentX()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component float getAlignmentY()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component int countHierarchyMembers()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component int getBoundsOp()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component int getHeight()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component int getWidth()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component int getX()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component int getY()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component int numListening(long)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component java.awt.AWTEvent coalesceEvents(java.awt.AWTEvent, java.awt.AWTEvent) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component java.awt.AWTEvent coalesceEvents(java.awt.AWTEvent, java.awt.AWTEvent)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null-&gt;null&quot;"/>
-    </annotation>
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.Color getBackground()">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.Color getForeground()">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.Component findUnderMouseInWindow(java.awt.PointerInfo)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;null&quot;"/>
-    </annotation>
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.Component getComponentAt(int, int)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.Component getComponentAt(java.awt.Point) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component java.awt.Component getComponentAt(java.awt.Point)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.Component locate(int, int)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.ComponentOrientation getComponentOrientation()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component java.awt.Container getParent()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component java.awt.Container getParent_NoClientCode()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component java.awt.Dimension getMaximumSize()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component java.awt.Dimension getSize(java.awt.Dimension) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.Dimension getSize(java.awt.Dimension)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component java.awt.Dimension minimumSize()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component java.awt.Dimension preferredSize()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component java.awt.Dimension size()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component java.awt.Font getFont()">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.Font getFont_NoClientCode()">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.Graphics getGraphics()">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.GraphicsConfiguration getGraphicsConfiguration()">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.Image createImage(int, int)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.Image getBackBuffer()">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.Point getLocation(java.awt.Point) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.Point getLocation(java.awt.Point)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component java.awt.Point getMousePosition()">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.Point location()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component java.awt.Point pointRelativeToComponent(java.awt.Point) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component java.awt.Point pointRelativeToComponent(java.awt.Point)">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component java.awt.Rectangle bounds()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component java.awt.Rectangle getBounds(java.awt.Rectangle) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.Rectangle getBounds(java.awt.Rectangle)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component java.awt.Window getContainingWindow(java.awt.Component)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;null&quot;"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component java.awt.dnd.DropTarget getDropTarget()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component java.awt.im.InputContext getInputContext()">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.im.InputMethodRequests getInputMethodRequests()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.image.VolatileImage createVolatileImage(int, int)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.image.VolatileImage createVolatileImage(int, int, java.awt.ImageCapabilities) 2">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.image.VolatileImage createVolatileImage(int, int, java.awt.ImageCapabilities)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.awt.peer.ComponentPeer getPeer()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component java.lang.Object getTreeLock()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component java.lang.String constructComponentName()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component java.lang.String paramString()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component java.lang.String toString()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component javax.accessibility.AccessibleContext getAccessibleContext()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component javax.accessibility.AccessibleStateSet getAccessibleStateSet()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component void add(java.awt.PopupMenu) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component void addComponentListener(java.awt.event.ComponentListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void addFocusListener(java.awt.event.FocusListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void addHierarchyBoundsListener(java.awt.event.HierarchyBoundsListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void addHierarchyListener(java.awt.event.HierarchyListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void addInputMethodListener(java.awt.event.InputMethodListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void addKeyListener(java.awt.event.KeyListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void addMouseListener(java.awt.event.MouseListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void addMouseMotionListener(java.awt.event.MouseMotionListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void addMouseWheelListener(java.awt.event.MouseWheelListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void addPropertyChangeListener(java.beans.PropertyChangeListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 1">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void applyComponentOrientation(java.awt.ComponentOrientation) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component void autoProcessMouseWheel(java.awt.event.MouseWheelEvent) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void autoProcessMouseWheel(java.awt.event.MouseWheelEvent)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component void checkGD(java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void clearCurrentFocusCycleRootOnHide()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component void createBufferStrategy(int, java.awt.BufferCapabilities) 1">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component void createChildHierarchyEvents(int, long, boolean)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component void dispatchEventImpl(java.awt.AWTEvent) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component void layout()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component void list(java.io.PrintStream, int) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component void list(java.io.PrintWriter, int) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component void paint(java.awt.Graphics) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void paint(java.awt.Graphics)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component void paintHeavyweightComponents(java.awt.Graphics) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void paintHeavyweightComponents(java.awt.Graphics)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component void printHeavyweightComponents(java.awt.Graphics) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void printHeavyweightComponents(java.awt.Graphics)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component void processEvent(java.awt.AWTEvent) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void readObject(java.io.ObjectInputStream) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component void removeComponentListener(java.awt.event.ComponentListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void removeFocusListener(java.awt.event.FocusListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void removeHierarchyBoundsListener(java.awt.event.HierarchyBoundsListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void removeHierarchyListener(java.awt.event.HierarchyListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void removeInputMethodListener(java.awt.event.InputMethodListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void removeKeyListener(java.awt.event.KeyListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void removeMouseListener(java.awt.event.MouseListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void removeMouseMotionListener(java.awt.event.MouseMotionListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void removeMouseWheelListener(java.awt.event.MouseWheelListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void removePropertyChangeListener(java.beans.PropertyChangeListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void removePropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 1">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Component void resize(java.awt.Dimension) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component void setBounds(java.awt.Rectangle) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component void setLocation(java.awt.Point) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component void writeObject(java.io.ObjectOutputStream) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component.FlipBufferStrategy FlipBufferStrategy(java.awt.Component, int, java.awt.BufferCapabilities) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Component.FlipBufferStrategy boolean contentsRestored()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component.FlipBufferStrategy java.awt.BufferCapabilities getCapabilities()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Component.FlipBufferStrategy void createBuffers(int, java.awt.BufferCapabilities) 1">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container boolean eventEnabled(java.awt.AWTEvent) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container boolean isAncestorOf(java.awt.Component) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container boolean isAncestorOf(java.awt.Component)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;false&quot;"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Container boolean isFocusCycleRoot()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Container boolean isFocusCycleRoot(java.awt.Container) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container boolean isFocusTraversalPolicyProvider()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Container boolean isFocusTraversalPolicySet()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Container boolean isRemoveNotifyNeeded(java.awt.Component, java.awt.Container, java.awt.Container) 1">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container boolean isRemoveNotifyNeeded(java.awt.Component, java.awt.Container, java.awt.Container)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,_,null-&gt;false;_,null,_-&gt;false;null,_,_-&gt;false&quot;"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Container boolean postsOldMouseEvents()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Container int countComponents()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Container int countHierarchyMembers()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Container int getComponentZOrder(java.awt.Component) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container int numListening(long)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Container java.awt.Component add(java.awt.Component)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Container java.awt.Component add(java.awt.Component, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Container java.awt.Component add(java.lang.String, java.awt.Component)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Container java.awt.Component findComponentAt(int, int)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container java.awt.Component findComponentAt(int, int, boolean)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container java.awt.Component findComponentAt(java.awt.Point) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container java.awt.Component findComponentAt(java.awt.Point)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container java.awt.Component findComponentAtImpl(int, int, boolean)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container java.awt.Component getComponentAt(int, int)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container java.awt.Component getComponentAt(java.awt.Point) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container java.awt.Component getComponentAt(java.awt.Point)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container java.awt.Component getMouseEventTargetImpl(int, int, boolean, java.awt.Container.EventTargetFilter, boolean, boolean)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container java.awt.Component locate(int, int)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container java.awt.Component[] getComponents()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container java.awt.Component[] getComponents_NoClientCode()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container java.awt.FocusTraversalPolicy getFocusTraversalPolicy()">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container java.awt.LayoutManager getLayout()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Container java.awt.Point getMousePosition(boolean)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container java.lang.String paramString()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container javax.accessibility.Accessible getAccessibleAt(java.awt.Point)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container javax.accessibility.Accessible getAccessibleChild(int)">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container void addContainerListener(java.awt.event.ContainerListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container void addDelicately(java.awt.Component, java.awt.Container, int) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container void addImpl(java.awt.Component, java.lang.Object, int) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container void addPropertyChangeListener(java.beans.PropertyChangeListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container void addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 1">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container void applyComponentOrientation(java.awt.ComponentOrientation) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container void checkAdding(java.awt.Component, int) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container void deliverEvent(java.awt.Event) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container void dispatchEventImpl(java.awt.AWTEvent) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container void dispatchEventToSelf(java.awt.AWTEvent) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container void list(java.io.PrintStream, int) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container void list(java.io.PrintWriter, int) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container void processEvent(java.awt.AWTEvent) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container void readObject(java.io.ObjectInputStream) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container void remove(java.awt.Component) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container void removeContainerListener(java.awt.event.ContainerListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container void removeDelicately(java.awt.Component, java.awt.Container, int) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container void reparentChild(java.awt.Component) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Container void reparentTraverse(java.awt.peer.ContainerPeer, java.awt.Container) 1">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container void setComponentZOrder(java.awt.Component, int) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container void writeObject(java.io.ObjectOutputStream) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Dimension Dimension(java.awt.Dimension) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Dimension boolean equals(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Dimension boolean equals(java.lang.Object)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="value=&quot;null-&gt;false&quot;,pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Dimension double getHeight()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Dimension double getWidth()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Dimension int hashCode()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Dimension java.awt.Dimension getSize()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Dimension java.lang.String toString()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Dimension void setSize(java.awt.Dimension) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Frame boolean isResizable()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Frame boolean isUndecorated()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Frame java.awt.Image getIconImage()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Frame java.awt.MenuBar getMenuBar()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Frame java.awt.Rectangle getMaximizedBounds()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Frame java.lang.String constructComponentName()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Frame java.lang.String getTitle()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Frame void init(java.lang.String, java.awt.GraphicsConfiguration) 1">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Frame void readObject(java.io.ObjectInputStream) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Frame void writeObject(java.io.ObjectOutputStream) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Window Window(java.awt.Frame) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Window Window(java.awt.Window) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Window Window(java.awt.Window, java.awt.GraphicsConfiguration) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Window boolean dispatchMouseWheelToAncestor(java.awt.event.MouseWheelEvent) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window boolean dispatchMouseWheelToAncestor(java.awt.event.MouseWheelEvent)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="value=&quot;!null-&gt;false;null-&gt;false&quot;,pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Window boolean eventEnabled(java.awt.AWTEvent) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Window boolean getFocusableWindowState()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Window boolean isAlwaysOnTop()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Window boolean isFocusCycleRoot()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Window boolean isShowing()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Window boolean postEvent(java.awt.Event)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null-&gt;false&quot;"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Window java.awt.Component getFocusOwner()">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window java.awt.Component getMostRecentFocusOwner()">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window java.awt.Component getTemporaryLostComponent()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Window java.awt.Container getFocusCycleRootAncestor()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window java.awt.Window getOwner()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Window java.lang.Object access$000(java.awt.Window) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Window java.lang.Object access$000(java.awt.Window)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Window java.lang.String constructComponentName()">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Window java.lang.String getWarningString()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Window void addOwnedWindow(java.lang.ref.WeakReference) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window void addPropertyChangeListener(java.beans.PropertyChangeListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window void addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 1">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window void addWindowFocusListener(java.awt.event.WindowFocusListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window void addWindowListener(java.awt.event.WindowListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window void addWindowStateListener(java.awt.event.WindowStateListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window void adjustDecendantsOnParent(int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Window void adjustListeningChildrenOnParent(long, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Window void clearMostRecentFocusOwnerOnHide()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Window void connectOwnedWindow(java.awt.Window) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Window void deliverMouseWheelToAncestor(java.awt.event.MouseWheelEvent) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window void deliverMouseWheelToAncestor(java.awt.event.MouseWheelEvent)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Window void dispatchEventImpl(java.awt.AWTEvent) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Window void ownedInit(java.awt.Window) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Window void postProcessKeyEvent(java.awt.event.KeyEvent) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window void postProcessKeyEvent(java.awt.event.KeyEvent)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Window void preProcessKeyEvent(java.awt.event.KeyEvent) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Window void processEvent(java.awt.AWTEvent) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window void readObject(java.io.ObjectInputStream) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Window void removeOwnedWindow(java.lang.ref.WeakReference) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window void removeWindowFocusListener(java.awt.event.WindowFocusListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window void removeWindowListener(java.awt.event.WindowListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window void removeWindowStateListener(java.awt.event.WindowStateListener) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window void setCursor(java.awt.Cursor) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="java.awt.Window void setFocusCycleRoot(boolean)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.awt.Window void writeObject(java.io.ObjectOutputStream) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
+    <item name='java.awt.Component boolean areInputMethodsEnabled()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean eventTypeEnabled(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean getFocusTraversalKeysEnabled()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean getIgnoreRepaint()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean inside(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean isBackgroundSet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean isCursorSet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean isDoubleBuffered()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean isEnabled()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean isEnabledImpl()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean isFocusCycleRoot(java.awt.Container) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Component boolean isFocusTraversableOverridden()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean isFontSet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean isForegroundSet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean isMaximumSizeSet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean isMinimumSizeSet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean isPreferredSizeSet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean isSameOrAncestorOf(java.awt.Component, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean isSameOrAncestorOf(java.awt.Component, boolean) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Component boolean isValid()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean isVisible()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component boolean postsOldMouseEvents()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component float getAlignmentX()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component float getAlignmentY()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component int countHierarchyMembers()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component int getBoundsOp()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component int getHeight()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component int getWidth()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component int getX()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component int getY()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component int numListening(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component java.awt.Component getComponentAt(int, int)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Component java.awt.Component locate(int, int)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Component java.awt.Container getParent()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component java.awt.Container getParent_NoClientCode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component java.awt.Dimension getMaximumSize()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Component java.awt.Dimension getSize(java.awt.Dimension)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component java.awt.Dimension getSize(java.awt.Dimension) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Component java.awt.Dimension minimumSize()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Component java.awt.Dimension preferredSize()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Component java.awt.Dimension size()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Component java.awt.Window getContainingWindow(java.awt.Component)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null-&gt;null&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component java.lang.Object getTreeLock()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component java.lang.String constructComponentName()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Component java.lang.String paramString()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Component java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Component void checkGD(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Component void clearCurrentFocusCycleRootOnHide()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component void createChildHierarchyEvents(int, long, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component void layout()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Component void list(java.io.PrintStream, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Component void readObject(java.io.ObjectInputStream) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Component void resize(java.awt.Dimension) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Component void writeObject(java.io.ObjectOutputStream) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Component.FlipBufferStrategy boolean contentsRestored()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Container boolean isAncestorOf(java.awt.Component)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null-&gt;false&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Container boolean isAncestorOf(java.awt.Component) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Container boolean isFocusCycleRoot()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Container boolean isFocusCycleRoot(java.awt.Container) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Container boolean isFocusTraversalPolicyProvider()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Container boolean isFocusTraversalPolicySet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Container boolean isRemoveNotifyNeeded(java.awt.Component, java.awt.Container, java.awt.Container)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,null-&gt;false;_,null,_-&gt;false;null,_,_-&gt;false&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Container boolean isRemoveNotifyNeeded(java.awt.Component, java.awt.Container, java.awt.Container) 1'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Container boolean postsOldMouseEvents()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Container int countComponents()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Container int countHierarchyMembers()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Container int getComponentZOrder(java.awt.Component) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Container int numListening(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Container java.awt.Component add(java.awt.Component)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Container java.awt.Component add(java.awt.Component, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Container java.awt.Component add(java.lang.String, java.awt.Component)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Container java.awt.Component findComponentAt(int, int)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Container java.awt.Component findComponentAt(int, int, boolean)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Container java.awt.Component findComponentAtImpl(int, int, boolean)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Container java.awt.Component getComponentAt(int, int)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Container java.awt.Component locate(int, int)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Container java.awt.Component[] getComponents()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Container java.awt.Component[] getComponents_NoClientCode()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Container java.lang.String paramString()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Container void addDelicately(java.awt.Component, java.awt.Container, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Container void addImpl(java.awt.Component, java.lang.Object, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Container void checkAdding(java.awt.Component, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Container void list(java.io.PrintStream, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Container void readObject(java.io.ObjectInputStream) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Container void remove(java.awt.Component) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Container void removeDelicately(java.awt.Component, java.awt.Container, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Container void reparentChild(java.awt.Component) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Container void setComponentZOrder(java.awt.Component, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Container void writeObject(java.io.ObjectOutputStream) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Dimension Dimension(java.awt.Dimension) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Dimension boolean equals(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null-&gt;false&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Dimension boolean equals(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Dimension double getHeight()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Dimension double getWidth()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Dimension int hashCode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Dimension java.awt.Dimension getSize()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Dimension java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Dimension void setSize(java.awt.Dimension) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Frame boolean isResizable()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Frame boolean isUndecorated()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Frame java.lang.String constructComponentName()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Frame java.lang.String getTitle()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Frame void readObject(java.io.ObjectInputStream) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Frame void writeObject(java.io.ObjectOutputStream) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Window Window(java.awt.Frame) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Window Window(java.awt.Window) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Window boolean getFocusableWindowState()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Window boolean isAlwaysOnTop()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Window boolean isFocusCycleRoot()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Window boolean isShowing()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Window java.awt.Component getFocusOwner()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Window java.awt.Component getMostRecentFocusOwner()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Window java.awt.Component getTemporaryLostComponent()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Window java.awt.Container getFocusCycleRootAncestor()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.awt.Window java.awt.Window getOwner()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Window java.lang.String constructComponentName()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Window java.lang.String getWarningString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Window void adjustDecendantsOnParent(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Window void adjustListeningChildrenOnParent(long, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Window void clearMostRecentFocusOwnerOnHide()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Window void connectOwnedWindow(java.awt.Window) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Window void ownedInit(java.awt.Window) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Window void readObject(java.io.ObjectInputStream) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.Window void setFocusCycleRoot(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Window void writeObject(java.io.ObjectOutputStream) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
 </root>

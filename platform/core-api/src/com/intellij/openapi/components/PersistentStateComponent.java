@@ -15,29 +15,30 @@
  */
 package com.intellij.openapi.components;
 
-import com.intellij.util.xmlb.XmlSerializer;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Every component which would like to persist its state across IDEA restarts
  * should implement this interface.
  *
- * See <a href="http://confluence.jetbrains.net/display/IDEADEV/Persisting+State+of+Components">JetBrains WIKI</a>
+ * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html">IntelliJ Platform SDK DevGuide</a>
  * for detailed description.
+ *
+ * In general, implementation should be thread-safe, because "loadState" is called from the same thread where component is initialized.
+ * If component used only from one thread (e.g. EDT), thread-safe implementation is not required.
  */
 public interface PersistentStateComponent<T> {
   /**
-   * @return a component state. All properties and public fields are serialized. Only values, which differ
+   * @return a component state. All properties, public and annotated fields are serialized. Only values, which differ
    * from default (i.e. the value of newly instantiated class) are serialized. <code>null</code> value indicates
-   * that no state should be stored
-   * @see XmlSerializer
+   * that no state should be stored.
+   * @see com.intellij.util.xmlb.XmlSerializer
    */
   @Nullable
   T getState();
 
   /**
-   * This method is called when new component state is loaded. A component should expect this method
-   * to be called at any moment of its lifecycle. The method can and will be called several times, if
+   * This method is called when new component state is loaded. The method can and will be called several times, if
    * config files were externally changed while IDEA running.
    * @param state loaded component state
    * @see com.intellij.util.xmlb.XmlSerializerUtil#copyBean(Object, Object) 

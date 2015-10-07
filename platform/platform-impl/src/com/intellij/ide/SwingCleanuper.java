@@ -237,6 +237,10 @@ public final class SwingCleanuper implements ApplicationComponent{
 
   private static boolean isCAccessible(Object resource) {
     final String name = resource.getClass().getName();
+    return isCAccessible(name);
+  }
+
+  static boolean isCAccessible(String name) {
     return name.equals("apple.awt.CAccessible") || name.equals("sun.lwawt.macosx.CAccessible");
   }
 

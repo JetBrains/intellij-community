@@ -188,7 +188,7 @@ public class ToolkitBugsProcessor {
     @Override
     public boolean process(Throwable e, StackTraceElement[] stack) {
       if (e instanceof NullPointerException && stack.length > 1) {
-        return stack[0].getClassName().equals("apple.awt.CAccessible") && stack[0].getMethodName().equals("getAccessibleContext");
+        return SwingCleanuper.isCAccessible(stack[0].getClassName()) && stack[0].getMethodName().equals("getAccessibleContext");
       }
       return false;
     }
