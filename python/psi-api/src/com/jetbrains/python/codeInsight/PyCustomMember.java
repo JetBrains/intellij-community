@@ -171,7 +171,7 @@ public class PyCustomMember {
     }
 
     PyClass targetClass = null;
-    if (myTypeName != null && myTypeName.indexOf('.') > 0) {
+    if (myTypeName != null) {
       targetClass = PyPsiFacade.getInstance(context.getProject()).createClassByQName(myTypeName, context);
     }
     final PsiElement resolveTarget = findResolveTarget(context);
