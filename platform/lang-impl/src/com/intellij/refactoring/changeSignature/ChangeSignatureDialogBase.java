@@ -19,7 +19,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -607,10 +606,11 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
           public void run() {
             updateSignatureAlarmFired();
           }
-        }, 100);
+        }, 100, ModalityState.stateForComponent(mySignatureArea));
       }
     };
-    ApplicationManager.getApplication().invokeLater(updateRunnable, ModalityState.current());
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(updateRunnable);
   }
 
   protected void updateSignatureAlarmFired() {
@@ -656,6 +656,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       myMethodsToPropagateParameters = null;
     }
 
+    myDisposed = true;
     invokeRefactoring(createRefactoringProcessor());
   }
 
