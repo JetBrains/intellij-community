@@ -98,50 +98,57 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
           PyExpression instanceExpr = qualifier;
           final PyArgumentList argumentList = callExpr.getArgumentList();
           
+          // Class.method(instance) -> method(instance)
           if (resolvesToClass(qualifier)) {
             final PyExpression[] arguments = argumentList.getArguments();
-            instanceExpr = arguments[0];
             if (arguments.length > 0) {
-              arguments[0].delete();
-            }
-          }
-          
-          // module.inst.method() -> method(module.inst.foo, module.inst.bar)
-          if (isPureReferenceExpression(instanceExpr)) {
-            // recursive call inside the method
-            if (myReadsOfSelfParam.contains(instanceExpr)) {
-              addArguments(argumentList, newParamNames);
+              instanceExpr = arguments[0];
+              instanceExpr.delete();
             }
             else {
-              final String instanceExprText = instanceExpr.getText();
+              // It's not clear how to handle usages like Class.method(), since there is no suitable instance
+              instanceExpr = null;
+            }
+          }
+
+          if (instanceExpr != null) {
+            // module.inst.method() -> method(module.inst.foo, module.inst.bar)
+            if (isPureReferenceExpression(instanceExpr)) {
+              // recursive call inside the method
+              if (myReadsOfSelfParam.contains(instanceExpr)) {
+                addArguments(argumentList, newParamNames);
+              }
+              else {
+                final String instanceExprText = instanceExpr.getText();
+                addArguments(argumentList, ContainerUtil.map(attrNames, new Function<String, String>() {
+                  @Override
+                  public String fun(String attribute) {
+                    return instanceExprText + "." + attribute;
+                  }
+                }));
+              }
+            }
+            // Class().method() -> method(Class().foo)
+            else if (newParamNames.size() == 1) {
+              addArguments(argumentList, Collections.singleton(instanceExpr.getText() + "." + ContainerUtil.getFirstItem(attrNames)));
+            }
+            // Class().method() -> inst = Class(); method(inst.foo, inst.bar)
+            else if (!newParamNames.isEmpty()) {
+              final PyStatement anchor = PsiTreeUtil.getParentOfType(callExpr, PyStatement.class);
+              final String targetName = selectUniqueName(usageElem);
+              final String assignmentText = targetName + " = " + instanceExpr.getText();
+              final PyAssignmentStatement assignment = myGenerator.createFromText(LanguageLevel.forElement(callExpr),
+                                                                                  PyAssignmentStatement.class,
+                                                                                  assignmentText);
+              //noinspection ConstantConditions
+              anchor.getParent().addBefore(assignment, anchor);
               addArguments(argumentList, ContainerUtil.map(attrNames, new Function<String, String>() {
                 @Override
                 public String fun(String attribute) {
-                  return instanceExprText + "." + attribute;
+                  return targetName + "." + attribute;
                 }
               }));
             }
-          }
-          // Class().method() -> method(Class().foo)
-          else if (newParamNames.size() == 1) {
-            addArguments(argumentList, Collections.singleton(instanceExpr.getText() + "." + ContainerUtil.getFirstItem(attrNames)));
-          }
-          // Class().method() -> inst = Class(); method(inst.foo, inst.bar)
-          else if (!newParamNames.isEmpty()) {
-            final PyStatement anchor = PsiTreeUtil.getParentOfType(callExpr, PyStatement.class);
-            final String targetName = selectUniqueName(usageElem);
-            final String assignmentText = targetName + " = " + instanceExpr.getText();
-            final PyAssignmentStatement assignment = myGenerator.createFromText(LanguageLevel.forElement(callExpr),
-                                                                                PyAssignmentStatement.class,
-                                                                                assignmentText);
-            //noinspection ConstantConditions
-            anchor.getParent().addBefore(assignment, anchor);
-            addArguments(argumentList, ContainerUtil.map(attrNames, new Function<String, String>() {
-              @Override
-              public String fun(String attribute) {
-                return targetName + "." + attribute;
-              }
-            }));
           }
         }
         
