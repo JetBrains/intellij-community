@@ -740,7 +740,7 @@ public class GenericsHighlightUtil {
       if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == aClass) return null;
     }
 
-    if (PsiUtil.isCompileTimeConstant(field)) return null;
+    if (PsiUtil.isCompileTimeConstant((PsiVariable)field)) return null;
 
     String description = JavaErrorMessages.message(
       "illegal.to.access.static.member.from.enum.constructor.or.instance.initializer",
