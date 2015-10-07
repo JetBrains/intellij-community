@@ -150,10 +150,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
             int processed = 0;
             for (Event event : eventSet) {
               if (methodWatcherActive) {
-                if (event instanceof MethodExitEvent) {
-                  if (myReturnValueWatcher.processMethodExitEvent((MethodExitEvent)event)) {
-                    processed++;
-                  }
+                if (myReturnValueWatcher.processEvent(event)) {
+                  processed++;
                   continue;
                 }
               }
@@ -227,8 +225,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                   suspendContext = getSuspendManager().pushSuspendContext(eventSet);
                 }
 
-                for (EventIterator eventIterator = eventSet.eventIterator(); eventIterator.hasNext();) {
-                  final Event event = eventIterator.nextEvent();
+                for (Event event : eventSet) {
                   //if (LOG.isDebugEnabled()) {
                   //  LOG.debug("EVENT : " + event);
                   //}
@@ -455,12 +452,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private void processLocatableEvent(final SuspendContextImpl suspendContext, final LocatableEvent event) {
-    if (myReturnValueWatcher != null && event instanceof MethodExitEvent) {
-      if (myReturnValueWatcher.processMethodExitEvent(((MethodExitEvent)event))) {
-        return;
-      }
-    }
-
     ThreadReference thread = event.thread();
     //LOG.assertTrue(thread.isSuspended());
     preprocessEvent(suspendContext, thread);
