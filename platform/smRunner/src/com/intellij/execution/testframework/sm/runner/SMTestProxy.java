@@ -655,7 +655,7 @@ public class SMTestProxy extends AbstractTestProxy {
     return null;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public List<DiffHyperlink> getDiffViewerProviders() {
     if (myState instanceof TestComparisonFailedStates) {
