@@ -180,12 +180,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
           branchNodes.add((Integer)myPermanentCommitsInfo.getCommitId(node));
         }
       });
-      return new Condition<CommitId>() {
-        @Override
-        public boolean value(CommitId commitId) {
-          return branchNodes.contains((Integer)commitId);
-        }
-      };
+      return new IntContainedInBranchCondition<CommitId>(branchNodes);
     }
     else {
       final Set<CommitId> branchNodes = ContainerUtil.newHashSet();
@@ -195,12 +190,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
           branchNodes.add(myPermanentCommitsInfo.getCommitId(node));
         }
       });
-      return new Condition<CommitId>() {
-        @Override
-        public boolean value(CommitId commitId) {
-          return branchNodes.contains(commitId);
-        }
-      };
+      return new ContainedInBranchCondition<CommitId>(branchNodes);
     }
   }
 
@@ -248,6 +238,32 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     @NotNull
     public Map<Integer, CommitId> getNotLoadedCommits() {
       return myNotLoadedCommits;
+    }
+  }
+
+  private static class IntContainedInBranchCondition<CommitId> implements Condition<CommitId> {
+    private final TIntHashSet myBranchNodes;
+
+    public IntContainedInBranchCondition(TIntHashSet branchNodes) {
+      myBranchNodes = branchNodes;
+    }
+
+    @Override
+    public boolean value(CommitId commitId) {
+      return myBranchNodes.contains((Integer)commitId);
+    }
+  }
+
+  private static class ContainedInBranchCondition<CommitId> implements Condition<CommitId> {
+    private final Set<CommitId> myBranchNodes;
+
+    public ContainedInBranchCondition(Set<CommitId> branchNodes) {
+      myBranchNodes = branchNodes;
+    }
+
+    @Override
+    public boolean value(CommitId commitId) {
+      return myBranchNodes.contains(commitId);
     }
   }
 }
