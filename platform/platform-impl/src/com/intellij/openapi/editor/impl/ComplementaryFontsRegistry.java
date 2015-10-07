@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.Patches;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -111,7 +111,7 @@ public class ComplementaryFontsRegistry {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ourFontNames.add("Monospaced");
     } else {
-      if (SystemInfo.isMac) {
+      if (Patches.JDK_MAC_FONT_STYLE_BUG) {
         fillStyledFontMap();
       }
       String[] fontNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
@@ -199,7 +199,7 @@ public class ComplementaryFontsRegistry {
   @Nullable
   private static FontInfo doGetFontAbleToDisplay(char c, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily) {
     synchronized (lock) {
-      if (SystemInfo.isMac && style > 0 && style < 4) {
+      if (Patches.JDK_MAC_FONT_STYLE_BUG && style > 0 && style < 4) {
         Pair<String, Integer>[] replacement = ourStyledFontMap.get(defaultFontFamily);
         if (replacement != null) {
           defaultFontFamily = replacement[style].first;
