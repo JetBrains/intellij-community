@@ -4,3 +4,4 @@ class C():
         
         
 C.method(C(), 42)
+C.method()

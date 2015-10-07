@@ -78,7 +78,7 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     final PyMakeFunctionTopLevelRefactoring action = new PyMakeFunctionTopLevelRefactoring();
     final TestActionEvent event = new TestActionEvent(action);
     action.beforeActionPerformedUpdate(event);
-    return event.getPresentation().isEnabled(); 
+    return event.getPresentation().isEnabled();
   }
 
   // PY-6637
@@ -89,28 +89,28 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
   // PY-6637
   public void testRefactoringAvailability() {
     myFixture.configureByFile(getTestName(true) + ".py");
-    
+
     final PsiFile file = myFixture.getFile();
     moveByText("func");
     assertFalse(isActionEnabled());
     moveByText("local");
     assertTrue(isActionEnabled());
-    
+
     // move to "def" keyword
     myFixture.getEditor().getCaretModel().moveCaretRelatively(-3, 0, false, false, false);
     final PsiElement tokenAtCaret = file.findElementAt(myFixture.getCaretOffset());
     assertNotNull(tokenAtCaret);
     assertEquals(tokenAtCaret.getNode().getElementType(), PyTokenTypes.DEF_KEYWORD);
     assertTrue(isActionEnabled());
-    
+
     moveByText("method");
     assertTrue(isActionEnabled());
-    
+
     moveByText("static_method");
     assertFalse(isActionEnabled());
     moveByText("class_method");
     assertFalse(isActionEnabled());
-    
+
     // Overridden method
     moveByText("overridden_method");
     assertFalse(isActionEnabled());
@@ -118,7 +118,7 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     // Overriding method
     moveByText("upper");
     assertFalse(isActionEnabled());
-    
+
     moveByText("property");
     assertFalse(isActionEnabled());
     moveByText("__magic__");
@@ -202,7 +202,6 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
   public void testMethodCalledViaClass() {
     doTestSuccess();
   }
-
 
   public void testMethodUniqueNameOfExtractedQualifier() {
     doTestSuccess();
