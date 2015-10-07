@@ -19,13 +19,13 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SmartHashSet
 import gnu.trove.THashMap
 import org.jdom.Attribute
 import org.jdom.Element
-import java.io.IOException
 
 abstract class XmlElementStorage protected constructor(protected val fileSpec: String,
                                                        protected val rootElementName: String,
@@ -87,16 +87,12 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
     val oldData = storageDataRef.get()
     val newData = getStorageData(true)
     if (oldData == null) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("analyzeExternalChangesAndUpdateIfNeed: old data null, load new for ${toString()}")
-      }
+      LOG.debug { "analyzeExternalChangesAndUpdateIfNeed: old data null, load new for ${toString()}" }
       componentNames.addAll(newData.keys())
     }
     else {
       val changedComponentNames = oldData.getChangedComponentNames(newData)
-      if (LOG.isDebugEnabled) {
-        LOG.debug("analyzeExternalChangesAndUpdateIfNeed: changedComponentNames $changedComponentNames for ${toString()}")
-      }
+      LOG debug { "analyzeExternalChangesAndUpdateIfNeed: changedComponentNames $changedComponentNames for ${toString()}" }
       if (!ContainerUtil.isEmpty(changedComponentNames)) {
         componentNames.addAll(changedComponentNames)
       }
