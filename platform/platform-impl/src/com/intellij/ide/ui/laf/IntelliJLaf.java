@@ -58,7 +58,7 @@ public class IntelliJLaf extends DarculaLaf {
 
   private static void installMacOSXFonts(UIDefaults defaults) {
     final String face = "HelveticaNeue-Regular";
-    final String elCapitan = "SFNSDisplay-Semibold"; // we can experiment with different fonts: /System/Library/Fonts/SFNS*
+    final String elCapitan = null;//"SFNSText-RegularG2"; // we can experiment with different fonts: /System/Library/Fonts/SFNS*
     final FontUIResource uiFont = getFont(face, elCapitan, 13, Font.PLAIN);
     LafManagerImpl.initFontDefaults(defaults, 13, uiFont);
     for (Object key : new HashSet<Object>(defaults.keySet())) {
@@ -83,7 +83,7 @@ public class IntelliJLaf extends DarculaLaf {
 
   @NotNull
   private static FontUIResource getFont(String yosemite, String elCapitan, int size, int style) {
-    if (SystemInfo.isMacOSElCapitan) {
+    if (SystemInfo.isMacOSElCapitan && elCapitan != null) {
       try {
         final Font sfFont = Font.createFont(Font.TRUETYPE_FONT, new File("/System/Library/Fonts/" + elCapitan + ".otf"));
         return new FontUIResource(sfFont.deriveFont(size + 0f));
