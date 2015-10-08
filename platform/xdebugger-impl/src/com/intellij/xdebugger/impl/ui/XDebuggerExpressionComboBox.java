@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 
 /**
@@ -142,8 +143,9 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
 
   @Override
   public XExpression getExpression() {
-    if (myComboBox.isPopupVisible()) {
-      Object value = myComboBox.getPopup().getList().getSelectedValue();
+    ComboPopup popup = myComboBox.getPopup();
+    if (popup != null && popup.isVisible()) {
+      Object value = popup.getList().getSelectedValue();
       if (value != null) {
         return (XExpression)value;
       }
