@@ -28,12 +28,11 @@ public interface VcsLogFilterer {
 
   void removeConsumer(@NotNull Consumer<VisiblePack> consumer);
 
-  void onRefresh(@NotNull DataPack dataPack);
+  void onRefresh();
 
   void onFiltersChange(@NotNull VcsLogFilterCollection filters);
 
   void onSortTypeChange(@NotNull PermanentGraph.SortType sortType);
 
   void moreCommitsNeeded(@NotNull Runnable onLoaded);
-
 }

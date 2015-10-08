@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.data;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -36,13 +35,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class VcsLogFiltererImpl implements VcsLogFilterer, Disposable {
+public class VcsLogFiltererImpl implements VcsLogFilterer {
   private static final Logger LOG = Logger.getInstance(VcsLogFiltererImpl.class);
 
   @NotNull private final SingleTaskController<Request, VisiblePack> myTaskController;
   @NotNull private final VisiblePackBuilder myVisiblePackBuilder;
   @NotNull private final VcsLogDataManager myDataManager;
-  @NotNull private final Consumer<DataPack> myDataPackConsumer;
 
   @NotNull private VcsLogFilterCollection myFilters;
   @NotNull private PermanentGraph.SortType mySortType;
@@ -77,14 +75,6 @@ public class VcsLogFiltererImpl implements VcsLogFilterer, Disposable {
         });
       }
     };
-
-    myDataPackConsumer = new Consumer<DataPack>() {
-      @Override
-      public void consume(DataPack dataPack) {
-        onRefresh(dataPack);
-      }
-    };
-    myDataManager.addConsumer(myDataPackConsumer);
   }
 
   @Override
@@ -98,7 +88,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer, Disposable {
   }
 
   @Override
-  public void onRefresh(@NotNull DataPack dataPack) {
+  public void onRefresh() {
     myTaskController.request(new RefreshRequest());
   }
 
@@ -115,11 +105,6 @@ public class VcsLogFiltererImpl implements VcsLogFilterer, Disposable {
   @Override
   public void moreCommitsNeeded(@NotNull Runnable onLoaded) {
     myTaskController.request(new MoreCommitsRequest(onLoaded));
-  }
-
-  @Override
-  public void dispose() {
-    myDataManager.removeConsumer(myDataPackConsumer);
   }
 
   private class MyTask extends Task.Backgroundable {

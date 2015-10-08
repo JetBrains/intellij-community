@@ -25,20 +25,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.data.VcsLogFiltererImpl;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -48,7 +41,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
 
 public class VcsLogManager implements Disposable {
 
@@ -61,7 +56,7 @@ public class VcsLogManager implements Disposable {
   private volatile VcsLogUiImpl myUi;
   private VcsLogDataManager myDataManager;
   private VcsLogColorManagerImpl myColorManager;
-  private PostponableLogRefresher myLogRefresher;
+  private VcsLogTabsRefresher myTabsLogRefresher;
 
   public VcsLogManager(@NotNull Project project, @NotNull VcsLogUiProperties uiProperties) {
     myProject = project;
@@ -79,23 +74,23 @@ public class VcsLogManager implements Disposable {
     return Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots());
   }
 
-  public void watchTab(@NotNull String contentTabName) {
-    myLogRefresher.addTabToWatch(contentTabName);
+  public void watchTab(@NotNull String contentTabName, @NotNull VcsLogFilterer filterer) {
+    myTabsLogRefresher.addTabToWatch(contentTabName, filterer);
   }
 
   public void unwatchTab(@NotNull String contentTabName) {
-    myLogRefresher.removeTabToWatch(contentTabName);
+    myTabsLogRefresher.removeTabFromWatch(contentTabName);
   }
 
   @NotNull
-  public JComponent initMainLog(@Nullable String contentTabName) {
+  public JComponent initMainLog(@Nullable final String contentTabName) {
     initData();
 
-    VcsLogUiImpl ui = new VcsLogUiImpl(myDataManager, myProject, myColorManager, myUiProperties,
-                                       new VcsLogFiltererImpl(myProject, myDataManager,
-                                                              PermanentGraph.SortType.values()[myUiProperties.getBekSortType()]));
+    VcsLogFiltererImpl filterer =
+      new VcsLogFiltererImpl(myProject, myDataManager, PermanentGraph.SortType.values()[myUiProperties.getBekSortType()]);
+    VcsLogUiImpl ui = new VcsLogUiImpl(myDataManager, myProject, myColorManager, myUiProperties, filterer);
     if (contentTabName != null) {
-      watchTab(contentTabName);
+      watchTab(contentTabName, filterer);
     }
     myUi = ui;
     myUi.requestFocus();
@@ -107,9 +102,9 @@ public class VcsLogManager implements Disposable {
 
     Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(getVcsRoots(), myProject);
     myDataManager = new VcsLogDataManager(myProject, logProviders);
-    myLogRefresher = new PostponableLogRefresher(myProject, myDataManager);
+    myTabsLogRefresher = new VcsLogTabsRefresher(myProject, myDataManager);
 
-    refreshLogOnVcsEvents(logProviders, myLogRefresher);
+    refreshLogOnVcsEvents(logProviders, myTabsLogRefresher);
 
     myColorManager = new VcsLogColorManagerImpl(logProviders.keySet());
 
@@ -162,7 +157,7 @@ public class VcsLogManager implements Disposable {
     if (myDataManager != null) Disposer.dispose(myDataManager);
 
     myDataManager = null;
-    myLogRefresher = null;
+    myTabsLogRefresher = null;
     myColorManager = null;
     myUi = null;
   }
@@ -175,92 +170,4 @@ public class VcsLogManager implements Disposable {
   public void dispose() {
     disposeLog();
   }
-
-  private static class PostponableLogRefresher implements VcsLogRefresher, Disposable {
-
-    private static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
-
-    @NotNull private final VcsLogDataManager myDataManager;
-    @NotNull private final ToolWindowManagerImpl myToolWindowManager;
-    @NotNull private final ToolWindowImpl myToolWindow;
-    @NotNull private final Set<String> myTabs = ContainerUtil.newHashSet();
-    @NotNull private final MyRefreshPostponedEventsListener myPostponedEventsListener;
-
-    @NotNull private final Set<VirtualFile> myRootsToRefresh = ContainerUtil.newConcurrentSet();
-
-    public PostponableLogRefresher(@NotNull Project project, @NotNull VcsLogDataManager dataManager) {
-      myDataManager = dataManager;
-      myToolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
-      myToolWindow = (ToolWindowImpl)myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
-
-      Disposer.register(dataManager, this);
-
-      myPostponedEventsListener = new MyRefreshPostponedEventsListener();
-      myToolWindow.getContentManager().addContentManagerListener(myPostponedEventsListener);
-      myToolWindowManager.addToolWindowManagerListener(myPostponedEventsListener);
-    }
-
-    public void addTabToWatch(@NotNull String tabName) {
-      myTabs.add(tabName);
-    }
-
-    public void removeTabToWatch(@NotNull String tabName) {
-      myTabs.remove(tabName);
-    }
-
-    @Override
-    public void refresh(@NotNull VirtualFile root) {
-      if (isRefreshEnabled()) {
-        myDataManager.refresh(Collections.singleton(root));
-      }
-      else {
-        myRootsToRefresh.add(root);
-      }
-    }
-
-    @Override
-    public void dispose() {
-      myToolWindow.getContentManager().removeContentManagerListener(myPostponedEventsListener);
-      myToolWindowManager.removeToolWindowManagerListener(myPostponedEventsListener);
-    }
-
-    private boolean isRefreshEnabled() {
-      if (myTabs.isEmpty()) return true;
-      if (myToolWindowManager.isToolWindowRegistered(TOOLWINDOW_ID) && myToolWindow.isVisible()) {
-        Content content = myToolWindow.getContentManager().getSelectedContent();
-        return content != null && myTabs.contains(content.getTabName());
-      }
-      return false;
-    }
-
-    private void refreshPostponedRoots() {
-      Set<VirtualFile> toRefresh = new HashSet<VirtualFile>(myRootsToRefresh);
-      myRootsToRefresh.removeAll(toRefresh); // clear the set, but keep roots which could possibly arrive after collecting them in the var.
-      myDataManager.refresh(toRefresh);
-    }
-
-    private class MyRefreshPostponedEventsListener extends ContentManagerAdapter implements ToolWindowManagerListener {
-
-      @Override
-      public void selectionChanged(ContentManagerEvent event) {
-        refreshRootsIfNeeded();
-      }
-
-      @Override
-      public void stateChanged() {
-        refreshRootsIfNeeded();
-      }
-
-      @Override
-      public void toolWindowRegistered(@NotNull String id) {
-      }
-
-      private void refreshRootsIfNeeded() {
-        if (isRefreshEnabled()) {
-          refreshPostponedRoots();
-        }
-      }
-    }
-  }
-
 }
