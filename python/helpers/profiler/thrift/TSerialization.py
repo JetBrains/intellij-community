@@ -17,8 +17,11 @@
 # under the License.
 #
 
-from thrift.protocol import TBinaryProtocol
+from __future__ import absolute_import
+
 from thrift.transport import TTransport
+
+from thrift.protocol import TBinaryProtocol
 
 
 def serialize(thrift_object,

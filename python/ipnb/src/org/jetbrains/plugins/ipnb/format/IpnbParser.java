@@ -174,6 +174,7 @@ public class IpnbParser {
       }
       else if (cell instanceof IpnbRawCell) {
         raw.cell_type = "raw";
+        raw.source = ((IpnbRawCell)cell).getSource();
       }
       else if (cell instanceof IpnbHeadingCell) {
         raw.cell_type = "heading";
@@ -198,7 +199,7 @@ public class IpnbParser {
                                 prompt, outputCells);
       }
       else if (cell_type.equals("raw")) {
-        cell = new IpnbRawCell();
+        cell = new IpnbRawCell(source);
       }
       else if (cell_type.equals("heading")) {
         cell = new IpnbHeadingCell(source, level);

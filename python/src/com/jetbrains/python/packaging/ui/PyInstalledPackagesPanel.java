@@ -138,7 +138,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
                   }
                   myNotificationArea.showWarning(builder.toString());
                 }
-                myInstallButton.setEnabled(!invalid && myHasManagement);
+                myInstallButton.setEnabled(!invalid && installEnabled());
               }
             }
           }
@@ -155,6 +155,11 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   @Override
   protected boolean canUninstallPackage(InstalledPackage pkg) {
     if (!myHasManagement) return false;
+
+    if (PythonSdkType.isDocker(getSelectedSdk())) {
+      return false;
+    }
+
     if (PythonSdkType.isVirtualEnv(getSelectedSdk()) && pkg instanceof PyPackage) {
       final String location = ((PyPackage)pkg).getLocation();
       if (location != null && location.startsWith(PySdkUtil.getUserSite())) {
@@ -173,11 +178,24 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
 
   @Override
   protected boolean canInstallPackage(@NotNull final InstalledPackage pyPackage) {
+    return installEnabled();
+  }
+
+  @Override
+  protected boolean installEnabled() {
+    if (PythonSdkType.isDocker(getSelectedSdk())) {
+      return false;
+    }
+
     return myHasManagement;
   }
 
   @Override
   protected boolean canUpgradePackage(InstalledPackage pyPackage) {
+    if (PythonSdkType.isDocker(getSelectedSdk())) {
+      return false;
+    }
+
     return myHasManagement && !PyCondaPackageManagerImpl.PYTHON.equals(pyPackage.getName());
   }
 }

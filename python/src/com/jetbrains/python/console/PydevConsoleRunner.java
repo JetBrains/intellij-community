@@ -66,7 +66,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.remote.RemoteSshProcess;
+import com.intellij.remote.RemoteProcess;
+import com.intellij.remote.Tunnelable;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -84,12 +85,10 @@ import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PySourcePosition;
 import com.jetbrains.python.remote.PyRemotePathMapper;
+import com.jetbrains.python.remote.PyRemoteProcessHandlerBase;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
-import com.jetbrains.python.remote.PyRemoteSdkCredentials;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
-import com.jetbrains.python.run.PythonCommandLineState;
-import com.jetbrains.python.run.PythonRunParams;
-import com.jetbrains.python.run.PythonTracebackFilter;
+import com.jetbrains.python.run.*;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -139,7 +138,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   public static Key<Sdk> CONSOLE_SDK = new Key<Sdk>("PYDEV_CONSOLE_SDK_KEY");
 
   private static final long APPROPRIATE_TO_WAIT = 60000;
-  private PyRemoteSdkCredentials myRemoteCredentials;
+
+  private PyRemoteProcessHandlerBase myRemoteProcessHandlerBase;
 
   private String myConsoleTitle = null;
 
@@ -456,7 +456,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     }
   }
 
-  private Process createRemoteConsoleProcess(PythonRemoteInterpreterManager manager, String[] command, Map<String, String> env)
+  private RemoteProcess createRemoteConsoleProcess(PythonRemoteInterpreterManager manager, String[] command, Map<String, String> env)
     throws ExecutionException {
     PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
     assert data != null;
@@ -477,32 +477,35 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     commandLine.getParametersList().set(2, "0");
 
     try {
-      myRemoteCredentials = data.getRemoteSdkCredentials(true);
       PyRemotePathMapper pathMapper = manager.setupMappings(getProject(), data, null);
 
-      commandLine.withExePath(myRemoteCredentials.getFullInterpreterPath());
+      commandLine.putUserData(PyRemoteProcessStarter.OPEN_FOR_INCOMING_CONNECTION, true);
 
-      myCommandLine = commandLine.getCommandLineString();
+      myRemoteProcessHandlerBase = PyRemoteProcessStarterManagerUtil
+        .getManager(data).startRemoteProcess(getProject(), commandLine, manager, data,
+                                                                      pathMapper);
 
-      RemoteSshProcess remoteProcess =
-        manager.createRemoteProcess(getProject(), myRemoteCredentials, pathMapper, commandLine, true);
+      myCommandLine = myRemoteProcessHandlerBase.getCommandLine();
 
+      RemoteProcess remoteProcess = myRemoteProcessHandlerBase.getProcess();
 
       Couple<Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);
 
-      remoteProcess.addLocalTunnel(myPorts[0], myRemoteCredentials.getHost(), remotePorts.first);
-      remoteProcess.addRemoteTunnel(remotePorts.second, "localhost", myPorts[1]);
-
+      if (remoteProcess instanceof Tunnelable) {
+        Tunnelable tunnelableProcess = (Tunnelable) remoteProcess;
+        tunnelableProcess.addLocalTunnel(myPorts[0], remotePorts.first);
+        tunnelableProcess.addRemoteTunnel(remotePorts.second, "localhost", myPorts[1]);
+      }
 
       myPydevConsoleCommunication = new PydevRemoteConsoleCommunication(getProject(), myPorts[0], remoteProcess, myPorts[1]);
       return remoteProcess;
     }
     catch (Exception e) {
-      throw new ExecutionException(e.getMessage());
+      throw new ExecutionException(e.getMessage(), e);
     }
   }
 
-  private static Couple<Integer> getRemotePortsFromProcess(RemoteSshProcess process) throws ExecutionException {
+  private static Couple<Integer> getRemotePortsFromProcess(RemoteProcess process) throws ExecutionException {
     Scanner s = new Scanner(process.getInputStream());
 
     return Couple.of(readInt(s, process), readInt(s, process));
@@ -559,9 +562,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
         assert data != null;
         myProcessHandler =
-          manager.createConsoleProcessHandler(process, myRemoteCredentials, getConsoleView(), myPydevConsoleCommunication,
+          manager.createConsoleProcessHandler((RemoteProcess)process, getConsoleView(), myPydevConsoleCommunication,
                                               myCommandLine, CharsetToolkit.UTF8_CHARSET,
-                                              manager.setupMappings(getProject(), data, null));
+                                              manager.setupMappings(getProject(), data, null), myRemoteProcessHandlerBase.getRemoteSocketToLocalHostProvider());
       }
       else {
         LOG.error("Can't create remote console process handler");

@@ -36,7 +36,7 @@ public class PluginProjectWizardTest extends NewProjectWizardTestCase {
     createSdk("devkit", IdeaJdk.getInstance());
     Project project = createProjectFromTemplate(PluginModuleType.getInstance().getName(), null, null);
     VirtualFile baseDir = project.getBaseDir();
-    VirtualFile virtualFile = VfsUtilCore.findRelativeFile("META-INF/plugin.xml", baseDir);
+    VirtualFile virtualFile = VfsUtilCore.findRelativeFile("resources/META-INF/plugin.xml", baseDir);
     assertNotNull(virtualFile);
 
     RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();

@@ -13,8 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.remoteServer.configuration.RemoteServer;
-import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerImpl;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.remoteServer.impl.runtime.ui.tree.TreeBuilderBase;
 import com.intellij.remoteServer.runtime.ConnectionStatus;
@@ -25,11 +23,14 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -37,6 +38,7 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -65,6 +67,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
   private final DefaultTreeModel myTreeModel;
   private TreeBuilderBase myBuilder;
   private AbstractTreeNode<?> myLastSelection;
+  private Set<Object> myCollapsedTreeNodeValues = new HashSet<Object>();
 
   private final Project myProject;
 
@@ -111,6 +114,36 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
         return true;
       }
     }.installOn(myTree);
+    myTree.addTreeExpansionListener(new TreeExpansionListener() {
+
+      @Override
+      public void treeExpanded(TreeExpansionEvent event) {
+        Object value = getNodeValue(event);
+        if (value != null) {
+          myCollapsedTreeNodeValues.remove(value);
+        }
+      }
+
+      @Override
+      public void treeCollapsed(TreeExpansionEvent event) {
+        Object value = getNodeValue(event);
+        if (value != null) {
+          myCollapsedTreeNodeValues.add(value);
+        }
+      }
+
+      private Object getNodeValue(TreeExpansionEvent event) {
+        DefaultMutableTreeNode treeNode = ObjectUtils.tryCast(event.getPath().getLastPathComponent(), DefaultMutableTreeNode.class);
+        if (treeNode == null) {
+          return null;
+        }
+        AbstractTreeNode nodeDescriptor = ObjectUtils.tryCast(treeNode.getUserObject(), AbstractTreeNode.class);
+        if (nodeDescriptor == null) {
+          return null;
+        }
+        return nodeDescriptor.getValue();
+      }
+    });
 
     DefaultActionGroup popupActionGroup = new DefaultActionGroup();
     popupActionGroup.add(ActionManager.getInstance().getAction(SERVERS_TOOL_WINDOW_TOOLBAR));
@@ -162,8 +195,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
   }
 
   private void updateServerDetails(ServersTreeStructure.RemoteServerNode node) {
-    RemoteServer<?> server = ((ServersTreeStructure.RemoteServerNode)node).getValue();
-    ServerConnection connection = ServerConnectionManager.getInstance().getConnection(server);
+    ServerConnection connection = ServerConnectionManager.getInstance().getConnection(node.getServer());
     if (connection == null) {
       showMessageLabel("Double-click on the server node to connect");
     }
@@ -182,7 +214,10 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
     myBuilder = new TreeBuilderBase(myTree, structure, myTreeModel) {
       @Override
       protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-        return nodeDescriptor instanceof ServersTreeStructure.RemoteServerNode || nodeDescriptor instanceof ServersTreeStructure.DeploymentNodeImpl;
+        return (nodeDescriptor instanceof ServersTreeStructure.RemoteServerNode
+                || nodeDescriptor instanceof ServersTreeStructure.DeploymentNodeImpl
+                || nodeDescriptor instanceof ServersTreeStructure.GroupNode)
+               && (!myCollapsedTreeNodeValues.contains(((AbstractTreeNode)nodeDescriptor).getValue()));
       }
     };
     Disposer.register(this, myBuilder);
@@ -324,14 +359,13 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
 
   private static boolean isServerNodeMatch(@NotNull final ServersTreeStructure.RemoteServerNode node,
                                            @NotNull final ServerConnection<?> connection) {
-    return node.getValue().equals(connection.getServer());
+    return node.getServer().equals(connection.getServer());
   }
 
   private static boolean isDeploymentNodeMatch(@NotNull ServersTreeStructure.DeploymentNodeImpl node,
                                                @NotNull final ServerConnection<?> connection, @NotNull final String deploymentName) {
-    AbstractTreeNode parent = node.getParent();
-    return parent instanceof ServersTreeStructure.RemoteServerNode &&
-           isServerNodeMatch((ServersTreeStructure.RemoteServerNode)parent, connection)
-           && node.getValue().getName().equals(deploymentName);
+    ServersTreeStructure.RemoteServerNode serverNode = node.getServerNode();
+    return isServerNodeMatch(serverNode, connection)
+           && node.getDeployment().getName().equals(deploymentName);
   }
 }

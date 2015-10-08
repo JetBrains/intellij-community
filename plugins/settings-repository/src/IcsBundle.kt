@@ -21,27 +21,22 @@ import java.lang.ref.Reference
 import java.lang.ref.SoftReference
 import java.util.*
 
-class IcsBundle {
-  companion object {
-    private var ourBundle: Reference<ResourceBundle>? = null
+private var ourBundle: Reference<ResourceBundle>? = null
 
-    val BUNDLE: String = "messages.IcsBundle"
+private const val BUNDLE: String = "messages.IcsBundle"
 
-    @JvmStatic
-    fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any?): String {
-      return CommonBundle.message(getBundle(), key, *params)
-    }
+internal fun icsMessage(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any?): String {
+  return CommonBundle.message(getBundle(), key, *params)
+}
 
-    private fun getBundle(): ResourceBundle {
-      var bundle: ResourceBundle? = null
-      if (ourBundle != null) {
-        bundle = ourBundle!!.get()
-      }
-      if (bundle == null) {
-        bundle = ResourceBundle.getBundle(BUNDLE)
-        ourBundle = SoftReference(bundle)
-      }
-      return bundle!!
-    }
+private fun getBundle(): ResourceBundle {
+  var bundle: ResourceBundle? = null
+  if (ourBundle != null) {
+    bundle = ourBundle!!.get()
   }
+  if (bundle == null) {
+    bundle = ResourceBundle.getBundle(BUNDLE)
+    ourBundle = SoftReference(bundle)
+  }
+  return bundle!!
 }

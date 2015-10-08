@@ -21,7 +21,7 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.InferredAnnotationsManager;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
-import com.intellij.javadoc.JavadocConfiguration;
+import com.intellij.javadoc.JavadocGeneratorRunProfile;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -233,7 +233,7 @@ public class JavaDocInfoGenerator {
     myProject = project;
     myElement = element;
     
-    Sdk jdk = JavadocConfiguration.getSdk(myProject);
+    Sdk jdk = JavadocGeneratorRunProfile.getSdk(myProject);
     mySdkVersion = jdk == null ? null : JavaSdk.getInstance().getVersion(jdk);
   }
 

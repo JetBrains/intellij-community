@@ -20,6 +20,7 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
@@ -52,6 +53,10 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
   }
 
 
+  /**
+   * @deprecated use {@link com.jetbrains.python.psi.PyPsiFacade#createClassByQName(String, PsiElement)} or skeleton may be found
+   */
+  @Deprecated
   @Nullable
   public static PyClass findClass(@NotNull String qName, Project project, GlobalSearchScope scope) {
     int pos = qName.lastIndexOf(".");
@@ -64,6 +69,10 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
     return null;
   }
 
+  /**
+   * @deprecated use {@link com.jetbrains.python.psi.PyPsiFacade#createClassByQName(String, PsiElement)} or skeleton may be found
+   */
+  @Deprecated
   @Nullable
   public static PyClass findClass(@Nullable String qName, Project project) {
     if (qName == null) {

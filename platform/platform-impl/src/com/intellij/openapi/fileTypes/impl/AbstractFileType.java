@@ -22,7 +22,6 @@ import com.intellij.lang.Commenter;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
-import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.*;
@@ -414,11 +413,5 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
 
   public void setCommenter(final Commenter commenter) {
     myCommenter = commenter;
-  }
-
-  @Override
-  @Nullable
-  public ExternalInfo getExternalInfo() {
-    return null;
   }
 }

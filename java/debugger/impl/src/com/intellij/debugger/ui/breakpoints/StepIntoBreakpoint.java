@@ -25,15 +25,14 @@ import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.MultiMap;
 import com.sun.jdi.*;
 import com.sun.jdi.request.BreakpointRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -67,29 +66,29 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
       }
 
       if (!locations.isEmpty()) {
-        final Set<Method> methods = new HashSet<Method>();
+        MultiMap<Method, Location> methods = new MultiMap<Method, Location>();
         for (Location loc : locations) {
           if (acceptLocation(debugProcess, classType, loc)) {
-            methods.add(loc.method());
+            methods.putValue(loc.method(), loc);
           }
         }
         Location location = null;
         final int methodsFound = methods.size();
         if (methodsFound == 1) {
-          location = methods.iterator().next().location();
+          location = methods.values().iterator().next();
         }
         else {
           if (myFilter instanceof LambdaMethodFilter) {
             final LambdaMethodFilter lambdaFilter = (LambdaMethodFilter)myFilter;
             if (lambdaFilter.getLambdaOrdinal() < methodsFound) {
-              final Method[] candidates = methods.toArray(new Method[methodsFound]);
+              Method[] candidates = methods.keySet().toArray(new Method[methodsFound]);
               Arrays.sort(candidates, DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
-              location = candidates[lambdaFilter.getLambdaOrdinal()].location();
+              location = methods.get(candidates[lambdaFilter.getLambdaOrdinal()]).iterator().next();
             }
           }
           else {
             if (methodsFound > 0) {
-              location = methods.iterator().next().location();
+              location = methods.values().iterator().next();
             }
           }
         }

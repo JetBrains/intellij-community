@@ -42,7 +42,7 @@ fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager
       }
     }
 
-    val roamingType = getRoamingType(fileToComponents.get(file))
+    val roamingType = getRoamingType(fileToComponents.get(file)!!)
     if (file.isFile) {
       val fileBytes = FileUtil.loadFileBytes(file)
       streamProvider.doSave(fileSpec, fileBytes, fileBytes.size(), roamingType)

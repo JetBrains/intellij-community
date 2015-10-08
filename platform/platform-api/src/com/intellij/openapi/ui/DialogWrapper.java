@@ -1352,7 +1352,9 @@ public abstract class DialogWrapper {
     };
 
     if (getValidationThreadToUse() == Alarm.ThreadToUse.SWING_THREAD) {
-      myValidationAlarm.addRequest(validateRequest, myValidationDelay, ModalityState.current());
+      // null if headless
+      JRootPane rootPane = getRootPane();
+      myValidationAlarm.addRequest(validateRequest, myValidationDelay, rootPane == null ? ModalityState.current() : ModalityState.stateForComponent(rootPane));
     }
     else {
       myValidationAlarm.addRequest(validateRequest, myValidationDelay);

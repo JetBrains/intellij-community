@@ -157,7 +157,8 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
   public static boolean isRemoteSdk(@Nullable String path) {
     if (path != null) {
       return path.startsWith(SSH_PREFIX) || path.startsWith(RemoteConnectionCredentialsWrapper.VAGRANT_PREFIX) ||
-             path.startsWith(RemoteConnectionCredentialsWrapper.SFTP_DEPLOYMENT_PREFIX);
+             path.startsWith(RemoteConnectionCredentialsWrapper.SFTP_DEPLOYMENT_PREFIX) ||
+             path.startsWith(RemoteConnectionCredentialsWrapper.DOCKER_PREFIX);
     }
     else {
       return false;

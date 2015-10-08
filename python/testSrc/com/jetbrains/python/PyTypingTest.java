@@ -151,7 +151,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testGenericType() {
-    doTest("A",
+    doTest("TypeVar('A')",
            "from typing import TypeVar\n" +
            "\n" +
            "T = TypeVar('A')\n" +
@@ -161,7 +161,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testGenericBoundedType() {
-    doTest("T <= int | str",
+    doTest("TypeVar('T', int, str)",
            "from typing import TypeVar\n" +
            "\n" +
            "T = TypeVar('T', int, str)\n" +
@@ -346,10 +346,23 @@ public class PyTypingTest extends PyTestCase {
            "from typing import Iterable\n" +
            "\n" +
            "def foo() -> Iterable[int]:\n" +
-           "    passs\n" +
+           "    pass\n" +
            "\n" +
            "for expr in foo():\n" +
            "    pass\n");
+  }
+
+  // PY-16353
+  public void testAssignedType() {
+    doTest("Iterable[int]",
+           "from typing import Iterable\n" +
+           "\n" +
+           "IntIterable = Iterable[int]\n" +
+           "\n" +
+           "def foo() -> IntIterable:\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = foo()\n");
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

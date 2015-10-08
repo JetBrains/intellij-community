@@ -17,10 +17,11 @@
 # under the License.
 #
 
+from __future__ import absolute_import
+
 import os
 import socket
 import ssl
-
 from thrift.transport import TSocket
 from thrift.transport.TTransport import TTransportException
 

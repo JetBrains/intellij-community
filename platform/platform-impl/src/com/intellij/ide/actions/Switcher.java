@@ -265,7 +265,7 @@ public class Switcher extends AnAction implements DumbAware {
       descriptions.add(pathLabel, BorderLayout.CENTER);
       twManager = ToolWindowManager.getInstance(project);
       DefaultListModel twModel = new DefaultListModel();
-      List<ActivateToolWindowAction> actions = ToolWindowsGroup.getToolWindowActions(project);
+      List<ActivateToolWindowAction> actions = ToolWindowsGroup.getToolWindowActions(project, true);
       List<ToolWindow> windows = ContainerUtil.newArrayList();
       for (ActivateToolWindowAction action : actions) {
         ToolWindow tw = twManager.getToolWindow(action.getToolWindowId());

@@ -53,7 +53,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -69,10 +68,7 @@ import com.intellij.ui.treeStructure.AlwaysExpandedTree;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
@@ -211,20 +207,31 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       @Nullable
       @Override
       protected Transferable createTransferable(JComponent component) {
-        Set<PsiElement> selection = ContainerUtil.newLinkedHashSet(getPsiElementsFromSelection());
-        if (selection.isEmpty()) return null;
-        List<PsiElement> result = ContainerUtil.newArrayListWithCapacity(selection.size());
-        for (PsiElement e : selection) {
-          if (!selection.contains(e.getParent())) {
-            result.add(e);
-          }
+        Set<Object> nodes = myAbstractTreeBuilder.getSelectedElements();
+        if (nodes.isEmpty()) return null;
+        List<Pair<FilteringTreeStructure.FilteringNode, PsiElement>> result = ContainerUtil.newArrayListWithCapacity(nodes.size());
+        for (Object o : nodes) {
+          if (!(o instanceof FilteringTreeStructure.FilteringNode)) continue;
+          FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)o;
+          PsiElement psi = getPsi(node);
+          ContainerUtil.addIfNotNull(result, Pair.create(node, psi));
         }
-        String text = StringUtil.join(result, new Function<PsiElement, String>() {
+
+        final Set<PsiElement> psiSelection = ContainerUtil.map2LinkedSet(result, Functions.<PsiElement>pairSecond());
+
+        String text = StringUtil.join(result, new Function<Pair<FilteringTreeStructure.FilteringNode, PsiElement>, String>() {
           @Override
-          public String fun(PsiElement e) {
-            return e.getText();
+          public String fun(Pair<FilteringTreeStructure.FilteringNode, PsiElement> pair) {
+            PsiElement psi = pair.second;
+            String defaultPresentation = pair.first.getPresentation().getPresentableText();
+            if (psi == null) return defaultPresentation;
+            for (PsiElement p = psi.getParent(); p != null; p = p.getParent()) {
+              if (psiSelection.contains(p)) return null;
+            }
+            return ObjectUtils.chooseNotNull(psi.getText(), defaultPresentation);
           }
         }, "\n");
+        
         String htmlText = "<body>\n" + text + "\n</body>";
         return new TextTransferable(XmlStringUtil.wrapInHtml(htmlText), text);
       }

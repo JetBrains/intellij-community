@@ -315,7 +315,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
     if (referenceExpression != null && element instanceof PsiMethod) {
       final PsiClass[] memberClass = getMemberClass(referenceExpression, element);
       if (memberClass != null && memberClass.length == 1) {
-        return CachedValuesManager.getCachedValue(referenceExpression, new CachedValueProvider<SearchScope>() {
+        return CachedValuesManager.getCachedValue(memberClass[0], new CachedValueProvider<SearchScope>() {
           @Nullable
           @Override
           public Result<SearchScope> compute() {

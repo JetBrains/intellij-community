@@ -17,8 +17,12 @@
 # under the License.
 #
 
+from __future__ import absolute_import
+
 from thrift.Thrift import TProcessor, TMessageType, TException
+
 from thrift.protocol import TProtocolDecorator, TMultiplexedProtocol
+
 
 class TMultiplexedProcessor(TProcessor):
   def __init__(self):

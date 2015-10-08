@@ -55,6 +55,7 @@ public class ExtractMethodHelper {
                                        @NotNull final SimpleDuplicatesFinder finder,
                                        @NotNull final Editor editor,
                                        @NotNull final Consumer<Pair<SimpleMatch, PsiElement>> replacer) {
+    finder.setReplacement(callElement);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       replaceDuplicates(callElement, editor, replacer, finder.findDuplicates(scope, generatedMethod));
       return;
@@ -98,6 +99,7 @@ public class ExtractMethodHelper {
         boolean replaceAll = false;
         final Map<SimpleMatch, RangeHighlighter> highlighterMap = new HashMap<SimpleMatch, RangeHighlighter>();
         for (SimpleMatch match : duplicates) {
+          if (!match.getStartElement().isValid() || !match.getEndElement().isValid()) continue;
           final Pair<SimpleMatch, PsiElement> replacement = Pair.create(match, callElement);
           if (!replaceAll) {
             highlightInEditor(project, match, editor, highlighterMap);

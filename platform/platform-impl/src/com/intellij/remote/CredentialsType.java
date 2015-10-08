@@ -19,5 +19,5 @@ package com.intellij.remote;
  * @author traff
  */
 public enum CredentialsType {
-  VAGRANT, WEB_DEPLOYMENT, SSH_HOST
+  VAGRANT, WEB_DEPLOYMENT, SSH_HOST, DOCKER
 }

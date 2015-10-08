@@ -10,16 +10,10 @@ import com.intellij.testFramework.*
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.io.File
-import java.lang.annotation.ElementType
-import java.lang.annotation.Retention
-import java.lang.annotation.RetentionPolicy
-import java.lang.annotation.Target
 
-class TestManager(val projectRule: ProjectRule, private val tempDirManager: TemporaryDirectory) : TestWatcher() {
-  companion object {
-    private val EXCLUDED_DIR_NAME = "excludedDir"
-  }
+private val EXCLUDED_DIR_NAME = "excludedDir"
 
+internal class TestManager(val projectRule: ProjectRule, private val tempDirManager: TemporaryDirectory) : TestWatcher() {
   var annotation: TestDescriptor? = null
 
   var filePath: String? = null
@@ -27,15 +21,14 @@ class TestManager(val projectRule: ProjectRule, private val tempDirManager: Temp
 
   private var ioFileToDelete: File? = null
 
-  @Retention(RetentionPolicy.RUNTIME)
-  @Target(ElementType.METHOD)
-  annotation public class TestDescriptor(public val filePath: String,
-                                         public val line: Int = -1,
-                                         public val column: Int = -1,
-                                         public val relativeToProject: Boolean = false,
-                                         public val excluded: Boolean = false,
-                                         public val doNotCreate: Boolean = false,
-                                         public val status: Int = 200)
+  @Target(AnnotationTarget.FUNCTION)
+  annotation class TestDescriptor(val filePath: String,
+                                  val line: Int = -1,
+                                  val column: Int = -1,
+                                  val relativeToProject: Boolean = false,
+                                  val excluded: Boolean = false,
+                                  val doNotCreate: Boolean = false,
+                                  val status: Int = 200)
 
   override fun starting(description: Description) {
     annotation = description.getAnnotation(TestDescriptor::class.java)
@@ -49,9 +42,7 @@ class TestManager(val projectRule: ProjectRule, private val tempDirManager: Temp
     }
 
     // trigger project creation
-    runInEdtAndWait {
-      projectRule.project
-    }
+    projectRule.project
 
     if (filePath!! == "_tmp_") {
       val file = tempDirManager.newPath(".txt")
@@ -69,7 +60,7 @@ class TestManager(val projectRule: ProjectRule, private val tempDirManager: Temp
     runInEdtAndWait {
       val normalizedFilePath = FileUtilRt.toSystemIndependentName(filePath!!)
       if (annotation!!.relativeToProject) {
-        val root = projectRule.project.getBaseDir()
+        val root = projectRule.project.baseDir
         runWriteAction {
           fileToDelete = root.findOrCreateChildData(this@TestManager, normalizedFilePath)
         }
@@ -78,8 +69,8 @@ class TestManager(val projectRule: ProjectRule, private val tempDirManager: Temp
         val module = projectRule.module
         if (annotation!!.excluded) {
           ModuleRootModificationUtil.updateModel(module) { model ->
-            val contentEntry = model.getContentEntries()[0]
-            val contentRoot = contentEntry.getFile()!!
+            val contentEntry = model.contentEntries[0]
+            val contentRoot = contentEntry.file!!
             runWriteAction {
               contentRoot.findChild(EXCLUDED_DIR_NAME)?.delete(this@TestManager)
               fileToDelete = contentRoot.createChildDirectory(this@TestManager, EXCLUDED_DIR_NAME)
@@ -91,7 +82,7 @@ class TestManager(val projectRule: ProjectRule, private val tempDirManager: Temp
           filePath = "$EXCLUDED_DIR_NAME/$filePath"
         }
         else {
-          val root = ModuleRootManager.getInstance(module).getSourceRoots()[0]
+          val root = ModuleRootManager.getInstance(module).sourceRoots[0]
           runWriteAction {
             fileToDelete = root.findOrCreateChildData(this@TestManager, normalizedFilePath)
           }
@@ -102,7 +93,7 @@ class TestManager(val projectRule: ProjectRule, private val tempDirManager: Temp
 
   override fun finished(description: Description?) {
     if (annotation!!.excluded) {
-      ModuleRootModificationUtil.updateModel(projectRule.module) { model -> model.getContentEntries()[0].removeExcludeFolder(EXCLUDED_DIR_NAME) }
+      ModuleRootModificationUtil.updateModel(projectRule.module) { model -> model.contentEntries[0].removeExcludeFolder(EXCLUDED_DIR_NAME) }
     }
 
     if (fileToDelete != null) {

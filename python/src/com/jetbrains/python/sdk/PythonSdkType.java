@@ -61,6 +61,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.remote.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PyBundle;
@@ -248,6 +249,12 @@ public class PythonSdkType extends SdkType {
       return data.getRemoteConnectionType() == CredentialsType.VAGRANT;
     }
     return false;
+  }
+
+  public static boolean isDocker(@Nullable final Sdk sdk) {
+    return sdk != null && sdk.getSdkAdditionalData() instanceof  RemoteSdkAdditionalData &&
+           ((RemoteSdkAdditionalData) sdk.getSdkAdditionalData()).getRemoteConnectionType() == CredentialsType.DOCKER;
+
   }
 
   public static boolean isRemote(@Nullable String sdkPath) {
@@ -573,7 +580,7 @@ public class PythonSdkType extends SdkType {
               }
               catch (InvalidSdkException e) {
                 // If the SDK is invalid, the user should worry about the SDK itself, not about skeletons generation errors
-                if (isVagrant(sdkUpdater.getSdk())) {
+                if (isVagrant(sdkUpdater.getSdk()) || isDocker(sdkUpdater.getSdk())) {
                   notifyRemoteSdkSkeletonsFail(e, new Runnable() {
                     @Override
                     public void run() {
@@ -616,7 +623,7 @@ public class PythonSdkType extends SdkType {
 
   public static void notifyRemoteSdkSkeletonsFail(final InvalidSdkException e, @Nullable final Runnable restartAction) {
     NotificationListener notificationListener;
-
+    String notificationMessage;
     if (e.getCause() instanceof VagrantNotStartedException) {
       notificationListener =
         new NotificationListener() {
@@ -637,15 +644,36 @@ public class PythonSdkType extends SdkType {
             }
           }
         };
+      notificationMessage = e.getMessage() + "\n<a href=\"#\">Launch vagrant and refresh skeletons</a>";
+    }
+    else if (ExceptionUtil.causedBy(e, DockerMachineNotStartedException.class)) {
+      //noinspection ThrowableResultOfMethodCallIgnored
+      DockerMachineNotStartedException cause = ExceptionUtil.findCause(e, DockerMachineNotStartedException.class);
+      final String machineName = cause.getMachineName();
+      notificationListener =
+        new NotificationListener() {
+          @Override
+          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+            final DockerSupport dockerSupport = DockerSupport.getInstance();
+            if (dockerSupport != null) {
+              dockerSupport.startMachineWithProgressIndicator(null, machineName);
+            }
+            if (restartAction != null) {
+              restartAction.run();
+            }
+          }
+        };
+      notificationMessage = e.getMessage() + "\n<a href=\"#\">Start Docker Machine '" + machineName + "' and refresh skeletons</a>";
     }
     else {
       notificationListener = null;
+      notificationMessage = e.getMessage();
     }
 
     Notifications.Bus.notify(
       new Notification(
         SKELETONS_TOPIC, "Couldn't refresh skeletons for remote interpreter",
-        e.getMessage() + "\n<a href=\"#\">Launch vagrant and refresh skeletons</a>",
+        notificationMessage,
         NotificationType.WARNING,
         notificationListener
       )
@@ -762,6 +790,9 @@ public class PythonSdkType extends SdkType {
     return path;
   }
 
+  /**
+   * Returns skeletons location on the local machine. Independent of SDK credentials type (e.g. ssh, Vagrant, Docker or else).
+   */
   public static String getSkeletonsPath(String basePath, String sdkHome) {
     String sep = File.separator;
     return getSkeletonsRootPath(basePath) + sep + FileUtil.toSystemIndependentName(sdkHome).hashCode() + sep;
@@ -1071,6 +1102,10 @@ public class PythonSdkType extends SdkType {
 
         @Override
         public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
+        }
+
+        @Override
+        public void docker(@NotNull DockerCredentialsHolder credentials) {
         }
       });
       return result.get();

@@ -279,7 +279,7 @@ public class InstalledPackagesPanel extends JPanel {
     final int[] selected = myPackagesTable.getSelectedRows();
     boolean upgradeAvailable = false;
     boolean canUninstall = selected.length != 0;
-    boolean canInstall = true;
+    boolean canInstall = installEnabled();
     boolean canUpgrade = true;
     if (myPackageManagementService != null && selected.length != 0) {
       for (int i = 0; i != selected.length; ++i) {
@@ -315,6 +315,10 @@ public class InstalledPackagesPanel extends JPanel {
   }
 
   protected boolean canInstallPackage(@NotNull final InstalledPackage pyPackage) {
+    return true;
+  }
+
+  protected boolean installEnabled() {
     return true;
   }
 

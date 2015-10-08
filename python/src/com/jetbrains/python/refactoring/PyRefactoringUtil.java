@@ -41,6 +41,9 @@ import java.util.*;
  * Time: 7:07:02 PM
  */
 public class PyRefactoringUtil {
+  private PyRefactoringUtil() {
+  }
+
   @NotNull
   public static List<PsiElement> getOccurrences(@NotNull final PsiElement pattern, @Nullable final PsiElement context) {
     if (context == null) {
@@ -277,9 +280,6 @@ public class PyRefactoringUtil {
       }
     }
     return PsiUtilCore.toPsiElementArray(array);
-  }
-
-  private PyRefactoringUtil() {
   }
 
   public static boolean areConflictingMethods(PyFunction pyFunction, PyFunction pyFunction1) {

@@ -26,12 +26,11 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
-import com.intellij.util.xmlb.SerializationFilter
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.Transient
+import com.intellij.util.xmlb.serialize
 import com.intellij.util.xmlb.toByteArray
 import gnu.trove.THashMap
 import org.assertj.core.api.Assertions.assertThat
@@ -60,15 +59,15 @@ internal class SchemeManagerTest {
 
   private fun getTestDataPath() = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/options"
 
-  @Test fun testLoadSchemes() {
+  @Test fun loadSchemes() {
     doLoadSaveTest("options1", "1->first;2->second")
   }
 
-  @Test fun testLoadSimpleSchemes() {
+  @Test fun loadSimpleSchemes() {
     doLoadSaveTest("options", "1->1")
   }
 
-  @Test fun testDeleteScheme() {
+  @Test fun deleteScheme() {
     val manager = createAndLoad("options1")
     manager.removeScheme(TestScheme("first"))
     manager.save()
@@ -76,7 +75,7 @@ internal class SchemeManagerTest {
     checkSchemes("2->second")
   }
 
-  @Test fun testRenameScheme() {
+  @Test fun renameScheme() {
     val manager = createAndLoad("options1")
 
     val scheme = manager.findSchemeByName("first")
@@ -143,7 +142,7 @@ internal class SchemeManagerTest {
   }
 
   fun TestScheme.save(file: File) {
-    FileUtil.writeToFile(file, _serialize().toByteArray())
+    FileUtil.writeToFile(file, serialize().toByteArray())
   }
 
   @Test fun `different extensions`() {
@@ -375,15 +374,12 @@ data class TestScheme(@field:Attribute private var name: String = "", @field:Att
   override @Transient fun setName(newName: String) {
     name = newName
   }
-
-  @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
-  override fun getExternalInfo() = null
 }
 
 open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme>() {
   override fun readScheme(element: Element) = XmlSerializer.deserialize(element, TestScheme::class.java)
 
-  override fun writeScheme(scheme: TestScheme) = scheme._serialize()
+  override fun writeScheme(scheme: TestScheme) = scheme.serialize()
 }
 
 fun SchemeManagerImpl<*, *>.save() {
@@ -391,5 +387,3 @@ fun SchemeManagerImpl<*, *>.save() {
   save(errors)
   CompoundRuntimeException.throwIfNotEmpty(errors)
 }
-
-fun <T : Any> T._serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)

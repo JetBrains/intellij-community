@@ -15,8 +15,11 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -55,7 +58,19 @@ public class PyGenericType implements PyType {
   @NotNull
   @Override
   public String getName() {
-    return myBound != null ? myName + " <= " + myBound.getName() : myName;
+    if (myBound instanceof PyUnionType) {
+      final PyUnionType bounds = (PyUnionType)myBound;
+      final String boundsString = StringUtil.join(bounds.getMembers(), new Function<PyType, String>() {
+        @Override
+        public String fun(PyType type) {
+          return type != null ? type.getName() : PyNames.UNKNOWN_TYPE;
+        }
+      }, ", ");
+      return "TypeVar('" + myName + "', " + boundsString + ")";
+    }
+    else {
+      return "TypeVar('" + myName + "')";
+    }
   }
 
   @Override

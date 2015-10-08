@@ -109,6 +109,7 @@ public class TemplateFileReferenceSet extends FileReferenceSet {
     return contexts;
   }
 
+  @Nullable
   protected PsiFileSystemItem getPsiDirectory(Module module, VirtualFile folder) {
     return PsiManager.getInstance(module.getProject()).findDirectory(folder);
   }

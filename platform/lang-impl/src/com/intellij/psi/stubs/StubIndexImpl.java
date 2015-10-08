@@ -370,19 +370,14 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         }
       }
       if (updated.length() > 0) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          requestRebuild();
-        }
-        else {
-          final Throwable e = new Throwable(updated.toString());
-          // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              forceRebuild(e);
-            }
-          }, ModalityState.NON_MODAL);
-        }
+        final Throwable e = new Throwable(updated.toString());
+        // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            forceRebuild(e);
+          }
+        }, ModalityState.NON_MODAL);
       }
       dropUnregisteredIndices();
     } catch (IOException ex) {

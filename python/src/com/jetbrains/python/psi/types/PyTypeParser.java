@@ -109,11 +109,17 @@ public class PyTypeParser {
     }
   }
 
+  /**
+   * @param  anchor should never be null or null will be returned
+   */
   @Nullable
   public static PyType getTypeByName(@Nullable final PsiElement anchor, @NotNull String type) {
     return parse(anchor, type).getType();
   }
 
+  /**
+   * @param  anchor should never be null or null will be returned
+   */
   @NotNull
   public static ParseResult parse(@Nullable final PsiElement anchor, @NotNull String type) {
     if (anchor == null || !anchor.isValid()) {

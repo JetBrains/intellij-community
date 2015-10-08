@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.ide.KillRingTransferable;
+import com.intellij.util.text.CharArrayUtil;
 
 /**
  * Stands for emacs <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Words.html#Words">kill-word</a> command.
@@ -61,7 +62,7 @@ public class KillToWordEndAction extends TextComponentEditorAction {
       }
       
       int end = lineEndOffset;
-      if (caretLine < document.getLineCount() - 1) {
+      if (caretLine < document.getLineCount() - 1 && CharArrayUtil.isEmptyOrSpaces(document.getImmutableCharSequence(), caretOffset, end)) {
         // No word end found between the current position and line end, hence, remove line feed sign if possible.
         end++;
       }

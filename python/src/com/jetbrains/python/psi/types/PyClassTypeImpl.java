@@ -19,7 +19,6 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -41,7 +40,6 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyResolveResultRater;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.*;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -649,8 +647,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  public static PyClassTypeImpl createTypeByQName(@NotNull Project project, String classQualifiedName, boolean isDefinition) {
-    PyClass pyClass = PyClassNameIndex.findClass(classQualifiedName, project);
+  public static PyClassTypeImpl createTypeByQName(@NotNull final PsiElement anchor,
+                                                  @NotNull final String classQualifiedName,
+                                                  final boolean isDefinition) {
+    final PyClass pyClass = PyPsiFacade.getInstance(anchor.getProject()).createClassByQName(classQualifiedName, anchor);
     if (pyClass == null) {
       return null;
     }

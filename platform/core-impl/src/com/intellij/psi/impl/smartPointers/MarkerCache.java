@@ -27,7 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TLongObjectHashMap;
-import gnu.trove.TLongObjectProcedure;
+import gnu.trove.TObjectFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,8 +65,9 @@ class MarkerCache {
         frozen = applyEvents(cache.third, events.subList(cache.first, eventCount), answer);
       }
       else {
-        answer = new TLongObjectHashMap<ManualRangeMarker>();
-        for (SelfElementInfo info : getInfos()) {
+        List<SelfElementInfo> infos = getInfos();
+        answer = new TLongObjectHashMap<ManualRangeMarker>(infos.size());
+        for (SelfElementInfo info : infos) {
           ProperTextRange range = info.getPsiRange();
           long key = info.markerCacheKey();
           if (range != null && key != 0) {
@@ -98,13 +99,10 @@ class MarkerCache {
                                           ((DocumentEventImpl) event).getInitialStartOffset(), ((DocumentEventImpl) event).getInitialOldLength());
       }
 
-      map.forEachEntry(new TLongObjectProcedure<ManualRangeMarker>() {
+      map.transformValues(new TObjectFunction<ManualRangeMarker, ManualRangeMarker>() {
         @Override
-        public boolean execute(long key, ManualRangeMarker currentRange) {
-          if (currentRange != null) {
-            map.put(key, currentRange.getUpdatedRange(corrected));
-          }
-          return true;
+        public ManualRangeMarker execute(ManualRangeMarker currentRange) {
+          return currentRange == null ? null : currentRange.getUpdatedRange(corrected);
         }
       });
     }

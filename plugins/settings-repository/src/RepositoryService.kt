@@ -42,7 +42,7 @@ public interface RepositoryService {
   }
 
   public fun checkFileRepo(url: String, messageParent: Container): Boolean {
-    val suffix = '/' + Constants.DOT_GIT
+    val suffix = "/${Constants.DOT_GIT}"
     val file = File(if (url.endsWith(suffix)) url.substring(0, url.length() - suffix.length()) else url)
     if (file.exists()) {
       if (!file.isDirectory) {
@@ -55,17 +55,17 @@ public interface RepositoryService {
       }
     }
     else if (!file.isAbsolute) {
-      Messages.showErrorDialog(messageParent, IcsBundle.message("specify.absolute.path.dialog.message"), "")
+      Messages.showErrorDialog(messageParent, icsMessage("specify.absolute.path.dialog.message"), "")
       return false
     }
 
-    if (Messages.showYesNoDialog(messageParent, IcsBundle.message("init.dialog.message"), IcsBundle.message("init.dialog.title"), Messages.getQuestionIcon()) == Messages.YES) {
+    if (Messages.showYesNoDialog(messageParent, icsMessage("init.dialog.message"), icsMessage("init.dialog.title"), Messages.getQuestionIcon()) == Messages.YES) {
       try {
         createBareRepository(file)
         return true
       }
       catch (e: IOException) {
-        Messages.showErrorDialog(messageParent, IcsBundle.message("init.failed.message", e.getMessage()), IcsBundle.message("init.failed.title"))
+        Messages.showErrorDialog(messageParent, icsMessage("init.failed.message", e.getMessage()), icsMessage("init.failed.title"))
         return false
       }
     }

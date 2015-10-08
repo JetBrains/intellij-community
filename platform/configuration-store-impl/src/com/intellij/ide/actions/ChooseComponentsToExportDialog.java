@@ -33,7 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,19 +57,21 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
   private final boolean myShowFilePath;
   private final String myDescription;
 
-  public ChooseComponentsToExportDialog(@NotNull MultiMap<File, ExportableItem> fileToComponents,
+  public ChooseComponentsToExportDialog(@NotNull Map<File, List<ExportableItem>> fileToComponents,
                                         boolean showFilePath, final String title, String description) {
     super(false);
 
     myDescription = description;
     myShowFilePath = showFilePath;
     Map<ExportableItem, ComponentElementProperties> componentToContainingListElement = new LinkedHashMap<ExportableItem, ComponentElementProperties>();
-    for (ExportableItem component : fileToComponents.values()) {
-      if (!addToExistingListElement(component, componentToContainingListElement, fileToComponents)) {
-        ComponentElementProperties componentElementProperties = new ComponentElementProperties();
-        componentElementProperties.addComponent(component);
+    for (List<ExportableItem> list : fileToComponents.values()) {
+      for (ExportableItem component : list) {
+        if (!addToExistingListElement(component, componentToContainingListElement, fileToComponents)) {
+          ComponentElementProperties componentElementProperties = new ComponentElementProperties();
+          componentElementProperties.addComponent(component);
 
-        componentToContainingListElement.put(component, componentElementProperties);
+          componentToContainingListElement.put(component, componentElementProperties);
+        }
       }
     }
     myChooser = new ElementsChooser<ComponentElementProperties>(true);
@@ -149,21 +151,24 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
 
   private static boolean addToExistingListElement(@NotNull ExportableItem component,
                                                   @NotNull Map<ExportableItem, ComponentElementProperties> componentToContainingListElement,
-                                                  @NotNull MultiMap<File, ExportableItem> fileToComponents) {
+                                                  @NotNull Map<File, List<ExportableItem>> fileToComponents) {
     File file = null;
     for (File exportFile : component.getFiles()) {
-      for (ExportableItem tiedComponent : fileToComponents.get(exportFile)) {
-        if (tiedComponent == component) {
-          continue;
-        }
+      List<ExportableItem> list = fileToComponents.get(exportFile);
+      if (!ContainerUtil.isEmpty(list)) {
+        for (ExportableItem tiedComponent : list) {
+          if (tiedComponent == component) {
+            continue;
+          }
 
-        final ComponentElementProperties elementProperties = componentToContainingListElement.get(tiedComponent);
-        if (elementProperties != null && !FileUtil.filesEqual(exportFile, file)) {
-          LOG.assertTrue(file == null, "Component " + component + " serialize itself into " + file + " and " + exportFile);
-          // found
-          elementProperties.addComponent(component);
-          componentToContainingListElement.put(component, elementProperties);
-          file = exportFile;
+          final ComponentElementProperties elementProperties = componentToContainingListElement.get(tiedComponent);
+          if (elementProperties != null && !FileUtil.filesEqual(exportFile, file)) {
+            LOG.assertTrue(file == null, "Component " + component + " serialize itself into " + file + " and " + exportFile);
+            // found
+            elementProperties.addComponent(component);
+            componentToContainingListElement.put(component, elementProperties);
+            file = exportFile;
+          }
         }
       }
     }

@@ -16,9 +16,11 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+from __future__ import absolute_import
 
 from thrift.protocol.TProtocol import TProtocolBase
 from types import *
+
 
 class TProtocolDecorator():
   def __init__(self, protocol):

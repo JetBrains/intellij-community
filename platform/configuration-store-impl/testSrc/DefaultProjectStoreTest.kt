@@ -5,23 +5,17 @@ import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.externalDependencies.ProjectExternalDependency
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.RuleChain
-import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.deleteRecursively
+import com.intellij.testFramework.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExternalResource
 import java.nio.file.Paths
 
-class DefaultProjectStoreTest {
+internal class DefaultProjectStoreTest {
   companion object {
     @ClassRule val projectRule = ProjectRule()
   }
@@ -32,35 +26,24 @@ class DefaultProjectStoreTest {
 
   private val ruleChain = RuleChain(
     tempDirManager,
-    object : ExternalResource() {
-      private var isDoNotSave = false
-
-      override fun before() {
-        val app = ApplicationManagerEx.getApplicationEx()
-        isDoNotSave = app.isDoNotSave
-        app.doNotSave(false)
-      }
-
-      override fun after() {
-        val app = ApplicationManagerEx.getApplicationEx()
+    WrapRule {
+      val app = ApplicationManagerEx.getApplicationEx()
+      val isDoNotSave = app.isDoNotSave
+      app.doNotSave(false);
+      {
         try {
           app.doNotSave(isDoNotSave)
         }
         finally {
-          Paths.get(app.stateStore.storageManager.expandMacros(StoragePathMacros.APP_CONFIG)).deleteRecursively()
+          Paths.get(app.stateStore.stateStorageManager.expandMacros(StoragePathMacros.APP_CONFIG)).deleteRecursively()
         }
       }
     },
-    object : ExternalResource() {
-      private var externalDependenciesManager: ExternalDependenciesManager? = null
-
-      override fun before() {
-        externalDependenciesManager = ProjectManager.getInstance().defaultProject.service<ExternalDependenciesManager>()
-        externalDependenciesManager!!.allDependencies = requiredPlugins
-      }
-
-      override fun after() {
-        externalDependenciesManager?.allDependencies = emptyList()
+    WrapRule {
+      val externalDependenciesManager = ProjectManager.getInstance().defaultProject.service<ExternalDependenciesManager>()
+      externalDependenciesManager.allDependencies = requiredPlugins
+      {
+        externalDependenciesManager.allDependencies = emptyList()
       }
     }
   )
@@ -73,6 +56,3 @@ class DefaultProjectStoreTest {
     }
   }
 }
-
-val IComponentStore.storageManager: StateStorageManager
-  get() = stateStorageManager

@@ -54,7 +54,7 @@ class Foo {
 
     myFixture.configureByText "a.java", """
 class Bar {
-  static void foo(ModifierList ml) {
+  static void foo() {
     if (getConstant() == <caret>) {}
   }
 
@@ -72,6 +72,28 @@ interface Foo {
     LookupManager.getInstance(project).hideActiveLookup()
 
     myFixture.complete(CompletionType.BASIC)
+    myFixture.assertPreferredCompletionItems 0, 'BAR', 'FOO'
+  }
+
+  public void "test magic constant in equality before another equality"() {
+    addMagicConstant()
+
+    myFixture.configureByText "a.java", """
+class Bar {
+  static void foo() {
+    if (getConstant() == <caret>getConstant() == 2) {}
+  }
+
+  @org.intellij.lang.annotations.MagicConstant(flagsFromClass = Foo.class)
+  public native int getConstant();
+}
+
+interface Foo {
+    int FOO = 1;
+    int BAR = 2;
+}
+"""
+    myFixture.complete(CompletionType.SMART)
     myFixture.assertPreferredCompletionItems 0, 'BAR', 'FOO'
   }
 

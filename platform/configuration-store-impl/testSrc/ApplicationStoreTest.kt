@@ -16,24 +16,27 @@
 package com.intellij.configurationStore
 
 import com.intellij.ide.actions.ExportableItem
+import com.intellij.ide.actions.exportSettings
 import com.intellij.ide.actions.getExportableComponentsMap
+import com.intellij.ide.actions.getPaths
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.testFramework.*
 import com.intellij.util.SmartList
-import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.util.xmlb.serialize
 import gnu.trove.THashMap
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.data.MapEntry
 import org.intellij.lang.annotations.Language
-import org.jdom.Element
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import org.picocontainer.MutablePicoContainer
+import org.picocontainer.defaults.InstanceComponentAdapter
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
@@ -113,14 +116,66 @@ internal class ApplicationStoreTest {
   }
 
   @Test fun `export settings`() {
+    testAppConfig.refreshVfs()
+
     val storageManager = ApplicationManager.getApplication().stateStore.stateStorageManager
     val optionsPath = storageManager.expandMacros(StoragePathMacros.APP_CONFIG)
     val rootConfigPath = storageManager.expandMacros(ROOT_CONFIG)
     val map = getExportableComponentsMap(false, true, storageManager)
-    assertThat(map.size()).isNotEqualTo(0)
+    assertThat(map).isNotEmpty()
 
-    val key = File(optionsPath, "filetypes.xml")
-    assertThat(map.get(key)).containsExactly(ExportableItem(listOf(key, File(rootConfigPath, "filetypes")), "File types", RoamingType.DEFAULT))
+    fun test(item: ExportableItem) {
+      val file = item.files.first()
+      assertThat(map.get(file)).containsExactly(item)
+      assertThat(file).doesNotExist()
+    }
+
+    test(ExportableItem(listOf(File(optionsPath, "filetypes.xml"), File(rootConfigPath, "filetypes")), "File types", RoamingType.DEFAULT))
+    test(ExportableItem(listOf(File(optionsPath, "customization.xml")), "Menus and toolbars customization", RoamingType.DEFAULT))
+    test(ExportableItem(listOf(File(optionsPath, "templates.xml"), File(rootConfigPath, "templates")), "Live templates", RoamingType.DEFAULT))
+  }
+
+  @Test fun `import settings`() {
+    testAppConfig.refreshVfs()
+
+    val component = A()
+    componentStore.initComponent(component, false)
+
+    component.options.foo = "new"
+
+    saveStore()
+
+    val storageManager = componentStore.storageManager
+
+    val configPath = storageManager.expandMacros(ROOT_CONFIG)
+    val configDir = Paths.get(configPath)
+
+    val componentPath = configDir.resolve("a.xml")
+    assertThat(componentPath).isRegularFile()
+    val componentFile = componentPath.toFile()
+
+    // additional export path
+    val additionalPath = configDir.resolve("foo")
+    additionalPath.writeChild("bar.icls", "")
+    val additionalFile = additionalPath.toFile()
+    val exportedData = BufferExposingByteArrayOutputStream()
+    exportSettings(setOf(componentFile, additionalFile), exportedData, configPath)
+
+    val relativePaths = getPaths(ByteArrayInputStream(exportedData.internalBuffer, 0, exportedData.size()))
+    assertThat(relativePaths).containsOnly("a.xml", "foo/", "foo/bar.icls", "IntelliJ IDEA Global Settings")
+    val list = listOf(ExportableItem(listOf(componentFile, additionalFile), ""))
+
+    fun <B> File.to(that: B) = MapEntry.entry(this, that)
+
+    val picoContainer = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
+    val componentKey = A::class.java.name
+    picoContainer.registerComponent(InstanceComponentAdapter(componentKey, component))
+    try {
+      assertThat(getExportableComponentsMap(false, false, storageManager, relativePaths)).containsOnly(componentFile to list, additionalFile to list)
+    }
+    finally {
+      picoContainer.unregisterComponent(componentKey)
+    }
   }
 
   private fun createComponentData(foo: String) = """<component name="A" foo="$foo" />"""
@@ -146,16 +201,16 @@ internal class ApplicationStoreTest {
 </application>""")
   }
 
-  @State(name = "A", storages = arrayOf(Storage(file = "a.xml")))
-  private open class A : PersistentStateComponent<Element> {
+  @State(name = "A", storages = arrayOf(Storage(file = "a.xml")), additionalExportFile = "foo")
+  private open class A : PersistentStateComponent<A.State> {
     data class State(@Attribute var foo: String = "", @Attribute var bar: String = "")
 
-    var state = State()
+    var options = State()
 
-    override fun getState() = state.serialize()
+    override fun getState() = options
 
-    override fun loadState(state: Element) {
-      this.state = XmlSerializer.deserialize(state, State::class.java)!!
+    override fun loadState(state: State) {
+      this.options = state
     }
   }
 
@@ -167,15 +222,15 @@ internal class ApplicationStoreTest {
 
     val component = A()
     componentStore.initComponent(component, false)
-    assertThat(component.state).isEqualTo(A.State("old"))
+    assertThat(component.options).isEqualTo(A.State("old"))
 
     saveStore()
 
     assertThat(file).hasContent(oldContent)
     assertThat(oldModificationTime).isEqualTo(file.getLastModifiedTime())
 
-    component.state.bar = "2"
-    component.state.foo = "1"
+    component.options.bar = "2"
+    component.options.foo = "1"
     saveStore()
 
     assertThat(file).hasContent("<application>\n  <component name=\"A\" foo=\"1\" bar=\"2\" />\n</application>")
@@ -191,7 +246,7 @@ internal class ApplicationStoreTest {
 
     val component = AWorkspace()
     componentStore.initComponent(component, false)
-    assertThat(component.state).isEqualTo(A.State("old"))
+    assertThat(component.options).isEqualTo(A.State("old"))
 
     saveStore()
 
@@ -242,6 +297,8 @@ internal class ApplicationStoreTest {
 
     override fun setPath(path: String) {
       storageManager.addMacro(StoragePathMacros.APP_CONFIG, path)
+      // yes, in tests APP_CONFIG equals to ROOT_CONFIG (as ICS does)
+      storageManager.addMacro(ROOT_CONFIG, path)
     }
   }
 

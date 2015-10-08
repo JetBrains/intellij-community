@@ -29,7 +29,7 @@ public fun showAuthenticationForm(credentials: Credentials?, uri: String, host: 
 
   return UIUtil.invokeAndWaitIfNeeded(object : Computable<Credentials?> {
     override fun compute(): Credentials? {
-      val note = if (sshKeyFile == null) IcsBundle.message(if (host == "github.com") "login.github.note" else "login.other.git.provider.note") else null
+      val note = if (sshKeyFile == null) icsMessage(if (host == "github.com") "login.github.note" else "login.other.git.provider.note") else null
       var username = credentials?.id
       if (username == null && host == "github.com" && path != null && sshKeyFile == null) {
         val firstSlashIndex = path.indexOf('/', 1)
@@ -37,10 +37,10 @@ public fun showAuthenticationForm(credentials: Credentials?, uri: String, host: 
       }
 
       val authenticationForm = RepositoryAuthenticationForm(if (sshKeyFile == null) {
-        IcsBundle.message("log.in.to", StringUtil.trimMiddle(uri, 50))
+        icsMessage("log.in.to", StringUtil.trimMiddle(uri, 50))
       }
       else {
-        IcsBundle.message("enter.your.password.for.ssh.key", PathUtilRt.getFileName(sshKeyFile))
+        icsMessage("enter.your.password.for.ssh.key", PathUtilRt.getFileName(sshKeyFile))
       }, username, credentials?.token, note, sshKeyFile != null)
       if (authenticationForm.showAndGet()) {
         username = sshKeyFile ?: authenticationForm.username

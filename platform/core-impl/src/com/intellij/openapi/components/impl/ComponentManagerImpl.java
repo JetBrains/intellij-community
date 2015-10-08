@@ -365,9 +365,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Nullable
-  public final PluginId getConfig(@NotNull Class<?> componentImplementation) {
-    ComponentConfigComponentAdapter adapter = getComponentAdapter(componentImplementation);
-    return adapter == null ? null : adapter.myPluginId;
+  public final PluginId getConfig(@NotNull ComponentAdapter adapter) {
+    return adapter instanceof ComponentConfigComponentAdapter ? ((ComponentConfigComponentAdapter)adapter).myPluginId : null;
   }
 
   public final boolean isWorkspaceComponent(@NotNull Class<?> componentImplementation) {

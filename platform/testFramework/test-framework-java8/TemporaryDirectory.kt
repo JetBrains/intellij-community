@@ -58,9 +58,9 @@ class TemporaryDirectory : ExternalResource() {
   /**
    * Directory is not created.
    */
-  public fun newDirectory(directoryName: String? = null): File = generatePath(directoryName).toFile()
+  fun newDirectory(directoryName: String? = null): File = generatePath(directoryName).toFile()
 
-  public fun newPath(directoryName: String? = null, refreshVfs: Boolean = true): Path {
+  fun newPath(directoryName: String? = null, refreshVfs: Boolean = true): Path {
     val path = generatePath(directoryName)
     if (refreshVfs) {
       path.refreshVfs()
@@ -79,7 +79,7 @@ class TemporaryDirectory : ExternalResource() {
     return path
   }
 
-  public fun newVirtualDirectory(directoryName: String? = null): VirtualFile {
+  fun newVirtualDirectory(directoryName: String? = null): VirtualFile {
     val path = generatePath(directoryName)
     path.createDirectories()
     val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.systemIndependentPath)
@@ -88,7 +88,7 @@ class TemporaryDirectory : ExternalResource() {
   }
 }
 
-public fun generateTemporaryPath(fileName: String?): Path {
+fun generateTemporaryPath(fileName: String?): Path {
   val tempDirectory = Paths.get(FileUtilRt.getTempDirectory())
   var path = tempDirectory.resolve(fileName)
   var i = 0

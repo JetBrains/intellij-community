@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -36,7 +35,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -90,7 +88,7 @@ public class ShelvedChangeList implements JDOMExternalizable, ExternalizableSche
     DATE = new Date(Long.parseLong(element.getAttributeValue(ATTRIBUTE_DATE)));
     myRecycled = Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_RECYCLED_CHANGELIST));
     //noinspection unchecked
-    final List<Element> children = (List<Element>)element.getChildren(ELEMENT_BINARY);
+    final List<Element> children = element.getChildren(ELEMENT_BINARY);
     myBinaryFiles = new ArrayList<ShelvedBinaryFile>(children.size());
     for (Element child : children) {
       ShelvedBinaryFile binaryFile = new ShelvedBinaryFile();
@@ -159,12 +157,6 @@ public class ShelvedChangeList implements JDOMExternalizable, ExternalizableSche
   @Override
   public String getName() {
     return mySchemeName;
-  }
-
-  @Nullable
-  @Override
-  public ExternalInfo getExternalInfo() {
-    return null;
   }
 
   @Override
