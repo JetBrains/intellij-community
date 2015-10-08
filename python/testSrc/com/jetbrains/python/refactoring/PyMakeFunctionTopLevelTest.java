@@ -225,6 +225,6 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return super.getTestDataPath() + "/refactoring/convertTopLevel/";
+    return super.getTestDataPath() + "/refactoring/makeFunctionTopLevel/";
   }
 }
