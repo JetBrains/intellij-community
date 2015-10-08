@@ -383,7 +383,23 @@ public final class UpdateChecker {
     final UpdateChannel channelToPropose = checkForUpdateResult.getChannelToPropose();
     final UpdateChannel updatedChannel = checkForUpdateResult.getUpdatedChannel();
 
-    if (newChannelReady(channelToPropose)) {
+    if (updatedChannel != null) {
+      Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+          new UpdateInfoDialog(updatedChannel, enableLink, updateSettings.canUseSecureConnection(), updatedPlugins, incompatiblePlugins).show();
+        }
+      };
+
+      if (alwaysShowResults) {
+        runnable.run();
+      }
+      else {
+        String message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().getFullProductName());
+        showNotification(project, message, false, runnable);
+      }
+    }
+    else if (newChannelReady(channelToPropose)) {
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
@@ -405,22 +421,6 @@ public final class UpdateChecker {
       }
       else {
         String message = IdeBundle.message("updates.new.version.available", ApplicationNamesInfo.getInstance().getFullProductName());
-        showNotification(project, message, false, runnable);
-      }
-    }
-    else if (updatedChannel != null) {
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          new UpdateInfoDialog(updatedChannel, enableLink, updateSettings.canUseSecureConnection(), updatedPlugins, incompatiblePlugins).show();
-        }
-      };
-
-      if (alwaysShowResults) {
-        runnable.run();
-      }
-      else {
-        String message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().getFullProductName());
         showNotification(project, message, false, runnable);
       }
     }
