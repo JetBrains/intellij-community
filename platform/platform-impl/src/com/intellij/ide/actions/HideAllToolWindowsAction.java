@@ -22,8 +22,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 
@@ -51,9 +49,8 @@ public class HideAllToolWindowsAction extends AnAction implements DumbAware {
     String[] ids = toolWindowManager.getToolWindowIds();
     boolean hasVisible = false;
     for (String id : ids) {
-      ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
-      if (toolWindow.isVisible() && toolWindow.getType() != ToolWindowType.WINDOWED) {
-        toolWindow.hide(null);
+      if (HideToolWindowAction.shouldBeHiddenByShortCut(toolWindowManager, id)) {
+        toolWindowManager.getToolWindow(id).hide(null);
         hasVisible = true;
       }
     }
@@ -82,8 +79,7 @@ public class HideAllToolWindowsAction extends AnAction implements DumbAware {
     ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
     String[] ids = toolWindowManager.getToolWindowIds();
     for (String id : ids) {
-      ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
-      if (toolWindow.isVisible() && toolWindow.getType() != ToolWindowType.WINDOWED) {
+      if (HideToolWindowAction.shouldBeHiddenByShortCut(toolWindowManager, id)) {
         presentation.setEnabled(true);
         presentation.setText(IdeBundle.message("action.hide.all.windows"), true);
         return;
