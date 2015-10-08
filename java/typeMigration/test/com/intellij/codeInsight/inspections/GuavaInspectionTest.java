@@ -97,6 +97,10 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testInsertTypeParameter() {
+    doTest();
+  }
+
   public void testDontShowFluentIterableChainQuickFix() {
     doTestNoQuickFixes(GuavaInspection.MigrateFluentIterableChainQuickFix.class);
   }
