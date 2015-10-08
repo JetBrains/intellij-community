@@ -16,7 +16,6 @@
 
 package com.intellij.execution.junit;
 
-import com.google.common.base.Strings;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -614,7 +613,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
         return (fqName.contains("*") ? fqName : StringUtil.getShortName(fqName)) + (size > 1 ? " and " + (size - 1) + " more" : "");
       }
       if (TEST_CATEGORY.equals(TEST_OBJECT)) {
-        return "@Category(" + (Strings.isNullOrEmpty(CATEGORY_NAME) ? "Invalid" : CATEGORY_NAME) + ")";
+        return "@Category(" + (StringUtil.isEmpty(CATEGORY_NAME) ? "Invalid" : CATEGORY_NAME) + ")";
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {
