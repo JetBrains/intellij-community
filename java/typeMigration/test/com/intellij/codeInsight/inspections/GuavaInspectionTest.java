@@ -75,6 +75,22 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testTransformAndConcat1() {
+    doTest();
+  }
+
+  public void testTransformAndConcat2() {
+    doTest();
+  }
+
+  public void testTransformAndConcat3() {
+    doTest();
+  }
+
+  public void testFilterIsInstance() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.enableInspections(new GuavaInspection());

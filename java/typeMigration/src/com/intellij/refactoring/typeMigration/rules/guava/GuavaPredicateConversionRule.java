@@ -33,6 +33,8 @@ import java.util.Map;
  * @author Dmitry Batkovich
  */
 public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
+  public static final String GUAVA_PREDICATE = "com.google.common.base.Predicate";
+
   @Override
   protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {
     descriptorsMap.put("apply", new TypeConversionDescriptor("$q$.apply($o$)", "$q$.test($o$)"));
@@ -41,7 +43,7 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
   @NotNull
   @Override
   public String ruleFromClass() {
-    return "com.google.common.base.Predicate";
+    return GUAVA_PREDICATE;
   }
 
   @NotNull

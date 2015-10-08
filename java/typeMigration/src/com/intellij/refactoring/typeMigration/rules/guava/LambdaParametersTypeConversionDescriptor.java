@@ -24,15 +24,15 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author Dmitry Batkovich
  */
-public class LambdaParametersTypeConversionDescription extends TypeConversionDescriptor {
-  private static final Logger LOG = Logger.getInstance(LambdaParametersTypeConversionDescription.class);
+public class LambdaParametersTypeConversionDescriptor extends TypeConversionDescriptor {
+  private static final Logger LOG = Logger.getInstance(LambdaParametersTypeConversionDescriptor.class);
 
-  public LambdaParametersTypeConversionDescription(@NonNls String stringToReplace, @NonNls String replaceByString) {
+  public LambdaParametersTypeConversionDescriptor(@NonNls String stringToReplace, @NonNls String replaceByString) {
     super(stringToReplace, replaceByString);
   }
 
   @Override
-  public final PsiExpression replace(PsiExpression expression) {
+  public PsiExpression replace(PsiExpression expression) {
     LOG.assertTrue(expression instanceof PsiMethodCallExpression);
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
     final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
