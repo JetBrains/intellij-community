@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.server.embedder;
 
 import org.apache.maven.artifact.manager.WagonManager;
+import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.DefaultArtifactRepository;
 import org.apache.maven.wagon.ConnectionException;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
@@ -51,9 +52,9 @@ public class Maven2ServerIndexFetcher implements ResourceFetcher {
   }
 
   public void connect(String _ignoredContextId, String _ignoredUrl) throws IOException {
-    String mirrorUrl = myWagonManager.getMirrorRepository(new DefaultArtifactRepository(myOriginalRepositoryId,
-                                                                                        myOriginalRepositoryUrl,
-                                                                                        null)).getUrl();
+    final ArtifactRepository mirrorRepository = myWagonManager.getMirrorRepository(
+      new DefaultArtifactRepository(myOriginalRepositoryId, myOriginalRepositoryUrl, null));
+    String mirrorUrl = mirrorRepository.getUrl();
     String indexUrl = mirrorUrl + (mirrorUrl.endsWith("/") ? "" : "/") + ".index";
     Repository repository = new Repository(myOriginalRepositoryId, indexUrl);
 
@@ -62,8 +63,8 @@ public class Maven2ServerIndexFetcher implements ResourceFetcher {
       myWagon.addTransferListener(myListener);
 
       myWagon.connect(repository,
-                      myWagonManager.getAuthenticationInfo(repository.getId()),
-                      myWagonManager.getProxy(repository.getProtocol()));
+                      myWagonManager.getAuthenticationInfo(mirrorRepository.getId()),
+                      myWagonManager.getProxy(mirrorRepository.getProtocol()));
     }
     catch (AuthenticationException e) {
       IOException newEx = new IOException("Authentication exception connecting to " + repository);
