@@ -286,7 +286,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
 
       final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
       if (forceIgnoreTypeCast) {
-        return (PsiExpression)javaCodeStyleManager.shortenClassReferences(elementFactory.createExpressionFromText(withoutTypesDeclared, lambdaExpression));
+        return (PsiExpression)javaCodeStyleManager.shortenClassReferences(lambdaExpression);
       }
 
       PsiTypeCastExpression typeCast = (PsiTypeCastExpression)elementFactory

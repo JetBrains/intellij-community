@@ -62,7 +62,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     }
 
     public TypeConversionDescriptor create() {
-      return myWithLambdaParameter ? new LambdaParametersTypeConversionDescription(myStringToReplace, myReplaceByString)
+      return myWithLambdaParameter ? new LambdaParametersTypeConversionDescriptor(myStringToReplace, myReplaceByString)
                                    : new TypeConversionDescriptor(myStringToReplace, myReplaceByString);
     }
 
@@ -80,14 +80,10 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     DESCRIPTORS_MAP.put("limit", new TypeConversionDescriptorFactory("$q$.limit($p$)", "$q$.limit($p$)", false, true));
     DESCRIPTORS_MAP.put("first", new TypeConversionDescriptorFactory("$q$.first()", "$q$.findFirst()", false));
     DESCRIPTORS_MAP.put("transform", new TypeConversionDescriptorFactory("$q$.transform($params$)", "$q$.map($params$)", true, true));
-    //TODO support
-    //DESCRIPTORS_MAP.put("transformAndConcat", new TransformAndConcatDescriptorBase("$q$.transformAndConcat($params$)", "$q$.flatMap($params$)"));
 
     DESCRIPTORS_MAP.put("allMatch", new TypeConversionDescriptorFactory("$it$.allMatch($c$)", "$it$." + StreamApiConstants.ALL_MATCH + "($c$)", true));
     DESCRIPTORS_MAP.put("anyMatch", new TypeConversionDescriptorFactory("$it$.anyMatch($c$)", "$it$." + StreamApiConstants.ANY_MATCH + "($c$)", true));
 
-    //TODO add another filter processor
-    DESCRIPTORS_MAP.put("filter", new TypeConversionDescriptorFactory("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "($p$)", true, true));
     DESCRIPTORS_MAP.put("first", new TypeConversionDescriptorFactory("$it$.first()", "$it$." + StreamApiConstants.FIND_FIRST + "()", false));
     DESCRIPTORS_MAP.put("firstMatch", new TypeConversionDescriptorFactory("$it$.firstMatch($p$)", "$it$.filter($p$).findFirst()", true));
     DESCRIPTORS_MAP.put("get", new TypeConversionDescriptorFactory("$it$.get($p$)", "$it$.collect(java.util.stream.Collectors.toList()).get($p$)", false));
@@ -113,21 +109,44 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     if (context instanceof PsiMethodCallExpression) {
       return buildCompoundDescriptor((PsiMethodCallExpression)context, to, labeler);
     }
-    final TypeConversionDescriptorFactory base = DESCRIPTORS_MAP.get(methodName);
-    if (base != null) {
-      final TypeConversionDescriptor descriptor = base.create();
-      if (base.isChainedMethod()) {
-        descriptor.withConversionType(to);
-      }
-      return descriptor;
-    }
-    else {
-      return null;
-    }
+
+    return getOneMethodDescriptor(methodName, method, to, context);
   }
 
   @Nullable
-  private static GuavaChainedConversionDescriptor buildCompoundDescriptor(PsiMethodCallExpression expression,
+  private TypeConversionDescriptorBase getOneMethodDescriptor(@NotNull String methodName,
+                                                              @NotNull PsiMethod method,
+                                                              @Nullable PsiType to,
+                                                              @Nullable PsiExpression context) {
+    TypeConversionDescriptor descriptorBase = null;
+    boolean needSpecifyType = true;
+    if (methodName.equals("filter")) {
+      descriptorBase = FluentIterableConversionUtil.getFilterDescriptor(method);
+    }
+    else if (methodName.equals("transformAndConcat")) {
+      descriptorBase = new FluentIterableConversionUtil.TransformAndConcatConversionRule();
+    }
+    else {
+      final TypeConversionDescriptorFactory base = DESCRIPTORS_MAP.get(methodName);
+      if (base != null) {
+        final TypeConversionDescriptor descriptor = base.create();
+        needSpecifyType = base.isChainedMethod();
+        descriptorBase = descriptor;
+      }
+    }
+    if (descriptorBase != null) {
+      if (needSpecifyType && to != null) {
+        descriptorBase.withConversionType(to);
+      }
+      return descriptorBase;
+    }
+    return null;
+  }
+
+
+
+  @Nullable
+  private GuavaChainedConversionDescriptor buildCompoundDescriptor(PsiMethodCallExpression expression,
                                                                           PsiType to,
                                                                           TypeMigrationLabeler labeler) {
     List<TypeConversionDescriptorBase> methodDescriptors = new SmartList<TypeConversionDescriptorBase>();
@@ -156,21 +175,15 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       if (containingClass == null) {
         break;
       }
-      TypeConversionDescriptorBase descriptor;
+      TypeConversionDescriptorBase descriptor = null;
       if (FLUENT_ITERABLE.equals(containingClass.getQualifiedName())) {
-        final TypeConversionDescriptorFactory descriptorFactory = DESCRIPTORS_MAP.get(methodName);
-        if (descriptorFactory == null) {
-          return null;
-        }
-        descriptor = descriptorFactory.create();
+        descriptor = getOneMethodDescriptor(methodName, method, null, current);
       }
       else if (GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(containingClass.getQualifiedName())) {
         descriptor = optionalDescriptor.getValue().findConversion(null, null, method, current.getMethodExpression(), labeler);
-        if (descriptor == null) {
-          return null;
-        }
-      } else {
-        break;
+      }
+      if (descriptor == null) {
+        return null;
       }
       methodDescriptors.add(descriptor);
       final PsiExpression qualifier = current.getMethodExpression().getQualifierExpression();

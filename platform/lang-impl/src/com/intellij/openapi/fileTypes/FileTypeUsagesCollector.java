@@ -21,14 +21,19 @@ import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -58,8 +63,7 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
       if (project.isDisposed()) {
         throw new CollectUsagesException("Project is disposed");
       }
-      VirtualFile ideaDir = project.getBaseDir().findChild(Project.DIRECTORY_STORE_FOLDER);
-      final String ideaDirPath = ideaDir == null ? null : ideaDir.getPath();
+      final String ideaDirPath = getIdeaDirPath(project.getBasePath());
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
@@ -71,7 +75,7 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
               @Override
               public boolean process(VirtualFile file, Void value) {
                 //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
-                if (ideaDirPath == null || !file.getPath().startsWith(ideaDirPath)) {
+                if (ideaDirPath == null || FileUtil.isAncestorThreeState(ideaDirPath, file.getPath(), true) == ThreeState.NO) {
                   usedFileTypes.add(fileType);
                   return false;
                 }
@@ -88,5 +92,22 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
         return new UsageDescriptor(fileType.getName(), 1);
       }
     });
+  }
+
+  @Nullable
+  private static String getIdeaDirPath(@Nullable String projectPath) {
+    if (projectPath != null) {
+      File projectDir = new File(projectPath);
+      File[] ideaDirs = projectDir.listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          return Project.DIRECTORY_STORE_FOLDER.equals(name);
+        }
+      });
+      if (ideaDirs.length == 1) {
+        return ideaDirs[0].getPath();
+      }
+    }
+    return null;
   }
 }
