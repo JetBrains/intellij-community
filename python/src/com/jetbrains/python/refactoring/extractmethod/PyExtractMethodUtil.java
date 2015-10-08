@@ -489,7 +489,7 @@ public class PyExtractMethodUtil {
     final PsiNamedElement parent = PsiTreeUtil.getParentOfType(anchor, PyFile.class, PyClass.class, PyFunction.class);
 
     final PsiElement result;
-    // The only safe case to insert extracted function *after* original scope owner is function.
+    // The only safe case to insert extracted function *after* the original scope owner is when it's function.
     if (parent instanceof PyFunction) {
       result = parent.getParent().addAfter(generatedMethod, parent);
     }

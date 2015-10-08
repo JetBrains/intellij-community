@@ -1,6 +1,5 @@
-package com.jetbrains.python.refactoring.convert;
+package com.jetbrains.python.refactoring.convertModulePackage;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -8,37 +7,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.refactoring.PyBaseRefactoringAction;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
-public abstract class PyBaseConvertRefactoringAction extends BaseRefactoringAction {
+public abstract class PyBaseConvertModulePackageAction extends PyBaseRefactoringAction {
   @Override
   protected final boolean isAvailableInEditorOnly() {
     return false;
-  }
-
-  @Override
-  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
-                                                        @NotNull Editor editor,
-                                                        @NotNull PsiFile file,
-                                                        @NotNull DataContext context) {
-    return false;
-  }
-
-  @Override
-  protected final boolean isAvailableForLanguage(Language language) {
-    return language.isKindOf(PythonLanguage.getInstance());
-  }
-
-  @Override
-  protected boolean isAvailableForFile(PsiFile file) {
-    return isAvailableForLanguage(file.getLanguage());
   }
 
   /**
@@ -57,5 +37,13 @@ public abstract class PyBaseConvertRefactoringAction extends BaseRefactoringActi
       message = PyBundle.message("refactoring.error.file.exists", file.getName());
     }
     CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), message, id, project);
+  }
+
+  @Override
+  protected boolean isEnabledOnElementInsideEditor(@NotNull PsiElement element,
+                                                   @NotNull Editor editor,
+                                                   @NotNull PsiFile file,
+                                                   @NotNull DataContext context) {
+    return false;
   }
 }

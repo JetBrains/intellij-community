@@ -184,7 +184,7 @@ public class ImportToImportFromIntention implements IntentionAction {
             // cut the module out of import, add a from-import.
             for (PyImportElement pie : importElements) {
               if (pie == myImportElement) {
-                PyUtil.removeListNode(pie);
+                pie.delete();
                 break;
               }
             }
