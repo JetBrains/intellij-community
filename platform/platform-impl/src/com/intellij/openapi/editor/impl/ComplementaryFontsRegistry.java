@@ -22,6 +22,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -50,6 +51,16 @@ public class ComplementaryFontsRegistry {
   private static final String[] ITALIC_NAMES = {"italic", "cursiva", "oblique", "inclined"};
   private static final String[] BOLD_ITALIC_NAMES = {"bolditalic", "bold-italic", "bold italic", "boldoblique", "bold-oblique", 
     "bold oblique", "demibold italic", "negreta cursiva","demi oblique"};
+
+  // Explicit mapping fontName->style for cases where generic rules (given above) don't work.
+  private static final Map<String, Integer> FONT_NAME_TO_STYLE = new HashMap<String, Integer>();
+  static {
+    FONT_NAME_TO_STYLE.put("AnkaCoder-b",           Font.BOLD);
+    FONT_NAME_TO_STYLE.put("AnkaCoder-i",           Font.ITALIC);
+    FONT_NAME_TO_STYLE.put("AnkaCoder-bi",          Font.BOLD | Font.ITALIC);
+    FONT_NAME_TO_STYLE.put("SourceCodePro-It",      Font.ITALIC);
+    FONT_NAME_TO_STYLE.put("SourceCodePro-BoldIt",  Font.BOLD | Font.ITALIC);
+  }
 
   static {
     final UISettings settings = UISettings.getInstance();
@@ -111,7 +122,7 @@ public class ComplementaryFontsRegistry {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ourFontNames.add("Monospaced");
     } else {
-      if (Patches.JDK_MAC_FONT_STYLE_BUG) {
+      if (Patches.JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND) {
         fillStyledFontMap();
       }
       String[] fontNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
@@ -128,7 +139,14 @@ public class ComplementaryFontsRegistry {
     Font[] allFonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
     for (Font font : allFonts) {
       String name = font.getName();
-      int style = getFontStyle(name);
+      Integer style = null;
+      if (!SystemInfo.isAppleJvm) {
+        style = FONT_NAME_TO_STYLE.get(name); // workaround with explicit fontName->style mapping doesn't work on Apple JVM
+      }
+      if (style == null) {
+        if (!Patches.JDK_MAC_FONT_STYLE_BUG) continue;
+        style = getFontStyle(name);
+      }
       if (style != Font.PLAIN) {
         String familyName = font.getFamily();
         Pair<String, Integer>[] entry = ourStyledFontMap.get(familyName);
@@ -199,7 +217,7 @@ public class ComplementaryFontsRegistry {
   @Nullable
   private static FontInfo doGetFontAbleToDisplay(char c, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily) {
     synchronized (lock) {
-      if (Patches.JDK_MAC_FONT_STYLE_BUG && style > 0 && style < 4) {
+      if (Patches.JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND && style > 0 && style < 4) {
         Pair<String, Integer>[] replacement = ourStyledFontMap.get(defaultFontFamily);
         if (replacement != null) {
           defaultFontFamily = replacement[style].first;
