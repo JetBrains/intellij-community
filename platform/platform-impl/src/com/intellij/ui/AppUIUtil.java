@@ -131,6 +131,8 @@ public class AppUIUtil {
       registerFont("/fonts/Inconsolata.ttf");
       registerFont("/fonts/SourceCodePro-Regular.ttf");
       registerFont("/fonts/SourceCodePro-Bold.ttf");
+      registerFont("/fonts/SourceCodePro-It.ttf");
+      registerFont("/fonts/SourceCodePro-BoldIt.ttf");
     }
   }
 
