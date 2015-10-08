@@ -46,8 +46,10 @@ class MouseShortcutDialog extends DialogWrapper{
   private final JRadioButton myRbSingleClick;
   private final JRadioButton myRbDoubleClick;
   private final JLabel myLblPreview;
-  private final MyClickPad myClickPad;
+  private final JLabel myClickPad;
   private final JTextArea myTarConflicts;
+
+  private final MouseShortcutConsumer myShortcutConsumer;
 
   private int myButton;
   @JdkConstants.InputEventMask  private int myModifiers;
@@ -79,8 +81,6 @@ class MouseShortcutDialog extends DialogWrapper{
 
     myLblPreview=new JLabel(" ");
 
-    myClickPad=new MyClickPad();
-
     myTarConflicts=new JTextArea();
     myTarConflicts.setFocusable(false);
     myTarConflicts.setEditable(false);
@@ -105,6 +105,20 @@ class MouseShortcutDialog extends DialogWrapper{
     myRbDoubleClick.setEnabled(restrictions.allowMouseDoubleClick);
 
     updatePreviewAndConflicts();
+
+    myClickPad = new JLabel(
+      KeyMapBundle.message("mouse.shortcut.label"),
+      AllIcons.General.Mouse, SwingConstants.LEADING
+    );
+    myShortcutConsumer = new MouseShortcutConsumer(shortcut) {
+      @Override
+      public void consume(MouseShortcut shortcut) {
+        myButton = shortcut.getButton();
+        myModifiers = shortcut.getModifiers();
+        updatePreviewAndConflicts();
+      }
+    };
+    myClickPad.addHierarchyListener(myShortcutConsumer);
 
     init();
   }
@@ -160,15 +174,13 @@ class MouseShortcutDialog extends DialogWrapper{
 
     // Click pad
 
-    JPanel clickPadPanel=new JPanel(new BorderLayout());
     panel.add(
-      clickPadPanel,
+      myClickPad,
       new GridBagConstraints(0,1,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,0,4,0),0,0)
     );
-    clickPadPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      KeyMapBundle.message("mouse.shortcut.dialog.click.pad.border"), true));
-    myClickPad.setPreferredSize(JBUI.size(260, 60));
-    clickPadPanel.add(myClickPad,BorderLayout.CENTER);
+    myClickPad.setBorder(BorderFactory.createCompoundBorder(
+      IdeBorderFactory.createTitledBorder(KeyMapBundle.message("mouse.shortcut.dialog.click.pad.border"), true),
+      JBUI.Borders.empty(20, 0, 20, 20)));
 
     // Shortcut preview
 
@@ -274,40 +286,6 @@ class MouseShortcutDialog extends DialogWrapper{
     else {
       myTarConflicts.setForeground(JBColor.RED);
       myTarConflicts.setText(KeyMapBundle.message("mouse.shortcut.dialog.assigned.to.area", buffer.toString()));
-    }
-  }
-
-  private class MyClickPad extends JLabel{
-    public MyClickPad(){
-      super(
-        KeyMapBundle.message("mouse.shortcut.label"),
-        AllIcons.General.Mouse, SwingConstants.CENTER
-      );
-      // It's very imporatant that MouseListener is added to the Dialog. If you add
-      // the same listener, for example, into the MyClickPad component you get fake
-      // Alt and Meta modifiers. I means that pressing of middle button causes
-      // Alt+Button2 event.
-      // See bug ID 4109826 on Sun's bug parade.
-      //cast is needed in order to compile with mustang
-      MouseAdapter adapter = new MouseAdapter() {
-        @Override
-        public void mouseWheelMoved(MouseWheelEvent e) {
-          mouseReleased(e);
-        }
-
-        public void mouseReleased(MouseEvent e){
-          Component component= SwingUtilities.getDeepestComponentAt(e.getComponent(),e.getX(),e.getY());
-          if(component== MyClickPad.this){
-            e.consume();
-            myButton = MouseShortcut.getButton(e);
-            myModifiers=e.getModifiersEx();
-            updatePreviewAndConflicts();
-          }
-        }
-      };
-      Window window = MouseShortcutDialog.this.getPeer().getWindow();
-      window.addMouseListener(adapter);
-      window.addMouseWheelListener(adapter);
     }
   }
 }

@@ -16,6 +16,7 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import com.google.common.collect.Lists;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -122,15 +123,11 @@ public class PyStructuredDocstringFormatter {
     final Map<String, String> env = new HashMap<String, String>();
     PythonEnvUtil.setPythonDontWriteBytecode(env);
 
-    final ProcessOutput output = PySdkUtil.getProcessOutput(formatter.newCommandLine(sdkHome, Lists.<String>newArrayList()),
-                                                            new File(sdkHome).getParent(),
-                                                            env, 5000, data, true);
-    if (output.isTimeout()) {
-      LOG.info("timeout when calculating docstring");
-      return null;
-    }
-    else if (output.getExitCode() != 0) {
-      LOG.info("error when calculating docstring: " + output.getStderr());
+    final GeneralCommandLine commandLine = formatter.newCommandLine(sdkHome, Lists.<String>newArrayList());
+    LOG.debug("Command for launching docstring formatter: " + commandLine.getCommandLineString());
+    
+    final ProcessOutput output = PySdkUtil.getProcessOutput(commandLine, new File(sdkHome).getParent(), env, 5000, data, true);
+    if (!output.checkSuccess(LOG)) {
       return null;
     }
     return output.getStdout();

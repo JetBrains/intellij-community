@@ -34,7 +34,6 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -528,19 +527,16 @@ public class ActionsTreeUtil {
 
   public static Condition<AnAction> isActionFiltered(final ActionManager actionManager,
                                                      final Keymap keymap,
-                                                     final KeyboardShortcut keyboardShortcut) {
+                                                     final Shortcut shortcut) {
     return new Condition<AnAction>() {
       public boolean value(final AnAction action) {
-        if (keyboardShortcut == null) return true;
+        if (shortcut == null) return true;
         if (action == null) return false;
         final Shortcut[] actionShortcuts =
           keymap.getShortcuts(action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action));
-        for (Shortcut shortcut : actionShortcuts) {
-          if (shortcut instanceof KeyboardShortcut) {
-            final KeyboardShortcut keyboardActionShortcut = (KeyboardShortcut)shortcut;
-            if (Comparing.equal(keyboardActionShortcut, keyboardShortcut)) {
-              return true;
-            }
+        for (Shortcut actionShortcut : actionShortcuts) {
+          if (shortcut.equals(actionShortcut)) {
+            return true;
           }
         }
         return false;
@@ -550,7 +546,7 @@ public class ActionsTreeUtil {
 
   public static Condition<AnAction> isActionFiltered(final ActionManager actionManager,
                                                      final Keymap keymap,
-                                                     final KeyboardShortcut shortcut,
+                                                     final Shortcut shortcut,
                                                      final String filter,
                                                      final boolean force) {
     return filter != null && filter.length() > 0 ? isActionFiltered(filter, force) :

@@ -206,6 +206,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
           final int finalJ = j;
           map.appendData("abc" + i, out -> IOUtil.writeString(StringUtil.repeat("0123456789", 10000 + finalJ - 3), out));
         }
+        map.force();
       }
 
       map.close();

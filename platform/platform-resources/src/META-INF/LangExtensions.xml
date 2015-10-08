@@ -451,6 +451,7 @@
     <refactoring.elementListenerProvider implementation="com.intellij.packageDependencies.ui.RefactoringScopeElementListenerProvider"/>
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor"/>
+    <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.CachedAnnotators"/>
     <daemon.changeLocalityDetector implementation="com.intellij.codeInsight.daemon.impl.DefaultChangeLocalityDetector"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentDateMacro"/>
@@ -778,9 +779,9 @@
                         serviceImplementation="com.intellij.ui.debugger.extensions.PlaybackDebugger$PlaybackDebuggerState"/>
 
     <globalInspection shortName="Annotator" displayName="Annotator" groupName="General" enabledByDefault="true" level="ERROR"
-                      implementationClass="com.intellij.codeInspection.DefaultHighlightVisitorBasedInspection$AnnotatorBasedInspection"/>
+                      implementationClass="com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection$AnnotatorBasedInspection"/>
     <globalInspection shortName="SyntaxError" displayName="Syntax error" groupName="General" enabledByDefault="true" level="ERROR"
-                      implementationClass="com.intellij.codeInspection.DefaultHighlightVisitorBasedInspection$SyntaxErrorInspection"/>
+                      implementationClass="com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection$SyntaxErrorInspection"/>
     <localInspection shortName="LossyEncoding" bundle="messages.InspectionsBundle" key="lossy.encoding"
                      groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.LossyEncodingInspection"/>
