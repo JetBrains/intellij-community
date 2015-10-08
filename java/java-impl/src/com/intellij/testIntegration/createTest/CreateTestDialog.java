@@ -83,7 +83,7 @@ public class CreateTestDialog extends DialogWrapper {
   private final PsiPackage myTargetPackage;
   private final Module myTargetModule;
 
-  private PsiDirectory myTargetDirectory;
+  protected PsiDirectory myTargetDirectory;
   private TestFramework mySelectedFramework;
 
   private final ComboBox myLibrariesCombo = new ComboBox(new DefaultComboBoxModel());
@@ -466,14 +466,22 @@ public class CreateTestDialog extends DialogWrapper {
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, myTargetPackageField.getText());
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_SUPERS_KEY, mySuperClassField.getText());
 
-    String errorMessage;
+    String errorMessage = null;
     try {
       myTargetDirectory = selectTargetDirectory();
       if (myTargetDirectory == null) return;
-      errorMessage = RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName());
     }
     catch (IncorrectOperationException e) {
       errorMessage = e.getMessage();
+    }
+
+    if (errorMessage == null) {
+      try {
+        errorMessage = checkCanCreateClass();
+      }
+      catch (IncorrectOperationException e) {
+        errorMessage = e.getMessage();
+      }
     }
 
     if (errorMessage != null) {
@@ -488,6 +496,10 @@ public class CreateTestDialog extends DialogWrapper {
     saveDefaultLibraryName();
     saveShowInheritedMembersStatus();
     super.doOKAction();
+  }
+
+  protected String checkCanCreateClass() {
+    return RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName());
   }
 
   @Nullable
