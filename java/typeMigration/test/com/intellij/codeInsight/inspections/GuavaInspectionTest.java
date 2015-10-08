@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.inspections.GuavaInspection;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -26,6 +27,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 import java.io.File;
+import java.util.Arrays;
 
 /**
  * @author Dmitry Batkovich
@@ -93,6 +95,21 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
 
   public void testFilterIsInstance() {
     doTest();
+  }
+
+  public void testDontShowFluentIterableChainQuickFix() {
+    doTestNoQuickFixes(GuavaInspection.MigrateFluentIterableChainQuickFix.class);
+  }
+
+  private void doTestNoQuickFixes(final Class<? extends IntentionAction>... quickFixesClasses) {
+    myFixture.configureByFile(getTestName(true) + ".java");
+    myFixture.enableInspections(new GuavaInspection());
+    myFixture.doHighlighting();
+    for (IntentionAction action : myFixture.getAvailableIntentions()) {
+      if (PsiTreeUtil.instanceOf(action, quickFixesClasses)) {
+        fail("Quick fix is found for types " + Arrays.toString(quickFixesClasses));
+      }
+    }
   }
 
   private void doTest() {

@@ -110,6 +110,14 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
 
         final PsiMethodCallExpression chain = findGuavaMethodChain(expression);
 
+        final PsiElement maybeLocalVariable = chain.getParent();
+        if (maybeLocalVariable instanceof PsiLocalVariable) {
+          final PsiClass aClass = PsiUtil.resolveClassInType(chain.getType());
+          if (aClass != null && GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(aClass.getQualifiedName())) {
+            return;
+          }
+        }
+
         PsiClassType initialType = (PsiClassType)expression.getType();
         LOG.assertTrue(initialType != null);
         PsiClass resolvedClass = initialType.resolve();
