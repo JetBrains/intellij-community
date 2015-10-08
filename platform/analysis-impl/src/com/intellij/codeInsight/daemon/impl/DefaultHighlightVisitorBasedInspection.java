@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.intellij.codeInspection;
+package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -174,7 +175,10 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
             @Override
             public HighlightVisitor[] produce() {
               gpass.incVisitorUsageCount(1);
-              return new HighlightVisitor[]{new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true)};
+
+              HighlightVisitor visitor = new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true,
+                                                                            ServiceManager.getService(project, CachedAnnotators.class));
+              return new HighlightVisitor[]{visitor};
             }
           });
         }
