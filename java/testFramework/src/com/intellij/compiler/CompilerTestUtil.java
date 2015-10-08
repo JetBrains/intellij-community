@@ -20,7 +20,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -81,7 +80,6 @@ public class CompilerTestUtil {
   }
 
   public static void enableExternalCompiler() {
-    ApplicationManagerEx.getApplicationEx().doNotSave(false);
     final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
     new WriteAction() {
       @Override
@@ -92,35 +90,30 @@ public class CompilerTestUtil {
   }
 
   public static void disableExternalCompiler(@NotNull  final Project project) {
-    try {
-      EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-        @Override
-        public void run() throws Throwable {
-          JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
-          AccessToken token = WriteAction.start();
-          try {
-            Sdk internalJdk = table.getInternalJdk();
-            List<Module> modulesToRestore = new SmartList<Module>();
-            for (Module module : ModuleManager.getInstance(project).getModules()) {
-              Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-              if (sdk != null && sdk.equals(internalJdk)) {
-                modulesToRestore.add(module);
-              }
+    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
+      @Override
+      public void run() throws Throwable {
+        JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
+        AccessToken token = WriteAction.start();
+        try {
+          Sdk internalJdk = table.getInternalJdk();
+          List<Module> modulesToRestore = new SmartList<Module>();
+          for (Module module : ModuleManager.getInstance(project).getModules()) {
+            Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+            if (sdk != null && sdk.equals(internalJdk)) {
+              modulesToRestore.add(module);
             }
-            table.removeJdk(internalJdk);
-            for (Module module : modulesToRestore) {
-              ModuleRootModificationUtil.setModuleSdk(module, internalJdk);
-            }
-            BuildManager.getInstance().clearState(project);
           }
-          finally {
-            token.finish();
+          table.removeJdk(internalJdk);
+          for (Module module : modulesToRestore) {
+            ModuleRootModificationUtil.setModuleSdk(module, internalJdk);
           }
+          BuildManager.getInstance().clearState(project);
         }
-      });
-    }
-    finally {
-      ApplicationManagerEx.getApplicationEx().doNotSave(true);
-    }
+        finally {
+          token.finish();
+        }
+      }
+    });
   }
 }

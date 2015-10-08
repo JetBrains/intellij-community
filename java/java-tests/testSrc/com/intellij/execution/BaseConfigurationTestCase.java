@@ -39,10 +39,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.MapDataContext;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.TempFiles;
+import com.intellij.testFramework.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -108,7 +105,7 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
       @Override
       public Module compute() {
         Module result = ModuleManager.getInstance(project).newModule(tempPath, StdModuleTypes.JAVA.getId());
-        project.save();
+        PlatformTestUtil.saveProject(project);
         return result;
       }
     });
