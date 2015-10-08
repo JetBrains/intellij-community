@@ -16,7 +16,7 @@
 package com.intellij.execution.junit;
 
 public class TestMethodConfigurationProducer extends AbstractTestMethodConfigurationProducer {
-  protected TestMethodConfigurationProducer() {
+  public TestMethodConfigurationProducer() {
     super(JUnitConfigurationType.getInstance());
   }
 }

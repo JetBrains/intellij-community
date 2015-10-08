@@ -15,15 +15,12 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ide.util.projectWizard.SettingsStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import javax.swing.*;
 import java.util.List;
@@ -66,12 +63,12 @@ public class WebProjectSettingsStepWrapper implements SettingsStep {
 
   @Override
   public void addExpertPanel(@NotNull JComponent panel) {
-    throw new NotImplementedException();
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void addExpertField(@NotNull String label, @NotNull JComponent field) {
-    throw new NotImplementedException();
+    throw new UnsupportedOperationException();
   }
 
   @Override

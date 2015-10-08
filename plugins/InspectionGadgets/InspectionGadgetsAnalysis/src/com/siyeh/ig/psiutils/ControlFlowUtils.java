@@ -471,6 +471,21 @@ public class ControlFlowUtils {
     return false;
   }
 
+  public static PsiStatement getLastStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
+    return getLastChildOfType(codeBlock, PsiStatement.class);
+  }
+
+  private static <T extends PsiElement> T getLastChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+    if (element == null) return null;
+    for (PsiElement child = element.getLastChild(); child != null; child = child.getPrevSibling()) {
+      if (aClass.isInstance(child)) {
+        //noinspection unchecked
+        return (T)child;
+      }
+    }
+    return null;
+  }
+
   public static boolean methodAlwaysThrowsException(@NotNull PsiMethod method) {
     final PsiCodeBlock body = method.getBody();
     if (body == null) {
