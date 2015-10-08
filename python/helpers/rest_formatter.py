@@ -3,7 +3,7 @@ import sys
 
 from docutils import nodes
 from docutils.core import publish_string
-from docutils.nodes import Text, field_body, field_name, rubric, SkipNode
+from docutils.nodes import Text, field_body, field_name, rubric
 from docutils.writers.html4css1 import HTMLTranslator
 from epydoc.markup import DocstringLinker
 from epydoc.markup.restructuredtext import ParsedRstDocstring, _EpydocHTMLTranslator, \
@@ -173,11 +173,20 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
                 self.body.append(text)
         else:
             self.body.append(node_text)
-        raise SkipNode
+        raise nodes.SkipNode
 
     def depart_problematic(self, node):
         if not self._is_text_wrapper(node):
             return HTMLTranslator.depart_problematic(self, node)
+
+    def visit_Text(self, node):
+        text = node.astext()
+        encoded = self.encode(text)
+        if not isinstance(node.parent, (nodes.literal, nodes.literal_block)):
+            encoded = encoded.replace('---', '&mdash;').replace('--', '&ndash;')
+        if self.in_mailto and self.settings.cloak_email_addresses:
+            encoded = self.cloak_email(encoded)
+        self.body.append(encoded)
 
     def _is_text_wrapper(self, node):
         return len(node.children) == 1 and isinstance(node.children[0], Text)
