@@ -3,7 +3,7 @@ import sys
 
 from docutils import nodes
 from docutils.core import publish_string
-from docutils.nodes import Text, field_body, field_name, rubric
+from docutils.nodes import Text, field_body, field_name, rubric, SkipNode
 from docutils.writers.html4css1 import HTMLTranslator
 from epydoc.markup import DocstringLinker
 from epydoc.markup.restructuredtext import ParsedRstDocstring, _EpydocHTMLTranslator, \
@@ -158,10 +158,29 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
 
     def visit_problematic(self, node):
         """Don't insert hyperlinks to nowhere for e.g. unclosed asterisks."""
-        # Note that children text elements will be visited anyway
+        if not self._is_text_wrapper(node):
+            return HTMLTranslator.visit_problematic(self, node)
+
+        node_text = node.astext()
+        m = re.match(r'(:\w+)?(:\S+:)?`(.+?)`', node_text)
+        if m:
+            _, directive, text = m.groups('')
+            if directive[1:-1] == 'exc':
+                self.body.append(self.starttag(node, 'a', '', href = 'psi_element://#typename#' + text))
+                self.body.append(text)
+                self.body.append('</a>')
+            else:
+                self.body.append(text)
+        else:
+            self.body.append(node_text)
+        raise SkipNode
 
     def depart_problematic(self, node):
-        pass
+        if not self._is_text_wrapper(node):
+            return HTMLTranslator.depart_problematic(self, node)
+
+    def _is_text_wrapper(self, node):
+        return len(node.children) == 1 and isinstance(node.children[0], Text)
 
     def visit_block_quote(self, node):
         self.body.append(self.emptytag(node, "br"))
