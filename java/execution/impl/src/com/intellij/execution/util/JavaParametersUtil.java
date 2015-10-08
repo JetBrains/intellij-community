@@ -32,6 +32,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -55,6 +56,11 @@ public class JavaParametersUtil {
 
     Project project = configuration.getProject();
     Module module = ProgramParametersUtil.getModule(configuration);
+
+    String alternativeJrePath = configuration.getAlternativeJrePath();
+    if (alternativeJrePath != null) {
+      configuration.setAlternativeJrePath(ProgramParametersUtil.expandPath(alternativeJrePath, null, project));
+    }
 
     String vmParameters = configuration.getVMParameters();
     if (vmParameters != null) {
@@ -156,10 +162,7 @@ public class JavaParametersUtil {
       return configuredJdk;
     }
 
-    if (JdkUtil.checkForJdk(jreHome)) {
-      throw new CantRunException(ExecutionBundle.message("jre.path.is.jdk.error.message"));
-    }
-    if (!JdkUtil.checkForJre(jreHome)) {
+    if (!JdkUtil.checkForJre(jreHome) && !JdkUtil.checkForJdk(jreHome)) {
       throw new CantRunException(ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.message", jreHome));
     }
 
