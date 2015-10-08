@@ -614,16 +614,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
     @Override
     public long getModificationStamp() {
-      final VirtualFile virtualFile = getVirtualFile();
-      if (virtualFile instanceof LightVirtualFile) {
-        Document doc = getCachedDocument();
-        if (doc != null) return getLastCommittedStamp(doc);
-        return virtualFile.getModificationStamp();
-      }
-
-      final Document document = getDocument();
+      final Document document = getCachedDocument();
       if (document == null) {
-        return virtualFile.getModificationStamp();
+        return getVirtualFile().getModificationStamp();
       }
       return getLastCommittedStamp(document);
     }
