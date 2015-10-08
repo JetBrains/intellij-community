@@ -109,6 +109,9 @@ public class RepositoryAttachHandler {
     RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(coord);
     final List<OrderRoot> roots = MavenDependenciesRemoteManager.getInstance(project)
       .downloadDependenciesModal(libraryProperties, attachSources, attachJavaDoc, copyTo);
+    if (roots == null || roots.size() == 0) {
+      return null;
+    }
     notifyArtifactsDownloaded(project, roots);
     RepositoryLibraryDescription libraryDescription = RepositoryLibraryDescription.findDescription(libraryProperties);
     return new NewLibraryConfiguration(
