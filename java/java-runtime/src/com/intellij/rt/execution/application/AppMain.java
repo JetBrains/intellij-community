@@ -135,7 +135,7 @@ public class AppMain {
       System.err.println("main method should be static");
       return;
     }
-    if (!Void.class.isInstance(m.getReturnType())) {
+    if (!void.class.isAssignableFrom(m.getReturnType())) {
       System.err.println("main method must return a value of type void");
       return;
     }
