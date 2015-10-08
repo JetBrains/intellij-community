@@ -10,4 +10,8 @@ class RedudantFieldInitialization {
   private Object o = null;
   private String s = "";
   private short h = 1;
+
+  public static final int DEFAULT_TYPE = 0;
+  private int type = DEFAULT_TYPE;
+  private int type2 = ((DEFAULT_TYPE) + 0);
 }
