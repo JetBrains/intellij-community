@@ -45,11 +45,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
     if ("or".equals(methodName)) {
       PsiMethodCallExpression methodCallExpression = null;
       if (context instanceof PsiMethodCallExpression) {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        if (parameters.length != 1) {
-          return null;
-        }
-        final PsiClass aClass = PsiTypesUtil.getPsiClass(parameters[0].getType());
+        final PsiClass aClass = getParameterClass(method);
         if (aClass != null) {
           final String qName = aClass.getQualifiedName();
           String pattern =
@@ -63,11 +59,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
       if (methodCallExpression == null) {
         return null;
       }
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (parameters.length != 1) {
-        return null;
-      }
-      final PsiClass aClass = PsiTypesUtil.getPsiClass(parameters[0].getType());
+      final PsiClass aClass = getParameterClass(method);
       if (aClass != null) {
         final String qName = aClass.getQualifiedName();
         if (GUAVA_OPTIONAL.equals(qName)) {
@@ -79,11 +71,19 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
           return descriptor;
         }
         String pattern = GuavaSupplierConversionRule.GUAVA_SUPPLIER.equals(qName) ? "$val$.orElseGet($other$)" : "$val$.orElse($other$)";
-        return new LambdaParametersTypeConversionDescription("$val$.or($other$)", pattern);
+        return new LambdaParametersTypeConversionDescriptor("$val$.or($other$)", pattern);
       }
       return null;
     }
     return null;
+  }
+
+  private PsiClass getParameterClass(PsiMethod method) {
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length != 1) {
+      return null;
+    }
+    return PsiTypesUtil.getPsiClass(parameters[0].getType());
   }
 
   @Override

@@ -64,7 +64,8 @@ public class XmlCommenter implements EscapingCommenter {
     String suffix = getBlockCommentSuffix();
 
     int start = range.getStartOffset();
-    if (CharArrayUtil.regionMatches(document.getCharsSequence(), start, prefix)) {
+    int prefixStart = start = CharArrayUtil.shiftForward(document.getCharsSequence(), start, " \t\n");
+    if (CharArrayUtil.regionMatches(document.getCharsSequence(), prefixStart, prefix)) {
       start += prefix.length();
     }
     int end = range.getEndOffset();
@@ -83,7 +84,7 @@ public class XmlCommenter implements EscapingCommenter {
     if (CharArrayUtil.regionMatches(document.getCharsSequence(), start, GT)) {
       document.replaceString(start, start + GT.length(), ESCAPED_GT);
     }
-    if (CharArrayUtil.regionMatches(document.getCharsSequence(), range.getStartOffset(), prefix + "-")) {
+    if (CharArrayUtil.regionMatches(document.getCharsSequence(), prefixStart, prefix + "-")) {
       document.insertString(start, " ");
     }
     if (CharArrayUtil.regionMatches(document.getCharsSequence(), range.getEndOffset() - suffix.length() - 1, "-" + suffix)) {

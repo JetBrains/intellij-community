@@ -27,10 +27,10 @@ public class VariableNotUsedInsideIf {
   }
 
   void bat(String s) {
-    if (s != null) {
+    if (<warning descr="'s' checked for 'null' is not used inside 'if'">s</warning> != null) {
       System.out.println();
     }
-    if (s == null) {
+    if (<warning descr="'s' checked for 'null' is not used inside 'if'">s</warning> == null) {
 
     } else {
       
@@ -38,24 +38,24 @@ public class VariableNotUsedInsideIf {
   }
 
   void money(String s) {
-    if (((s) != (null))) {
+    if (((<warning descr="'s' checked for 'null' is not used inside 'if'">s</warning>) != (null))) {
       System.out.println();
     }
   }
 
   void x(Integer x){
-    if (x != null) {
+    if (<warning descr="'x' checked for 'null' is not used inside 'if'">x</warning> != null) {
       System.out.println();
     }
   }
 
   int x(Integer x, int y){
-    if (x != null) return y;//oops, wrong one
+    if (<warning descr="'x' checked for 'null' is not used inside 'if'">x</warning> != null) return y;//oops, wrong one
     return y;
   }
 
   int conditional(Integer x) {
-    return x == null ? 1 : someValue();
+    return <warning descr="'x' checked for 'null' is not used inside conditional">x</warning> == null ? 1 : someValue();
   }
 
   private int someValue() {
@@ -64,6 +64,6 @@ public class VariableNotUsedInsideIf {
 
   void perenthesis(String[] args)
   {
-    String message = (args == null) ? "not null" : "null";
+    String message = (<warning descr="'args' checked for 'null' is not used inside conditional">args</warning> == null) ? "not null" : "null";
   }
 }

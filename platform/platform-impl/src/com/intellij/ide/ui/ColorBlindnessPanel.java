@@ -30,6 +30,7 @@ import javax.swing.event.ChangeListener;
 final class ColorBlindnessPanel extends JPanel implements ChangeListener {
   private final JCheckBox myCheckBox = new JCheckBox();
   private final JComboBox myComboBox = new ComboBox();
+  private ColorBlindness myBlindness;
 
   public ColorBlindnessPanel() {
     super(new HorizontalLayout(JBUI.scale(10)));
@@ -58,6 +59,9 @@ final class ColorBlindnessPanel extends JPanel implements ChangeListener {
 
   public ColorBlindness getColorBlindness() {
     if (myCheckBox.isSelected()) {
+      if (myBlindness != null) {
+        return myBlindness;
+      }
       Object object = myComboBox.getSelectedItem();
       if (object instanceof Item) {
         Item item = (Item)object;
@@ -68,8 +72,10 @@ final class ColorBlindnessPanel extends JPanel implements ChangeListener {
   }
 
   public void setColorBlindness(ColorBlindness blindness) {
+    // invisible combobox should not be used to store values
+    myBlindness = myComboBox.isVisible() ? null : blindness;
     Item item = null;
-    if (blindness != null) {
+    if (myBlindness == null && blindness != null) {
       int count = myComboBox.getItemCount();
       for (int i = 0; i < count && item == null; i++) {
         Object object = myComboBox.getItemAt(i);
@@ -81,7 +87,7 @@ final class ColorBlindnessPanel extends JPanel implements ChangeListener {
         }
       }
     }
-    myCheckBox.setSelected(item != null);
+    myCheckBox.setSelected(myBlindness != null || item != null);
     if (item != null) {
       myComboBox.setSelectedItem(item);
     }

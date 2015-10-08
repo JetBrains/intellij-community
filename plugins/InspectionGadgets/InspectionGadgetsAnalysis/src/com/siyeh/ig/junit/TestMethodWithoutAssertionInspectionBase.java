@@ -19,10 +19,10 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -137,11 +137,7 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
     }
 
     private boolean lastStatementIsCallToMethodWithAssertion(PsiMethod method) {
-      final PsiCodeBlock body = method.getBody();
-      if (body == null) {
-        return false;
-      }
-      final PsiStatement lastStatement = PsiTreeUtil.getPrevSiblingOfType(body.getLastChild(), PsiStatement.class);
+      final PsiStatement lastStatement = ControlFlowUtils.getLastStatementInBlock(method.getBody());
       if (!(lastStatement instanceof PsiExpressionStatement)) {
         return false;
       }

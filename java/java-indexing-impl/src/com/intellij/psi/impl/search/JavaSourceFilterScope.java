@@ -31,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
-  private static final Logger LOG = Logger.getInstance(JavaSourceFilterScope.class);
-
   @Nullable
   private final ProjectFileIndex myIndex;
 
@@ -45,7 +43,6 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
     }
     else {
       myIndex = null;
-      LOG.error("delegate.getProject() == null, delegate.getClass() == " + delegate.getClass());
     }
   }
 
