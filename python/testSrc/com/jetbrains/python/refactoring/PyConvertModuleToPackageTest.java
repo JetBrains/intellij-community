@@ -4,7 +4,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.refactoring.convert.PyConvertModuleToPackageAction;
+import com.jetbrains.python.refactoring.convertModulePackage.PyConvertModuleToPackageAction;
 
 /**
  * @author Mikhail Golubev

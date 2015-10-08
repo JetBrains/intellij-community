@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyParser implements PsiParser {
   private static final Logger LOGGER = Logger.getInstance(PyParser.class.getName());
 
-  private LanguageLevel myLanguageLevel;
+  protected LanguageLevel myLanguageLevel;
   private StatementParsing.FUTURE myFutureFlag;
 
   public PyParser() {

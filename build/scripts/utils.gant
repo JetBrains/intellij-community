@@ -278,7 +278,7 @@ binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
 })
 
 def debugPort = System.getProperty("debug.port")
-def debugSuspend = System.getProperty("rи") ?: "n"
+def debugSuspend = System.getProperty("debug.suspend") ?: "n"
 if (debugSuspend == 'y') {
   println """
 

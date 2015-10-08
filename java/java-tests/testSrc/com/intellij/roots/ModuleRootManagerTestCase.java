@@ -33,15 +33,15 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
 
   @NotNull
   protected static Sdk getMockJdk17WithRtJarOnly() {
-    return retainRtJarOnly(IdeaTestUtil.getMockJdk17());
+    return retainRtJarOnlyAndSetVersion(IdeaTestUtil.getMockJdk17());
   }
 
   protected Sdk getMockJdk18WithRtJarOnly() {
-    return retainRtJarOnly(IdeaTestUtil.getMockJdk18());
+    return retainRtJarOnlyAndSetVersion(IdeaTestUtil.getMockJdk18());
   }
 
   @NotNull
-  private static Sdk retainRtJarOnly(Sdk jdk) {
+  private static Sdk retainRtJarOnlyAndSetVersion(Sdk jdk) {
     final SdkModificator modificator = jdk.getSdkModificator();
     VirtualFile rtJar = null;
     for (VirtualFile root : modificator.getRoots(OrderRootType.CLASSES)) {
@@ -51,6 +51,7 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
       }
     }
     assertNotNull("rt.jar not found in jdk: " + jdk, rtJar);
+    modificator.setVersionString(IdeaTestUtil.getMockJdkVersion(jdk.getHomePath()));
     modificator.removeAllRoots();
     modificator.addRoot(rtJar, OrderRootType.CLASSES);
     modificator.commitChanges();

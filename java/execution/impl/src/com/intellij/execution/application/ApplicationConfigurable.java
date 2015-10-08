@@ -19,10 +19,7 @@ import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.ConfigurationUtil;
-import com.intellij.execution.ui.AlternativeJREPanel;
-import com.intellij.execution.ui.ClassBrowser;
-import com.intellij.execution.ui.CommonJavaParametersPanel;
-import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.execution.ui.*;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -49,7 +46,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   private JPanel myWholePanel;
 
   private final ConfigurationModuleSelector myModuleSelector;
-  private AlternativeJREPanel myAlternativeJREPanel;
+  private JrePathEditor myJrePathEditor;
   private JCheckBox myShowSwingInspectorCheckbox;
   private final JreVersionDetector myVersionDetector;
   private final Project myProject;
@@ -58,6 +55,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   public ApplicationConfigurable(final Project project) {
     myProject = project;
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
+    myJrePathEditor.setDefaultJreSelector(DefaultJreSelector.fromSourceRootsDependencies(myModule.getComponent(), getMainClassField()));
     myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
     myModule.getComponent().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -67,7 +65,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     ClassBrowser.createApplicationClassBrowser(project, myModuleSelector).setField(getMainClassField());
     myVersionDetector = new JreVersionDetector();
 
-    myAnchor = UIUtil.mergeComponentsWithAnchor(myMainClass, myCommonProgramParameters, myAlternativeJREPanel, myModule);
+    myAnchor = UIUtil.mergeComponentsWithAnchor(myMainClass, myCommonProgramParameters, myJrePathEditor, myModule);
   }
 
   public void applyEditorTo(final ApplicationConfiguration configuration) throws ConfigurationException {
@@ -76,8 +74,8 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     final String className = getMainClassField().getText();
     final PsiClass aClass = myModuleSelector.findClass(className);
     configuration.MAIN_CLASS_NAME = aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className;
-    configuration.ALTERNATIVE_JRE_PATH = myAlternativeJREPanel.getPath();
-    configuration.ALTERNATIVE_JRE_PATH_ENABLED = myAlternativeJREPanel.isPathEnabled();
+    configuration.ALTERNATIVE_JRE_PATH = myJrePathEditor.getJrePathOrName();
+    configuration.ALTERNATIVE_JRE_PATH_ENABLED = myJrePathEditor.isAlternativeJreSelected();
     configuration.ENABLE_SWING_INSPECTOR = (myVersionDetector.isJre50Configured(configuration) || myVersionDetector.isModuleJre50Configured(configuration)) && myShowSwingInspectorCheckbox.isSelected();
 
     updateShowSwingInspector(configuration);
@@ -87,7 +85,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     myCommonProgramParameters.reset(configuration);
     myModuleSelector.reset(configuration);
     getMainClassField().setText(configuration.MAIN_CLASS_NAME != null ? configuration.MAIN_CLASS_NAME.replaceAll("\\$", "\\.") : "");
-    myAlternativeJREPanel.init(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
+    myJrePathEditor.setPathOrName(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
 
     updateShowSwingInspector(configuration);
   }
@@ -144,7 +142,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     this.myAnchor = anchor;
     myMainClass.setAnchor(anchor);
     myCommonProgramParameters.setAnchor(anchor);
-    myAlternativeJREPanel.setAnchor(anchor);
+    myJrePathEditor.setAnchor(anchor);
     myModule.setAnchor(anchor);
   }
 }

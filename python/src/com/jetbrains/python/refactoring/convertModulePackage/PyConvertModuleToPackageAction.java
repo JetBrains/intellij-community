@@ -1,4 +1,4 @@
-package com.jetbrains.python.refactoring.convert;
+package com.jetbrains.python.refactoring.convertModulePackage;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -21,12 +21,12 @@ import java.io.IOException;
 /**
  * @author Mikhail Golubev
  */
-public class PyConvertModuleToPackageAction extends PyBaseConvertRefactoringAction {
+public class PyConvertModuleToPackageAction extends PyBaseConvertModulePackageAction {
   public static final String ID = "py.refactoring.convert.module.to.package";
   private static final Logger LOG = Logger.getInstance(PyConvertModuleToPackageAction.class);
 
   @Override
-  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  protected boolean isEnabledOnElementsOutsideEditor(@NotNull PsiElement[] elements) {
     if (elements.length == 1) {
       return elements[0] instanceof PyFile && !PyUtil.isPackage((PyFile)elements[0]);
     }

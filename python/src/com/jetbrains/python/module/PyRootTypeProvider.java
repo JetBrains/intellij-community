@@ -48,7 +48,7 @@ public abstract class PyRootTypeProvider {
     }
   };
 
-  public abstract void reset(@NotNull final Disposable disposable, PyContentEntriesEditor editor, Module module);
+  public abstract void reset(@NotNull final Disposable disposable, PyContentEntriesEditor editor, @NotNull Module module);
 
   public abstract void apply(Module module);
 
@@ -74,6 +74,9 @@ public abstract class PyRootTypeProvider {
   @Nullable
   public CustomShortcutSet getShortcut() {
     return null;
+  }
+
+  public void disposeUIResources(@NotNull Module module) {
   }
 
 
@@ -123,12 +126,12 @@ public abstract class PyRootTypeProvider {
 
   private void addRoot(VirtualFilePointer root, PyContentEntriesEditor editor) {
     editor.getContentEntryEditor().addRoot(this, root);
-    editor.getErrorPanel().getValidatorsManager().validate();
+    editor.getWarningPanel().getValidatorsManager().validate();
   }
 
   protected void removeRoot(VirtualFile selectedFile, PyContentEntriesEditor editor, ModifiableRootModel model) {
     editor.getContentEntryEditor().removeRoot(null, selectedFile.getUrl(), this);
-    editor.getErrorPanel().getValidatorsManager().validate();
+    editor.getWarningPanel().getValidatorsManager().validate();
   }
 
   protected boolean hasRoot(VirtualFile file, PyContentEntriesEditor editor) {

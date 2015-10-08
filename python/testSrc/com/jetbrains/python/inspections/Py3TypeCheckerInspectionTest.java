@@ -78,4 +78,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testTypingListSubscriptionExpression() {
     doTest();
   }
+
+  // PY-16855
+  public void testTypingTypeVarWithUnresolvedBound() {
+    doTest();
+  }
 }

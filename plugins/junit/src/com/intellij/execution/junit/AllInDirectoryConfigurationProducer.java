@@ -16,7 +16,7 @@
 package com.intellij.execution.junit;
 
 public class AllInDirectoryConfigurationProducer extends AbstractAllInDirectoryConfigurationProducer {
-  protected AllInDirectoryConfigurationProducer() {
+  public AllInDirectoryConfigurationProducer() {
     super(JUnitConfigurationType.getInstance());
   }
 }

@@ -158,7 +158,7 @@
                   <text resource-bundle="messages/ExecutionBundle" key="application.configuration.use.classpath.and.jdk.of.module.label"/>
                 </properties>
               </component>
-              <component id="baac2" class="com.intellij.execution.ui.AlternativeJREPanel" binding="alternateJDK">
+              <component id="baac2" class="com.intellij.execution.ui.JrePathEditor" binding="alternateJDK">
                 <constraints>
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>

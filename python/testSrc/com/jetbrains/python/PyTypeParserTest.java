@@ -137,7 +137,7 @@ public class PyTypeParserTest extends PyTestCase {
     final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T");
     assertNotNull(type);
     assertInstanceOf(type, PyGenericType.class);
-    assertEquals("T", type.getName());
+    assertEquals("TypeVar('T')", type.getName());
   }
 
   // PY-4223
@@ -251,7 +251,7 @@ public class PyTypeParserTest extends PyTestCase {
     assertEquals("int", type0.getName());
     final PyType type1 = parameterTypes.get(1).getType(context);
     assertNotNull(type1);
-    assertEquals("T", type1.getName());
+    assertEquals("TypeVar('T')", type1.getName());
   }
 
   public void testCallableWithoutArgs() {
