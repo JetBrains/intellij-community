@@ -25,12 +25,7 @@ import java.net.URL;
 public class InfoReader {
   @NotNull
   public static UpdatesInfo read(@NotNull String fileName) {
-    try (InputStream stream = InfoReader.class.getResourceAsStream(fileName)) {
-      return new UpdatesInfo(JDOMUtil.load(stream));
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    return read(InfoReader.class.getResource(fileName));
   }
 
   @NotNull
