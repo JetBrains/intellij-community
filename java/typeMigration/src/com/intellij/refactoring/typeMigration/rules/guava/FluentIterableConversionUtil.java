@@ -56,34 +56,7 @@ public class FluentIterableConversionUtil {
     return null;
   }
 
-  static TypeConversionDescriptor getTransformAndConcatDescriptor(PsiExpression context) {
-    if (context instanceof PsiReferenceExpression) {
-      if (context.getParent() instanceof PsiExpression) {
-        context = (PsiExpression)context.getParent();
-      } else return null;
-    }
-    if (!(context instanceof PsiMethodCallExpression)) return null;
-
-    PsiMethodCallExpression expression = (PsiMethodCallExpression) context;
-    final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
-    if (arguments.length != 1) return null;
-
-    final PsiExpression argument = arguments[0];
-
-    PsiAnonymousClass anonymousClass;
-    if (argument instanceof PsiNewExpression && (anonymousClass =((PsiNewExpression)argument).getAnonymousClass()) != null) {
-      return AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, true) ? new TransformAndConcatConversionRule() : null;
-    }
-    if (argument instanceof PsiFunctionalExpression) {
-      return new TransformAndConcatConversionRule();
-    }
-
-    //TODO other convertible cases
-
-    return null;
-  }
-
-  private static class TransformAndConcatConversionRule extends LambdaParametersTypeConversionDescriptor {
+  static class TransformAndConcatConversionRule extends LambdaParametersTypeConversionDescriptor {
     public TransformAndConcatConversionRule() {
       super("$q$.transformAndConcat($params$)", "$q$.flatMap($params$)");
     }
@@ -97,8 +70,14 @@ public class FluentIterableConversionUtil {
           (anonymousClass = ((PsiNewExpression)argument).getAnonymousClass()) != null) {
         if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, true)) {
           argument = AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(argument, true, true);
-        } else return expression;
+        };
       }
+      final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(expression.getProject());
+      if (argument != null && !(argument instanceof PsiFunctionalExpression)) {
+        argument =
+          (PsiExpression)argument.replace(javaPsiFacade.getElementFactory().createExpressionFromText("(" + argument.getText() + ")::apply", null));
+      }
+
       if (argument instanceof PsiMethodReferenceExpression) {
         argument = ReplaceMethodRefWithLambdaIntention.convertMethodReferenceToLambda((PsiMethodReferenceExpression)argument);
       }
@@ -106,11 +85,9 @@ public class FluentIterableConversionUtil {
         List<Pair<PsiExpression, Boolean>> iterableReturnValues = new SmartList<Pair<PsiExpression, Boolean>>();
 
         final PsiElement body = ((PsiLambdaExpression)argument).getBody();
-        final PsiClass collection =
-          JavaPsiFacade.getInstance(expression.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, expression.getResolveScope());
+        final PsiClass collection = javaPsiFacade.findClass(CommonClassNames.JAVA_UTIL_COLLECTION, expression.getResolveScope());
         if (collection == null) return expression;
-        final PsiClass iterable =
-          JavaPsiFacade.getInstance(expression.getProject()).findClass(CommonClassNames.JAVA_LANG_ITERABLE, expression.getResolveScope());
+        final PsiClass iterable = javaPsiFacade.findClass(CommonClassNames.JAVA_LANG_ITERABLE, expression.getResolveScope());
         if (iterable == null) return expression;
 
         if (body instanceof PsiCodeBlock) {

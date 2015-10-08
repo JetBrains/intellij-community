@@ -124,13 +124,15 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       descriptorBase = FluentIterableConversionUtil.getFilterDescriptor(method);
     }
     else if (methodName.equals("transformAndConcat")) {
-      descriptorBase = FluentIterableConversionUtil.getTransformAndConcatDescriptor(context);
+      descriptorBase = new FluentIterableConversionUtil.TransformAndConcatConversionRule();
     }
-    final TypeConversionDescriptorFactory base = DESCRIPTORS_MAP.get(methodName);
-    if (base != null) {
-      final TypeConversionDescriptor descriptor = base.create();
-      needSpecifyType = base.isChainedMethod();
-      descriptorBase = descriptor;
+    else {
+      final TypeConversionDescriptorFactory base = DESCRIPTORS_MAP.get(methodName);
+      if (base != null) {
+        final TypeConversionDescriptor descriptor = base.create();
+        needSpecifyType = base.isChainedMethod();
+        descriptorBase = descriptor;
+      }
     }
     if (descriptorBase != null) {
       if (needSpecifyType && to != null) {
