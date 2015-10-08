@@ -35,7 +35,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -293,9 +292,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   protected static int getRemoteTunneledPort(int localPort, @NotNull RemoteProcessHandlerBase handler) throws IOException {
     try {
-      Pair<String, Integer> remoteSocket = handler.obtainRemoteSocket();
-      handler.addRemoteForwarding(remoteSocket.getSecond(), localPort);
-      return remoteSocket.getSecond();
+      return handler.getRemoteSocket(localPort).getSecond();
     }
     catch (Exception e) {
       throw new IOException(e);

@@ -40,6 +40,8 @@ public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
 
   void setDeploymentConnectionType(@NotNull WebDeploymentCredentialsHolder credentials);
 
+  void setDockerConnectionType(@NotNull DockerCredentialsHolder credentials);
+
   CredentialsType getRemoteConnectionType();
 
   void switchOnConnectionType(@NotNull RemoteSdkConnectionAcceptor acceptor);

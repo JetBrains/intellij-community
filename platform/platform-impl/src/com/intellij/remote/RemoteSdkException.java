@@ -58,6 +58,12 @@ public class RemoteSdkException extends ExecutionException {
   }
 
   public static RemoteSdkException cantObtainRemoteCredentials(Throwable e) {
-    return new RemoteSdkException("Cant obtain remote credentials", e);
+    // TODO needs review
+    if (e.getCause() instanceof RemoteCredentialException) {
+      return new RemoteSdkException("Cant obtain remote credentials", e);
+    }
+    else {
+      return new RemoteSdkException(e.getMessage(), e);
+    }
   }
 }

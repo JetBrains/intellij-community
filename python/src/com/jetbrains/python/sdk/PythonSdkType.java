@@ -762,6 +762,9 @@ public class PythonSdkType extends SdkType {
     return path;
   }
 
+  /**
+   * Returns skeletons location on the local machine. Independent of SDK credentials type (e.g. ssh, Vagrant, Docker or else).
+   */
   public static String getSkeletonsPath(String basePath, String sdkHome) {
     String sep = File.separator;
     return getSkeletonsRootPath(basePath) + sep + FileUtil.toSystemIndependentName(sdkHome).hashCode() + sep;
@@ -1071,6 +1074,10 @@ public class PythonSdkType extends SdkType {
 
         @Override
         public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
+        }
+
+        @Override
+        public void docker(@NotNull DockerCredentialsHolder credentials) {
         }
       });
       return result.get();

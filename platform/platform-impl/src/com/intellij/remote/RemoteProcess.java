@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,13 @@
  */
 package com.intellij.remote;
 
+import com.intellij.execution.process.SelfKiller;
+
 /**
- * @author traff
+ * @author Alexander Koshevoy
  */
-public enum CredentialsType {
-  VAGRANT, WEB_DEPLOYMENT, SSH_HOST, DOCKER
+public abstract class RemoteProcess extends Process implements SelfKiller {
+  public abstract boolean killProcessTree();
+
+  public abstract boolean isDisconnected();
 }

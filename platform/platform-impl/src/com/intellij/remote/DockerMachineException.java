@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,18 @@
 package com.intellij.remote;
 
 /**
- * @author traff
+ * @author Alexander Koshevoy
  */
-public enum CredentialsType {
-  VAGRANT, WEB_DEPLOYMENT, SSH_HOST, DOCKER
+public class DockerMachineException extends RuntimeException {
+  public DockerMachineException(String message) {
+    super(message);
+  }
+
+  public DockerMachineException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public DockerMachineException(Throwable cause) {
+    super(cause);
+  }
 }
