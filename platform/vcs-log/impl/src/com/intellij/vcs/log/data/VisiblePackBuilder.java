@@ -67,7 +67,7 @@ class VisiblePackBuilder {
       return Pair.create(applyHashFilter(dataPack, hashFilter.getHashes(), sortType), commitCount);
     }
 
-    Set<Integer> matchingHeads = getMatchingHeads(dataPack.getRefs(), dataPack.getLogProviders().keySet(), filters);
+    Set<Integer> matchingHeads = getMatchingHeads(dataPack.getRefsModel(), dataPack.getLogProviders().keySet(), filters);
     List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
     Collection<CommitId> matchingCommits = null;
     boolean canRequestMore = false;

@@ -67,51 +67,8 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   public VirtualFile getRoot(int rowIndex) {
-    int head = myDataPack.getVisibleGraph().getRowInfo(rowIndex).getOneOfHeads();
-    Collection<VcsRef> refs = myDataPack.getRefsModel().refsToCommit(head);
-    if (refs.isEmpty()) {
-      LOG.error("No references pointing to head " + myLogDataManager.getCommitId(head) + " identified for commit at row " + rowIndex,
-                new Attachment("details.txt", getErrorDetails()));
-      // take the first root: it is the right choice in one-repo case, though it will likely fail in multi-repo case
-      return myDataPack.getLogProviders().keySet().iterator().next();
-    }
-    return refs.iterator().next().getRoot();
-  }
-
-  @NotNull
-  private String getErrorDetails() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("LAST 100 COMMITS:\n");
-    List<GraphCommit<Integer>> commits = myDataPack.getPermanentGraph().getAllCommits();
-    for (int i = 0; i < 100 && i < commits.size(); i++) {
-      GraphCommit<Integer> commit = commits.get(i);
-      sb.append(String.format("%s -> %s\n", myLogDataManager.getCommitId(commit.getId()).getHash().toShortString(), getParents(commit)));
-    }
-    sb.append("\nALL REFS:\n");
-    printRefs(sb, myDataPack.getRefsModel().getAllRefsByRoot());
-    return sb.toString();
-  }
-
-  @NotNull
-  private String getParents(@NotNull GraphCommit<Integer> commit) {
-    return StringUtil.join(commit.getParents(), new Function<Integer, String>() {
-      @Override
-      public String fun(Integer integer) {
-        return myLogDataManager.getCommitId(integer).getHash().toShortString();
-      }
-    }, ", ");
-  }
-
-  private static void printRefs(@NotNull StringBuilder sb, @NotNull Map<VirtualFile, Set<VcsRef>> refs) {
-    for (Map.Entry<VirtualFile, Set<VcsRef>> entry : refs.entrySet()) {
-      sb.append("\n\n" + entry.getKey().getName() + ":\n");
-      sb.append(StringUtil.join(entry.getValue(), new Function<VcsRef, String>() {
-        @Override
-        public String fun(@NotNull VcsRef ref) {
-          return ref.getName() + " : " + ref.getCommitHash().toShortString();
-        }
-      }, "\n"));
-    }
+    int commit = myDataPack.getVisibleGraph().getRowInfo(rowIndex).getCommit();
+    return myLogDataManager.getCommitId(commit).getRoot();
   }
 
   @NotNull
@@ -120,7 +77,7 @@ public class GraphTableModel extends AbstractTableModel {
     List<VcsRef> refs = Collections.emptyList();
     if (details != null) {
       message = details.getSubject();
-      refs = (List<VcsRef>)myDataPack.getRefsModel().refsToCommit(details.getId(), details.getRoot());
+      refs = (List<VcsRef>)myDataPack.getRefs().refsToCommit(details.getId(), details.getRoot());
     }
     return new GraphCommitCell(message, refs);
   }

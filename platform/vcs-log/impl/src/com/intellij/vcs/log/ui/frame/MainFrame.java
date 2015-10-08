@@ -90,7 +90,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     // initialize components
     myGraphTable = new VcsLogGraphTable(vcsLogUI, logDataManager, initialDataPack);
-    myBranchesPanel = new BranchesPanel(logDataManager, vcsLogUI, initialDataPack.getRefsModel());
+    myBranchesPanel = new BranchesPanel(logDataManager, vcsLogUI, initialDataPack.getRefs());
     JComponent branchScrollPane = myBranchesPanel.createScrollPane();
     branchScrollPane.setVisible(uiProperties.isShowBranchesPanel());
     myDetailsPanel = new DetailsPanel(logDataManager, myGraphTable, vcsLogUI.getColorManager(), initialDataPack);

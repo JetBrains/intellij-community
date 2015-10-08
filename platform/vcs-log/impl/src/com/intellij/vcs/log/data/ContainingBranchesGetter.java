@@ -51,7 +51,7 @@ public class ContainingBranchesGetter {
   @NotNull private SLRUMap<CommitId, List<String>> myCache = createCache();
   @NotNull private Map<VirtualFile, ContainedInBranchCondition> myConditions = ContainerUtil.newHashMap();
   private int myCurrentBranchesChecksum;
-  @Nullable private VcsLogRefs myRefs;
+  @Nullable private RefsModel myRefs;
   @Nullable private PermanentGraph<Integer> myGraph;
 
   ContainingBranchesGetter(@NotNull VcsLogDataManager dataManager, @NotNull Disposable parentDisposable) {
@@ -74,7 +74,7 @@ public class ContainingBranchesGetter {
     myDataManager.addConsumer(new Consumer<DataPack>() {
       @Override
       public void consume(DataPack dataPack) {
-        myRefs = dataPack.getRefs();
+        myRefs = dataPack.getRefsModel();
         Collection<VcsRef> currentBranches = myRefs.getBranches();
         int checksum = currentBranches.hashCode();
         if (myCurrentBranchesChecksum != 0 && myCurrentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
@@ -171,14 +171,14 @@ public class ContainingBranchesGetter {
     private final VirtualFile root;
     private final Hash hash;
     private final SLRUMap<CommitId, List<String>> cache;
-    @Nullable private final VcsLogRefs refs;
+    @Nullable private final RefsModel refs;
     @Nullable private final PermanentGraph<Integer> graph;
 
     public Task(VirtualFile root,
                 Hash hash,
                 SLRUMap<CommitId, List<String>> cache,
                 @Nullable PermanentGraph<Integer> graph,
-                @Nullable VcsLogRefs refs) {
+                @Nullable RefsModel refs) {
       this.root = root;
       this.hash = hash;
       this.cache = cache;

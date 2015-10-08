@@ -41,11 +41,11 @@ public class BranchesPanel extends JPanel {
   @NotNull private LinkedHashMap<VirtualFile, List<RefGroup>> myRefGroups;
   @Nullable private Collection<VirtualFile> myRoots = null;
 
-  public BranchesPanel(@NotNull VcsLogDataManager dataHolder, @NotNull VcsLogUiImpl ui, @NotNull RefsModel initialRefsModel) {
+  public BranchesPanel(@NotNull VcsLogDataManager dataManager, @NotNull VcsLogUiImpl ui, @NotNull VcsLogRefs initialRefsModel) {
     super(new FlowLayout(FlowLayout.LEADING, BIG_ROOTS_GAP - 2 * SMALL_ROOTS_GAP, 0));
     setBorder(new EmptyBorder(TOP, SMALL_ROOTS_GAP, BOTTOM, SMALL_ROOTS_GAP));
 
-    myDataManager = dataHolder;
+    myDataManager = dataManager;
     myUi = ui;
     myRefGroups = getRefsToDisplayOnPanel(initialRefsModel);
     myReferencePainter = new VcsRefPainter(myUi.getColorManager(), true);

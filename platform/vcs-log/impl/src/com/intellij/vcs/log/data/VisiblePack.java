@@ -61,11 +61,6 @@ public class VisiblePack implements VcsLogDataPack {
   @NotNull
   @Override
   public VcsLogRefs getRefs() {
-    return myDataPack.getRefs();
-  }
-
-  @NotNull
-  public RefsModel getRefsModel() {
     return myDataPack.getRefsModel();
   }
 

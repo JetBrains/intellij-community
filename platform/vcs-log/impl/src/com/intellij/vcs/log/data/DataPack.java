@@ -93,11 +93,6 @@ public class DataPack {
   }
 
   @NotNull
-  public VcsLogRefs getRefs() {
-    return myRefsModel;
-  }
-
-  @NotNull
   public RefsModel getRefsModel() {
     return myRefsModel;
   }
