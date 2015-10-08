@@ -239,13 +239,13 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
 
     @Override
     public void render(SimpleColoredComponent component, boolean selected) {
-      component.append(getPresentableText());
+      component.append(FileUtil.toSystemDependentName(getPresentableText()));
       component.setIcon(AllIcons.Nodes.Folder);
     }
 
     @Override
     public String getPresentableText() {
-      return FileUtil.toSystemDependentName(myPath);
+      return myPath;
     }
 
     @Override
