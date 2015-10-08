@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,14 +79,14 @@ public class GroovyExtractChooser {
       throw new GrRefactoringError(RefactoringBundle.message("readonly.occurences.found"));
     }
 
-    SelectionModel selectionModel = editor.getSelectionModel();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    final StringPartInfo stringPart = StringPartInfo.findStringPart(file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+    final StringPartInfo stringPart = StringPartInfo.findStringPart(file, start, end);
     if (stringPart != null) {
       return new InitialInfo(new VariableInfo[0], new VariableInfo[0], PsiElement.EMPTY_ARRAY, GrStatement.EMPTY_ARRAY, new ArrayList<GrStatement>(), stringPart, project, null);
     }
 
+    final SelectionModel selectionModel = editor.getSelectionModel();
     if (!forceStatements) {
       GrVariable variable = GrIntroduceHandlerBase.findVariable(file, start, end);
       if (variable != null) {
