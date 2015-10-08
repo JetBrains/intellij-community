@@ -343,7 +343,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
       g.clipRect(JBUI.scale(2), JBUI.scale(2), comboBox.getWidth()- JBUI.scale(4), comboBox.getHeight() - JBUI.scale(4));
     }
     if (editor != null && comboBox.isEditable()) {
-      ((JComponent)editor).setBorder(null);
       g.setColor(editor.getBackground());
       g.fillRoundRect(x + JBUI.scale(1), y + JBUI.scale(1), W, H, R, R);
       g.setColor(getArrowButtonFillColor(arrowButton.getBackground()));
