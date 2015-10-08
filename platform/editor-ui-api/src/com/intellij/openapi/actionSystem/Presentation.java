@@ -308,6 +308,7 @@ public final class Presentation implements Cloneable {
     setDescription(presentation.getDescription());
     setIcon(presentation.getIcon());
     setDisabledIcon(presentation.getDisabledIcon());
+    setHoveredIcon(presentation.getHoveredIcon());
     setVisible(presentation.isVisible());
     setEnabled(presentation.isEnabled());
   }
