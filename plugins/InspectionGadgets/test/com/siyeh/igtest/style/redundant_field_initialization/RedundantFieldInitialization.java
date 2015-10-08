@@ -1,13 +1,13 @@
 package com.siyeh.igtest.style.redundant_field_initialization;
 
 class RedudantFieldInitialization {
-  private int i = -0;
-  private float f = .0f;
-  private double d = 0.;
-  private boolean e = false;
-  private byte b = (byte)0;
-  private String[] ss = null;
-  private Object o = null;
+  private int i = <warning descr="Field initialization to '-0' is redundant">-0</warning>;
+  private float f = <warning descr="Field initialization to '.0f' is redundant">.0f</warning>;
+  private double d = <warning descr="Field initialization to '0.' is redundant">0.</warning>;
+  private boolean e = <warning descr="Field initialization to 'false' is redundant">false</warning>;
+  private byte b = <warning descr="Field initialization to '(byte)0' is redundant">(byte)0</warning>;
+  private String[] ss = <warning descr="Field initialization to 'null' is redundant">null</warning>;
+  private Object o = <warning descr="Field initialization to 'null' is redundant">null</warning>;
   private String s = "";
   private short h = 1;
 }
