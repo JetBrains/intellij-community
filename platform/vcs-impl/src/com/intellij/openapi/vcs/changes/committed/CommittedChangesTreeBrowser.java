@@ -295,23 +295,23 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     return result;
   }
 
-  private static void addOrReplaceChange(final List<Change> changes, final Change c) {
+  private static void addOrReplaceChange(final List<Change> result, final Change c) {
     final ContentRevision beforeRev = c.getBeforeRevision();
     // todo!!! further improvements needed
     if (beforeRev != null) {
       final FilePath beforePath = beforeRev.getFile();
-      for (Change oldChange : changes) {
+      for (Change oldChange : result) {
         ContentRevision rev = oldChange.getAfterRevision();
         if (rev != null && rev.getFile().equals(beforePath)) {
-          changes.remove(oldChange);
+          result.remove(oldChange);
           if (oldChange.getBeforeRevision() != null || c.getAfterRevision() != null) {
-            changes.add(new Change(oldChange.getBeforeRevision(), c.getAfterRevision()));
+            result.add(new Change(oldChange.getBeforeRevision(), c.getAfterRevision()));
           }
           return;
         }
       }
     }
-    changes.add(c);
+    result.add(c);
   }
 
   private List<CommittedChangeList> getSelectedChangeLists() {
