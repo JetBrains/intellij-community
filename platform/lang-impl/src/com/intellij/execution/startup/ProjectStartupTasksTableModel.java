@@ -17,6 +17,7 @@ package com.intellij.execution.startup;
 
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,12 +54,12 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
 
   @Override
   public void addRow() {
-    throw new IllegalAccessError("Not implemented");
+    throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
   public void exchangeRows(int oldIndex, int newIndex) {
-    throw new IllegalAccessError("Not implemented");
+    throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
@@ -131,6 +132,7 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
   }
 
   public void addConfiguration(final @NotNull RunnerAndConfigurationSettings configuration) {
+    if (myAllConfigurations.contains(configuration)) return;
     if (! myAllConfigurations.add(configuration)) return;
     Collections.sort(myAllConfigurations, RunnerAndConfigurationSettingsComparator.getInstance());
     fireTableDataChanged();
@@ -142,6 +144,17 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
 
   public List<RunnerAndConfigurationSettings> getAllConfigurations() {
     return myAllConfigurations;
+  }
+
+  public void reValidateConfigurations(final Processor<RunnerAndConfigurationSettings> existenceChecker) {
+    final Iterator<RunnerAndConfigurationSettings> iterator = myAllConfigurations.iterator();
+    while (iterator.hasNext()) {
+      final RunnerAndConfigurationSettings settings = iterator.next();
+      if (!existenceChecker.process(settings)) {
+        iterator.remove();
+        mySharedConfigurations.remove(settings);
+      }
+    }
   }
 
   public static class RunnerAndConfigurationSettingsComparator implements Comparator<RunnerAndConfigurationSettings> {

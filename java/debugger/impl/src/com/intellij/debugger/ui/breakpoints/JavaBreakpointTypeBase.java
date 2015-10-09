@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -70,11 +69,7 @@ public abstract class JavaBreakpointTypeBase<T extends JavaBreakpointProperties>
         return ApplicationManager.getApplication().runReadAction(new Computable<XSourcePosition>() {
           @Override
           public XSourcePosition compute() {
-            PsiFile containingFile = aClass.getContainingFile();
-            if (containingFile != null && aClass.getTextOffset() >= 0) {
-              return XDebuggerUtil.getInstance().createPositionByOffset(containingFile.getVirtualFile(), aClass.getTextOffset());
-            }
-            return null;
+            return XDebuggerUtil.getInstance().createPositionByElement(aClass);
           }
         });
       }

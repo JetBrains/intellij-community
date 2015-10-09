@@ -26,6 +26,7 @@ import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorInspe
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorRenderer;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -39,6 +40,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class ResourceBundlePropertyStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
+  private static final Logger LOG = Logger.getInstance(ResourceBundlePropertyStructureViewElement.class);
   private static final TextAttributesKey GROUP_KEY;
 
   public static final String PROPERTY_GROUP_KEY_TEXT = "<property>";
@@ -117,12 +119,16 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
 
       @Override
       public TextAttributes getTextAttributes(EditorColorsScheme colorsScheme) {
-        myInspectionPassInfo = ResourceBundleEditorInspectionPass.inspect(getProperty().getKey(), getProperty().getPropertiesFile().getResourceBundle());
-        final TextAttributesKey baseAttrKey = (myPresentableName != null && myPresentableName.isEmpty()) ? GROUP_KEY : PropertiesHighlighter.PROPERTY_KEY;
+        final TextAttributesKey baseAttrKey =
+          (myPresentableName != null && myPresentableName.isEmpty()) ? GROUP_KEY : PropertiesHighlighter.PROPERTY_KEY;
         final TextAttributes baseAttrs = colorsScheme.getAttributes(baseAttrKey);
-        TextAttributes highlightingAttributes = myInspectionPassInfo.getTextAttributes(colorsScheme);
-        if (highlightingAttributes != null) {
-          return TextAttributes.merge(baseAttrs, highlightingAttributes);
+        if (getProperty().getPsiElement().isValid()) {
+          myInspectionPassInfo =
+            ResourceBundleEditorInspectionPass.inspect(getProperty().getKey(), getProperty().getPropertiesFile().getResourceBundle());
+          TextAttributes highlightingAttributes = myInspectionPassInfo.getTextAttributes(colorsScheme);
+          if (highlightingAttributes != null) {
+            return TextAttributes.merge(baseAttrs, highlightingAttributes);
+          }
         }
         return baseAttrs;
       }

@@ -23,12 +23,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelper;
-import com.jetbrains.python.documentation.PyDocumentationBuilder;
+import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -65,8 +64,7 @@ public class PyStructuredDocstringFormatter {
     if (module == null) return Lists.newArrayList();
     final List<String> result = new ArrayList<String>();
 
-    final String[] lines = PyDocumentationBuilder.removeCommonIndentation(docstring);
-    final String preparedDocstring = StringUtil.join(lines, "\n");
+    final String preparedDocstring = PyIndentUtil.removeCommonIndent(docstring, true);
 
     final HelperPackage formatter;
     final StructuredDocString structuredDocString;
@@ -93,7 +91,7 @@ public class PyStructuredDocstringFormatter {
       return null;
     }
 
-    final String output = runExternalTool(module, formatter, docstring);
+    final String output = runExternalTool(module, formatter, preparedDocstring);
     if (output != null) {
       result.add(0, output);
     }

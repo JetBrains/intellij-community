@@ -21,6 +21,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.IntentionListStep;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -34,12 +35,17 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Batkovich
  */
 public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
   private final static Logger LOG = Logger.getInstance(ResourceBundleEditorShowQuickFixesAction.class);
+
+  public ResourceBundleEditorShowQuickFixesAction() {
+    super(PropertiesBundle.message("resource.bundle.editor.show.quick.fixes.action.text"));
+  }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
