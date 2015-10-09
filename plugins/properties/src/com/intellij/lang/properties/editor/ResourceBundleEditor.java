@@ -171,14 +171,18 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         }
       }
 
-      private boolean arePropertiesEquivalent(@Nullable IProperty p1, @Nullable IProperty p2) {
-        if (p1 == p2) {
+      private boolean arePropertiesEquivalent(@Nullable IProperty oldSelected, @Nullable IProperty newSelected) {
+        if (oldSelected == newSelected) {
           return true;
         }
-        if (p1 == null || p2 == null) {
+        if (oldSelected == null || newSelected == null) {
           return false;
         }
-        return p1.getPsiElement().isEquivalentTo(p2.getPsiElement());
+        final PsiElement oldPsiElement = oldSelected.getPsiElement();
+        if (!oldPsiElement.isValid()) {
+          return false;
+        }
+        return oldPsiElement.isEquivalentTo(newSelected.getPsiElement());
       }
     });
     installPropertiesChangeListeners();
