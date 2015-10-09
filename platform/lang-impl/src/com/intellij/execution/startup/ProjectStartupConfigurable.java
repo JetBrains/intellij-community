@@ -20,12 +20,11 @@ import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.actions.ExecutorProvider;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.NewRunConfigurationPopup;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.icons.AllIcons;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -36,9 +35,13 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -49,7 +52,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +71,6 @@ import java.util.List;
 public class ProjectStartupConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final Project myProject;
   private JBTable myTable;
-  private ProjectStartupTaskManager myProjectStartupTaskManager;
   private ToolbarDecorator myDecorator;
   private ProjectStartupTasksTableModel myModel;
 
@@ -103,8 +105,6 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   @Nullable
   @Override
   public JComponent createComponent() {
-    initManager();
-
     myModel = new ProjectStartupTasksTableModel(RunManagerEx.getInstanceEx(myProject));
     myTable = new JBTable(myModel);
     new TableSpeedSearch(myTable);
@@ -156,26 +156,22 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           return myTable.getSelectedRow() >= 0;
         }
       })
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          final int row = myTable.getSelectedRow();
-          if (row < 0) return;
+      .disableUpAction().disableDownAction();
 
-          myModel.removeRow(row);
-          refreshDataUpdateSelection(null);
-        }
-      }).disableUpAction().disableDownAction();
     final JPanel tasksPanel = myDecorator.createPanel();
-    return FormBuilder.createFormBuilder() // todo bundle
-      .addLabeledComponentFillVertically("Tasks to be executed right after opening the project.", tasksPanel)
-      .getPanel();
-  }
+    final JLabel label = new JLabel("Run tasks and tools via run configurations");
+    label.setForeground(UIUtil.getInactiveTextColor());
+    label.setHorizontalAlignment(SwingConstants.RIGHT);
+    final JPanel wrapper = new JPanel(new BorderLayout());
+    wrapper.add(new JLabel("To be started on project opening:"), BorderLayout.WEST);
+    wrapper.add(label, BorderLayout.EAST);
+    wrapper.setBorder(BorderFactory.createEmptyBorder(0, 0, UIUtil.DEFAULT_VGAP, 0));
 
-  private void initManager() {
-    if (myProjectStartupTaskManager == null) {
-      myProjectStartupTaskManager = ProjectStartupTaskManager.getInstance(myProject);
-    }
+    final JPanel main = new JPanel(new BorderLayout());
+    main.add(wrapper, BorderLayout.NORTH);
+    main.add(tasksPanel, BorderLayout.CENTER);
+
+    return main;
   }
 
   private void refreshDataUpdateSelection(RunnerAndConfigurationSettings settings) {
@@ -216,10 +212,20 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
       @Override
       public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
-        final RunManagerEx runManager = RunManagerImpl.getInstanceEx(project);
+        final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
         final ConfigurationType[] factories = runManager.getConfigurationFactories();
-        // todo filter list
-        final List<ConfigurationType> factoriesList = Arrays.asList(factories);
+        final Condition<ConfigurationType> filter = new Condition<ConfigurationType>() {
+          private final RunnerRegistry myRegistry = RunnerRegistry.getInstance();
+
+          @Override
+          public boolean value(ConfigurationType configurationType) {
+            ConfigurationFactory factory = null;
+            return !UnknownConfigurationType.INSTANCE.equals(configurationType) &&
+                   ((factory = runManager.getFactory(configurationType.getId(), null)) != null) &&
+                   myRegistry.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
+          }
+        };
+        final List<ConfigurationType> factoriesList = ContainerUtil.filter(Arrays.asList(factories), filter);
         final ListPopup popup = NewRunConfigurationPopup.createAddPopup(factoriesList, "", new Consumer<ConfigurationFactory>() {
           @Override
           public void consume(final ConfigurationFactory factory) {
@@ -233,8 +239,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
                     public void run() {
                       RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
                       if (configuration != null) {
-                        myModel.addConfiguration(configuration);
-                        refreshDataUpdateSelection(configuration);
+                        addConfiguration(configuration);
                       }
                     }
                   }, ModalityState.any(), project.getDisposed());
@@ -253,46 +258,28 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     };
   }
 
-  private ChooseRunConfigurationPopup.ItemWrapper<Void> createEditWrapper() {
-    return new ChooseRunConfigurationPopup.ItemWrapper<Void>(null) {
-      @Override
-      public Icon getIcon() {
-        return AllIcons.Actions.EditSource;
-      }
-
-      @Override
-      public String getText() {
-        return UIUtil.removeMnemonic(ActionsBundle.message("action.editRunConfigurations.text"));
-      }
-
-      @Override
-      public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
-        if (new EditConfigurationsDialog(project).showAndGet()) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
-              if (configuration != null) {
-                myModel.addConfiguration(configuration);
-                refreshDataUpdateSelection(configuration);
-              }
-            }
-          }, project.getDisposed());
-        }
-      }
-
-      @Override
-      public boolean available(Executor executor) {
-        return true;
-      }
-    };
+  private void addConfiguration(RunnerAndConfigurationSettings configuration) {
+    if (!ProjectStartupRunner.canRun(DefaultRunExecutor.getRunExecutorInstance(), configuration)) {
+      final String message = "Can not add Run Configuration '" + configuration.getName() + "' to Startup Tasks," +
+                             " since it can not be run with Run executor.";
+      final Balloon balloon = JBPopupFactory.getInstance()
+        .createHtmlTextBalloonBuilder(message, MessageType.ERROR, null)
+        .setHideOnClickOutside(true)
+        .setFadeoutTime(3000)
+        .setCloseButtonEnabled(true)
+        .createBalloon();
+      final RelativePoint rp = new RelativePoint(myDecorator.getActionsPanel(), new Point(5, 5));
+      balloon.show(rp, Balloon.Position.atLeft);
+      return;
+    }
+    myModel.addConfiguration(configuration);
+    refreshDataUpdateSelection(configuration);
   }
 
   private void selectAndAddConfiguration(final AnActionButton button) {
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers = new ArrayList<ChooseRunConfigurationPopup.ItemWrapper>();
     wrappers.add(createNewWrapper(button));
-    //wrappers.add(createEditWrapper());
     final ChooseRunConfigurationPopup.ItemWrapper[] allSettings =
       ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
         @Override
@@ -300,10 +287,11 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           return executor;
         }
       }, false);
+    final Set<RunnerAndConfigurationSettings> existing = new HashSet<RunnerAndConfigurationSettings>(myModel.getAllConfigurations());
     for (ChooseRunConfigurationPopup.ItemWrapper setting : allSettings) {
       if (setting.getValue() instanceof RunnerAndConfigurationSettings) {
-        // todo maybe auto save temporary?
-        if (!((RunnerAndConfigurationSettings)setting.getValue()).isTemporary()) {
+        final RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)setting.getValue();
+        if (!settings.isTemporary() && ProjectStartupRunner.canRun(executor, settings) && !existing.contains(settings)) {
           wrappers.add(setting);
         }
       }
@@ -328,8 +316,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           final ChooseRunConfigurationPopup.ItemWrapper at = (ChooseRunConfigurationPopup.ItemWrapper)list.getModel().getElementAt(index);
           if (at.getValue() instanceof RunnerAndConfigurationSettings) {
             final RunnerAndConfigurationSettings added = (RunnerAndConfigurationSettings)at.getValue();
-            myModel.addConfiguration(added);
-            refreshDataUpdateSelection(added);
+            addConfiguration(added);
           } else {
             at.perform(myProject, executor, button.getDataContext());
           }
@@ -351,10 +338,10 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public boolean isModified() {
-    initManager();
-    final Set<RunnerAndConfigurationSettings> shared = new HashSet<RunnerAndConfigurationSettings>(myProjectStartupTaskManager.getSharedConfigurations());
+    final ProjectStartupTaskManager projectStartupTaskManager = ProjectStartupTaskManager.getInstance(myProject);
+    final Set<RunnerAndConfigurationSettings> shared = new HashSet<RunnerAndConfigurationSettings>(projectStartupTaskManager.getSharedConfigurations());
     final List<RunnerAndConfigurationSettings> list = new ArrayList<RunnerAndConfigurationSettings>(shared);
-    list.addAll(myProjectStartupTaskManager.getLocalConfigurations());
+    list.addAll(projectStartupTaskManager.getLocalConfigurations());
     Collections.sort(list, ProjectStartupTasksTableModel.RunnerAndConfigurationSettingsComparator.getInstance());
 
     if (!Comparing.equal(list, myModel.getAllConfigurations())) return true;
@@ -364,7 +351,6 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public void apply() throws ConfigurationException {
-    initManager();
     final List<RunnerAndConfigurationSettings> shared = new ArrayList<RunnerAndConfigurationSettings>();
     final List<RunnerAndConfigurationSettings> local = new ArrayList<RunnerAndConfigurationSettings>();
 
@@ -378,13 +364,13 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       }
     }
 
-    myProjectStartupTaskManager.setStartupConfigurations(shared, local);
+    ProjectStartupTaskManager.getInstance(myProject).setStartupConfigurations(shared, local);
   }
 
   @Override
   public void reset() {
-    initManager();
-    myModel.setData(myProjectStartupTaskManager.getSharedConfigurations(), myProjectStartupTaskManager.getLocalConfigurations());
+    final ProjectStartupTaskManager projectStartupTaskManager = ProjectStartupTaskManager.getInstance(myProject);
+    myModel.setData(projectStartupTaskManager.getSharedConfigurations(), projectStartupTaskManager.getLocalConfigurations());
     refreshDataUpdateSelection(null);
   }
 

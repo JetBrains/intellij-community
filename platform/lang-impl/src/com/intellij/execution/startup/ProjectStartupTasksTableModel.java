@@ -54,12 +54,12 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
 
   @Override
   public void addRow() {
-    throw new IllegalAccessError("Not implemented");
+    throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
   public void exchangeRows(int oldIndex, int newIndex) {
-    throw new IllegalAccessError("Not implemented");
+    throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
@@ -132,6 +132,7 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
   }
 
   public void addConfiguration(final @NotNull RunnerAndConfigurationSettings configuration) {
+    if (myAllConfigurations.contains(configuration)) return;
     if (! myAllConfigurations.add(configuration)) return;
     Collections.sort(myAllConfigurations, RunnerAndConfigurationSettingsComparator.getInstance());
     fireTableDataChanged();
