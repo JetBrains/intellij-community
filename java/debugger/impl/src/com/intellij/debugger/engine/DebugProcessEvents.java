@@ -186,6 +186,11 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
             getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
               @Override
+              public Priority getPriority() {
+                return Priority.HIGH;
+              }
+
+              @Override
               protected void action() throws Exception {
                 if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL) {
                   // check if there is already one request with policy SUSPEND_ALL
