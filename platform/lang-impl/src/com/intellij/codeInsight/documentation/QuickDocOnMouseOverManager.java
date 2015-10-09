@@ -65,7 +65,6 @@ public class QuickDocOnMouseOverManager {
 
   /** Holds a reference (if any) to the documentation manager used last time to show an 'auto quick doc' popup. */
   @Nullable private WeakReference<DocumentationManager> myDocumentationManager;
-  @Nullable private WeakReference<Editor> myEditor;
 
   @Nullable private DelayedQuickDocInfo myDelayedQuickDocInfo;
   private           boolean             myEnabled;
@@ -253,7 +252,6 @@ public class QuickDocOnMouseOverManager {
     
     hint.cancel();
     myDocumentationManager = null;
-    myEditor = null;
   }
 
   private void allowUpdateFromContext(Project project, boolean allow) {
@@ -270,7 +268,8 @@ public class QuickDocOnMouseOverManager {
   
   @Nullable
   private Editor getEditor() {
-    return SoftReference.dereference(myEditor);
+    DocumentationManager manager = getDocManager();
+    return manager == null ? null : manager.getEditor();
   }
   
   private static class DelayedQuickDocInfo {
@@ -322,7 +321,6 @@ public class QuickDocOnMouseOverManager {
       try {
         info.docManager.showJavaDocInfo(info.editor, info.targetElement, info.originalElement, myHintCloseCallback, true);
         myDocumentationManager = new WeakReference<DocumentationManager>(info.docManager);
-        myEditor = new WeakReference<Editor>(info.editor);
       }
       finally {
         info.editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, null);
@@ -335,7 +333,6 @@ public class QuickDocOnMouseOverManager {
     public void run() {
       myActiveElements.clear();
       myDocumentationManager = null;
-      myEditor = null;
     }
   }
   

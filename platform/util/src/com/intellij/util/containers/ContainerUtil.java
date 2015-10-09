@@ -16,6 +16,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
@@ -35,6 +36,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
 public class ContainerUtil extends ContainerUtilRt {
+  private static final Logger LOG = Logger.getInstance(ContainerUtil.class);
+
   private static final int INSERTION_SORT_THRESHOLD = 10;
   private static final int DEFAULT_CONCURRENCY_LEVEL = Math.min(16, Runtime.getRuntime().availableProcessors());
 
@@ -483,6 +486,23 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <K, V> ImmutableMapBuilder<K, V> immutableMapBuilder() {
     return new ImmutableMapBuilder<K, V>();
+  }
+
+  @NotNull
+  public static <K, V> MultiMap<K, V> groupBy(@NotNull Iterable<V> collection, @NotNull NullableFunction<V, K> grouper) {
+    MultiMap<K, V> result = MultiMap.createLinked();
+    for (V data : collection) {
+      K key = grouper.fun(data);
+      if (key == null) {
+        continue;
+      }
+      result.putValue(key, data);
+    }
+
+    if (!result.isEmpty() && result.keySet().iterator().next() instanceof Comparable) {
+      return new KeyOrderedMultiMap<K, V>(result);
+    }
+    return result;
   }
 
   public static class ImmutableMapBuilder<K, V> {
@@ -2773,6 +2793,28 @@ public class ContainerUtil extends ContainerUtilRt {
     }
     sb.append('}');
     return sb.toString();
+  }
+
+  public static class KeyOrderedMultiMap<K, V> extends MultiMap<K, V> {
+
+    public KeyOrderedMultiMap() {
+    }
+
+    public KeyOrderedMultiMap(@NotNull MultiMap<? extends K, ? extends V> toCopy) {
+      super(toCopy);
+    }
+
+    @NotNull
+    @Override
+    protected Map<K, Collection<V>> createMap() {
+      return new TreeMap<K, Collection<V>>();
+    }
+
+    @NotNull
+    @Override
+    protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
+      return new TreeMap<K, Collection<V>>();
+    }
   }
 }
 
