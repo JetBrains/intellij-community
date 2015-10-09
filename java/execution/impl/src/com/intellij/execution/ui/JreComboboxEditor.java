@@ -54,7 +54,9 @@ class JreComboboxEditor extends BasicComboBoxEditor {
 
   @Override
   protected JTextField createEditorComponent() {
-    return new JBTextField();
+    JBTextField field = new JBTextField();
+    field.setBorder(null);
+    return field;
   }
 
   public StatusText getEmptyText() {

@@ -584,20 +584,14 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
 
             // Parse first keystroke
 
-            KeyStroke firstKeyStroke;
             String firstKeyStrokeStr = shortcutElement.getAttributeValue(FIRST_KEYSTROKE_ATTRIBUTE);
+            if (firstKeyStrokeStr == null) {
+              throw new InvalidDataException("Attribute '" + FIRST_KEYSTROKE_ATTRIBUTE + "' cannot be null; Action's id=" + id + "; Keymap's name=" + myName);
+            }
             if (skipInserts && firstKeyStrokeStr.contains("INSERT")) continue;
 
-            if (firstKeyStrokeStr != null) {
-              firstKeyStroke = KeyStrokeAdapter.getKeyStroke(firstKeyStrokeStr);
-              if (firstKeyStroke == null) {
-                throw new InvalidDataException(
-                  "Cannot parse first-keystroke: '" + firstKeyStrokeStr + "'; " + "Action's id=" + id + "; Keymap's name=" + myName);
-              }
-            }
-            else {
-              throw new InvalidDataException("Attribute 'first-keystroke' cannot be null; Action's id=" + id + "; Keymap's name=" + myName);
-            }
+            KeyStroke firstKeyStroke = KeyStrokeAdapter.getKeyStroke(firstKeyStrokeStr);
+            if (firstKeyStroke == null) continue; // logged when parsed 
 
             // Parse second keystroke
 
@@ -605,21 +599,19 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
             String secondKeyStrokeStr = shortcutElement.getAttributeValue(SECOND_KEYSTROKE_ATTRIBUTE);
             if (secondKeyStrokeStr != null) {
               secondKeyStroke = KeyStrokeAdapter.getKeyStroke(secondKeyStrokeStr);
-              if (secondKeyStroke == null) {
-                throw new InvalidDataException(
-                  "Wrong second-keystroke: '" + secondKeyStrokeStr + "'; Action's id=" + id + "; Keymap's name=" + myName);
-              }
+              if (secondKeyStroke == null) continue; // logged when parsed 
             }
             Shortcut shortcut = new KeyboardShortcut(firstKeyStroke, secondKeyStroke);
             ArrayList<Shortcut> shortcuts = id2shortcuts.get(id);
             shortcuts.add(shortcut);
           }
           else if (KEYBOARD_GESTURE_SHORTCUT.equals(shortcutElement.getName())) {
-            KeyStroke stroke = null;
             final String strokeText = shortcutElement.getAttributeValue(KEYBOARD_GESTURE_KEY);
-            if (strokeText != null) {
-              stroke = KeyStrokeAdapter.getKeyStroke(strokeText);
+            if (strokeText == null) {
+              throw new InvalidDataException("Attribute '" + KEYBOARD_GESTURE_KEY + "' cannot be null; Action's id=" + id + "; Keymap's name=" + myName);
             }
+            KeyStroke stroke = KeyStrokeAdapter.getKeyStroke(strokeText);
+            if (stroke == null) continue; // logged when parsed 
 
             final String modifierText = shortcutElement.getAttributeValue(KEYBOARD_GESTURE_MODIFIER);
             KeyboardGestureAction.ModifierType modifier = null;
@@ -630,9 +622,6 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
               modifier = KeyboardGestureAction.ModifierType.hold;
             }
 
-            if (stroke == null) {
-              throw new InvalidDataException("Wrong keystroke=" + strokeText + " action id=" + id + " keymap=" + myName);
-            }
             if (modifier == null) {
               throw new InvalidDataException("Wrong modifier=" + modifierText + " action id=" + id + " keymap=" + myName);
             }

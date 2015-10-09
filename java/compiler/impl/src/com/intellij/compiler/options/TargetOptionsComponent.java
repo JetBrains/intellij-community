@@ -329,7 +329,9 @@ public class TargetOptionsComponent extends JPanel {
     combo.setEditor(new BasicComboBoxEditor() {
       @Override
       protected JTextField createEditorComponent() {
-        return new HintTextField(COMPILER_DEFAULT, 12);
+        HintTextField editor = new HintTextField(COMPILER_DEFAULT, 12);
+        editor.setBorder(null);
+        return editor;
       }
     });
     return combo;

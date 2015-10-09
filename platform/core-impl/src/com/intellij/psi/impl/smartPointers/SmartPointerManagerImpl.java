@@ -23,10 +23,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
@@ -244,6 +241,32 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
     list.markerCache.updateMarkers(frozen, events);
   }
+
+  public void updatePointerTargetsAfterReparse(@NotNull VirtualFile file) {
+    FilePointersList list = getPointers(file);
+    if (list == null) return;
+
+    for (SmartPsiElementPointerImpl pointer : list.getAlivePointers()) {
+      if (!(pointer instanceof SmartPsiFileRangePointerImpl) && pointer.getElementInfo() instanceof SelfElementInfo) {
+        updatePointerTarget(pointer, pointer.getPsiRange());
+      }
+    }
+  }
+
+  // after reparse and its complex tree diff, the element might have "moved" to other range
+  // but if an element of the same type can still be found at the old range, let's point there
+  private static <E extends PsiElement> void updatePointerTarget(@NotNull SmartPsiElementPointerImpl<E> pointer, @Nullable Segment pointerRange) {
+    E cachedElement = pointer.getCachedElement();
+    if (cachedElement == null || cachedElement.isValid() && pointerRange != null && pointerRange.equals(cachedElement.getTextRange())) {
+      return;
+    }
+
+    E newTarget = pointer.doRestoreElement();
+    if (newTarget != null) {
+      pointer.cacheElement(newTarget);
+    }
+  }
+
 
   Project getProject() {
     return myProject;

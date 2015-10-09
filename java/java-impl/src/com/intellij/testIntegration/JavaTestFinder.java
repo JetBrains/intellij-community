@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public class JavaTestFinder implements TestFinder {
     }
   }
 
-  private static boolean isTestSubjectClass(PsiClass klass) {
+  protected boolean isTestSubjectClass(PsiClass klass) {
     if (klass.isAnnotationType() || 
         TestFrameworks.getInstance().isTestClass(klass) ||
         !klass.isPhysical()) {
@@ -114,11 +114,10 @@ public class JavaTestFinder implements TestFinder {
 
     HashSet<String> names = new HashSet<String>();
     cache.getAllClassNames(names);
-    final TestFrameworks frameworks = TestFrameworks.getInstance();
     for (String eachName : names) {
       if (pattern.matcher(eachName).matches()) {
         for (PsiClass eachClass : cache.getClassesByName(eachName, scope)) {
-          if (eachClass.isPhysical() && (frameworks.isTestClass(eachClass) || frameworks.isPotentialTestClass(eachClass))) {
+          if (isTestClass(eachClass)) {
             if (!processor.process(Pair.create(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)))) {
               return true;
             }
@@ -127,6 +126,11 @@ public class JavaTestFinder implements TestFinder {
       }
     }
     return false;
+  }
+
+  protected boolean isTestClass(PsiClass eachClass) {
+    final TestFrameworks frameworks = TestFrameworks.getInstance();
+    return eachClass.isPhysical() && (frameworks.isTestClass(eachClass) || frameworks.isPotentialTestClass(eachClass));
   }
 
   @Nullable
