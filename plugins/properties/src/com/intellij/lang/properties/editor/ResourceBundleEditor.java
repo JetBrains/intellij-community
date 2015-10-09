@@ -152,6 +152,13 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         // filter out temp unselect/select events
+        if (getSelectedElementIfOnlyOne() instanceof ResourceBundleFileStructureViewElement) {
+          ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, NO_PROPERTY_SELECTED);
+          selectedPropertiesFile = null;
+          selectedProperty = null;
+          return;
+        }
+
         if (Comparing.equal(e.getNewLeadSelectionPath(), e.getOldLeadSelectionPath()) || getSelectedProperty() == null) return;
         if (!arePropertiesEquivalent(selectedProperty, getSelectedProperty()) ||
             !Comparing.equal(selectedPropertiesFile, getSelectedPropertiesFile())) {
