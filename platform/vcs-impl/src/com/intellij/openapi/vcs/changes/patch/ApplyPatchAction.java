@@ -215,9 +215,8 @@ public class ApplyPatchAction extends DumbAwareAction {
             applyPatchStatusReference.set(ApplyPatchStatus.ABORT);
           }
           else if (result == Messages.NO) {
-            applyPatchStatusReference.set(ApplyPatchStatus.FAILURE);
+            applyPatchStatusReference.set(ApplyPatchStatus.SKIP);
           }
-
           return result != Messages.CANCEL;
         }
       });
