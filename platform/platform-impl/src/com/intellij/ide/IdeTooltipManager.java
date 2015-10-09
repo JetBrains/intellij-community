@@ -288,7 +288,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       effectivePoint.y = toCenterY ? bounds.height / 2 : effectivePoint.y;
     }
 
-    if (myCurrentComponent == tooltip.getComponent() && myCurrentTipUi != null) {
+    if (myCurrentComponent == tooltip.getComponent() && myCurrentTipUi != null && !myCurrentTipUi.isDisposed()) {
       myCurrentTipUi.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
       return;
     }
