@@ -374,7 +374,8 @@ public class QuickDocOnMouseOverManager {
   private class MyVisibleAreaListener implements VisibleAreaListener {
     @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
-      if (e.getEditor() == getEditor()) {
+      Editor editor = getEditor();
+      if (editor == null || editor == e.getEditor()) {
         closeQuickDocIfPossible();
       }
     }
@@ -383,7 +384,8 @@ public class QuickDocOnMouseOverManager {
   private class MyCaretListener extends CaretAdapter {
     @Override
     public void caretPositionChanged(CaretEvent e) {
-      if (e.getEditor() == getEditor()) {
+      Editor editor = getEditor();
+      if (editor == null || editor == e.getEditor()) {
         allowUpdateFromContext(e.getEditor().getProject(), true);
         closeQuickDocIfPossible();
       }
