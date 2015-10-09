@@ -548,7 +548,16 @@ public class AbstractPopup implements JBPopup {
       return preferredLocation;
     }
     int adjustedY = preferredBounds.y - editor.getLineHeight() * 3 / 2 - preferredSize.height;
-    return adjustedY >= 0 ? RelativePoint.fromScreen(new Point(preferredBounds.x, adjustedY)) : preferredLocation;
+    if (adjustedY < 0) {
+      return preferredLocation;
+    }
+    Point point = new Point(preferredBounds.x, adjustedY);
+    Component component = preferredLocation.getComponent();
+    if (component == null) {
+      return RelativePoint.fromScreen(point);
+    }
+    SwingUtilities.convertPointFromScreen(point, component);
+    return new RelativePoint(component, point);
   }
 
   public void addPopupListener(JBPopupListener listener) {
