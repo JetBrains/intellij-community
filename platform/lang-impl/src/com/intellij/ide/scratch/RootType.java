@@ -20,8 +20,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -84,7 +82,7 @@ public abstract class RootType {
 
   @Nullable
   public Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
-    return substituteLanguageImpl(getOriginalLanguage(file), file, project);
+    return substituteLanguageImpl(ScratchFileType.getOriginalLanguage(file), file, project);
   }
 
   @Nullable
@@ -113,19 +111,6 @@ public abstract class RootType {
   protected static Language substituteLanguageImpl(Language language, VirtualFile file, Project project) {
     return language != null && language != ScratchFileType.INSTANCE.getLanguage() ?
            LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project) : language;
-  }
-
-  @Nullable
-  protected static FileType getOriginalFileType(@NotNull VirtualFile file) {
-    String extension = file.getExtension();
-    if (extension == null) return null;
-    return FileTypeManager.getInstance().getFileTypeByExtension(extension);
-  }
-
-  @Nullable
-  protected static Language getOriginalLanguage(@NotNull VirtualFile file) {
-    FileType fileType = getOriginalFileType(file);
-    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
   }
 
   public boolean isIgnored(@NotNull Project project, @NotNull VirtualFile element) {
