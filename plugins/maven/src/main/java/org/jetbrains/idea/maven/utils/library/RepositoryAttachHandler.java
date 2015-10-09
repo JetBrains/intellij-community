@@ -57,6 +57,7 @@ import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.services.MavenRepositoryServicesManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -95,7 +96,7 @@ public class RepositoryAttachHandler {
     List<MavenRepositoryInfo> repositories = dialog.getRepositories();
     NewLibraryConfiguration configuration = resolveAndDownload(project, coord, attachJavaDoc, attachSources, copyTo, repositories);
     if (configuration == null) {
-      Messages.showErrorDialog(parentComponent, "No files were downloaded for " + coord, CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(parentComponent, ProjectBundle.message("maven.downloading.failed", coord), CommonBundle.getErrorTitle());
     }
     return configuration;
   }
@@ -109,6 +110,9 @@ public class RepositoryAttachHandler {
     RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(coord);
     final List<OrderRoot> roots = MavenDependenciesRemoteManager.getInstance(project)
       .downloadDependenciesModal(libraryProperties, attachSources, attachJavaDoc, copyTo);
+    if (roots == null || roots.size() == 0) {
+      return null;
+    }
     notifyArtifactsDownloaded(project, roots);
     RepositoryLibraryDescription libraryDescription = RepositoryLibraryDescription.findDescription(libraryProperties);
     return new NewLibraryConfiguration(
