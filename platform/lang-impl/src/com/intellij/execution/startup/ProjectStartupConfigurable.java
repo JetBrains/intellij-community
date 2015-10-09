@@ -15,14 +15,14 @@
  */
 package com.intellij.execution.startup;
 
-import com.intellij.execution.Executor;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.actions.ExecutorProvider;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.EditConfigurationsDialog;
+import com.intellij.execution.impl.NewRunConfigurationPopup;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
@@ -30,19 +30,24 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.Consumer;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -189,6 +194,57 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     myTable.getSelectionModel().setLeadSelectionIndex(0);
   }
 
+  private ChooseRunConfigurationPopup.ItemWrapper<Void> createNewWrapper(final AnActionButton button) {
+    return new ChooseRunConfigurationPopup.ItemWrapper<Void>(null) {
+      @Override
+      public Icon getIcon() {
+        return IconUtil.getAddIcon();
+      }
+
+      @Override
+      public String getText() {
+        return UIUtil.removeMnemonic(ExecutionBundle.message("add.new.run.configuration.acrtion.name"));
+      }
+
+      @Override
+      public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
+        final RunManagerEx runManager = RunManagerImpl.getInstanceEx(project);
+        final ConfigurationType[] factories = runManager.getConfigurationFactories();
+        // todo filter list
+        final List<ConfigurationType> factoriesList = Arrays.asList(factories);
+        final ListPopup popup = NewRunConfigurationPopup.createAddPopup(factoriesList, "", new Consumer<ConfigurationFactory>() {
+          @Override
+          public void consume(final ConfigurationFactory factory) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                final EditConfigurationsDialog dialog = new EditConfigurationsDialog(project, factory);
+                if (dialog.showAndGet()) {
+                  ApplicationManager.getApplication().invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                      RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
+                      if (configuration != null) {
+                        myModel.addConfiguration(configuration);
+                        selectPathOrFirst(configuration);
+                      }
+                    }
+                  }, ModalityState.any(), project.getDisposed());
+                }
+              }
+            }, ModalityState.any(), project.getDisposed());
+          }
+        }, null, EmptyRunnable.getInstance(), false);
+        showPopup(button, popup);
+      }
+
+      @Override
+      public boolean available(Executor executor) {
+        return true;
+      }
+    };
+  }
+
   private ChooseRunConfigurationPopup.ItemWrapper<Void> createEditWrapper() {
     return new ChooseRunConfigurationPopup.ItemWrapper<Void>(null) {
       @Override
@@ -227,7 +283,8 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   private void selectAndAddConfiguration(final AnActionButton button) {
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers = new ArrayList<ChooseRunConfigurationPopup.ItemWrapper>();
-    wrappers.add(createEditWrapper());
+    wrappers.add(createNewWrapper(button));
+    //wrappers.add(createEditWrapper());
     final ChooseRunConfigurationPopup.ItemWrapper[] allSettings =
       ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
         @Override
@@ -272,6 +329,10 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       })
       .createPopup();
 
+    showPopup(button, popup);
+  }
+
+  private void showPopup(AnActionButton button, JBPopup popup) {
     final RelativePoint point = button.getPreferredPopupPoint();
     if (point != null) {
       popup.show(point);
