@@ -283,9 +283,9 @@ public class Main {
       t = awtError;
     }
     else {
-      message.append("Internal error. Please report to https://");
+      message.append("Internal error. Please report to ");
       boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
-      message.append(studio ? "code.google.com/p/android/issues" : "intellij-support.jetbrains.com/hc/en-us/requests/new");
+      message.append(studio ? "https://code.google.com/p/android/issues" : "http://jb.gg/ide/critical-startup-errors");
       message.append("\n\n");
     }
 
