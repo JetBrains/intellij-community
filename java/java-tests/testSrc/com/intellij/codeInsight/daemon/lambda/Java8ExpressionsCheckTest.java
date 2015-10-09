@@ -47,6 +47,10 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestAllMethodCallExpressions();
   }
 
+  public void testDontCollectUnhandledReferencesInsideLambdaBody() throws Exception {
+    doTestAllMethodCallExpressions();
+  }
+
   public void testCachedUnresolvedMethods() throws Exception {
     doTestCachedUnresolved();
   }

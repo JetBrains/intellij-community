@@ -195,8 +195,15 @@ public class ScrollingModelImpl implements ScrollingModelEx {
                   scrollType == ScrollType.CENTER_DOWN ||
                   scrollType == ScrollType.CENTER_UP ? 0 : viewRect.x;
     if (targetLocation.x < hOffset) {
-      hOffset = targetLocation.x - 4 * spaceWidth;
-      hOffset = hOffset > 0 ? hOffset : 0;
+      int inset = 4 * spaceWidth;
+      if (scrollType == ScrollType.MAKE_VISIBLE && targetLocation.x < viewRect.width - inset) {
+        // if we need to scroll to the left to make target position visible, 
+        // let's scroll to the leftmost position (if that will make caret visible)
+        hOffset = 0;
+      }
+      else {
+        hOffset = Math.max(0, targetLocation.x - inset);
+      }
     }
     else if (targetLocation.x >= hOffset + viewRect.width) {
       hOffset = targetLocation.x - Math.max(0, viewRect.width - xInsets);

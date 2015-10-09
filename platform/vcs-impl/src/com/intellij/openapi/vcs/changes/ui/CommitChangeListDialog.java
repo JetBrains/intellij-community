@@ -54,7 +54,9 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.OnOffListener;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -78,7 +80,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final CommitContext myCommitContext;
   private final CommitMessage myCommitMessageArea;
   private Splitter mySplitter;
-  private final JPanel myAdditionalOptionsPanel;
+  @Nullable private final JPanel myAdditionalOptionsPanel;
 
   private final ChangesBrowser myBrowser;
   private final ChangesBrowserExtender myBrowserExtender;
@@ -352,9 +354,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myActionName = VcsBundle.message("commit.dialog.title");
 
-    myAdditionalOptionsPanel = new JPanel();
-
-    myAdditionalOptionsPanel.setLayout(new BorderLayout());
     Box optionsBox = Box.createVerticalBox();
 
     boolean hasVcsOptions = false;
@@ -437,7 +436,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     if (hasVcsOptions || beforeVisible || afterVisible) {
       optionsBox.add(Box.createVerticalGlue());
+      myAdditionalOptionsPanel = new JPanel(new BorderLayout());
       myAdditionalOptionsPanel.add(optionsBox, BorderLayout.NORTH);
+    }
+    else {
+      myAdditionalOptionsPanel = null;
     }
 
     myOkActionText = actionName;
@@ -1003,40 +1006,36 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   @Nullable
   protected JComponent createCenterPanel() {
-    JPanel rootPane = new JPanel(new BorderLayout());
-
     mySplitter = new Splitter(true);
     mySplitter.setHonorComponentsMinimumSize(true);
     mySplitter.setFirstComponent(myBrowser);
     mySplitter.setSecondComponent(myCommitMessageArea);
     initMainSplitter();
 
-    rootPane.add(mySplitter, BorderLayout.CENTER);
-
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
-    JPanel legendPanel = new JPanel(new BorderLayout());
-    legendPanel.add(myLegend.getComponent(), BorderLayout.EAST);
-    myBrowser.getBottomPanel().add(legendPanel, BorderLayout.SOUTH);
+    myBrowser.getBottomPanel().add(JBUI.Panels.simplePanel().addToRight(myLegend.getComponent()), BorderLayout.SOUTH);
 
-    JPanel infoPanel = new JPanel(new BorderLayout());
-    JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(myAdditionalOptionsPanel, true);
-    optionsPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    optionsPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-    optionsPane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
-    infoPanel.add(optionsPane, BorderLayout.CENTER);
-    rootPane.add(infoPanel, BorderLayout.EAST);
-    infoPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
+    JPanel mainPanel;
+    if (myAdditionalOptionsPanel != null) {
+      JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(myAdditionalOptionsPanel, true);
+      optionsPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      optionsPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+      optionsPane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
+      JPanel infoPanel = JBUI.Panels.simplePanel(optionsPane).withBorder(JBUI.Borders.emptyLeft(10));
 
-    final JPanel wrapper = new JPanel(new GridBagLayout());
-    final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                         new Insets(0, 0, 0, 0), 0, 0);
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(wrapper, BorderLayout.WEST);
-    rootPane.add(panel, BorderLayout.SOUTH);
+      mainPanel = new JPanel(new MyOptionsLayout(mySplitter, infoPanel, 150));
+      mainPanel.add(mySplitter);
+      mainPanel.add(infoPanel);
+    } else {
+      mainPanel = mySplitter;
+    }
 
-    myWarningLabel.setBorder(BorderFactory.createEmptyBorder(5,5,0,5));
-    wrapper.add(myWarningLabel, gb);
+    myWarningLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
+    final JPanel panel = new JPanel(new GridBagLayout());
+    panel.add(myWarningLabel, new GridBag().anchor(GridBagConstraints.NORTHWEST).weightx(1));
+
+    JPanel rootPane = JBUI.Panels.simplePanel(mainPanel).addToBottom(panel);
 
     // TODO: there are no reason to use such heavy interface for a simple task.
     myDetailsSplitter = new SplitterWithSecondHideable(true, "Details", rootPane,
@@ -1399,6 +1398,35 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     @Override
     protected void onAfterNavigate() {
       doCancelAction();
+    }
+  }
+
+  private static class MyOptionsLayout extends AbstractLayoutManager {
+    private final JComponent myPanel;
+    private final JComponent myOptions;
+    private final int myMinOptionsWidth;
+
+    public MyOptionsLayout(@NotNull JComponent panel, @NotNull JComponent options, int minOptionsWidth) {
+      myPanel = panel;
+      myOptions = options;
+      myMinOptionsWidth = minOptionsWidth;
+    }
+
+    @Override
+    public Dimension preferredLayoutSize(Container parent) {
+      Dimension size1 = myPanel.getPreferredSize();
+      Dimension size2 = myOptions.getPreferredSize();
+      return new Dimension(size1.width + size2.width, Math.max(size1.height, size2.height));
+    }
+
+    @Override
+    public void layoutContainer(Container parent) {
+      Rectangle bounds = parent.getBounds();
+      int availableWidth = bounds.width - myPanel.getPreferredSize().width;
+      int preferredWidth = myOptions.getPreferredSize().width;
+      int optionsWidth = Math.max(Math.min(availableWidth, preferredWidth), myMinOptionsWidth);
+      myPanel.setBounds(new Rectangle(0, 0, bounds.width - optionsWidth, bounds.height));
+      myOptions.setBounds(new Rectangle(bounds.width - optionsWidth, 0, optionsWidth, bounds.height));
     }
   }
 }

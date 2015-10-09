@@ -266,6 +266,12 @@ public class QuickDocOnMouseOverManager {
     return SoftReference.dereference(myDocumentationManager);
   }
   
+  @Nullable
+  private Editor getEditor() {
+    DocumentationManager manager = getDocManager();
+    return manager == null ? null : manager.getEditor();
+  }
+  
   private static class DelayedQuickDocInfo {
 
     @NotNull public final DocumentationManager docManager;
@@ -365,22 +371,31 @@ public class QuickDocOnMouseOverManager {
   private class MyVisibleAreaListener implements VisibleAreaListener {
     @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
-      closeQuickDocIfPossible();
+      Editor editor = getEditor();
+      if (editor == null || editor == e.getEditor()) {
+        closeQuickDocIfPossible();
+      }
     }
   }
   
   private class MyCaretListener extends CaretAdapter {
     @Override
     public void caretPositionChanged(CaretEvent e) {
-      allowUpdateFromContext(e.getEditor().getProject(), true);
-      closeQuickDocIfPossible(); 
+      Editor editor = getEditor();
+      if (editor == null || editor == e.getEditor()) {
+        allowUpdateFromContext(e.getEditor().getProject(), true);
+        closeQuickDocIfPossible();
+      }
     }
   }
   
   private class MyDocumentListener extends DocumentAdapter {
     @Override
     public void documentChanged(DocumentEvent e) {
-      closeQuickDocIfPossible();
+      Editor editor = getEditor();
+      if (editor == null || editor.getDocument() == e.getDocument()) {
+        closeQuickDocIfPossible();
+      }
     }
   }
 }

@@ -8,7 +8,7 @@ class Test {
         IntStream mi = sp.map(Inner::foo);
         Stream<Integer> mI = sp.map(Inner::fooBoxed);
 
-        IntStream li = sp.<error descr="Ambiguous method call: both 'Stream.map(Function<? super Inner, ? extends R>)' and 'Stream.map(IntFunction<? super Inner>)' match">map</error>(inner->inner.<error descr="Cannot resolve method 'foo()'">foo</error>());
+        IntStream li = sp.<error descr="Cannot resolve method 'map(<lambda expression>)'">map</error>(inner->inner.<error descr="Cannot resolve method 'foo()'">foo</error>());
         Stream<Integer> lI = sp.<error descr="Ambiguous method call: both 'Stream.map(Function<? super Inner, ? extends Integer>)' and 'Stream.map(IntFunction<? super Inner>)' match">map</error>(inner -> inner.<error descr="Cannot resolve method 'fooBoxed()'">fooBoxed</error>());
     }
 
