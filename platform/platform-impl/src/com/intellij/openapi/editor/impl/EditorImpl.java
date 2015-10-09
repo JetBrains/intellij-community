@@ -571,8 +571,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     updateCaretCursor();
     
-    addEditorMouseListener(new MyEditorPopupHandler());
-
     // This hacks context layout problem where editor appears scrolled to the right just after it is created.
     if (!ourIsUnitTestMode) {
       UiNotifyConnector.doWhenFirstShown(myEditorComponent, new Runnable() {
@@ -5794,6 +5792,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       else {
         processMousePressed(e);
       }
+      
+      invokePopupIfNeeded(event);
     }
 
     private void runMouseClickedCommand(@NotNull final MouseEvent e) {
@@ -5820,6 +5820,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       myScrollingTimer.stop();
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
+      invokePopupIfNeeded(event);
+      if (event.isConsumed()) {
+        return;
+      }
       for (EditorMouseListener listener : myMouseListeners) {
         listener.mouseReleased(event);
         if (event.isConsumed()) {
@@ -6991,6 +6995,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     info.put("caret", visual.getLine() + ":" + visual.getColumn());
   }
 
+  private void invokePopupIfNeeded(EditorMouseEvent event) {
+    if (myContextMenuGroupId != null &&
+        event.getArea() == EditorMouseEventArea.EDITING_AREA &&
+        event.getMouseEvent().isPopupTrigger() &&
+        !event.isConsumed()) {
+      AnAction action = CustomActionsSchema.getInstance().getCorrectedAction(myContextMenuGroupId);
+      if (action instanceof ActionGroup) {
+        ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, (ActionGroup)action);
+        MouseEvent e = event.getMouseEvent();
+        final Component c = e.getComponent();
+        if (c != null && c.isShowing()) {
+          popupMenu.getComponent().show(c, e.getX(), e.getY());
+        }
+        e.consume();
+      }
+    }
+  }
+
   private class MyScrollPane extends JBScrollPane {
     private MyScrollPane() {
       super(0);
@@ -7182,41 +7204,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
              && (offset < currentLeadingEdge ? myLeadingWhitespaceShown :
                  offset >= currentTrailingEdge ? myTrailingWhitespaceShown :
                  myInnerWhitespaceShown);
-    }
-  }
-  
-  private class MyEditorPopupHandler extends EditorMouseAdapter {
-    @Override
-    public void mouseReleased(EditorMouseEvent e) {
-      invokePopupIfNeeded(e);
-    }
-
-    @Override
-    public void mousePressed(EditorMouseEvent e) {
-      invokePopupIfNeeded(e);
-    }
-
-    @Override
-    public void mouseClicked(EditorMouseEvent e) {
-      invokePopupIfNeeded(e);
-    }
-
-    private void invokePopupIfNeeded(EditorMouseEvent event) {
-      if (myContextMenuGroupId != null && 
-          event.getArea() == EditorMouseEventArea.EDITING_AREA && 
-          event.getMouseEvent().isPopupTrigger() && 
-          !event.isConsumed()) {
-        AnAction action = CustomActionsSchema.getInstance().getCorrectedAction(myContextMenuGroupId);
-        if (action instanceof ActionGroup) {
-          ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, (ActionGroup)action);
-          MouseEvent e = event.getMouseEvent();
-          final Component c = e.getComponent();
-          if (c != null && c.isShowing()) {
-            popupMenu.getComponent().show(c, e.getX(), e.getY());
-          }
-          e.consume();
-        }
-      }
     }
   }
 }
