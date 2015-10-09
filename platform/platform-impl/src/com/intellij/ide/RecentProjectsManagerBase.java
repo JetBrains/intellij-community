@@ -413,6 +413,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
             .setTitle("Recent Projects")
             .setFocusable(true)
             .setRequestFocus(true)
+            .setMayBeParent(true)
             .setMovable(true)
             .createPopup();
           Disposer.register(popup, disposable);
