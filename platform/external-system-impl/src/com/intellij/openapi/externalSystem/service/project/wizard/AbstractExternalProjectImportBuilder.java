@@ -1,6 +1,7 @@
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -152,12 +153,14 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     systemSettings.setLinkedProjectsSettings(projects);
 
     if (externalProjectNode != null) {
-      ExternalProjectDataSelectorDialog dialog = new ExternalProjectDataSelectorDialog(
-        project, new InternalExternalProjectInfo(myExternalSystemId, projectSettings.getExternalProjectPath(), externalProjectNode));
-      if (dialog.hasMultipleDataToSelect()) {
-        dialog.showAndGet();
-      } else {
-        dialog.dispose();
+      if(!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        ExternalProjectDataSelectorDialog dialog = new ExternalProjectDataSelectorDialog(
+          project, new InternalExternalProjectInfo(myExternalSystemId, projectSettings.getExternalProjectPath(), externalProjectNode));
+        if (dialog.hasMultipleDataToSelect()) {
+          dialog.showAndGet();
+        } else {
+          dialog.dispose();
+        }
       }
 
       myProjectDataManager.importData(externalProjectNode, project, modelsProvider, true);
