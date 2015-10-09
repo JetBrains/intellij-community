@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.Semaphore;
@@ -324,6 +325,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           File file = new File(myDataDir.getPath().replace('/', File.separatorChar) + File.separator + DATA_FILE_NAME);
           Document document = JDOMUtil.loadDocument(file);
           myData.readExternal(document.getRootElement());
+          PlatformTestUtil.saveProject(myProject);
 
         }
         catch (Exception e) {
