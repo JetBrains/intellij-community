@@ -39,10 +39,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 /**
  * @author Dmitry Avdeev
@@ -191,6 +188,7 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
     }
     myEnumerator.close();
     myThreadPool.shutdown();
+    assertTrue(myThreadPool.awaitTermination(100, TimeUnit.SECONDS));
   }
 
   @NotNull
