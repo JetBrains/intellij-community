@@ -137,7 +137,7 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
     if (jre instanceof DefaultJreItem) {
       return myPreviousCustomJrePath;
     }
-    return jre.getPresentableText();
+    return jre.getPathOrName();
   }
 
   public boolean isAlternativeJreSelected() {
@@ -181,7 +181,7 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
   private JreComboBoxItem findOrAddCustomJre(@NotNull String pathOrName) {
     for (JreComboBoxItem item : myComboBoxModel.getItems()) {
       if (item instanceof CustomJreItem && FileUtil.pathsEqual(pathOrName, ((CustomJreItem)item).myPath)
-        || item.getPresentableText().equals(pathOrName)) {
+          || pathOrName.equals(item.getPathOrName())) {
         return item;
       }
     }
@@ -204,6 +204,8 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
   interface JreComboBoxItem {
     void render(SimpleColoredComponent component, boolean selected);
     String getPresentableText();
+    @Nullable
+    String getPathOrName();
     int getOrder();
   }
 
@@ -225,6 +227,11 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
     }
 
     @Override
+    public String getPathOrName() {
+      return mySdk.getName();
+    }
+
+    @Override
     public int getOrder() {
       return 1;
     }
@@ -239,12 +246,17 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
 
     @Override
     public void render(SimpleColoredComponent component, boolean selected) {
-      component.append(FileUtil.toSystemDependentName(getPresentableText()));
+      component.append(getPresentableText());
       component.setIcon(AllIcons.Nodes.Folder);
     }
 
     @Override
     public String getPresentableText() {
+      return FileUtil.toSystemDependentName(myPath);
+    }
+
+    @Override
+    public String getPathOrName() {
       return myPath;
     }
 
@@ -267,6 +279,11 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
     @Override
     public String getPresentableText() {
       return DEFAULT_JRE_TEXT;
+    }
+
+    @Override
+    public String getPathOrName() {
+      return null;
     }
 
     @Override
