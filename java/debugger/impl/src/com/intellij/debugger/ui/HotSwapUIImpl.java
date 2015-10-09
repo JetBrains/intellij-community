@@ -123,7 +123,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
     myListeners.remove(listener);
   }
 
-  private boolean shouldDisplayHangWarning(DebuggerSettings settings, List<DebuggerSession> sessions) {
+  private static boolean shouldDisplayHangWarning(DebuggerSettings settings, List<DebuggerSession> sessions) {
     if (!settings.HOTSWAP_HANG_WARNING_ENABLED) {
       return false;
     }

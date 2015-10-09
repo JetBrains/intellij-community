@@ -21,13 +21,14 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.InstanceFilter;
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
@@ -36,7 +37,6 @@ import com.sun.jdi.event.LocatableEvent;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,25 +83,6 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
 
   public String getSuspendPolicy() {
     return SUSPEND? SUSPEND_POLICY : DebuggerSettings.SUSPEND_NONE;
-  }
-
-  /**
-   * @return true if the ID was added or false otherwise
-   */
-  private boolean hasObjectID(long id) {
-    for (InstanceFilter instanceFilter : myInstanceFilters) {
-      if (instanceFilter.getId() == id) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  protected void addInstanceFilter(long l) {
-    final InstanceFilter[] filters = new InstanceFilter[myInstanceFilters.length + 1];
-    System.arraycopy(myInstanceFilters, 0, filters, 0, myInstanceFilters.length);
-    filters[myInstanceFilters.length] = InstanceFilter.create(String.valueOf(l));
-    myInstanceFilters = filters;
   }
 
   public final ClassFilter[] getClassFilters() {
@@ -179,39 +160,6 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
     DebuggerUtilsEx.writeFilters(parentNode, FILTER_OPTION_NAME, myClassFilters);
     DebuggerUtilsEx.writeFilters(parentNode, EXCLUSION_FILTER_OPTION_NAME, myClassExclusionFilters);
     DebuggerUtilsEx.writeFilters(parentNode, INSTANCE_ID_OPTION_NAME, InstanceFilter.createClassFilters(myInstanceFilters));
-  }
-
-  protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
-    return event.location().declaringType().name();
-  }
-
-  private boolean typeMatchesClassFilters(@Nullable String typeName) {
-    if (typeName == null) {
-      return true;
-    }
-    boolean matches = false, hasEnabled = false;
-    for (ClassFilter classFilter : getClassFilters()) {
-      if (classFilter.isEnabled()) {
-        hasEnabled = true;
-        if (classFilter.matches(typeName)) {
-          matches = true;
-          break;
-        }
-      }
-    }
-    if(hasEnabled && !matches) {
-      return false;
-    }
-    for (ClassFilter classFilter : getClassExclusionFilters()) {
-      if (classFilter.isEnabled() && classFilter.matches(typeName)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  public PsiElement getEvaluationElement() {
-    return null;
   }
 
   public TextWithImports getCondition() {

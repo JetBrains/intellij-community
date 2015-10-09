@@ -50,7 +50,7 @@ public class EditSourceAction extends DebuggerAction{
     }
   }
 
-  private SourcePosition getSourcePosition(DebuggerTreeNodeImpl selectedNode, DebuggerContextImpl debuggerContext) {
+  private static SourcePosition getSourcePosition(DebuggerTreeNodeImpl selectedNode, DebuggerContextImpl debuggerContext) {
     final DebuggerContextImpl context = debuggerContext;
 
     if (selectedNode == null || context == null) {

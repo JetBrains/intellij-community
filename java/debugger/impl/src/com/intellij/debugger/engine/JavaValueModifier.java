@@ -92,7 +92,7 @@ public class JavaValueModifier extends XValueModifier {
   //  e.getPresentation().setVisible(enable);
   //}
   //
-  private void update(final DebuggerContextImpl context) {
+  private static void update(final DebuggerContextImpl context) {
     DebuggerInvocationUtil.swingInvokeLater(context.getProject(), new Runnable() {
       public void run() {
         final DebuggerSession session = context.getDebuggerSession();
