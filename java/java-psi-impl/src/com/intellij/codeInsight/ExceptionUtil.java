@@ -266,7 +266,9 @@ public class ExceptionUtil {
       unhandledExceptions = getUnhandledExceptions(expression, topElement, includeSelfCalls);
     }
     else if (element instanceof PsiMethodReferenceExpression) {
-      unhandledExceptions = getUnhandledExceptions((PsiMethodReferenceExpression)element, topElement);
+      PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)element).getQualifierExpression();
+      return qualifierExpression != null ? collectUnhandledExceptions(qualifierExpression, topElement, null, false) 
+                                         : Collections.<PsiClassType>emptySet();
     }
     else if (element instanceof PsiLambdaExpression) {
       return Collections.emptySet();
