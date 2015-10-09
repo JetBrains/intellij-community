@@ -27,10 +27,7 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.StringUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -917,10 +914,6 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
     }
     final PsiBlockStatement block = (PsiBlockStatement)body;
     final PsiCodeBlock codeBlock = block.getCodeBlock();
-    final PsiStatement[] statements = codeBlock.getStatements();
-    if (statements.length <= 0) {
-      return null;
-    }
-    return statements[0];
+    return ControlFlowUtils.getFirstStatementInBlock(codeBlock);
   }
 }
