@@ -32,6 +32,7 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +86,7 @@ public class ToolWindowTaskService extends AbstractToolWindowService<TaskData> {
 
     ExternalSystemKeymapExtension.updateActions(project, nodes);
 
-    MultiMap<ExternalConfigPathAware, DataNode<TaskData>> grouped = ExternalSystemApiUtil.groupBy(nodes, TASK_HOLDER_RETRIEVAL_STRATEGY);
+    MultiMap<ExternalConfigPathAware, DataNode<TaskData>> grouped = ContainerUtil.groupBy(nodes, TASK_HOLDER_RETRIEVAL_STRATEGY);
     Map<String, Collection<ExternalTaskPojo>> data = ContainerUtilRt.newHashMap();
     for (Map.Entry<ExternalConfigPathAware, Collection<DataNode<TaskData>>> entry : grouped.entrySet()) {
       data.put(entry.getKey().getLinkedExternalProjectPath(), ContainerUtilRt.map2List(entry.getValue(), MAPPER));
