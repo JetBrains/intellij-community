@@ -48,6 +48,7 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -146,7 +147,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
             runManager.setSelectedConfiguration(was);
           }
           myModel.fireTableDataChanged();
-          selectPathOrFirst(selected);
+          refreshDataUpdateSelection(selected);
         }
       })
       .setEditActionUpdater(new AnActionButtonUpdater() {
@@ -162,7 +163,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           if (row < 0) return;
 
           myModel.removeRow(row);
-          selectPathOrFirst(null);
+          refreshDataUpdateSelection(null);
         }
       }).disableUpAction().disableDownAction();
     final JPanel tasksPanel = myDecorator.createPanel();
@@ -177,8 +178,15 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     }
   }
 
-  private void selectPathOrFirst(RunnerAndConfigurationSettings settings) {
+  private void refreshDataUpdateSelection(RunnerAndConfigurationSettings settings) {
     if (myTable.isEmpty()) return;
+    myModel.reValidateConfigurations(new Processor<RunnerAndConfigurationSettings>() {
+      private RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
+      @Override
+      public boolean process(RunnerAndConfigurationSettings settings) {
+        return runManager.getConfigurationById(settings.getUniqueID()) != null;
+      }
+    });
 
     if (settings != null) {
       final List<RunnerAndConfigurationSettings> configurations = myModel.getAllConfigurations();
@@ -226,7 +234,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
                       RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
                       if (configuration != null) {
                         myModel.addConfiguration(configuration);
-                        selectPathOrFirst(configuration);
+                        refreshDataUpdateSelection(configuration);
                       }
                     }
                   }, ModalityState.any(), project.getDisposed());
@@ -266,7 +274,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
               RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
               if (configuration != null) {
                 myModel.addConfiguration(configuration);
-                selectPathOrFirst(configuration);
+                refreshDataUpdateSelection(configuration);
               }
             }
           }, project.getDisposed());
@@ -321,7 +329,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           if (at.getValue() instanceof RunnerAndConfigurationSettings) {
             final RunnerAndConfigurationSettings added = (RunnerAndConfigurationSettings)at.getValue();
             myModel.addConfiguration(added);
-            selectPathOrFirst(added);
+            refreshDataUpdateSelection(added);
           } else {
             at.perform(myProject, executor, button.getDataContext());
           }
@@ -377,7 +385,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   public void reset() {
     initManager();
     myModel.setData(myProjectStartupTaskManager.getSharedConfigurations(), myProjectStartupTaskManager.getLocalConfigurations());
-    selectPathOrFirst(null);
+    refreshDataUpdateSelection(null);
   }
 
   @Override

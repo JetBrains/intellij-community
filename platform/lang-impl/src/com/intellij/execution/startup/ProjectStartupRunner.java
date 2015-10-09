@@ -45,7 +45,7 @@ public class ProjectStartupRunner implements StartupActivity {
     RunManagerImpl.getInstanceImpl(project).addRunManagerListener(new RunManagerAdapter() {
       @Override
       public void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
-        projectStartupTaskManager.delete(settings.getName());
+        projectStartupTaskManager.delete(settings.getUniqueID());
       }
 
       @Override
