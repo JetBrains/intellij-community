@@ -156,16 +156,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           return myTable.getSelectedRow() >= 0;
         }
       })
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          final int row = myTable.getSelectedRow();
-          if (row < 0) return;
-
-          myModel.removeRow(row);
-          refreshDataUpdateSelection(null);
-        }
-      }).disableUpAction().disableDownAction();
+      .disableUpAction().disableDownAction();
     final JPanel tasksPanel = myDecorator.createPanel();
     return FormBuilder.createFormBuilder() // todo bundle
       .addLabeledComponentFillVertically("Tasks to be executed right after opening the project.", tasksPanel)
