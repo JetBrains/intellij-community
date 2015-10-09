@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -40,13 +39,18 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
 
-public final class EditorHistoryManager extends AbstractProjectComponent implements JDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorHistoryManager");
-  private Element myElement;
+@State(name = "editorHistoryManager", storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE))
+public final class EditorHistoryManager implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(EditorHistoryManager.class);
 
-  public static EditorHistoryManager getInstance(final Project project){
+  private final Project myProject;
+
+  public static EditorHistoryManager getInstance(@NotNull Project project){
     return project.getComponent(EditorHistoryManager.class);
   }
 
@@ -55,49 +59,24 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
    */
   private final List<HistoryEntry> myEntriesList = new ArrayList<HistoryEntry>();
 
-  /**
-   * Invoked by reflection
-   */
-  EditorHistoryManager(final Project project, final UISettings uiSettings) {
-    super(project);
-    uiSettings.addUISettingsListener(new MyUISettingsListener(), project);
-  }
+  EditorHistoryManager(@NotNull Project project, @NotNull UISettings uiSettings) {
+    myProject = project;
 
-  @Override
-  public void projectOpened(){
-
-    MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new MyEditorManagerBeforeListener());
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyEditorManagerListener());
-
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
-      new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          // myElement may be null if node that corresponds to this manager does not exist
-          if (myElement != null) {
-            final List children = myElement.getChildren(HistoryEntry.TAG);
-            myElement = null;
-            //noinspection unchecked
-            for (final Element e : (Iterable<Element>)children) {
-              try {
-                addEntry(new HistoryEntry(EditorHistoryManager.this.myProject, e));
-              }
-              catch (InvalidDataException e1) {
-                // OK here
-              }
-              catch (ProcessCanceledException e1) {
-                // OK here
-              }
-              catch (Exception anyException) {
-                LOG.error(anyException);
-              }
-            }
-            trimToSize();
-          }
-        }
+    uiSettings.addUISettingsListener(new UISettingsListener() {
+      @Override
+      public void uiSettingsChanged(UISettings source) {
+        trimToSize();
       }
-    );
+    }, project);
+
+    MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before.Adapter() {
+      @Override
+      public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        updateHistoryEntry(file, false);
+      }
+    });
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyEditorManagerListener());
   }
 
   private synchronized void addEntry(HistoryEntry entry) {
@@ -106,16 +85,6 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
 
   private synchronized void removeEntry(HistoryEntry entry) {
     myEntriesList.remove(entry);
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName(){
-    return "editorHistoryManager";
-  }
-
-  private void fileOpenedImpl(@NotNull final VirtualFile file) {
-    fileOpenedImpl(file, null, null);
   }
 
   /**
@@ -332,20 +301,42 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
   }
 
   @Override
-  public void readExternal(final Element element) {
+  public void loadState(@NotNull Element element) {
     // we have to delay xml processing because history entries require EditorStates to be created
     // which is done via corresponding EditorProviders, those are not accessible before their
     // is initComponent() called
-    myElement = element.clone();
+    final Element state = element.clone();
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
+      @Override
+      public void run() {
+        for (Element e : state.getChildren(HistoryEntry.TAG)) {
+          try {
+            addEntry(new HistoryEntry(myProject, e));
+          }
+          catch (InvalidDataException e1) {
+            // OK here
+          }
+          catch (ProcessCanceledException e1) {
+            // OK here
+          }
+          catch (Exception anyException) {
+            LOG.error(anyException);
+          }
+        }
+        trimToSize();
+      }
+    });
   }
 
   @Override
-  public synchronized void writeExternal(final Element element){
+  public synchronized Element getState() {
+    Element element = new Element("state");
     // update history before saving
     final VirtualFile[] openFiles = FileEditorManager.getInstance(myProject).getOpenFiles();
     for (int i = openFiles.length - 1; i >= 0; i--) {
       final VirtualFile file = openFiles[i];
-      if(getEntry(file) != null){ // we have to update only files that are in history
+      // we have to update only files that are in history
+      if (getEntry(file) != null) {
         updateHistoryEntry(file, false);
       }
     }
@@ -353,6 +344,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     for (final HistoryEntry entry : myEntriesList) {
       entry.writeExternal(element, myProject);
     }
+    return element;
   }
 
   /**
@@ -361,7 +353,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
   private final class MyEditorManagerListener extends FileEditorManagerAdapter{
     @Override
     public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file){
-      fileOpenedImpl(file);
+      fileOpenedImpl(file, null, null);
     }
 
     @Override
@@ -375,23 +367,6 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
           updateHistoryEntry(event.getNewFile(), true);
         }
       });
-    }
-  }
-
-  private final class MyEditorManagerBeforeListener extends FileEditorManagerListener.Before.Adapter {
-    @Override
-    public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      updateHistoryEntry(file, false);
-    }
-  }
-
-  /**
-   * Cuts/extends history length
-   */
-  private final class MyUISettingsListener implements UISettingsListener{
-    @Override
-    public void uiSettingsChanged(final UISettings source) {
-      trimToSize();
     }
   }
 }
