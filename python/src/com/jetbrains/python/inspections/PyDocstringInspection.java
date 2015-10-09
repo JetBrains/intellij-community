@@ -79,6 +79,10 @@ public class PyDocstringInspection extends PyInspection {
       if (PythonUnitTestUtil.isUnitTestCaseFunction(node)) return;
       final PyClass containingClass = node.getContainingClass();
       if (containingClass != null && PythonUnitTestUtil.isUnitTestCaseClass(containingClass)) return;
+      final Property property = node.getProperty();
+      if (property != null && (node == property.getSetter().valueOrNull() || node == property.getDeleter().valueOrNull())) {
+        return;
+      }
       final String name = node.getName();
       if (name != null && !name.startsWith("_")) checkDocString(node);
     }
