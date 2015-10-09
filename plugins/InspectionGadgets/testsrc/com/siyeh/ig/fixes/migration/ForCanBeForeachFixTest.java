@@ -22,7 +22,8 @@ import com.siyeh.ig.migration.ForCanBeForeachInspection;
 public class ForCanBeForeachFixTest extends IGQuickFixesTestCase {
 
   public void testParenthesis() { doTest(); }
-  
+  public void testInstanceofAndWhitespace() { doTest(); }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
