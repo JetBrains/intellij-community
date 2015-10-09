@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -54,7 +55,7 @@ public class KeywordArgumentCompletionUtil {
 
         final PyUnionType unionType = PyUtil.as(context.getType(callee), PyUnionType.class);
         if (unionType != null) {
-          fetchCallablesFromUnion(ret, callExpr, unionType);
+          fetchCallablesFromUnion(ret, callExpr, unionType, context);
         }
       }
     }
@@ -62,10 +63,11 @@ public class KeywordArgumentCompletionUtil {
 
   private static void fetchCallablesFromUnion(@NotNull final List<LookupElement> ret,
                                               @NotNull final PyCallExpression callExpr,
-                                              @NotNull final PyUnionType unionType) {
+                                              @NotNull final PyUnionType unionType,
+                                              @NotNull final TypeEvalContext context) {
     for (final PyType memberType : unionType.getMembers()) {
       if (memberType instanceof PyUnionType) {
-        fetchCallablesFromUnion(ret, callExpr, (PyUnionType)memberType);
+        fetchCallablesFromUnion(ret, callExpr, (PyUnionType)memberType, context);
       }
       if (memberType instanceof PyFunctionType) {
         final PyFunctionType type = (PyFunctionType)memberType;
@@ -73,7 +75,26 @@ public class KeywordArgumentCompletionUtil {
           addKeywordArgumentVariants(type.getCallable(), callExpr, ret);
         }
       }
+      if (memberType instanceof PyCallableType) {
+        final List<PyCallableParameter> callableParameters = ((PyCallableType)memberType).getParameters(context);
+        if (callableParameters != null) {
+          fetchCallablesFromCallableType(ret, callExpr, callableParameters);
+        }
+      }
     }
+  }
+
+  private static void fetchCallablesFromCallableType(@NotNull final List<LookupElement> ret,
+                                                     @NotNull final PyCallExpression callExpr,
+                                                     @NotNull final Iterable<PyCallableParameter> callableParameters) {
+    final List<String> parameterNames = new ArrayList<String>();
+    for (final PyCallableParameter callableParameter : callableParameters) {
+      final String name = callableParameter.getName();
+      if (name != null) {
+        parameterNames.add(name);
+      }
+    }
+    addKeywordArgumentVariantsForCallable(callExpr, ret, parameterNames);
   }
 
   public static void addKeywordArgumentVariants(PyCallable callable, PyCallExpression callExpr, final List<LookupElement> ret) {
@@ -88,24 +109,33 @@ public class KeywordArgumentCompletionUtil {
     visited.add(callable);
 
     final TypeEvalContext context = TypeEvalContext.codeCompletion(callable.getProject(), callable.getContainingFile());
+
     final List<PyParameter> parameters = PyUtil.getParameters(callable, context);
+    for (final PyParameter parameter : parameters) {
+      parameter.getName();
+    }
+
 
     if (callable instanceof PyFunction) {
       addKeywordArgumentVariantsForFunction(callExpr, ret, visited, (PyFunction)callable, parameters, context);
     }
     else {
-      addKeywordArgumentVariantsForCallable(callExpr, ret, parameters);
+      final Collection<String> parameterNames = new ArrayList<String>();
+      for (final PyParameter parameter : parameters) {
+        final String name = parameter.getName();
+        if (name != null) {
+          parameterNames.add(name);
+        }
+      }
+      addKeywordArgumentVariantsForCallable(callExpr, ret, parameterNames);
     }
   }
 
   private static void addKeywordArgumentVariantsForCallable(@NotNull final PyCallExpression callExpr,
                                                             @NotNull final List<LookupElement> ret,
-                                                            @NotNull final List<PyParameter> parameters) {
-    for (final PyParameter parameter : parameters) {
-      final String name = parameter.getName();
-      if (name != null && parameter.getAsNamed() != null) {
-        ret.add(PyUtil.createNamedParameterLookup(name, callExpr.getProject()));
-      }
+                                                            @NotNull final Collection<String> parameterNames) {
+    for (final String parameterName : parameterNames) {
+      ret.add(PyUtil.createNamedParameterLookup(parameterName, callExpr.getProject()));
     }
   }
 
