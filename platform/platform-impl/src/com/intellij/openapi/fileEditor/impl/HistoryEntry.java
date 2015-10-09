@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Map;
 
 final class HistoryEntry{
@@ -58,10 +57,7 @@ final class HistoryEntry{
     myFile = getVirtualFile(e);
     myProvider2State = new HashMap<FileEditorProvider, FileEditorState>();
 
-    List providers = e.getChildren(PROVIDER_ELEMENT);
-    for (final Object provider1 : providers) {
-      Element _e = (Element)provider1;
-
+    for (Element _e : e.getChildren(PROVIDER_ELEMENT)) {
       String typeId = _e.getAttributeValue(EDITOR_TYPE_ID_ATTR);
       FileEditorProvider provider = FileEditorProviderManager.getInstance().getProvider(typeId);
       if (provider == null) {
@@ -76,8 +72,7 @@ final class HistoryEntry{
         throw new InvalidDataException();
       }
 
-      FileEditorState state = provider.readState(stateElement, project, myFile);
-      putState(provider, state);
+      putState(provider, provider.readState(stateElement, project, myFile));
     }
   }
 

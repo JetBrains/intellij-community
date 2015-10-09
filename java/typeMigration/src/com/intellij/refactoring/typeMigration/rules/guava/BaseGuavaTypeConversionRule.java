@@ -26,6 +26,8 @@ import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -93,12 +95,6 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
   }
 
   private boolean canConvert(PsiType from, PsiType to) {
-    if (from instanceof PsiEllipsisType) {
-      from = ((PsiEllipsisType)from).getComponentType();
-    }
-    if (to instanceof PsiEllipsisType) {
-      to = ((PsiEllipsisType)to).getComponentType();
-    }
     if (!(from instanceof PsiClassType)) {
       return false;
     }

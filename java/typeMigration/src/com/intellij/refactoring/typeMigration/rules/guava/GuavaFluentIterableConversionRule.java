@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.typeMigration.rules.guava;
 
+import com.intellij.codeInspection.java18StreamApi.PseudoLambdaReplaceTemplate;
 import com.intellij.codeInspection.java18StreamApi.StreamApiConstants;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
@@ -74,7 +75,6 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   static {
     DESCRIPTORS_MAP.put("contains",
                         new TypeConversionDescriptorFactory("$it$.contains($o$)", "$it$.anyMatch(e -> e != null && e.equals($o$))", false));
-    DESCRIPTORS_MAP.put("from", new TypeConversionDescriptorFactory("FluentIterable.from($it$)", "$it$.stream()", false, true));
     DESCRIPTORS_MAP.put("isEmpty", new TypeConversionDescriptorFactory("$q$.isEmpty()", "$q$.findAny().isPresent()", false));
     DESCRIPTORS_MAP.put("skip", new TypeConversionDescriptorFactory("$q$.skip($p$)", "$q$.skip($p$)", false, true));
     DESCRIPTORS_MAP.put("limit", new TypeConversionDescriptorFactory("$q$.limit($p$)", "$q$.limit($p$)", false, true));
@@ -120,7 +120,15 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
                                                               @Nullable PsiExpression context) {
     TypeConversionDescriptor descriptorBase = null;
     boolean needSpecifyType = true;
-    if (methodName.equals("filter")) {
+    if (methodName.equals("from")) {
+      descriptorBase = new TypeConversionDescriptor("FluentIterable.from($it$)", "$it$.stream()") {
+        @Override
+        public PsiExpression replace(PsiExpression expression) {
+          PseudoLambdaReplaceTemplate.replaceTypeParameters(((PsiMethodCallExpression) expression).getArgumentList().getExpressions()[0]);
+          return super.replace(expression);
+        }
+      };
+    } else if (methodName.equals("filter")) {
       descriptorBase = FluentIterableConversionUtil.getFilterDescriptor(method);
     }
     else if (methodName.equals("transformAndConcat")) {

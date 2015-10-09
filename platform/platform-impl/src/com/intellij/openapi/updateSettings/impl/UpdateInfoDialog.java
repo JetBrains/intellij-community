@@ -219,7 +219,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       );
       myNewVersion.setText(formatVersion(myLatestBuild.getVersion(), myLatestBuild.getNumber().asStringWithoutProductCode()));
 
-      if (myPatch != null) {
+      if (myPatch != null && !StringUtil.isEmptyOrSpaces(myPatch.getSize())) {
         myPatchInfo.setText(myPatch.getSize() + " MB");
       }
       else {

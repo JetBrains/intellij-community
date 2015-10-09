@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 
 public class HideSideWindowsAction extends AnAction implements DumbAware {
@@ -37,7 +36,9 @@ public class HideSideWindowsAction extends AnAction implements DumbAware {
     if (id == null) {
       id = toolWindowManager.getLastActiveToolWindowId();
     }
-    toolWindowManager.hideToolWindow(id, true);
+    if (HideToolWindowAction.shouldBeHiddenByShortCut(toolWindowManager, id)) {
+      toolWindowManager.hideToolWindow(id, true);
+    }
   }
 
   public void update(AnActionEvent event) {
@@ -60,8 +61,6 @@ public class HideSideWindowsAction extends AnAction implements DumbAware {
       presentation.setEnabled(false);
       return;
     }
-
-    ToolWindowEx toolWindow = (ToolWindowEx)toolWindowManager.getToolWindow(id);
-    presentation.setEnabled(toolWindow.isVisible());
+    presentation.setEnabled(HideToolWindowAction.shouldBeHiddenByShortCut(toolWindowManager, id));
   }
 }

@@ -56,6 +56,11 @@ public class JavaParametersUtil {
     Project project = configuration.getProject();
     Module module = ProgramParametersUtil.getModule(configuration);
 
+    String alternativeJrePath = configuration.getAlternativeJrePath();
+    if (alternativeJrePath != null) {
+      configuration.setAlternativeJrePath(ProgramParametersUtil.expandPath(alternativeJrePath, null, project));
+    }
+
     String vmParameters = configuration.getVMParameters();
     if (vmParameters != null) {
       vmParameters = ProgramParametersUtil.expandPath(vmParameters, module, project);
@@ -156,10 +161,7 @@ public class JavaParametersUtil {
       return configuredJdk;
     }
 
-    if (JdkUtil.checkForJdk(jreHome)) {
-      throw new CantRunException(ExecutionBundle.message("jre.path.is.jdk.error.message"));
-    }
-    if (!JdkUtil.checkForJre(jreHome)) {
+    if (!JdkUtil.checkForJre(jreHome) && !JdkUtil.checkForJdk(jreHome)) {
       throw new CantRunException(ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.message", jreHome));
     }
 
