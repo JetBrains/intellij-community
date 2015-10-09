@@ -166,31 +166,39 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
                                               @NotNull final Editor hostEditor,
                                               @NotNull final IntentionAction action,
                                               @NotNull String text) {
-    if (!hostFile.isValid()) return false;
     final Project project = hostFile.getProject();
+    return chooseActionAndInvoke(hostFile, hostEditor, action, text, project);
+  }
+
+  public static boolean chooseActionAndInvoke(@Nullable PsiFile hostFile,
+                                              @Nullable final Editor hostEditor,
+                                              @NotNull final IntentionAction action,
+                                              @NotNull String text,
+                                              @NotNull final Project project) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickFix");
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
-    Pair<PsiFile, Editor> pair = chooseBetweenHostAndInjected(hostFile, hostEditor, new PairProcessor<PsiFile, Editor>() {
+    final Pair<PsiFile, Editor> pair = hostEditor != null && hostFile != null
+                                 ? chooseBetweenHostAndInjected(hostFile, hostEditor, new PairProcessor<PsiFile, Editor>() {
       @Override
       public boolean process(PsiFile psiFile, Editor editor) {
         return availableFor(psiFile, editor, action);
       }
-    });
+    }) : Pair.<PsiFile, Editor>create(null, null);
     if (pair == null) return false;
-    final Editor editorToApply = pair.second;
-    final PsiFile fileToApply = pair.first;
 
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
         try {
-          action.invoke(project, editorToApply, fileToApply);
+          action.invoke(project, pair.second, pair.first);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
         }
-        DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(hostEditor);
+        if (hostEditor != null) {
+          DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(hostEditor);
+        }
       }
     };
 

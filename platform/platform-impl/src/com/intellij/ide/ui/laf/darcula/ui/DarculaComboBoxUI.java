@@ -280,8 +280,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   @Override
   protected ComboBoxEditor createEditor() {
     final ComboBoxEditor comboBoxEditor = super.createEditor();
-    if (comboBoxEditor != null && comboBoxEditor.getEditorComponent() != null) {
-      comboBoxEditor.getEditorComponent().addKeyListener(new KeyAdapter() {
+    Component editor = comboBoxEditor == null ? null : comboBoxEditor.getEditorComponent();
+    if (editor instanceof JComponent) {
+      ((JComponent)editor).setBorder(JBUI.Borders.empty());
+    }
+    if (editor != null) {
+      editor.addKeyListener(new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent e) {
           process(e);
@@ -299,7 +303,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
           process(e);
         }
       });
-      comboBoxEditor.getEditorComponent().addFocusListener(new FocusAdapter() {
+      editor.addFocusListener(new FocusAdapter() {
         @Override
         public void focusGained(FocusEvent e) {
           update();

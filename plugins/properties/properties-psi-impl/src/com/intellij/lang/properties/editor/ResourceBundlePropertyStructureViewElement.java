@@ -22,13 +22,15 @@ package com.intellij.lang.properties.editor;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.navigation.ColoredItemPresentation;
+import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorInspectionPass;
+import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
+import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.JBColor;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,32 +39,23 @@ import javax.swing.*;
 import java.awt.*;
 
 public class ResourceBundlePropertyStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
-  private final ResourceBundle myResourceBundle;
-  @NotNull private final PropertiesAnchorizer.PropertyAnchor myAnchor;
-  private String myPresentableName;
-
-  private static final TextAttributesKey INCOMPLETE_PROPERTY_KEY;
-  private static final TextAttributesKey INCOMPLETE_GROUP_KEY;
   private static final TextAttributesKey GROUP_KEY;
 
   public static final String PROPERTY_GROUP_KEY_TEXT = "<property>";
 
-  static {
-    TextAttributes incompleteKeyTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_KEY).clone();
-    incompleteKeyTextAttributes.setForegroundColor(JBColor.RED);
-    INCOMPLETE_PROPERTY_KEY = TextAttributesKey.createTextAttributesKey("INCOMPLETE_PROPERTY_KEY", incompleteKeyTextAttributes);
+  private final @NotNull PropertiesAnchorizer.PropertyAnchor myAnchor;
+  private String myPresentableName;
 
+
+  static {
     TextAttributes groupKeyTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_KEY).clone();
     groupKeyTextAttributes.setFontType(Font.ITALIC);
     GROUP_KEY = TextAttributesKey.createTextAttributesKey("GROUP_KEY", groupKeyTextAttributes);
-
-    final TextAttributes incompleteGroupKeyTextAttribute = groupKeyTextAttributes.clone();
-    incompleteGroupKeyTextAttribute.setForegroundColor(JBColor.RED);
-    INCOMPLETE_GROUP_KEY = TextAttributesKey.createTextAttributesKey("INCOMPLETE_GROUP_KEY", incompleteGroupKeyTextAttribute);
   }
 
+  private ResourceBundleEditorInspectionPass.InspectionPassInfo myInspectionPassInfo;
+
   public ResourceBundlePropertyStructureViewElement(final ResourceBundle resourceBundle, final @NotNull PropertiesAnchorizer.PropertyAnchor anchor) {
-    myResourceBundle = resourceBundle;
     myAnchor = anchor;
   }
 
@@ -97,10 +90,16 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
     return EMPTY_ARRAY;
   }
 
+  @NotNull
+  public ResourceBundleEditorProblemDescriptor[] getProblemDescriptors() {
+    return myInspectionPassInfo.getDescriptors();
+  }
+
   @Override
   @NotNull
   public ItemPresentation getPresentation() {
-    return new ColoredItemPresentation() {
+    return new ResourceBundleEditorRenderer.TextAttributesPresentation() {
+
       @Override
       public String getPresentableText() {
         return myPresentableName == null ? getProperty().getName() : myPresentableName.isEmpty() ? PROPERTY_GROUP_KEY_TEXT : myPresentableName;
@@ -117,14 +116,15 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
       }
 
       @Override
-      public TextAttributesKey getTextAttributesKey() {
-        final IgnoredPropertiesFilesSuffixesManager
-          ignoredPropertiesFilesSuffixesManager = IgnoredPropertiesFilesSuffixesManager.getInstance(myResourceBundle.getProject());
-        final boolean isPropertyComplete = ignoredPropertiesFilesSuffixesManager.isPropertyComplete(myResourceBundle, getProperty().getName());
-        if (myPresentableName != null && myPresentableName.isEmpty()) {
-          return isPropertyComplete ? GROUP_KEY : INCOMPLETE_GROUP_KEY;
+      public TextAttributes getTextAttributes(EditorColorsScheme colorsScheme) {
+        myInspectionPassInfo = ResourceBundleEditorInspectionPass.inspect(getProperty().getKey(), getProperty().getPropertiesFile().getResourceBundle());
+        final TextAttributesKey baseAttrKey = (myPresentableName != null && myPresentableName.isEmpty()) ? GROUP_KEY : PropertiesHighlighter.PROPERTY_KEY;
+        final TextAttributes baseAttrs = colorsScheme.getAttributes(baseAttrKey);
+        TextAttributes highlightingAttributes = myInspectionPassInfo.getTextAttributes(colorsScheme);
+        if (highlightingAttributes != null) {
+          return TextAttributes.merge(baseAttrs, highlightingAttributes);
         }
-        return isPropertyComplete ? PropertiesHighlighter.PROPERTY_KEY : INCOMPLETE_PROPERTY_KEY;
+        return baseAttrs;
       }
     };
   }

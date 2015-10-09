@@ -74,6 +74,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
@@ -282,7 +283,7 @@ public class DiffUtil {
   @NotNull
   public static JPanel createMessagePanel(@NotNull JComponent comp) {
     JPanel wrapper = new JPanel(new GridBagLayout());
-    wrapper.add(comp, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.insets(1), 0, 0));
+    wrapper.add(comp, new GridBag().insets(JBUI.insets(1)));
     return wrapper;
   }
 

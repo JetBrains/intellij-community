@@ -34,6 +34,7 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.editor.inspections.incomplete.IncompletePropertyInspection;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertiesResourceBundleUtil;
 import com.intellij.openapi.actionSystem.*;
@@ -111,7 +112,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   private final Set<PropertiesFile> myBackSlashPressed     = new THashSet<PropertiesFile>();
   private final Alarm               mySelectionChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final PropertiesAnchorizer myPropertiesAnchorizer;
-  private final IgnoredPropertiesFilesSuffixesManager.SuffixesListener mySuffixesListener;
 
   private JPanel              myValuesPanel;
   private JPanel              myStructureViewPanel;
@@ -201,14 +201,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         onSelectionChanged(event);
       }
     });
-
-    mySuffixesListener = new IgnoredPropertiesFilesSuffixesManager.SuffixesListener() {
-      @Override
-      public void suffixesChanged() {
-        recreateEditorsPanel();
-      }
-    };
-    IgnoredPropertiesFilesSuffixesManager.getInstance(myProject).addListener(mySuffixesListener);
   }
 
   public ResourceBundle getResourceBundle() {
@@ -406,35 +398,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     myValuesPanel.add(myNoPropertySelectedPanel, NO_PROPERTY_SELECTED);
 
     final List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles();
-    final IgnoredPropertiesFilesSuffixesManager suffixesManager =
-      IgnoredPropertiesFilesSuffixesManager.getInstance(myResourceBundle.getProject());
-    if (!suffixesManager.getIgnoredSuffixes().isEmpty()) {
-      final List<PropertiesFile> initialOrder = new ArrayList<PropertiesFile>(propertiesFiles);
-      final PropertiesFile defaultPropertiesFile = myResourceBundle.getDefaultPropertiesFile();
-      Collections.sort(propertiesFiles, new Comparator<PropertiesFile>() {
-
-        @Override
-        public int compare(PropertiesFile p1, PropertiesFile p2) {
-          if (p1.equals(defaultPropertiesFile)) {
-            return -1;
-          }
-          if (p2.equals(defaultPropertiesFile)) {
-            return 1;
-          }
-          final boolean isIgnored1 = suffixesManager.getIgnoredSuffixes().contains(PropertiesUtil.getSuffix(p1));
-          final boolean isIgnored2 = suffixesManager.getIgnoredSuffixes().contains(PropertiesUtil.getSuffix(p2));
-          if (isIgnored1 != isIgnored2) {
-            if (isIgnored1) {
-              return 1;
-            }
-            else {
-              return -1;
-            }
-          }
-          return initialOrder.indexOf(p1) - initialOrder.indexOf(p2);
-        }
-      });
-    }
 
     GridBagConstraints gc = new GridBagConstraints(0, 0, 0, 0, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                                    new Insets(5, 5, 5, 5), 0, 0);
@@ -733,12 +696,12 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     final String currentKey = selectedProperty.getKey();
     final int idx = keysOrder.indexOf(currentKey);
     LOG.assertTrue(idx != -1);
-    final IgnoredPropertiesFilesSuffixesManager
-      ignoredPropertiesFilesSuffixesManager = IgnoredPropertiesFilesSuffixesManager.getInstance(myProject);
+    final IncompletePropertyInspection incompletePropertyInspection =
+      IncompletePropertyInspection.getInstance(myResourceBundle.getDefaultPropertiesFile().getContainingFile());
     for (int i = 1; i < keysOrder.size(); i++) {
       int trimmedIndex = (i + idx) % keysOrder.size();
       final String key = keysOrder.get(trimmedIndex);
-      if (!ignoredPropertiesFilesSuffixesManager.isPropertyComplete(myResourceBundle, key)) {
+      if (!incompletePropertyInspection.isPropertyComplete(key, myResourceBundle)) {
         selectProperty(key);
         return;
       }
@@ -894,7 +857,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         }
       }
     }
-    IgnoredPropertiesFilesSuffixesManager.getInstance(myProject).removeListener(mySuffixesListener);
     VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
     myDisposed = true;
     Disposer.dispose(myStructureViewComponent);
@@ -908,10 +870,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       }
     }
     myEditors.clear();
-  }
-
-  public void queueUpdateTree() {
-    myStructureViewComponent.getTreeBuilder().queueUpdate();
   }
 
   public void setKeepEmptyProperties(boolean keepEmptyProperties) {
