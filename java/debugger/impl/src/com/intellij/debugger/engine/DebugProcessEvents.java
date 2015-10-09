@@ -456,7 +456,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       @Override
       public void contextAction() throws Exception {
         final SuspendManager suspendManager = getSuspendManager();
-        SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, getSuspendContext().getThread());
+        SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, suspendContext.getThread());
 
         if (evaluatingContext != null && !DebuggerSession.enableBreakpointsDuringEvaluation()) {
           // is inside evaluation, so ignore any breakpoints

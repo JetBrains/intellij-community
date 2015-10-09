@@ -17,12 +17,15 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.SourcePositionProvider;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.engine.SourcePositionProvider;
-import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -36,17 +39,20 @@ public class EditSourceAction extends DebuggerAction{
       return;
     }
 
-    final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
     if (selectedNode != null) {
-      debuggerContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
-        public void threadAction() {
-          final SourcePosition sourcePosition = getSourcePosition(selectedNode, debuggerContext);
-          if (sourcePosition != null) {
-            sourcePosition.navigate(true);
+      final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
+      DebugProcessImpl process = debuggerContext.getDebugProcess();
+      if (process != null) {
+        process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+          public void threadAction() {
+            final SourcePosition sourcePosition = getSourcePosition(selectedNode, debuggerContext);
+            if (sourcePosition != null) {
+              sourcePosition.navigate(true);
+            }
           }
-        }
-      });
+        });
+      }
     }
   }
 
@@ -57,7 +63,7 @@ public class EditSourceAction extends DebuggerAction{
       return null;
     }
 
-    final Project project = context.getProject();
+    final Project project = selectedNode.getProject();
 
     final DebuggerSession debuggerSession = context.getDebuggerSession();
 
