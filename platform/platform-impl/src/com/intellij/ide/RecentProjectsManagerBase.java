@@ -412,6 +412,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
           JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)
             .setTitle("Recent Projects")
             .setFocusable(true)
+            .setRequestFocus(true)
             .setMovable(true)
             .createPopup();
           Disposer.register(popup, disposable);
