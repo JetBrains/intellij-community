@@ -101,9 +101,9 @@ public class ProjectStartupTaskManager {
     myLocal.rename(oldId, settings);
   }
 
-  public void delete(final String name) {
-    if (myShared.deleteConfiguration(name)) return;
-    myLocal.deleteConfiguration(name);
+  public void delete(final String id) {
+    if (myShared.deleteConfiguration(id)) return;
+    myLocal.deleteConfiguration(id);
   }
 
   public void setStartupConfigurations(final @NotNull Collection<RunnerAndConfigurationSettings> shared,

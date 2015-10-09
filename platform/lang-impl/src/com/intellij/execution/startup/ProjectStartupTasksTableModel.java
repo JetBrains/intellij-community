@@ -17,6 +17,7 @@ package com.intellij.execution.startup;
 
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NotNull;
 
@@ -142,6 +143,17 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
 
   public List<RunnerAndConfigurationSettings> getAllConfigurations() {
     return myAllConfigurations;
+  }
+
+  public void reValidateConfigurations(final Processor<RunnerAndConfigurationSettings> existenceChecker) {
+    final Iterator<RunnerAndConfigurationSettings> iterator = myAllConfigurations.iterator();
+    while (iterator.hasNext()) {
+      final RunnerAndConfigurationSettings settings = iterator.next();
+      if (!existenceChecker.process(settings)) {
+        iterator.remove();
+        mySharedConfigurations.remove(settings);
+      }
+    }
   }
 
   public static class RunnerAndConfigurationSettingsComparator implements Comparator<RunnerAndConfigurationSettings> {
