@@ -53,7 +53,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -158,10 +157,21 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
         }
       })
       .disableUpAction().disableDownAction();
+
     final JPanel tasksPanel = myDecorator.createPanel();
-    return FormBuilder.createFormBuilder() // todo bundle
-      .addLabeledComponentFillVertically("Tasks to be executed right after opening the project.", tasksPanel)
-      .getPanel();
+    final JLabel label = new JLabel("Run tasks and tools via run configurations");
+    label.setForeground(UIUtil.getInactiveTextColor());
+    label.setHorizontalAlignment(SwingConstants.RIGHT);
+    final JPanel wrapper = new JPanel(new BorderLayout());
+    wrapper.add(new JLabel("To be started on project opening:"), BorderLayout.WEST);
+    wrapper.add(label, BorderLayout.EAST);
+    wrapper.setBorder(BorderFactory.createEmptyBorder(0, 0, UIUtil.DEFAULT_VGAP, 0));
+
+    final JPanel main = new JPanel(new BorderLayout());
+    main.add(wrapper, BorderLayout.NORTH);
+    main.add(tasksPanel, BorderLayout.CENTER);
+
+    return main;
   }
 
   private void refreshDataUpdateSelection(RunnerAndConfigurationSettings settings) {
