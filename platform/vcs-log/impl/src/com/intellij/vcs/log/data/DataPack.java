@@ -59,7 +59,7 @@ public class DataPack {
       }
     };
     GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
-    Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getAllRefs(), hashMap);
+    Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), hashMap);
     StopWatch sw = StopWatch.start("building graph");
     PermanentGraphImpl<Integer> permanentGraph = PermanentGraphImpl.newInstance(commits, colorManager, branches);
     sw.report();
@@ -67,12 +67,10 @@ public class DataPack {
   }
 
   @NotNull
-  private static Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<VcsRef> allRefs,
-                                                         @NotNull VcsLogHashMap hashMap) {
+  private static Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<VcsRef> branches, @NotNull VcsLogHashMap hashMap) {
     Set<Integer> result = new HashSet<Integer>();
-    for (VcsRef vcsRef : allRefs) {
-      if (vcsRef.getType().isBranch())
-        result.add(hashMap.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()));
+    for (VcsRef vcsRef : branches) {
+      result.add(hashMap.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()));
     }
     return result;
   }
