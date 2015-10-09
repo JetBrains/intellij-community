@@ -68,7 +68,6 @@ import java.util.List;
 public class ProjectStartupConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final Project myProject;
   private JBTable myTable;
-  private ProjectStartupTaskManager myProjectStartupTaskManager;
   private ToolbarDecorator myDecorator;
   private ProjectStartupTasksTableModel myModel;
 
@@ -103,8 +102,6 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   @Nullable
   @Override
   public JComponent createComponent() {
-    initManager();
-
     myModel = new ProjectStartupTasksTableModel(RunManagerEx.getInstanceEx(myProject));
     myTable = new JBTable(myModel);
     new TableSpeedSearch(myTable);
@@ -161,12 +158,6 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     return FormBuilder.createFormBuilder() // todo bundle
       .addLabeledComponentFillVertically("Tasks to be executed right after opening the project.", tasksPanel)
       .getPanel();
-  }
-
-  private void initManager() {
-    if (myProjectStartupTaskManager == null) {
-      myProjectStartupTaskManager = ProjectStartupTaskManager.getInstance(myProject);
-    }
   }
 
   private void refreshDataUpdateSelection(RunnerAndConfigurationSettings settings) {
@@ -342,10 +333,10 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public boolean isModified() {
-    initManager();
-    final Set<RunnerAndConfigurationSettings> shared = new HashSet<RunnerAndConfigurationSettings>(myProjectStartupTaskManager.getSharedConfigurations());
+    final ProjectStartupTaskManager projectStartupTaskManager = ProjectStartupTaskManager.getInstance(myProject);
+    final Set<RunnerAndConfigurationSettings> shared = new HashSet<RunnerAndConfigurationSettings>(projectStartupTaskManager.getSharedConfigurations());
     final List<RunnerAndConfigurationSettings> list = new ArrayList<RunnerAndConfigurationSettings>(shared);
-    list.addAll(myProjectStartupTaskManager.getLocalConfigurations());
+    list.addAll(projectStartupTaskManager.getLocalConfigurations());
     Collections.sort(list, ProjectStartupTasksTableModel.RunnerAndConfigurationSettingsComparator.getInstance());
 
     if (!Comparing.equal(list, myModel.getAllConfigurations())) return true;
@@ -355,7 +346,6 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public void apply() throws ConfigurationException {
-    initManager();
     final List<RunnerAndConfigurationSettings> shared = new ArrayList<RunnerAndConfigurationSettings>();
     final List<RunnerAndConfigurationSettings> local = new ArrayList<RunnerAndConfigurationSettings>();
 
@@ -369,13 +359,13 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       }
     }
 
-    myProjectStartupTaskManager.setStartupConfigurations(shared, local);
+    ProjectStartupTaskManager.getInstance(myProject).setStartupConfigurations(shared, local);
   }
 
   @Override
   public void reset() {
-    initManager();
-    myModel.setData(myProjectStartupTaskManager.getSharedConfigurations(), myProjectStartupTaskManager.getLocalConfigurations());
+    final ProjectStartupTaskManager projectStartupTaskManager = ProjectStartupTaskManager.getInstance(myProject);
+    myModel.setData(projectStartupTaskManager.getSharedConfigurations(), projectStartupTaskManager.getLocalConfigurations());
     refreshDataUpdateSelection(null);
   }
 
