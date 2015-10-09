@@ -16,7 +16,6 @@
 package com.intellij.util.io;
 
 import com.intellij.ide.IdeBundle;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,6 +23,7 @@ import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -31,23 +31,16 @@ import static org.junit.Assert.*;
 import static org.junit.Assume.assumeThat;
 
 public class HttpRequestsTest  {
-  private final HttpRequests.RequestProcessor<Void> myProcessor = new HttpRequests.RequestProcessor<Void>() {
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    @Override
-    public Void process(@NotNull HttpRequests.Request request) throws IOException {
-      request.getInputStream().read();
-      return null;
-    }
-  };
+  private final HttpRequests.RequestProcessor<Integer> myProcessor = request -> request.getInputStream().read();
 
   @Before
-  public void setUp() throws Exception {
-    InetAddress addr = InetAddress.getByName("openjdk.java.net");
+  public void setUp() throws UnknownHostException {
+    InetAddress addr = InetAddress.getByName("www.jetbrains.com");
     assumeThat(addr, instanceOf(Inet4Address.class));
   }
 
   @Test
-  public void testLimit() {
+  public void testRedirectLimit() {
     try {
       HttpRequests.request("").redirectLimit(0).connect(myProcessor);
       fail();
@@ -59,18 +52,19 @@ public class HttpRequestsTest  {
 
   @Test(timeout = 5000, expected = SocketTimeoutException.class)
   public void testConnectTimeout() throws IOException {
-    HttpRequests.request("http://openjdk.java.net").connectTimeout(1).connect(myProcessor);
+    HttpRequests.request("http://www.jetbrains.com").connectTimeout(1).connect(myProcessor);
     fail();
   }
 
   @Test(timeout = 5000, expected = SocketTimeoutException.class)
   public void testReadTimeout() throws IOException {
-    HttpRequests.request("http://openjdk.java.net").readTimeout(1).connect(myProcessor);
+    HttpRequests.request("http://www.jetbrains.com").readTimeout(1).connect(myProcessor);
     fail();
   }
 
   @Test(timeout = 5000)
-  public void testReadString() throws IOException {
-    assertThat(HttpRequests.request("http://openjdk.java.net").readString(null), containsString("Download"));
+  public void testDataRead() throws IOException {
+    String content = HttpRequests.request("http://www.jetbrains.com").readString(null);
+    assertThat(content, containsString("JetBrains"));
   }
 }
