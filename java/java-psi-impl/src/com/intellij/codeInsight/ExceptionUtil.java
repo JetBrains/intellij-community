@@ -268,6 +268,9 @@ public class ExceptionUtil {
     else if (element instanceof PsiMethodReferenceExpression) {
       unhandledExceptions = getUnhandledExceptions((PsiMethodReferenceExpression)element, topElement);
     }
+    else if (element instanceof PsiLambdaExpression) {
+      return Collections.emptySet();
+    }
     else if (element instanceof PsiThrowStatement) {
       PsiThrowStatement statement = (PsiThrowStatement)element;
       unhandledExceptions = getUnhandledExceptions(statement, topElement);
@@ -326,7 +329,13 @@ public class ExceptionUtil {
     }
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      foundExceptions = collectUnhandledExceptions(child, topElement, foundExceptions, includeSelfCalls);
+      Set<PsiClassType> foundInChild = collectUnhandledExceptions(child, topElement, foundExceptions, includeSelfCalls);
+      if (foundExceptions == null) {
+        foundExceptions = foundInChild;
+      }
+      else if (foundInChild != null) {
+        foundExceptions.addAll(foundInChild);
+      }
     }
 
     return foundExceptions;
