@@ -734,6 +734,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       for (MemberNode selectedNode : mySelectedNodes) {
         mySelectedElements.add((T)selectedNode.getDelegate());
       }
+      if (!myAllowEmptySelection) {
+        setOKActionEnabled(!mySelectedElements.isEmpty());
+      }
     }
   }
 
