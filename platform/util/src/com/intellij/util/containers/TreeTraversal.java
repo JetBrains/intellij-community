@@ -331,6 +331,7 @@ public abstract class TreeTraversal {
 
     final Function<T, ? extends Iterable<? extends T>> tree;
     final ArrayDeque<T> queue = new ArrayDeque<T>();
+    T cur;
 
     BfsIterator(@NotNull Iterable<? extends T> roots, Function<T, ? extends Iterable<? extends T>> tree) {
       this.tree = tree;
@@ -339,10 +340,15 @@ public abstract class TreeTraversal {
 
     @Override
     public T nextImpl() {
+      expandIfNeeded();
       if (queue.isEmpty()) return stop();
-      T result = queue.remove();
-      JBIterable.from(tree.fun(result)).addAllTo(queue);
-      return result;
+      return cur = queue.remove();
+    }
+
+    private void expandIfNeeded() {
+      if (cur == null) return;
+      JBIterable.from(tree.fun(cur)).addAllTo(queue);
+      cur = null;
     }
   }
 
@@ -375,6 +381,7 @@ public abstract class TreeTraversal {
     final ArrayDeque<T> queue = new ArrayDeque<T>();
     final Map<T, T> paths = ContainerUtil.newTroveMap(ContainerUtil.<T>identityStrategy());
     T cur;
+    boolean shouldExpand;
 
     TracingBfsIt(@NotNull Iterable<? extends T> roots, Function<T, ? extends Iterable<? extends T>> tree) {
       this.tree = tree;
@@ -383,14 +390,20 @@ public abstract class TreeTraversal {
 
     @Override
     public T nextImpl() {
+      expandIfNeeded();
       if (queue.isEmpty()) return stop();
-      T result = queue.remove();
-      for (T t : JBIterable.from(tree.fun(result))) {
+      shouldExpand = true;
+      return cur = queue.remove();
+    }
+
+    private void expandIfNeeded() {
+      if (!shouldExpand) return;
+      for (T t : JBIterable.from(tree.fun(cur))) {
         if (paths.containsKey(t)) continue;
         queue.add(t);
-        paths.put(t, result);
+        paths.put(t, cur);
       }
-      return cur = result;
+      shouldExpand = false;
     }
 
     @Override
