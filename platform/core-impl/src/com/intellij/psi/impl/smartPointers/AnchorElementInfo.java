@@ -130,6 +130,7 @@ class AnchorElementInfo extends SelfElementInfo {
       if (anchor == null) anchor = element;
       myType = anchor.getClass();
       setRange(anchor.getTextRange());
+      myMarkerCache.rangeChanged(markerCacheKey());
       myStubElementTypeAndId = pack(-1, null);
     }
   }
