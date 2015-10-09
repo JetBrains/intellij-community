@@ -65,6 +65,7 @@ public class QuickDocOnMouseOverManager {
 
   /** Holds a reference (if any) to the documentation manager used last time to show an 'auto quick doc' popup. */
   @Nullable private WeakReference<DocumentationManager> myDocumentationManager;
+  @Nullable private WeakReference<Editor> myEditor;
 
   @Nullable private DelayedQuickDocInfo myDelayedQuickDocInfo;
   private           boolean             myEnabled;
@@ -252,6 +253,7 @@ public class QuickDocOnMouseOverManager {
     
     hint.cancel();
     myDocumentationManager = null;
+    myEditor = null;
   }
 
   private void allowUpdateFromContext(Project project, boolean allow) {
@@ -264,6 +266,11 @@ public class QuickDocOnMouseOverManager {
   @Nullable
   private DocumentationManager getDocManager() {
     return SoftReference.dereference(myDocumentationManager);
+  }
+  
+  @Nullable
+  private Editor getEditor() {
+    return SoftReference.dereference(myEditor);
   }
   
   private static class DelayedQuickDocInfo {
@@ -315,6 +322,7 @@ public class QuickDocOnMouseOverManager {
       try {
         info.docManager.showJavaDocInfo(info.editor, info.targetElement, info.originalElement, myHintCloseCallback, true);
         myDocumentationManager = new WeakReference<DocumentationManager>(info.docManager);
+        myEditor = new WeakReference<Editor>(info.editor);
       }
       finally {
         info.editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, null);
@@ -327,6 +335,7 @@ public class QuickDocOnMouseOverManager {
     public void run() {
       myActiveElements.clear();
       myDocumentationManager = null;
+      myEditor = null;
     }
   }
   
@@ -365,22 +374,29 @@ public class QuickDocOnMouseOverManager {
   private class MyVisibleAreaListener implements VisibleAreaListener {
     @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
-      closeQuickDocIfPossible();
+      if (e.getEditor() == getEditor()) {
+        closeQuickDocIfPossible();
+      }
     }
   }
   
   private class MyCaretListener extends CaretAdapter {
     @Override
     public void caretPositionChanged(CaretEvent e) {
-      allowUpdateFromContext(e.getEditor().getProject(), true);
-      closeQuickDocIfPossible(); 
+      if (e.getEditor() == getEditor()) {
+        allowUpdateFromContext(e.getEditor().getProject(), true);
+        closeQuickDocIfPossible();
+      }
     }
   }
   
   private class MyDocumentListener extends DocumentAdapter {
     @Override
     public void documentChanged(DocumentEvent e) {
-      closeQuickDocIfPossible();
+      Editor editor = getEditor();
+      if (editor == null || editor.getDocument() == e.getDocument()) {
+        closeQuickDocIfPossible();
+      }
     }
   }
 }
