@@ -1087,7 +1087,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
     return null;
   }
-  
+
+  Editor getEditor() {
+    return myEditor;
+  }
+
   @TestOnly
   public ActionCallback getLastAction() {
     return myLastAction;

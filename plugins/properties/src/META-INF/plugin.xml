@@ -86,6 +86,10 @@
                      key="wrong.property.key.value.delimiter.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="WEAK WARNING" cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.WrongPropertyKeyValueDelimiterInspection"/>
+    <localInspection language="Properties" shortName="IncompleteProperty" bundle="messages.PropertiesBundle"
+                     key="incomplete.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
+                     enabledByDefault="true" level="ERROR" cleanupTool="false"
+                     implementationClass="com.intellij.lang.properties.editor.inspections.incomplete.IncompletePropertyInspection"/>
 
     <idIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesIdIndexer"/>
     <todoIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesTodoIndexer"/>
@@ -106,13 +110,6 @@
     <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoPropertyDeclarationsProvider"/>
 
     <codeStyleSettingsProvider implementation="com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettingsProvider"/>
-
-    <projectConfigurable groupId="tools"
-                         groupWeight="10"
-                         provider="com.intellij.lang.properties.ResourceBundleEditorConfigurable$Provider"
-                         id="resource.bundle.editor.highlighting.settings"
-                         displayName="Resource Bundle Editor"/>
-    <projectService serviceImplementation="com.intellij.lang.properties.editor.IgnoredPropertiesFilesSuffixesManager"/>
 
     <internalFileTemplate name="XML Properties File.xml"/>
     <refactoring.copyHandler implementation="com.intellij.lang.properties.editor.PropertiesCopyHandler"/>
@@ -156,5 +153,9 @@
     <action id="CreateResourceBundle" class="com.intellij.lang.properties.create.CreateResourceBundleAction">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewFromTemplate"/>
     </action>
+    <action id="ResourceBundleEditorShowIntentions"
+            class="com.intellij.lang.properties.editor.ResourceBundleEditorShowQuickFixesAction"
+            use-shortcut-of="ShowIntentionActions"/>
+
   </actions>
 </idea-plugin>

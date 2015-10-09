@@ -48,6 +48,7 @@ public class MethodReturnValueWatcher  {
 
   private ThreadReference myThread;
   private @Nullable MethodEntryRequest myEntryRequest;
+  private @Nullable Method myEntryMethod;
   private @Nullable MethodExitRequest myExitRequest;
 
   private java.lang.reflect.Method myReturnValueMethod;
@@ -61,8 +62,14 @@ public class MethodReturnValueWatcher  {
   }
 
   private void processMethodExitEvent(MethodExitEvent event) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("<- " + event.method());
+    }
     try {
-      if (Registry.is("debugger.watch.return.speedup") && Comparing.equal(event.request().getProperty(METHOD_KEY), event.method())) {
+      if (Registry.is("debugger.watch.return.speedup") && Comparing.equal(myEntryMethod, event.method())) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Now watching all");
+        }
         enableEntryWatching(true);
         createExitRequest().enable();
       }
@@ -94,13 +101,22 @@ public class MethodReturnValueWatcher  {
   }
 
   private void processMethodEntryEvent(MethodEntryEvent event) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("-> " + event.method());
+    }
     try {
-      myExitRequest = createExitRequest();
-      myExitRequest.addClassFilter(event.method().declaringType());
-      myExitRequest.putProperty(METHOD_KEY, event.method());
-      myExitRequest.enable();
+      if (myEntryRequest != null && myEntryRequest.isEnabled()) {
+        myExitRequest = createExitRequest();
+        myExitRequest.addClassFilter(event.method().declaringType());
+        myEntryMethod = event.method();
+        myExitRequest.enable();
 
-      enableEntryWatching(false);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Now watching only " + event.method());
+        }
+
+        enableEntryWatching(false);
+      }
     }
     catch (Exception e) {
       LOG.error(e);
@@ -177,7 +193,6 @@ public class MethodReturnValueWatcher  {
   }
 
   private static final String WATCHER_REQUEST_KEY = "WATCHER_REQUEST_KEY";
-  private static final String METHOD_KEY = "METHOD_KEY";
 
   private MethodEntryRequest createEntryRequest() {
     DebuggerManagerThreadImpl.assertIsManagerThread(); // to ensure EventRequestManager synchronization

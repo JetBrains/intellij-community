@@ -146,47 +146,41 @@ public class DebugProcessEvents extends DebugProcessImpl {
           try {
             final EventSet eventSet = eventQueue.remove();
 
-            final boolean methodWatcherActive = myReturnValueWatcher != null && myReturnValueWatcher.isEnabled();
-            int processed = 0;
-            for (Event event : eventSet) {
-              if (methodWatcherActive) {
-                if (myReturnValueWatcher.processEvent(event)) {
-                  processed++;
-                  continue;
-                }
+            getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
+              @Override
+              public Priority getPriority() {
+                return Priority.HIGH;
               }
-              if (event instanceof ThreadStartEvent) {
-                processed++;
-                final ThreadReference thread = ((ThreadStartEvent)event).thread();
-                getManagerThread().schedule(new DebuggerCommandImpl() {
-                  @Override
-                  protected void action() throws Exception {
+
+              @Override
+              protected void action() throws Exception {
+                int processed = 0;
+                for (Event event : eventSet) {
+                  if (myReturnValueWatcher != null && myReturnValueWatcher.isEnabled()) {
+                    if (myReturnValueWatcher.processEvent(event)) {
+                      processed++;
+                      continue;
+                    }
+                  }
+                  if (event instanceof ThreadStartEvent) {
+                    processed++;
+                    ThreadReference thread = ((ThreadStartEvent)event).thread();
                     getVirtualMachineProxy().threadStarted(thread);
                     myDebugProcessDispatcher.getMulticaster().threadStarted(DebugProcessEvents.this, thread);
                   }
-                });
-              }
-              else if (event instanceof ThreadDeathEvent) {
-                processed++;
-                final ThreadReference thread = ((ThreadDeathEvent)event).thread();
-                getManagerThread().schedule(new DebuggerCommandImpl() {
-                  @Override
-                  protected void action() throws Exception {
+                  else if (event instanceof ThreadDeathEvent) {
+                    processed++;
+                    ThreadReference thread = ((ThreadDeathEvent)event).thread();
                     getVirtualMachineProxy().threadStopped(thread);
                     myDebugProcessDispatcher.getMulticaster().threadStopped(DebugProcessEvents.this, thread);
                   }
-                });
-              }
-            }
+                }
 
-            if (processed == eventSet.size()) {
-              eventSet.resume();
-              continue;
-            }
+                if (processed == eventSet.size()) {
+                  eventSet.resume();
+                  return;
+                }
 
-            getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
-              @Override
-              protected void action() throws Exception {
                 if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL) {
                   // check if there is already one request with policy SUSPEND_ALL
                   for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
@@ -462,7 +456,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       @Override
       public void contextAction() throws Exception {
         final SuspendManager suspendManager = getSuspendManager();
-        SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, getSuspendContext().getThread());
+        SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, suspendContext.getThread());
 
         if (evaluatingContext != null && !DebuggerSession.enableBreakpointsDuringEvaluation()) {
           // is inside evaluation, so ignore any breakpoints

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.ui.treeStructure;
 
 import com.intellij.Patches;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
@@ -119,16 +118,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   protected boolean isCustomUI() {
     return false;
-  }
-
-  /**
-   * Will be removed in version 13
-   *
-   * @deprecated use isWideSelection
-   * @see #isWideSelection()
-   */
-  protected boolean isMacWideSelection() {
-    return isWideSelection();
   }
 
   protected boolean isWideSelection() {
@@ -706,7 +695,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     if (!(ui instanceof BasicTreeUI)) return false;
     BasicTreeUI treeUI = (BasicTreeUI)ui;
     if (!treeModel.isLeaf(path.getLastPathComponent())) {
-      Insets insets = Tree.this.getInsets();
+      Insets insets = this.getInsets();
       int boxWidth = treeUI.getExpandedIcon() != null ? treeUI.getExpandedIcon().getIconWidth() : 8;
       int boxLeftX = treeUI.getLeftChildIndent() + treeUI.getRightChildIndent() * (path.getPathCount() - 1);
       if (getComponentOrientation().isLeftToRight()) {

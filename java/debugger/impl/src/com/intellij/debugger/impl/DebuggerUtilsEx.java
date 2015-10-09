@@ -123,14 +123,14 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
 
-  public static boolean isAssignableFrom(final String baseQualifiedName, ReferenceType checkedType) {
+  public static boolean isAssignableFrom(@NotNull final String baseQualifiedName, @NotNull ReferenceType checkedType) {
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(baseQualifiedName)) {
       return true;
     }
     return getSuperClass(baseQualifiedName, checkedType) != null;
   }
 
-  public static ReferenceType getSuperClass(final String baseQualifiedName, ReferenceType checkedType) {
+  public static ReferenceType getSuperClass(@NotNull final String baseQualifiedName, @NotNull ReferenceType checkedType) {
     if (baseQualifiedName.equals(checkedType.name())) {
       return checkedType;
     }

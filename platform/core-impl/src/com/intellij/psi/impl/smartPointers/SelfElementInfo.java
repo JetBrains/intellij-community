@@ -40,7 +40,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   protected volatile Class myType;
   private final SmartPointerManagerImpl myManager;
   protected final Language myLanguage;
-  private final MarkerCache myMarkerCache;
+  protected final MarkerCache myMarkerCache;
   private final boolean myForInjected;
   private boolean myHasRange;
   private int myStartOffset;
@@ -60,6 +60,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     myManager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(project);
     myMarkerCache = myManager.getMarkerCache(containingFile.getViewProvider().getVirtualFile());
     setRange(range);
+    myMarkerCache.rangeChanged(markerCacheKey());
   }
 
   void setRange(@Nullable Segment range) {
@@ -67,7 +68,6 @@ public class SelfElementInfo extends SmartPointerElementInfo {
       myHasRange = true;
       myStartOffset = range.getStartOffset();
       myEndOffset = range.getEndOffset();
-      myMarkerCache.rangeChanged(markerCacheKey());
     } else {
       myHasRange = false;
     }

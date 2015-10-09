@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * <p>
@@ -31,20 +32,20 @@ import git4idea.repo.GitRepository;
 public class GitBranchesAction extends DumbAwareAction {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    assert project != null;
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    GitRepository repository =
-      (file == null ? GitBranchUtil.getCurrentRepository(project) : GitBranchUtil.getRepositoryOrGuess(project, file));
+    GitRepository repository = file == null ?
+                               GitBranchUtil.getCurrentRepository(project) :
+                               GitBranchUtil.getRepositoryOrGuess(project, file);
     if (repository != null) {
-      GitBranchPopup.getInstance(project, repository).asListPopup().showInBestPositionFor(e.getDataContext());
+      GitBranchPopup.getInstance(project, repository).asListPopup().showCenteredInCurrentWindow(project);
     }
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    e.getPresentation().setEnabled(project != null && !project.isDisposed());
+    e.getPresentation().setEnabledAndVisible(project != null && !project.isDisposed());
   }
 }

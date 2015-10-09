@@ -208,13 +208,15 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
     return new VcsAnnotation(VcsUtil.getFilePath(gitFileAnnotation.getFile()), basicData, null);
   }
 
+  @Nullable
   @Override
-  public FileAnnotation restore(VcsAnnotation vcsAnnotation,
-                                VcsAbstractHistorySession session,
-                                String annotatedContent,
+  public FileAnnotation restore(@NotNull VcsAnnotation vcsAnnotation,
+                                @NotNull VcsAbstractHistorySession session,
+                                @NotNull String annotatedContent,
                                 boolean forCurrentRevision, VcsRevisionNumber revisionNumber) {
-    final GitFileAnnotation gitFileAnnotation =
-      new GitFileAnnotation(myProject, vcsAnnotation.getFilePath().getVirtualFile(), revisionNumber);
+    VirtualFile virtualFile = vcsAnnotation.getFilePath().getVirtualFile();
+    if (virtualFile == null) return null;
+    final GitFileAnnotation gitFileAnnotation = new GitFileAnnotation(myProject, virtualFile, revisionNumber);
     gitFileAnnotation.addLogEntries(session.getRevisionList());
     final VcsLineAnnotationData basicAnnotation = vcsAnnotation.getBasicAnnotation();
     final int size = basicAnnotation.getNumLines();

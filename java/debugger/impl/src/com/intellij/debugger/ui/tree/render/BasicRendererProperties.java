@@ -116,7 +116,7 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private void addOption(final Element element, final String optionName, final String optionValue) {
+  private static void addOption(final Element element, final String optionName, final String optionValue) {
     final Element option = new Element("option");
     element.addContent(option);
     option.setAttribute("name", optionName);
