@@ -32,6 +32,7 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements PsiFileStub<T> {
@@ -141,10 +142,10 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
     T file = myFile;
     Integer lastStubTreeHash = file == null ? null : file.getUserData(ObjectStubTree.LAST_STUB_TREE_HASH);
     return toString() +
-           Objects.toStringHelper(this)
+           Objects.toStringHelper("")
              .add("myFile", file)
              .add("myInvalidationReason", myInvalidationReason)
-             .add("myStubRoots", myStubRoots)
+             .add("myStubRoots", Arrays.toString(myStubRoots))
              .add("stubTree", stubTree)
              .add("lastStubTreeHash", lastStubTreeHash)
              .toString();
