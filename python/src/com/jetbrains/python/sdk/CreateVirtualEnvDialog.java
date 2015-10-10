@@ -188,15 +188,14 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
   }
 
   protected void checkValid() {
+    setOKActionEnabled(true);
+    setErrorText(null);
+
     super.checkValid();
     if (mySdkCombo.getSelectedItem() == null) {
       setOKActionEnabled(false);
       setErrorText("Select base interpreter");
-      return;
     }
-
-    setOKActionEnabled(true);
-    setErrorText(null);
   }
 
   protected void registerValidators(final FacetValidatorsManager validatorsManager) {
