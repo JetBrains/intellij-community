@@ -320,8 +320,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
     final String systemLafClassName = UIManager.getSystemLookAndFeelClassName();
     if (SystemInfo.isMac) {
-      UIManager.LookAndFeelInfo laf = findLaf(Registry.is("ide.mac.yosemite.laf") ? IntelliJLaf.class.getName() : systemLafClassName);
-      LOG.assertTrue(laf != null);
+      String className = Registry.is("ide.mac.yosemite.laf") ? IntelliJLaf.class.getName() : systemLafClassName;
+      UIManager.LookAndFeelInfo laf = findLaf(className);
+      LOG.assertTrue(laf != null, "Could not find look and feel: " + className);
       return laf;
     }
     if (PlatformUtils.isRubyMine() || PlatformUtils.isPyCharm()) {
