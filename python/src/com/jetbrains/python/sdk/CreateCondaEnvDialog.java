@@ -143,15 +143,14 @@ public class CreateCondaEnvDialog extends AbstractCreateVirtualEnvDialog {
   }
 
   protected void checkValid() {
+    setOKActionEnabled(true);
+    setErrorText(null);
+
     super.checkValid();
     if (mySdkCombo.getSelectedItem() == null) {
       setOKActionEnabled(false);
       setErrorText("Select python version");
-      return;
     }
-
-    setOKActionEnabled(true);
-    setErrorText(null);
   }
 
   protected void registerValidators(final FacetValidatorsManager validatorsManager) {
