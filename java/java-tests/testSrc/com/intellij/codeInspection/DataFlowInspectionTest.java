@@ -381,7 +381,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     doTest();
     assertEmpty(myFixture.filterAvailableIntentions("Surround"));
     assertEmpty(myFixture.filterAvailableIntentions("Assert"));
-    assertNotEmpty(myFixture.filterAvailableIntentions("Introduce Local Variable"));
+    assertNotEmpty(myFixture.filterAvailableIntentions("Introduce variable"));
   }
 
   public void testAssertThat() {
