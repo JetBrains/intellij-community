@@ -160,7 +160,6 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
                   if (ProjectJdkTable.getInstance().findJdk(sdk.getName()) == null) {
                     SdkConfigurationUtil.addSdk(sdk);
                   }
-                  PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
                 }
               });
             }
@@ -221,7 +220,6 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     return new CreateVirtualEnvDialog.VirtualEnvCallback() {
         @Override
         public void virtualEnvCreated(Sdk sdk, boolean associateWithProject) {
-          PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
           if (associateWithProject) {
             SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
             if (additionalData == null) {

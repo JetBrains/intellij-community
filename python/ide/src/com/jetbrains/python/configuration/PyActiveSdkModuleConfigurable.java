@@ -33,7 +33,6 @@ public class PyActiveSdkModuleConfigurable extends ModuleAwareProjectConfigurabl
   public PyActiveSdkModuleConfigurable(Project project) {
     super(project, "Project Interpreter", "reference.settings.project.interpreter");
     myProject = project;
-    PythonSdkUpdater.getInstance().clearAlreadyUpdated();
   }
 
   @NotNull

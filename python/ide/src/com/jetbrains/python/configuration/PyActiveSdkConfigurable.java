@@ -193,7 +193,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
           if (addedSdk != null) {
             myProjectSdksModel.addSdk(addedSdk);
             updateSdkList(false);
-            PythonSdkUpdater.getInstance().markAlreadyUpdated(addedSdk.getHomePath());
             mySdkCombo.getModel().setSelectedItem(myProjectSdksModel.findSdk(addedSdk.getName()));
           }
         }
@@ -277,7 +276,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         }
       });
       newSdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
-      PythonSdkUpdater.getInstance().markAlreadyUpdated(sdkHome.getPath());
       if (newSdk != null) {
         myProjectSdksModel.addSdk(newSdk);
         updateSdkList(false);
