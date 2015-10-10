@@ -612,8 +612,6 @@ public class PythonSdkType extends SdkType {
     try {
       updateSdkRootsFromSysPath(sdkUpdater);
       updateUserAddedPaths(sdkUpdater);
-      PythonSdkUpdater.getInstance()
-        .markAlreadyUpdated(sdkUpdater.getHomePath());
       return true;
     }
     catch (InvalidSdkException ignored) {

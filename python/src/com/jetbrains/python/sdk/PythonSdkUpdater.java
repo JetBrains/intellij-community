@@ -59,8 +59,6 @@ import java.util.List;
 public class PythonSdkUpdater implements StartupActivity {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkUpdater");
 
-  private final Set<String> myAlreadyUpdated = new HashSet<String>();
-
   public static PythonSdkUpdater getInstance() {
     final StartupActivity[] extensions = Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY);
     for (StartupActivity extension : extensions) {
@@ -69,10 +67,6 @@ public class PythonSdkUpdater implements StartupActivity {
       }
     }
     throw new UnsupportedOperationException("could not find self");
-  }
-
-  public void markAlreadyUpdated(String path) {
-    myAlreadyUpdated.add(path);
   }
 
   @Override
@@ -91,7 +85,7 @@ public class PythonSdkUpdater implements StartupActivity {
       final Sdk sdk = PythonSdkType.findPythonSdk(module);
       if (sdk != null) {
         final SdkTypeId sdkType = sdk.getSdkType();
-        if (sdkType instanceof PythonSdkType && !myAlreadyUpdated.contains(sdk.getHomePath())) {
+        if (sdkType instanceof PythonSdkType) {
           sdksToUpdate.add(sdk);
         }
       }
@@ -141,7 +135,6 @@ public class PythonSdkUpdater implements StartupActivity {
                       LOG.error(e);
                     }
                   }
-                  myAlreadyUpdated.add(sdk.getHomePath());
                 }
               }
             });
@@ -196,7 +189,6 @@ public class PythonSdkUpdater implements StartupActivity {
    * Updates SDK based on sys.path and cleans legacy information up.
    */
   private static void updateSdkPath(@NotNull PySdkUpdater sdkUpdater, @NotNull List<String> sysPath) {
-    if (getInstance().isAlreadyUpdated(sdkUpdater.getHomePath())) return;
     addNewSysPathEntries(sdkUpdater, sysPath);
     removeSourceRoots(sdkUpdater);
     removeDuplicateClassRoots(sdkUpdater);
@@ -304,13 +296,5 @@ public class PythonSdkUpdater implements StartupActivity {
       return oldRoots.contains(rootFile);
     }
     return false;
-  }
-
-  public void clearAlreadyUpdated() {
-    myAlreadyUpdated.clear();
-  }
-
-  public boolean isAlreadyUpdated(String path) {
-    return myAlreadyUpdated.contains(path);
   }
 }
