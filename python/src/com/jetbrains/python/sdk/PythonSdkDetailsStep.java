@@ -21,10 +21,7 @@ import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
@@ -149,23 +146,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        final NullableConsumer<Sdk> callback = new NullableConsumer<Sdk>() {
-          @Override
-          public void consume(@Nullable final Sdk sdk) {
-            mySdkAddedCallback.consume(sdk);
-            if (sdk != null) {
-              DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
-                @Override
-                public void run() {
-                  if (ProjectJdkTable.getInstance().findJdk(sdk.getName()) == null) {
-                    SdkConfigurationUtil.addSdk(sdk);
-                  }
-                }
-              });
-            }
-          }
-        };
-        SdkConfigurationUtil.createSdk(myProject, myExistingSdks, callback, false, PythonSdkType.getInstance());
+      SdkConfigurationUtil.createSdk(myProject, myExistingSdks, mySdkAddedCallback, false, PythonSdkType.getInstance());
       }
     }, ModalityState.any());
   }
