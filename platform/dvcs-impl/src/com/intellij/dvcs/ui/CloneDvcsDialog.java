@@ -90,6 +90,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     initListeners();
     setTitle(DvcsBundle.getString("clone.title"));
     myRepositoryUrlLabel.setText(DvcsBundle.message("clone.repository.url", displayName));
+    myRepositoryUrlLabel.setDisplayedMnemonic('R');
     setOKButtonText(DvcsBundle.getString("clone.button"));
   }
 

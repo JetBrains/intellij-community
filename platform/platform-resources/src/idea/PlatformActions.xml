@@ -206,7 +206,11 @@
         <group id="FileOpenGroup">
           <action id="NewDummyProject" class="com.intellij.ide.actions.NewDummyProjectAction" text="New Dummy Project" internal="true"/>
           <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.Menu_open"/>
-          <group id="$LRU" class="com.intellij.ide.actions.RecentProjectsGroup" popup="true"/>
+          <group id="$LRU" popup="true">
+            <group id="RecentProjectListGroup" class="com.intellij.ide.actions.RecentProjectsGroup" popup="false"/>
+            <separator/>
+            <action class="com.intellij.ide.ManageRecentProjectsAction" id="ManageRecentProjects"/>
+          </group>
           <action id="CloseProject" class="com.intellij.ide.actions.CloseProjectAction"/>
         </group>
         <separator/>
