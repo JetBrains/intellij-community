@@ -997,9 +997,15 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return StringUtil.shortenTextWithEllipsis(name, 100, 0);
   }
 
-  public String suggestBranchName(Task task) {
+  @TestOnly
+  public String suggestBranchName(@NotNull Task task) {
+    return suggestBranchName(task, VcsTaskHandler.DEFAULT_PROHIBITED_SYMBOLS);
+  }
+
+  public String suggestBranchName(@NotNull Task task, @Nullable String prohibitedRegExp) {
     if (task.isIssue()) {
-      return TaskUtil.formatTask(task, myConfig.branchNameFormat).replace(' ', '-');
+      String formatTask = TaskUtil.formatTask(task, myConfig.branchNameFormat);
+      return prohibitedRegExp != null ? formatTask.replaceAll(prohibitedRegExp, "-") : formatTask;
     }
     else {
       String summary = task.getSummary();
@@ -1008,7 +1014,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       return StringUtil.join(strings, 0, Math.min(2, strings.length), "-");
     }
   }
-
 
   @TestOnly
   public ChangeListAdapter getChangeListListener() {

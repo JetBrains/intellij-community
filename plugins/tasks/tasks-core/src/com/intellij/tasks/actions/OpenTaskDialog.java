@@ -44,6 +44,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Avdeev
@@ -174,7 +175,10 @@ public class OpenTaskDialog extends DialogWrapper {
         });
       }
 
-      myBranchName.setText(taskManager.suggestBranchName(task));
+      myBranchName.setText(
+        taskManager.suggestBranchName(task, myVcsTaskHandler != null
+                                            ? myVcsTaskHandler.getProhibitedSymbolsInBranchNames()
+                                            : VcsTaskHandler.DEFAULT_PROHIBITED_SYMBOLS));
       myChangelistName.setText(taskManager.getChangelistName(task));
     }
     updateFields(true);
@@ -257,6 +261,12 @@ public class OpenTaskDialog extends DialogWrapper {
       String branchName = myBranchName.getText().trim();
       if (branchName.isEmpty()) {
         return new ValidationInfo("Branch name should not be empty", myBranchName);
+      }
+      else if (myVcsTaskHandler != null) {
+        String regExp = myVcsTaskHandler.getProhibitedSymbolsInBranchNames();
+        if (regExp != null && (Pattern.compile(regExp).matcher(branchName)).find()) {
+          return new ValidationInfo("Branch name contains prohibited symbols or regexp: \'" + regExp + "\'");
+        }
       }
       else if (branchName.contains(" ")) {
         return new ValidationInfo("Branch name should not contain spaces");

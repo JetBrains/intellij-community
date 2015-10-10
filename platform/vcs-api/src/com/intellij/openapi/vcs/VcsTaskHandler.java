@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -29,6 +30,8 @@ import java.util.List;
  *         Date: 16.07.13
  */
 public abstract class VcsTaskHandler {
+
+  public static final String DEFAULT_PROHIBITED_SYMBOLS = " ";
 
   public static VcsTaskHandler[] getAllHandlers(final Project project) {
     VcsTaskHandler[] extensions = EXTENSION_POINT_NAME.getExtensions(project);
@@ -86,4 +89,12 @@ public abstract class VcsTaskHandler {
    * @return all existing tasks (branches)
    */
   public abstract TaskInfo[] getAllExistingTasks();
+
+  /**
+   * @return REGEXP with prohibited symbols for replaceAll(REGEXP, other) future call, null if every symbol is possible
+   */
+  @Nullable
+  public String getProhibitedSymbolsInBranchNames() {
+    return DEFAULT_PROHIBITED_SYMBOLS;
+  }
 }

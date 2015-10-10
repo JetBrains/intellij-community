@@ -102,4 +102,10 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
   protected boolean hasBranch(@NotNull HgRepository repository, @NotNull String name) {
     return HgUtil.getNamesWithoutHashes(repository.getBookmarks()).contains(name) || repository.getOpenedBranches().contains(name);
   }
+
+  @Override
+  @Nullable
+  public String getProhibitedSymbolsInBranchNames() {
+    return null;
+  }
 }
