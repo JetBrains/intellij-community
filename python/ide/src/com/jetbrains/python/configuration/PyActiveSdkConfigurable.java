@@ -288,20 +288,22 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final Sdk prevSdk = getSdk();
     setSdk(newSdk);
 
-    // update string literals if different LanguageLevel was selected
+    rehighlightStringLiterals(newSdk, prevSdk);
+  }
+
+  private void rehighlightStringLiterals(@Nullable final Sdk newSdk, @Nullable final Sdk prevSdk) {
     if (prevSdk != null && newSdk != null) {
       final PythonSdkFlavor flavor1 = PythonSdkFlavor.getFlavor(newSdk);
       final PythonSdkFlavor flavor2 = PythonSdkFlavor.getFlavor(prevSdk);
       if (flavor1 != null && flavor2 != null) {
         final LanguageLevel languageLevel1 = flavor1.getLanguageLevel(newSdk);
         final LanguageLevel languageLevel2 = flavor2.getLanguageLevel(prevSdk);
-        if ((languageLevel1.isPy3K() && languageLevel2.isPy3K()) ||
-            (!languageLevel1.isPy3K()) && !languageLevel2.isPy3K()) {
-          return;
+        if ((languageLevel1.isPy3K() && !languageLevel2.isPy3K()) ||
+            (!languageLevel1.isPy3K()) && languageLevel2.isPy3K()) {
+          PyUtil.rehighlightOpenEditors(myProject);
         }
       }
     }
-    PyUtil.rehighlightOpenEditors(myProject);
   }
 
   private void setSdk(final Sdk item) {
