@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,19 +55,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PyActiveSdkConfigurable implements UnnamedConfigurable {
-  private JPanel myMainPanel;
   private final Project myProject;
   @Nullable private final Module myModule;
-  private MySdkModelListener mySdkModelListener;
-
+  private MySdkModelListener mySdkModelListener = new MySdkModelListener();
   private PyConfigurableInterpreterList myInterpreterList;
   private ProjectSdksModel myProjectSdksModel;
+  private NullableConsumer<Sdk> myDetailsCallback;
+
+  private JPanel myMainPanel;
   private ComboBox mySdkCombo;
   private PyInstalledPackagesPanel myPackagesPanel;
   private JButton myDetailsButton;
   private static final String SHOW_ALL = PyBundle.message("active.sdk.dialog.show.all.item");
-  private NullableConsumer<Sdk> myDetailsCallback;
-  private boolean mySdkSettingsWereModified = false;
 
   public PyActiveSdkConfigurable(@NotNull Project project) {
     myModule = null;
@@ -81,79 +80,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myProject = module.getProject();
     layoutPanel();
     initContent();
-  }
-
-  private void initContent() {
-    myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
-
-    myProjectSdksModel = myInterpreterList.getModel();
-    mySdkModelListener = new MySdkModelListener(this);
-    myProjectSdksModel.addListener(mySdkModelListener);
-
-    mySdkCombo.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final Sdk selectedSdk = (Sdk)mySdkCombo.getSelectedItem();
-        myPackagesPanel.updatePackages(selectedSdk != null ? PyPackageManagers.getInstance().getManagementService(myProject, selectedSdk) : null);
-        myPackagesPanel.updateNotifications(selectedSdk);
-      }
-    });
-    myDetailsCallback = new NullableConsumer<Sdk>() {
-      @Override
-      public void consume(@Nullable Sdk sdk) {
-        if (sdk instanceof PyDetectedSdk) {
-          final Sdk addedSdk = SdkConfigurationUtil.createAndAddSDK(sdk.getHomePath(), PythonSdkType.getInstance());
-          if (addedSdk != null) {
-            myProjectSdksModel.addSdk(addedSdk);
-            updateSdkList(false);
-            PythonSdkUpdater.getInstance().markAlreadyUpdated(addedSdk.getHomePath());
-            mySdkCombo.getModel().setSelectedItem(myProjectSdksModel.findSdk(addedSdk.getName()));
-          }
-        }
-        else if (sdk != null) {
-          PythonSdkAdditionalData additionalData = (PythonSdkAdditionalData)sdk.getSdkAdditionalData();
-          if (additionalData != null) {
-            final String path = additionalData.getAssociatedProjectPath();
-            final String basePath = myProject.getBasePath();
-            if (basePath != null && !basePath.equals(path))
-              additionalData.setAssociatedProjectPath(null);
-          }
-          updateSdkList(false);
-          mySdkCombo.getModel().setSelectedItem(myProjectSdksModel.findSdk(sdk.getName()));
-        }
-        mySdkSettingsWereModified = true;
-      }
-    };
-    myDetailsButton.addActionListener(new ActionListener() {
-                                        @Override
-                                        public void actionPerformed(ActionEvent e) {
-                                          showDetails();
-                                        }
-                                      }
-    );
-
-  }
-
-  private void showDetails() {
-    final PythonSdkDetailsDialog moreDialog = myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
-                                                                 new PythonSdkDetailsDialog(myModule, myDetailsCallback);
-    final NullableConsumer<Sdk> sdkAddedCallback = new NullableConsumer<Sdk>() {
-      @Override
-      public void consume(Sdk sdk) {
-        if (sdk == null) return;
-        final PySdkService sdkService = PySdkService.getInstance();
-        sdkService.restoreSdk(sdk);
-        if (myProjectSdksModel.findSdk(sdk) == null) {
-          myProjectSdksModel.addSdk(sdk);
-        }
-        updateSdkList(false);
-        mySdkCombo.getModel().setSelectedItem(myProjectSdksModel.findSdk(sdk.getName()));
-        myPackagesPanel.updatePackages(PyPackageManagers.getInstance().getManagementService(myProject, sdk));
-        myPackagesPanel.updateNotifications(sdk);
-      }
-    };
-    PythonSdkDetailsStep.show(myProject, myProjectSdksModel.getSdks(), moreDialog, myMainPanel,
-                              myDetailsButton.getLocationOnScreen(), sdkAddedCallback);
   }
 
   private void layoutPanel() {
@@ -188,7 +114,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       }
     };
     mySdkCombo.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-    mySdkCombo.setRenderer(new PySdkListCellRenderer(false));
 
     final PackagesNotificationPanel notificationsArea = new PackagesNotificationPanel();
     final JComponent notificationsComponent = notificationsArea.getComponent();
@@ -245,6 +170,78 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myMainPanel.add(notificationsComponent, c);
   }
 
+  private void initContent() {
+    myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
+
+    myProjectSdksModel = myInterpreterList.getModel();
+    myProjectSdksModel.addListener(mySdkModelListener);
+
+    mySdkCombo.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final Sdk selectedSdk = (Sdk)mySdkCombo.getSelectedItem();
+        myPackagesPanel.updatePackages(selectedSdk != null ?
+                                       PyPackageManagers.getInstance().getManagementService(myProject, selectedSdk) : null);
+        myPackagesPanel.updateNotifications(selectedSdk);
+      }
+    });
+    myDetailsCallback = new NullableConsumer<Sdk>() {
+      @Override
+      public void consume(@Nullable Sdk sdk) {
+        if (sdk instanceof PyDetectedSdk) {
+          final Sdk addedSdk = SdkConfigurationUtil.createAndAddSDK(sdk.getHomePath(), PythonSdkType.getInstance());
+          if (addedSdk != null) {
+            myProjectSdksModel.addSdk(addedSdk);
+            updateSdkList(false);
+            PythonSdkUpdater.getInstance().markAlreadyUpdated(addedSdk.getHomePath());
+            mySdkCombo.getModel().setSelectedItem(myProjectSdksModel.findSdk(addedSdk.getName()));
+          }
+        }
+        else if (sdk != null) {
+          PythonSdkAdditionalData additionalData = (PythonSdkAdditionalData)sdk.getSdkAdditionalData();
+          if (additionalData != null) {
+            final String path = additionalData.getAssociatedProjectPath();
+            final String basePath = myProject.getBasePath();
+            if (basePath != null && !basePath.equals(path))
+              additionalData.setAssociatedProjectPath(null);
+          }
+          updateSdkList(false);
+          mySdkCombo.getModel().setSelectedItem(myProjectSdksModel.findSdk(sdk.getName()));
+        }
+      }
+    };
+    myDetailsButton.addActionListener(new ActionListener() {
+                                        @Override
+                                        public void actionPerformed(ActionEvent e) {
+                                          showDetails();
+                                        }
+                                      }
+    );
+
+  }
+
+  private void showDetails() {
+    final PythonSdkDetailsDialog moreDialog = myModule == null ? new PythonSdkDetailsDialog(myProject, myDetailsCallback) :
+                                                                 new PythonSdkDetailsDialog(myModule, myDetailsCallback);
+    final NullableConsumer<Sdk> sdkAddedCallback = new NullableConsumer<Sdk>() {
+      @Override
+      public void consume(Sdk sdk) {
+        if (sdk == null) return;
+        final PySdkService sdkService = PySdkService.getInstance();
+        sdkService.restoreSdk(sdk);
+        if (myProjectSdksModel.findSdk(sdk) == null) {
+          myProjectSdksModel.addSdk(sdk);
+        }
+        updateSdkList(false);
+        mySdkCombo.getModel().setSelectedItem(myProjectSdksModel.findSdk(sdk.getName()));
+        myPackagesPanel.updatePackages(PyPackageManagers.getInstance().getManagementService(myProject, sdk));
+        myPackagesPanel.updateNotifications(sdk);
+      }
+    };
+    PythonSdkDetailsStep.show(myProject, myProjectSdksModel.getSdks(), moreDialog, myMainPanel,
+                              myDetailsButton.getLocationOnScreen(), sdkAddedCallback);
+  }
+
   @Override
   public JComponent createComponent() {
     return myMainPanel;
@@ -255,7 +252,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final Sdk selectedItem = (Sdk)mySdkCombo.getSelectedItem();
     Sdk sdk = getSdk();
     final Sdk selectedSdk = selectedItem == null ? null : myProjectSdksModel.findSdk(selectedItem);
-    return selectedItem instanceof PyDetectedSdk || !Comparing.equal(sdk, selectedSdk) || mySdkSettingsWereModified;
+    return selectedItem instanceof PyDetectedSdk || !Comparing.equal(sdk, selectedSdk);
   }
 
   @Nullable
@@ -269,49 +266,44 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @Override
   public void apply() throws ConfigurationException {
-    try {
-      final Sdk item = (Sdk)mySdkCombo.getSelectedItem();
-      myProjectSdksModel.apply();
-      Sdk newSdk = item == null ? null : myProjectSdksModel.findSdk(item);
-      if (item instanceof PyDetectedSdk) {
-        VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-          @Override
-          public VirtualFile compute() {
-            return LocalFileSystem.getInstance().refreshAndFindFileByPath(item.getName());
-          }
-        });
-        newSdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
-        PythonSdkUpdater.getInstance().markAlreadyUpdated(sdkHome.getPath());
-        if (newSdk != null) {
-          myProjectSdksModel.addSdk(newSdk);
-          updateSdkList(false);
-          myProjectSdksModel.apply();
+    final Sdk item = (Sdk)mySdkCombo.getSelectedItem();
+    myProjectSdksModel.apply();
+    Sdk newSdk = item == null ? null : myProjectSdksModel.findSdk(item);
+    if (item instanceof PyDetectedSdk) {
+      VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+        @Override
+        public VirtualFile compute() {
+          return LocalFileSystem.getInstance().refreshAndFindFileByPath(item.getName());
         }
-        PySdkService.getInstance().solidifySdk(item);
+      });
+      newSdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
+      PythonSdkUpdater.getInstance().markAlreadyUpdated(sdkHome.getPath());
+      if (newSdk != null) {
+        myProjectSdksModel.addSdk(newSdk);
+        updateSdkList(false);
+        myProjectSdksModel.apply();
       }
-      mySdkCombo.getModel().setSelectedItem(newSdk == null ? null : myProjectSdksModel.findSdk(newSdk.getName()));
+      PySdkService.getInstance().solidifySdk(item);
+    }
+    mySdkCombo.getModel().setSelectedItem(newSdk == null ? null : myProjectSdksModel.findSdk(newSdk.getName()));
 
-      final Sdk prevSdk = getSdk();
-      setSdk(newSdk);
+    final Sdk prevSdk = getSdk();
+    setSdk(newSdk);
 
-      // update string literals if different LanguageLevel was selected
-      if (prevSdk != null && newSdk != null) {
-        final PythonSdkFlavor flavor1 = PythonSdkFlavor.getFlavor(newSdk);
-        final PythonSdkFlavor flavor2 = PythonSdkFlavor.getFlavor(prevSdk);
-        if (flavor1 != null && flavor2 != null) {
-          final LanguageLevel languageLevel1 = flavor1.getLanguageLevel(newSdk);
-          final LanguageLevel languageLevel2 = flavor2.getLanguageLevel(prevSdk);
-          if ((languageLevel1.isPy3K() && languageLevel2.isPy3K()) ||
-              (!languageLevel1.isPy3K()) && !languageLevel2.isPy3K()) {
-            return;
-          }
+    // update string literals if different LanguageLevel was selected
+    if (prevSdk != null && newSdk != null) {
+      final PythonSdkFlavor flavor1 = PythonSdkFlavor.getFlavor(newSdk);
+      final PythonSdkFlavor flavor2 = PythonSdkFlavor.getFlavor(prevSdk);
+      if (flavor1 != null && flavor2 != null) {
+        final LanguageLevel languageLevel1 = flavor1.getLanguageLevel(newSdk);
+        final LanguageLevel languageLevel2 = flavor2.getLanguageLevel(prevSdk);
+        if ((languageLevel1.isPy3K() && languageLevel2.isPy3K()) ||
+            (!languageLevel1.isPy3K()) && !languageLevel2.isPy3K()) {
+          return;
         }
       }
-      PyUtil.rehighlightOpenEditors(myProject);
     }
-    finally {
-      mySdkSettingsWereModified = false;
-    }
+    PyUtil.rehighlightOpenEditors(myProject);
   }
 
   private void setSdk(final Sdk item) {
@@ -388,26 +380,24 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myInterpreterList.disposeModel();
   }
 
-  private static class MySdkModelListener implements SdkModel.Listener {
-    private final PyActiveSdkConfigurable myConfigurable;
+  private class MySdkModelListener implements SdkModel.Listener {
 
-    public MySdkModelListener(PyActiveSdkConfigurable configurable) {
-      myConfigurable = configurable;
+    public MySdkModelListener() {
     }
 
     @Override
     public void sdkAdded(Sdk sdk) {
-      myConfigurable.updateSdkList(true);
+      updateSdkList(true);
     }
 
     @Override
     public void beforeSdkRemove(Sdk sdk) {
-      myConfigurable.updateSdkList(true);
+      updateSdkList(true);
     }
 
     @Override
     public void sdkChanged(Sdk sdk, String previousName) {
-      myConfigurable.updateSdkList(true);
+      updateSdkList(true);
     }
 
     @Override
