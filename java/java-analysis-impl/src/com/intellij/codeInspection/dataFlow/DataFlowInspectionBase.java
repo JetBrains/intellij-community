@@ -254,7 +254,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   }
 
   @Nullable
-  protected LocalQuickFixOnPsiElement createIntroduceVariableFix(PsiExpression expression) {
+  protected LocalQuickFix createIntroduceVariableFix(PsiExpression expression) {
     return null;
   }
 
