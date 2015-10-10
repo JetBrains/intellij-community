@@ -57,7 +57,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   private final Project myProject;
   private final Component myOwnerComponent;
   private final Sdk[] myExistingSdks;
-  private final NullableConsumer<Sdk> myCallback;
+  private final NullableConsumer<Sdk> mySdkAddedCallback;
 
   private static final String LOCAL = PyBundle.message("sdk.details.step.add.local");
   private static final String REMOTE = PyBundle.message("sdk.details.step.add.remote");
@@ -70,8 +70,8 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
                           final Sdk[] existingSdks,
                           @Nullable final DialogWrapper moreDialog,
                           JComponent ownerComponent, final Point popupPoint,
-                          final NullableConsumer<Sdk> callback) {
-    show(project, existingSdks, moreDialog, ownerComponent, popupPoint, callback, false);
+                          final NullableConsumer<Sdk> sdkAddedCallback) {
+    show(project, existingSdks, moreDialog, ownerComponent, popupPoint, sdkAddedCallback, false);
 
   }
 
@@ -79,8 +79,8 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
                           final Sdk[] existingSdks,
                           @Nullable final DialogWrapper moreDialog,
                           JComponent ownerComponent, final Point popupPoint,
-                          final NullableConsumer<Sdk> callback, boolean isNewProject) {
-    final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, moreDialog, ownerComponent, existingSdks, callback);
+                          final NullableConsumer<Sdk> sdkAddedCallback, boolean isNewProject) {
+    final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, moreDialog, ownerComponent, existingSdks, sdkAddedCallback);
     sdkHomesStep.setNewProject(isNewProject);
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
     popup.showInScreenCoordinates(ownerComponent, popupPoint);
@@ -93,13 +93,13 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   public PythonSdkDetailsStep(@Nullable final Project project,
                               @Nullable final DialogWrapper moreDialog, @NotNull final Component ownerComponent,
                               @NotNull final Sdk[] existingSdks,
-                              @NotNull final NullableConsumer<Sdk> callback) {
+                              @NotNull final NullableConsumer<Sdk> sdkAddedCallback) {
     super(null, getAvailableOptions(moreDialog != null));
     myProject = project;
     myMore = moreDialog;
     myOwnerComponent = ownerComponent;
     myExistingSdks = existingSdks;
-    myCallback = callback;
+    mySdkAddedCallback = sdkAddedCallback;
   }
 
   private static List<String> getAvailableOptions(boolean showMore) {
@@ -152,7 +152,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
         final NullableConsumer<Sdk> callback = new NullableConsumer<Sdk>() {
           @Override
           public void consume(@Nullable final Sdk sdk) {
-            myCallback.consume(sdk);
+            mySdkAddedCallback.consume(sdk);
             if (sdk != null) {
               DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
                 @Override
@@ -174,7 +174,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   private void createRemoteSdk() {
     PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
     if (remoteInterpreterManager != null) {
-      remoteInterpreterManager.addRemoteSdk(myProject, myOwnerComponent, Lists.newArrayList(myExistingSdks), myCallback);
+      remoteInterpreterManager.addRemoteSdk(myProject, myOwnerComponent, Lists.newArrayList(myExistingSdks), mySdkAddedCallback);
     }
     else {
       final String pathToPluginsPage = ShowSettingsUtil.getSettingsMenuName() + " | Plugins";
@@ -235,7 +235,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
               ((PythonSdkAdditionalData)additionalData).associateWithProject(myProject);
             }
           }
-          myCallback.consume(sdk);
+          mySdkAddedCallback.consume(sdk);
         }
       };
   }
