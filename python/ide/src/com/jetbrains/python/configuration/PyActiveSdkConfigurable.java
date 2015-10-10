@@ -61,6 +61,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private PyConfigurableInterpreterList myInterpreterList;
   private ProjectSdksModel myProjectSdksModel;
   private NullableConsumer<Sdk> myAddSdkCallback;
+  private boolean mySdkSettingsWereModified = false;
 
   private JPanel myMainPanel;
   private ComboBox mySdkCombo;
@@ -93,8 +94,9 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         if (SHOW_ALL.equals(item)) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              PythonSdkDetailsDialog moreDialog = myModule == null ? new PythonSdkDetailsDialog(myProject, myAddSdkCallback)
-                                                                   : new PythonSdkDetailsDialog(myModule, myAddSdkCallback);
+              PythonSdkDetailsDialog moreDialog = myModule == null
+                                                  ? new PythonSdkDetailsDialog(myProject, myAddSdkCallback, getSettingsModifiedCallback())
+                                                  : new PythonSdkDetailsDialog(myModule, myAddSdkCallback, getSettingsModifiedCallback());
               moreDialog.show();
             }
           });
@@ -170,6 +172,16 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myMainPanel.add(notificationsComponent, c);
   }
 
+  @NotNull
+  private Runnable getSettingsModifiedCallback() {
+    return new Runnable() {
+      @Override
+      public void run() {
+        mySdkSettingsWereModified = true;
+      }
+    };
+  }
+
   private void initContent() {
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
 
@@ -197,8 +209,9 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   private void showDetails() {
-    final PythonSdkDetailsDialog moreDialog = myModule == null ? new PythonSdkDetailsDialog(myProject, myAddSdkCallback) :
-                                                                 new PythonSdkDetailsDialog(myModule, myAddSdkCallback);
+    final PythonSdkDetailsDialog moreDialog = myModule == null
+                                              ? new PythonSdkDetailsDialog(myProject, myAddSdkCallback, getSettingsModifiedCallback())
+                                              : new PythonSdkDetailsDialog(myModule, myAddSdkCallback, getSettingsModifiedCallback());
 
     PythonSdkDetailsStep.show(myProject, myProjectSdksModel.getSdks(), moreDialog, myMainPanel,
                               myDetailsButton.getLocationOnScreen(), myAddSdkCallback);
@@ -213,7 +226,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   public boolean isModified() {
     Sdk sdk = getSdk();
     final Sdk selectedSdk = getSelectedSdk();
-    return selectedSdk instanceof PyDetectedSdk || !Comparing.equal(sdk, selectedSdk);
+    return mySdkSettingsWereModified || selectedSdk instanceof PyDetectedSdk || !Comparing.equal(sdk, selectedSdk);
   }
 
   @Nullable
