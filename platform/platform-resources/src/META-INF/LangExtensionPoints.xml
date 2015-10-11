@@ -210,7 +210,7 @@
       <with attribute="implementationClass" implements="com.intellij.psi.codeStyle.arrangement.Rearranger"/>
     </extensionPoint>
     <extensionPoint name="lang.formatting.extractor" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.psi.codeStyle.extractor.differ.FLangCodeStyleExtractor"/>
+      <with attribute="implementationClass" implements="com.intellij.psi.codeStyle.extractor.differ.LangCodeStyleExtractor"/>
     </extensionPoint>
     <extensionPoint name="rearranger.ui" interface="com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent$Factory"/>
 

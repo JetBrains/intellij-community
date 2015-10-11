@@ -22,17 +22,17 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import com.intellij.psi.codeStyle.extractor.differ.FDiffer;
-import com.intellij.psi.codeStyle.extractor.values.FGeneration;
-import com.intellij.psi.codeStyle.extractor.values.FGens;
-import com.intellij.psi.codeStyle.extractor.values.FValue;
-import com.intellij.psi.codeStyle.extractor.values.FValuesExtractionResult;
+import com.intellij.psi.codeStyle.extractor.differ.Differ;
+import com.intellij.psi.codeStyle.extractor.values.Generation;
+import com.intellij.psi.codeStyle.extractor.values.Gens;
+import com.intellij.psi.codeStyle.extractor.values.Value;
+import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class FUtils {
+public class Utils {
   public static int CRITICAL_SYMBOL_WEIGHT = 100;
 
   public static void logError(String message) {
@@ -95,7 +95,7 @@ public class FUtils {
 
       if (oPos < oEnd && nPos < nEnd && !isSpace(oldV.charAt(oPos)) && !isSpace(newV.charAt(nPos))) {
         logError("AST changed!");
-        return FDiffer.UGLY_FORMATTING;
+        return Differ.UGLY_FORMATTING;
       }
     }
     return diff;
@@ -118,14 +118,14 @@ public class FUtils {
   }
 
   public static void adjustValuesMin(
-    @NotNull FValuesExtractionResult gens,
-    @NotNull FDiffer differ,
+    @NotNull ValuesExtractionResult gens,
+    @NotNull Differ differ,
     @Nullable ProgressIndicator indicator) {
 
-    final List<FValue> values = gens.getValues();
+    final List<Value> values = gens.getValues();
     final int length = values.size();
     int i = 0;
-    for (FValue value : values) {
+    for (Value value : values) {
       if (indicator != null) {
         indicator.checkCanceled();
         indicator.setText2("Value:" + value.name);
@@ -143,10 +143,10 @@ public class FUtils {
         if (diff < bestScope) {
           bestValue = cnst;
           bestScope = diff;
-          value.state = FValue.STATE.SELECTED;
+          value.state = Value.STATE.SELECTED;
         }
         else if (diff > bestScope) {
-          value.state = FValue.STATE.SELECTED;
+          value.state = Value.STATE.SELECTED;
         }
       }
       value.value = bestValue;
@@ -155,11 +155,11 @@ public class FUtils {
   }
 
   public static void adjustValuesGA(
-    @NotNull FGens gens,
-    @NotNull FDiffer differ,
+    @NotNull Gens gens,
+    @NotNull Differ differ,
     @Nullable ProgressIndicator indicator) {
 
-    FGeneration generation = FGeneration.createZeroGeneration(gens);
+    Generation generation = Generation.createZeroGeneration(gens);
     while (generation.tryAgain()) {
       if (indicator != null) {
         indicator.checkCanceled();
@@ -167,9 +167,9 @@ public class FUtils {
       final int age = generation.getAge();
       if (indicator != null) {
         indicator.setText2(" age:" + age + "/" + generation.getParentKind());
-        indicator.setFraction(0.5 * age / FGeneration.GEN_COUNT);
+        indicator.setFraction(0.5 * age / Generation.GEN_COUNT);
       }
-      generation = FGeneration.createNextGeneration(differ, generation);
+      generation = Generation.createNextGeneration(differ, generation);
     }
     gens.copyFrom(generation.getBestGens(differ));
   }

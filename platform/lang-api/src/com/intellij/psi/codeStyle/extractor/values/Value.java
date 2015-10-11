@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FValue {
+public class Value {
   public enum STATE {
     INIT,
     SELECTED,
@@ -187,11 +187,11 @@ public class FValue {
   @NotNull
   public STATE state;
   @NotNull
-  public FClassSerializer serializer;
+  public ClassSerializer serializer;
   @NotNull
   public final VAR_KIND kind;
 
-  public FValue(@NotNull String name, @NotNull Object value, @NotNull FClassSerializer serializer, @NotNull VAR_KIND kind) {
+  public Value(@NotNull String name, @NotNull Object value, @NotNull ClassSerializer serializer, @NotNull VAR_KIND kind) {
     this.kind = kind;
     this.name = name;
     if (value instanceof Integer && ((Integer)value) == 0 && kind == VAR_KIND.BRACE_STYLE) {
@@ -205,7 +205,7 @@ public class FValue {
     this.serializer = serializer;
   }
 
-  public FValue(@NotNull FValue valueZ) {
+  public Value(@NotNull Value valueZ) {
     name = valueZ.name;
     value = valueZ.value;
     state = valueZ.state;
@@ -215,9 +215,9 @@ public class FValue {
 
   @Nullable
   @Contract("false -> null")
-  public FValue write(boolean retPrevValue) {
+  public Value write(boolean retPrevValue) {
     final Object orig = serializer.write(name, value, retPrevValue);
-    return orig == null ? null : new FValue(name, orig, serializer, kind);
+    return orig == null ? null : new Value(name, orig, serializer, kind);
   }
 
   @Override
@@ -232,8 +232,8 @@ public class FValue {
 
   @Override
   public boolean equals(Object o) {
-    if (o instanceof FValue) {
-      FValue other = (FValue) o;
+    if (o instanceof Value) {
+      Value other = (Value) o;
       return other.name.equals(name) && other.serializer.equals(serializer);
     } else {
       return false;

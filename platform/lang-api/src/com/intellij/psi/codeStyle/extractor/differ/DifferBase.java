@@ -18,20 +18,20 @@ package com.intellij.psi.codeStyle.extractor.differ;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.extractor.FUtils;
-import com.intellij.psi.codeStyle.extractor.values.FValuesExtractionResult;
+import com.intellij.psi.codeStyle.extractor.Utils;
+import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
 
 /**
  * @author Roman.Shein
  * @since 30.07.2015.
  */
-public abstract class FDifferBase implements FDiffer {
+public abstract class DifferBase implements Differ {
   protected final Project myProject;
   protected final String myOrigText;
   protected final CodeStyleSettings mySettings;
   protected final PsiFile myFile;
 
-  public FDifferBase(Project project, PsiFile file, CodeStyleSettings settings) {
+  public DifferBase(Project project, PsiFile file, CodeStyleSettings settings) {
     myProject = project;
     myFile = file;
     myOrigText = myFile.getText();
@@ -41,10 +41,10 @@ public abstract class FDifferBase implements FDiffer {
   public abstract String reformattedText();
 
   @Override
-  public int getDifference(FValuesExtractionResult container) {
-    final FValuesExtractionResult orig = container.apply(true);
+  public int getDifference(ValuesExtractionResult container) {
+    final ValuesExtractionResult orig = container.apply(true);
     String newText = reformattedText();
-    int result = FUtils.getDiff(mySettings.getCommonSettings(myFile.getLanguage()).getIndentOptions(), myOrigText, newText);
+    int result = Utils.getDiff(mySettings.getCommonSettings(myFile.getLanguage()).getIndentOptions(), myOrigText, newText);
     orig.apply(false);
     return result;
   }

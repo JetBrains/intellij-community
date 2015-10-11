@@ -19,7 +19,7 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.extractor.values.FValue;
+import com.intellij.psi.codeStyle.extractor.values.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -28,13 +28,13 @@ import java.util.Collection;
  * @author Roman.Shein
  * @since 31.07.2015.
  */
-public interface FLangCodeStyleExtractor {
-  LanguageExtension<FLangCodeStyleExtractor> EXTENSION =
-      new LanguageExtension<FLangCodeStyleExtractor>("com.intellij.lang.formatting.extractor");
+public interface LangCodeStyleExtractor {
+  LanguageExtension<LangCodeStyleExtractor> EXTENSION =
+      new LanguageExtension<LangCodeStyleExtractor>("com.intellij.lang.formatting.extractor");
 
   @NotNull
-  FDiffer getDiffer(Project project, PsiFile psiFile, CodeStyleSettings settings);
+  Differ getDiffer(Project project, PsiFile psiFile, CodeStyleSettings settings);
 
   @NotNull
-  Collection<FValue.VAR_KIND> getCustomVarKinds();
+  Collection<Value.VAR_KIND> getCustomVarKinds();
 }

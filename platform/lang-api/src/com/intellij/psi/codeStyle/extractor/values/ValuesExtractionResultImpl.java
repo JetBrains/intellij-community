@@ -27,30 +27,30 @@ import java.util.Map;
  * @author Roman.Shein
  * @since 04.08.2015.
  */
-public class FValuesExtractionResultImpl implements FValuesExtractionResult {
+public class ValuesExtractionResultImpl implements ValuesExtractionResult {
   @NotNull
-  protected final List<FValue> myValues;
+  protected final List<Value> myValues;
 
-  public FValuesExtractionResultImpl(@NotNull List<FValue> values) {
+  public ValuesExtractionResultImpl(@NotNull List<Value> values) {
     myValues = values;
   }
 
   @NotNull
-  public List<FValue> getValues() {
+  public List<Value> getValues() {
     return myValues;
   }
 
   public void applySelected() {
-    for (FValue value : myValues) {
-      if (value.state == FValue.STATE.SELECTED) {
+    for (Value value : myValues) {
+      if (value.state == Value.STATE.SELECTED) {
         value.write(false);
       }
     }
   }
 
   @Override
-  public void applyConditioned(Condition<FValue> c, Map<FValue, Object> backup) {
-    for (FValue value: myValues) {
+  public void applyConditioned(Condition<Value> c, Map<Value, Object> backup) {
+    for (Value value: myValues) {
       if (c.value(value)) {
         value.write(false);
       } else {
@@ -61,19 +61,19 @@ public class FValuesExtractionResultImpl implements FValuesExtractionResult {
   }
 
   @Contract("false -> null")
-  public FValuesExtractionResult apply(boolean retPrevValue) {
+  public ValuesExtractionResult apply(boolean retPrevValue) {
     if (retPrevValue) {
-      final ArrayList<FValue> orig = new ArrayList<FValue>();
-      for (FValue value : myValues) {
-        final FValue old = value.write(true);
+      final ArrayList<Value> orig = new ArrayList<Value>();
+      for (Value value : myValues) {
+        final Value old = value.write(true);
         if (old != null) {
           orig.add(old);
         }
       }
-      return new FGens(orig);
+      return new Gens(orig);
     }
 
-    for (FValue value : myValues) {
+    for (Value value : myValues) {
       value.write(false);
     }
     return null;

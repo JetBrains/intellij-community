@@ -20,12 +20,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.extractor.FUtils;
-import com.intellij.psi.codeStyle.extractor.differ.FDiffer;
-import com.intellij.psi.codeStyle.extractor.differ.FLangCodeStyleExtractor;
-import com.intellij.psi.codeStyle.extractor.values.FValue;
-import com.intellij.psi.codeStyle.extractor.values.FValuesExtractionResult;
-import com.intellij.psi.codeStyle.extractor.values.FValuesExtractionResultImpl;
+import com.intellij.psi.codeStyle.extractor.Utils;
+import com.intellij.psi.codeStyle.extractor.differ.Differ;
+import com.intellij.psi.codeStyle.extractor.differ.LangCodeStyleExtractor;
+import com.intellij.psi.codeStyle.extractor.values.Value;
+import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
+import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResultImpl;
 
 import java.util.List;
 import java.util.Random;
@@ -34,25 +34,25 @@ import java.util.Random;
  * @author Roman.Shein
  * @since 04.08.2015.
  */
-public class FBruteForceProcessor extends FCodeStyleDeriveProcessor {
+public class BruteForceProcessor extends CodeStyleDeriveProcessor {
 
-  public FBruteForceProcessor(FLangCodeStyleExtractor langExtractor) {
+  public BruteForceProcessor(LangCodeStyleExtractor langExtractor) {
     super(langExtractor);
   }
 
   @Override
-  public FValuesExtractionResult runWithProgress(Project project, CodeStyleSettings settings, PsiFile file, ProgressIndicator indicator) {
-    List<FValue> values = getFormattingValues(settings, file.getLanguage());
-    FDiffer differ = myLangExtractor.getDiffer(project, file, settings);
-    FValuesExtractionResult container = new FValuesExtractionResultImpl(values);
-    FUtils.adjustValuesMin(container, differ, indicator);
+  public ValuesExtractionResult runWithProgress(Project project, CodeStyleSettings settings, PsiFile file, ProgressIndicator indicator) {
+    List<Value> values = getFormattingValues(settings, file.getLanguage());
+    Differ differ = myLangExtractor.getDiffer(project, file, settings);
+    ValuesExtractionResult container = new ValuesExtractionResultImpl(values);
+    Utils.adjustValuesMin(container, differ, indicator);
     return container;
   }
 
   public void randomizeSettings(CodeStyleSettings settings, Language language) {
-    List<FValue> values = getFormattingValues(settings, language);
+    List<Value> values = getFormattingValues(settings, language);
     Random rand = new Random();
-    for (FValue value : values) {
+    for (Value value : values) {
       Object[] possible = value.getPossibleValues();
       int index = rand.nextInt(possible.length);
       value.value = possible[index];

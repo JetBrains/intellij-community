@@ -13,26 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.extractor.values;
+package com.intellij.psi.codeStyle.extractor.differ;
 
-import com.intellij.openapi.util.Condition;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
 
-import java.util.List;
-import java.util.Map;
+public interface Differ {
+  int UGLY_FORMATTING = Integer.MAX_VALUE / 4;
 
-/**
- * @author Roman.Shein
- * @since 04.08.2015.
- */
-public interface FValuesExtractionResult {
-
-  @NotNull
-  List<FValue> getValues();
-
-  void applySelected();
-
-  void applyConditioned(Condition<FValue> c, Map<FValue, Object> backup);
-
-  FValuesExtractionResult apply(boolean retPrevValue);
+  int getDifference(ValuesExtractionResult values);
 }

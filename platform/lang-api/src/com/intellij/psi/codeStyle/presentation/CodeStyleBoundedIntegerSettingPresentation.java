@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle;
+package com.intellij.psi.codeStyle.presentation;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -21,14 +21,19 @@ import org.jetbrains.annotations.NotNull;
  * @author Roman.Shein
  * @since 15.09.2015.
  */
-public class CodeStyleIntegerSettingRepresentation extends CodeStyleSettingRepresentation {
+public class CodeStyleBoundedIntegerSettingPresentation extends CodeStyleSettingPresentation {
 
   protected int myLowerBound;
   protected int myUpperBound;
   protected int myDefaultValue;
   protected String myDefaultValueUiName;
 
-  public CodeStyleIntegerSettingRepresentation(@NotNull String fieldName, @NotNull String uiName, int lowerBound, int upperBound, int defaultValue, String defaultValueUiName) {
+  public CodeStyleBoundedIntegerSettingPresentation(@NotNull String fieldName,
+                                                    @NotNull String uiName,
+                                                    int lowerBound,
+                                                    int upperBound,
+                                                    int defaultValue,
+                                                    String defaultValueUiName) {
     super(fieldName, uiName);
     myLowerBound = lowerBound;
     myUpperBound = upperBound;

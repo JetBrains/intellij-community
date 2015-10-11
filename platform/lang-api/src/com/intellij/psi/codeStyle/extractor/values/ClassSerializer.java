@@ -22,13 +22,13 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
-public class FClassSerializer {
+public class ClassSerializer {
   @NotNull
   private String myInstanceName;
   @NotNull
   private final Object myInstance;
 
-  public FClassSerializer(@NotNull String instanceName, @NotNull Object o) {
+  public ClassSerializer(@NotNull String instanceName, @NotNull Object o) {
     myInstanceName = instanceName;
     myInstance = o;
   }
@@ -92,8 +92,8 @@ public class FClassSerializer {
 
   @Override
   public boolean equals(Object o) {
-    if (o instanceof FClassSerializer) {
-      FClassSerializer other = (FClassSerializer) o;
+    if (o instanceof ClassSerializer) {
+      ClassSerializer other = (ClassSerializer) o;
       return other.myInstance.equals(myInstance);
     } else {
       return false;

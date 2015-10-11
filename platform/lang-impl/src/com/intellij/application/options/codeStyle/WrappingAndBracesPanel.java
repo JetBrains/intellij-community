@@ -17,6 +17,9 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.presentation.CodeStyleBoundedIntegerSettingPresentation;
+import com.intellij.psi.codeStyle.presentation.CodeStyleSelectSettingPresentation;
+import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -60,20 +63,20 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
   @Override
   protected void initTables() {
-    for (Map.Entry<CodeStyleSettingRepresentation.SettingsGroup, List<CodeStyleSettingRepresentation>> entry:
-      CodeStyleSettingRepresentation.getStandardSettings(getSettingsType()).entrySet()) {
-      CodeStyleSettingRepresentation.SettingsGroup group = entry.getKey();
-      for (CodeStyleSettingRepresentation setting: entry.getValue()) {
+    for (Map.Entry<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> entry:
+      CodeStyleSettingPresentation.getStandardSettings(getSettingsType()).entrySet()) {
+      CodeStyleSettingPresentation.SettingsGroup group = entry.getKey();
+      for (CodeStyleSettingPresentation setting: entry.getValue()) {
         //TODO this is ugly, but is the fastest way to make Options UI API and settings representation API connect
         String fieldName = setting.getFieldName();
         String uiName = setting.getUiName();
-        if (setting instanceof CodeStyleIntegerSettingRepresentation) {
-          CodeStyleIntegerSettingRepresentation intSetting = (CodeStyleIntegerSettingRepresentation) setting;
+        if (setting instanceof CodeStyleBoundedIntegerSettingPresentation) {
+          CodeStyleBoundedIntegerSettingPresentation intSetting = (CodeStyleBoundedIntegerSettingPresentation) setting;
           int defaultValue = intSetting.getDefaultValue();
           addOption(fieldName, uiName, group.name, intSetting.getLowerBound(), intSetting.getUpperBound(), defaultValue, intSetting.getValueUiName(
             defaultValue));
-        } else if (setting instanceof CodeStyleSelectSettingRepresentation) {
-          CodeStyleSelectSettingRepresentation selectSetting = (CodeStyleSelectSettingRepresentation) setting;
+        } else if (setting instanceof CodeStyleSelectSettingPresentation) {
+          CodeStyleSelectSettingPresentation selectSetting = (CodeStyleSelectSettingPresentation) setting;
           addOption(fieldName, uiName, group.name, selectSetting.getOptions(), selectSetting.getValues());
         } else {
           addOption(fieldName, uiName, group.name);

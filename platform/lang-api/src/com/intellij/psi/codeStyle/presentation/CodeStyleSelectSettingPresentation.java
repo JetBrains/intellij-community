@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle;
+package com.intellij.psi.codeStyle.presentation;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Roman.Shein
  * @since 16.09.2015.
  */
-public class CodeStyleSelectSettingRepresentation extends CodeStyleSettingRepresentation {
+public class CodeStyleSelectSettingPresentation extends CodeStyleSettingPresentation {
 
   @NotNull
   protected int[] myValues;
@@ -31,8 +31,8 @@ public class CodeStyleSelectSettingRepresentation extends CodeStyleSettingRepres
   protected int myLowerBound;
   protected int myUpperBound;
 
-  public CodeStyleSelectSettingRepresentation(@NotNull String fieldName, @NotNull String uiName,
-                                               @NotNull int[] values, @NotNull String[] valueUiNames) {
+  public CodeStyleSelectSettingPresentation(@NotNull String fieldName, @NotNull String uiName,
+                                            @NotNull int[] values, @NotNull String[] valueUiNames) {
     super(fieldName, uiName);
 
     assert(values.length == valueUiNames.length);

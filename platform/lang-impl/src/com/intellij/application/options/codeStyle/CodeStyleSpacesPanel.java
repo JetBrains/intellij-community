@@ -16,7 +16,7 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.psi.codeStyle.CodeStyleSettingRepresentation;
+import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 
@@ -36,11 +36,12 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
 
   @Override
   protected void initTables() {
-    Map<CodeStyleSettingRepresentation.SettingsGroup, List<CodeStyleSettingRepresentation>> settingsMap = CodeStyleSettingRepresentation.getStandardSettings(getSettingsType());
+    Map<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> settingsMap = CodeStyleSettingPresentation
+      .getStandardSettings(getSettingsType());
 
-    for (Map.Entry<CodeStyleSettingRepresentation.SettingsGroup, List<CodeStyleSettingRepresentation>> entry: settingsMap.entrySet()) {
+    for (Map.Entry<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> entry: settingsMap.entrySet()) {
       String groupName = entry.getKey().name;
-      for (CodeStyleSettingRepresentation setting: entry.getValue()) {
+      for (CodeStyleSettingPresentation setting: entry.getValue()) {
         initBooleanField(setting.getFieldName(), setting.getUiName(), groupName);
       }
       initCustomOptions(groupName);

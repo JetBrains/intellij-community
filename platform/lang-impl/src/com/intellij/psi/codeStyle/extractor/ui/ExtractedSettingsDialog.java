@@ -20,9 +20,9 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.codeStyle.CodeStyleSettingRepresentation;
+import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.psi.codeStyle.extractor.values.FValue;
+import com.intellij.psi.codeStyle.extractor.values.Value;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeTableSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
@@ -50,12 +50,14 @@ import java.util.List;
  * @author Roman.Shein
  * @since 28.09.2015.
  */
-public class FExtractedSettingsDialog extends DialogWrapper {
-  protected FCodeStyleSettingsNameProvider myNameProvider;
-  protected List<FValue> myValues;
+public class ExtractedSettingsDialog extends DialogWrapper {
+  protected CodeStyleSettingsNameProvider myNameProvider;
+  protected List<Value> myValues;
   protected DefaultMutableTreeNode myRoot;
 
-  public FExtractedSettingsDialog(@Nullable Project project, @NotNull FCodeStyleSettingsNameProvider nameProvider, @NotNull List<FValue> values) {
+  public ExtractedSettingsDialog(@Nullable Project project,
+                                 @NotNull CodeStyleSettingsNameProvider nameProvider,
+                                 @NotNull List<Value> values) {
     super(project, false);
     myNameProvider = nameProvider;
     myValues = values;
@@ -71,12 +73,12 @@ public class FExtractedSettingsDialog extends DialogWrapper {
     return result;
   }
 
-  public boolean valueIsSelectedInTree(@NotNull FValue value) {
+  public boolean valueIsSelectedInTree(@NotNull Value value) {
     if (myRoot == null) return false;
     return valueIsSelectedInTree(myRoot, value);
   }
 
-  protected boolean valueIsSelectedInTree(@NotNull TreeNode startNode, @NotNull FValue value) {
+  protected boolean valueIsSelectedInTree(@NotNull TreeNode startNode, @NotNull Value value) {
     for (Enumeration children = startNode.children(); children.hasMoreElements();) {
       Object child = children.nextElement();
       if (child instanceof SettingsTreeNode) {
@@ -93,19 +95,19 @@ public class FExtractedSettingsDialog extends DialogWrapper {
   }
 
   public static class SettingsTreeNode extends DefaultMutableTreeNode {
-    protected CodeStyleSettingRepresentation myRepresentation;
+    protected CodeStyleSettingPresentation myRepresentation;
     protected boolean accepted = true;
     protected final String valueString;
     protected final boolean isGroupNode;
     protected final String customTitle;
-    protected FValue myValue;
+    protected Value myValue;
 
-    public SettingsTreeNode(String valueString, CodeStyleSettingRepresentation representation, boolean isGroupNode, FValue value) {
+    public SettingsTreeNode(String valueString, CodeStyleSettingPresentation representation, boolean isGroupNode, Value value) {
       this(valueString, representation, isGroupNode, null, value);
     }
 
-    public SettingsTreeNode(String valueString, CodeStyleSettingRepresentation representation, boolean isGroupNode, String customTitle,
-                            FValue value) {
+    public SettingsTreeNode(String valueString, CodeStyleSettingPresentation representation, boolean isGroupNode, String customTitle,
+                            Value value) {
       this.valueString = valueString;
       this.myRepresentation = representation;
       this.isGroupNode = isGroupNode;
@@ -299,23 +301,23 @@ public class FExtractedSettingsDialog extends DialogWrapper {
 
   protected JComponent buildExtractedSettingsTree() {
 
-    Collection<FValue> unusedValues = ContainerUtil.newHashSet(myValues);
+    Collection<Value> unusedValues = ContainerUtil.newHashSet(myValues);
     myRoot = new DefaultMutableTreeNode();
     for (Map.Entry<LanguageCodeStyleSettingsProvider.SettingsType,
-      Map<CodeStyleSettingRepresentation.SettingsGroup, List<CodeStyleSettingRepresentation>>> typeEntry : myNameProvider.mySettings.entrySet()) {
+      Map<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>>> typeEntry : myNameProvider.mySettings.entrySet()) {
       DefaultMutableTreeNode settingsNode = null;
-      for (Map.Entry<CodeStyleSettingRepresentation.SettingsGroup, List<CodeStyleSettingRepresentation>> groupEntry: typeEntry.getValue().entrySet()) {
-        CodeStyleSettingRepresentation.SettingsGroup group = groupEntry.getKey();
-        List<CodeStyleSettingRepresentation> representations = groupEntry.getValue();
-        List<CodeStyleSettingRepresentation> children = ContainerUtil.emptyList();
+      for (Map.Entry<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> groupEntry: typeEntry.getValue().entrySet()) {
+        CodeStyleSettingPresentation.SettingsGroup group = groupEntry.getKey();
+        List<CodeStyleSettingPresentation> representations = groupEntry.getValue();
+        List<CodeStyleSettingPresentation> children = ContainerUtil.emptyList();
         DefaultMutableTreeNode groupNode = null;
         if (group.name == null && !representations.isEmpty()) {
           //there is a setting with name coinciding with group name
           if (representations.size() > 1) {
             children = representations.subList(1, representations.size());
           }
-          CodeStyleSettingRepresentation headRep = representations.get(0);
-          FValue myValue = FCodeStyleSettingsNameProvider.getValue(headRep, myValues);
+          CodeStyleSettingPresentation headRep = representations.get(0);
+          Value myValue = CodeStyleSettingsNameProvider.getValue(headRep, myValues);
           if (myValue == null) {
             //value was not found (was not selected)
             groupNode = new SettingsTreeNode(headRep.getUiName());
@@ -327,8 +329,8 @@ public class FExtractedSettingsDialog extends DialogWrapper {
         } else {
           children = representations;
         }
-        for (CodeStyleSettingRepresentation representation: children) {
-          FValue myValue = FCodeStyleSettingsNameProvider.getValue(representation, myValues);
+        for (CodeStyleSettingPresentation representation: children) {
+          Value myValue = CodeStyleSettingsNameProvider.getValue(representation, myValues);
           if (myValue != null) {
             if (groupNode == null) {
               groupNode = new SettingsTreeNode(group.name);
@@ -337,9 +339,9 @@ public class FExtractedSettingsDialog extends DialogWrapper {
             unusedValues.remove(myValue);
           }
         }
-        if (groupNode != null) {
+        if (groupNode != null && !groupNode.isLeaf()) {
           if (settingsNode == null) {
-            settingsNode = new SettingsTreeNode(FCodeStyleSettingsNameProvider.getSettingsTypeName(typeEntry.getKey()));
+            settingsNode = new SettingsTreeNode(CodeStyleSettingsNameProvider.getSettingsTypeName(typeEntry.getKey()));
           }
           settingsNode.add(groupNode);
         }
@@ -349,24 +351,25 @@ public class FExtractedSettingsDialog extends DialogWrapper {
       }
     }
 
-    unusedValues = ContainerUtil.filter(unusedValues, new Condition<FValue>(){
-      @Override
-      public boolean value(FValue value) {
-        return value.state == FValue.STATE.SELECTED;
-      }
-    });
-
-    DefaultMutableTreeNode unnamedNode = null;
-    for (FValue value: unusedValues) {
-      if (unnamedNode == null) {
-        unnamedNode = new SettingsTreeNode("Settings without UI representation");
-      }
-      unnamedNode.add(new SettingsTreeNode(value.value.toString(), null, false, value.name, value));
-    }
-
-    if (unnamedNode != null) {
-      myRoot.add(unnamedNode);
-    }
+    //TODO: for now, settings without UI presentation are not displayed. Do something about it.
+    //unusedValues = ContainerUtil.filter(unusedValues, new Condition<Value>(){
+    //  @Override
+    //  public boolean value(Value value) {
+    //    return value.state == Value.STATE.SELECTED;
+    //  }
+    //});
+    //
+    //DefaultMutableTreeNode unnamedNode = null;
+    //for (Value value: unusedValues) {
+    //  if (unnamedNode == null) {
+    //    unnamedNode = new SettingsTreeNode("Settings without UI representation");
+    //  }
+    //  unnamedNode.add(new SettingsTreeNode(value.value.toString(), null, false, value.name, value));
+    //}
+    //
+    //if (unnamedNode != null) {
+    //  myRoot.add(unnamedNode);
+    //}
 
     final ColumnInfo[] COLUMNS = new ColumnInfo[]{getTitleColumnInfo(), getValueColumnInfo()};
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
@@ -60,10 +61,11 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
 
     JPanel optionsPanel = new JPanel(new GridBagLayout());
 
-    Map<CodeStyleSettingRepresentation.SettingsGroup, List<CodeStyleSettingRepresentation>> settings = CodeStyleSettingRepresentation.getStandardSettings(getSettingsType());
+    Map<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> settings = CodeStyleSettingPresentation
+      .getStandardSettings(getSettingsType());
 
-    OptionGroup keepBlankLinesOptionsGroup = createOptionsGroup(BLANK_LINES_KEEP, settings.get(new CodeStyleSettingRepresentation.SettingsGroup(BLANK_LINES_KEEP)));
-    OptionGroup blankLinesOptionsGroup = createOptionsGroup(BLANK_LINES, settings.get(new CodeStyleSettingRepresentation.SettingsGroup(BLANK_LINES)));
+    OptionGroup keepBlankLinesOptionsGroup = createOptionsGroup(BLANK_LINES_KEEP, settings.get(new CodeStyleSettingPresentation.SettingsGroup(BLANK_LINES_KEEP)));
+    OptionGroup blankLinesOptionsGroup = createOptionsGroup(BLANK_LINES, settings.get(new CodeStyleSettingPresentation.SettingsGroup(BLANK_LINES)));
     if (keepBlankLinesOptionsGroup != null) {
       keepBlankLinesOptionsGroup.setAnchor(keepBlankLinesOptionsGroup.findAnchor());
       optionsPanel.add(keepBlankLinesOptionsGroup.createPanel(),
@@ -109,10 +111,10 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
   }
 
   @Nullable
-  private OptionGroup createOptionsGroup(@NotNull String groupName, @NotNull List<CodeStyleSettingRepresentation> settings) {
+  private OptionGroup createOptionsGroup(@NotNull String groupName, @NotNull List<CodeStyleSettingPresentation> settings) {
     OptionGroup optionGroup = new OptionGroup(groupName);
 
-    for (CodeStyleSettingRepresentation setting: settings) {
+    for (CodeStyleSettingPresentation setting: settings) {
       createOption(optionGroup, setting.getUiName(), setting.getFieldName());
     }
     initCustomOptions(optionGroup, groupName);

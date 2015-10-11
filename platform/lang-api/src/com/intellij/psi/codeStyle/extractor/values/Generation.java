@@ -16,8 +16,8 @@
 package com.intellij.psi.codeStyle.extractor.values;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.codeStyle.extractor.FUtils;
-import com.intellij.psi.codeStyle.extractor.differ.FDiffer;
+import com.intellij.psi.codeStyle.extractor.Utils;
+import com.intellij.psi.codeStyle.extractor.differ.Differ;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,29 +25,29 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class FGeneration {
+public class Generation {
 
   private static int GENERATION_POOL_SIZE = 45;
   private static int MUTATION_PER_GEN = 10;
   public  static int GEN_COUNT = 40;
-  private List<FGens> myGensPool;
+  private List<Gens> myGensPool;
   private int myAge;
   private int myParentKind;
 
-  private FGeneration(@NotNull final FGens bestGens) {
+  private Generation(@NotNull final Gens bestGens) {
     myParentKind = -1;
-    myGensPool = new ArrayList<FGens>(GENERATION_POOL_SIZE);
+    myGensPool = new ArrayList<Gens>(GENERATION_POOL_SIZE);
     for (int i = 0; i < GENERATION_POOL_SIZE; ++i) {
       // the best goes as is
-      myGensPool.add(new FGens(bestGens).mutate(i == 0 ? 0 : MUTATION_PER_GEN));
+      myGensPool.add(new Gens(bestGens).mutate(i == 0 ? 0 : MUTATION_PER_GEN));
     }
     myAge = 0;
   }
 
-  private FGeneration(@NotNull FGeneration previous, int parentKind) {
+  private Generation(@NotNull Generation previous, int parentKind) {
     myAge = previous.myAge + 1;
     myParentKind = parentKind;
-    myGensPool = new ArrayList<FGens>(GENERATION_POOL_SIZE);
+    myGensPool = new ArrayList<Gens>(GENERATION_POOL_SIZE);
     int mutationsCount = MUTATION_PER_GEN;
     //if (myAge < 30) {
     //  if (myAge < 5) {
@@ -68,31 +68,31 @@ public class FGeneration {
     for (int i = 0; i < GENERATION_POOL_SIZE; i++) {
       int parent1 = 0, parent2 = 0, iterations = 0;
       while (parent1 == parent2) {
-        parent1 = FUtils.getRandomLess(prevPullSize);//~ fitness?
-        parent2 = FUtils.getRandomLess(prevPullSize);
+        parent1 = Utils.getRandomLess(prevPullSize);//~ fitness?
+        parent2 = Utils.getRandomLess(prevPullSize);
         if (++iterations > 25) break;
       }
-      myGensPool.add(FGens.breed(
+      myGensPool.add(Gens.breed(
         previous.myGensPool.get(parent1),
         previous.myGensPool.get(parent2),
         mutationsCount));
     }
   }
 
-  public static FGeneration createZeroGeneration(@NotNull FGens gens) {
-    return new FGeneration(gens);
+  public static Generation createZeroGeneration(@NotNull Gens gens) {
+    return new Generation(gens);
   }
 
-  public static FGeneration createNextGeneration(FDiffer differ, @NotNull FGeneration previous) {
+  public static Generation createNextGeneration(Differ differ, @NotNull Generation previous) {
     final int parentKind = previous.reduceToSize(differ, (int)(0.2 * previous.myGensPool.size()));
-    return previous.tryAgain() ? new FGeneration(previous, parentKind) : previous;
+    return previous.tryAgain() ? new Generation(previous, parentKind) : previous;
   }
 
-  private int reduceToSize(FDiffer differ, int newPoolSize) {
+  private int reduceToSize(Differ differ, int newPoolSize) {
     List<Pair<Integer, Integer>> ranges = new ArrayList<Pair<Integer, Integer>>(myGensPool.size());
 
     int i = 0;
-    for (final FGens gens : myGensPool) {
+    for (final Gens gens : myGensPool) {
       int range = differ.getDifference(gens);
       ranges.add(Pair.create(range, i++));
       if (range == 0) {
@@ -109,14 +109,14 @@ public class FGeneration {
       }
     });
 
-    final ArrayList<FGens> gensPool = new ArrayList<FGens>(newPoolSize);
+    final ArrayList<Gens> gensPool = new ArrayList<Gens>(newPoolSize);
     int count = 0;
     int worseForward = 0;
     for (final Pair<Integer, Integer> pair : ranges) {
       if (count >= newPoolSize) {
         break;
       }
-      FGens gens = myGensPool.get(pair.second);
+      Gens gens = myGensPool.get(pair.second);
       gensPool.add(gens);
       ++count;
       worseForward = pair.first;
@@ -130,7 +130,7 @@ public class FGeneration {
     return myAge < GEN_COUNT;
   }
 
-  public FGens getBestGens(FDiffer differ) {
+  public Gens getBestGens(Differ differ) {
     reduceToSize(differ, 1);
     return myGensPool.get(0);
   }

@@ -22,11 +22,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.psi.codeStyle.extractor.FUtils;
-import com.intellij.psi.codeStyle.extractor.differ.FLangCodeStyleExtractor;
-import com.intellij.psi.codeStyle.extractor.values.FClassSerializer;
-import com.intellij.psi.codeStyle.extractor.values.FValue;
-import com.intellij.psi.codeStyle.extractor.values.FValuesExtractionResult;
+import com.intellij.psi.codeStyle.extractor.Utils;
+import com.intellij.psi.codeStyle.extractor.differ.LangCodeStyleExtractor;
+import com.intellij.psi.codeStyle.extractor.values.ClassSerializer;
+import com.intellij.psi.codeStyle.extractor.values.Value;
+import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,51 +37,51 @@ import java.util.*;
  * @author Roman.Shein
  * @since 04.08.2015.
  */
-public abstract class FCodeStyleDeriveProcessor {
+public abstract class CodeStyleDeriveProcessor {
 
-  protected final FLangCodeStyleExtractor myLangExtractor;
+  protected final LangCodeStyleExtractor myLangExtractor;
 
-  protected FCodeStyleDeriveProcessor(FLangCodeStyleExtractor langExtractor) {
+  protected CodeStyleDeriveProcessor(LangCodeStyleExtractor langExtractor) {
     myLangExtractor = langExtractor;
   }
 
-  public abstract FValuesExtractionResult runWithProgress(Project project, CodeStyleSettings settings, PsiFile file,
+  public abstract ValuesExtractionResult runWithProgress(Project project, CodeStyleSettings settings, PsiFile file,
                                     ProgressIndicator indicator);
 
-  public Map<FValue, Object> backupValues(CodeStyleSettings settings, Language language) {
-    List<FValue> baseValues = getFormattingValues(settings, language);
-    Map<FValue, Object> res = ContainerUtil.newHashMap();
-    for (FValue baseValue: baseValues) {
+  public Map<Value, Object> backupValues(CodeStyleSettings settings, Language language) {
+    List<Value> baseValues = getFormattingValues(settings, language);
+    Map<Value, Object> res = ContainerUtil.newHashMap();
+    for (Value baseValue: baseValues) {
       res.put(baseValue, baseValue.value);
     }
     return res;
   }
 
   @NotNull
-  private Collection<FValue.VAR_KIND> getVarKinds() {
-    List<FValue.VAR_KIND> varKinds = new LinkedList<FValue.VAR_KIND>();
+  private Collection<Value.VAR_KIND> getVarKinds() {
+    List<Value.VAR_KIND> varKinds = new LinkedList<Value.VAR_KIND>();
     varKinds.addAll(myLangExtractor.getCustomVarKinds());
-    varKinds.addAll(Arrays.asList(FValue.VAR_KIND.defaultKinds));
+    varKinds.addAll(Arrays.asList(Value.VAR_KIND.defaultKinds));
     return varKinds;
   }
 
   @NotNull
-  private FValue.VAR_KIND getVarKind(@NotNull String name,  @NotNull Object value) {
-    for (FValue.VAR_KIND varKind : getVarKinds()) {
+  private Value.VAR_KIND getVarKind(@NotNull String name,  @NotNull Object value) {
+    for (Value.VAR_KIND varKind : getVarKinds()) {
       if (varKind.accepts(name, value)) {
         return varKind;
       }
     }
-    return FValue.VAR_KIND.NOTHING;
+    return Value.VAR_KIND.NOTHING;
   }
 
   @NotNull
-  private List<FValue> readAll(@NotNull String instanceName, @NotNull Object instance) {
+  private List<Value> readAll(@NotNull String instanceName, @NotNull Object instance) {
     Class<?> cls = instance.getClass();
-    List<FValue> ret = new ArrayList<FValue>();
-    FClassSerializer serializer = new FClassSerializer(instanceName, instance);
+    List<Value> ret = new ArrayList<Value>();
+    ClassSerializer serializer = new ClassSerializer(instanceName, instance);
     for (Field field : cls.getDeclaredFields()) {
-      field = FClassSerializer.getPreparedField(field);
+      field = ClassSerializer.getPreparedField(field);
       if (field == null || field.getName().endsWith("_FORCE")) continue;
       try {
         ret.add(buildFValue(field, instance, serializer));
@@ -94,35 +94,35 @@ public abstract class FCodeStyleDeriveProcessor {
   }
 
   @NotNull
-  private FValue buildFValue(@NotNull Field field,
+  private Value buildFValue(@NotNull Field field,
                              @NotNull Object instance,
-                             @NotNull FClassSerializer serializer) throws IllegalAccessException {
+                             @NotNull ClassSerializer serializer) throws IllegalAccessException {
     String name = field.getName();
     Object value = field.get(instance);
-    FValue.VAR_KIND varKind = getVarKind(name, value);
-    return new FValue(name, value, serializer, varKind);
+    Value.VAR_KIND varKind = getVarKind(name, value);
+    return new Value(name, value, serializer, varKind);
   }
 
   @NotNull
-  protected List<FValue> getFormattingValues(CodeStyleSettings settings, Language language) {
+  protected List<Value> getFormattingValues(CodeStyleSettings settings, Language language) {
 
     final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(language);
     CommonCodeStyleSettings.IndentOptions indentOptions = commonSettings.getIndentOptions();
     if (indentOptions == null) {
-      FUtils.logError("IndentOptions from common settings are null; using indent options from settings.");
+      Utils.logError("IndentOptions from common settings are null; using indent options from settings.");
       indentOptions = settings.getIndentOptions();
     }
-    final Object languageSettings = FUtils.getLanguageSettings(settings, language);
+    final Object languageSettings = Utils.getLanguageSettings(settings, language);
 
-    List<FValue> values = readAll("commonSettings", commonSettings);
+    List<Value> values = readAll("commonSettings", commonSettings);
     if (languageSettings != null) {
       values.addAll(readAll("ocSettings", languageSettings));
     }
     final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
     if (provider != null) {
       final Set<String> supportedFields = provider.getSupportedFields();
-      List<FValue> cvalues = new ArrayList<FValue>(values.size());
-      for (FValue value : values) {
+      List<Value> cvalues = new ArrayList<Value>(values.size());
+      for (Value value : values) {
         if (supportedFields.contains(value.name)) {
           cvalues.add(value);
         }
@@ -131,11 +131,11 @@ public abstract class FCodeStyleDeriveProcessor {
     }
 
     if (indentOptions != null) {
-      List<FValue> valuesOrder = readAll("indentOptions", indentOptions);
+      List<Value> valuesOrder = readAll("indentOptions", indentOptions);
       valuesOrder.addAll(values);
       return valuesOrder;
     } else {
-      FUtils.logError("Not indent options detected.");
+      Utils.logError("Not indent options detected.");
       return values;
     }
   }

@@ -18,9 +18,11 @@ package com.intellij.psi.codeStyle.extractor.ui;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.codeStyle.extractor.values.FValue;
+import com.intellij.psi.codeStyle.extractor.values.Value;
+import com.intellij.psi.codeStyle.presentation.CodeStyleSelectSettingPresentation;
+import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.psi.codeStyle.CodeStyleSettingRepresentation.SettingsGroup;
+import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation.SettingsGroup;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,22 +33,22 @@ import java.util.*;
  * @author Roman.Shein
  * @since 03.08.2015.
  */
-public class FCodeStyleSettingsNameProvider implements CodeStyleSettingsCustomizable {
+public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomizable {
 
-  protected Map<SettingsType, Map<SettingsGroup, List<CodeStyleSettingRepresentation>>> mySettings =
+  protected Map<SettingsType, Map<SettingsGroup, List<CodeStyleSettingPresentation>>> mySettings =
     ContainerUtil.newHashMap();
-  private Map<SettingsType, Map<SettingsGroup, List<CodeStyleSettingRepresentation>>> standardSettings =
+  private Map<SettingsType, Map<SettingsGroup, List<CodeStyleSettingPresentation>>> standardSettings =
     ContainerUtil.newHashMap();
 
-  public FCodeStyleSettingsNameProvider() {
+  public CodeStyleSettingsNameProvider() {
     for (SettingsType settingsType : SettingsType.values()) {
-      standardSettings.put(settingsType, CodeStyleSettingRepresentation.getStandardSettings(settingsType));
+      standardSettings.put(settingsType, CodeStyleSettingPresentation.getStandardSettings(settingsType));
     }
   }
 
-  protected void addSetting(@NotNull SettingsGroup group, @NotNull CodeStyleSettingRepresentation setting, @Nullable OptionAnchor anchor,
+  protected void addSetting(@NotNull SettingsGroup group, @NotNull CodeStyleSettingPresentation setting, @Nullable OptionAnchor anchor,
                             @Nullable String anchorFieldName) {
-    for (Map.Entry<SettingsType, Map<SettingsGroup, List<CodeStyleSettingRepresentation>>> entry: mySettings.entrySet()) {
+    for (Map.Entry<SettingsType, Map<SettingsGroup, List<CodeStyleSettingPresentation>>> entry: mySettings.entrySet()) {
       if (entry.getValue().containsKey(group)) {
         addSetting(entry.getKey(), group, setting, anchor, anchorFieldName);
         return;
@@ -55,19 +57,19 @@ public class FCodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiz
     addSetting(SettingsType.LANGUAGE_SPECIFIC, group, setting, anchor, anchorFieldName);
   }
 
-  protected void addSetting(@NotNull SettingsType settingsType, @NotNull SettingsGroup group, @NotNull CodeStyleSettingRepresentation setting,
+  protected void addSetting(@NotNull SettingsType settingsType, @NotNull SettingsGroup group, @NotNull CodeStyleSettingPresentation setting,
                             @Nullable OptionAnchor anchor, @Nullable String anchorFieldName) {
-    Map<CodeStyleSettingRepresentation.SettingsGroup, List<CodeStyleSettingRepresentation>> groups = mySettings.get(settingsType);
+    Map<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> groups = mySettings.get(settingsType);
     if (groups == null) {
       groups = ContainerUtil.newLinkedHashMap();
     }
-    List<CodeStyleSettingRepresentation> settingsList = groups.get(group);
+    List<CodeStyleSettingPresentation> settingsList = groups.get(group);
     if (settingsList == null) {
       settingsList = ContainerUtil.newLinkedList();
     }
     if (settingsList.contains(setting)) return;
     if (anchor != null && anchorFieldName != null) {
-      CodeStyleSettingRepresentation anchorSettingRepresentation = new CodeStyleSettingRepresentation(anchorFieldName, anchorFieldName);
+      CodeStyleSettingPresentation anchorSettingRepresentation = new CodeStyleSettingPresentation(anchorFieldName, anchorFieldName);
       int insertIndex = settingsList.indexOf(anchorSettingRepresentation);
       if (insertIndex < 0) {
         insertIndex = settingsList.size();
@@ -92,9 +94,9 @@ public class FCodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiz
   @Override
   public void showAllStandardOptions() {
     for (SettingsType settingsType : SettingsType.values()) {
-      Map<SettingsGroup, List<CodeStyleSettingRepresentation>> standardGroups = standardSettings.get(settingsType);
-      for (Map.Entry<SettingsGroup, List<CodeStyleSettingRepresentation>> entry : standardGroups.entrySet()) {
-        for (CodeStyleSettingRepresentation setting: entry.getValue()) {
+      Map<SettingsGroup, List<CodeStyleSettingPresentation>> standardGroups = standardSettings.get(settingsType);
+      for (Map.Entry<SettingsGroup, List<CodeStyleSettingPresentation>> entry : standardGroups.entrySet()) {
+        for (CodeStyleSettingPresentation setting: entry.getValue()) {
           addSetting(settingsType, entry.getKey(), setting, null, null);
         }
       }
@@ -105,9 +107,9 @@ public class FCodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiz
   public void showStandardOptions(String... optionNames) {
     List<String> options = Arrays.asList(optionNames);
     for (SettingsType settingsType : SettingsType.values()) {
-      Map<SettingsGroup, List<CodeStyleSettingRepresentation>> standardGroups = standardSettings.get(settingsType);
-      for (Map.Entry<SettingsGroup, List<CodeStyleSettingRepresentation>> entry : standardGroups.entrySet()) {
-        for (CodeStyleSettingRepresentation setting: entry.getValue()) {
+      Map<SettingsGroup, List<CodeStyleSettingPresentation>> standardGroups = standardSettings.get(settingsType);
+      for (Map.Entry<SettingsGroup, List<CodeStyleSettingPresentation>> entry : standardGroups.entrySet()) {
+        for (CodeStyleSettingPresentation setting: entry.getValue()) {
           if (options.contains(setting.getFieldName())) {
             addSetting(settingsType, entry.getKey(), setting, null, null);
           }
@@ -125,22 +127,22 @@ public class FCodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiz
   public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass, @NotNull String fieldName, @NotNull String title,
                                @Nullable String groupName, @Nullable OptionAnchor anchor, @Nullable String anchorFieldName, Object... options) {
     if (options.length == 2) {
-      addSetting(new SettingsGroup(groupName), new CodeStyleSelectSettingRepresentation(fieldName, title, (int[])options[1],
+      addSetting(new SettingsGroup(groupName), new CodeStyleSelectSettingPresentation(fieldName, title, (int[])options[1],
                                                                                         (String[])options[0]), anchor, anchorFieldName);
     } else {
-      addSetting(new SettingsGroup(groupName), new CodeStyleSettingRepresentation(fieldName, title), anchor, anchorFieldName);
+      addSetting(new SettingsGroup(groupName), new CodeStyleSettingPresentation(fieldName, title), anchor, anchorFieldName);
     }
   }
 
   @Override
   public void renameStandardOption(String fieldName, String newTitle) {
     for (SettingsType settingsType : SettingsType.values()) {
-      Map<SettingsGroup, List<CodeStyleSettingRepresentation>> standardGroups = mySettings.get(settingsType);
+      Map<SettingsGroup, List<CodeStyleSettingPresentation>> standardGroups = mySettings.get(settingsType);
       if (standardGroups == null) {
         continue;
       }
-      for (Map.Entry<SettingsGroup, List<CodeStyleSettingRepresentation>> entry : standardGroups.entrySet()) {
-        for (CodeStyleSettingRepresentation setting: entry.getValue()) {
+      for (Map.Entry<SettingsGroup, List<CodeStyleSettingPresentation>> entry : standardGroups.entrySet()) {
+        for (CodeStyleSettingPresentation setting: entry.getValue()) {
           if (setting.getFieldName().equals(fieldName)) {
             setting.setUiName(newTitle);
             return;
@@ -153,14 +155,14 @@ public class FCodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiz
   @Override
   public void moveStandardOption(String fieldName, String newGroup) {
     for (SettingsType settingsType : SettingsType.values()) {
-      Map<SettingsGroup, List<CodeStyleSettingRepresentation>> standardGroups = mySettings.get(settingsType);
+      Map<SettingsGroup, List<CodeStyleSettingPresentation>> standardGroups = mySettings.get(settingsType);
       if (standardGroups == null) {
         standardGroups = ContainerUtil.newLinkedHashMap();
         mySettings.put(settingsType, standardGroups);
       }
-      for (Map.Entry<SettingsGroup, List<CodeStyleSettingRepresentation>> entry : standardGroups.entrySet()) {
-        CodeStyleSettingRepresentation moveSetting = null;
-        for (CodeStyleSettingRepresentation setting: entry.getValue()) {
+      for (Map.Entry<SettingsGroup, List<CodeStyleSettingPresentation>> entry : standardGroups.entrySet()) {
+        CodeStyleSettingPresentation moveSetting = null;
+        for (CodeStyleSettingPresentation setting: entry.getValue()) {
           if (setting.getFieldName().equals(fieldName)) {
             moveSetting = setting;
             break;
@@ -191,31 +193,31 @@ public class FCodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiz
     }
   }
 
-  public static FValue getValue(final CodeStyleSettingRepresentation representation, List<FValue> values) {
-    FValue myValue = ContainerUtil.find(values, new Condition<FValue>() {
+  public static Value getValue(final CodeStyleSettingPresentation representation, List<Value> values) {
+    Value myValue = ContainerUtil.find(values, new Condition<Value>() {
       @Override
-      public boolean value(FValue value) {
-        return value.state == FValue.STATE.SELECTED && value.name.equals(representation.getFieldName());
+      public boolean value(Value value) {
+        return value.state == Value.STATE.SELECTED && value.name.equals(representation.getFieldName());
         //return value.name.equals(representation.getFieldName()); //TODO this is here only to test the UI!!
       }
     });
     return myValue;
   }
 
-  public String getSettings(List<FValue> values) {
+  public String getSettings(List<Value> values) {
     StringBuilder builder = new StringBuilder();
     for (SettingsType settingsType : LanguageCodeStyleSettingsProvider.SettingsType.values()) {
       builder.append("<br><b><u>").append(getSettingsTypeName(settingsType)).append("</u></b>");
-      Map<SettingsGroup, List<CodeStyleSettingRepresentation>> groups = mySettings.get(settingsType);
+      Map<SettingsGroup, List<CodeStyleSettingPresentation>> groups = mySettings.get(settingsType);
       if (groups != null) {
-        for (Map.Entry<SettingsGroup, List<CodeStyleSettingRepresentation>> entry : groups.entrySet()) {
+        for (Map.Entry<SettingsGroup, List<CodeStyleSettingPresentation>> entry : groups.entrySet()) {
           boolean firstSettingGroupTop = entry.getKey().isNull();
           boolean groupReported = false;
-          for (final CodeStyleSettingRepresentation setting : entry.getValue()) {
-            FValue myValue = ContainerUtil.find(values, new Condition<FValue>() {
+          for (final CodeStyleSettingPresentation setting : entry.getValue()) {
+            Value myValue = ContainerUtil.find(values, new Condition<Value>() {
               @Override
-              public boolean value(FValue value) {
-                return value.state == FValue.STATE.SELECTED && value.name.equals(setting.getFieldName());
+              public boolean value(Value value) {
+                return value.state == Value.STATE.SELECTED && value.name.equals(setting.getFieldName());
               }
             });
             if (myValue == null) {

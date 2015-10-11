@@ -19,10 +19,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.extractor.FUtils;
-import com.intellij.psi.codeStyle.extractor.differ.FDiffer;
-import com.intellij.psi.codeStyle.extractor.differ.FLangCodeStyleExtractor;
-import com.intellij.psi.codeStyle.extractor.values.FGens;
+import com.intellij.psi.codeStyle.extractor.Utils;
+import com.intellij.psi.codeStyle.extractor.differ.Differ;
+import com.intellij.psi.codeStyle.extractor.differ.LangCodeStyleExtractor;
+import com.intellij.psi.codeStyle.extractor.values.Gens;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -32,35 +32,35 @@ import java.util.*;
  * @author Roman.Shein
  * @since 29.07.2015.
  */
-public class FGenProcessor extends FCodeStyleDeriveProcessor{
+public class GenProcessor extends CodeStyleDeriveProcessor {
 
   private static DateFormat formatter = new SimpleDateFormat("mm:ss");
 
-  public FGenProcessor(FLangCodeStyleExtractor langExtractor) {
+  public GenProcessor(LangCodeStyleExtractor langExtractor) {
     super(langExtractor);
   }
 
   @Override
-  public FGens runWithProgress(Project project, CodeStyleSettings settings, PsiFile file, ProgressIndicator indicator) {
-    final FGens origGens = new FGens(getFormattingValues(settings, file.getLanguage()));
-    final FGens forSelection = origGens.copy();
+  public Gens runWithProgress(Project project, CodeStyleSettings settings, PsiFile file, ProgressIndicator indicator) {
+    final Gens origGens = new Gens(getFormattingValues(settings, file.getLanguage()));
+    final Gens forSelection = origGens.copy();
 
-    final FDiffer differ = myLangExtractor.getDiffer(project, file, settings);
+    final Differ differ = myLangExtractor.getDiffer(project, file, settings);
     forSelection.dropToInitial();
-    FUtils.resetRandom();
+    Utils.resetRandom();
 
     long startTime = System.nanoTime();
-    FUtils.adjustValuesGA(forSelection, differ, indicator);
+    Utils.adjustValuesGA(forSelection, differ, indicator);
     reportResult("GA", forSelection, differ, startTime, file.getName());
 
     startTime = System.nanoTime();
-    FUtils.adjustValuesMin(forSelection, differ, indicator);
+    Utils.adjustValuesMin(forSelection, differ, indicator);
     reportResult("MIN", forSelection, differ, startTime, file.getName());
 
     return forSelection;
   }
 
-  private void reportResult(String label, FGens gens, FDiffer differ, long startTime, String fileName) {
+  private void reportResult(String label, Gens gens, Differ differ, long startTime, String fileName) {
     Date date = new Date((System.nanoTime() - startTime) / 1000000);
     System.out.println(fileName + ": " + label + " range:" + differ.getDifference(gens) + "  Execution Time: " + formatter.format(date));
   }
