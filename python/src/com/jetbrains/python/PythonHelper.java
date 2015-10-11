@@ -58,6 +58,8 @@ public enum PythonHelper implements HelperPackage {
   DJANGO_MANAGE("pycharm", "django_manage"),
   MANAGE_TASKS_PROVIDER("pycharm", "_jb_manage_tasks_provider"),
 
+  APPCFG_CONSOLE("pycharm", "appcfg_fetcher"),
+
   BUILDOUT_ENGULFER("pycharm", "buildout_engulfer"),
 
   EPYDOC_FORMATTER("epydoc_formatter.py"),
