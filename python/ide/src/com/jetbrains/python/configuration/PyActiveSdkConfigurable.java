@@ -288,7 +288,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final Sdk prevSdk = getSdk();
     setSdk(selectedSdk);
 
-    rehighlightStringLiterals(selectedSdk, prevSdk);
+    rehighlightVersionSpecific(selectedSdk, prevSdk);
   }
 
   private void setSelectedSdk(@Nullable final Sdk selectedSdk) {
@@ -302,7 +302,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myPackagesPanel.updateNotifications(selectedSdk);
   }
 
-  private void rehighlightStringLiterals(@Nullable final Sdk newSdk, @Nullable final Sdk prevSdk) {
+  private void rehighlightVersionSpecific(@Nullable final Sdk newSdk, @Nullable final Sdk prevSdk) {
     if (prevSdk != null && newSdk != null) {
       final PythonSdkFlavor flavor1 = PythonSdkFlavor.getFlavor(newSdk);
       final PythonSdkFlavor flavor2 = PythonSdkFlavor.getFlavor(prevSdk);
