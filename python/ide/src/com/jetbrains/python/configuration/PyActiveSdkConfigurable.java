@@ -250,6 +250,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @Override
   public void apply() throws ConfigurationException {
+    mySdkSettingsWereModified = false;
     Sdk selectedSdk = getSelectedSdk();
     if (selectedSdk instanceof PyDetectedSdk) {
       final String sdkName = selectedSdk.getName();
