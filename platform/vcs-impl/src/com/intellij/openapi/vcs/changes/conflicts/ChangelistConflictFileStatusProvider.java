@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,10 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.impl.FileStatusProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
 
 /**
  * @author Dmitry Avdeev
@@ -39,7 +38,7 @@ public class ChangelistConflictFileStatusProvider implements FileStatusProvider 
   private static final FileStatus ADDED_OUTSIDE =
     FileStatusFactory.getInstance().createFileStatus("addedOutside", "Added in not active changelist", FileStatus.COLOR_ADDED.brighter());
   private static final FileStatus CHANGELIST_CONFLICT =
-    FileStatusFactory.getInstance().createFileStatus("changelistConflict", "Changelist conflict", Color.red);
+    FileStatusFactory.getInstance().createFileStatus("changelistConflict", "Changelist conflict", JBColor.RED);
 
   private final ChangelistConflictTracker myConflictTracker;
   private final ChangeListManager myChangeListManager;
