@@ -696,15 +696,18 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       int matchingRoot = 0;
       for (Pair<IStubFileElementType, PsiFile> root : roots) {
         final PsiFileStub matchingStub = stubRoots[matchingRoot++];
+        PsiFileImpl eachPsiRoot = (PsiFileImpl)root.second;
+        if (eachPsiRoot.getTreeElement() != null) continue;
 
         //noinspection unchecked
-        ((StubBase)matchingStub).setPsi(root.second);
+        ((StubBase)matchingStub).setPsi(eachPsiRoot);
         final StubTree stubTree = new StubTree(matchingStub);
         stubTree.setDebugInfo("created in getStubTree()");
-        if (root.second == this) stubHolder = stubTree;
-        root.second.putUserData(ObjectStubTree.LAST_STUB_TREE_HASH, null);
-        ((PsiFileImpl)root.second).myStub = new SoftReference<StubTree>(stubTree);
+        if (eachPsiRoot == this) stubHolder = stubTree;
+        eachPsiRoot.putUserData(ObjectStubTree.LAST_STUB_TREE_HASH, null);
+        eachPsiRoot.myStub = new SoftReference<StubTree>(stubTree);
       }
+      assert derefStub() == stubHolder : "Current file not in root list: " + roots + ", vp=" + viewProvider;
       return stubHolder;
     }
   }
