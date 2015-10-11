@@ -259,7 +259,7 @@ public class GitUtil {
    * @param value a value to parse
    * @return timestamp as {@link Date} object
    */
-  private static Date parseTimestamp(String value) {
+  public static Date parseTimestamp(String value) {
     final long parsed;
     parsed = Long.parseLong(value.trim());
     return new Date(parsed * 1000);
