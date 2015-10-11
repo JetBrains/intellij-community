@@ -19,9 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
@@ -276,12 +273,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          ProgressManager.getInstance().run(new Task.Backgroundable(myProject, PyBundle.message("sdk.gen.updating.skels"), false) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              PythonSdkUpdater.updateSdk(finalSelectedSdk, myProject);
-            }
-          });
+          assert finalSelectedSdk != null;
+          PythonSdkType.getInstance().setupSdkPaths(finalSelectedSdk, myProject, null);
         }
       });
     }

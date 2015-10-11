@@ -78,7 +78,7 @@ public class PythonSdkUpdater implements StartupActivity {
     updateActiveSdks(project, 7000);
   }
 
-  public void updateActiveSdks(@NotNull final Project project, final int delay) {
+  public static void updateActiveSdks(@NotNull final Project project, final int delay) {
     final Set<Sdk> sdksToUpdate = new HashSet<Sdk>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final Sdk sdk = PythonSdkType.findPythonSdk(module);
@@ -96,7 +96,7 @@ public class PythonSdkUpdater implements StartupActivity {
     }
   }
 
-  private void updateSdks(final Project project, final int delay, final Set<Sdk> sdksToUpdate) {
+  private static void updateSdks(final Project project, final int delay, final Set<Sdk> sdksToUpdate) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         if (delay > 0) {
