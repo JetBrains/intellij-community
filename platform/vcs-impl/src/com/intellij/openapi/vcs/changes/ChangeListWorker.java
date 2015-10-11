@@ -699,7 +699,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     if (changeCandidate == null) {
       return ThreeState.NO;
     }
-    return FileUtil.isAncestorThreeState(changeCandidate.getPath(), dir.getPath(), false);
+    return FileUtil.isAncestorThreeState(dir.getPath(), changeCandidate.getPath(), false);
   }
 
   @NotNull
