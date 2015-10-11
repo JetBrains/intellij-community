@@ -468,7 +468,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
               if (MvcToolWindowDescriptor.class.isAssignableFrom(ep.getFactoryClass())) {
                 MvcToolWindowDescriptor descriptor = (MvcToolWindowDescriptor)ep.getToolWindowFactory();
                 String id = descriptor.getToolWindowId();
-                boolean shouldShow = MvcModuleStructureUtil.hasModulesWithSupport(myProject, descriptor.getFramework());
+                boolean shouldShow = descriptor.value(myProject);
 
                 ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
 
