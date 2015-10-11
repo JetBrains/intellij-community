@@ -16,7 +16,6 @@
 package com.jetbrains.python.sdk;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -115,26 +114,7 @@ public class PythonSdkUpdater implements StartupActivity {
               @Override
               public void run(@NotNull ProgressIndicator indicator) {
                 for (final Sdk sdk : sdksToUpdate) {
-                  try {
-                    LOG.info("Performing background update of skeletons for SDK " + sdk.getHomePath());
-                    updateSdk(project, null, PySdkUpdater.fromSdkPath(sdk.getHomePath()));
-                  }
-                  catch (PySdkUpdater.PySdkNotFoundException e) {
-                    LOG.info("Sdk " + sdk.getName() + " was removed during update process.");
-                  }
-                  catch (InvalidSdkException e) {
-                    if (PythonSdkType.isVagrant(sdk) || PythonSdkType.isDocker(sdk)) {
-                      PythonSdkType.notifyRemoteSdkSkeletonsFail(e, new Runnable() {
-                        @Override
-                        public void run() {
-                          updateSdks(project, delay, Sets.newHashSet(sdk));
-                        }
-                      });
-                    }
-                    else if (!PythonSdkType.isInvalid(sdk)) {
-                      LOG.error(e);
-                    }
-                  }
+                  updateSdk(sdk, project);
                 }
               }
             });
@@ -142,6 +122,29 @@ public class PythonSdkUpdater implements StartupActivity {
         });
       }
     });
+  }
+
+  public static void updateSdk(final Sdk sdk, final Project project) {
+    try {
+      LOG.info("Performing background update of skeletons for SDK " + sdk.getHomePath());
+      updateSdk(project, null, PySdkUpdater.fromSdkPath(sdk.getHomePath()));
+    }
+    catch (PySdkUpdater.PySdkNotFoundException e) {
+      LOG.info("Sdk " + sdk.getName() + " was removed during update process.");
+    }
+    catch (InvalidSdkException e) {
+      if (PythonSdkType.isVagrant(sdk) || PythonSdkType.isDocker(sdk)) {
+        PythonSdkType.notifyRemoteSdkSkeletonsFail(e, new Runnable() {
+          @Override
+          public void run() {
+            updateSdk(sdk, project);
+          }
+        });
+      }
+      else if (!PythonSdkType.isInvalid(sdk)) {
+        LOG.error(e);
+      }
+    }
   }
 
   public static void updateSdk(@Nullable Project project, @Nullable Component ownerComponent, @NotNull final PySdkUpdater sdkUpdater)
