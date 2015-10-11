@@ -19,6 +19,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
@@ -53,6 +56,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private final Project myProject;
@@ -68,6 +72,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private PyInstalledPackagesPanel myPackagesPanel;
   private JButton myDetailsButton;
   private static final String SHOW_ALL = PyBundle.message("active.sdk.dialog.show.all.item");
+  private Set<Sdk> myInitialSdkSet;
 
   public PyActiveSdkConfigurable(@NotNull Project project) {
     myModule = null;
@@ -186,6 +191,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
 
     myProjectSdksModel = myInterpreterList.getModel();
+    myInitialSdkSet = myProjectSdksModel.getProjectSdks().keySet();
     myProjectSdksModel.addListener(mySdkModelListener);
 
     mySdkCombo.addActionListener(new ActionListener() {
@@ -264,6 +270,20 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       if (selectedSdk != null) {
         myProjectSdksModel.addSdk(selectedSdk);
       }
+    }
+    else if (myInitialSdkSet.contains(selectedSdk)) {
+      final Sdk finalSelectedSdk = selectedSdk;
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          ProgressManager.getInstance().run(new Task.Backgroundable(myProject, PyBundle.message("sdk.gen.updating.skels"), false) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              PythonSdkUpdater.updateSdk(finalSelectedSdk, myProject);
+            }
+          });
+        }
+      });
     }
     if (selectedSdk != null) {
       updateSdkList(false);
