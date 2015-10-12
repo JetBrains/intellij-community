@@ -30,7 +30,11 @@ public class IpnbParser {
   private static Gson initGson() {
     final GsonBuilder builder =
       new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(IpnbCellRaw.class, new RawCellAdapter())
-    .registerTypeAdapter(IpnbFileRaw.class, new FileAdapter()).registerTypeAdapter(CellOutputRaw.class, new OutputsAdapter()).registerTypeAdapter(OutputDataRaw.class, new OutputDataAdapter()).serializeNulls();
+        .registerTypeAdapter(IpnbFileRaw.class, new FileAdapter()).registerTypeAdapter(CellOutputRaw.class, new OutputsAdapter())
+        .registerTypeAdapter(OutputDataRaw.class, new OutputDataAdapter())
+        .registerTypeAdapter(CellOutputRaw.class, new CellOutputDeserializer())
+        .registerTypeAdapter(OutputDataRaw.class, new OutputDataDeserializer())
+        .registerTypeAdapter(IpnbCellRaw.class, new CellRawDeserializer()).serializeNulls();
     return builder.create();
   }
 
@@ -142,9 +146,9 @@ public class IpnbParser {
     Integer execution_count;
     Map<String, Object> metadata = new HashMap<String, Object>();
     Integer level;
-    CellOutputRaw[] outputs;
-    String[] source;
-    String[] input;
+    List<CellOutputRaw> outputs;
+    List<String> source;
+    List<String> input;
     String language;
     Integer prompt_number;
 
@@ -160,7 +164,7 @@ public class IpnbParser {
         for (IpnbOutputCell outputCell : ((IpnbCodeCell)cell).getCellOutputs()) {
           outputRaws.add(CellOutputRaw.fromOutput(outputCell, nbformat));
         }
-        raw.outputs = outputRaws.toArray(new CellOutputRaw[outputRaws.size()]);
+        raw.outputs = outputRaws;
         final Integer promptNumber = ((IpnbCodeCell)cell).getPromptNumber();
         if (nbformat == 4) {
           raw.execution_count = promptNumber != null && promptNumber >= 0 ? promptNumber : null;
@@ -221,12 +225,12 @@ public class IpnbParser {
     String png;
     String stream;
     String jpeg;
-    String[] html;
-    String[] latex;
-    String[] svg;
+    List<String> html;
+    List<String> latex;
+    List<String> svg;
     Integer prompt_number;
-    String[] text;
-    String[] traceback;
+    List<String> text;
+    List<String> traceback;
     Map<String, Object> metadata;
 
     public static CellOutputRaw fromOutput(@NotNull final IpnbOutputCell outputCell, int nbformat) {
@@ -261,7 +265,7 @@ public class IpnbParser {
       else if (outputCell instanceof IpnbJpegOutputCell) {
         if (nbformat == 4) {
           final OutputDataRaw dataRaw = new OutputDataRaw();
-          dataRaw.jpeg = new String[]{((IpnbJpegOutputCell)outputCell).getBase64String()};
+          dataRaw.jpeg = Lists.newArrayList(((IpnbJpegOutputCell)outputCell).getBase64String());
           raw.data = dataRaw;
         }
         else {
@@ -332,7 +336,7 @@ public class IpnbParser {
         outputCell = new IpnbPngOutputCell(png == null ? StringUtil.join(data.png) : png, text, prompt_number);
       }
       else if (jpeg != null || (data != null && data.jpeg != null)) {
-        outputCell = new IpnbJpegOutputCell(jpeg == null ? StringUtil.join(data.jpeg) : jpeg, text, prompt_number);
+        outputCell = new IpnbJpegOutputCell(jpeg == null ? StringUtil.join(data.jpeg, "") : jpeg, text, prompt_number);
       }
       else if (svg != null || (data != null && data.svg != null)) {
         outputCell = new IpnbSvgOutputCell(svg == null ? data.svg : svg, text, prompt_number);
@@ -363,12 +367,12 @@ public class IpnbParser {
   }
 
   private static class OutputDataRaw {
-    @SerializedName("text/plain") String[] text;
-    @SerializedName("text/html") String[] html;
-    @SerializedName("image/svg+xml") String[] svg;
+    @SerializedName("text/plain") List<String> text;
+    @SerializedName("text/html") List<String> html;
+    @SerializedName("image/svg+xml") List<String> svg;
     @SerializedName("image/png") String png;
-    @SerializedName("image/jpeg") String[] jpeg;
-    @SerializedName("text/latex") String[] latex;
+    @SerializedName("image/jpeg") List<String> jpeg;
+    @SerializedName("text/latex") List<String> latex;
   }
 
   static class RawCellAdapter implements JsonSerializer<IpnbCellRaw> {
@@ -433,6 +437,152 @@ public class IpnbParser {
 
       return jsonObject;
     }
+  }
+
+  static class CellRawDeserializer implements JsonDeserializer<IpnbCellRaw> {
+
+    @Override
+    public IpnbCellRaw deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+      throws JsonParseException {
+      final JsonObject object = json.getAsJsonObject();
+      final IpnbCellRaw cellRaw = new IpnbCellRaw();
+      final JsonElement cell_type = object.get("cell_type");
+      if (cell_type != null) {
+        cellRaw.cell_type = cell_type.getAsString();
+      }
+      final JsonElement count = object.get("execution_count");
+      if (count != null) {
+        cellRaw.execution_count = count.getAsInt();
+      }
+      final JsonElement metadata = object.get("metadata");
+      if (metadata != null) {
+        cellRaw.metadata = gson.fromJson(metadata, Map.class);
+      }
+      final JsonElement level = object.get("level");
+      if (level != null) {
+        cellRaw.level = level.getAsInt();
+      }
+
+      final JsonElement outputsElement = object.get("outputs");
+      if (outputsElement != null) {
+        final JsonArray outputs = outputsElement.getAsJsonArray();
+        cellRaw.outputs = Lists.newArrayList();
+        for (JsonElement output : outputs) {
+          cellRaw.outputs.add(gson.fromJson(output, CellOutputRaw.class));
+        }
+      }
+      cellRaw.source = getStringOrArray("source", object);
+      cellRaw.input = getStringOrArray("input", object);
+      final JsonElement language = object.get("language");
+      if (language != null) {
+        cellRaw.language = language.getAsString();
+      }
+      final JsonElement number = object.get("prompt_number");
+      if (number != null) {
+        cellRaw.prompt_number = number.getAsInt();
+      }
+      return cellRaw;
+    }
+  }
+
+  static class OutputDataDeserializer implements JsonDeserializer<OutputDataRaw> {
+
+    @Override
+    public OutputDataRaw deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+      throws JsonParseException {
+      final JsonObject object = json.getAsJsonObject();
+      final OutputDataRaw dataRaw = new OutputDataRaw();
+      dataRaw.text = getStringOrArray("text/plain", object);
+      dataRaw.html = getStringOrArray("text/html", object);
+      dataRaw.svg = getStringOrArray("image/svg+xml", object);
+      final JsonElement png = object.get("image/png");
+      if (png != null) {
+        dataRaw.png = png.getAsString();
+      }
+      dataRaw.jpeg = getStringOrArray("image/jpeg", object);
+      dataRaw.latex = getStringOrArray("text/latex", object);
+
+      return dataRaw;
+    }
+  }
+  static class CellOutputDeserializer implements JsonDeserializer<CellOutputRaw> {
+
+    @Override
+    public CellOutputRaw deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+      throws JsonParseException {
+      final JsonObject object = json.getAsJsonObject();
+      final CellOutputRaw cellOutputRaw = new CellOutputRaw();
+      final JsonElement ename = object.get("ename");
+      if (ename != null) {
+        cellOutputRaw.ename = ename.getAsString();
+      }
+      final JsonElement name = object.get("name");
+      if (name != null) {
+        cellOutputRaw.name = name.getAsString();
+      }
+      final JsonElement evalue = object.get("evalue");
+      if (evalue != null) {
+        cellOutputRaw.evalue = evalue.getAsString();
+      }
+      final JsonElement data = object.get("data");
+      if (data != null) {
+        cellOutputRaw.data = gson.fromJson(data, OutputDataRaw.class);
+      }
+
+      final JsonElement count = object.get("execution_count");
+      if (count != null) {
+        cellOutputRaw.execution_count = count.getAsInt();
+      }
+      final JsonElement outputType = object.get("output_type");
+      if (outputType != null) {
+        cellOutputRaw.output_type = outputType.getAsString();
+      }
+      final JsonElement png = object.get("png");
+      if (png != null) {
+        cellOutputRaw.png = png.getAsString();
+      }
+      final JsonElement stream = object.get("stream");
+      if (stream != null) {
+        cellOutputRaw.stream = stream.getAsString();
+      }
+      final JsonElement jpeg = object.get("jpeg");
+      if (jpeg != null) {
+        cellOutputRaw.jpeg = jpeg.getAsString();
+      }
+
+      cellOutputRaw.html = getStringOrArray("html", object);
+      cellOutputRaw.latex = getStringOrArray("latex", object);
+      cellOutputRaw.svg = getStringOrArray("svg", object);
+      final JsonElement promptNumber = object.get("prompt_number");
+      if (promptNumber != null) {
+        cellOutputRaw.prompt_number = promptNumber.getAsInt();
+      }
+      cellOutputRaw.text = getStringOrArray("text", object);
+      cellOutputRaw.traceback = getStringOrArray("traceback", object);
+      final JsonElement metadata = object.get("metadata");
+      if (metadata != null) {
+        cellOutputRaw.metadata = gson.fromJson(metadata, Map.class);
+      }
+
+      return cellOutputRaw;
+    }
+  }
+
+  @Nullable
+  private static ArrayList<String> getStringOrArray(String name, JsonObject object) {
+    final JsonElement jsonElement = object.get(name);
+    final ArrayList<String> strings = Lists.newArrayList();
+    if (jsonElement == null) return null;
+    if (jsonElement.isJsonArray()) {
+      final JsonArray array = jsonElement.getAsJsonArray();
+      for (JsonElement element : array) {
+        strings.add(element.getAsString());
+      }
+    }
+    else {
+      strings.add(jsonElement.getAsString());
+    }
+    return strings;
   }
 
   static class OutputsAdapter implements JsonSerializer<CellOutputRaw> {

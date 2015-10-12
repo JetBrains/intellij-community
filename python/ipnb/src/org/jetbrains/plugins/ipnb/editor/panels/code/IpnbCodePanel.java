@@ -22,6 +22,7 @@ import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 
 public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
@@ -134,7 +135,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   public void updateCellSource() {
     final Document document = myCodeSourcePanel.getEditor().getDocument();
     final String text = document.getText();
-    myCell.setSource(StringUtil.splitByLinesKeepSeparators(text));
+    myCell.setSource(Arrays.asList(StringUtil.splitByLinesKeepSeparators(text)));
   }
 
   public void updatePanel(@Nullable final String replacementContent, @Nullable final List<IpnbOutputCell> outputContent) {
@@ -143,7 +144,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
       @Override
       public void run() {
         if (replacementContent != null) {
-          myCell.setSource(StringUtil.splitByLinesKeepSeparators(replacementContent));
+          myCell.setSource(Arrays.asList(StringUtil.splitByLinesKeepSeparators(replacementContent)));
           application.runWriteAction(new Runnable() {
             @Override
             public void run() {

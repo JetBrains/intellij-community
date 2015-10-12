@@ -9,6 +9,7 @@ import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -52,11 +53,11 @@ public class WebSocketConnectionTest extends TestCase {
                            @NotNull String parentMessageId) {
         if (myMessageId.equals(parentMessageId)) {
           final ArrayList<IpnbOutputCell> outputs = connection.getOutput();
-          assertEquals(outputs.size(), 1);
+          assertEquals(1, outputs.size());
           assertEquals(outputs.get(0).getClass(), IpnbOutOutputCell.class);
-          final String[] text = outputs.get(0).getText();
+          final List<String> text = outputs.get(0).getText();
           assertNotNull(text);
-          assertEquals("4", text[0]);
+          assertEquals("4", text.get(0));
           evaluated.set(true);
           connection.shutdown();
         }
@@ -87,11 +88,11 @@ public class WebSocketConnectionTest extends TestCase {
                            @NotNull String parentMessageId) {
         if (myMessageId.equals(parentMessageId)) {
           final ArrayList<IpnbOutputCell> outputs = connection.getOutput();
-          assertEquals(outputs.size(), 1);
+          assertEquals(1, outputs.size());
           assertEquals(outputs.get(0).getClass(), IpnbOutOutputCell.class);
-          final String[] text = outputs.get(0).getText();
+          final List<String> text = outputs.get(0).getText();
           assertNotNull(text);
-          assertEquals("7", text[0]);
+          assertEquals("7", text.get(0));
           evaluated.set(true);
           connection.shutdown();
         }
