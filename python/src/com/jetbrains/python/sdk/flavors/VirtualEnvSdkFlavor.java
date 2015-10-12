@@ -75,6 +75,8 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
         VirtualFile condaFolder = userHome.findChild(root);
         addEnvsFolder(roots, condaFolder);
         if (SystemInfo.isWindows) {
+          final VirtualFile appData = userHome.findFileByRelativePath("AppData\\Local\\Continuum\\" + root);
+          addEnvsFolder(roots, appData);
           condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\" + root);
           addEnvsFolder(roots, condaFolder);
         }
