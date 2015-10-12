@@ -1118,7 +1118,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
     else {
-      createSpaceProperty(true, false, 0);
+      createSpaceProperty(true, mySettings.KEEP_LINE_BREAKS, 0);
     }
   }
 

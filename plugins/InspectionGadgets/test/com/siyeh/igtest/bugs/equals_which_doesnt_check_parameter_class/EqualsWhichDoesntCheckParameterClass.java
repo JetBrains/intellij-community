@@ -3,7 +3,7 @@ package com.siyeh.igtest.bugs.equals_which_doesnt_check_parameter;
 public class EqualsWhichDoesntCheckParameterClass {
     private int foo;
 
-    public boolean equals(Object o) {
+    public boolean <warning descr="'equals()' should check the class of its parameter">equals</warning>(Object o) {
         if (this == o) return true;
         //if (o instanceof EqualsWhichDoesntCheckParameterClassInspection) return false;
         //if (getClass() != o.getClass()) return false;
@@ -83,7 +83,7 @@ class Parent {
   private String parentField;
 
   public boolean equals(Object o) {
-    if (! getClass().isAssignableFrom(o.getClass()) {return false;}
+    if (! getClass().isAssignableFrom(o.getClass())) {return false;}
     return ((Parent)o).parentField.equals(parentField);
   }
 }

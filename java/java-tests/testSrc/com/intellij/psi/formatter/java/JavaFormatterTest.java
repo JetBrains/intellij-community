@@ -75,6 +75,23 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest("NullMethodParameter.java", "NullMethodParameter_after.java");
   }
+  
+  public void test_DoNot_JoinLines_If_KeepLineBreaksIsOn() {
+    getSettings().KEEP_LINE_BREAKS = true;
+    getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    doTextTest(
+      "public class Test<Param> {\n" +
+      "    @SuppressWarnings(\"unchecked\")\n" +
+      "        void executeParallel(Param... params) {\n" +
+      "    }\n" +
+      "}",
+      "public class Test<Param> {\n" +
+      "    @SuppressWarnings(\"unchecked\")\n" +
+      "    void executeParallel(Param... params) {\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 
   public void testNew() throws Exception {
     final CommonCodeStyleSettings settings = getSettings();

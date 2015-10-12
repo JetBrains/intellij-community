@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 import java.util.*;
-import java.util.stream.Collectors;
-
 import com.google.common.collect.FluentIterable;
 
 class A {
   int m1() {
     ArrayList<String> strings = new ArrayList<String>();
-    int size = strings.stream().map(s -> s + s).limit(10).collect(Collectors.toList()).size();
+    int size = (int) FluentIterable.from(strings).transform(s -> s + s).limit(10).count();
     return size
   }
 }

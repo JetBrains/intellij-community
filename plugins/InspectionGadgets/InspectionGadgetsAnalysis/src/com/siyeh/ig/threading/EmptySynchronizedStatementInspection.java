@@ -23,6 +23,7 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptySynchronizedStatementInspection extends BaseInspection {
@@ -57,11 +58,7 @@ public class EmptySynchronizedStatementInspection extends BaseInspection {
     public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
       final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return;
-      }
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length > 0) {
+      if (ControlFlowUtils.isEmptyCodeBlock(body)) {
         return;
       }
       registerStatementError(statement);

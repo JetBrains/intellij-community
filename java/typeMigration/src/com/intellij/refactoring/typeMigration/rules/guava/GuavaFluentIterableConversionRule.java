@@ -101,7 +101,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     DESCRIPTORS_MAP.put("first", new TypeConversionDescriptorFactory("$it$.first()", "$it$." + StreamApiConstants.FIND_FIRST + "()", false));
     DESCRIPTORS_MAP.put("firstMatch", new TypeConversionDescriptorFactory("$it$.firstMatch($p$)", "$it$.filter($p$).findFirst()", true, true, false));
     DESCRIPTORS_MAP.put("get", new TypeConversionDescriptorFactory("$it$.get($p$)", "$it$.collect(java.util.stream.Collectors.toList()).get($p$)", false));
-    DESCRIPTORS_MAP.put("size", new TypeConversionDescriptorFactory("$it$.size()", "$it$.collect(java.util.stream.Collectors.toList()).size()", false));
+    DESCRIPTORS_MAP.put("size", new TypeConversionDescriptorFactory("$it$.size()", "(int) $it$.count()", false));
 
     DESCRIPTORS_MAP.put("toMap", new TypeConversionDescriptorFactory("$it$.toMap($f$)",
                                                               "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))", false));
@@ -261,7 +261,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
 
     @Override
     public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
-      PsiMethodCallExpression toReturn = null;
+      PsiExpression toReturn = null;
       PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression) expression;
       final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(expression.getProject());
 
@@ -270,7 +270,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
         final SmartPsiElementPointer<PsiExpression> qualifierRef = oldQualifier == null
                                                                    ? null
                                                                    : smartPointerManager.createSmartPsiElementPointer(oldQualifier);
-        final PsiMethodCallExpression replaced = (PsiMethodCallExpression)descriptor.replace(methodCallExpression);
+        final PsiExpression replaced = descriptor.replace(methodCallExpression);
         if (toReturn == null) {
           toReturn = replaced;
         }

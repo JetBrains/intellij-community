@@ -181,7 +181,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
       jar("extensions.jar") { module("extensions")}
 
-      jar("idea.jar") {
+      jar([name: "idea.jar", duplicate: "preserve"]) {
         implementationModules.each { module it}
       }
 

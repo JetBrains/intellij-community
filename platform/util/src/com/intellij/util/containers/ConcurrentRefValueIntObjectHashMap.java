@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,17 @@ import java.lang.ref.ReferenceQueue;
 import java.util.*;
 
 /**
- * Base class for concurrent int key -> (weak/soft) value:V map
+ * Base class for concurrent key:int -> (weak/soft) value:V map
  * Null values are NOT allowed
  */
 abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   private final ConcurrentIntObjectMap<IntReference<V>> myMap = ContainerUtil.createConcurrentIntObjectMap();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
-  protected abstract IntReference<V> createReference(int key, @NotNull V value, ReferenceQueue<V> queue);
+  @NotNull
+  protected abstract IntReference<V> createReference(int key, @NotNull V value, @NotNull ReferenceQueue<V> queue);
 
-  protected interface IntReference<V> {
+  interface IntReference<V> {
     int getKey();
     V get();
   }
@@ -126,7 +127,7 @@ abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObj
       @Override
       public Iterator<ConcurrentIntObjectMap.IntEntry<V>> iterator() {
         return new Iterator<IntEntry<V>>() {
-          IntEntry<V> next = nextAliveEntry();
+          private IntEntry<V> next = nextAliveEntry();
           @Override
           public boolean hasNext() {
             return next != null;
@@ -197,7 +198,7 @@ abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObj
         return null;
       }
 
-      V next = findNextRef();
+      private V next = findNextRef();
 
       @Override
       public boolean hasMoreElements() {

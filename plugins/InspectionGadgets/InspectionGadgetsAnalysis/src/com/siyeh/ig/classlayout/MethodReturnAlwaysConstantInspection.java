@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodInheritanceUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -95,14 +96,7 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
 
   private static boolean alwaysReturnsConstant(PsiMethod method) {
     final PsiCodeBlock body = method.getBody();
-    if (body == null) {
-      return false;
-    }
-    final PsiStatement[] statements = body.getStatements();
-    if (statements.length != 1) {
-      return false;
-    }
-    final PsiStatement statement = statements[0];
+    final PsiStatement statement = ControlFlowUtils.getOnlyStatementInBlock(body);
     if (!(statement instanceof PsiReturnStatement)) {
       return false;
     }

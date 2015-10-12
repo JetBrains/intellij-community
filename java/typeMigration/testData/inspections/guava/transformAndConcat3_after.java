@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -8,7 +7,7 @@ class A {
     ArrayList<String> strings = new ArrayList<String>();
     Stream<String> it = strings.stream();
 
-    int i = it.flatMap(o -> {
+    int i = (int) it.flatMap(o -> {
         if ('a' > 2) {
             return StreamSupport.stream(getIterable().spliterator(), false);
         } else if ('c' < 123) {
@@ -17,7 +16,7 @@ class A {
             return strings1.stream();
         }
         return null;
-    }).collect(Collectors.toList()).size();
+    }).count();
 
   }
 

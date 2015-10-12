@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.Nullable;
 
 public class NonNlsUtils {
@@ -268,20 +269,11 @@ public class NonNlsUtils {
       return false;
     }
     method = (PsiMethod)navigationElement;
-    final PsiCodeBlock body = method.getBody();
-    if (body == null) {
-      return false;
-    }
-    final PsiStatement[] statements = body.getStatements();
-    if (statements.length == 0) {
-      return false;
-    }
-    final PsiStatement lastStatement = statements[statements.length - 1];
+    final PsiStatement lastStatement = ControlFlowUtils.getLastStatementInBlock(method.getBody());
     if (!(lastStatement instanceof PsiReturnStatement)) {
       return false;
     }
-    final PsiReturnStatement returnStatement =
-      (PsiReturnStatement)lastStatement;
+    final PsiReturnStatement returnStatement = (PsiReturnStatement)lastStatement;
     final PsiExpression returnValue = returnStatement.getReturnValue();
     return returnValue instanceof PsiThisExpression;
   }

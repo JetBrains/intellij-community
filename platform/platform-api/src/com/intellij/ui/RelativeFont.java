@@ -96,7 +96,25 @@ public final class RelativeFont implements PropertyChangeListener {
     if (font != null) {
       component.setFont(new MyFont(font));
     }
+    uninstallFrom(component);
     component.addPropertyChangeListener(PROPERTY, this);
+    return component;
+  }
+
+  /**
+   * Uninstalls all instances from the specified component.
+   * It just removes all the "font" property change listeners
+   * without any font modification.
+   *
+   * @param component the component to uninstall from
+   * @return the same component
+   */
+  public static <T extends Component> T uninstallFrom(T component) {
+    for (PropertyChangeListener listener : component.getPropertyChangeListeners(PROPERTY)) {
+      if (listener instanceof RelativeFont) {
+        component.removePropertyChangeListener(PROPERTY, listener);
+      }
+    }
     return component;
   }
 

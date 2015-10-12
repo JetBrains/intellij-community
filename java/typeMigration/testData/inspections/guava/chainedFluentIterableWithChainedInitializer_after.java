@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class A {
@@ -7,6 +6,6 @@ class A {
     ArrayList<String> strings = new ArrayList<String>();
     Stream<String> it = strings.stream().map(s -> s + s);
 
-    return it.skip(10).collect(Collectors.toList()).size();
+    return (int) it.skip(10).count();
   }
 }
