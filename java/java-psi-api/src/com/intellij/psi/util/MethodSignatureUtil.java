@@ -58,6 +58,11 @@ public class MethodSignatureUtil {
       }
     };
 
+  public static boolean areOverrideEquivalent(PsiMethod method1, PsiMethod method2) {
+    return method1.getTypeParameters().length == method2.getTypeParameters().length &&
+           areErasedParametersEqual(method1.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY));
+  }
+  
   public static boolean areErasedParametersEqual(@NotNull MethodSignature method1, @NotNull MethodSignature method2) {
     PsiType[] erased1 = method1 instanceof MethodSignatureBase
                         ? ((MethodSignatureBase)method1).getErasedParameterTypes() : calcErasedParameterTypes(method1);
