@@ -600,7 +600,7 @@ public class PsiUtilCore {
     return node == null ? null : node.getElementType();
   }
 
-  @Contract("null -> null;!null -> !null")
+  @Contract("null -> null")
   public static IElementType getElementType(@Nullable PsiElement element) {
     return element == null ? null : getElementType(element.getNode());
   }
