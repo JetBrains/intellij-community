@@ -48,22 +48,22 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction;
 import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -220,12 +220,13 @@ public class LineStatusTrackerDrawing {
     List<DiffFragment> wordDiff = computeWordDiff(range, tracker);
 
     installEditorHighlighters(range, editor, tracker, wordDiff, disposable);
-    Pair<JComponent, Integer> editorComponent = createEditorComponent(range, editor, tracker, wordDiff);
+    JComponent editorComponent = createEditorComponent(range, editor, tracker, wordDiff);
 
     ActionToolbar toolbar = buildToolbar(range, editor, tracker, mousePosition, disposable);
     toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
+    toolbar.setReservePlaceAutoPopupIcon(false);
 
-    PopupPanel popupPanel = new PopupPanel(editor, toolbar, editorComponent.first, editorComponent.second);
+    PopupPanel popupPanel = new PopupPanel(editor, toolbar, editorComponent);
 
     LightweightHint hint = new LightweightHint(popupPanel);
     HintListener closeListener = new HintListener() {
@@ -340,12 +341,12 @@ public class LineStatusTrackerDrawing {
     });
   }
 
-  @NotNull
-  private static Pair<JComponent, Integer> createEditorComponent(@NotNull Range range,
-                                                                 @NotNull Editor editor,
-                                                                 @NotNull LineStatusTracker tracker,
-                                                                 @Nullable List<DiffFragment> wordDiff) {
-    if (range.getType() == Range.INSERTED) return Pair.create(null, 0);
+  @Nullable
+  private static JComponent createEditorComponent(@NotNull Range range,
+                                                  @NotNull Editor editor,
+                                                  @NotNull LineStatusTracker tracker,
+                                                  @Nullable List<DiffFragment> wordDiff) {
+    if (range.getType() == Range.INSERTED) return null;
 
     DocumentEx doc = (DocumentEx)tracker.getVcsDocument();
     EditorEx uEditor = (EditorEx)EditorFactory.getInstance().createViewer(doc, tracker.getProject());
@@ -371,11 +372,10 @@ public class LineStatusTrackerDrawing {
 
     JComponent fragmentComponent =
       EditorFragmentComponent.createEditorFragmentComponent(uEditor, range.getVcsLine1(), range.getVcsLine2(), false, false);
-    int leftBorder = fragmentComponent.getBorder().getBorderInsets(fragmentComponent).left;
 
     EditorFactory.getInstance().releaseEditor(uEditor);
 
-    return Pair.create(fragmentComponent, leftBorder);
+    return fragmentComponent;
   }
 
   private static String getFileName(final Document document) {
@@ -490,37 +490,48 @@ public class LineStatusTrackerDrawing {
 
   private static class PopupPanel extends JPanel {
     private final JComponent myEditorComponent;
-    private final int myEditorLeftBorder;
 
     public PopupPanel(@NotNull final Editor editor,
                       @NotNull ActionToolbar toolbar,
-                      @Nullable JComponent editorComponent,
-                      int editorLeftBorder) {
+                      @Nullable JComponent editorComponent) {
       super(new BorderLayout());
       setOpaque(false);
 
       myEditorComponent = editorComponent;
-      myEditorLeftBorder = editorLeftBorder;
+      boolean isEditorVisible = myEditorComponent != null;
 
       Color background = ((EditorEx)editor).getBackgroundColor();
-      Color foreground = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
+      Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
 
       JComponent toolbarComponent = toolbar.getComponent();
       toolbarComponent.setBackground(background);
-      boolean isEditorVisible = editorComponent != null;
-      toolbarComponent.setBorder(new ColoredSideBorder(foreground, foreground, isEditorVisible ? null : foreground, foreground, 1));
+      toolbarComponent.setBorder(null);
+
+      JComponent toolbarPanel = JBUI.Panels.simplePanel(toolbarComponent);
+      toolbarPanel.setBackground(background);
+      Border outsideToolbarBorder = JBUI.Borders.customLine(borderColor, 1, 1, isEditorVisible ? 0 : 1, 1);
+      Border insideToolbarBorder = JBUI.Borders.empty(1, 5, 1, 5);
+      toolbarPanel.setBorder(BorderFactory.createCompoundBorder(outsideToolbarBorder, insideToolbarBorder));
+
+      if (myEditorComponent != null) {
+        // default border of EditorFragmentComponent is replaced here with our own.
+        Border outsideEditorBorder = JBUI.Borders.customLine(borderColor, 1);
+        Border insideEditorBorder = JBUI.Borders.empty(2);
+        myEditorComponent.setBorder(BorderFactory.createCompoundBorder(outsideEditorBorder, insideEditorBorder));
+      }
 
       // 'empty space' to the right of toolbar
       JPanel emptyPanel = new JPanel();
       emptyPanel.setOpaque(false);
+      emptyPanel.setPreferredSize(new Dimension());
 
-      JPanel toolbarPanel = new JPanel(new BorderLayout());
-      toolbarPanel.setOpaque(false);
-      toolbarPanel.add(toolbarComponent, BorderLayout.WEST);
-      toolbarPanel.add(emptyPanel, BorderLayout.CENTER);
+      JPanel topPanel = new JPanel(new BorderLayout());
+      topPanel.setOpaque(false);
+      topPanel.add(toolbarPanel, BorderLayout.WEST);
+      topPanel.add(emptyPanel, BorderLayout.CENTER);
 
-      add(toolbarPanel, BorderLayout.NORTH);
-      if (editorComponent != null) add(editorComponent, BorderLayout.CENTER);
+      add(topPanel, BorderLayout.NORTH);
+      if (myEditorComponent != null) add(myEditorComponent, BorderLayout.CENTER);
 
       // transfer clicks into editor
       MouseAdapter listener = new MouseAdapter() {
@@ -546,7 +557,7 @@ public class LineStatusTrackerDrawing {
     }
 
     public int getEditorTextOffset() {
-      return myEditorLeftBorder;
+      return 3;
     }
   }
 }
