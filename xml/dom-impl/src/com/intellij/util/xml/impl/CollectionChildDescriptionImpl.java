@@ -16,15 +16,14 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +31,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Type;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -40,17 +38,6 @@ import java.util.List;
  */
 public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl implements DomCollectionChildDescription, AbstractCollectionChildDescription {
   private final Collection<JavaMethod> myGetterMethods;
-  private final NotNullFunction<DomInvocationHandler, List<XmlTag>> myTagsGetter = new NotNullFunction<DomInvocationHandler, List<XmlTag>>() {
-    @Override
-    @NotNull
-    public List<XmlTag> fun(final DomInvocationHandler handler) {
-      XmlTag tag = handler.getXmlTag();
-      if (tag == null) {
-        return Collections.emptyList();
-      }
-      return DomImplUtil.findSubTags(tag, handler.createEvaluatedXmlName(getXmlName()), handler.getFile());
-    }
-  };
 
   public CollectionChildDescriptionImpl(final XmlName tagName, final Type type, final Collection<JavaMethod> getterMethods) {
     super(tagName, type);
@@ -62,8 +49,8 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return "CollectionChildDescription:" + getXmlName();
   }
 
-  public NotNullFunction<DomInvocationHandler, List<XmlTag>> getTagsGetter() {
-    return myTagsGetter;
+  List<XmlTag> getCollectionSubTags(DomInvocationHandler<?,?> handler, @NotNull XmlTag tag) {
+    return DomImplUtil.findSubTags(tag, handler.createEvaluatedXmlName(getXmlName()), handler.getFile());
   }
 
   @Override
@@ -108,9 +95,9 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   @Override
   @NotNull
   public List<? extends DomElement> getValues(@NotNull final DomElement element) {
-    final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
+    final DomInvocationHandler<?,?> handler = DomManagerImpl.getDomInvocationHandler(element);
     if (handler != null) {
-      return handler.getCollectionChildren(this, myTagsGetter);
+      return handler.getCollectionChildren(this);
     }
     final JavaMethod getterMethod = getGetterMethod();
     if (getterMethod == null) {
@@ -118,12 +105,13 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
       return ContainerUtil.concat(collection, new Function<DomElement, Collection<? extends DomElement>>() {
         @Override
         public Collection<? extends DomElement> fun(final DomElement domElement) {
-          final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(domElement);
+          final DomInvocationHandler<?,?> handler = DomManagerImpl.getDomInvocationHandler(domElement);
           assert handler != null : domElement;
-          return handler.getCollectionChildren(CollectionChildDescriptionImpl.this, myTagsGetter);
+          return handler.getCollectionChildren(CollectionChildDescriptionImpl.this);
         }
       });
     }
+    //noinspection unchecked
     return (List<? extends DomElement>)getterMethod.invoke(element, ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
