@@ -275,7 +275,6 @@ public class CodeFormatterFacade {
       List<DocumentWindow> injectedDocuments = InjectedLanguageUtil.getCachedInjectedDocuments(file);
       if (!injectedDocuments.isEmpty()) {
         for (DocumentWindow injectedDocument : injectedDocuments) {
-          if (injectedDocument.getHostRanges().length > 1) continue;
           injectedFileRangesSet.add(TextRange.from(injectedDocument.injectedToHost(0), injectedDocument.getTextLength()));
         }
       }

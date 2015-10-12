@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -37,7 +38,8 @@ public class FormatCommentsProcessor implements PreFormatProcessor {
     assert e != null;
     final Project project = e.getProject();
     if (!CodeStyleSettingsManager.getSettings(project).ENABLE_JAVADOC_FORMATTING ||
-        element.getPsi().getContainingFile().getLanguage() != JavaLanguage.INSTANCE)
+        element.getPsi().getContainingFile().getLanguage() != JavaLanguage.INSTANCE
+        || InjectedLanguageManager.getInstance(project).isInjectedFragment(element.getPsi().getContainingFile()))
     {
       return range;
     }
