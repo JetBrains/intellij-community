@@ -515,7 +515,7 @@ public class ControlFlowUtils {
     return hasChildrenOfTypeCount(codeBlock, count, PsiStatement.class);
   }
 
-  private static <T extends PsiElement> boolean hasChildrenOfTypeCount(@Nullable PsiElement element, int count, @NotNull Class<T> aClass) {
+  static <T extends PsiElement> boolean hasChildrenOfTypeCount(@Nullable PsiElement element, int count, @NotNull Class<T> aClass) {
     if (element == null) return false;
     int i = 0;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
