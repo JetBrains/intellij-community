@@ -21,6 +21,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
@@ -44,6 +45,7 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 
 public class DeferredIconImpl<T> implements DeferredIcon {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.DeferredIconImpl");
   private static final int MIN_AUTO_UPDATE_MILLIS = 950;
   private static final RepaintScheduler ourRepaintScheduler = new RepaintScheduler();
   @NotNull
@@ -81,6 +83,19 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     myNeedReadAction = needReadAction;
     myEvalListener = listener;
     myAutoUpdatable = autoUpdatable;
+    checkDelegationDepth();
+  }
+
+  private void checkDelegationDepth() {
+    int depth = 0;
+    DeferredIconImpl each = this;
+    while (each.myDelegateIcon instanceof DeferredIconImpl && depth < 50) {
+      depth++;
+      each = (DeferredIconImpl)each.myDelegateIcon;
+    }
+    if (depth >= 50) {
+      LOG.error("Too deep deferred icon nesting");
+    }
   }
 
   @NotNull
@@ -144,6 +159,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
         }
         final Icon result = evaluated[0];
         myDelegateIcon = result;
+        checkDelegationDepth();
 
         final boolean shouldRevalidate =
           Registry.is("ide.tree.deferred.icon.invalidates.cache") && myDelegateIcon.getIconWidth() != oldWidth;
