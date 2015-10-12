@@ -48,8 +48,8 @@ public class JsonParserTest extends TestCase {
     assertEquals(1, cells.size());
     final IpnbCell cell = cells.get(0);
     assertTrue(cell instanceof IpnbMarkdownCell);
-    final String[] source = ((IpnbMarkdownCell)cell).getSource();
-    final String joined = StringUtil.join(source);
+    final List<String> source = ((IpnbMarkdownCell)cell).getSource();
+    final String joined = StringUtil.join(source, "");
     assertEquals("<img src=\"images/ipython_logo.png\">", joined);
   }
 
@@ -64,8 +64,8 @@ public class JsonParserTest extends TestCase {
     assertTrue(cell instanceof IpnbCodeCell);
     final List<IpnbOutputCell> outputs = ((IpnbCodeCell)cell).getCellOutputs();
     assertEquals(0, outputs.size());
-    final String[] source = ((IpnbCodeCell)cell).getSource();
-    final String joined = StringUtil.join(source);
+    final List<String> source = ((IpnbCodeCell)cell).getSource();
+    final String joined = StringUtil.join(source, "");
     assertEquals("e = x + 2*y", joined);
     final String language = ((IpnbCodeCell)cell).getLanguage();
     assertEquals("python", language);
@@ -85,8 +85,8 @@ public class JsonParserTest extends TestCase {
     final List<IpnbOutputCell> outputs = ((IpnbCodeCell)cell).getCellOutputs();
     assertEquals(1, outputs.size());
     final IpnbOutputCell output = outputs.get(0);
-    final String[] text = output.getText();
-    final String joined = StringUtil.join(text);
+    final List<String> text = output.getText();
+    final String joined = StringUtil.join(text, "");
     assertEquals("\"Add(Symbol('x'), Mul(Integer(2), Symbol('y')))\"", joined);
   }
 

@@ -38,6 +38,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, Disposable {
@@ -178,7 +179,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   public void createAndAddCell(final boolean below) {
-    final IpnbCodeCell cell = new IpnbCodeCell("python", new String[]{""}, null, new ArrayList<IpnbOutputCell>());
+    final IpnbCodeCell cell = new IpnbCodeCell("python", Collections.<String>emptyList(), null, new ArrayList<IpnbOutputCell>());
     final IpnbCodePanel codePanel = new IpnbCodePanel(myProject, myParent, cell);
 
     addCell(codePanel, below);

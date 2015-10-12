@@ -12,6 +12,7 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import java.awt.*;
+import java.util.List;
 
 public class IpnbErrorPanel extends IpnbCodeOutputPanel<IpnbErrorOutputCell> {
   public IpnbErrorPanel(@NotNull final IpnbErrorOutputCell cell) {
@@ -20,10 +21,10 @@ public class IpnbErrorPanel extends IpnbCodeOutputPanel<IpnbErrorOutputCell> {
 
   @Override
   protected JComponent createViewPanel() {
-    final String[] text = myCell.getText();
+    final List<String> text = myCell.getText();
     if (text == null) return new JLabel();
     ColorPane ansiColoredPane = new ColorPane();
-    ansiColoredPane.appendANSI(StringUtil.join(text));
+    ansiColoredPane.appendANSI(StringUtil.join(text, ""));
     ansiColoredPane.setBackground(IpnbEditorUtil.getBackground());
     ansiColoredPane.setEditable(false);
     return ansiColoredPane;
