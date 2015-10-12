@@ -577,11 +577,12 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
     }
 
     final StubElement parentStub = stub.getParentStub();
-    if (!(parentStub instanceof StubBasedPsiElementBase)) {
+    PsiElement psi = parentStub.getPsi();
+    if (!(psi instanceof StubBasedPsiElementBase)) {
       LOG.error(stub + " parent is " + parentStub);
       return null;
     }
-    final StubBasedPsiElementBase<?> context = (StubBasedPsiElementBase)parentStub.getPsi();
+    final StubBasedPsiElementBase<?> context = (StubBasedPsiElementBase)psi;
     @SuppressWarnings("unchecked")
     PsiClass[] classesInScope = (PsiClass[])parentStub.getChildrenByType(Constants.CLASS_BIT_SET, PsiClass.ARRAY_FACTORY);
 
