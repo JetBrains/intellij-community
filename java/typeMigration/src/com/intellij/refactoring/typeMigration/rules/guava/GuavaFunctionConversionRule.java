@@ -15,13 +15,8 @@
  */
 package com.intellij.refactoring.typeMigration.rules.guava;
 
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
-import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -33,7 +28,7 @@ public class GuavaFunctionConversionRule extends BaseGuavaTypeConversionRule {
 
   @Override
   protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {
-    descriptorsMap.put("apply", new TypeConversionDescriptorBase());
+    descriptorsMap.put("apply", new FunctionalInterfaceTypeConversionDescriptor("apply", "apply"));
   }
 
   @NotNull

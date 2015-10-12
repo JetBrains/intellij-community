@@ -105,6 +105,31 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTestNoQuickFixes(GuavaInspection.MigrateFluentIterableChainQuickFix.class);
   }
 
+  public void testRemoveMethodReferenceForFunctionalInterfaces() {
+    doTest();
+  }
+
+  //needs Guava 18.0 as dependency
+  public void _testChainedFluentIterableWithOf() {
+    doTest();
+  }
+
+  public void testChainContainsStopMethods() {
+    doTestNoQuickFixes(GuavaInspection.MigrateFluentIterableChainQuickFix.class);
+  }
+
+  public void testFluentIterableAndOptionalChain() {
+    doTest();
+  }
+
+  public void testCopyInto() {
+    doTest();
+  }
+
+  public void testToArray() {
+    doTest();
+  }
+
   private void doTestNoQuickFixes(final Class<? extends IntentionAction>... quickFixesClasses) {
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.enableInspections(new GuavaInspection());

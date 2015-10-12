@@ -33,6 +33,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
   private final static Logger LOG = Logger.getInstance(GuavaOptionalConversionRule.class);
 
   public final static String GUAVA_OPTIONAL = "com.google.common.base.Optional";
+  public final static String JAVA_OPTIONAL = "java.util.Optional";
 
   @Nullable
   @Override
@@ -53,7 +54,8 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
           return new TypeConversionDescriptor("$expr$", pattern);
         }
         return null;
-      } else if (context.getParent() instanceof PsiMethodCallExpression) {
+      }
+      else if (context.getParent() instanceof PsiMethodCallExpression) {
         methodCallExpression = (PsiMethodCallExpression)context.getParent();
       }
       if (methodCallExpression == null) {
@@ -70,8 +72,9 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
           }
           return descriptor;
         }
-        String pattern = GuavaSupplierConversionRule.GUAVA_SUPPLIER.equals(qName) ? "$val$.orElseGet($other$)" : "$val$.orElse($other$)";
-        return new LambdaParametersTypeConversionDescriptor("$val$.or($other$)", pattern);
+        return GuavaSupplierConversionRule.GUAVA_SUPPLIER.equals(qName)
+               ? new LambdaParametersTypeConversionDescriptor("$val$.or($other$)", "$val$.orElseGet($other$)")
+               : new TypeConversionDescriptor("$val$.or($other$)", "$val$.orElse($other$)");
       }
       return null;
     }
@@ -121,12 +124,12 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
   @NotNull
   @Override
   public String ruleFromClass() {
-    return "com.google.common.base.Optional";
+    return GUAVA_OPTIONAL;
   }
 
   @NotNull
   @Override
   public String ruleToClass() {
-    return "java.util.Optional";
+    return JAVA_OPTIONAL;
   }
 }

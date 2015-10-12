@@ -15,20 +15,12 @@
  */
 package com.intellij.refactoring.typeMigration.rules.guava;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
-import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
-import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+/**
 /**
  * @author Dmitry Batkovich
  */
@@ -37,7 +29,7 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
 
   @Override
   protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {
-    descriptorsMap.put("apply", new TypeConversionDescriptor("$q$.apply($o$)", "$q$.test($o$)"));
+    descriptorsMap.put("apply", new FunctionalInterfaceTypeConversionDescriptor("apply", "test"));
   }
 
   @NotNull

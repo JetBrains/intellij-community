@@ -34,6 +34,7 @@ import com.intellij.refactoring.typeMigration.rules.guava.BaseGuavaTypeConversio
 import com.intellij.refactoring.typeMigration.rules.guava.GuavaFluentIterableConversionRule;
 import com.intellij.refactoring.typeMigration.rules.guava.GuavaFunctionConversionRule;
 import com.intellij.refactoring.typeMigration.rules.guava.GuavaOptionalConversionRule;
+import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -44,16 +45,27 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
  */
 @SuppressWarnings("DialogTitleCapitalization")
-public class GuavaInspection extends BaseJavaLocalInspectionTool {
+//TODO it is not batch inspection
+//public class GuavaInspection extends BaseJavaLocalInspectionTool {
+public class GuavaInspection extends BaseJavaBatchLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(GuavaInspection.class);
 
   private final static String PROBLEM_DESCRIPTION_FOR_VARIABLE = "Guava's functional primitives can be replaced by Java API";
   private final static String PROBLEM_DESCRIPTION_FOR_METHOD_CHAIN = "Guava's FluentIterable method chain can be replaced by Java API";
+
+  private final static SoftLazyValue<Set<String>> FLUENT_ITERABLE_STOP_METHODS = new SoftLazyValue<Set<String>>() {
+    @NotNull
+    @Override
+    protected Set<String> compute() {
+      return ContainerUtil.newHashSet("append", "cycle", "uniqueIndex", "index");
+    }
+  };
 
   @NotNull
   @Override
@@ -109,6 +121,9 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         if (!isFluentIterableFromCall(expression)) return;
 
         final PsiMethodCallExpression chain = findGuavaMethodChain(expression);
+        if (chain == null) {
+          return;
+        }
 
         final PsiElement maybeLocalVariable = chain.getParent();
         if (maybeLocalVariable instanceof PsiLocalVariable) {
@@ -132,7 +147,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
 
       private boolean isFluentIterableFromCall(PsiMethodCallExpression expression) {
         PsiMethod method = expression.resolveMethod();
-        if (method == null || !"from".equals(method.getName())) {
+        if (method == null || !GuavaFluentIterableConversionRule.CHAIN_HEAD_METHODS.contains(method.getName())) {
           return false;
         }
         PsiClass aClass = method.getContainingClass();
@@ -147,6 +162,9 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
             final PsiMethod method = current.resolveMethod();
             if (method == null) {
               return chain;
+            }
+            if (FLUENT_ITERABLE_STOP_METHODS.getValue().contains(method.getName())) {
+              return null;
             }
             final PsiClass containingClass = method.getContainingClass();
             if (containingClass == null || ! (GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(containingClass.getQualifiedName())

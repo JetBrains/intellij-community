@@ -19,11 +19,20 @@ import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.codeInspection.java18StreamApi.StreamApiConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
+import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.types.ReplaceMethodRefWithLambdaIntention;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +45,67 @@ import java.util.List;
  */
 public class FluentIterableConversionUtil {
   private final static Logger LOG = Logger.getInstance(FluentIterableConversionUtil.class);
+
+  static class CopyIntoDescriptor extends TypeConversionDescriptor {
+    public CopyIntoDescriptor() {
+      super("$it$.copyInto($c$)", "$it$.forEach(($c$)::add)");
+    }
+
+    @Override
+    public PsiExpression replace(PsiExpression expression) {
+
+      //TODO check parenthesis
+
+      return super.replace(expression);
+    }
+  }
+
+  @Nullable
+  static TypeConversionDescriptor getToArrayDescriptor(PsiType initialType, PsiExpression expression) {
+    if (!(initialType instanceof PsiClassType)) {
+      return null;
+    }
+    final PsiType[] parameters = ((PsiClassType)initialType).getParameters();
+    if (parameters.length != 1) {
+      return null;
+    }
+    final PsiElement methodCall = expression.getParent();
+    if (!(methodCall instanceof PsiMethodCallExpression)) {
+      return null;
+    }
+
+    final PsiExpression[] expressions = ((PsiMethodCallExpression)methodCall).getArgumentList().getExpressions();
+    if (expressions.length != 1) {
+      return null;
+    }
+    final PsiExpression classTypeExpression = expressions[0];
+    final PsiType targetType = classTypeExpression.getType();
+    if (!(targetType instanceof PsiClassType)) {
+      return null;
+    }
+    final PsiType[] targetParameters = ((PsiClassType)targetType).getParameters();
+    if (targetParameters.length != 1) {
+      return null;
+    }
+    if (PsiTypesUtil.compareTypes(parameters[0], targetParameters[0], false)) {
+      return new TypeConversionDescriptor("$q$.toArray($type$)", null) {
+        PsiType myType = parameters[0];
+
+        @Override
+        public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
+          final UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
+          final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
+          final String name = codeStyleManager.suggestUniqueVariableName(
+            codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, PsiType.INT).names[0], expression, false);
+          final String chosenName = nameGenerator.generateUniqueName(name);
+          setReplaceByString("$q$.toArray(" + chosenName + " -> " + " new " + myType.getCanonicalText(false) + "[" + chosenName + "])");
+
+          return super.replace(expression);
+        }
+      };
+    }
+    return null;
+  }
 
   @Nullable
   static TypeConversionDescriptor getFilterDescriptor(PsiMethod method) {
@@ -167,6 +237,7 @@ public class FluentIterableConversionUtil {
       return super.replace(expression);
     }
   }
+
 
 
 }

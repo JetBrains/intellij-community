@@ -420,6 +420,9 @@ public class TypeMigrationLabeler {
       //TODO conversion of lambda expression now works incorrectly [Dmitry Batkovich]
       return;
     }
+    else if (expr instanceof PsiConditionalExpression) {
+      return;
+    }
     
     convertExpression(expr, migrationType, originalType, isCovariant);
   }
