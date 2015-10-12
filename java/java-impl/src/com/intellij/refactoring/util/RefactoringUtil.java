@@ -56,7 +56,6 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import com.siyeh.ipp.types.ExpandOneLineLambda2CodeBlockIntention;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -263,6 +262,7 @@ public class RefactoringUtil {
     if (parent == null) parent = place;
     while (true) {
       if (isExpressionAnchorElement(parent)) return parent;
+      if (parent instanceof PsiExpression && parent.getParent() instanceof PsiLambdaExpression) return parent;
       parent = parent.getParent();
       if (parent == null) return null;
     }
