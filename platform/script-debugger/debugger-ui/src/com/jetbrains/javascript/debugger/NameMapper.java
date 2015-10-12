@@ -13,114 +13,90 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.javascript.debugger;
+package com.jetbrains.javascript.debugger
 
-import com.google.common.base.CharMatcher;
-import com.intellij.openapi.editor.Document;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
-import gnu.trove.THashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.sourcemap.MappingEntry;
-import org.jetbrains.debugger.sourcemap.MappingList;
-import org.jetbrains.debugger.sourcemap.SourceMap;
+import com.google.common.base.CharMatcher
+import com.intellij.openapi.editor.Document
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNamedElement
+import gnu.trove.THashMap
+import org.jetbrains.debugger.sourcemap.MappingEntry
+import org.jetbrains.debugger.sourcemap.MappingList
+import org.jetbrains.debugger.sourcemap.SourceMap
 
-import java.util.Map;
+import org.jetbrains.rpc.CommandProcessor.LOG
 
-import static org.jetbrains.rpc.CommandProcessor.LOG;
-
-public class NameMapper {
-  public static final String S1 = ",()[]{}=";
-  protected static final CharMatcher NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"));
-  // don't trim trailing .&: - could be part of expression
-  private static final CharMatcher OPERATOR_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1));
-
-  private final Document document;
-  private final Document generatedDocument;
-  private final MappingList sourceMappings;
-  private final SourceMap sourceMap;
-
-  private Map<String, String> rawNameToSource;
-
-  public NameMapper(@NotNull Document document, @NotNull Document generatedDocument, @NotNull MappingList sourceMappings, @NotNull SourceMap sourceMap) {
-    this.document = document;
-    this.generatedDocument = generatedDocument;
-    this.sourceMappings = sourceMappings;
-    this.sourceMap = sourceMap;
-  }
-
-  @Nullable
-  public Map<String, String> getRawNameToSource() {
-    return rawNameToSource;
-  }
+open class NameMapper(private val document: Document, private val generatedDocument: Document, private val sourceMappings: MappingList, private val sourceMap: SourceMap) {
+  var rawNameToSource: MutableMap<String, String>? = null
+    private set
 
   // PsiNamedElement, JSVariable for example
   // returns generated name
-  @Nullable
-  public String map(@NotNull PsiElement identifierOrNamedElement) {
-    int offset = identifierOrNamedElement.getTextOffset();
-    int line = document.getLineNumber(offset);
+  fun map(identifierOrNamedElement: PsiElement): String? {
+    val offset = identifierOrNamedElement.textOffset
+    val line = document.getLineNumber(offset)
 
-    int sourceEntryIndex = sourceMappings.indexOf(line, offset - document.getLineStartOffset(line));
+    val sourceEntryIndex = sourceMappings.indexOf(line, offset - document.getLineStartOffset(line))
     if (sourceEntryIndex == -1) {
-      return null;
+      return null
     }
 
-    MappingEntry sourceEntry = sourceMappings.get(sourceEntryIndex);
-    MappingEntry next = sourceMappings.getNextOnTheSameLine(sourceEntryIndex, false);
+    val sourceEntry = sourceMappings.get(sourceEntryIndex)
+    val next = sourceMappings.getNextOnTheSameLine(sourceEntryIndex, false)
     if (next != null && sourceMappings.getColumn(next) == sourceMappings.getColumn(sourceEntry)) {
-      warnSeveralMapping(identifierOrNamedElement);
-      return null;
+      warnSeveralMapping(identifierOrNamedElement)
+      return null
     }
 
-    String sourceEntryName = sourceEntry.getName();
-    String generatedName = extractName(getGeneratedName(generatedDocument, sourceMap, sourceEntry));
+    val sourceEntryName = sourceEntry.name
+    val generatedName = extractName(getGeneratedName(generatedDocument, sourceMap, sourceEntry))
     if (!generatedName.isEmpty()) {
-      String sourceName = sourceEntryName;
+      var sourceName: String? = sourceEntryName
       if (sourceName == null) {
-        sourceName = identifierOrNamedElement instanceof PsiNamedElement ? ((PsiNamedElement)identifierOrNamedElement).getName() : identifierOrNamedElement.getText();
+        sourceName = if (identifierOrNamedElement is PsiNamedElement) identifierOrNamedElement.name else identifierOrNamedElement.text
         if (sourceName == null) {
-          return null;
+          return null
         }
       }
 
       if (rawNameToSource == null) {
-        rawNameToSource = new THashMap<String, String>();
+        rawNameToSource = THashMap<String, String>()
       }
-      rawNameToSource.put(generatedName, sourceName);
-      return generatedName;
+      rawNameToSource!!.put(generatedName, sourceName)
+      return generatedName
     }
-    return null;
+    return null
   }
 
-  public static void warnSeveralMapping(@NotNull PsiElement element) {
-    // see https://dl.dropboxusercontent.com/u/43511007/s/Screen%20Shot%202015-01-21%20at%2020.33.44.png
-    // var1 mapped to the whole "var c, notes, templates, ..." expression text + unrelated text "   ;"
-    LOG.warn("incorrect sourcemap, several mappings for named element " + element.getText());
-  }
+  protected open fun extractName(rawGeneratedName: CharSequence) = NAME_TRIMMER.trimFrom(rawGeneratedName)
 
-  @NotNull
-  public static String trimName(@NotNull CharSequence rawGeneratedName, boolean isLastToken) {
-    return (isLastToken ? NAME_TRIMMER : OPERATOR_TRIMMER).trimFrom(rawGeneratedName);
-  }
+  companion object {
+    private val S1 = ",()[]{}="
+    protected val NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"))
+    // don't trim trailing .&: - could be part of expression
+    private val OPERATOR_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1))
 
-  @NotNull
-  protected String extractName(@NotNull CharSequence rawGeneratedName) {
-    return NAME_TRIMMER.trimFrom(rawGeneratedName);
-  }
-
-  @NotNull
-  private static CharSequence getGeneratedName(@NotNull Document document, @NotNull SourceMap sourceMap, @NotNull MappingEntry sourceEntry) {
-    int lineStartOffset = document.getLineStartOffset(sourceEntry.getGeneratedLine());
-    MappingEntry nextGeneratedMapping = sourceMap.getMappings().getNextOnTheSameLine(sourceEntry);
-    int endOffset;
-    if (nextGeneratedMapping == null) {
-      endOffset = document.getLineEndOffset(sourceEntry.getGeneratedLine());
+    fun warnSeveralMapping(element: PsiElement) {
+      // see https://dl.dropboxusercontent.com/u/43511007/s/Screen%20Shot%202015-01-21%20at%2020.33.44.png
+      // var1 mapped to the whole "var c, notes, templates, ..." expression text + unrelated text "   ;"
+      LOG.warn("incorrect sourcemap, several mappings for named element " + element.text)
     }
-    else {
-      endOffset = lineStartOffset + nextGeneratedMapping.getGeneratedColumn();
+
+    fun trimName(rawGeneratedName: CharSequence, isLastToken: Boolean): String {
+      return (if (isLastToken) NAME_TRIMMER else OPERATOR_TRIMMER).trimFrom(rawGeneratedName)
     }
-    return document.getImmutableCharSequence().subSequence(lineStartOffset + sourceEntry.getGeneratedColumn(), endOffset);
   }
+}
+
+private fun getGeneratedName(document: Document, sourceMap: SourceMap, sourceEntry: MappingEntry): CharSequence {
+  val lineStartOffset = document.getLineStartOffset(sourceEntry.generatedLine)
+  val nextGeneratedMapping = sourceMap.mappings.getNextOnTheSameLine(sourceEntry)
+  val endOffset: Int
+  if (nextGeneratedMapping == null) {
+    endOffset = document.getLineEndOffset(sourceEntry.generatedLine)
+  }
+  else {
+    endOffset = lineStartOffset + nextGeneratedMapping.generatedColumn
+  }
+  return document.immutableCharSequence.subSequence(lineStartOffset + sourceEntry.generatedColumn, endOffset)
 }
