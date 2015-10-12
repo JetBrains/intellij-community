@@ -94,7 +94,6 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
     myEnumerator.close();
     myThreadPool.shutdown();
     assertTrue(myThreadPool.awaitTermination(100, TimeUnit.SECONDS));
-    FileUtil.delete(myTempDirectory);
   }
 
   public void testReadWrite() throws Exception {
