@@ -337,7 +337,13 @@ public class TypeMigrationLabeler {
     }
 
     if (expr instanceof PsiConditionalExpression) {
-
+      final PsiConditionalExpression condExpr = (PsiConditionalExpression)expr;
+      for (PsiExpression e : ContainerUtil.newArrayList(condExpr.getThenExpression(), condExpr.getElseExpression())) {
+        if (e != null) {
+          migrateExpressionType(e, migrationType, place, alreadyProcessed, false);
+        }
+      }
+      getTypeEvaluator().setType(new TypeMigrationUsageInfo(expr), migrationType);
     } else if (expr instanceof PsiClassObjectAccessExpression) {
       if (!TypeConversionUtil.isAssignable(migrationType, expr.getType())) {
         markFailedConversion(Pair.create(expr.getType(), migrationType), expr);
