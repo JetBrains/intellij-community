@@ -344,16 +344,16 @@ class HTMLTextPainter {
     writer.write("<style type=\"text/css\">\n");
     writer.write(".ln { color: rgb(0,0,0); font-weight: normal; font-style: normal; }\n");
     HighlighterIterator hIterator = myHighlighter.createIterator(myOffset);
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     while(!hIterator.atEnd()) {
       TextAttributes textAttributes = hIterator.getTextAttributes();
       if (!myStyleMap.containsKey(textAttributes)) {
         @NonNls String styleName = "s" + myStyleMap.size();
         myStyleMap.put(textAttributes, styleName);
         writer.write("." + styleName + " { ");
-        final Color foreColor = textAttributes.getForegroundColor();
-        if (foreColor != null) {
-          writer.write("color: " + colorToHtml(foreColor) + "; ");
-        }
+        Color foreColor = textAttributes.getForegroundColor();
+        if (foreColor == null) foreColor = scheme.getDefaultForeground();
+        writer.write("color: " + colorToHtml(foreColor) + "; ");
         if ((textAttributes.getFontType() & Font.BOLD) != 0) {
           writer.write("font-weight: bold; ");
         }
