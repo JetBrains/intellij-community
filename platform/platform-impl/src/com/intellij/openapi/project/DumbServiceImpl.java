@@ -181,7 +181,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       return;
     }
 
-    UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
+    invokeLaterIfNeeded(application, new DumbAwareRunnable() {
       @Override
       public void run() {
         if (myProject.isDisposed()) {
@@ -245,6 +245,15 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         }
       }
     });
+  }
+
+  private static void invokeLaterIfNeeded(Application application, DumbAwareRunnable runnable) {
+    if (application.isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      application.invokeLater(runnable, ModalityState.any());
+    }
   }
 
   @Nullable
