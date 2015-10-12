@@ -338,17 +338,11 @@ class VariableView(name: String, private val variable: Variable, private val con
     }
   }
 
-  override fun getEvaluateContext(): EvaluateContext {
-    return context.evaluateContext
-  }
+  override fun getEvaluateContext() = context.evaluateContext
 
-  fun getValue(): Value? {
-    return variable.value
-  }
+  fun getValue() = variable.value
 
-  override fun canNavigateToSource(): Boolean {
-    return value is FunctionValue || viewSupport.canNavigateToSource(variable, context)
-  }
+  override fun canNavigateToSource() = value is FunctionValue || viewSupport.canNavigateToSource(variable, context)
 
   override fun computeSourcePosition(navigatable: XNavigatable) {
     if (value is FunctionValue) {
@@ -403,9 +397,7 @@ class VariableView(name: String, private val variable: Variable, private val con
     }
   }
 
-  override fun computeInlineDebuggerData(callback: XInlineDebuggerDataCallback): ThreeState {
-    return viewSupport.computeInlineDebuggerData(name, variable, context, callback)
-  }
+  override fun computeInlineDebuggerData(callback: XInlineDebuggerDataCallback) = viewSupport.computeInlineDebuggerData(name, variable, context, callback)
 
   override fun getEvaluationExpression(): String? {
     if (!watchableAsEvaluationExpression()) {
@@ -422,7 +414,6 @@ class VariableView(name: String, private val variable: Variable, private val con
   }
 
   private class MyFullValueEvaluator(private val value: Value) : XFullValueEvaluator(if (value is StringValue) value.length else value.valueString.length()) {
-
     override fun startEvaluation(callback: XFullValueEvaluator.XFullValueEvaluationCallback) {
       if (value !is StringValue || !value.isTruncated) {
         callback.evaluated(value.valueString)
@@ -443,16 +434,6 @@ class VariableView(name: String, private val variable: Variable, private val con
   override fun getScope() = context.scope
 
   companion object {
-    fun getClassName(value: ObjectValue): String {
-      val className = value.className
-      return if (className.isNullOrEmpty()) "Object" else className!!
-    }
-
-    fun getObjectValueDescription(value: ObjectValue): String {
-      val description = value.valueString
-      return if (StringUtil.isEmpty(description)) getClassName(value) else description
-    }
-
     fun setObjectPresentation(value: ObjectValue, icon: Icon, node: XValueNode) {
       node.setPresentation(icon, ObjectValuePresentation(getObjectValueDescription(value)), value.hasProperties() != ThreeState.NO)
     }
@@ -492,20 +473,30 @@ class VariableView(name: String, private val variable: Variable, private val con
         else -> if (type.isObjectType) AllIcons.Debugger.Value else AllIcons.Debugger.Db_primitive
       }
     }
-
-    internal fun trimFunctionDescription(value: Value): String {
-      val presentableValue = value.valueString ?: return ""
-
-      var endIndex = 0
-      while (endIndex < presentableValue.length() && !StringUtil.isLineBreak(presentableValue.charAt(endIndex))) {
-        endIndex++
-      }
-      while (endIndex > 0 && Character.isWhitespace(presentableValue.charAt(endIndex - 1))) {
-        endIndex--
-      }
-      return presentableValue.substring(0, endIndex)
-    }
   }
+}
+
+fun getClassName(value: ObjectValue): String {
+  val className = value.className
+  return if (className.isNullOrEmpty()) "Object" else className!!
+}
+
+fun getObjectValueDescription(value: ObjectValue): String {
+  val description = value.valueString
+  return if (description.isNullOrEmpty()) getClassName(value) else description
+}
+
+internal fun trimFunctionDescription(value: Value): String {
+  val presentableValue = value.valueString ?: return ""
+
+  var endIndex = 0
+  while (endIndex < presentableValue.length() && !StringUtil.isLineBreak(presentableValue.charAt(endIndex))) {
+    endIndex++
+  }
+  while (endIndex > 0 && Character.isWhitespace(presentableValue.charAt(endIndex - 1))) {
+    endIndex--
+  }
+  return presentableValue.substring(0, endIndex)
 }
 
 private fun createNumberPresentation(value: String): XValuePresentation {

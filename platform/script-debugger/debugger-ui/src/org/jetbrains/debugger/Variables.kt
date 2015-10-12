@@ -55,21 +55,21 @@ fun processScopeVariables(scope: Scope,
                           node: XCompositeNode,
                           context: VariableContext,
                           isLast: Boolean): Promise<Void> {
-  return processVariables(context, scope.variablesHost.get(), node, {memberFilter, variables ->
-      val additionalVariables = memberFilter.additionalVariables
-      val properties = ArrayList<Variable>(variables.size() + additionalVariables.size())
-      val functions = SmartList<Variable>()
-      for (variable in variables) {
-        if (memberFilter.isMemberVisible(variable)) {
-          val value = variable.value
-          if (value != null && value.type == ValueType.FUNCTION && value.valueString != null && !UNNAMED_FUNCTION_PATTERN.matcher(value.valueString).lookingAt()) {
-            functions.add(variable)
-          }
-          else {
-            properties.add(variable)
-          }
+  return processVariables(context, scope.variablesHost.get(), node, { memberFilter, variables ->
+    val additionalVariables = memberFilter.additionalVariables
+    val properties = ArrayList<Variable>(variables.size() + additionalVariables.size())
+    val functions = SmartList<Variable>()
+    for (variable in variables) {
+      if (memberFilter.isMemberVisible(variable)) {
+        val value = variable.value
+        if (value != null && value.type == ValueType.FUNCTION && value.valueString != null && !UNNAMED_FUNCTION_PATTERN.matcher(value.valueString).lookingAt()) {
+          functions.add(variable)
+        }
+        else {
+          properties.add(variable)
         }
       }
+    }
 
     val comparator = if (memberFilter.hasNameMappings()) comparator { o1, o2 -> naturalCompare(memberFilter.rawNameToSource(o1), memberFilter.rawNameToSource(o2)) } else NATURAL_NAME_COMPARATOR
     properties.sort(comparator)

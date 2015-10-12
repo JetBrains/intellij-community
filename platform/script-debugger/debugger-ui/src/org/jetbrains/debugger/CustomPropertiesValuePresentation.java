@@ -36,7 +36,7 @@ public class CustomPropertiesValuePresentation extends XValuePresentation {
 
   @Override
   public void renderValue(@NotNull XValueTextRenderer renderer) {
-    renderer.renderComment(VariableView.Companion.getObjectValueDescription(value));
+    renderer.renderComment(VariableViewKt.getObjectValueDescription(value));
     renderer.renderSpecialSymbol(" {");
     boolean isFirst = true;
     for (Variable property : properties) {
@@ -74,11 +74,11 @@ public class CustomPropertiesValuePresentation extends XValuePresentation {
           break;
 
         case FUNCTION:
-          renderer.renderComment(VariableView.Companion.trimFunctionDescription(value));
+          renderer.renderComment(VariableViewKt.trimFunctionDescription(value));
           break;
 
         case OBJECT:
-          renderer.renderComment(VariableView.Companion.getObjectValueDescription((ObjectValue)value));
+          renderer.renderComment(VariableViewKt.getObjectValueDescription((ObjectValue)value));
           break;
 
         default:
