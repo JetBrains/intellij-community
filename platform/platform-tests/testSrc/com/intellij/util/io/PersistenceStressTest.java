@@ -51,7 +51,6 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
   private final List<PersistentHashMap<String, Record>> myMaps = new ArrayList<>();
   private final List<String> myKeys = new ArrayList<>();
   private PersistentStringEnumerator myEnumerator;
-  private File myTempDirectory;
 
   public static class Record {
     public final int magnitude;
@@ -73,14 +72,14 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
       String key = new String(bytes, CharsetToolkit.UTF8_CHARSET);
       myKeys.add(key);
     }
-    myTempDirectory = FileUtil.createTempDirectory("map", "");
+    File tempDirectory = FileUtil.createTempDirectory("map", "");
 
     for (int i = 0; i < 10; i++) {
-      PersistentHashMap<String, Record> map = createMap(FileUtil.createTempFile(myTempDirectory, "persistent", "map" + i));
+      PersistentHashMap<String, Record> map = createMap(FileUtil.createTempFile(tempDirectory, "persistent", "map" + i));
       myMaps.add(map);
     }
     PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
-    myEnumerator = new PersistentStringEnumerator(FileUtil.createTempFile(myTempDirectory, "persistent", "enum"), storageLockContext);
+    myEnumerator = new PersistentStringEnumerator(FileUtil.createTempFile(tempDirectory, "persistent", "enum"), storageLockContext);
 
     myThreadPool = Executors.newFixedThreadPool(myMaps.size() + 2);
   }
