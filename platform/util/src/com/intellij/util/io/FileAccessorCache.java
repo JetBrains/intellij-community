@@ -81,6 +81,12 @@ public abstract class FileAccessorCache<K, T> implements com.intellij.util.conta
     }
   }
 
+  public void clear() {
+    synchronized (myLock) {
+      myCache.clear();
+    }
+  }
+
   @Override
   public int getHashCode(K value) {
     return value.hashCode();
