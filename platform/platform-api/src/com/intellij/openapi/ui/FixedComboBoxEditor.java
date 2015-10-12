@@ -221,6 +221,17 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
     }
 
     @Override
+    public Color getBackground() {
+      if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+        Container parent = getParent();
+        if (parent != null && !parent.isEnabled()) {
+          return Gray.xF8;
+        }
+      }
+      return super.getBackground();
+    }
+
+    @Override
     public void insertUpdate(DocumentEvent e) {
       textChanged();
     }
